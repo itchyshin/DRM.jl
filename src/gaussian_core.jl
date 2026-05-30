@@ -10,7 +10,7 @@
 using StatsModels: @formula, FormulaTerm, Term, ConstantTerm,
     schema, apply_schema, modelcols, coefnames
 using Statistics: std
-import StatsAPI: coef, vcov, nobs
+import StatsAPI: coef, vcov, nobs, StatisticalModel
 
 """
     Gaussian()
@@ -75,7 +75,10 @@ end
 # only the predictor matrix.
 function _design(response::Symbol, rhs, data)
     ft = FormulaTerm(Term(response), rhs)
-    ft = apply_schema(ft, schema(ft, data))
+    # The 3-arg apply_schema with a StatisticalModel context adds R's implicit
+    # intercept (so `y ~ x` means `y ~ 1 + x`, matching drmTMB); explicit
+    # `1 + x` / `0 + x` are respected.
+    ft = apply_schema(ft, schema(ft, data), StatisticalModel)
     y, X = modelcols(ft, data)
     Xm = X isa AbstractMatrix ? Matrix{Float64}(X) : reshape(Float64.(collect(X)), :, 1)
     return Float64.(y), Xm, String.(vec(coefnames(ft.rhs)))

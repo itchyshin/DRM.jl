@@ -27,6 +27,7 @@ end
 
 # Gaussian location–scale front end (drm/bf public API).
 include("test_gaussian_core.jl")
+include("test_gaussian_bivariate.jl")
 
 # NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
