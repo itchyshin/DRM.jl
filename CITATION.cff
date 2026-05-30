@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use DRM.jl, please cite it as below."
+title: "DRM.jl: Distributional Regression Models in Julia"
+abstract: >-
+  A Julia engine and twin of the R package drmTMB for univariate and
+  bivariate distributional regression (a separate formula per distributional
+  parameter: mean, scale, and bivariate residual correlation), including the
+  q=4 phylogenetic bivariate location-scale model fit by a sparse
+  augmented-state Laplace approximation with an exact O(p) marginal gradient.
+type: software
+authors:
+  - family-names: Nakagawa
+    given-names: Shinichi
+    orcid: "https://orcid.org/0000-0002-7765-5182"
+    email: itchyshin@gmail.com
+license: MIT
+repository-code: "https://github.com/itchyshin/DRM.jl"
+url: "https://itchyshin.github.io/DRM.jl/"
+version: 0.1.0-DEV
+keywords:
+  - distributional regression
+  - location-scale models
+  - phylogenetic comparative methods
+  - mixed models
+  - Julia
+  - Laplace approximation

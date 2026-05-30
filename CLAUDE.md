@@ -1,9 +1,11 @@
 # Claude Code instructions for DRM.jl
 
-`DRM.jl` is the Julia "digital twin" of the R package **drmTMB** (univariate &
+`DRM.jl` is the Julia twin of the R package **drmTMB** (univariate &
 bivariate distributional regression). Sister to GLLVM.jl. **Read `HANDOVER.md`
 first** — it is the source of truth for scope, the verified state, and the
-roadmap.
+engine. Then [`AGENTS.md`](AGENTS.md) (the team, lanes, Definition of Done, and
+the parity / bridge / license contracts) and [`ROADMAP.md`](ROADMAP.md)
+(phases + gates). The live work ledger is **GitHub Issues**, not a private file.
 
 ## Identity & syntax (keep stable)
 - Distributional regression: a formula per parameter — mean μ, scale **σ** (use
@@ -11,7 +13,8 @@ roadmap.
   correlation. Group-level (phylo/spatial/study) correlations are named
   covariance summaries, not residual `rho12`.
 - Front end (planned): `bf(mu1=…, mu2=…, sigma1=…, sigma2=…, rho12=…)` (mirror
-  drmTMB). Meta-analysis = `gaussian()` + `meta_known_V`.
+  drmTMB). Meta-analysis = `gaussian()` + `meta_V()` (the older `meta_known_V`
+  is deprecated; keep it only as a parity stub).
 - **ML is the default** (REML likelihoods aren't comparable across fixed-effect
   structures — needed for model selection); REML is an option.
 
@@ -31,3 +34,16 @@ roadmap.
   numbers (e.g. drmTMB at p=10,000) to measured results.
 - Don't revert human/Codex changes unless asked. Update `report/` when the
   grammar, likelihood, RE, or phylogenetic behaviour changes.
+
+## Team, ledger & recovery
+- **Speak as Shannon**; name the active perspectives and say explicitly when no
+  subagents are running. The 12 personas + their lanes are in `AGENTS.md`.
+- **Work ledger = GitHub Issues.** Milestones = phases; one issue → one branch →
+  one PR → merge; PRs `closes #NN`. Don't pile up local commits.
+- **Evidence-first rehydration.** On resume, reconstruct state from `git status`
+  / recent commits / `docs/dev-log/` (check-log, after-task, recovery-
+  checkpoints) — not chat memory. Helper: `tools/drm-checkpoint.jl`.
+- **License boundary.** drmTMB is GPL(≥3); DRM.jl is MIT. **Never vendor drmTMB
+  GPL source.** R-parity uses generated outputs only. Rose audits this per tag.
+- **Definition of Done** (per `AGENTS.md`): impl + tests + docstrings + worked
+  example + check-log + after-task + Rose audit.

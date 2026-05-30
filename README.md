@@ -2,13 +2,15 @@
 
 [![Build Status](https://github.com/itchyshin/DRM.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/itchyshin/DRM.jl/actions/workflows/CI.yml)
 
-Fast **distributional regression models** in Julia — the Julia "digital twin" of
+Fast **distributional regression models** in Julia — the Julia twin of
 the R package [drmTMB](https://github.com/itchyshin/drmTMB).
 
 > **Scaffold / pilot (v0.1.0-DEV).** This repo migrates a *verified proof-of-
 > concept* engine; the public API and module layout will change before v0.1.0.
-> See [HANDOVER.md](HANDOVER.md) for the roadmap and exactly what is solid vs.
-> experimental.
+> See [HANDOVER.md](HANDOVER.md) (verified engine), [ROADMAP.md](ROADMAP.md)
+> (phases), and [AGENTS.md](AGENTS.md) (the team) for what is solid vs. planned.
+> The [Documenter site](https://itchyshin.github.io/DRM.jl/) mirrors drmTMB's
+> navbar, with every page status-tagged.
 
 ## Why
 
@@ -79,7 +81,9 @@ src/experimental/   migrated but NOT yet wired: REML (reml_q4), inference
 bench/              runnable benchmarks + the q4_p100 fixtures + R fixture gen
 test/               runtests.jl + migrated correctness checks (need path fixes)
 report/             13 design/provenance reports (the full poc record)
-docs/               CONTRACT.md; Documenter site is a TODO
+docs/               Documenter site (mirrors drmTMB navbar) + dev-log; CONTRACT.md
+AGENTS.md ROADMAP.md   the 12-persona team + the phase plan
+.claude/workflows/  10 scripted workflows (W0/Q/A/B/D/F/G/H/S/R)
 ```
 
 ## Status — honest

@@ -1,0 +1,26 @@
+name: Roadmap (phase tracker)
+description: A pinned per-phase tracking issue carrying a checklist of its slices.
+labels: ["roadmap"]
+body:
+  - type: input
+    id: phase
+    attributes:
+      label: Phase / milestone
+      description: e.g. "Phase 1.0 — Hygiene + wire experimental/"
+    validations:
+      required: true
+  - type: textarea
+    id: slices
+    attributes:
+      label: Slices (checklist)
+      description: One checkbox per slice. Promote each to a real issue when it starts (Workflow D / H).
+      value: |
+        - [ ] slice 1
+        - [ ] slice 2
+    validations:
+      required: true
+  - type: textarea
+    id: gate
+    attributes:
+      label: Phase gate
+      description: What must hold for this phase to be done (the verification commands).

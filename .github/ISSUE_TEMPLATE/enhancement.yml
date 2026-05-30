@@ -1,0 +1,40 @@
+name: Enhancement (capability slice)
+description: A new DRM.jl capability — a family, structured effect, inference, or engine slice.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What capability, and which drmTMB capability-matrix row it mirrors.
+    validations:
+      required: true
+  - type: dropdown
+    id: owner
+    attributes:
+      label: Owning persona
+      options: [Ada, Boole, Noether, Fisher, Curie, Rose, Florence, Pat, Grace, Karpinski, Hopper, Pólya]
+    validations:
+      required: true
+  - type: dropdown
+    id: status
+    attributes:
+      label: Target status tag (mirrors drmTMB)
+      options: ["Stable", "First slice", "Opt-in control", "Planned or reserved", "Unsupported or blocked"]
+    validations:
+      required: true
+  - type: input
+    id: drmtmb
+    attributes:
+      label: drmTMB parity reference
+      description: The drmTMB function / article / URL this mirrors (anchor v0.1.3).
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Definition of Done
+      options:
+        - label: Implementation wired into the module
+        - label: Tests (failing-first where applicable) in test/runtests.jl
+        - label: Docstrings + worked example
+        - label: check-log + after-task report
+        - label: Rose audit — claim-vs-evidence, status tag honest

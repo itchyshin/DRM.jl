@@ -10,7 +10,7 @@
 
 ## 0. TL;DR
 
-- **What:** `DRM.jl` is the Julia "digital twin" of the R package **drmTMB**
+- **What:** `DRM.jl` is the Julia twin of the R package **drmTMB**
   (univariate & bivariate *distributional* regression — a formula per parameter
   μ/σ/ρ). It mirrors the **gllvmTMB → GLLVM.jl** move. Sister to GLLVM.jl.
 - **Why it exists:** drmTMB's selling-point model — the **q=4 phylogenetic
@@ -182,12 +182,18 @@ include chain + exports). `src/experimental/` migrated but not wired. `bench/`
 has runnable benchmarks + the `q4_p100` fixtures + the R fixture-gen. `report/`
 has all 13 design/provenance docs. CI is Linux-only, PR + `workflow_dispatch`
 (cost-disciplined). **Honest:** engine files are the poc's script-style includes
-(one `println` fires on load); this is a *scaffold ready to develop*, not a
+(one stray load-time print fires from `sparse_aug_plsm.jl`; removed in Phase 1.0 via Workflow A); this is a *scaffold ready to develop*, not a
 polished v0.1.
 
 ---
 
 ## 8. Roadmap to v0.1.0 (ordered)
+
+> **Update (Phase 0, 2026-05-30):** the team ([`AGENTS.md`](AGENTS.md)), the 10
+> scripted workflows (`.claude/workflows/`), the Documenter shell (`docs/`),
+> `bench/Project.toml`, `TagBot.yml` / `Documenter.yml`, and the GitHub Issues
+> ledger now exist. See [`ROADMAP.md`](ROADMAP.md) for the live phase plan; the
+> engine steps below (A–D) remain the substantive roadmap.
 
 **A. Package hygiene (first).** Wire a clean module (single base include, remove
 load-time prints, deliberate public API); make `Pkg.instantiate(); using DRM;

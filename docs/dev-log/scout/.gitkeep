@@ -1,0 +1,3 @@
+# scout/ — Pólya's scout snapshots (Workflow S): YYYY-MM-DD-scout.md plus the
+# diff inputs (drmTMB pkgdown HEAD, gllvmTMB NEWS, GLLVM.jl commits, literature).
+# Each snapshot diffs against the previous; actionable signals become `idea` issues.

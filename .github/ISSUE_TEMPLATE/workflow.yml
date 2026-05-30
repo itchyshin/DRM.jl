@@ -1,0 +1,21 @@
+name: Workflow change
+description: Change to a scripted workflow under .claude/workflows/.
+labels: ["workflow"]
+body:
+  - type: dropdown
+    id: which
+    attributes:
+      label: Which workflow
+      options: [W0, Q, A, B, D, F, G, H, S, R]
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: Change + rationale
+      description: What changes, and why. Note if it enables a scaffolded phase body.
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: "Reminder: workflow scripts inherit the active session model — do not hardcode a model ID."

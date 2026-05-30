@@ -1,0 +1,4 @@
+# Reserved for the R-parity fixture suite (Workflow G, Phase 1.1+).
+# drmTMB v0.1.3 *reference outputs* (data + fitted numbers) are vendored under
+# test/parity/fixtures/ here so the parity gate runs on CI with no live R+drmTMB
+# install. Generated outputs only — never drmTMB GPL source (see AGENTS.md).

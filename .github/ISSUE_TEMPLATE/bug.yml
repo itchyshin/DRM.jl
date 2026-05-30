@@ -1,0 +1,31 @@
+name: Bug
+description: A defect against the verified engine, a shipped article, or a parity drift.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What's wrong
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Minimal code / command. Note the fixture (e.g. q4_p100) if relevant.
+      render: julia
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+    validations:
+      required: true
+  - type: checkboxes
+    id: regression
+    attributes:
+      label: Baseline
+      options:
+        - label: This regresses the verified engine (logLik −256.51 / 2.18×) — treat as blocking.
+        - label: This is a drmTMB parity drift (note the drmTMB v0.1.3 reference).

@@ -2,7 +2,7 @@
     DRM
 
 `DRM.jl` — a Julia engine for distributional regression models, the Julia
-"digital twin" of the R package **drmTMB**. Mirrors the gllvmTMB → GLLVM.jl move.
+twin of the R package **drmTMB**. Mirrors the gllvmTMB → GLLVM.jl move.
 
 This v0.1.0-DEV scaffold migrates the verified `drm-julia-poc` engine for the
 **q=4 phylogenetic bivariate location–scale model (PLSM)** — the selling-point

@@ -1,0 +1,10 @@
+# JuliaFormatter config — pinned for deterministic style. Karpinski owns it.
+#
+# Apply FILE-SCOPED (e.g. `using JuliaFormatter; format("src/foo.jl")`), never
+# repo-wide, to avoid churning the verified `src/` engine in unrelated diffs.
+# See AGENTS.md ("file-scoped formatting") and the global air-format anti-pattern.
+
+style = "blue"
+margin = 92
+indent = 4
+remove_extra_newlines = true

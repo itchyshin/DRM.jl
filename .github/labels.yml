@@ -1,0 +1,25 @@
+# DRM.jl label manifest. Kept in sync with tools/bootstrap-issues.jl (the script
+# is the source of truth that actually creates them via `gh label create --force`).
+# `bug` and `enhancement` already exist on GitHub by default; we re-color them.
+
+- { name: roadmap,         color: "0e8a16", description: "Per-phase pinned tracking issue" }
+- { name: enhancement,     color: "a2eeef", description: "New capability — family, structured effect, article" }
+- { name: bug,             color: "d73a4a", description: "Defect / regression / parity drift" }
+- { name: documenter,      color: "1d76db", description: "Lands in docs/src/" }
+- { name: r-bridge,        color: "5319e7", description: "Hopper / Lovelace — parity, engine=julia, RCall" }
+- { name: workflow,        color: "fbca04", description: "Changes to .claude/workflows/*.js" }
+- { name: engine-quality,  color: "0052cc", description: "Workflow Q gate work" }
+- { name: formula-parity,  color: "c2e0c6", description: "drmTMB ↔ DRM.jl formula contract (Boole)" }
+- { name: idea,            color: "d4c5f9", description: "Pólya scouting signal / creative combination" }
+- { name: autoresearch,    color: "bfdadc", description: "Workflow R estimator-optimisation experiment" }
+- { name: phase-0,         color: "ededed", description: "Phase 0 — Team & workflows" }
+- { name: phase-1,         color: "ededed", description: "Phase 1.x" }
+- { name: phase-2,         color: "ededed", description: "Phase 2 — Family expansion" }
+- { name: phase-3,         color: "ededed", description: "Phase 3 — Articles" }
+- { name: "status:stable",          color: "0e8a16", description: "drmTMB status: Stable" }
+- { name: "status:first-slice",     color: "fbca04", description: "drmTMB status: First slice" }
+- { name: "status:opt-in-control",  color: "0052cc", description: "drmTMB status: Opt-in control" }
+- { name: "status:planned",         color: "ededed", description: "drmTMB status: Planned or reserved" }
+- { name: "status:blocked",         color: "b60205", description: "drmTMB status: Unsupported or blocked" }
+- { name: good-first-codex,  color: "7057ff", description: "Hand-off: good for Codex" }
+- { name: good-first-claude, color: "7057ff", description: "Hand-off: good for Claude" }
