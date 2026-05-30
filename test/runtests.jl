@@ -25,6 +25,9 @@ using Test, LinearAlgebra, SparseArrays, Random
     end
 end
 
+# Gaussian location–scale front end (drm/bf public API).
+include("test_gaussian_core.jl")
+
 # NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
 # script-style include paths and need path/`using DRM` updates before wiring

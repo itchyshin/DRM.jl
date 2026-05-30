@@ -31,11 +31,18 @@ module DRM
 # fit_q4_sparse_tmb.jl transitively pull the whole chain from this src/ dir.
 include("fit_q4_sparse_tmb.jl")
 
+# Gaussian location–scale front end (public bf()/drm() API).
+include("gaussian_core.jl")
+
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
        fit_q4_sparse_tmb, marginal_and_exact_grad, marginal_nll,
        estep_mode, prior_precision, build_Huu, joint_grad, joint_nll,
        pack_theta, unpack_theta, lc_to_Λ, Λ_to_lc,
        augmented_phy, random_balanced_tree, sigma_phy_dense, takahashi_selinv
+
+# Public API — the Gaussian distributional-regression front end.
+export @formula, bf, drm_formula, drm, Gaussian, DrmFormula, DrmFit,
+       coef, vcov, loglik, nobs, fixef
 
 end # module DRM
