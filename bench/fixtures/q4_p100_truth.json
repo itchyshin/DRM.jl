@@ -1,0 +1,12 @@
+{
+  "cell_id": "q4_p100",
+  "n": 100,
+  "p_species": 100,
+  "model": "q4",
+  "beta_mu1": [1, 0.4],
+  "beta_mu2": [-0.5, 0.6],
+  "sigma1_intercept": 0.1,
+  "sigma2_intercept": -0.05,
+  "rho12_intercept": 0.4,
+  "sd_phy": [0.7, 0.7, 0.3, 0.3]
+}
