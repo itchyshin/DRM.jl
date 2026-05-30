@@ -1,0 +1,3 @@
+# after-task/ — mandatory slice closure reports: YYYY-MM-DD-<slice>.md
+# Each records: files changed, verification commands + results, per-persona
+# verdict (Ada overview, Rose claim-vs-evidence, owning persona), closes #NN.

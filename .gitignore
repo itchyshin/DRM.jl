@@ -5,3 +5,10 @@
 .DS_Store
 *.log
 deps/deps.jl
+
+# Julia env Manifests. Root is a library (never pin). docs/ + bench/ dev DRM via
+# a machine-specific path, so their Manifests aren't portable; Phase 1.0 (Grace)
+# pins portable docs/+bench/ Manifests via a relative dev path.
+/Manifest.toml
+/docs/Manifest.toml
+/bench/Manifest.toml

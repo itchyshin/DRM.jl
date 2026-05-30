@@ -1,0 +1,30 @@
+name: Distribution family
+description: Add one response family. Uses Workflow H.
+labels: ["enhancement"]
+body:
+  - type: input
+    id: family
+    attributes:
+      label: Family
+      description: e.g. student, lognormal, Gamma, tweedie, beta, poisson, nbinom2, cumulative_logit
+    validations:
+      required: true
+  - type: input
+    id: params
+    attributes:
+      label: Distributional parameters
+      description: e.g. mu, sigma, nu  (+ zi / hu modifiers where applicable)
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Link function(s)
+  - type: input
+    id: sigma-phi
+    attributes:
+      label: Internal sigma↔phi mapping (for parity)
+      description: e.g. Tweedie phi = sigma^2; beta phi = 1/sigma^2; else none.
+  - type: markdown
+    attributes:
+      value: "Pipeline (Workflow H): link infra → Laplace path → ADEMP recovery (Curie) → Documenter stub (Workflow D) → R-parity gate (Workflow G)."

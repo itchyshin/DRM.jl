@@ -1,0 +1,28 @@
+name: Article (Documenter page)
+description: Write or fill a Documenter article, mirroring a drmTMB pkgdown article. Uses Workflow D.
+labels: ["documenter"]
+body:
+  - type: input
+    id: slug
+    attributes:
+      label: DRM.jl page slug
+      description: e.g. tutorials/bivariate-coscale
+    validations:
+      required: true
+  - type: input
+    id: drmtmb-url
+    attributes:
+      label: drmTMB article URL (mirror target)
+      description: e.g. https://itchyshin.github.io/drmTMB/articles/bivariate-coscale.html
+    validations:
+      required: true
+  - type: dropdown
+    id: status
+    attributes:
+      label: Status tag for this page
+      options: ["Stable", "First slice", "Opt-in control", "Planned or reserved", "Unsupported or blocked"]
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: "Run via Workflow D (`mirror-article`): ingest → Florence figure → Pat reader → Rose audit."
