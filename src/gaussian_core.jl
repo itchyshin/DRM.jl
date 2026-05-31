@@ -73,15 +73,21 @@ struct DrmFit{F}
     obs::Dict{Symbol,Vector{Float64}}      # observed response per mean-parameter
     scales::Dict{Symbol,Vector{Float64}}   # residual scale(s) for simulation
     formula::Any                           # the DrmFormula / BivariateDrmFormula (for predict)
+    nll::Any                               # objective θ ↦ nll(θ) (for profile intervals)
 end
 
-# 11-arg outer constructor: formula defaults to nothing (the fitters use this;
-# drm() attaches the formula via _withformula).
+# 11-arg outer constructor: formula + nll default to nothing (the fitters use
+# this; drm() attaches the formula via _withformula, the objective via _withnll).
 DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales) =
-    DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales, nothing)
+    DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales, nothing, nothing)
 
 _withformula(fit::DrmFit, f) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
-    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, f)
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, f, fit.nll)
+
+# Attach the (negative) log-likelihood closure so profile intervals can re-optimise
+# the nuisance parameters at each fixed value. nll(θ) must accept the full θ vector.
+_withnll(fit::DrmFit, nll) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, nll)
 
 # Build a design matrix for one parameter's RHS. We reuse the (real) response as
 # a dummy LHS so the formula is always valid for `schema`/`modelcols`, then keep
@@ -188,7 +194,7 @@ function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     means = Dict(:mu => Xμ * θ̂[1:pμ])
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales)
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
 
 # ---- accessors -----------------------------------------------------------

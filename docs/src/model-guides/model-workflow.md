@@ -1,11 +1,11 @@
 # Checking and using fitted models
 
-!!! note "Status — First slice (Wald inference)"
+!!! note "Status — Stable (Gaussian post-fit + inference)"
     Mirrors drmTMB's [Checking and using fitted models](https://itchyshin.github.io/drmTMB/articles/model-workflow.html).
     **In DRM.jl today:** coefficient extraction, Wald standard errors, Wald
-    confidence intervals, fitted values, residuals, `predict` (new data),
-    `simulate`, and **parametric bootstrap** intervals (`bootstrap_ci`). Profile
-    intervals are on the roadmap.
+    **and profile-likelihood** confidence intervals, fitted values, residuals,
+    `predict` (new data), `simulate`, and **parametric bootstrap** intervals
+    (`bootstrap_ci`).
 
 Once you have a fit, pull coefficients and quantify their uncertainty.
 
@@ -32,6 +32,16 @@ Each row carries its parameter (`:mu` / `:sigma`), coefficient name, point
 estimate, and interval bounds. Intervals are on each parameter's working scale —
 `μ` on the response scale, `σ` on `log σ` — so for a residual-SD ratio you
 exponentiate the `σ` bounds.
+
+For a **profile-likelihood** interval (drmTMB's `method = "profile"`), pass
+`method = :profile`. It inverts the likelihood-ratio statistic — re-optimising
+the nuisance parameters at each fixed value — so it is asymmetric and exact under
+the LR statistic where Wald is only a quadratic approximation. Use Wald for
+speed; profile when a parameter's likelihood is skewed (a scale or variance term):
+
+```@example wf
+confint(fit; method = :profile)
+```
 
 !!! tip "What scale is the interval on?"
     A `σ` row gives an interval for a `log σ` coefficient. `exp(lower)` and
