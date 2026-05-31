@@ -34,10 +34,16 @@ function drm(f::DrmFormula, fam::Poisson; data, g_tol::Real = 1e-8)
     if !isempty(re)                                       # random intercept (1|g) → GHQ marginal
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
             error("Poisson() random effects cannot be combined with `zi`/`hu` yet")
-        (length(re) == 1 && _re_kind(re[1][1])[1] === :intercept) ||
-            error("Poisson() supports a single random intercept `(1 | g)` on the mean")
-        grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
-        return _withformula(_fit_poisson_ranef(fam, y, Xμ, gidx, G, nmμ, grp, g_tol), f)
+        length(re) == 1 || error("Poisson() supports a single random-effect term on the mean")
+        (rk, var) = _re_kind(re[1][1]); grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
+        if rk === :intercept                              # (1 | g) → 1-D GHQ
+            return _withformula(_fit_poisson_ranef(fam, y, Xμ, gidx, G, nmμ, grp, g_tol), f)
+        elseif rk === :corr                               # (1 + x | g) → 2-D GHQ
+            xs = Float64.(getproperty(data, var))
+            return _withformula(_fit_poisson_corr_ranef(fam, y, Xμ, xs, gidx, G, nmμ, grp, g_tol), f)
+        else
+            error("Poisson() supports `(1 | g)` or `(1 + x | g)` random effects on the mean")
+        end
     end
     haskey(rhs, :zi) && haskey(rhs, :hu) &&
         error("`zi` and `hu` cannot both be specified (zero-inflation vs hurdle)")
@@ -92,6 +98,54 @@ function _fit_poisson_ranef(fam::Poisson, y, Xμ, gidx, G, nmμ, grp, g_tol)
     blocks = [:mu => 1:pμ, :resd => (pμ+1):(pμ+1)]
     names = [:mu => nmμ, :resd => [String(grp)]]
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # population λ (b=0)
+    scales = Dict{Symbol,Vector{Float64}}()
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+end
+
+# Poisson count GLMM with a correlated random intercept+slope (1 + x | g) on log λ.
+# Per group (b0,b1) ~ N(0, Σ); because groups are disjoint the 2-D integral
+# factorises, so it is done by a 2-D Gauss–Hermite tensor grid (K² nodes). Σ is the
+# log-Cholesky parameterisation L = [exp(a) 0; cc exp(b)] (the `vc` convention), so
+# vc(fit) reconstructs Σ = L Lᵀ. O(G·K²·group) per eval, fully differentiable.
+function _fit_poisson_corr_ranef(fam::Poisson, y, Xμ, xs, gidx, G, nmμ, grp, g_tol)
+    n = length(y); pμ = size(Xμ, 2)
+    members = [Int[] for _ in 1:G]
+    for i in 1:n
+        push!(members[gidx[i]], i)
+    end
+    lf = [_logfactorial(round(Int, yi)) for yi in y]
+    z1, w1 = _gauss_hermite(12); lw = log.(w1); K = length(z1); rt2 = sqrt(2.0); lπ = log(π)
+    function nll(θ)
+        βμ = θ[1:pμ]; a = θ[pμ+1]; b = θ[pμ+2]; cc = θ[pμ+3]
+        l11 = exp(a); l22 = exp(b); η0 = Xμ * βμ
+        s = zero(eltype(θ))
+        for idx in members
+            isempty(idx) && continue
+            terms = Vector{eltype(θ)}(undef, K * K)
+            t = 0
+            for j in 1:K, k in 1:K
+                t += 1
+                b0 = rt2 * l11 * z1[j]; b1 = rt2 * (cc * z1[j] + l22 * z1[k])   # √2 L z
+                gll = lw[j] + lw[k]
+                for i in idx
+                    η = clamp(η0[i] + b0 + b1 * xs[i], -30.0, 30.0)
+                    gll += y[i] * η - exp(η) - lf[i]
+                end
+                terms[t] = gll
+            end
+            mx = maximum(terms)
+            s -= (-lπ + mx + log(sum(exp.(terms .- mx))))      # 2-D: -0.5·2·logπ = -logπ
+        end
+        return s
+    end
+    θ0 = zeros(pμ + 3)
+    θ0[1] = log(sum(y) / n + eps())
+    θ0[pμ+1] = log(0.4); θ0[pμ+2] = log(0.4); θ0[pμ+3] = 0.0
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :recov => (pμ+1):(pμ+3)]
+    names = [:mu => nmμ, :recov => ["$(grp):L11", "$(grp):L22", "$(grp):L21"]]
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict{Symbol,Vector{Float64}}()
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
