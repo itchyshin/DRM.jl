@@ -1,12 +1,13 @@
 name: Documenter
-# Cost-disciplined (matches CLAUDE.md): NO push-to-main trigger. A single cheap
-# Linux job. PR builds the site as a check (no deploy); version tags deploy
-# release docs; workflow_dispatch builds + deploys the dev docs on demand.
+# Single cheap Linux job. Deploys dev docs on push to main (keeps the site
+# current), release docs on version tags, builds as a check on PRs. The
+# DocumenterVitepress (npm) build uses Node from NodeJS_20_jll — no setup-node.
 on:
+  push:
+    branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
-  push:
-    tags: ['v*']
   workflow_dispatch:
 
 concurrency:

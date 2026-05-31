@@ -67,8 +67,14 @@ makedocs(
     ],
 )
 
-deploydocs(
-    repo = "github.com/itchyshin/DRM.jl",
+# Use DocumenterVitepress.deploydocs (NOT Documenter's): it flattens the VitePress
+# build output (build/1/*) into the version root on gh-pages and rewrites the site
+# `base`. Plain Documenter.deploydocs deploys build/ verbatim → the site lands as
+# build/1/ and every asset/nav link 404s (the bug this site hit). Mirrors GLLVM.jl.
+DocumenterVitepress.deploydocs(;
+    repo = "github.com/itchyshin/DRM.jl.git",
+    target = joinpath(@__DIR__, "build"),
     devbranch = "main",
+    branch = "gh-pages",
     push_preview = false,
 )
