@@ -45,6 +45,7 @@ include("test_student.jl")
 include("test_poisson.jl")
 include("test_nbinom2.jl")
 include("test_beta.jl")
+include("test_gamma.jl")
 
 # NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
