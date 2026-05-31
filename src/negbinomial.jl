@@ -24,15 +24,27 @@ struct NegBinomial2 end
 
 function drm(f::DrmFormula, fam::NegBinomial2; data, g_tol::Real = 1e-8)
     rhs = Dict(f.forms)
-    for (_, r) in f.forms
-        _, re, mv, st = _split_ranef(r)
-        (isempty(re) && mv === nothing && st === nothing) ||
-            error("NegBinomial2() currently supports fixed effects only")
+    fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
+    (mv === nothing && st === nothing) ||
+        error("NegBinomial2() does not support meta_V / structured markers")
+    for (pname, r) in f.forms          # only the mean may carry a random effect
+        pname === :mu && continue
+        _, re2, mv2, st2 = _split_ranef(r)
+        (isempty(re2) && mv2 === nothing && st2 === nothing) ||
+            error("NegBinomial2(): only the mean formula may carry a random effect")
     end
-    y, Xμ, nmμ = _design(f.response, rhs[:mu], data)
+    y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> yi ≥ 0 && isinteger(yi), y) ||
         error("NegBinomial2() requires non-negative integer counts as the response")
+    if !isempty(re)                                       # random intercept on the mean → GHQ
+        (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
+            error("NegBinomial2() random effects cannot be combined with `zi`/`hu` yet")
+        (length(re) == 1 && _re_kind(re[1][1])[1] === :intercept) ||
+            error("NegBinomial2() supports a single random intercept `(1 | g)` on the mean")
+        grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
+        return _withformula(_fit_negbin2_ranef(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), f)
+    end
     haskey(rhs, :zi) && haskey(rhs, :hu) &&
         error("`zi` and `hu` cannot both be specified (zero-inflation vs hurdle)")
     if haskey(rhs, :zi)                                   # zero-inflated NB (ZINB)
@@ -44,6 +56,52 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, g_tol::Real = 1e-8)
         return _withformula(_fit_negbin2_hu(fam, y, Xμ, Xσ, Xhu, nmμ, nmσ, nmhu, g_tol), f)
     end
     return _withformula(_fit_negbin2(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol), f)
+end
+
+# NB2 count GLMM with a random intercept (1|g) on log μ. b_g ~ N(0,σ_b²) is
+# integrated out per group by 32-node Gauss–Hermite quadrature; the dispersion θ
+# (the `sigma` slot) is a fixed effect. Same scheme as the Poisson GLMM.
+function _fit_negbin2_ranef(fam::NegBinomial2, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
+    n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    members = [Int[] for _ in 1:G]
+    for i in 1:n
+        push!(members[gidx[i]], i)
+    end
+    yint = round.(Int, y)
+    z, w = _gauss_hermite(32); logw = log.(w); K = length(z); rt2 = sqrt(2.0); lπ = log(π)
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; σb = exp(θ[pμ+pσ+1])
+        η0 = Xμ * βμ; ησ = clamp.(Xσ * βσ, -20.0, 20.0)
+        s = zero(eltype(θ))
+        for idx in members
+            isempty(idx) && continue
+            terms = Vector{eltype(θ)}(undef, K)
+            for k in 1:K
+                δ = rt2 * σb * z[k]
+                gll = logw[k]
+                for i in idx
+                    μ = exp(clamp(η0[i] + δ, -20.0, 20.0)); r = exp(ησ[i]); p = r / (r + μ)
+                    gll += logpdf(NegativeBinomial(r, p), yint[i])
+                end
+                terms[k] = gll
+            end
+            mx = maximum(terms)
+            s -= (-0.5 * lπ + mx + log(sum(exp.(terms .- mx))))
+        end
+        return s
+    end
+    m = sum(y) / n; v = sum(abs2, y .- m) / max(n - 1, 1)
+    θ0 = zeros(pμ + pσ + 1)
+    θ0[1] = log(m + eps())
+    θ0[pμ+1] = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    θ0[pμ+pσ+1] = log(0.5)
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
+    names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # population μ (b=0)
+    scales = Dict{Symbol,Vector{Float64}}()
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
 
 # Zero-inflated NB2: P(0) = π + (1-π)·NB(0), P(k>0) = (1-π)·NB(k), with
