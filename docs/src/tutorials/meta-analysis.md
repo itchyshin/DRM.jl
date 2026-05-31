@@ -1,6 +1,48 @@
 # Mean effects and residual heterogeneity
 
-!!! note "Status — Planned or reserved"
-    Mirrors drmTMB's [Mean effects and residual heterogeneity](https://itchyshin.github.io/drmTMB/articles/meta-analysis.html). **In DRM.jl today:** `gaussian()` + `meta_V()` — planned.
+!!! note "Status — Stable (diagonal known variances)"
+    Mirrors drmTMB's [Mean effects and residual heterogeneity](https://itchyshin.github.io/drmTMB/articles/meta-analysis.html).
+    **In DRM.jl today:** Gaussian meta-analysis with **known** per-study sampling
+    variances via `meta_V(v)`, plus estimated between-study heterogeneity τ
+    (the `σ` parameter). Dense / bivariate sampling covariance is planned.
 
-*Phase 0 stub — filled via Workflow D (`mirror-article`). See the [roadmap](https://github.com/itchyshin/DRM.jl/blob/main/ROADMAP.md).*
+In meta-analysis each study reports an effect `y_i` with a **known** sampling
+variance `v_i`. The model separates that known measurement uncertainty from the
+**between-study heterogeneity** τ you want to estimate:
+
+```math
+y_i \sim \mathcal{N}(x_i^\top\beta,\; v_i + \tau^2).
+```
+
+Flag the known-variance column with `meta_V(v)` in the mean formula; τ is the
+`σ` parameter (`sigma ~ 1` for a single heterogeneity).
+
+```@example meta
+using DRM, Random
+Random.seed!(42)
+
+k = 200
+x = randn(k)                          # a study-level moderator
+v = (0.15 .+ 0.5 .* rand(k)) .^ 2     # KNOWN sampling variances
+τ = 0.3                               # between-study heterogeneity (to recover)
+y = 0.4 .+ 0.6 .* x .+ τ .* randn(k) .+ sqrt.(v) .* randn(k)
+dat = (; y, x, v)
+
+fit = drm(bf(@formula(y ~ x + meta_V(v)), @formula(sigma ~ 1)), Gaussian(); data = dat)
+coef(fit, :mu)                        # overall intercept + moderator slope
+```
+
+The between-study heterogeneity τ is the `σ` intercept (on the log scale):
+
+```@example meta
+exp(coef(fit, :sigma)[1])             # τ ≈ 0.3
+```
+
+A `meta_V` model with no moderators (`y ~ 1 + meta_V(v)`) is the classic
+random-effects meta-analysis; adding moderators (`y ~ x + meta_V(v)`) is
+meta-regression. Wald intervals via [`confint`](../model-guides/model-workflow.md)
+apply as usual.
+
+!!! note "Known V is not residual σ"
+    `meta_V(v)` is *supplied* measurement uncertainty; τ (the `σ` parameter) is
+    *estimated* heterogeneity. See [Which scale are you modelling?](../model-guides/which-scale.md).
