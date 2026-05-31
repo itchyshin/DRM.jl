@@ -128,6 +128,27 @@ fitt = drm(bf(@formula(y ~ x), @formula(sigma ~ 1)), TruncatedNegBinomial2(); da
 exp(coef(fitt, :sigma)[1])      # recovered dispersion θ
 ```
 
+## Random effects: a count GLMM
+
+Counts collected in groups (sites, individuals, broods) want a **random
+intercept**. Add `(1 | g)` to the mean — the group effect on `log λ` is
+integrated out per group by Gauss–Hermite quadrature, so `Poisson()` becomes a
+proper count GLMM:
+
+```@example count
+Random.seed!(20260627)
+Gc = 40; mc = 30; nc = Gc * mc
+gc = repeat(1:Gc, inner = mc); xc = randn(nc)
+bg = 0.6 .* randn(Gc)                                   # group random intercepts, SD 0.6
+yc2 = Float64.([rand(Distributions.Poisson(exp(0.3 + 0.5 * xc[i] + bg[gc[i]]))) for i in 1:nc])
+
+fitre = drm(bf(@formula(y ~ x + (1 | g))), Poisson(); data = (; y = yc2, x = xc, g = gc))
+re_sd(fitre)[:g]      # recovered group random-intercept SD (≈ 0.6)
+```
+
+`re_sd(fit)[:g]` is the group SD; `coef(fitre, :mu)` are the population-level
+(`b = 0`) log-rate coefficients.
+
 ## See also
 
 - [What can I fit today?](../model-guides/model-map.md) — the family/feature matrix.
