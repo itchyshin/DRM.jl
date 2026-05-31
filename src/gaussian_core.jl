@@ -98,9 +98,13 @@ fit = drm(bf(y ~ x1, sigma ~ x1), Gaussian(); data = dat)
 """
 function drm(f::DrmFormula, fam::Gaussian; data, g_tol::Real = 1e-8)
     rhs = Dict(f.forms)
-    fixed_mu, re = _split_ranef(rhs[:mu])          # peel off (1 | g) terms
+    fixed_mu, re, metav = _split_ranef(rhs[:mu])   # peel off (1 | g) and meta_V(v)
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, rhs[:sigma], data)
+    if metav !== nothing
+        vv = Float64.(getproperty(data, metav))    # known sampling variances
+        return _fit_meta_gaussian(fam, y, Xμ, Xσ, vv, nmμ, nmσ, g_tol)
+    end
     isempty(re) && return _fit_fixed_gaussian(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     length(re) == 1 ||
         error("DRM.jl (current slice) supports a single random-intercept term `(1 | g)`")

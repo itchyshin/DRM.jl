@@ -17,3 +17,4 @@ overlap before editing. See `AGENTS.md` → *Definition of Done*.
 | 2026-05-30 | Slice 6: Wald inference | `Pkg.test()` + docs build | ✅ `stderror` + `confint` (est ± z·se) on all model types; `model-workflow` `@example` clean. (Profile/bootstrap + predict/simulate deferred.) | Shannon |
 | 2026-05-30 | Slice 7a: capability map | docs build | ✅ `model-map.md` rewritten to the live Gaussian surface (Stable / Verified engine / Planned); build clean | Shannon |
 | 2026-05-30 | Slice (post-fit): fitted + residuals | `Pkg.test()` + docs build | ✅ all green; `fitted`/`residuals` on univariate/bivariate/RE (stored means+obs on DrmFit); `model-workflow` `@example` clean | Shannon |
+| 2026-05-30 | Slice 5: meta_V (meta-analysis) | `Pkg.test()` + docs build | ✅ all green; `meta_V(v)` known sampling variances + heterogeneity τ recovered; `meta-analysis` `@example` clean | Shannon |

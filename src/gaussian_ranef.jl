@@ -11,16 +11,19 @@ function _split_ranef(rhs)
     terms = rhs isa Tuple ? collect(rhs) : Any[rhs]
     fixed = Any[]
     re = Tuple{Any,Symbol}[]
+    metav = nothing                                   # meta_V(v) known-variance column
     for t in terms
         if t isa FunctionTerm && t.f === (|)
             push!(re, (t.args[1], t.args[2].sym))     # (re-lhs, grouping symbol)
+        elseif t isa FunctionTerm && t.f === meta_V
+            metav = t.args[1].sym
         else
             push!(fixed, t)
         end
     end
     fixed_rhs = isempty(fixed) ? ConstantTerm(1) :
                 length(fixed) == 1 ? fixed[1] : Tuple(fixed)
-    return fixed_rhs, re
+    return fixed_rhs, re, metav
 end
 
 # Map group labels to 1:G (stable first-seen order), O(n).

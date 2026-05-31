@@ -28,7 +28,7 @@ is the same: **one formula per distributional parameter**.
 | q=4 **phylogenetic** bivariate location–scale | **Verified engine** | 2.18× over drmTMB, O(p) to p=10,000 (`HANDOVER.md`); public `phylo()` front end planned |
 | Random **slopes**; random effects on `σ` | **Planned** | — |
 | `spatial()` / `animal()` / `relmat()` structured effects | **Planned** | — |
-| Known sampling covariance `meta_V()` | **Planned** | — |
+| Known sampling covariance `meta_V(v)` (meta-analysis) | **Stable** | diagonal known variances + estimated heterogeneity τ |
 | `fitted` / `residuals` post-fit accessors | **Stable** | on every fitted model |
 | Profile / bootstrap intervals; `predict` (new data) / `simulate` | **Planned** | — |
 | Non-Gaussian families (Student, Gamma, beta, Poisson, NB2, …) | **Planned** | Phase 2 |
