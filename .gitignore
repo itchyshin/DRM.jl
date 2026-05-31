@@ -16,3 +16,6 @@ deps/deps.jl
 # DocumenterVitepress: npm deps for the VitePress build (Node from NodeJS_jll).
 /docs/node_modules/
 /docs/package-lock.json
+
+# Local preview helper (Claude_Preview launch config) — not part of the package.
+/.claude/launch.json
