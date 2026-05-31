@@ -41,11 +41,18 @@ function drm(f::DrmFormula, fam::Beta; data, g_tol::Real = 1e-8)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> 0 < yi < 1, y) ||
         error("Beta() requires responses strictly in the open interval (0, 1)")
-    if !isempty(re)                    # random intercept on the logit mean → GHQ
-        (length(re) == 1 && _re_kind(re[1][1])[1] === :intercept) ||
-            error("Beta() supports a single random intercept `(1 | g)` on the mean")
-        grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
-        return _withformula(_fit_beta_ranef(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), f)
+    if !isempty(re)                    # random effect on the logit mean → GHQ
+        length(re) == 1 ||
+            error("Beta() supports a single random-effect term `(1 | g)` or `(1 + x | g)` on the mean")
+        (rk, var) = _re_kind(re[1][1]); grp = re[1][2]
+        gidx, G = _group_index(getproperty(data, grp))
+        if rk === :intercept            # (1 | g) → 1-D Gauss–Hermite marginal
+            return _withformula(_fit_beta_ranef(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), f)
+        elseif rk === :corr             # (1 + x | g) → 2-D Gauss–Hermite marginal
+            return _withformula(_fit_beta_corr_ranef(fam, y, Xμ, Xσ, Float64.(getproperty(data, var)), gidx, G, nmμ, nmσ, grp, g_tol), f)
+        else
+            error("Beta() supports `(1 | g)` or `(1 + x | g)` on the mean, not `(0 + x | g)`")
+        end
     end
     return _withformula(_fit_beta(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol), f)
 end
@@ -88,6 +95,55 @@ function _fit_beta_ranef(fam::Beta, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol
     θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
+    means = Dict(:mu => _logistic.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict{Symbol,Vector{Float64}}()
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+end
+
+# Beta GLMM with a correlated random intercept+slope (1 + x | g) on the logit
+# mean: per group (b0,b1) ~ N(0, Σ), Σ = L Lᵀ with L = [l11 0; cc l22] (log-
+# Cholesky a=log l11, b=log l22, cc). The 2-D group integral is taken by a K×K
+# Gauss–Hermite product rule (b = √2 L z), the same scheme as the count GLMMs;
+# precision φ = 1/σ² is a fixed effect. θ = [β_μ; β_σ; a, b, cc]. O(G·K²).
+function _fit_beta_corr_ranef(fam::Beta, y, Xμ, Xσ, xs, gidx, G, nmμ, nmσ, grp, g_tol)
+    n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    members = [Int[] for _ in 1:G]
+    for i in 1:n
+        push!(members[gidx[i]], i)
+    end
+    z1, w1 = _gauss_hermite(12); lw = log.(w1); K = length(z1); rt2 = sqrt(2.0); lπ = log(π)
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
+        l11 = exp(θ[pμ+pσ+1]); l22 = exp(θ[pμ+pσ+2]); cc = θ[pμ+pσ+3]
+        η0 = Xμ * βμ; ησ = clamp.(Xσ * βσ, -15.0, 15.0)
+        s = zero(eltype(θ))
+        for idx in members
+            isempty(idx) && continue
+            terms = Vector{eltype(θ)}(undef, K * K); t = 0
+            for j in 1:K, k in 1:K
+                t += 1
+                b0 = rt2 * l11 * z1[j]; b1 = rt2 * (cc * z1[j] + l22 * z1[k])
+                gll = lw[j] + lw[k]
+                for i in idx
+                    μ = _logistic(clamp(η0[i] + b0 + b1 * xs[i], -30.0, 30.0)); φ = exp(-2 * ησ[i])
+                    gll += Distributions.logpdf(Distributions.Beta(μ * φ, (1 - μ) * φ), y[i])
+                end
+                terms[t] = gll
+            end
+            mx = maximum(terms)
+            s -= (-lπ + mx + log(sum(exp.(terms .- mx))))   # 2-D: -log π
+        end
+        return s
+    end
+    ȳ = sum(y) / n; v = sum(abs2, y .- ȳ) / max(n - 1, 1)
+    φ0 = max(ȳ * (1 - ȳ) / max(v, eps()) - 1, 0.5)
+    θ0 = zeros(pμ + pσ + 3)
+    θ0[1] = log(ȳ / (1 - ȳ)); θ0[pμ+1] = -0.5 * log(φ0)
+    θ0[pμ+pσ+1] = log(0.4); θ0[pμ+pσ+2] = log(0.4); θ0[pμ+pσ+3] = 0.0
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :recov => (pμ+pσ+1):(pμ+pσ+3)]
+    names = [:mu => nmμ, :sigma => nmσ, :recov => ["$(grp):L11", "$(grp):L22", "$(grp):L21"]]
     means = Dict(:mu => _logistic.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict{Symbol,Vector{Float64}}()
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
