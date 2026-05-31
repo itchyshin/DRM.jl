@@ -28,15 +28,24 @@ drmTMB and brms: one formula per distributional parameter. See
 
 ## What you can fit today
 
+The **entire Gaussian surface is complete** — every modelling structure drmTMB
+offers for the Gaussian family, fitted and recovery-tested:
+
 | Surface | Status |
 |---|---|
-| Univariate Gaussian **location–scale** (`μ`, `σ`), fixed effects | **Stable** — ML fit, Wald covariance |
-| Bivariate Gaussian **q=4 phylogenetic** location–scale (the engine headline) | **Verified** — 2.18× faster than drmTMB, O(p) to p=10,000 |
-| `bf()` for bivariate `ρ12`, ordinary & structured random effects, more families | **Landing slice by slice** — see [What can I fit today?](model-guides/model-map.md) |
+| Univariate Gaussian **location–scale** (`μ`, `σ`) by ML | **Stable** |
+| **Bivariate** Gaussian + residual correlation **`ρ12`** (its own formula) | **Stable** |
+| **Random effects** on the mean: `(1\|g)`, slopes `(0+x\|g)`, correlated `(1+x\|g)`, crossed/nested | **Stable** |
+| **Random effects on the scale**: `sigma ~ … + (1\|g)` (Gauss–Hermite marginal) | **Stable** |
+| **Structured effects** on the mean: `relmat` / `animal` / `phylo` / `spatial`, plus `meta_V` meta-analysis | **Stable** |
+| **Inference**: Wald + **profile-likelihood** + parametric **bootstrap** intervals | **Stable** |
+| **Post-fit**: `predict` (new data) · `simulate` · `fitted` · `residuals` | **Stable** |
+| Bivariate **q=4 phylogenetic** location–scale (the engine headline) | **Verified** — 2.18× faster than drmTMB, O(p) to p=10,000 |
+| Non-Gaussian families (Student, Gamma, beta, Poisson, NB2, …) | **Planned** — Phase 2 |
 
 The full capability map mirrors drmTMB's, with every page carrying an honest
-status tag (*Stable / First slice / Opt-in control / Planned*). We don't oversell:
-if a surface isn't fitted yet, the page says so.
+status tag. We don't oversell: see [What can I fit today?](model-guides/model-map.md)
+for the live matrix.
 
 ## Why a Julia twin?
 
@@ -63,7 +72,8 @@ shows the same model side by side in both languages.
 - Building the package? The [team & roadmap](https://github.com/itchyshin/DRM.jl/blob/main/AGENTS.md).
 
 !!! note "Pre-release (v0.1.0-DEV)"
-    The public API is stabilising as the Gaussian surface is completed; see the
+    The Gaussian surface is complete; the public API is stabilising ahead of the
+    v0.1.0 cut, with non-Gaussian families next. See the
     [roadmap](https://github.com/itchyshin/DRM.jl/blob/main/ROADMAP.md).
 
 ---
