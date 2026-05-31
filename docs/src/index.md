@@ -41,7 +41,8 @@ offers for the Gaussian family, fitted and recovery-tested:
 | **Inference**: Wald + **profile-likelihood** + parametric **bootstrap** intervals | **Stable** |
 | **Post-fit**: `predict` (new data) · `simulate` · `fitted` · `residuals` | **Stable** |
 | Bivariate **q=4 phylogenetic** location–scale (the engine headline) | **Verified** — 2.18× faster than drmTMB, O(p) to p=10,000 |
-| Non-Gaussian families (Student, Gamma, beta, Poisson, NB2, …) | **Planned** — Phase 2 |
+| **Student-t** family `Student()` — robust location–scale–shape (`μ`, `σ`, `ν`) | **Stable** |
+| Other families (Gamma, beta, Poisson, NB2, Tweedie, …) | **Planned** — Phase 2 |
 
 The full capability map mirrors drmTMB's, with every page carrying an honest
 status tag. We don't oversell: see [What can I fit today?](model-guides/model-map.md)
