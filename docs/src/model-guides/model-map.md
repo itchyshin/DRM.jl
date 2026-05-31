@@ -30,7 +30,7 @@ is the same: **one formula per distributional parameter**.
 | Correlated `(1 + x \| g)`, multiple RE terms, `σ` random effects | **Planned** | — |
 | `relmat(1 \| id)` structured effect (supplied `K`) on the mean | **Stable** | closed-form GLS; `re_sd` |
 | `animal(1 \| id)` (pedigree `A`) / `phylo(1 \| species)` (tree) on the mean | **Stable** | closed-form GLS via the `relmat` engine |
-| `spatial()` structured effect | **Planned** | needs an estimated range parameter; next |
+| `spatial(1 \| site)` structured effect (coords + estimated range) | **Stable** | exponential kernel `exp(-d/ρ)`, closed-form GLS |
 | Known sampling covariance `meta_V(v)` (meta-analysis) | **Stable** | diagonal known variances + estimated heterogeneity τ |
 | `fitted` / `residuals` post-fit accessors | **Stable** | on every fitted model |
 | `simulate` (parametric replicate) | **Stable** | residual-level draw; bootstrap building block |

@@ -24,6 +24,8 @@ function _split_ranef(rhs)
             structured = (:animal, t.args[1].args[2].sym)
         elseif t isa FunctionTerm && t.f === phylo
             structured = (:phylo, t.args[1].args[2].sym)
+        elseif t isa FunctionTerm && t.f === spatial
+            structured = (:spatial, t.args[1].args[2].sym)
         else
             push!(fixed, t)
         end
