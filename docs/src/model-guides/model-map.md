@@ -30,7 +30,8 @@ is the same: **one formula per distributional parameter**.
 | `spatial()` / `animal()` / `relmat()` structured effects | **Planned** | — |
 | Known sampling covariance `meta_V(v)` (meta-analysis) | **Stable** | diagonal known variances + estimated heterogeneity τ |
 | `fitted` / `residuals` post-fit accessors | **Stable** | on every fitted model |
-| Profile / bootstrap intervals; `predict` (new data) / `simulate` | **Planned** | — |
+| `simulate` (parametric replicate) | **Stable** | residual-level draw; bootstrap building block |
+| Profile / bootstrap intervals; `predict` (new data) | **Planned** | — |
 | Non-Gaussian families (Student, Gamma, beta, Poisson, NB2, …) | **Planned** | Phase 2 |
 
 ## Worked, fitted paths

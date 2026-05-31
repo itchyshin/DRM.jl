@@ -84,5 +84,8 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, g_tol::Real = 1e-8)
     names = [:mu1 => nm1, :mu2 => nm2, :sigma1 => nms1, :sigma2 => nms2, :rho12 => nmr]
     means = Dict(:mu1 => X1 * θ̂[rng(1)], :mu2 => X2 * θ̂[rng(2)])
     obs = Dict(:mu1 => Vector{Float64}(y1), :mu2 => Vector{Float64}(y2))
-    return DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs)
+    scales = Dict(:sigma1 => exp.(Xs1 * θ̂[rng(3)]),
+                  :sigma2 => exp.(Xs2 * θ̂[rng(4)]),
+                  :rho12 => tanh.(Xr * θ̂[rng(5)]))
+    return DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales)
 end
