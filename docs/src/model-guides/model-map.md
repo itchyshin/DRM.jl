@@ -37,6 +37,7 @@ is the same: **one formula per distributional parameter**.
 | `simulate` (parametric replicate) | **Stable** | residual-level draw; bootstrap building block |
 | Parametric **bootstrap** intervals (`bootstrap_ci`) | **Stable** (Gaussian) | simulate + refit percentiles; **Gaussian fits only** — Wald & profile intervals cover all families |
 | `predict` (new data, population level) | **Stable** | `Xβ̂` on new rows |
+| `summary(fit)` / `coeftable(fit)` — readable fit + Wald coefficient table | **Stable** | REPL summary (family · nobs · logLik) then a per-block Estimate / Std.Error / z / p table (+ CI from `coeftable`) |
 | `σ` random effects `sigma ~ … + (1 \| g)` (RE on the scale) | **Stable** | per-group Gauss–Hermite marginal (32 nodes); `re_sd(fit)` for the scale-RE SD |
 | Random intercept `(1 \| g)` on a **non-Gaussian** mean — Poisson · NB2 · Beta · Gamma · Student-t · LogNormal · Beta-binomial GLMMs | **Stable** | per-group Gauss–Hermite marginal; `re_sd(fit)` for the group SD |
 | Correlated random slope `(1 + x \| g)` on a **non-Gaussian** mean — Poisson · NB2 · Beta · Gamma · Student-t · LogNormal · Beta-binomial | **Stable** | per-group 2-D Gauss–Hermite tensor grid; `vc(fit)` for the 2×2 RE cov |
@@ -45,6 +46,7 @@ is the same: **one formula per distributional parameter**.
 | **Negative-binomial** `NegBinomial2()` — overdispersed counts (NB2) | **Stable** | `bf(y ~ x, sigma ~ 1)`; `sigma` slot = dispersion θ |
 | **Beta** `Beta()` — proportions in (0,1), logit-link mean | **Stable** | `sigma` slot = precision via `φ = 1/σ²` |
 | **Beta-binomial** `BetaBinomial()` — successes / trials, `cbind(s, f) ~ …` | **Stable** | logit mean + overdispersion `φ = 1/σ²` |
+| **Binomial** `Binomial()` — successes / trials (logistic regression), `cbind(s, f) ~ …` or 0/1 | **Stable** | logit mean, no dispersion; fixed effects + `(1 \| g)` logistic GLMM |
 | **Gamma** `Gamma()` — positive continuous, log-link mean | **Stable** | `sigma` slot = CV via shape `α = 1/σ²` |
 | **LogNormal** `LogNormal()` — positive, multiplicative (log y Gaussian) | **Stable** | `μ` = mean of `log y`; `σ` = SD of `log y` |
 | **`zi`** zero-inflation modifier on counts (ZIP / ZINB) | **Stable** | `bf(y ~ x, zi ~ 1)` with `Poisson()` / `NegBinomial2()` |
