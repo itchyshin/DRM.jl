@@ -5,6 +5,7 @@
 
 using LinearAlgebra: diag
 using Distributions: Normal, quantile
+import Statistics
 import StatsAPI: stderror, confint
 
 """
@@ -32,6 +33,42 @@ function confint(fit::DrmFit; level::Real = 0.95)
             est = fit.theta[idx]
             s = se[idx]
             push!(rows, (param = p, coef = nms[j], estimate = est, lower = est - z * s, upper = est + z * s))
+        end
+    end
+    return rows
+end
+
+"""
+    bootstrap_ci(formula, family; data, B = 300, level = 0.95, rng = default_rng(), K =, A =, tree =)
+
+Parametric bootstrap confidence intervals: fit the model, then `simulate` `B`
+replicate responses, refit each, and take percentile intervals per coefficient.
+Univariate-response models (fixed / random-effect / meta / structured). Same row
+shape as [`confint`](@ref). Pass through the structured-matrix keywords (`K` /
+`A` / `tree`) exactly as to [`drm`](@ref).
+"""
+function bootstrap_ci(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
+        level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing, tree = nothing)
+    fit0 = drm(formula, family; data, K, A, tree)
+    response = formula.response
+    est = coef(fit0)
+    p = length(est)
+    draws = Matrix{Float64}(undef, B, p)
+    for b in 1:B
+        ysim = simulate(fit0; rng)
+        datab = merge(data, NamedTuple{(response,)}((ysim,)))
+        draws[b, :] = coef(drm(formula, family; data = datab, K, A, tree))
+    end
+    α = (1 - level) / 2
+    rows = NamedTuple{(:param, :coef, :estimate, :lower, :upper),
+        Tuple{Symbol,String,Float64,Float64,Float64}}[]
+    col = 1
+    for ((pp, r), (_, nms)) in zip(fit0.blocks, fit0.coefnames)
+        for (j, _) in enumerate(r)
+            v = @view draws[:, col]
+            push!(rows, (param = pp, coef = nms[j], estimate = est[col],
+                lower = Statistics.quantile(v, α), upper = Statistics.quantile(v, 1 - α)))
+            col += 1
         end
     end
     return rows
