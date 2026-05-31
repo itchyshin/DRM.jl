@@ -116,8 +116,18 @@ fit = drm(bf(y ~ x1, sigma ~ x1), Gaussian(); data = dat)
 function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8)
     rhs = Dict(f.forms)
     fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat/animal/phylo/spatial(1|g)
+    fixed_sigma, sigma_re, _, _ = _split_ranef(rhs[:sigma])    # (1|g) on the scale → GHQ marginal
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
-    _, Xσ, nmσ = _design(f.response, rhs[:sigma], data)
+    _, Xσ, nmσ = _design(f.response, fixed_sigma, data)
+    if !isempty(sigma_re)                                      # random effect on log σ
+        (isempty(re) && structured === nothing && metav === nothing) ||
+            error("a random effect on `sigma` must be the only random structure (the mean must be fixed effects)")
+        (length(sigma_re) == 1 && _re_kind(sigma_re[1][1])[1] === :intercept) ||
+            error("`sigma` random effects support a single random intercept `(1 | g)`")
+        sgrp = sigma_re[1][2]
+        gidx, G = _group_index(getproperty(data, sgrp))
+        return _withformula(_fit_sigma_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, sgrp, g_tol), f)
+    end
     if structured !== nothing
         kind, grp = structured
         gidx, G = _group_index(getproperty(data, grp))

@@ -50,6 +50,29 @@ A large positive gain says the variance structure is real signal. (Formal
 likelihood-ratio / information-criterion tooling arrives with the inference
 slice; see the [roadmap](https://github.com/itchyshin/DRM.jl/blob/main/ROADMAP.md).)
 
+## Random dispersion: a scale that varies by group
+
+When the *spread* itself varies across many groups (sites, individuals,
+studies), put a **random intercept on `σ`** rather than a fixed level per group.
+Because the random effect enters σ nonlinearly there is no closed-form marginal,
+so DRM.jl integrates each group's effect out with per-group **Gauss–Hermite
+quadrature** (drmTMB uses Laplace; for a 1-D effect these agree):
+
+```@example ls
+Random.seed!(13)
+G = 40; m = 25; ng = G * m
+grp = repeat(1:G, inner = m)
+bg = 0.5 .* randn(G)                    # group-level log-σ deviations, SD 0.5
+yr = exp.(log(0.5) .+ bg[grp]) .* randn(ng)
+datre = (; y = yr, grp)
+
+fitre = drm(bf(@formula(y ~ 1), @formula(sigma ~ 1 + (1 | grp))), Gaussian(); data = datre)
+re_sd(fitre)[:grp]      # recovered SD of the group-level dispersion (≈ 0.5)
+```
+
+`re_sd` returns the scale-RE SD; `coef(fitre, :sigma)` is the population
+(group-average) `log σ`.
+
 ## See also
 
 - [Get started](../get-started.md) — your first fit.
