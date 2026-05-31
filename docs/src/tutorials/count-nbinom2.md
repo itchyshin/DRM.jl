@@ -1,10 +1,10 @@
 # Count abundance and extra zeros
 
-!!! note "Status — Stable (Poisson + NB2)"
+!!! note "Status — Stable (Poisson + NB2 + zi)"
     Mirrors drmTMB's [Count abundance and extra zeros](https://itchyshin.github.io/drmTMB/articles/count-nbinom2.html).
-    **In DRM.jl today:** the **Poisson** family `Poisson()` and the
-    **negative-binomial** family `NegBinomial2()` (overdispersed counts). The
-    `zi` zero-inflation modifier for **extra zeros** is the next Phase-2 slice.
+    **In DRM.jl today:** the **Poisson** family `Poisson()`, the
+    **negative-binomial** family `NegBinomial2()` (overdispersed counts), and the
+    **`zi` zero-inflation modifier** (extra zeros) on either — i.e. ZIP and ZINB.
 
 Counts — abundances, visit tallies, event counts — are non-negative integers, so
 a Gaussian model is the wrong shape. The **Poisson** family models the log of the
@@ -65,6 +65,28 @@ exp(coef(fitnb, :sigma)[1])     # estimated dispersion θ (≈ 2.5 ⇒ real over
 
 A finite, smallish `θ` is the signal that the counts are overdispersed and a
 plain Poisson would understate the uncertainty.
+
+## Extra zeros: the `zi` modifier
+
+Many count datasets have **more zeros** than any single count distribution
+predicts (a site is unsuitable, a detector was off). Add a `zi ~ …` formula and
+the model becomes a mixture — with probability `π` (logit link) the count is a
+structural zero, otherwise it is drawn from the count family. Works on both
+`Poisson()` (ZIP) and `NegBinomial2()` (ZINB):
+
+```@example count
+Random.seed!(20260619)
+π = 0.40                                          # 40% structural zeros
+λzi = exp.(0.6 .+ 0.4 .* x)
+yzi = Float64.([rand() < π ? 0 : rand(Distributions.Poisson(λi)) for λi in λzi])
+datzi = (; y = yzi, x)
+
+fitzi = drm(bf(@formula(y ~ x), @formula(zi ~ 1)), Poisson(); data = datzi)
+1 / (1 + exp(-coef(fitzi, :zi)[1]))     # recovered zero-inflation probability (≈ 0.40)
+```
+
+`coef(fitzi, :mu)` is still the log-mean of the *count* process; the `:zi` block
+is the structural-zero model on the logit scale.
 
 ## See also
 

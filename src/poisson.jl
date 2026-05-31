@@ -31,7 +31,49 @@ function drm(f::DrmFormula, fam::Poisson; data, g_tol::Real = 1e-8)
     y, Xμ, nmμ = _design(f.response, rhs[:mu], data)
     all(yi -> yi ≥ 0 && isinteger(yi), y) ||
         error("Poisson() requires non-negative integer counts as the response")
+    if haskey(rhs, :zi)                                   # zero-inflated Poisson
+        _, Xzi, nmzi = _design(f.response, rhs[:zi], data)
+        return _withformula(_fit_poisson_zi(fam, y, Xμ, Xzi, nmμ, nmzi, g_tol), f)
+    end
     return _withformula(_fit_poisson(fam, y, Xμ, nmμ, g_tol), f)
+end
+
+# log-logistic helpers (stable): log π and log(1-π) for π = logistic(η).
+_log_logistic(η) = -log1p(exp(-η))
+_log1m_logistic(η) = -log1p(exp(η))
+# log(exp(a) + exp(b)), numerically stable.
+_logaddexp(a, b) = (m = max(a, b); m + log1p(exp(-abs(a - b))))
+
+# Zero-inflated Poisson: P(0) = π + (1-π)e^{-λ}, P(k>0) = (1-π)·Poisson(k; λ),
+# with π = logistic(Xziᵀβ) (logit link) and λ = exp(Xμᵀβ).
+function _fit_poisson_zi(fam::Poisson, y, Xμ, Xzi, nmμ, nmzi, g_tol)
+    n = length(y); pμ, pz = size(Xμ, 2), size(Xzi, 2)
+    lf = [_logfactorial(round(Int, yi)) for yi in y]
+    iszero_y = y .== 0
+    function nll(θ)
+        βμ = θ[1:pμ]; βz = θ[pμ+1:pμ+pz]
+        ημ = clamp.(Xμ * βμ, -30.0, 30.0); ηz = clamp.(Xzi * βz, -30.0, 30.0)
+        s = zero(eltype(θ))
+        @inbounds for i in 1:n
+            λ = exp(ημ[i]); lπ = _log_logistic(ηz[i]); l1mπ = _log1m_logistic(ηz[i])
+            if iszero_y[i]
+                s -= _logaddexp(lπ, l1mπ - λ)              # log(π + (1-π)e^{-λ})
+            else
+                s -= l1mπ + (y[i] * ημ[i] - λ - lf[i])
+            end
+        end
+        return s
+    end
+    pos = y[y.>0]
+    θ0 = zeros(pμ + pz)
+    θ0[1] = log((isempty(pos) ? sum(y) / n : sum(pos) / length(pos)) + eps())   # λ from non-zeros
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :zi => (pμ+1):(pμ+pz)]
+    names = [:mu => nmμ, :zi => nmzi]
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict{Symbol,Vector{Float64}}()
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
 
 function _fit_poisson(fam::Poisson, y, Xμ, nmμ, g_tol)
