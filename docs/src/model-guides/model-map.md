@@ -38,7 +38,8 @@ is the same: **one formula per distributional parameter**.
 | Parametric **bootstrap** intervals (`bootstrap_ci`) | **Stable** | simulate + refit percentiles |
 | `predict` (new data, population level) | **Stable** | `Xβ̂` on new rows |
 | `σ` random effects `sigma ~ … + (1 \| g)` (RE on the scale) | **Stable** | per-group Gauss–Hermite marginal (32 nodes); `re_sd(fit)` for the scale-RE SD |
-| Non-Gaussian families (Student, Gamma, beta, Poisson, NB2, …) | **Planned** | Phase 2 |
+| **Student-t** family `Student()` — robust location–scale–shape (`μ`, `σ`, `ν`) | **Stable** | `bf(y ~ x, sigma ~ 1, nu ~ 1)`; fixed effects |
+| Other families (Gamma, beta, Poisson, NB2, Tweedie, …) | **Planned** | Phase 2 — one family at a time |
 
 ## Worked, fitted paths
 
