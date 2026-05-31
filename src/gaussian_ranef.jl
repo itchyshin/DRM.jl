@@ -189,3 +189,61 @@ function vc(fit::DrmFit)
     end
     return d
 end
+
+# Multiple independent scalar random-effect components (e.g. (1|g) + (1|h)).
+# comps :: Vector of (w, gidx, Gk, label). Marginal V = D + Σ_k σ_k² Z_k Z_kᵀ.
+# Whitened Woodbury: fold σ into a scaled design Z̃ = Z·diag(σ_per_col), giving a
+# small q×q (q = Σ G_k) capacitance M = I + Z̃ᵀD⁻¹Z̃ (the logdet(G) term is
+# absorbed into logdet(M)). In exact arithmetic M is identity-plus-PSD hence PD,
+# but at extreme σ the I is lost to rounding (M's entries ≫ 1) and the raw
+# Z̃ᵀD⁻¹Z̃ is rank-deficient (crossed intercept columns), so we factor with
+# check=false and return a finite penalty on failure — the optimiser's line
+# search then retreats from those ill-scaled probes. Closed-form GLS; Z precomputed.
+function _fit_multi_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol)
+    n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    K = length(comps)
+    Gks = [c[3] for c in comps]
+    q = sum(Gks)
+    offs = cumsum([0; Gks])
+    Z = zeros(n, q)
+    colcomp = Vector{Int}(undef, q)
+    for (k, (w, gidx, Gk, _)) in enumerate(comps)
+        for c in 1:Gk
+            colcomp[offs[k]+c] = k
+        end
+        @inbounds for i in 1:n
+            Z[i, offs[k]+gidx[i]] = w[i]
+        end
+    end
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
+        ημ = Xμ * βμ
+        ησ = clamp.(Xσ * βσ, -30.0, 30.0)          # bound σ predictor: keep exp finite
+        invD = exp.(-2 .* ησ); r = y .- ημ
+        σk = [exp(clamp(θ[pμ+pσ+k], -30.0, 30.0)) for k in 1:K]
+        σcol = [σk[colcomp[c]] for c in 1:q]
+        Z̃ = Z .* σcol'                             # scale each column by its σ_k
+        ZtDir = Z̃' * (invD .* r)
+        M = Z̃' * (invD .* Z̃)
+        C = cholesky(Symmetric(M + I); check = false)  # check=false → never throws
+        issuccess(C) || return oftype(sum(θ), 1e18)    # retreat from ill-scaled probes
+        quad = sum(r .^ 2 .* invD) - dot(ZtDir, C \ ZtDir)
+        logdetV = sum(2 .* ησ) + logdet(C)
+        return 0.5 * (logdetV + quad) + 0.5 * n * log(2π)
+    end
+    βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
+    s0 = std(res0) / sqrt(K + 1)                   # balanced variance split: resid + K REs
+    θ0 = zeros(pμ + pσ + K)
+    θ0[1:pμ] .= βμ0
+    θ0[pμ+1] = log(s0 + eps())
+    for k in 1:K
+        θ0[pμ+pσ+k] = log(s0 + eps())
+    end
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+K)]
+    names = [:mu => nmμ, :sigma => nmσ, :resd => [c[4] for c in comps]]
+    means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
+    return DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales)
+end

@@ -38,6 +38,7 @@ include("test_bootstrap.jl")
 include("test_gaussian_spatial.jl")
 include("test_predict.jl")
 include("test_correlated_re.jl")
+include("test_multi_re.jl")
 
 # NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
