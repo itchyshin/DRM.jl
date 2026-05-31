@@ -44,7 +44,7 @@ offers for the Gaussian family, fitted and recovery-tested:
 | **Student-t** family `Student()` — robust location–scale–shape (`μ`, `σ`, `ν`) | **Stable** |
 | **Poisson** + **negative-binomial** `NegBinomial2()` — counts & overdispersion | **Stable** |
 | **Beta** `Beta()` — proportions in (0,1) · **Gamma** / **LogNormal** — positive continuous | **Stable** |
-| **`zi`** zero-inflation + **`hu`** hurdle modifiers on counts | **Stable** |
+| **`zi`** zero-inflation + **`hu`** hurdle modifiers on counts · **truncated NB2** | **Stable** |
 | Other families (Tweedie, beta-binomial, zero-one-beta, …) | **Planned** — Phase 2 |
 
 The full capability map mirrors drmTMB's, with every page carrying an honest

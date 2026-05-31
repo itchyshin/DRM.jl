@@ -112,6 +112,22 @@ fith = drm(bf(@formula(y ~ x), @formula(hu ~ 1)), Poisson(); data = dath)
 `zi` and `hu` cannot both be set on one model — they are competing stories for the
 zeros.
 
+## Counts that can't be zero: truncated NB2
+
+Some counts are positive by construction — litter sizes, group sizes *given
+presence*. `TruncatedNegBinomial2()` is the NB2 conditioned on `y ≥ 1`
+(`P(k) = NB(k)/(1 − NB(0))`), with the same parameters as `NegBinomial2()`:
+
+```@example count
+Random.seed!(20260622)
+rtnb(r, p) = (while true; k = rand(Distributions.NegativeBinomial(r, p)); k > 0 && return k; end)
+μt = exp.(0.8 .+ 0.3 .* x); θt = 3.0
+yt = Float64.([rtnb(θt, θt / (θt + μi)) for μi in μt])
+
+fitt = drm(bf(@formula(y ~ x), @formula(sigma ~ 1)), TruncatedNegBinomial2(); data = (; y = yt, x))
+exp(coef(fitt, :sigma)[1])      # recovered dispersion θ
+```
+
 ## See also
 
 - [What can I fit today?](../model-guides/model-map.md) — the family/feature matrix.
