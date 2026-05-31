@@ -35,11 +35,11 @@ is the same: **one formula per distributional parameter**.
 | Known sampling covariance `meta_V(v)` (meta-analysis) | **Stable** | diagonal known variances + estimated heterogeneity τ |
 | `fitted` / `residuals` post-fit accessors | **Stable** | on every fitted model |
 | `simulate` (parametric replicate) | **Stable** | residual-level draw; bootstrap building block |
-| Parametric **bootstrap** intervals (`bootstrap_ci`) | **Stable** | simulate + refit percentiles |
+| Parametric **bootstrap** intervals (`bootstrap_ci`) | **Stable** (Gaussian) | simulate + refit percentiles; **Gaussian fits only** — Wald & profile intervals cover all families |
 | `predict` (new data, population level) | **Stable** | `Xβ̂` on new rows |
 | `σ` random effects `sigma ~ … + (1 \| g)` (RE on the scale) | **Stable** | per-group Gauss–Hermite marginal (32 nodes); `re_sd(fit)` for the scale-RE SD |
-| Random intercept `(1 \| g)` on a **non-Gaussian** mean — Poisson · NB2 · Beta · Gamma GLMMs | **Stable** | per-group Gauss–Hermite marginal; `re_sd(fit)` for the group SD |
-| Correlated random slope `(1 + x \| g)` on a **non-Gaussian** mean — Poisson · NB2 · Beta · Gamma | **Stable** | per-group 2-D Gauss–Hermite tensor grid; `vc(fit)` for the 2×2 RE cov |
+| Random intercept `(1 \| g)` on a **non-Gaussian** mean — Poisson · NB2 · Beta · Gamma · Student-t · LogNormal · Beta-binomial GLMMs | **Stable** | per-group Gauss–Hermite marginal; `re_sd(fit)` for the group SD |
+| Correlated random slope `(1 + x \| g)` on a **non-Gaussian** mean — Poisson · NB2 · Beta · Gamma · Student-t · LogNormal · Beta-binomial | **Stable** | per-group 2-D Gauss–Hermite tensor grid; `vc(fit)` for the 2×2 RE cov |
 | **Student-t** family `Student()` — robust location–scale–shape (`μ`, `σ`, `ν`) | **Stable** | `bf(y ~ x, sigma ~ 1, nu ~ 1)`; fixed effects |
 | **Poisson** family `Poisson()` — counts, log-link mean | **Stable** | `bf(y ~ x)`; fixed effects |
 | **Negative-binomial** `NegBinomial2()` — overdispersed counts (NB2) | **Stable** | `bf(y ~ x, sigma ~ 1)`; `sigma` slot = dispersion θ |
