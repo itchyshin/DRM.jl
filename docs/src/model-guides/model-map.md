@@ -40,7 +40,8 @@ is the same: **one formula per distributional parameter**.
 | `σ` random effects `sigma ~ … + (1 \| g)` (RE on the scale) | **Stable** | per-group Gauss–Hermite marginal (32 nodes); `re_sd(fit)` for the scale-RE SD |
 | **Student-t** family `Student()` — robust location–scale–shape (`μ`, `σ`, `ν`) | **Stable** | `bf(y ~ x, sigma ~ 1, nu ~ 1)`; fixed effects |
 | **Poisson** family `Poisson()` — counts, log-link mean | **Stable** | `bf(y ~ x)`; fixed effects |
-| Other families (Gamma, beta, NB2, Tweedie, …) | **Planned** | Phase 2 — one family at a time |
+| **Negative-binomial** `NegBinomial2()` — overdispersed counts (NB2) | **Stable** | `bf(y ~ x, sigma ~ 1)`; `sigma` slot = dispersion θ |
+| Other families (Gamma, beta, Tweedie, …) + `zi`/`hu` modifiers | **Planned** | Phase 2 — one family at a time |
 
 ## Worked, fitted paths
 
