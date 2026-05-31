@@ -68,6 +68,9 @@ include("test_lognormal_re.jl")
 include("test_lognormal_slope_re.jl")
 include("test_betabinomial_re.jl")
 include("test_betabinomial_slope_re.jl")
+include("test_binomial.jl")
+include("test_binomial_re.jl")
+include("test_summary.jl")
 
 # NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
