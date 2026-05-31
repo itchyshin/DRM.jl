@@ -15,3 +15,4 @@ overlap before editing. See `AGENTS.md` → *Definition of Done*.
 | 2026-05-30 | Slice 2: bivariate Gaussian ρ12 | `Pkg.test()` + docs build | ✅ 23/23 (+6 bivariate recovery incl. ρ12); fixed implicit-intercept (`y ~ x` now ⇒ `1 + x`); docs `@example` clean | Shannon |
 | 2026-05-30 | Slice 3: random intercept (1\|g) | `Pkg.test()` + docs build | ✅ 27/27 (+4 RE recovery: β, residual σ, group SD via closed-form marginal); `which-scale` `@example` clean | Shannon |
 | 2026-05-30 | Slice 6: Wald inference | `Pkg.test()` + docs build | ✅ `stderror` + `confint` (est ± z·se) on all model types; `model-workflow` `@example` clean. (Profile/bootstrap + predict/simulate deferred.) | Shannon |
+| 2026-05-30 | Slice 7a: capability map | docs build | ✅ `model-map.md` rewritten to the live Gaussian surface (Stable / Verified engine / Planned); build clean | Shannon |
