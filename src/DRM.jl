@@ -34,6 +34,7 @@ include("fit_q4_sparse_tmb.jl")
 # Gaussian location–scale front end (public bf()/drm() API).
 include("gaussian_core.jl")
 include("gaussian_bivariate.jl")
+include("gaussian_ranef.jl")
 
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
@@ -44,6 +45,6 @@ export AugProblem, make_problem,
 
 # Public API — the Gaussian distributional-regression front end.
 export @formula, bf, drm_formula, drm, Gaussian, DrmFormula, BivariateDrmFormula, DrmFit,
-       coef, vcov, loglik, nobs, fixef
+       coef, vcov, loglik, nobs, fixef, re_sd
 
 end # module DRM

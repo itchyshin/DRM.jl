@@ -1,6 +1,50 @@
 # Which scale are you modelling?
 
-!!! note "Status — Planned or reserved"
-    Mirrors drmTMB's [Which scale are you modelling?](https://itchyshin.github.io/drmTMB/articles/which-scale.html). **In DRM.jl today:** the `sigma` (residual) vs group-level SD vs known-V distinction — documented as the API lands.
+!!! note "Status — Stable (residual σ + group-level SD)"
+    Mirrors drmTMB's [Which scale are you modelling?](https://itchyshin.github.io/drmTMB/articles/which-scale.html).
+    **In DRM.jl today:** the residual scale `σ` and a group-level
+    random-intercept SD are both fitted; known sampling covariance (`meta_V`)
+    is on the roadmap.
 
-*Phase 0 stub — filled via Workflow D (`mirror-article`). See the [roadmap](https://github.com/itchyshin/DRM.jl/blob/main/ROADMAP.md).*
+"Variance" can mean different things, and DRM.jl keeps them separate:
+
+| Quantity | What it is | How you model it |
+|---|---|---|
+| **Residual `σ`** | within-unit spread of `y` around its mean | the `sigma ~ …` formula |
+| **Group-level SD** | between-group spread of random intercepts | a `(1 \| g)` term on the mean |
+| **Known sampling V** | measurement uncertainty you supply | `meta_V(V = V)` *(planned)* |
+
+## Residual σ vs group SD, side by side
+
+```@example ws
+using DRM, Random
+Random.seed!(3)
+
+G = 60; m = 25; n = G * m
+g = repeat(1:G, inner = m)
+x = randn(n)
+b = 0.8 .* randn(G)                      # between-group: SD 0.8
+y = 1.0 .+ 0.3 .* x .+ b[g] .+ 0.5 .* randn(n)   # within-group residual: SD 0.5
+dat = (; y, x, g)
+
+fit = drm(bf(@formula(y ~ x + (1 | g)), @formula(sigma ~ 1)), Gaussian(); data = dat)
+
+exp(coef(fit, :sigma)[1])     # residual (within-group) SD ≈ 0.5
+```
+
+```@example ws
+re_sd(fit)[:g]                # group-level (between-group) SD ≈ 0.8
+```
+
+The two are genuinely different parameters: `σ` is how much observations vary
+*within* a group; `re_sd` is how much group means vary *around* the overall
+mean. A mean random effect leaves the marginal model Gaussian, so this is fit in
+closed form (no approximation).
+
+!!! tip
+    Modelling how the *residual* spread changes with a predictor? That's
+    `sigma ~ x` — see [When variance carries signal](../tutorials/location-scale.md).
+
+## See also
+
+- [Get started](../get-started.md) · [What can I fit today?](model-map.md)
