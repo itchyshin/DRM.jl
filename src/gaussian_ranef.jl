@@ -26,6 +26,24 @@ function _split_ranef(rhs)
     return fixed_rhs, re, metav
 end
 
+# Per-observation random-effect design weight from the term's lhs:
+# `(1 | g)` → wᵢ = 1 (random intercept); `(0 + x | g)` → wᵢ = xᵢ (independent
+# random slope). Correlated `(1 + x | g)` is planned.
+function _re_weights(re_lhs, data, n)
+    if re_lhs isa ConstantTerm
+        re_lhs.n == 1 || error("random-effect intercept term must be `1`")
+        return ones(n)
+    elseif re_lhs isa FunctionTerm && re_lhs.f === (+)
+        consts = filter(t -> t isa ConstantTerm, re_lhs.args)
+        vars = filter(t -> t isa Term, re_lhs.args)
+        if any(c -> c.n == 0, consts) && length(vars) == 1
+            return Float64.(getproperty(data, vars[1].sym))
+        end
+        error("DRM.jl (current slice) supports `(1 | g)` or `(0 + x | g)`; correlated `(1 + x | g)` is planned")
+    end
+    error("unsupported random-effect term: `($re_lhs | …)`")
+end
+
 # Map group labels to 1:G (stable first-seen order), O(n).
 function _group_index(labels)
     lvl = Dict{eltype(labels),Int}()
@@ -38,7 +56,7 @@ end
 
 # Gaussian location–scale with one random intercept (1 | g) on the mean.
 # θ = [β_μ; β_σ (log σ); log σ_b].
-function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
+function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
 
@@ -54,8 +72,9 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, nmμ, nmσ, gr
             r = y[i] - ημ[i]
             a = r * invD
             k = gidx[i]
-            S[k] += invD
-            C[k] += a
+            wi = w[i]
+            S[k] += wi * wi * invD                 # (ZᵀD⁻¹Z)_kk = Σ w_i²/D_i
+            C[k] += wi * a                         # (ZᵀD⁻¹r)_k  = Σ w_i r_i/D_i
             q1 += r * a                            # rᵀD⁻¹r
             logdetD += 2 * ησ[i]                   # log D_i
         end

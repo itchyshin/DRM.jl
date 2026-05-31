@@ -19,3 +19,4 @@ overlap before editing. See `AGENTS.md` → *Definition of Done*.
 | 2026-05-30 | Slice (post-fit): fitted + residuals | `Pkg.test()` + docs build | ✅ all green; `fitted`/`residuals` on univariate/bivariate/RE (stored means+obs on DrmFit); `model-workflow` `@example` clean | Shannon |
 | 2026-05-30 | Slice 5: meta_V (meta-analysis) | `Pkg.test()` + docs build | ✅ all green; `meta_V(v)` known sampling variances + heterogeneity τ recovered; `meta-analysis` `@example` clean | Shannon |
 | 2026-05-30 | Slice: simulate | `Pkg.test()` + docs build | ✅ all green; `simulate(fit)` parametric replicate (univariate + bivariate); refit-recovers-coefs sanity; `model-workflow` `@example` clean | Shannon |
+| 2026-05-30 | Slice: independent random slope (0+x\|g) | `Pkg.test()` | ✅ 9 testsets; weighted diagonal-capacitance marginal; fixed slope correctly targets β₁ + realized mean RE (finite-G); variance components recovered | Shannon |

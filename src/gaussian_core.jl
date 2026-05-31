@@ -109,10 +109,11 @@ function drm(f::DrmFormula, fam::Gaussian; data, g_tol::Real = 1e-8)
     end
     isempty(re) && return _fit_fixed_gaussian(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     length(re) == 1 ||
-        error("DRM.jl (current slice) supports a single random-intercept term `(1 | g)`")
-    _, grp = re[1]
+        error("DRM.jl (current slice) supports a single random-effect term `(1 | g)` or `(0 + x | g)`")
+    re_lhs, grp = re[1]
+    w = _re_weights(re_lhs, data, length(y))
     gidx, G = _group_index(getproperty(data, grp))
-    return _fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
+    return _fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol)
 end
 
 # univariate Gaussian location–scale, fixed effects only (closed form, ML)
