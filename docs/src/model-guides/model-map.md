@@ -46,6 +46,7 @@ is the same: **one formula per distributional parameter**.
 | **LogNormal** `LogNormal()` — positive, multiplicative (log y Gaussian) | **Stable** | `μ` = mean of `log y`; `σ` = SD of `log y` |
 | **`zi`** zero-inflation modifier on counts (ZIP / ZINB) | **Stable** | `bf(y ~ x, zi ~ 1)` with `Poisson()` / `NegBinomial2()` |
 | **`hu`** hurdle modifier on counts (hurdle-Poisson / -NB) | **Stable** | `bf(y ~ x, hu ~ 1)`; zero-truncated positive part |
+| **Truncated NB2** `TruncatedNegBinomial2()` — positive counts (≥ 1) | **Stable** | `bf(y ~ x, sigma ~ 1)`; `P(k)=NB(k)/(1−NB(0))` |
 | Other families (Tweedie, beta-binomial, zero-one-beta, …) | **Planned** | Phase 2 — one family at a time |
 
 ## Worked, fitted paths

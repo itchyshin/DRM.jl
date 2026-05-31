@@ -144,3 +144,59 @@ function _fit_negbin2(fam::NegBinomial2, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     scales = Dict{Symbol,Vector{Float64}}()
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
+
+"""
+    TruncatedNegBinomial2()
+
+Zero-truncated negative-binomial (NB2) family for strictly-positive counts (≥ 1)
+— litter sizes, group sizes given presence. Same parameterisation as
+[`NegBinomial2`](@ref) (log-link mean `μ`, dispersion `θ` in the `sigma` slot)
+but conditioned on `y ≥ 1`: `P(k) = NB(k) / (1 − NB(0))`. Mirrors `drmTMB`'s
+`truncated_nbinom2`.
+
+```julia
+fit = drm(bf(y ~ x, sigma ~ 1), TruncatedNegBinomial2(); data = dat)
+```
+"""
+struct TruncatedNegBinomial2 end
+
+function drm(f::DrmFormula, fam::TruncatedNegBinomial2; data, g_tol::Real = 1e-8)
+    rhs = Dict(f.forms)
+    for (_, r) in f.forms
+        _, re, mv, st = _split_ranef(r)
+        (isempty(re) && mv === nothing && st === nothing) ||
+            error("TruncatedNegBinomial2() currently supports fixed effects only")
+    end
+    y, Xμ, nmμ = _design(f.response, rhs[:mu], data)
+    _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
+    all(yi -> yi ≥ 1 && isinteger(yi), y) ||
+        error("TruncatedNegBinomial2() requires positive integer counts (≥ 1) as the response")
+    return _withformula(_fit_truncated_negbin2(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol), f)
+end
+
+function _fit_truncated_negbin2(fam::TruncatedNegBinomial2, y, Xμ, Xσ, nmμ, nmσ, g_tol)
+    n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    yint = round.(Int, y)
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
+        ημ = clamp.(Xμ * βμ, -20.0, 20.0); ησ = clamp.(Xσ * βσ, -20.0, 20.0)
+        s = zero(eltype(θ))
+        @inbounds for i in 1:n
+            μ = exp(ημ[i]); r = exp(ησ[i]); p = r / (r + μ)
+            d = NegativeBinomial(r, p)
+            s -= logpdf(d, yint[i]) - _log1mexp(logpdf(d, 0))   # divide out P(0): zero-truncated
+        end
+        return s
+    end
+    m = sum(y) / n; v = sum(abs2, y .- m) / max(n - 1, 1)
+    θ0 = zeros(pμ + pσ)
+    θ0[1] = log(m + eps())
+    θ0[pμ+1] = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ)]
+    names = [:mu => nmμ, :sigma => nmσ]
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))  # untruncated NB mean μ̂
+    scales = Dict{Symbol,Vector{Float64}}()
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+end
