@@ -7,7 +7,7 @@
 # brms / drmTMB. Each formula's left-hand side names its distributional
 # parameter — `y ~ …` sets the response + μ predictor, `sigma ~ …` sets log σ.
 
-using StatsModels: @formula, FormulaTerm, Term, ConstantTerm,
+using StatsModels: @formula, FormulaTerm, Term, ConstantTerm, FunctionTerm,
     schema, apply_schema, modelcols, coefnames
 using Statistics: std
 import StatsAPI: coef, vcov, nobs, StatisticalModel
@@ -96,16 +96,24 @@ fit = drm(bf(y ~ x1, sigma ~ x1), Gaussian(); data = dat)
 """
 function drm(f::DrmFormula, fam::Gaussian; data, g_tol::Real = 1e-8)
     rhs = Dict(f.forms)
-    y, Xμ, nmμ = _design(f.response, rhs[:mu], data)
+    fixed_mu, re = _split_ranef(rhs[:mu])          # peel off (1 | g) terms
+    y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, rhs[:sigma], data)
+    isempty(re) && return _fit_fixed_gaussian(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol)
+    length(re) == 1 ||
+        error("DRM.jl (current slice) supports a single random-intercept term `(1 | g)`")
+    _, grp = re[1]
+    gidx, G = _group_index(getproperty(data, grp))
+    return _fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
+end
+
+# univariate Gaussian location–scale, fixed effects only (closed form, ML)
+function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
-
     function nll(θ)
-        βμ = θ[1:pμ]
-        βσ = θ[pμ+1:pμ+pσ]
-        ημ = Xμ * βμ
-        ησ = Xσ * βσ                       # log σ
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
+        ημ = Xμ * βμ; ησ = Xσ * βσ                 # log σ
         s = zero(eltype(θ))
         @inbounds for i in 1:n
             r = y[i] - ημ[i]
@@ -113,17 +121,13 @@ function drm(f::DrmFormula, fam::Gaussian; data, g_tol::Real = 1e-8)
         end
         return s + 0.5 * n * log(2π)
     end
-
-    # init: OLS for μ, residual sd for the σ intercept
     βμ0 = Xμ \ y
     θ0 = zeros(pμ + pσ)
     θ0[1:pμ] .= βμ0
     θ0[pμ+1] = log(std(y - Xμ * βμ0) + eps())
-
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
     V = inv(ForwardDiff.hessian(nll, θ̂))
-
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ)]
     names = [:mu => nmμ, :sigma => nmσ]
     return DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res))
@@ -146,6 +150,24 @@ nobs(fit::DrmFit) = fit.nobs
 Maximised log-likelihood of the fitted model.
 """
 loglik(fit::DrmFit) = fit.loglik
+
+"""
+    re_sd(fit) -> Dict{Symbol,Float64}
+
+Estimated random-effect (random-intercept) standard deviations, keyed by
+grouping factor.
+"""
+function re_sd(fit::DrmFit)
+    d = Dict{Symbol,Float64}()
+    for (p, r) in fit.blocks
+        p === :resd || continue
+        nms = first(cn[2] for cn in fit.coefnames if cn[1] === :resd)
+        for (j, nm) in enumerate(nms)
+            d[Symbol(nm)] = exp(fit.theta[r[j]])
+        end
+    end
+    return d
+end
 
 """
     fixef(fit) -> Vector{Pair}
