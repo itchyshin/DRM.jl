@@ -1,19 +1,21 @@
 using Documenter
+using DocumenterVitepress
 using DRM
 
 # Sidebar mirrors drmTMB's pkgdown navbar (5 dropdowns + Reference + Changelog).
-# warnonly = true while the site is a Phase 0 stub: pages reference planned
-# symbols and cross-refs that do not exist yet; we do not want those to fail the
-# build. Tighten this (drop warnonly) as pages are filled via Workflow D.
+# The site uses the DocumenterVitepress backend (a VitePress/Vue build, the
+# docs.makie.org look). Node is supplied by NodeJS_20_jll — no system install.
+# warnonly = true while some pages are stubs that reference planned symbols /
+# cross-refs that do not exist yet; tighten this as those pages are filled.
 makedocs(
     sitename = "DRM.jl",
     authors = "Shinichi Nakagawa",
     modules = [DRM],
     warnonly = true,
-    format = Documenter.HTML(
-        prettyurls = get(ENV, "CI", nothing) == "true",
-        canonical = "https://itchyshin.github.io/DRM.jl",
-        edit_link = "main",
+    format = DocumenterVitepress.MarkdownVitepress(
+        repo = "https://github.com/itchyshin/DRM.jl",
+        devbranch = "main",
+        devurl = "dev",
     ),
     pages = [
         "Home" => "index.md",
