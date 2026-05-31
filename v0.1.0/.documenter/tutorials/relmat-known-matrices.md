@@ -1,0 +1,57 @@
+
+# Known-matrix relatedness with relmat {#Known-matrix-relatedness-with-relmat}
+
+::: tip Status — Stable (Gaussian mean, supplied K)
+
+Mirrors drmTMB's [Known-matrix relatedness with relmat](https://itchyshin.github.io/drmTMB/articles/relmat-known-matrices.html). **In DRM.jl today:** `relmat(1 | id)` with a user-supplied relatedness matrix `K` on the Gaussian **mean** — a structured random intercept fit in closed form. `animal()` (pedigree) and `phylo()` (tree) reuse this engine.
+
+:::
+
+When units are _related_ by a known matrix — a pedigree, a phylogeny, a kinship matrix — the random intercept is no longer i.i.d.: `u ~ N(0, σ_s² K)` with `K` the known relatedness. For a Gaussian mean the marginal stays Gaussian, `y ~ N(Xβ, D + σ_s² Z K Zᵀ)`, so DRM.jl fits it in **closed form** (PGLS-style, no approximation). Supply `K` (ordered by the grouping's first appearance):
+
+```julia
+using DRM, Random, LinearAlgebra
+Random.seed!(1)
+
+G = 40
+A = let M = randn(G, G); M * M' / G + I end       # build a relatedness matrix
+d = sqrt.(diag(A)); K = A ./ (d * d')              # → a correlation matrix
+m = 5; n = G * m
+id = repeat(1:G, inner = m)
+x = randn(n)
+u = 0.7 .* (cholesky(Symmetric(K)).L * randn(G))   # structured effect u ~ N(0, 0.7² K)
+y = 0.3 .+ 0.5 .* x .+ u[id] .+ 0.4 .* randn(n)
+
+fit = drm(bf(@formula(y ~ x + relmat(1 | id)), @formula(sigma ~ 1)),
+          Gaussian(); data = (; y, x, id), K = K)
+
+re_sd(fit)[:id]        # structured-effect SD (≈ 0.7)
+```
+
+
+```ansi
+0.7359150303405342
+```
+
+
+```julia
+exp(coef(fit, :sigma)[1])     # residual SD (≈ 0.4)
+```
+
+
+```ansi
+0.41149564584150605
+```
+
+
+`K` must be ordered to match the levels of `id` as they first appear in the data. The same engine powers `animal(1 | id)` (with a pedigree-derived `A`) and `phylo(1 | species)` (with a tree-derived correlation).
+
+::: tip Gaussian mean vs location-scale
+
+This closed-form path is for structured effects on the **mean**. When the structured effect also acts on `log σ` (the q=4 phylogenetic location-scale model), DRM.jl uses its verified sparse-Laplace engine — see `HANDOVER.md`.
+
+:::
+
+## See also {#See-also}
+- [Which scale are you modelling?](../model-guides/which-scale.md) · [What can I fit today?](../model-guides/model-map.md)
+  
