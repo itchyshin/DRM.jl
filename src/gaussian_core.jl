@@ -11,7 +11,7 @@ using StatsModels: @formula, FormulaTerm, Term, ConstantTerm, FunctionTerm,
     schema, apply_schema, modelcols, coefnames
 using Statistics: std
 using Random: default_rng
-import StatsAPI: coef, vcov, nobs, fitted, residuals, StatisticalModel
+import StatsAPI: coef, vcov, nobs, fitted, residuals, predict, StatisticalModel
 
 """
     Gaussian()
@@ -72,7 +72,16 @@ struct DrmFit{F}
     means::Dict{Symbol,Vector{Float64}}   # fitted mean per mean-parameter
     obs::Dict{Symbol,Vector{Float64}}      # observed response per mean-parameter
     scales::Dict{Symbol,Vector{Float64}}   # residual scale(s) for simulation
+    formula::Any                           # the DrmFormula / BivariateDrmFormula (for predict)
 end
+
+# 11-arg outer constructor: formula defaults to nothing (the fitters use this;
+# drm() attaches the formula via _withformula).
+DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales) =
+    DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales, nothing)
+
+_withformula(fit::DrmFit, f) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, f)
 
 # Build a design matrix for one parameter's RHS. We reuse the (real) response as
 # a dummy LHS so the formula is always valid for `schema`/`modelcols`, then keep
@@ -110,7 +119,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             coords === nothing && error("spatial(1 | $grp) needs `coords = …`")
             cmat = Matrix{Float64}(coords)
             size(cmat, 1) == G || error("coords must have $G rows (one per `$grp` level)")
-            return _fit_spatial_gaussian(fam, y, Xμ, Xσ, gidx, G, cmat, nmμ, nmσ, grp, g_tol)
+            return _withformula(_fit_spatial_gaussian(fam, y, Xμ, Xσ, gidx, G, cmat, nmμ, nmσ, grp, g_tol), f)
         end
         Kmat = if kind === :relmat
             K === nothing && error("relmat(1 | $grp) needs `K = …`")
@@ -123,19 +132,19 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             _phylo_correlation(tree)
         end
         size(Kmat) == (G, G) || error("structured matrix must be $(G)×$(G) (the number of `$grp` levels)")
-        return _fit_structured_gaussian(fam, y, Xμ, Xσ, gidx, G, Kmat, nmμ, nmσ, grp, g_tol)
+        return _withformula(_fit_structured_gaussian(fam, y, Xμ, Xσ, gidx, G, Kmat, nmμ, nmσ, grp, g_tol), f)
     end
     if metav !== nothing
         vv = Float64.(getproperty(data, metav))    # known sampling variances
-        return _fit_meta_gaussian(fam, y, Xμ, Xσ, vv, nmμ, nmσ, g_tol)
+        return _withformula(_fit_meta_gaussian(fam, y, Xμ, Xσ, vv, nmμ, nmσ, g_tol), f)
     end
-    isempty(re) && return _fit_fixed_gaussian(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol)
+    isempty(re) && return _withformula(_fit_fixed_gaussian(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol), f)
     length(re) == 1 ||
         error("DRM.jl (current slice) supports a single random-effect term `(1 | g)` or `(0 + x | g)`")
     re_lhs, grp = re[1]
     w = _re_weights(re_lhs, data, length(y))
     gidx, G = _group_index(getproperty(data, grp))
-    return _fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol)
+    return _withformula(_fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol), f)
 end
 
 # univariate Gaussian location–scale, fixed effects only (closed form, ML)
@@ -194,6 +203,36 @@ Response residuals (observed − fitted mean), matching [`fitted`](@ref)'s shape
 function residuals(fit::DrmFit)
     haskey(fit.means, :mu) && return fit.obs[:mu] .- fit.means[:mu]
     return Dict(k => fit.obs[k] .- fit.means[k] for k in keys(fit.means))
+end
+
+"""
+    predict(fit, newdata) -> Vector or Dict
+
+Population-level mean prediction on `newdata` (a NamedTuple / column table):
+`Xβ̂` with random / structured effects integrated out. Univariate models return
+a vector; bivariate models return `Dict(:mu1 => …, :mu2 => …)`. Predictors must
+be present in `newdata` (continuous; categorical levels must match training).
+"""
+function predict(fit::DrmFit, newdata)
+    f = fit.formula
+    f === nothing && error("predict: this fit did not retain its formula")
+    nd = NamedTuple(pairs(newdata))
+    nrows = length(first(values(nd)))
+    if f isa DrmFormula
+        fixed_mu, _, _, _ = _split_ranef(Dict(f.forms)[:mu])
+        ndr = merge(nd, NamedTuple{(f.response,)}((zeros(nrows),)))
+        _, Xnew, _ = _design(f.response, fixed_mu, ndr)
+        return Xnew * coef(fit, :mu)
+    else  # BivariateDrmFormula
+        fm = Dict(f.forms)
+        fixed1, _, _, _ = _split_ranef(fm[:mu1])
+        fixed2, _, _, _ = _split_ranef(fm[:mu2])
+        nd1 = merge(nd, NamedTuple{(f.response1,)}((zeros(nrows),)))
+        nd2 = merge(nd, NamedTuple{(f.response2,)}((zeros(nrows),)))
+        _, X1, _ = _design(f.response1, fixed1, nd1)
+        _, X2, _ = _design(f.response2, fixed2, nd2)
+        return Dict(:mu1 => X1 * coef(fit, :mu1), :mu2 => X2 * coef(fit, :mu2))
+    end
 end
 
 """
