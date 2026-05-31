@@ -10,6 +10,7 @@
 using StatsModels: @formula, FormulaTerm, Term, ConstantTerm, FunctionTerm,
     schema, apply_schema, modelcols, coefnames
 using Statistics: std
+using Random: default_rng
 import StatsAPI: coef, vcov, nobs, fitted, residuals, StatisticalModel
 
 """
@@ -70,6 +71,7 @@ struct DrmFit{F}
     converged::Bool
     means::Dict{Symbol,Vector{Float64}}   # fitted mean per mean-parameter
     obs::Dict{Symbol,Vector{Float64}}      # observed response per mean-parameter
+    scales::Dict{Symbol,Vector{Float64}}   # residual scale(s) for simulation
 end
 
 # Build a design matrix for one parameter's RHS. We reuse the (real) response as
@@ -138,7 +140,8 @@ function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     names = [:mu => nmμ, :sigma => nmσ]
     means = Dict(:mu => Xμ * θ̂[1:pμ])
     obs = Dict(:mu => Vector{Float64}(y))
-    return DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs)
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
+    return DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales)
 end
 
 # ---- accessors -----------------------------------------------------------
@@ -168,6 +171,29 @@ Response residuals (observed − fitted mean), matching [`fitted`](@ref)'s shape
 function residuals(fit::DrmFit)
     haskey(fit.means, :mu) && return fit.obs[:mu] .- fit.means[:mu]
     return Dict(k => fit.obs[k] .- fit.means[k] for k in keys(fit.means))
+end
+
+"""
+    simulate(fit; rng = default_rng())
+
+Draw one parametric (residual-level) replicate from the fitted model — the
+building block of a parametric bootstrap. Univariate / random-effect / meta
+models return a response vector; bivariate models return `Dict(:mu1=>…, :mu2=>…)`.
+For random-effect models the draw is conditional on the random effects being
+zero (population level).
+"""
+function simulate(fit::DrmFit; rng = default_rng())
+    n = fit.nobs
+    if haskey(fit.scales, :sigma)                       # univariate / RE / meta
+        return fit.means[:mu] .+ fit.scales[:sigma] .* randn(rng, n)
+    elseif haskey(fit.scales, :sigma1)                  # bivariate
+        μ1, μ2 = fit.means[:mu1], fit.means[:mu2]
+        σ1, σ2, ρ = fit.scales[:sigma1], fit.scales[:sigma2], fit.scales[:rho12]
+        z1 = randn(rng, n); z2 = randn(rng, n)
+        return Dict(:mu1 => μ1 .+ σ1 .* z1,
+                    :mu2 => μ2 .+ σ2 .* (ρ .* z1 .+ sqrt.(1 .- ρ .^ 2) .* z2))
+    end
+    error("simulate: unsupported fit")
 end
 
 """

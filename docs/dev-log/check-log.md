@@ -18,3 +18,4 @@ overlap before editing. See `AGENTS.md` → *Definition of Done*.
 | 2026-05-30 | Slice 7a: capability map | docs build | ✅ `model-map.md` rewritten to the live Gaussian surface (Stable / Verified engine / Planned); build clean | Shannon |
 | 2026-05-30 | Slice (post-fit): fitted + residuals | `Pkg.test()` + docs build | ✅ all green; `fitted`/`residuals` on univariate/bivariate/RE (stored means+obs on DrmFit); `model-workflow` `@example` clean | Shannon |
 | 2026-05-30 | Slice 5: meta_V (meta-analysis) | `Pkg.test()` + docs build | ✅ all green; `meta_V(v)` known sampling variances + heterogeneity τ recovered; `meta-analysis` `@example` clean | Shannon |
+| 2026-05-30 | Slice: simulate | `Pkg.test()` + docs build | ✅ all green; `simulate(fit)` parametric replicate (univariate + bivariate); refit-recovers-coefs sanity; `model-workflow` `@example` clean | Shannon |
