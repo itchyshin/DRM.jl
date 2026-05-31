@@ -8,7 +8,7 @@
 # `relmat(1 | id)` supplies K directly; `animal()` / `phylo()` / `spatial()`
 # reuse this engine with K from a pedigree / tree / coordinates.
 
-using LinearAlgebra: cholesky, Symmetric, Diagonal, dot, logdet, inv, diag
+using LinearAlgebra: cholesky, Symmetric, Diagonal, dot, logdet, inv, diag, I
 
 """
     relmat(1 | id)
@@ -53,6 +53,17 @@ function _phylo_correlation(tree)
     return C ./ (d * d')
 end
 
+"""
+    spatial(1 | site)
+
+Coordinate-spatial structured random intercept on the Gaussian mean. Pass site
+coordinates via `drm(...; coords = coords)` (a `G×2` matrix, one row per `site`
+level in first-seen order). The spatial correlation `K(ρ) = exp(-d / ρ)` is built
+from pairwise distances and the range `ρ` is estimated jointly. Closed-form
+Gaussian marginal (K is rebuilt each evaluation since it depends on `ρ`).
+"""
+spatial(x) = x
+
 function _fit_structured_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, K, nmμ, nmσ, grp, g_tol)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
@@ -89,6 +100,55 @@ function _fit_structured_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, K, nmμ, 
 
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
+    means = Dict(:mu => Xμ * θ̂[1:pμ])
+    obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
+    return DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales)
+end
+
+# Coordinate-spatial structured intercept: K(ρ) = exp(-d/ρ) from site distances,
+# with the range ρ estimated jointly (θ gains log σ_s and log ρ). K depends on θ
+# so it is rebuilt each evaluation; otherwise the closed-form marginal is as in
+# `_fit_structured_gaussian`.
+function _fit_spatial_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, coords, nmμ, nmσ, grp, g_tol)
+    n = length(y)
+    pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    Ddist = [sqrt(sum(abs2, coords[k, :] .- coords[l, :])) for k in 1:G, l in 1:G]
+    meandist = sum(Ddist) / (G^2 - G)
+
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; lσs = θ[pμ+pσ+1]; lρ = θ[pμ+pσ+2]
+        ημ = Xμ * βμ; ησ = Xσ * βσ
+        σs² = exp(2 * lσs); ρ = exp(lρ)
+        K = exp.(-Ddist ./ ρ) + 1e-8 * I           # exponential spatial correlation (+ jitter)
+        Kfac = cholesky(Symmetric(K))
+        T = eltype(θ)
+        S = zeros(T, G); C = zeros(T, G)
+        q1 = zero(T); logdetD = zero(T)
+        @inbounds for i in 1:n
+            invD = exp(-2 * ησ[i]); r = y[i] - ημ[i]; a = r * invD; k = gidx[i]
+            S[k] += invD; C[k] += a; q1 += r * a; logdetD += 2 * ησ[i]
+        end
+        M = inv(Kfac) ./ σs² + Diagonal(S)
+        Mfac = cholesky(Symmetric(M))
+        quad = q1 - dot(C, Mfac \ C)
+        logdetV = logdetD + G * log(σs²) + logdet(Kfac) + logdet(Mfac)
+        return 0.5 * (logdetV + quad) + 0.5 * n * log(2π)
+    end
+
+    βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
+    θ0 = zeros(pμ + pσ + 2)
+    θ0[1:pμ] .= βμ0
+    θ0[pμ+1] = log(std(res0) + eps())
+    θ0[pμ+pσ+1] = log(std(res0) / 2 + eps())
+    θ0[pμ+pσ+2] = log(meandist)
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res)
+    V = inv(ForwardDiff.hessian(nll, θ̂))
+
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ),
+        :resd => (pμ+pσ+1):(pμ+pσ+1), :range => (pμ+pσ+2):(pμ+pσ+2)]
+    names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)], :range => ["range"]]
     means = Dict(:mu => Xμ * θ̂[1:pμ])
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))

@@ -98,14 +98,20 @@ the univariate `Gaussian()` location–scale model with fixed effects:
 fit = drm(bf(y ~ x1, sigma ~ x1), Gaussian(); data = dat)
 ```
 """
-function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8)
     rhs = Dict(f.forms)
-    fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat/animal/phylo(1|g)
+    fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat/animal/phylo/spatial(1|g)
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, rhs[:sigma], data)
     if structured !== nothing
         kind, grp = structured
         gidx, G = _group_index(getproperty(data, grp))
+        if kind === :spatial
+            coords === nothing && error("spatial(1 | $grp) needs `coords = …`")
+            cmat = Matrix{Float64}(coords)
+            size(cmat, 1) == G || error("coords must have $G rows (one per `$grp` level)")
+            return _fit_spatial_gaussian(fam, y, Xμ, Xσ, gidx, G, cmat, nmμ, nmσ, grp, g_tol)
+        end
         Kmat = if kind === :relmat
             K === nothing && error("relmat(1 | $grp) needs `K = …`")
             Matrix{Float64}(K)
