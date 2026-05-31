@@ -50,7 +50,7 @@ is the same: **one formula per distributional parameter**.
 | **Truncated NB2** `TruncatedNegBinomial2()` — positive counts (≥ 1) | **Stable** | `bf(y ~ x, sigma ~ 1)`; `P(k)=NB(k)/(1−NB(0))` |
 | **Zero-one-inflated beta** `ZeroOneBeta()` — proportions on `[0,1]` | **Stable** | `mu`/`sigma` + `zoi` (boundary) / `coi` (one) |
 | **Tweedie** `Tweedie()` — semicontinuous (positive + exact zeros, `1<p<2`) | **Stable** | `mu`(log) / `sigma`(√dispersion) / `nu`(power); Dunn–Smyth series |
-| `cumulative_logit` (ordinal) | **Planned** | Phase 2 |
+| **Cumulative-logit** `CumulativeLogit()` — ordinal (ordered categories) | **Stable** | `Pr(y≤k)=logistic(θ_k−η)`; K−1 cutpoints |
 
 ## Worked, fitted paths
 

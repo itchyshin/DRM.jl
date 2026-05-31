@@ -4,8 +4,8 @@
     Mirrors drmTMB's [Choosing response families](https://itchyshin.github.io/drmTMB/articles/distribution-families.html).
     **In DRM.jl today:** Gaussian, Student-t, LogNormal, Gamma, Poisson,
     negative-binomial (NB2) + truncated, beta, beta-binomial,
-    zero-one-inflated beta, and Tweedie — plus the `zi` / `hu` count modifiers.
-    Remaining: `cumulative_logit` (ordinal) — Phase 2.
+    zero-one-inflated beta, Tweedie, and cumulative-logit (ordinal) — plus the
+    `zi` / `hu` count modifiers. **This is drmTMB's complete family set.**
 
 Pick the family from the *shape* of your response, then give each of its
 parameters a formula with `bf`.
@@ -23,6 +23,7 @@ parameters a formula with `bf`.
 | Proportions in (0,1) | `Beta()` | logit | precision `φ = 1/σ²` |
 | Successes out of trials | `BetaBinomial()` | logit | overdispersion `φ = 1/σ²` (`cbind(s,f)`) |
 | Proportions on `[0,1]` incl. 0 and 1 | `ZeroOneBeta()` | logit | `φ = 1/σ²` + `zoi` / `coi` |
+| Ordered categories `1..K` | `CumulativeLogit()` | logit (cutpoints) | K−1 ordered cutpoints |
 
 Each family's `sigma` slot is its natural dispersion handle — the same
 `sigma ~ …` formula machinery, with a family-specific link/mapping.
@@ -76,6 +77,24 @@ end
 ytw = [rtw(exp(0.5 + 0.3 * xi), 2.0, 1.5) for xi in x]
 fittw = drm(bf(@formula(y ~ x), @formula(sigma ~ 1), @formula(nu ~ 1)), Tweedie(); data = (; y = ytw, x))
 (zeros = count(==(0.0), ytw), p = 1 + 1 / (1 + exp(-coef(fittw, :nu)[1])))   # power ≈ 1.5
+```
+
+For **ordered categories** (Likert-type ratings, severity classes),
+`CumulativeLogit()` models `Pr(y ≤ k) = logistic(θ_k − η)` with ordered
+cutpoints. The response is coded `1, 2, …, K`; the location intercept is dropped
+(the cutpoints absorb it):
+
+```@example fam
+θo = [-1.0, 0.0, 1.2]; Ko = 4
+yo = map(x) do xi
+    u = rand(); η = 0.8 * xi; cat = Ko
+    for j in 1:(Ko-1)
+        (u < 1 / (1 + exp(-(θo[j] - η)))) && (cat = j; break)
+    end
+    cat
+end
+fito = drm(bf(@formula(y ~ x)), CumulativeLogit(); data = (; y = Float64.(yo), x))
+coef(fito, :mu)[1]      # slope ≈ 0.8
 ```
 
 ## See also
