@@ -2,9 +2,9 @@
 
 !!! note "Status — First slice (Wald inference)"
     Mirrors drmTMB's [Checking and using fitted models](https://itchyshin.github.io/drmTMB/articles/model-workflow.html).
-    **In DRM.jl today:** coefficient extraction, Wald standard errors, and Wald
-    confidence intervals. Profile / bootstrap intervals, `predict`, `simulate`,
-    and residuals are on the roadmap.
+    **In DRM.jl today:** coefficient extraction, Wald standard errors, Wald
+    confidence intervals, fitted values, and residuals. Profile / bootstrap
+    intervals, `predict` (new data), and `simulate` are on the roadmap.
 
 Once you have a fit, pull coefficients and quantify their uncertainty.
 
@@ -36,6 +36,17 @@ exponentiate the `σ` bounds.
     A `σ` row gives an interval for a `log σ` coefficient. `exp(lower)` and
     `exp(upper)` give the interval for the multiplicative effect on the residual
     SD. See [Which scale are you modelling?](which-scale.md).
+
+## Fitted values and residuals
+
+```@example wf
+ŷ = fitted(fit)            # fitted means (Xβ̂)
+res = residuals(fit)       # observed − fitted
+(n = length(res), sum_resid = round(sum(res), digits = 6))
+```
+
+For a bivariate model, `fitted` / `residuals` return one vector per response,
+keyed `Dict(:mu1 => …, :mu2 => …)`.
 
 ## See also
 
