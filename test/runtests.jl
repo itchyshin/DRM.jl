@@ -29,6 +29,7 @@ end
 include("test_gaussian_core.jl")
 include("test_gaussian_bivariate.jl")
 include("test_gaussian_ranef.jl")
+include("test_inference.jl")
 
 # NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
