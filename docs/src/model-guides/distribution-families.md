@@ -13,8 +13,10 @@ parameters a formula with `bf`.
 | Real-valued, symmetric | `Gaussian()` | identity | residual SD `σ` (log) |
 | Real-valued, heavy tails / outliers | `Student()` | identity | scale `σ` (log) + d.o.f. `nu` |
 | Strictly positive, continuous | `Gamma()` | log | shape `α = 1/σ²` |
+| Strictly positive, right-skewed (multiplicative) | `LogNormal()` | identity on `log y` | SD of `log y`, `σ` (log) |
 | Counts (variance ≈ mean) | `Poisson()` | log | — |
 | Counts, overdispersed | `NegBinomial2()` | log | dispersion `θ` (log) |
+| Counts with extra zeros | + `zi ~ …` modifier | logit on `π` | (on `Poisson` / `NegBinomial2`) |
 | Proportions in (0,1) | `Beta()` | logit | precision `φ = 1/σ²` |
 
 Each family's `sigma` slot is its natural dispersion handle — the same
@@ -44,6 +46,16 @@ exp(coef(fit, :mu)[2])           # multiplicative effect of x on the mean
 
 ```@example fam
 exp(-2 * coef(fit, :sigma)[1])   # recovered shape α = 1/σ² (≈ 8)
+```
+
+`LogNormal()` is the other positive-continuous option — use it when the data are
+*multiplicative* (the log is symmetric). Its `μ` formula is the mean of `log y`,
+and `σ` the SD of `log y`:
+
+```@example fam
+yln = exp.(0.5 .+ 0.3 .* x .+ 0.4 .* randn(n))    # log y ~ Normal
+fitln = drm(bf(@formula(y ~ x), @formula(sigma ~ 1)), LogNormal(); data = (; y = yln, x))
+(intercept = coef(fitln, :mu)[1], sd_logy = exp(coef(fitln, :sigma)[1]))   # ≈ (0.5, 0.4)
 ```
 
 ## See also
