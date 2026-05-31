@@ -28,7 +28,7 @@ is the same: **one formula per distributional parameter**.
 | q=4 **phylogenetic** bivariate location–scale | **Verified engine** | 2.18× over drmTMB, O(p) to p=10,000 (`HANDOVER.md`); public `phylo()` front end planned |
 | Independent random **slope** `(0 + x \| g)` on the mean | **Stable** | closed-form marginal; `re_sd` |
 | Correlated random slope `(1 + x \| g)` | **Stable** | 2×2 block marginal; `vc(fit)` |
-| Multiple RE terms; `σ` random effects | **Planned** | issues #39 (multi) / #40 (Laplace) |
+| Multiple RE terms `(1 \| g) + (1 \| h)` (crossed / nested) on the mean | **Stable** | whitened-Woodbury dense capacitance; `re_sd(fit)` per grouping |
 | `relmat(1 \| id)` structured effect (supplied `K`) on the mean | **Stable** | closed-form GLS; `re_sd` |
 | `animal(1 \| id)` (pedigree `A`) / `phylo(1 \| species)` (tree) on the mean | **Stable** | closed-form GLS via the `relmat` engine |
 | `spatial(1 \| site)` structured effect (coords + estimated range) | **Stable** | exponential kernel `exp(-d/ρ)`, closed-form GLS |
@@ -55,6 +55,9 @@ drm(bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
 
 # random intercept on the mean
 drm(bf(@formula(y ~ x + (1 | g)), @formula(sigma ~ 1)), Gaussian(); data = dat)
+
+# multiple crossed random intercepts — re_sd(fit) returns one SD per grouping
+drm(bf(@formula(y ~ x + (1 | g) + (1 | h)), @formula(sigma ~ 1)), Gaussian(); data = dat)
 ```
 
 ## Where to go next

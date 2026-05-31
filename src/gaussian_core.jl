@@ -139,17 +139,27 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         return _withformula(_fit_meta_gaussian(fam, y, Xμ, Xσ, vv, nmμ, nmσ, g_tol), f)
     end
     isempty(re) && return _withformula(_fit_fixed_gaussian(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol), f)
-    length(re) == 1 ||
-        error("DRM.jl (current slice) supports a single random-effect term `(1 | g)` or `(0 + x | g)`")
-    re_lhs, grp = re[1]
-    kind, var = _re_kind(re_lhs)
-    gidx, G = _group_index(getproperty(data, grp))
-    if kind === :corr
+    re_kinds = [_re_kind(rl) for (rl, _) in re]
+    if length(re) == 1 && re_kinds[1][1] === :corr           # (1 + x | g)
+        (_, grp) = re[1]; (_, var) = re_kinds[1]
+        gidx, G = _group_index(getproperty(data, grp))
         xs = Float64.(getproperty(data, var))
         return _withformula(_fit_correlated_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, xs, nmμ, nmσ, grp, g_tol), f)
     end
-    w = kind === :intercept ? ones(length(y)) : Float64.(getproperty(data, var))
-    return _withformula(_fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol), f)
+    any(k -> k[1] === :corr, re_kinds) &&
+        error("a correlated `(1 + x | g)` block must be the only random-effect term")
+    if length(re) == 1                                        # single scalar component
+        (_, grp) = re[1]; (kind, var) = re_kinds[1]
+        gidx, G = _group_index(getproperty(data, grp))
+        w = kind === :intercept ? ones(length(y)) : Float64.(getproperty(data, var))
+        return _withformula(_fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol), f)
+    end
+    comps = map(zip(re, re_kinds)) do ((_, grp), (kind, var))  # multiple scalar components
+        w = kind === :intercept ? ones(length(y)) : Float64.(getproperty(data, var))
+        gidx, Gk = _group_index(getproperty(data, grp))
+        (w, gidx, Gk, String(grp))
+    end
+    return _withformula(_fit_multi_ranef_gaussian(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol), f)
 end
 
 # univariate Gaussian location–scale, fixed effects only (closed form, ML)
