@@ -48,7 +48,8 @@ is the same: **one formula per distributional parameter**.
 | **`zi`** zero-inflation modifier on counts (ZIP / ZINB) | **Stable** | `bf(y ~ x, zi ~ 1)` with `Poisson()` / `NegBinomial2()` |
 | **`hu`** hurdle modifier on counts (hurdle-Poisson / -NB) | **Stable** | `bf(y ~ x, hu ~ 1)`; zero-truncated positive part |
 | **Truncated NB2** `TruncatedNegBinomial2()` — positive counts (≥ 1) | **Stable** | `bf(y ~ x, sigma ~ 1)`; `P(k)=NB(k)/(1−NB(0))` |
-| Other families (Tweedie, zero-one-inflated beta, cumulative_logit) | **Planned** | Phase 2 — one family at a time |
+| **Zero-one-inflated beta** `ZeroOneBeta()` — proportions on `[0,1]` | **Stable** | `mu`/`sigma` + `zoi` (boundary) / `coi` (one) |
+| Other families (Tweedie, cumulative_logit) | **Planned** | Phase 2 — one family at a time |
 
 ## Worked, fitted paths
 

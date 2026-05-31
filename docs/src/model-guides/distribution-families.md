@@ -1,9 +1,11 @@
 # Choosing response families
 
-!!! note "Status — Stable (six families)"
+!!! note "Status — Stable"
     Mirrors drmTMB's [Choosing response families](https://itchyshin.github.io/drmTMB/articles/distribution-families.html).
-    **In DRM.jl today:** Gaussian, Student-t, Poisson, negative-binomial (NB2),
-    beta, and Gamma. More families and the `zi`/`hu` modifiers are Phase-2 work.
+    **In DRM.jl today:** Gaussian, Student-t, LogNormal, Gamma, Poisson,
+    negative-binomial (NB2) + truncated, beta, beta-binomial, and
+    zero-one-inflated beta — plus the `zi` / `hu` count modifiers. Remaining:
+    Tweedie and cumulative_logit (Phase 2).
 
 Pick the family from the *shape* of your response, then give each of its
 parameters a formula with `bf`.
@@ -19,6 +21,7 @@ parameters a formula with `bf`.
 | Counts with extra zeros | + `zi ~ …` modifier | logit on `π` | (on `Poisson` / `NegBinomial2`) |
 | Proportions in (0,1) | `Beta()` | logit | precision `φ = 1/σ²` |
 | Successes out of trials | `BetaBinomial()` | logit | overdispersion `φ = 1/σ²` (`cbind(s,f)`) |
+| Proportions on `[0,1]` incl. 0 and 1 | `ZeroOneBeta()` | logit | `φ = 1/σ²` + `zoi` / `coi` |
 
 Each family's `sigma` slot is its natural dispersion handle — the same
 `sigma ~ …` formula machinery, with a family-specific link/mapping.

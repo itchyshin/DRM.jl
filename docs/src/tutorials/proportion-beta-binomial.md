@@ -1,10 +1,11 @@
 # Proportions and success rates
 
-!!! note "Status — Stable (beta + beta-binomial)"
+!!! note "Status — Stable (beta + beta-binomial + zero-one-inflated beta)"
     Mirrors drmTMB's [Proportions and success rates](https://itchyshin.github.io/drmTMB/articles/proportion-beta-binomial.html).
     **In DRM.jl today:** the **beta** family `Beta()` for continuous proportions
-    in `(0,1)`, and the **beta-binomial** family `BetaBinomial()` for counts of
-    successes out of known trials (`cbind(successes, failures) ~ …`).
+    in `(0,1)`, the **beta-binomial** family `BetaBinomial()` for counts of
+    successes out of known trials (`cbind(successes, failures) ~ …`), and the
+    **zero-one-inflated beta** `ZeroOneBeta()` for proportions on `[0,1]`.
 
 Proportions, rates, and probabilities live on `(0,1)` — bounded at both ends, so
 a Gaussian model can predict impossible values. The **beta** family models the
@@ -71,6 +72,29 @@ exp(-2 * coef(fitbb, :sigma)[1])     # recovered precision φ (≈ 12)
 
 `coef(fitbb, :mu)` is the success probability on the logit scale; ordinary
 binomial is the no-overdispersion limit (`φ → ∞`).
+
+## Proportions that hit 0 or 1: zero-one-inflated beta
+
+A plain beta lives on the *open* `(0,1)` — it cannot represent an exact 0 or 1.
+When the data pile up at the boundaries (none-detected, all-detected),
+`ZeroOneBeta()` adds two logit parameters: `zoi` = P(the value is a boundary) and
+`coi` = P(it is 1, given a boundary). The interior is the usual `Beta(μ, φ)`:
+
+```@example beta
+Random.seed!(20260624)
+zoi = 0.25; coi = 0.4; φz = 12.0
+μz = 1 ./ (1 .+ exp.(-(0.2 .+ 0.6 .* x)))
+yz = map(μi -> rand() < zoi ? (rand() < coi ? 1.0 : 0.0) :
+                rand(Distributions.Beta(μi * φz, (1 - μi) * φz)), μz)
+datz = (; y = yz, x)
+
+fitz = drm(bf(@formula(y ~ x), @formula(sigma ~ 1), @formula(zoi ~ 1), @formula(coi ~ 1)),
+    ZeroOneBeta(); data = datz)
+(zoi = 1 / (1 + exp(-coef(fitz, :zoi)[1])),     # recovered P(boundary) ≈ 0.25
+ coi = 1 / (1 + exp(-coef(fitz, :coi)[1])))     # recovered P(1 | boundary) ≈ 0.40
+```
+
+`fitted(fitz)` returns the unconditional mean `(1 - zoi)·μ + zoi·coi`.
 
 ## See also
 
