@@ -49,7 +49,8 @@ is the same: **one formula per distributional parameter**.
 | **`hu`** hurdle modifier on counts (hurdle-Poisson / -NB) | **Stable** | `bf(y ~ x, hu ~ 1)`; zero-truncated positive part |
 | **Truncated NB2** `TruncatedNegBinomial2()` — positive counts (≥ 1) | **Stable** | `bf(y ~ x, sigma ~ 1)`; `P(k)=NB(k)/(1−NB(0))` |
 | **Zero-one-inflated beta** `ZeroOneBeta()` — proportions on `[0,1]` | **Stable** | `mu`/`sigma` + `zoi` (boundary) / `coi` (one) |
-| Other families (Tweedie, cumulative_logit) | **Planned** | Phase 2 — one family at a time |
+| **Tweedie** `Tweedie()` — semicontinuous (positive + exact zeros, `1<p<2`) | **Stable** | `mu`(log) / `sigma`(√dispersion) / `nu`(power); Dunn–Smyth series |
+| `cumulative_logit` (ordinal) | **Planned** | Phase 2 |
 
 ## Worked, fitted paths
 

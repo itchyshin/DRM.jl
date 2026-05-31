@@ -47,7 +47,8 @@ offers for the Gaussian family, fitted and recovery-tested:
 | **Gamma** / **LogNormal** — positive continuous | **Stable** |
 | **`zi`** zero-inflation + **`hu`** hurdle modifiers on counts · **truncated NB2** | **Stable** |
 | **Zero-one-inflated beta** `ZeroOneBeta()` — proportions on `[0,1]` | **Stable** |
-| Other families (Tweedie, cumulative_logit) | **Planned** — Phase 2 |
+| **Tweedie** `Tweedie()` — semicontinuous (positive + exact zeros) | **Stable** |
+| `cumulative_logit` (ordinal) | **Planned** — Phase 2 |
 
 The full capability map mirrors drmTMB's, with every page carrying an honest
 status tag. We don't oversell: see [What can I fit today?](model-guides/model-map.md)
