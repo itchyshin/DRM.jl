@@ -41,7 +41,8 @@ is the same: **one formula per distributional parameter**.
 | **Student-t** family `Student()` — robust location–scale–shape (`μ`, `σ`, `ν`) | **Stable** | `bf(y ~ x, sigma ~ 1, nu ~ 1)`; fixed effects |
 | **Poisson** family `Poisson()` — counts, log-link mean | **Stable** | `bf(y ~ x)`; fixed effects |
 | **Negative-binomial** `NegBinomial2()` — overdispersed counts (NB2) | **Stable** | `bf(y ~ x, sigma ~ 1)`; `sigma` slot = dispersion θ |
-| Other families (Gamma, beta, Tweedie, …) + `zi`/`hu` modifiers | **Planned** | Phase 2 — one family at a time |
+| **Beta** `Beta()` — proportions in (0,1), logit-link mean | **Stable** | `sigma` slot = precision via `φ = 1/σ²` |
+| Other families (Gamma, lognormal, Tweedie, …) + `zi`/`hu` modifiers | **Planned** | Phase 2 — one family at a time |
 
 ## Worked, fitted paths
 
