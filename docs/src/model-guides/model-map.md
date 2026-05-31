@@ -45,7 +45,8 @@ is the same: **one formula per distributional parameter**.
 | **Gamma** `Gamma()` — positive continuous, log-link mean | **Stable** | `sigma` slot = CV via shape `α = 1/σ²` |
 | **LogNormal** `LogNormal()` — positive, multiplicative (log y Gaussian) | **Stable** | `μ` = mean of `log y`; `σ` = SD of `log y` |
 | **`zi`** zero-inflation modifier on counts (ZIP / ZINB) | **Stable** | `bf(y ~ x, zi ~ 1)` with `Poisson()` / `NegBinomial2()` |
-| Other families (Tweedie, beta-binomial, zero-one-beta, …) + `hu` hurdle | **Planned** | Phase 2 — one family at a time |
+| **`hu`** hurdle modifier on counts (hurdle-Poisson / -NB) | **Stable** | `bf(y ~ x, hu ~ 1)`; zero-truncated positive part |
+| Other families (Tweedie, beta-binomial, zero-one-beta, …) | **Planned** | Phase 2 — one family at a time |
 
 ## Worked, fitted paths
 

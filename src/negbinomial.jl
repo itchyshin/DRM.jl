@@ -33,9 +33,15 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, g_tol::Real = 1e-8)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> yi ≥ 0 && isinteger(yi), y) ||
         error("NegBinomial2() requires non-negative integer counts as the response")
+    haskey(rhs, :zi) && haskey(rhs, :hu) &&
+        error("`zi` and `hu` cannot both be specified (zero-inflation vs hurdle)")
     if haskey(rhs, :zi)                                   # zero-inflated NB (ZINB)
         _, Xzi, nmzi = _design(f.response, rhs[:zi], data)
         return _withformula(_fit_negbin2_zi(fam, y, Xμ, Xσ, Xzi, nmμ, nmσ, nmzi, g_tol), f)
+    end
+    if haskey(rhs, :hu)                                   # hurdle NB
+        _, Xhu, nmhu = _design(f.response, rhs[:hu], data)
+        return _withformula(_fit_negbin2_hu(fam, y, Xμ, Xσ, Xhu, nmμ, nmσ, nmhu, g_tol), f)
     end
     return _withformula(_fit_negbin2(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol), f)
 end
@@ -71,6 +77,42 @@ function _fit_negbin2_zi(fam::NegBinomial2, y, Xμ, Xσ, Xzi, nmμ, nmσ, nmzi, 
     θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :zi => (pμ+pσ+1):(pμ+pσ+pz)]
     names = [:mu => nmμ, :sigma => nmσ, :zi => nmzi]
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict{Symbol,Vector{Float64}}()
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+end
+
+# Hurdle NB2: P(0) = π, P(k>0) = (1-π)·NB(k)/(1-NB(0)) [zero-truncated], with
+# π = logistic(Xhuᵀβ) the hurdle (zero) probability. Uses `_log1mexp` (poisson.jl).
+function _fit_negbin2_hu(fam::NegBinomial2, y, Xμ, Xσ, Xhu, nmμ, nmσ, nmhu, g_tol)
+    n = length(y); pμ, pσ, ph = size(Xμ, 2), size(Xσ, 2), size(Xhu, 2)
+    yint = round.(Int, y); iszero_y = y .== 0
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; βh = θ[pμ+pσ+1:pμ+pσ+ph]
+        ημ = clamp.(Xμ * βμ, -20.0, 20.0); ησ = clamp.(Xσ * βσ, -20.0, 20.0)
+        ηh = clamp.(Xhu * βh, -30.0, 30.0)
+        s = zero(eltype(θ))
+        @inbounds for i in 1:n
+            lπ = _log_logistic(ηh[i]); l1mπ = _log1m_logistic(ηh[i])
+            if iszero_y[i]
+                s -= lπ
+            else
+                μ = exp(ημ[i]); r = exp(ησ[i]); p = r / (r + μ)
+                d = NegativeBinomial(r, p)
+                s -= l1mπ + logpdf(d, yint[i]) - _log1mexp(logpdf(d, 0))
+            end
+        end
+        return s
+    end
+    pos = y[y.>0]; m = isempty(pos) ? sum(y) / n : sum(pos) / length(pos)
+    v = sum(abs2, y .- sum(y) / n) / max(n - 1, 1)
+    θ0 = zeros(pμ + pσ + ph)
+    θ0[1] = log(m + eps())
+    θ0[pμ+1] = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :hu => (pμ+pσ+1):(pμ+pσ+ph)]
+    names = [:mu => nmμ, :sigma => nmσ, :hu => nmhu]
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict{Symbol,Vector{Float64}}()
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
