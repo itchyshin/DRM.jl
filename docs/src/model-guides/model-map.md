@@ -26,7 +26,8 @@ is the same: **one formula per distributional parameter**.
 | Ordinary **random intercept** `(1 \| g)` on the mean | **Stable** | closed-form Gaussian marginal; `re_sd(fit)` for the group SD |
 | **Wald** inference (`stderror`, `confint`) | **Stable** | on every fitted model above |
 | q=4 **phylogenetic** bivariate location–scale | **Verified engine** | 2.18× over drmTMB, O(p) to p=10,000 (`HANDOVER.md`); public `phylo()` front end planned |
-| Random **slopes**; random effects on `σ` | **Planned** | — |
+| Independent random **slope** `(0 + x \| g)` on the mean | **Stable** | closed-form marginal; `re_sd` |
+| Correlated `(1 + x \| g)`, multiple RE terms, `σ` random effects | **Planned** | — |
 | `spatial()` / `animal()` / `relmat()` structured effects | **Planned** | — |
 | Known sampling covariance `meta_V(v)` (meta-analysis) | **Stable** | diagonal known variances + estimated heterogeneity τ |
 | `fitted` / `residuals` post-fit accessors | **Stable** | on every fitted model |
