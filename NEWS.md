@@ -4,13 +4,31 @@ All notable changes are recorded here. The live work ledger is
 [GitHub Issues](https://github.com/itchyshin/DRM.jl/issues); this file is the
 human-readable changelog and mirrors `docs/src/changelog.md`.
 
-## Unreleased
+## v0.1.1 (2026-05-31)
 
-- **Beta-binomial** family `BetaBinomial()` — successes out of known trials with
+**drmTMB family parity complete** — the four remaining families, each
+recovery-tested and shipped one-PR-per-family with green CI. DRM.jl now fits
+every distribution family drmTMB offers.
+
+- **Beta-binomial** `BetaBinomial()` — successes out of known trials with
   extra-binomial overdispersion. Two-column `cbind(successes, failures) ~ …`
   response (drmTMB-exact, via a `cbind` formula marker + a second-response field
   on `DrmFormula`), logit mean + `φ = 1/σ²`. (drmTMB has no standalone
   `binomial`; ordinary binomial is the `φ → ∞` limit of beta-binomial.)
+- **Zero-one-inflated beta** `ZeroOneBeta()` — proportions on the closed `[0,1]`;
+  mixture `P(0)=zoi(1-coi)`, `P(1)=zoi·coi`, `(1-zoi)·Beta(μ,φ)`. Params
+  `mu`/`sigma`/`zoi`/`coi`.
+- **Tweedie** `Tweedie()` — semicontinuous (compound Poisson–Gamma, `1<p<2`):
+  exact-zero mass + positive continuous part. Mean `μ` (log), `sigma` =
+  √dispersion, `nu` = the estimated power `p` (logit-`(1,2)`). Density via the
+  Dunn–Smyth series (adds the `SpecialFunctions` dependency).
+- **Cumulative-logit** `CumulativeLogit()` — ordinal: `Pr(y≤k)=logistic(θ_k−η)`
+  with `K-1` ordered cutpoints; intercept dropped.
+
+Full set (12 univariate + bivariate Gaussian): Gaussian, Student-t, LogNormal,
+Gamma, Tweedie, Beta, zero-one-inflated beta, beta-binomial, Poisson,
+NegBinomial2, truncated-NB2, cumulative-logit. Families are validated by
+simulation parameter recovery; the numerical drmTMB-parity gate is #17.
 
 ## v0.1.0 (2026-05-31)
 
