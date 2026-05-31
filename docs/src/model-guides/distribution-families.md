@@ -18,6 +18,7 @@ parameters a formula with `bf`.
 | Counts, overdispersed | `NegBinomial2()` | log | dispersion `θ` (log) |
 | Counts with extra zeros | + `zi ~ …` modifier | logit on `π` | (on `Poisson` / `NegBinomial2`) |
 | Proportions in (0,1) | `Beta()` | logit | precision `φ = 1/σ²` |
+| Successes out of trials | `BetaBinomial()` | logit | overdispersion `φ = 1/σ²` (`cbind(s,f)`) |
 
 Each family's `sigma` slot is its natural dispersion handle — the same
 `sigma ~ …` formula machinery, with a family-specific link/mapping.

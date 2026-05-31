@@ -43,9 +43,10 @@ offers for the Gaussian family, fitted and recovery-tested:
 | Bivariate **q=4 phylogenetic** location–scale (the engine headline) | **Verified** — 2.18× faster than drmTMB, O(p) to p=10,000 |
 | **Student-t** family `Student()` — robust location–scale–shape (`μ`, `σ`, `ν`) | **Stable** |
 | **Poisson** + **negative-binomial** `NegBinomial2()` — counts & overdispersion | **Stable** |
-| **Beta** `Beta()` — proportions in (0,1) · **Gamma** / **LogNormal** — positive continuous | **Stable** |
+| **Beta** / **beta-binomial** `BetaBinomial()` — proportions & successes-out-of-trials | **Stable** |
+| **Gamma** / **LogNormal** — positive continuous | **Stable** |
 | **`zi`** zero-inflation + **`hu`** hurdle modifiers on counts · **truncated NB2** | **Stable** |
-| Other families (Tweedie, beta-binomial, zero-one-beta, …) | **Planned** — Phase 2 |
+| Other families (Tweedie, zero-one-inflated beta, cumulative_logit) | **Planned** — Phase 2 |
 
 The full capability map mirrors drmTMB's, with every page carrying an honest
 status tag. We don't oversell: see [What can I fit today?](model-guides/model-map.md)
