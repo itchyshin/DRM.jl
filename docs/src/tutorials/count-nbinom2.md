@@ -1,10 +1,11 @@
 # Count abundance and extra zeros
 
-!!! note "Status — Stable (Poisson + NB2 + zi)"
+!!! note "Status — Stable (Poisson + NB2 + zi + hu)"
     Mirrors drmTMB's [Count abundance and extra zeros](https://itchyshin.github.io/drmTMB/articles/count-nbinom2.html).
     **In DRM.jl today:** the **Poisson** family `Poisson()`, the
-    **negative-binomial** family `NegBinomial2()` (overdispersed counts), and the
-    **`zi` zero-inflation modifier** (extra zeros) on either — i.e. ZIP and ZINB.
+    **negative-binomial** family `NegBinomial2()` (overdispersed counts), and both
+    the **`zi` zero-inflation** and **`hu` hurdle** modifiers on either count
+    family (ZIP / ZINB and hurdle-Poisson / hurdle-NB).
 
 Counts — abundances, visit tallies, event counts — are non-negative integers, so
 a Gaussian model is the wrong shape. The **Poisson** family models the log of the
@@ -87,6 +88,29 @@ fitzi = drm(bf(@formula(y ~ x), @formula(zi ~ 1)), Poisson(); data = datzi)
 
 `coef(fitzi, :mu)` is still the log-mean of the *count* process; the `:zi` block
 is the structural-zero model on the logit scale.
+
+## A different two-part story: the `hu` hurdle modifier
+
+A **hurdle** model splits the data in two: a logit "hurdle" decides zero vs
+positive (`π = P(y = 0)`), and the positive counts follow the **zero-truncated**
+count distribution. Unlike `zi`, *all* zeros come from the hurdle — use it when
+"is it present at all?" and "how many, given present?" are distinct processes. Add
+a `hu ~ …` formula (works on `Poisson()` and `NegBinomial2()`):
+
+```@example count
+Random.seed!(20260620)
+πh = 0.40                                         # 40% structural (hurdle) zeros
+λh = exp.(0.6 .+ 0.4 .* x)
+rtpois(λ) = (while true; k = rand(Distributions.Poisson(λ)); k > 0 && return k; end)
+yh = Float64.([rand() < πh ? 0 : rtpois(λi) for λi in λh])
+dath = (; y = yh, x)
+
+fith = drm(bf(@formula(y ~ x), @formula(hu ~ 1)), Poisson(); data = dath)
+1 / (1 + exp(-coef(fith, :hu)[1]))      # recovered hurdle (zero) probability (≈ 0.40)
+```
+
+`zi` and `hu` cannot both be set on one model — they are competing stories for the
+zeros.
 
 ## See also
 
