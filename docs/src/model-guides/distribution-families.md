@@ -1,6 +1,55 @@
 # Choosing response families
 
-!!! note "Status — Planned or reserved"
-    Mirrors drmTMB's [Choosing response families](https://itchyshin.github.io/drmTMB/articles/distribution-families.html). **In DRM.jl today:** Gaussian (the engine today); the other families arrive in Phase 2.
+!!! note "Status — Stable (six families)"
+    Mirrors drmTMB's [Choosing response families](https://itchyshin.github.io/drmTMB/articles/distribution-families.html).
+    **In DRM.jl today:** Gaussian, Student-t, Poisson, negative-binomial (NB2),
+    beta, and Gamma. More families and the `zi`/`hu` modifiers are Phase-2 work.
 
-*Phase 0 stub — filled via Workflow D (`mirror-article`). See the [roadmap](https://github.com/itchyshin/DRM.jl/blob/main/ROADMAP.md).*
+Pick the family from the *shape* of your response, then give each of its
+parameters a formula with `bf`.
+
+| Response looks like… | Family | Mean link | Second parameter (`sigma` slot) |
+|---|---|---|---|
+| Real-valued, symmetric | `Gaussian()` | identity | residual SD `σ` (log) |
+| Real-valued, heavy tails / outliers | `Student()` | identity | scale `σ` (log) + d.o.f. `nu` |
+| Strictly positive, continuous | `Gamma()` | log | shape `α = 1/σ²` |
+| Counts (variance ≈ mean) | `Poisson()` | log | — |
+| Counts, overdispersed | `NegBinomial2()` | log | dispersion `θ` (log) |
+| Proportions in (0,1) | `Beta()` | logit | precision `φ = 1/σ²` |
+
+Each family's `sigma` slot is its natural dispersion handle — the same
+`sigma ~ …` formula machinery, with a family-specific link/mapping.
+
+## Example: a Gamma model for positive data
+
+`Gamma()` suits durations, sizes, and concentrations — strictly positive and
+right-skewed. The mean uses a log link; the `sigma` slot is the **coefficient of
+variation**, mapped to the shape `α = 1/σ²`:
+
+```@example fam
+using DRM, Random
+import Distributions          # `Gamma` below is DRM's family; qualify the distribution
+Random.seed!(20260618)
+
+n = 3000
+x = randn(n)
+α = 8.0                                          # shape (CV = 1/√α ≈ 0.35)
+μ = exp.(0.5 .+ 0.4 .* x)                         # log-linear mean
+y = Float64.([rand(Distributions.Gamma(α, μi / α)) for μi in μ])
+dat = (; y, x)
+
+fit = drm(bf(@formula(y ~ x), @formula(sigma ~ 1)), Gamma(); data = dat)
+exp(coef(fit, :mu)[2])           # multiplicative effect of x on the mean
+```
+
+```@example fam
+exp(-2 * coef(fit, :sigma)[1])   # recovered shape α = 1/σ² (≈ 8)
+```
+
+## See also
+
+- [When variance carries signal](../tutorials/location-scale.md) — Gaussian.
+- [Robust continuous responses](../tutorials/robust-student.md) — Student-t.
+- [Count abundance and extra zeros](../tutorials/count-nbinom2.md) — Poisson / NB2.
+- [Proportions and success rates](../tutorials/proportion-beta-binomial.md) — beta.
+- [What can I fit today?](model-map.md) — the live capability matrix.
