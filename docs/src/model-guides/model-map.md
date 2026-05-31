@@ -29,7 +29,8 @@ is the same: **one formula per distributional parameter**.
 | Independent random **slope** `(0 + x \| g)` on the mean | **Stable** | closed-form marginal; `re_sd` |
 | Correlated `(1 + x \| g)`, multiple RE terms, `σ` random effects | **Planned** | — |
 | `relmat(1 \| id)` structured effect (supplied `K`) on the mean | **Stable** | closed-form GLS; `re_sd` |
-| `animal()` / `phylo()` / `spatial()` structured effects | **Planned** | reuse the `relmat` engine; next |
+| `animal(1 \| id)` (pedigree `A`) / `phylo(1 \| species)` (tree) on the mean | **Stable** | closed-form GLS via the `relmat` engine |
+| `spatial()` structured effect | **Planned** | needs an estimated range parameter; next |
 | Known sampling covariance `meta_V(v)` (meta-analysis) | **Stable** | diagonal known variances + estimated heterogeneity τ |
 | `fitted` / `residuals` post-fit accessors | **Stable** | on every fitted model |
 | `simulate` (parametric replicate) | **Stable** | residual-level draw; bootstrap building block |

@@ -20,6 +20,10 @@ function _split_ranef(rhs)
             metav = t.args[1].sym
         elseif t isa FunctionTerm && t.f === relmat
             structured = (:relmat, t.args[1].args[2].sym)   # inner (1 | grp)
+        elseif t isa FunctionTerm && t.f === animal
+            structured = (:animal, t.args[1].args[2].sym)
+        elseif t isa FunctionTerm && t.f === phylo
+            structured = (:phylo, t.args[1].args[2].sym)
         else
             push!(fixed, t)
         end

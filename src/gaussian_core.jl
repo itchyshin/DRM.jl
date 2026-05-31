@@ -98,17 +98,25 @@ the univariate `Gaussian()` location–scale model with fixed effects:
 fit = drm(bf(y ~ x1, sigma ~ x1), Gaussian(); data = dat)
 ```
 """
-function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, g_tol::Real = 1e-8)
     rhs = Dict(f.forms)
-    fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat(1|g)
+    fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat/animal/phylo(1|g)
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, rhs[:sigma], data)
     if structured !== nothing
-        _, grp = structured
+        kind, grp = structured
         gidx, G = _group_index(getproperty(data, grp))
-        K === nothing && error("relmat(1 | $grp) needs its relatedness matrix via `K = …`")
-        Kmat = Matrix{Float64}(K)
-        size(Kmat) == (G, G) || error("K must be $(G)×$(G) (the number of `$grp` levels)")
+        Kmat = if kind === :relmat
+            K === nothing && error("relmat(1 | $grp) needs `K = …`")
+            Matrix{Float64}(K)
+        elseif kind === :animal
+            A === nothing && error("animal(1 | $grp) needs the relatedness matrix `A = …`")
+            Matrix{Float64}(A)
+        else  # :phylo
+            tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
+            _phylo_correlation(tree)
+        end
+        size(Kmat) == (G, G) || error("structured matrix must be $(G)×$(G) (the number of `$grp` levels)")
         return _fit_structured_gaussian(fam, y, Xμ, Xσ, gidx, G, Kmat, nmμ, nmσ, grp, g_tol)
     end
     if metav !== nothing

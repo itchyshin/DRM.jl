@@ -8,7 +8,7 @@
 # `relmat(1 | id)` supplies K directly; `animal()` / `phylo()` / `spatial()`
 # reuse this engine with K from a pedigree / tree / coordinates.
 
-using LinearAlgebra: cholesky, Symmetric, Diagonal, dot, logdet, inv
+using LinearAlgebra: cholesky, Symmetric, Diagonal, dot, logdet, inv, diag
 
 """
     relmat(1 | id)
@@ -23,6 +23,35 @@ drm(bf(y ~ x + relmat(1 | id), sigma ~ 1), Gaussian(); data, K = K)
 they first appear in `data`. The marginal stays Gaussian (closed-form).
 """
 relmat(x) = x   # marker; intercepted during formula parsing
+
+"""
+    animal(1 | id)
+
+Animal-model structured random intercept. Supply the additive-relatedness matrix
+over the levels of `id` via `drm(...; A = A)`. Reuses the closed-form
+structured-Gaussian engine (same as [`relmat`](@ref)).
+"""
+animal(x) = x
+
+"""
+    phylo(1 | species)
+
+Phylogenetic structured random intercept on the Gaussian **mean**: pass the tree
+via `drm(...; tree = tree)` (an `AugmentedPhy` from `random_balanced_tree` /
+`augmented_phy`, or a Newick string). The phylogenetic correlation is built from
+the tree (`sigma_phy_dense`) and the marginal is fit in closed form. (The q=4
+phylogenetic *location-scale* model — a structured effect on `log σ` too — uses
+the verified sparse-Laplace engine instead; see `HANDOVER.md`.)
+"""
+phylo(x) = x
+
+# Phylogenetic correlation from a tree (AugmentedPhy or Newick string).
+function _phylo_correlation(tree)
+    phy = tree isa AbstractString ? augmented_phy(tree) : tree
+    C = sigma_phy_dense(phy; σ²_phy = 1.0)
+    d = sqrt.(diag(C))
+    return C ./ (d * d')
+end
 
 function _fit_structured_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, K, nmμ, nmσ, grp, g_tol)
     n = length(y)
