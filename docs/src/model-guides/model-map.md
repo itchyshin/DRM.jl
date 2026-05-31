@@ -37,7 +37,7 @@ is the same: **one formula per distributional parameter**.
 | `simulate` (parametric replicate) | **Stable** | residual-level draw; bootstrap building block |
 | Parametric **bootstrap** intervals (`bootstrap_ci`) | **Stable** | simulate + refit percentiles |
 | `predict` (new data, population level) | **Stable** | `Xβ̂` on new rows |
-| `σ` random effects (RE on the scale parameter) | **Planned** | issue #40 — needs the Laplace engine |
+| `σ` random effects `sigma ~ … + (1 \| g)` (RE on the scale) | **Stable** | per-group Gauss–Hermite marginal (32 nodes); `re_sd(fit)` for the scale-RE SD |
 | Non-Gaussian families (Student, Gamma, beta, Poisson, NB2, …) | **Planned** | Phase 2 |
 
 ## Worked, fitted paths
@@ -58,6 +58,9 @@ drm(bf(@formula(y ~ x + (1 | g)), @formula(sigma ~ 1)), Gaussian(); data = dat)
 
 # multiple crossed random intercepts — re_sd(fit) returns one SD per grouping
 drm(bf(@formula(y ~ x + (1 | g) + (1 | h)), @formula(sigma ~ 1)), Gaussian(); data = dat)
+
+# random effect on the SCALE — group-level dispersion (Gauss–Hermite marginal)
+drm(bf(@formula(y ~ x), @formula(sigma ~ 1 + (1 | g))), Gaussian(); data = dat)
 ```
 
 ## Where to go next

@@ -8,7 +8,8 @@
 # `relmat(1 | id)` supplies K directly; `animal()` / `phylo()` / `spatial()`
 # reuse this engine with K from a pedigree / tree / coordinates.
 
-using LinearAlgebra: cholesky, Symmetric, Diagonal, dot, logdet, inv, diag, I, issuccess
+using LinearAlgebra: cholesky, Symmetric, Diagonal, dot, logdet, inv, diag, I, issuccess,
+    eigen, SymTridiagonal
 
 """
     relmat(1 | id)

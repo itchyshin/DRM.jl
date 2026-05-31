@@ -247,3 +247,63 @@ function _fit_multi_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, comps, nmμ, nmσ
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
+
+# Gauss–Hermite nodes/weights (Golub–Welsch) for ∫ h(x) e^{-x²} dx ≈ Σ wₖ h(xₖ).
+function _gauss_hermite(K::Int)
+    β = [sqrt(k / 2) for k in 1:(K-1)]
+    E = eigen(SymTridiagonal(zeros(K), β))
+    return E.values, sqrt(π) .* (E.vectors[1, :]) .^ 2
+end
+
+# Random intercept on the SCALE: sigma ~ <fixed> + (1 | g), with
+# log σᵢ = Xσᵢᵀβσ + b_{g(i)}, b_g ~ N(0, σ_b²); the mean is fixed effects. There
+# is no closed-form marginal (b enters σ nonlinearly), so each group's random
+# effect is integrated out by K-node Gauss–Hermite quadrature: substituting
+# b = √2 σ_b z turns the prior integral into Σₖ wₖ·(group likelihood at node k).
+# Within a group every observation gets the same node shift δₖ = √2 σ_b zₖ, so a
+# group reduces to Aₘ = Σ η0ᵢ and Bₘ = Σ rᵢ² e^{-2η0ᵢ}. O(n + G·K) per eval and
+# fully differentiable (nodes are constants). drmTMB does this with Laplace; for
+# a 1-D effect AGHQ is the standard, more accurate sibling.
+function _fit_sigma_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
+    n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    members = [Int[] for _ in 1:G]
+    for i in 1:n
+        push!(members[gidx[i]], i)
+    end
+    z, w = _gauss_hermite(32)
+    logw = log.(w); K = length(z); rt2 = sqrt(2.0); lπ = log(π); l2π = log(2π)
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; σb = exp(θ[pμ+pσ+1])
+        η0 = Xσ * βσ                            # fixed-effect log σ
+        r = y .- Xμ * βμ
+        re = r .^ 2 .* exp.(-2 .* η0)           # rᵢ² e^{-2η0ᵢ}
+        T = eltype(θ)
+        s = zero(T)
+        for idx in members
+            mg = length(idx)
+            mg == 0 && continue
+            Ag = sum(@view η0[idx]); Bg = sum(@view re[idx])
+            terms = Vector{T}(undef, K)
+            for k in 1:K
+                δ = rt2 * σb * z[k]
+                terms[k] = logw[k] - mg * δ - 0.5 * exp(-2δ) * Bg
+            end
+            mx = maximum(terms)
+            llg = -0.5 * lπ - 0.5 * mg * l2π - Ag + mx + log(sum(exp.(terms .- mx)))
+            s -= llg
+        end
+        return s
+    end
+    βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
+    θ0 = zeros(pμ + pσ + 1)
+    θ0[1:pμ] .= βμ0
+    θ0[pμ+1] = log(std(res0) + eps())
+    θ0[pμ+pσ+1] = log(0.5 * std(res0) + eps())   # σ_b init
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
+    names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
+    means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))   # population (b=0) σ
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+end
