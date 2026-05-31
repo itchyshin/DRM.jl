@@ -19,3 +19,6 @@ deps/deps.jl
 
 # Local preview helper (Claude_Preview launch config) — not part of the package.
 /.claude/launch.json
+
+# Subagent worktrees (created by the Agent tool; never commit).
+/.claude/worktrees/
