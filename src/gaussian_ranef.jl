@@ -12,18 +12,21 @@ function _split_ranef(rhs)
     fixed = Any[]
     re = Tuple{Any,Symbol}[]
     metav = nothing                                   # meta_V(v) known-variance column
+    structured = nothing                              # (:relmat, grouping) — known K
     for t in terms
         if t isa FunctionTerm && t.f === (|)
             push!(re, (t.args[1], t.args[2].sym))     # (re-lhs, grouping symbol)
         elseif t isa FunctionTerm && t.f === meta_V
             metav = t.args[1].sym
+        elseif t isa FunctionTerm && t.f === relmat
+            structured = (:relmat, t.args[1].args[2].sym)   # inner (1 | grp)
         else
             push!(fixed, t)
         end
     end
     fixed_rhs = isempty(fixed) ? ConstantTerm(1) :
                 length(fixed) == 1 ? fixed[1] : Tuple(fixed)
-    return fixed_rhs, re, metav
+    return fixed_rhs, re, metav, structured
 end
 
 # Per-observation random-effect design weight from the term's lhs:
