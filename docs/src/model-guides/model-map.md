@@ -38,7 +38,7 @@ is the same: **one formula per distributional parameter**.
 | Parametric **bootstrap** intervals (`bootstrap_ci`) | **Stable** | simulate + refit percentiles |
 | `predict` (new data, population level) | **Stable** | `Xβ̂` on new rows |
 | `σ` random effects `sigma ~ … + (1 \| g)` (RE on the scale) | **Stable** | per-group Gauss–Hermite marginal (32 nodes); `re_sd(fit)` for the scale-RE SD |
-| Random intercept `(1 \| g)` on a **non-Gaussian** mean (Poisson count GLMM) | **Stable** | per-group GHQ marginal; NB2 / other families rolling out |
+| Random intercept `(1 \| g)` on a **non-Gaussian** mean (Poisson / NB2 count GLMMs) | **Stable** | per-group GHQ marginal; `re_sd(fit)`; more families rolling out |
 | **Student-t** family `Student()` — robust location–scale–shape (`μ`, `σ`, `ν`) | **Stable** | `bf(y ~ x, sigma ~ 1, nu ~ 1)`; fixed effects |
 | **Poisson** family `Poisson()` — counts, log-link mean | **Stable** | `bf(y ~ x)`; fixed effects |
 | **Negative-binomial** `NegBinomial2()` — overdispersed counts (NB2) | **Stable** | `bf(y ~ x, sigma ~ 1)`; `sigma` slot = dispersion θ |
