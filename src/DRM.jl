@@ -38,6 +38,7 @@ include("gaussian_ranef.jl")
 include("gaussian_meta.jl")
 include("gaussian_structured.jl")
 include("student.jl")
+include("poisson.jl")
 include("inference.jl")
 
 # Public API — the verified single-fit + scaling engine.
@@ -48,7 +49,7 @@ export AugProblem, make_problem,
        augmented_phy, random_balanced_tree, sigma_phy_dense, takahashi_selinv
 
 # Public API — the Gaussian distributional-regression front end.
-export @formula, bf, drm_formula, drm, Gaussian, Student, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
+export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
        coef, vcov, loglik, nobs, fixef, re_sd, vc, stderror, confint, fitted, residuals, predict, simulate, bootstrap_ci
 
 end # module DRM
