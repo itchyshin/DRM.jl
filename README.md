@@ -86,15 +86,32 @@ AGENTS.md ROADMAP.md   the 12-persona team + the phase plan
 .claude/workflows/  10 scripted workflows (W0/Q/A/B/D/F/G/H/S/R)
 ```
 
-## Status — honest
+## Status — honest (v0.1.0)
 
-- **Solid (verified):** the q=4 ML location-scale single fit (2.18× over drmTMB),
-  O(p) scaling to p=10,000, the conjugate location-only cell (EM 3.1× over LBFGS),
-  Wald + bootstrap inference.
-- **Experimental / needs review:** REML (mean-axis bias-correction verified;
-  scale-axis + exact gradient open), threaded-bootstrap timing, χ̄² boundary
-  inference, and **wiring `src/experimental/` into a clean public API** — the
-  v0.1 work. See [HANDOVER.md](HANDOVER.md).
+**Public `drm()` / `bf()` front end** — recovery-tested, drmTMB-mirroring syntax:
+
+- **Gaussian** — location–scale, bivariate `rho12`, random effects on the mean
+  (intercept / slope / correlated / crossed-nested) **and the scale**
+  (`sigma ~ (1|g)`, Gauss–Hermite), structured effects (`relmat` / `animal` /
+  `phylo` / `spatial`), `meta_V`; Wald + profile + bootstrap intervals;
+  `predict` / `simulate`.
+- **8 families** — Gaussian, Student-t, Poisson, NegBinomial2,
+  TruncatedNegBinomial2, Beta, Gamma, LogNormal — plus the `zi` / `hu` count
+  modifiers.
+- **Docs** — a DocumenterVitepress site (the docs.makie.org look) with CairoMakie
+  figures (incl. the Confidence Eye), executed examples, honest per-page tags.
+
+Families are validated by **simulation parameter recovery**; the numerical
+drmTMB-parity gate (RCall vs. drmTMB v0.1.3 outputs) is tracked in
+[#17](https://github.com/itchyshin/DRM.jl/issues/17).
+
+**Verified engine (foundation):** the q=4 ML location-scale single fit — 2.18×
+over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
+
+**Not yet wired:** `src/experimental/` (REML `reml_q4`, inference `infer_q4`,
+location-only, EM variants), the bivariate-phylo q=4 public front end, and the
+R↔Julia bridge (`engine = "julia"`). See [HANDOVER.md](HANDOVER.md) /
+[ROADMAP.md](ROADMAP.md).
 
 ## License
 

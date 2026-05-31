@@ -4,7 +4,13 @@ All notable changes are recorded here. The live work ledger is
 [GitHub Issues](https://github.com/itchyshin/DRM.jl/issues); this file is the
 human-readable changelog and mirrors `docs/src/changelog.md`.
 
-## v0.1.0-DEV (unreleased)
+## v0.1.0 (2026-05-31)
+
+First tagged release: the `drm()` / `bf()` distributional-regression front end
+with **8 response families**, the count `zi` / `hu` modifiers, the complete
+Gaussian random-effect / structured / inference surface, and a published
+DocumenterVitepress site. Formula syntax mirrors drmTMB exactly; families are
+validated by simulation parameter recovery (numerical drmTMB-parity gate: #17).
 
 ### Phase 0 — Team & workflows (2026-05-30)
 
@@ -47,8 +53,48 @@ PRs #21–#27 (green CI each):
 - Fixed R's implicit intercept (`y ~ x` ⇒ `y ~ 1 + x`). Verified `src/` engine
   unchanged.
 
-Planned next: structured effects (`phylo()` wiring the verified q=4 engine,
-then `spatial()` / `animal()` / `relmat()`), random slopes, `σ` random effects,
-`predict` (new data) / `simulate`, and profile / bootstrap intervals.
+### Gaussian surface — completed (2026-05-31)
+
+Completing the Gaussian distributional-regression surface, all recovery-tested,
+each shipped as one PR with green CI:
+
+- **Random effects on the mean** — independent slopes `(0 + x | g)`, correlated
+  intercept+slope `(1 + x | g)` (`vc`), and multiple crossed / nested terms
+  `(1 | g) + (1 | h)` (whitened-Woodbury capacitance).
+- **Random effects on the scale** — `sigma ~ … + (1 | g)`, integrated out by
+  per-group Gauss–Hermite quadrature (#40).
+- **Structured effects on the mean** — `relmat(1|id, K)`, `animal(1|id, A)`,
+  `phylo(1|species, tree)`, `spatial(1|site, coords)` — closed-form GLS.
+- **Parametric bootstrap** (`bootstrap_ci`) and **profile-likelihood** intervals
+  (`confint(fit; method = :profile)`, #38), alongside Wald.
+- **Post-fit** — `predict` (new data) and `simulate`.
+
+### Phase 2 — response families (2026-05-31)
+
+Eight families behind the same `bf()` grammar, each with its own per-parameter
+formulas and a simulation recovery test:
+
+- **Student-t** `Student()` — robust location–scale–shape (μ, σ, ν).
+- **Poisson** `Poisson()` — counts (log-link mean).
+- **NegBinomial2** `NegBinomial2()` — overdispersed counts (dispersion θ).
+- **TruncatedNegBinomial2** `TruncatedNegBinomial2()` — positive counts (≥ 1).
+- **Beta** `Beta()` — proportions in (0,1) (logit mean; precision φ = 1/σ²).
+- **Gamma** `Gamma()` — positive continuous (shape α = 1/σ²).
+- **LogNormal** `LogNormal()` — positive, multiplicative.
+- **Count modifiers** — `zi` (zero-inflation: ZIP / ZINB) and `hu` (hurdle).
+
+### Documentation — the makie-style site (2026-05-31)
+
+- Adopted the **DocumenterVitepress** backend (the docs.makie.org look); Node is
+  supplied by `NodeJS_jll`, so there is no system install and no extra CI step.
+- **CairoMakie** figure gallery rendered from live fits, including the
+  **Confidence Eye** (pale compatibility lens + outline + hollow estimate).
+- Landing page, capability matrix, family guide, and tutorials filled with
+  executed examples and honest status tags.
+
+Planned next: the R↔Julia bridge (`engine = "julia"`), binomial / beta-binomial
+(needs a trials column), the bespoke families (Tweedie / cumulative_logit /
+zero-one-inflated beta), wiring `src/experimental/`, and the RCall numerical
+drmTMB-parity gate (#17).
 
 [parity anchor: drmTMB v0.1.3 (2026-05-20)]
