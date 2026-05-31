@@ -4,6 +4,14 @@ All notable changes are recorded here. The live work ledger is
 [GitHub Issues](https://github.com/itchyshin/DRM.jl/issues); this file is the
 human-readable changelog and mirrors `docs/src/changelog.md`.
 
+## Unreleased
+
+- **Beta-binomial** family `BetaBinomial()` — successes out of known trials with
+  extra-binomial overdispersion. Two-column `cbind(successes, failures) ~ …`
+  response (drmTMB-exact, via a `cbind` formula marker + a second-response field
+  on `DrmFormula`), logit mean + `φ = 1/σ²`. (drmTMB has no standalone
+  `binomial`; ordinary binomial is the `φ → ∞` limit of beta-binomial.)
+
 ## v0.1.0 (2026-05-31)
 
 First tagged release: the `drm()` / `bf()` distributional-regression front end
@@ -92,9 +100,9 @@ formulas and a simulation recovery test:
 - Landing page, capability matrix, family guide, and tutorials filled with
   executed examples and honest status tags.
 
-Planned next: the R↔Julia bridge (`engine = "julia"`), binomial / beta-binomial
-(needs a trials column), the bespoke families (Tweedie / cumulative_logit /
-zero-one-inflated beta), wiring `src/experimental/`, and the RCall numerical
-drmTMB-parity gate (#17).
+Planned next: the R↔Julia bridge (`engine = "julia"`), beta-binomial (needs a
+trials column — drmTMB has no standalone binomial), the bespoke families
+(Tweedie / cumulative_logit / zero-one-inflated beta), wiring `src/experimental/`,
+and the RCall numerical drmTMB-parity gate (#17).
 
 [parity anchor: drmTMB v0.1.3 (2026-05-20)]

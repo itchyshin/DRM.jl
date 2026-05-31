@@ -31,7 +31,11 @@ A bundle of one linear-predictor formula per distributional parameter, built by
 struct DrmFormula
     response::Symbol
     forms::Vector{Pair{Symbol,Any}}
+    response2::Any   # second response column (failures), for `cbind(s, f)` beta-binomial; else nothing
 end
+
+# 2-arg convenience: single-column response (the common case).
+DrmFormula(response::Symbol, forms::Vector{Pair{Symbol,Any}}) = DrmFormula(response, forms, nothing)
 
 """
     bf(response_formula, dpar_formulas...)
@@ -43,13 +47,18 @@ formula `y ~ …` sets the response and the `μ` predictor; each later formula
 to `~ 1` when omitted.
 """
 function bf(mu::FormulaTerm, dpars::FormulaTerm...)
-    response = mu.lhs.sym
+    lhs = mu.lhs
+    if lhs isa FunctionTerm && lhs.f === cbind        # cbind(successes, failures) ~ …
+        response = lhs.args[1].sym; response2 = lhs.args[2].sym
+    else
+        response = lhs.sym; response2 = nothing
+    end
     forms = Pair{Symbol,Any}[:mu => mu.rhs]
     for f in dpars
         push!(forms, f.lhs.sym => f.rhs)
     end
     any(p -> first(p) === :sigma, forms) || push!(forms, :sigma => ConstantTerm(1))
-    return DrmFormula(response, forms)
+    return DrmFormula(response, forms, response2)
 end
 const drm_formula = bf
 

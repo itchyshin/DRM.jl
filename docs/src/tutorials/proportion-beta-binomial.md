@@ -1,10 +1,10 @@
 # Proportions and success rates
 
-!!! note "Status — First slice (beta)"
+!!! note "Status — Stable (beta + beta-binomial)"
     Mirrors drmTMB's [Proportions and success rates](https://itchyshin.github.io/drmTMB/articles/proportion-beta-binomial.html).
     **In DRM.jl today:** the **beta** family `Beta()` for continuous proportions
-    in `(0,1)`. The beta-binomial family for count-of-successes data is a later
-    Phase-2 slice.
+    in `(0,1)`, and the **beta-binomial** family `BetaBinomial()` for counts of
+    successes out of known trials (`cbind(successes, failures) ~ …`).
 
 Proportions, rates, and probabilities live on `(0,1)` — bounded at both ends, so
 a Gaussian model can predict impossible values. The **beta** family models the
@@ -48,6 +48,29 @@ extrema(fitted(fit))
 !!! tip "Precision, not SD"
     The `sigma` slot is a dispersion handle: `φ = 1/σ²`. A large `φ` (small `σ`)
     means observations hug the mean; a small `φ` means they spread toward 0 and 1.
+
+## Successes out of trials: the beta-binomial family
+
+When the data are **counts of successes out of a known number of trials** (not a
+continuous proportion), keep the denominator: give a two-column response
+`cbind(successes, failures)` — exactly as drmTMB — and use `BetaBinomial()`. It
+adds extra-binomial overdispersion through the same `sigma` precision
+(`φ = 1/σ²`):
+
+```@example beta
+Random.seed!(20260623)
+N = 3000; ntr = fill(25, N)
+φbb = 12.0
+μbb = 1 ./ (1 .+ exp.(-(0.2 .+ 0.7 .* x)))
+succ = [rand(Distributions.BetaBinomial(ntr[i], μbb[i] * φbb, (1 - μbb[i]) * φbb)) for i in 1:N]
+datbb = (; s = Float64.(succ), fail = Float64.(ntr .- succ), x)
+
+fitbb = drm(bf(@formula(cbind(s, fail) ~ x), @formula(sigma ~ 1)), BetaBinomial(); data = datbb)
+exp(-2 * coef(fitbb, :sigma)[1])     # recovered precision φ (≈ 12)
+```
+
+`coef(fitbb, :mu)` is the success probability on the logit scale; ordinary
+binomial is the no-overdispersion limit (`φ → ∞`).
 
 ## See also
 

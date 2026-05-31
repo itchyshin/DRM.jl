@@ -50,6 +50,7 @@ include("test_zi.jl")
 include("test_lognormal.jl")
 include("test_hurdle.jl")
 include("test_truncated_nb.jl")
+include("test_betabinomial.jl")
 
 # NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's

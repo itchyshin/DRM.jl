@@ -42,12 +42,13 @@ is the same: **one formula per distributional parameter**.
 | **Poisson** family `Poisson()` — counts, log-link mean | **Stable** | `bf(y ~ x)`; fixed effects |
 | **Negative-binomial** `NegBinomial2()` — overdispersed counts (NB2) | **Stable** | `bf(y ~ x, sigma ~ 1)`; `sigma` slot = dispersion θ |
 | **Beta** `Beta()` — proportions in (0,1), logit-link mean | **Stable** | `sigma` slot = precision via `φ = 1/σ²` |
+| **Beta-binomial** `BetaBinomial()` — successes / trials, `cbind(s, f) ~ …` | **Stable** | logit mean + overdispersion `φ = 1/σ²` |
 | **Gamma** `Gamma()` — positive continuous, log-link mean | **Stable** | `sigma` slot = CV via shape `α = 1/σ²` |
 | **LogNormal** `LogNormal()` — positive, multiplicative (log y Gaussian) | **Stable** | `μ` = mean of `log y`; `σ` = SD of `log y` |
 | **`zi`** zero-inflation modifier on counts (ZIP / ZINB) | **Stable** | `bf(y ~ x, zi ~ 1)` with `Poisson()` / `NegBinomial2()` |
 | **`hu`** hurdle modifier on counts (hurdle-Poisson / -NB) | **Stable** | `bf(y ~ x, hu ~ 1)`; zero-truncated positive part |
 | **Truncated NB2** `TruncatedNegBinomial2()` — positive counts (≥ 1) | **Stable** | `bf(y ~ x, sigma ~ 1)`; `P(k)=NB(k)/(1−NB(0))` |
-| Other families (Tweedie, beta-binomial, zero-one-beta, …) | **Planned** | Phase 2 — one family at a time |
+| Other families (Tweedie, zero-one-inflated beta, cumulative_logit) | **Planned** | Phase 2 — one family at a time |
 
 ## Worked, fitted paths
 
