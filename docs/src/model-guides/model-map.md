@@ -29,7 +29,8 @@ is the same: **one formula per distributional parameter**.
 | Random **slopes**; random effects on `σ` | **Planned** | — |
 | `spatial()` / `animal()` / `relmat()` structured effects | **Planned** | — |
 | Known sampling covariance `meta_V()` | **Planned** | — |
-| Profile / bootstrap intervals; `predict` / `simulate` / residuals | **Planned** | — |
+| `fitted` / `residuals` post-fit accessors | **Stable** | on every fitted model |
+| Profile / bootstrap intervals; `predict` (new data) / `simulate` | **Planned** | — |
 | Non-Gaussian families (Student, Gamma, beta, Poisson, NB2, …) | **Planned** | Phase 2 |
 
 ## Worked, fitted paths

@@ -10,7 +10,7 @@
 using StatsModels: @formula, FormulaTerm, Term, ConstantTerm, FunctionTerm,
     schema, apply_schema, modelcols, coefnames
 using Statistics: std
-import StatsAPI: coef, vcov, nobs, StatisticalModel
+import StatsAPI: coef, vcov, nobs, fitted, residuals, StatisticalModel
 
 """
     Gaussian()
@@ -68,6 +68,8 @@ struct DrmFit{F}
     loglik::Float64
     nobs::Int
     converged::Bool
+    means::Dict{Symbol,Vector{Float64}}   # fitted mean per mean-parameter
+    obs::Dict{Symbol,Vector{Float64}}      # observed response per mean-parameter
 end
 
 # Build a design matrix for one parameter's RHS. We reuse the (real) response as
@@ -130,7 +132,9 @@ function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     V = inv(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ)]
     names = [:mu => nmμ, :sigma => nmσ]
-    return DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res))
+    means = Dict(:mu => Xμ * θ̂[1:pμ])
+    obs = Dict(:mu => Vector{Float64}(y))
+    return DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs)
 end
 
 # ---- accessors -----------------------------------------------------------
@@ -143,6 +147,24 @@ function coef(fit::DrmFit, param::Symbol)
 end
 vcov(fit::DrmFit) = fit.vcov
 nobs(fit::DrmFit) = fit.nobs
+
+"""
+    fitted(fit)
+
+Fitted mean(s). Univariate / random-effect models return the μ vector (the
+population/marginal mean `Xβ̂`); bivariate models return `Dict(:mu1=>…, :mu2=>…)`.
+"""
+fitted(fit::DrmFit) = haskey(fit.means, :mu) ? fit.means[:mu] : fit.means
+
+"""
+    residuals(fit)
+
+Response residuals (observed − fitted mean), matching [`fitted`](@ref)'s shape.
+"""
+function residuals(fit::DrmFit)
+    haskey(fit.means, :mu) && return fit.obs[:mu] .- fit.means[:mu]
+    return Dict(k => fit.obs[k] .- fit.means[k] for k in keys(fit.means))
+end
 
 """
     loglik(fit) -> Float64
