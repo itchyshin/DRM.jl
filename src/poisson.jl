@@ -34,7 +34,15 @@ function drm(f::DrmFormula, fam::Poisson; data, g_tol::Real = 1e-8)
     if !isempty(re)                                       # random intercept (1|g) → GHQ marginal
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
             error("Poisson() random effects cannot be combined with `zi`/`hu` yet")
-        length(re) == 1 || error("Poisson() supports a single random-effect term on the mean")
+        if length(re) > 1                                 # (1|g)+(1|h)+… crossed/multiple intercepts → sparse Laplace
+            all(_re_kind(r[1])[1] === :intercept for r in re) ||
+                error("Poisson() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
+            comps = map(re) do r
+                grp = r[2]; gidx, G = _group_index(getproperty(data, grp))
+                (ones(length(y)), gidx, G, String(grp))
+            end
+            return _withformula(_fit_poisson_crossed_laplace(fam, y, Xμ, comps, nmμ, g_tol), f)
+        end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
         if rk === :intercept                              # (1 | g) → 1-D GHQ
             return _withformula(_fit_poisson_ranef(fam, y, Xμ, gidx, G, nmμ, grp, g_tol), f)
