@@ -34,7 +34,8 @@ is the same: **one formula per distributional parameter**.
 | Known sampling covariance `meta_V(v)` (meta-analysis) | **Stable** | diagonal known variances + estimated heterogeneity τ |
 | `fitted` / `residuals` post-fit accessors | **Stable** | on every fitted model |
 | `simulate` (parametric replicate) | **Stable** | residual-level draw; bootstrap building block |
-| Profile / bootstrap intervals; `predict` (new data) | **Planned** | — |
+| Parametric **bootstrap** intervals (`bootstrap_ci`) | **Stable** | simulate + refit percentiles |
+| Profile intervals; `predict` (new data) | **Planned** | — |
 | Non-Gaussian families (Student, Gamma, beta, Poisson, NB2, …) | **Planned** | Phase 2 |
 
 ## Worked, fitted paths

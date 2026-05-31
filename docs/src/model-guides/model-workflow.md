@@ -3,8 +3,9 @@
 !!! note "Status — First slice (Wald inference)"
     Mirrors drmTMB's [Checking and using fitted models](https://itchyshin.github.io/drmTMB/articles/model-workflow.html).
     **In DRM.jl today:** coefficient extraction, Wald standard errors, Wald
-    confidence intervals, fitted values, residuals, and `simulate`. Profile /
-    bootstrap intervals and `predict` (new data) are on the roadmap.
+    confidence intervals, fitted values, residuals, `simulate`, and **parametric
+    bootstrap** intervals (`bootstrap_ci`). Profile intervals and `predict`
+    (new data) are on the roadmap.
 
 Once you have a fit, pull coefficients and quantify their uncertainty.
 
@@ -57,6 +58,21 @@ bootstrap:
 y_rep = simulate(fit; rng = MersenneTwister(1))   # one replicate response vector
 length(y_rep)
 ```
+
+## Bootstrap confidence intervals
+
+`bootstrap_ci` automates the parametric bootstrap — simulate `B` replicates,
+refit each, and take percentile intervals. It takes the same arguments as `drm`
+(plus `B`), since it refits internally:
+
+```julia
+bootstrap_ci(bf(@formula(y ~ x), @formula(sigma ~ x)), Gaussian();
+             data = dat, B = 500, level = 0.95)
+```
+
+Returns the same `(param, coef, estimate, lower, upper)` rows as `confint`. Use
+Wald (`confint`) for speed; bootstrap when you want fewer distributional
+assumptions.
 
 ## See also
 
