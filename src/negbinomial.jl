@@ -37,13 +37,20 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, g_tol::Real = 1e-8)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> yi ≥ 0 && isinteger(yi), y) ||
         error("NegBinomial2() requires non-negative integer counts as the response")
-    if !isempty(re)                                       # random intercept on the mean → GHQ
+    if !isempty(re)                                       # random effect on the mean → GHQ
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
             error("NegBinomial2() random effects cannot be combined with `zi`/`hu` yet")
-        (length(re) == 1 && _re_kind(re[1][1])[1] === :intercept) ||
-            error("NegBinomial2() supports a single random intercept `(1 | g)` on the mean")
-        grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
-        return _withformula(_fit_negbin2_ranef(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), f)
+        length(re) == 1 ||
+            error("NegBinomial2() supports a single random-effect term on the mean")
+        (rk, var) = _re_kind(re[1][1]); grp = re[1][2]
+        gidx, G = _group_index(getproperty(data, grp))
+        if rk === :intercept                              # (1 | g) → 1-D GHQ
+            return _withformula(_fit_negbin2_ranef(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), f)
+        elseif rk === :corr                               # (1 + x | g) → 2-D GHQ
+            return _withformula(_fit_negbin2_corr_ranef(fam, y, Xμ, Xσ, Float64.(getproperty(data, var)), gidx, G, nmμ, nmσ, grp, g_tol), f)
+        else
+            error("NegBinomial2() supports (1|g) or (1+x|g) on the mean")
+        end
     end
     haskey(rhs, :zi) && haskey(rhs, :hu) &&
         error("`zi` and `hu` cannot both be specified (zero-inflation vs hurdle)")
@@ -99,6 +106,60 @@ function _fit_negbin2_ranef(fam::NegBinomial2, y, Xμ, Xσ, gidx, G, nmμ, nmσ,
     θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # population μ (b=0)
+    scales = Dict{Symbol,Vector{Float64}}()
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+end
+
+# NB2 count GLMM with a CORRELATED random intercept+slope (1 + x | g) on log μ:
+# per group (b0,b1) ~ N(0, Σ_re), Σ_re a 2×2 covariance (log-Cholesky a, b, c).
+# Unlike the Gaussian case there is no closed-form marginal (b enters μ through
+# exp), so the 2-D prior integral is done by tensor-product Gauss–Hermite: with
+# (b0,b1) = √2 L (z_j, z_k) the prior turns into Σ_{j,k} w_j w_k·(likelihood at
+# that node). O(G·K²·m̄) per eval, fully differentiable. Mirrors the Poisson /
+# NB2 random-intercept route extended to two dimensions; the `recov` block and
+# names follow the Gaussian correlated fit so `vc(fit)` reconstructs Σ.
+function _fit_negbin2_corr_ranef(fam::NegBinomial2, y, Xμ, Xσ, xs, gidx, G, nmμ, nmσ, grp, g_tol)
+    n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    members = [Int[] for _ in 1:G]
+    for i in 1:n
+        push!(members[gidx[i]], i)
+    end
+    yint = round.(Int, y)
+    z1, w1 = _gauss_hermite(12); lw = log.(w1); K = length(z1); rt2 = sqrt(2.0); lπ = log(π)
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
+        a = θ[pμ+pσ+1]; b = θ[pμ+pσ+2]; cc = θ[pμ+pσ+3]
+        l11 = exp(a); l22 = exp(b)                 # L = [l11 0; cc l22], Σ_re = L Lᵀ
+        η0 = Xμ * βμ; ησ = clamp.(Xσ * βσ, -20.0, 20.0)
+        s = zero(eltype(θ))
+        for idx in members
+            isempty(idx) && continue
+            terms = Vector{eltype(θ)}(undef, K * K); t = 0
+            for j in 1:K, k in 1:K
+                t += 1
+                b0 = rt2 * l11 * z1[j]; b1 = rt2 * (cc * z1[j] + l22 * z1[k])   # √2 L z
+                gll = lw[j] + lw[k]
+                for i in idx
+                    μ = exp(clamp(η0[i] + b0 + b1 * xs[i], -20.0, 20.0)); r = exp(ησ[i]); p = r / (r + μ)
+                    gll += logpdf(NegativeBinomial(r, p), yint[i])
+                end
+                terms[t] = gll
+            end
+            mx = maximum(terms)
+            s -= (-lπ + mx + log(sum(exp.(terms .- mx))))   # 2-D Gaussian factor: −log π
+        end
+        return s
+    end
+    m = sum(y) / n; v = sum(abs2, y .- m) / max(n - 1, 1)
+    θ0 = zeros(pμ + pσ + 3)
+    θ0[1] = log(m + eps())
+    θ0[pμ+1] = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))   # MoM dispersion init (as in _fit_negbin2_ranef)
+    θ0[pμ+pσ+1] = log(0.4); θ0[pμ+pσ+2] = log(0.4); θ0[pμ+pσ+3] = 0.0
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :recov => (pμ+pσ+1):(pμ+pσ+3)]
+    names = [:mu => nmμ, :sigma => nmσ, :recov => ["$(grp):L11", "$(grp):L22", "$(grp):L21"]]
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # population μ (b=0)
     scales = Dict{Symbol,Vector{Float64}}()
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
