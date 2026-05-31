@@ -1,10 +1,10 @@
 # Count abundance and extra zeros
 
-!!! note "Status — First slice (Poisson)"
+!!! note "Status — Stable (Poisson + NB2)"
     Mirrors drmTMB's [Count abundance and extra zeros](https://itchyshin.github.io/drmTMB/articles/count-nbinom2.html).
-    **In DRM.jl today:** the **Poisson** family `Poisson()` for counts (log link
-    on the mean). Negative-binomial (`nbinom2`) for overdispersion and the `zi`
-    zero-inflation modifier are the next Phase-2 slices.
+    **In DRM.jl today:** the **Poisson** family `Poisson()` and the
+    **negative-binomial** family `NegBinomial2()` (overdispersed counts). The
+    `zi` zero-inflation modifier for **extra zeros** is the next Phase-2 slice.
 
 Counts — abundances, visit tallies, event counts — are non-negative integers, so
 a Gaussian model is the wrong shape. The **Poisson** family models the log of the
@@ -42,9 +42,29 @@ extrema(fitted(fit))        # fitted means λ̂ = exp(Xβ̂)
 
 !!! tip "When Poisson is too tight"
     Poisson forces variance = mean. Real counts are often **overdispersed**
-    (variance > mean) or have **extra zeros**. The negative-binomial family
-    (`nbinom2`) and the `zi` zero-inflation modifier — both arriving next in
-    Phase 2 — relax those assumptions.
+    (variance > mean). The negative-binomial family `NegBinomial2()` relaxes that
+    — read on. (The `zi` zero-inflation modifier for **extra zeros** is a later
+    Phase-2 slice.)
+
+## Overdispersion: the negative-binomial (NB2) family
+
+`NegBinomial2()` adds a dispersion (size) parameter `θ` in the `sigma` slot. The
+variance is `μ + μ²/θ`, so smaller `θ` means heavier overdispersion and `θ → ∞`
+returns to Poisson.
+
+```@example count
+Random.seed!(20260616)
+θ = 2.5
+μnb = exp.(0.4 .+ 0.5 .* x)
+ynb = Float64.([rand(Distributions.NegativeBinomial(θ, θ / (θ + μi))) for μi in μnb])
+datnb = (; y = ynb, x)
+
+fitnb = drm(bf(@formula(y ~ x), @formula(sigma ~ 1)), NegBinomial2(); data = datnb)
+exp(coef(fitnb, :sigma)[1])     # estimated dispersion θ (≈ 2.5 ⇒ real overdispersion)
+```
+
+A finite, smallish `θ` is the signal that the counts are overdispersed and a
+plain Poisson would understate the uncertainty.
 
 ## See also
 
