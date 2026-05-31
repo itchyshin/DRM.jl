@@ -142,8 +142,13 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     length(re) == 1 ||
         error("DRM.jl (current slice) supports a single random-effect term `(1 | g)` or `(0 + x | g)`")
     re_lhs, grp = re[1]
-    w = _re_weights(re_lhs, data, length(y))
+    kind, var = _re_kind(re_lhs)
     gidx, G = _group_index(getproperty(data, grp))
+    if kind === :corr
+        xs = Float64.(getproperty(data, var))
+        return _withformula(_fit_correlated_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, xs, nmμ, nmσ, grp, g_tol), f)
+    end
+    w = kind === :intercept ? ones(length(y)) : Float64.(getproperty(data, var))
     return _withformula(_fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol), f)
 end
 

@@ -27,7 +27,8 @@ is the same: **one formula per distributional parameter**.
 | **Wald** inference (`stderror`, `confint`) | **Stable** | on every fitted model above |
 | q=4 **phylogenetic** bivariate location–scale | **Verified engine** | 2.18× over drmTMB, O(p) to p=10,000 (`HANDOVER.md`); public `phylo()` front end planned |
 | Independent random **slope** `(0 + x \| g)` on the mean | **Stable** | closed-form marginal; `re_sd` |
-| Correlated `(1 + x \| g)`, multiple RE terms, `σ` random effects | **Planned** | — |
+| Correlated random slope `(1 + x \| g)` | **Stable** | 2×2 block marginal; `vc(fit)` |
+| Multiple RE terms; `σ` random effects | **Planned** | issues #39 (multi) / #40 (Laplace) |
 | `relmat(1 \| id)` structured effect (supplied `K`) on the mean | **Stable** | closed-form GLS; `re_sd` |
 | `animal(1 \| id)` (pedigree `A`) / `phylo(1 \| species)` (tree) on the mean | **Stable** | closed-form GLS via the `relmat` engine |
 | `spatial(1 \| site)` structured effect (coords + estimated range) | **Stable** | exponential kernel `exp(-d/ρ)`, closed-form GLS |
@@ -36,7 +37,7 @@ is the same: **one formula per distributional parameter**.
 | `simulate` (parametric replicate) | **Stable** | residual-level draw; bootstrap building block |
 | Parametric **bootstrap** intervals (`bootstrap_ci`) | **Stable** | simulate + refit percentiles |
 | `predict` (new data, population level) | **Stable** | `Xβ̂` on new rows |
-| Profile intervals; correlated / `σ` random effects | **Planned** | issues #38–#40 |
+| Profile intervals (#38); `σ` random effects (#40, Laplace) | **Planned** | — |
 | Non-Gaussian families (Student, Gamma, beta, Poisson, NB2, …) | **Planned** | Phase 2 |
 
 ## Worked, fitted paths

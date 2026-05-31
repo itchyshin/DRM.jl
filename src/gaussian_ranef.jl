@@ -38,17 +38,17 @@ end
 # Per-observation random-effect design weight from the term's lhs:
 # `(1 | g)` → wᵢ = 1 (random intercept); `(0 + x | g)` → wᵢ = xᵢ (independent
 # random slope). Correlated `(1 + x | g)` is planned.
-function _re_weights(re_lhs, data, n)
+function _re_kind(re_lhs)
     if re_lhs isa ConstantTerm
         re_lhs.n == 1 || error("random-effect intercept term must be `1`")
-        return ones(n)
+        return (:intercept, nothing)
     elseif re_lhs isa FunctionTerm && re_lhs.f === (+)
         consts = filter(t -> t isa ConstantTerm, re_lhs.args)
         vars = filter(t -> t isa Term, re_lhs.args)
-        if any(c -> c.n == 0, consts) && length(vars) == 1
-            return Float64.(getproperty(data, vars[1].sym))
-        end
-        error("DRM.jl (current slice) supports `(1 | g)` or `(0 + x | g)`; correlated `(1 + x | g)` is planned")
+        length(vars) == 1 || error("DRM.jl supports `(1 | g)`, `(0 + x | g)`, `(1 + x | g)`")
+        v = vars[1].sym
+        any(c -> c.n == 0, consts) && return (:slope, v)      # 0 + x  → slope only
+        any(c -> c.n == 1, consts) && return (:corr, v)       # 1 + x  → correlated intercept+slope
     end
     error("unsupported random-effect term: `($re_lhs | …)`")
 end
@@ -115,4 +115,77 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))   # residual σ (RE excluded)
     return DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales)
+end
+
+# Correlated random intercept+slope (1 + x | g): per group (b0,b1) ~ N(0, Σ_re),
+# Σ_re a 2×2 covariance (log-Cholesky parameters a, b, c). Groups are disjoint, so
+# the Woodbury capacitance is block-diagonal in 2×2 blocks → O(G), explicit 2×2
+# inverse/solve/det (ForwardDiff-friendly). θ = [β_μ; β_σ; a, b, c].
+function _fit_correlated_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, xs, nmμ, nmσ, grp, g_tol)
+    n = length(y)
+    pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
+        a = θ[pμ+pσ+1]; b = θ[pμ+pσ+2]; cc = θ[pμ+pσ+3]
+        ημ = Xμ * βμ; ησ = Xσ * βσ
+        T = eltype(θ)
+        l11 = exp(a); l22 = exp(b)                 # L = [l11 0; cc l22], Σ_re = L Lᵀ
+        Σ11 = l11^2; Σ21 = cc * l11; Σ22 = cc^2 + l22^2
+        detΣ = Σ11 * Σ22 - Σ21^2
+        Si11 = Σ22 / detΣ; Si22 = Σ11 / detΣ; Si21 = -Σ21 / detΣ
+        logdetΣre = log(detΣ)
+        b11 = zeros(T, G); b21 = zeros(T, G); b22 = zeros(T, G)
+        c1 = zeros(T, G); c2 = zeros(T, G)
+        q1 = zero(T); logdetD = zero(T)
+        @inbounds for i in 1:n
+            invD = exp(-2 * ησ[i]); r = y[i] - ημ[i]; w = xs[i]; k = gidx[i]
+            b11[k] += invD; b21[k] += w * invD; b22[k] += w * w * invD
+            ri = r * invD; c1[k] += ri; c2[k] += w * ri
+            q1 += r * ri; logdetD += 2 * ησ[i]
+        end
+        quad = q1; logdetM = zero(T)
+        @inbounds for k in 1:G
+            m11 = Si11 + b11[k]; m21 = Si21 + b21[k]; m22 = Si22 + b22[k]
+            dM = m11 * m22 - m21^2
+            u1 = (m22 * c1[k] - m21 * c2[k]) / dM      # M_k⁻¹ c_k
+            u2 = (-m21 * c1[k] + m11 * c2[k]) / dM
+            quad -= c1[k] * u1 + c2[k] * u2
+            logdetM += log(dM)
+        end
+        logdetV = logdetD + G * logdetΣre + logdetM
+        return 0.5 * (logdetV + quad) + 0.5 * n * log(2π)
+    end
+    βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
+    θ0 = zeros(pμ + pσ + 3)
+    θ0[1:pμ] .= βμ0
+    θ0[pμ+1] = log(std(res0) + eps())
+    sd0 = log(std(res0) / 2 + eps())
+    θ0[pμ+pσ+1] = sd0; θ0[pμ+pσ+2] = sd0; θ0[pμ+pσ+3] = 0.0
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :recov => (pμ+pσ+1):(pμ+pσ+3)]
+    names = [:mu => nmμ, :sigma => nmσ, :recov => ["$(grp):L11", "$(grp):L22", "$(grp):L21"]]
+    means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
+    return DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales)
+end
+
+"""
+    vc(fit) -> Dict{Symbol,Matrix{Float64}}
+
+Random-effect covariance matrix per grouping factor, for correlated
+random-effect blocks (`(1 + x | g)`). `sqrt.(diag(vc(fit)[:g]))` are the
+intercept/slope SDs; the off-diagonal gives their covariance.
+"""
+function vc(fit::DrmFit)
+    d = Dict{Symbol,Matrix{Float64}}()
+    for (p, r) in fit.blocks
+        p === :recov || continue
+        a, b, cc = fit.theta[r]
+        l11 = exp(a); l22 = exp(b)
+        Σ = [l11^2 cc*l11; cc*l11 cc^2+l22^2]
+        nm = first(cn[2] for cn in fit.coefnames if cn[1] === :recov)[1]   # "g:L11"
+        d[Symbol(split(nm, ":")[1])] = Σ
+    end
+    return d
 end
