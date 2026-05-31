@@ -43,7 +43,8 @@ is the same: **one formula per distributional parameter**.
 | **Negative-binomial** `NegBinomial2()` — overdispersed counts (NB2) | **Stable** | `bf(y ~ x, sigma ~ 1)`; `sigma` slot = dispersion θ |
 | **Beta** `Beta()` — proportions in (0,1), logit-link mean | **Stable** | `sigma` slot = precision via `φ = 1/σ²` |
 | **Gamma** `Gamma()` — positive continuous, log-link mean | **Stable** | `sigma` slot = CV via shape `α = 1/σ²` |
-| Other families (lognormal, Tweedie, beta-binomial, …) + `zi`/`hu` modifiers | **Planned** | Phase 2 — one family at a time |
+| **`zi`** zero-inflation modifier on counts (ZIP / ZINB) | **Stable** | `bf(y ~ x, zi ~ 1)` with `Poisson()` / `NegBinomial2()` |
+| Other families (lognormal, Tweedie, beta-binomial, …) + `hu` hurdle modifier | **Planned** | Phase 2 — one family at a time |
 
 ## Worked, fitted paths
 
