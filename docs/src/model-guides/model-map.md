@@ -35,7 +35,8 @@ is the same: **one formula per distributional parameter**.
 | `fitted` / `residuals` post-fit accessors | **Stable** | on every fitted model |
 | `simulate` (parametric replicate) | **Stable** | residual-level draw; bootstrap building block |
 | Parametric **bootstrap** intervals (`bootstrap_ci`) | **Stable** | simulate + refit percentiles |
-| Profile intervals; `predict` (new data) | **Planned** | — |
+| `predict` (new data, population level) | **Stable** | `Xβ̂` on new rows |
+| Profile intervals; correlated / `σ` random effects | **Planned** | issues #38–#40 |
 | Non-Gaussian families (Student, Gamma, beta, Poisson, NB2, …) | **Planned** | Phase 2 |
 
 ## Worked, fitted paths
