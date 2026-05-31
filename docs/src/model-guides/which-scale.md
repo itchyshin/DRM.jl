@@ -1,10 +1,10 @@
 # Which scale are you modelling?
 
-!!! note "Status — Stable (residual σ + group-level SD)"
+!!! note "Status — Stable"
     Mirrors drmTMB's [Which scale are you modelling?](https://itchyshin.github.io/drmTMB/articles/which-scale.html).
-    **In DRM.jl today:** the residual scale `σ` and a group-level
-    random-intercept SD are both fitted; known sampling covariance (`meta_V`)
-    is on the roadmap.
+    **In DRM.jl today:** all of them — the residual scale `σ` (including a
+    random effect *on* `σ`), a group-level random-intercept SD, and known
+    sampling variances via `meta_V`.
 
 "Variance" can mean different things, and DRM.jl keeps them separate:
 
@@ -12,7 +12,8 @@
 |---|---|---|
 | **Residual `σ`** | within-unit spread of `y` around its mean | the `sigma ~ …` formula |
 | **Group-level SD** | between-group spread of random intercepts | a `(1 \| g)` term on the mean |
-| **Known sampling V** | measurement uncertainty you supply | `meta_V(V = V)` *(planned)* |
+| **Known sampling V** | measurement uncertainty you supply | `meta_V(v)` in the mean formula |
+| **Scale-level RE** | between-group spread of the *dispersion* | a `(1 \| g)` term on `sigma ~ …` |
 
 ## Residual σ vs group SD, side by side
 

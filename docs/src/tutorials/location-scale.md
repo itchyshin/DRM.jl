@@ -46,9 +46,10 @@ fit0 = drm(bf(@formula(y ~ 1), @formula(sigma ~ 1)), Gaussian(); data = dat)
 loglik(fit) - loglik(fit0)    # gain from letting σ depend on group
 ```
 
-A large positive gain says the variance structure is real signal. (Formal
-likelihood-ratio / information-criterion tooling arrives with the inference
-slice; see the [roadmap](https://github.com/itchyshin/DRM.jl/blob/main/ROADMAP.md).)
+A large positive gain says the variance structure is real signal. Quantify the
+σ effects with [`confint`](../model-guides/model-workflow.md) (Wald or profile);
+dedicated AIC / likelihood-ratio-test helpers are a later convenience on top of
+`loglik`.
 
 ## Random dispersion: a scale that varies by group
 

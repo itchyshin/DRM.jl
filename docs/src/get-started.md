@@ -2,8 +2,12 @@
 
 !!! note "Status — Stable"
     Mirrors drmTMB's [Distributional regression with drmTMB](https://itchyshin.github.io/drmTMB/articles/drmTMB.html).
-    **In DRM.jl today:** the univariate Gaussian location–scale model fits by
-    maximum likelihood through the `drm` / `bf` front end.
+    **In DRM.jl today:** the full Gaussian surface — location–scale, bivariate
+    `ρ12`, random effects (on the mean *and* the scale), structured effects,
+    meta-analysis, and Wald / profile / bootstrap inference — fits by maximum
+    likelihood through the `drm` / `bf` front end. This page starts with the
+    simplest first fit; [What can I fit today?](model-guides/model-map.md) is the
+    full map.
 
 Start here when you want to fit a first model and check that the fitted object
 matches your scientific question. DRM.jl gives each distributional parameter its
