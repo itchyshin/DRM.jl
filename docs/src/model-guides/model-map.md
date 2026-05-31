@@ -28,7 +28,8 @@ is the same: **one formula per distributional parameter**.
 | q=4 **phylogenetic** bivariate location–scale | **Verified engine** | 2.18× over drmTMB, O(p) to p=10,000 (`HANDOVER.md`); public `phylo()` front end planned |
 | Independent random **slope** `(0 + x \| g)` on the mean | **Stable** | closed-form marginal; `re_sd` |
 | Correlated `(1 + x \| g)`, multiple RE terms, `σ` random effects | **Planned** | — |
-| `spatial()` / `animal()` / `relmat()` structured effects | **Planned** | — |
+| `relmat(1 \| id)` structured effect (supplied `K`) on the mean | **Stable** | closed-form GLS; `re_sd` |
+| `animal()` / `phylo()` / `spatial()` structured effects | **Planned** | reuse the `relmat` engine; next |
 | Known sampling covariance `meta_V(v)` (meta-analysis) | **Stable** | diagonal known variances + estimated heterogeneity τ |
 | `fitted` / `residuals` post-fit accessors | **Stable** | on every fitted model |
 | `simulate` (parametric replicate) | **Stable** | residual-level draw; bootstrap building block |
