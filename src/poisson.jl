@@ -25,12 +25,20 @@ _logfactorial(k::Integer) = sum(log, 2:k; init = 0.0)   # log k!  (0 for k = 0, 
 
 function drm(f::DrmFormula, fam::Poisson; data, g_tol::Real = 1e-8)
     rhs = Dict(f.forms)
-    _, re, mv, st = _split_ranef(rhs[:mu])
-    (isempty(re) && mv === nothing && st === nothing) ||
-        error("Poisson() currently supports fixed effects only")
-    y, Xμ, nmμ = _design(f.response, rhs[:mu], data)
+    fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
+    (mv === nothing && st === nothing) ||
+        error("Poisson() does not support meta_V / structured markers")
+    y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     all(yi -> yi ≥ 0 && isinteger(yi), y) ||
         error("Poisson() requires non-negative integer counts as the response")
+    if !isempty(re)                                       # random intercept (1|g) → GHQ marginal
+        (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
+            error("Poisson() random effects cannot be combined with `zi`/`hu` yet")
+        (length(re) == 1 && _re_kind(re[1][1])[1] === :intercept) ||
+            error("Poisson() supports a single random intercept `(1 | g)` on the mean")
+        grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
+        return _withformula(_fit_poisson_ranef(fam, y, Xμ, gidx, G, nmμ, grp, g_tol), f)
+    end
     haskey(rhs, :zi) && haskey(rhs, :hu) &&
         error("`zi` and `hu` cannot both be specified (zero-inflation vs hurdle)")
     if haskey(rhs, :zi)                                   # zero-inflated Poisson
@@ -42,6 +50,50 @@ function drm(f::DrmFormula, fam::Poisson; data, g_tol::Real = 1e-8)
         return _withformula(_fit_poisson_hu(fam, y, Xμ, Xhu, nmμ, nmhu, g_tol), f)
     end
     return _withformula(_fit_poisson(fam, y, Xμ, nmμ, g_tol), f)
+end
+
+# Poisson count GLMM with a random intercept (1|g) on log λ. b_g ~ N(0,σ_b²) is
+# integrated out per group by K-node Gauss–Hermite quadrature (b = √2 σ_b z), the
+# same scheme as the Gaussian σ-RE. O(n·K) per evaluation, fully differentiable.
+function _fit_poisson_ranef(fam::Poisson, y, Xμ, gidx, G, nmμ, grp, g_tol)
+    n = length(y); pμ = size(Xμ, 2)
+    members = [Int[] for _ in 1:G]
+    for i in 1:n
+        push!(members[gidx[i]], i)
+    end
+    lf = [_logfactorial(round(Int, yi)) for yi in y]
+    z, w = _gauss_hermite(32); logw = log.(w); K = length(z); rt2 = sqrt(2.0); lπ = log(π)
+    function nll(θ)
+        βμ = θ[1:pμ]; σb = exp(θ[pμ+1])
+        η0 = Xμ * βμ
+        s = zero(eltype(θ))
+        for idx in members
+            isempty(idx) && continue
+            terms = Vector{eltype(θ)}(undef, K)
+            for k in 1:K
+                δ = rt2 * σb * z[k]
+                gll = logw[k]
+                for i in idx
+                    η = η0[i] + δ
+                    gll += y[i] * η - exp(η) - lf[i]      # log Poisson(y_i; e^η)
+                end
+                terms[k] = gll
+            end
+            mx = maximum(terms)
+            s -= (-0.5 * lπ + mx + log(sum(exp.(terms .- mx))))
+        end
+        return s
+    end
+    θ0 = zeros(pμ + 1)
+    θ0[1] = log(sum(y) / n + eps())
+    θ0[pμ+1] = log(0.5)
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :resd => (pμ+1):(pμ+1)]
+    names = [:mu => nmμ, :resd => [String(grp)]]
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # population λ (b=0)
+    scales = Dict{Symbol,Vector{Float64}}()
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
 
 # log-logistic helpers (stable): log π and log(1-π) for π = logistic(η).
