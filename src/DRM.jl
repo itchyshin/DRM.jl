@@ -61,6 +61,6 @@ export AugProblem, make_problem,
 
 # Public API — the Gaussian distributional-regression front end.
 export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
-       coef, vcov, loglik, nobs, dof, aic, bic, fixef, re_sd, vc, stderror, confint, coeftable, fitted, residuals, predict, simulate, bootstrap_ci
+       coef, vcov, loglik, nobs, dof, aic, bic, fixef, re_sd, vc, ranef, stderror, confint, coeftable, fitted, residuals, predict, simulate, bootstrap_ci
 
 end # module DRM
