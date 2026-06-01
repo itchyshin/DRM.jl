@@ -129,6 +129,7 @@ open(OUT, "w") do io
     println(io)
     println(io, "CPU-aware run: Julia threads = $(Threads.nthreads()), BLAS threads = $(BLAS.get_num_threads()).")
     println(io, "Poisson is drmTMB-comparable through the #70 paired benchmark. Binomial/NB2/Gamma/Beta here are internal Julia engine proofs; NB2/Gamma/Beta fix the nuisance parameter to isolate the crossed-Laplace mean engine.")
+    println(io, "The crossed Hessian path is adaptive: dense factorisation for q ≤ $(DRM.CROSSED_SPARSE_Q_THRESHOLD), sparse CHOLMOD + Takahashi selected inverse for larger q.")
     println(io)
     println(io, "| cell | family | n | G | H | median/s | beta1 | sd_g | sd_h | converged | nuisance |")
     println(io, "|:-----|:-------|--:|--:|--:|---------:|------:|-----:|-----:|:----------|:---------|")

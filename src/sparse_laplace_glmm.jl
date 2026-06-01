@@ -117,6 +117,77 @@ function _poisson_fixed_start(y, X)
     return β
 end
 
+const CROSSED_SPARSE_Q_THRESHOLD = 512
+
+function _crossed_dense_hessian(diagH, weights, gidx, G, hidx, Hh)
+    q = G + Hh
+    Hmat = zeros(Float64, q, q)
+    @inbounds for j in 1:q
+        Hmat[j, j] = diagH[j]
+    end
+    @inbounds for i in eachindex(weights)
+        gi = gidx[i]
+        hi = G + hidx[i]
+        w = weights[i]
+        Hmat[gi, hi] += w
+        Hmat[hi, gi] += w
+    end
+    return Hmat
+end
+
+function _crossed_sparse_hessian(diagH, weights, gidx, G, hidx, Hh)
+    n = length(weights)
+    q = G + Hh
+    rows = Vector{Int}(undef, q + 2n)
+    cols = Vector{Int}(undef, q + 2n)
+    vals = Vector{Float64}(undef, q + 2n)
+    @inbounds for j in 1:q
+        rows[j] = j
+        cols[j] = j
+        vals[j] = diagH[j]
+    end
+    offset = q
+    @inbounds for i in 1:n
+        gi = gidx[i]
+        hi = G + hidx[i]
+        w = weights[i]
+        rows[offset + 2i - 1] = gi
+        cols[offset + 2i - 1] = hi
+        vals[offset + 2i - 1] = w
+        rows[offset + 2i] = hi
+        cols[offset + 2i] = gi
+        vals[offset + 2i] = w
+    end
+    return sparse(rows, cols, vals, q, q)
+end
+
+function _crossed_hessian(diagH, weights, gidx, G, hidx, Hh)
+    q = G + Hh
+    q > CROSSED_SPARSE_Q_THRESHOLD ?
+        _crossed_sparse_hessian(diagH, weights, gidx, G, hidx, Hh) :
+        _crossed_dense_hessian(diagH, weights, gidx, G, hidx, Hh)
+end
+
+function _crossed_selected_inverse_entries(ch, gidx, G, hidx, Hh)
+    q = G + Hh
+    if !(ch isa SparseArrays.CHOLMOD.Factor)
+        Hinv = ch \ Matrix{Float64}(I, q, q)
+        hd = diag(Hinv)
+        cross = Vector{Float64}(undef, length(gidx))
+        @inbounds for i in eachindex(gidx)
+            cross[i] = Hinv[gidx[i], G + hidx[i]]
+        end
+        return hd, cross
+    end
+    S = takahashi_selinv(ch)
+    hd = diag(S)
+    cross = Vector{Float64}(undef, length(gidx))
+    @inbounds for i in eachindex(gidx)
+        cross[i] = S[gidx[i], G + hidx[i]]
+    end
+    return hd, cross
+end
+
 function _poisson_crossed_mode(y, η0, gidx, G, hidx, Hh, logσ; b0 = nothing,
                                maxiter::Int = 60, tol::Real = 1e-8)
     q = G + Hh
@@ -140,7 +211,8 @@ function _poisson_crossed_mode(y, η0, gidx, G, hidx, Hh, logσ; b0 = nothing,
         iters = iter
         T = eltype(b)
         grad = zeros(T, q)
-        Hmat = zeros(T, q, q)
+        diagH = zeros(Float64, q)
+        weights = Vector{Float64}(undef, length(y))
         @inbounds for i in eachindex(y)
             gi = gidx[i]
             hi = G + hidx[i]
@@ -149,22 +221,19 @@ function _poisson_crossed_mode(y, η0, gidx, G, hidx, Hh, logσ; b0 = nothing,
             r = μ - y[i]
             grad[gi] += r
             grad[hi] += r
-            Hmat[gi, gi] += μ
-            Hmat[hi, hi] += μ
-            Hmat[gi, hi] += μ
+            diagH[gi] += μ
+            diagH[hi] += μ
+            weights[i] = μ
         end
         @inbounds for j in 1:G
             grad[j] += invg * b[j]
-            Hmat[j, j] += invg
+            diagH[j] += invg
         end
         @inbounds for j in (G+1):q
             grad[j] += invh * b[j]
-            Hmat[j, j] += invh
+            diagH[j] += invh
         end
-        Hmat .+= transpose(Hmat)
-        @inbounds for j in 1:q
-            Hmat[j, j] *= 0.5
-        end
+        Hmat = _crossed_hessian(diagH, weights, gidx, G, hidx, Hh)
         ch = cholesky(Symmetric(Hmat); check = false)
         issuccess(ch) || return b, ch, iters, false
         step = ch \ grad
@@ -225,14 +294,14 @@ function _fit_poisson_crossed_intercepts_laplace(fam::Poisson, y, Xμ, gidx, G, 
         val = data + prior + G * logσ[1] + Hh * logσ[2] + 0.5 * logdet(ch)
         grad || return val
 
-        Hinv = ch \ Matrix{Float64}(I, G + Hh, G + Hh)
+        hd, crossinv = _crossed_selected_inverse_entries(ch, gidx, G, hidx, Hh)
         tlogdet = zeros(eltype(θ), G + Hh)             # Z' * (μ .* leverage)
         crossβ = zeros(eltype(θ), G + Hh, pμ)          # Z' * (μ .* Xβ_col)
         gβ = gradβ_raw
         @inbounds for i in eachindex(y)
             gi = gidx[i]
             hi = G + hidx[i]
-            lever = Hinv[gi, gi] + Hinv[hi, hi] + 2 * Hinv[gi, hi]
+            lever = hd[gi] + hd[hi] + 2 * crossinv[i]
             μi = μstore[i]
             μlever = μi * lever
             tlogdet[gi] += μlever
@@ -245,11 +314,10 @@ function _fit_poisson_crossed_intercepts_laplace(fam::Poisson, y, Xμ, gidx, G, 
                 crossβ[hi, k] += μi * xik
             end
         end
-        implicit = Hinv * tlogdet
+        implicit = ch \ tlogdet
         @inbounds for k in 1:pμ
             gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
         end
-        hd = diag(Hinv)
         gσ1 = G - invg * (sum(abs2, @view b[1:G]) + sum(@view hd[1:G]))
         gσ2 = Hh - invh * (sum(abs2, @view b[G+1:G+Hh]) + sum(@view hd[G+1:G+Hh]))
         gσ1 += dot(@view(implicit[1:G]), invg .* @view(b[1:G]))
@@ -571,7 +639,8 @@ function _crossed_mean_mode(kind, aux, η0, gidx, G, hidx, Hh, logσ; b0 = nothi
         iters = iter
         T = eltype(b)
         grad = zeros(T, q)
-        Hmat = zeros(T, q, q)
+        diagH = zeros(Float64, q)
+        weights = Vector{Float64}(undef, length(η0))
         @inbounds for i in eachindex(η0)
             gi = gidx[i]
             hi = G + hidx[i]
@@ -580,22 +649,19 @@ function _crossed_mean_mode(kind, aux, η0, gidx, G, hidx, Hh, logσ; b0 = nothi
             w = _laplace_d2(kind, aux, i, η)
             grad[gi] += r
             grad[hi] += r
-            Hmat[gi, gi] += w
-            Hmat[hi, hi] += w
-            Hmat[gi, hi] += w
+            diagH[gi] += w
+            diagH[hi] += w
+            weights[i] = w
         end
         @inbounds for j in 1:G
             grad[j] += invg * b[j]
-            Hmat[j, j] += invg
+            diagH[j] += invg
         end
         @inbounds for j in (G+1):q
             grad[j] += invh * b[j]
-            Hmat[j, j] += invh
+            diagH[j] += invh
         end
-        Hmat .+= transpose(Hmat)
-        @inbounds for j in 1:q
-            Hmat[j, j] *= 0.5
-        end
+        Hmat = _crossed_hessian(diagH, weights, gidx, G, hidx, Hh)
         ch = cholesky(Symmetric(Hmat); check = false)
         issuccess(ch) || return b, ch, iters, false
         step = ch \ grad
@@ -658,14 +724,14 @@ function _fit_crossed_mean_laplace(fam, kind, aux, n::Int, Xμ, gidx, G, hidx, H
         val = data + prior + G * logσ[1] + Hh * logσ[2] + 0.5 * logdet(ch)
         grad || return val
 
-        Hinv = ch \ Matrix{Float64}(I, G + Hh, G + Hh)
+        hd, crossinv = _crossed_selected_inverse_entries(ch, gidx, G, hidx, Hh)
         tlogdet = zeros(eltype(θ), G + Hh)
         crossβ = zeros(eltype(θ), G + Hh, pμ)
         gβ = gradβ_raw
         @inbounds for i in 1:n
             gi = gidx[i]
             hi = G + hidx[i]
-            lever = Hinv[gi, gi] + Hinv[hi, hi] + 2 * Hinv[gi, hi]
+            lever = hd[gi] + hd[hi] + 2 * crossinv[i]
             tlever = tstore[i] * lever
             tlogdet[gi] += tlever
             tlogdet[hi] += tlever
@@ -677,11 +743,10 @@ function _fit_crossed_mean_laplace(fam, kind, aux, n::Int, Xμ, gidx, G, hidx, H
                 crossβ[hi, k] += wstore[i] * xik
             end
         end
-        implicit = Hinv * tlogdet
+        implicit = ch \ tlogdet
         @inbounds for k in 1:pμ
             gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
         end
-        hd = diag(Hinv)
         gσ1 = G - invg * (sum(abs2, @view b[1:G]) + sum(@view hd[1:G]))
         gσ2 = Hh - invh * (sum(abs2, @view b[G+1:G+Hh]) + sum(@view hd[G+1:G+Hh]))
         gσ1 += dot(@view(implicit[1:G]), invg .* @view(b[1:G]))
