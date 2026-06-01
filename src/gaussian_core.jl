@@ -11,7 +11,7 @@ using StatsModels: @formula, FormulaTerm, Term, ConstantTerm, FunctionTerm,
     schema, apply_schema, modelcols, coefnames
 using Statistics: std
 using Random: default_rng
-import StatsAPI: coef, vcov, nobs, fitted, residuals, predict, StatisticalModel
+import StatsAPI: coef, vcov, nobs, fitted, residuals, predict, aic, bic, dof, StatisticalModel
 
 """
     Gaussian()
@@ -332,6 +332,28 @@ end
 Maximised log-likelihood of the fitted model.
 """
 loglik(fit::DrmFit) = fit.loglik
+
+"""
+    dof(fit) -> Int
+
+Degrees of freedom — the number of estimated parameters (length of θ).
+"""
+dof(fit::DrmFit) = length(fit.theta)
+
+"""
+    aic(fit) -> Float64
+
+Akaike information criterion, `-2·loglik + 2·dof`. Lower is better; compares
+models fit by **ML** (not REML) on the same data.
+"""
+aic(fit::DrmFit) = -2 * fit.loglik + 2 * length(fit.theta)
+
+"""
+    bic(fit) -> Float64
+
+Bayesian (Schwarz) information criterion, `-2·loglik + dof·log(nobs)`.
+"""
+bic(fit::DrmFit) = -2 * fit.loglik + length(fit.theta) * log(fit.nobs)
 
 """
     re_sd(fit) -> Dict{Symbol,Float64}

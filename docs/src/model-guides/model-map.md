@@ -38,6 +38,7 @@ is the same: **one formula per distributional parameter**.
 | Parametric **bootstrap** intervals (`bootstrap_ci`) | **Stable** | simulate + refit percentiles; Gaussian + **Poisson · NB2 · Beta · Gamma** (constant dispersion); Wald & profile cover all families |
 | `predict` (new data, population level) | **Stable** | `Xβ̂` on new rows |
 | `summary(fit)` / `coeftable(fit)` — readable fit + Wald coefficient table | **Stable** | REPL summary (family · nobs · logLik) then a per-block Estimate / Std.Error / z / p table (+ CI from `coeftable`) |
+| `aic(fit)` / `bic(fit)` / `dof(fit)` — information criteria | **Stable** | `−2·loglik + 2k` and `+ k·log n` (`k = dof = #params`); ML-based model selection |
 | `σ` random effects `sigma ~ … + (1 \| g)` (RE on the scale) | **Stable** | per-group Gauss–Hermite marginal (32 nodes); `re_sd(fit)` for the scale-RE SD |
 | Random intercept `(1 \| g)` on a **non-Gaussian** mean — Poisson · NB2 · Beta · Gamma · Student-t · LogNormal · Beta-binomial GLMMs | **Stable** | per-group Gauss–Hermite marginal; `re_sd(fit)` for the group SD |
 | Correlated random slope `(1 + x \| g)` on a **non-Gaussian** mean — Poisson · NB2 · Beta · Gamma · Student-t · LogNormal · Beta-binomial | **Stable** | per-group 2-D Gauss–Hermite tensor grid; `vc(fit)` for the 2×2 RE cov |
