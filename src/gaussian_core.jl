@@ -253,6 +253,28 @@ function residuals(fit::DrmFit)
 end
 
 """
+    sigma(fit)
+
+Fitted scale / dispersion. Returns the per-observation fitted scale(s) computed
+at the MLE — drmTMB's `sigma()`.
+
+- Univariate location–scale with a single scale (`:sigma`): the `σ_i` vector
+  (`exp.(Xσ·β̂_σ)` on the response scale; for meta-analysis `√(vᵢ + τ²)`).
+- Bivariate co-scale: `Dict(:sigma1 => …, :sigma2 => …)`.
+- Families with no separately fitted scale stored (e.g. Poisson, whose variance
+  is fixed by the mean): returns an empty `Dict` — there is no free dispersion.
+
+For the population-level scale *coefficients* (on the working/log scale) use
+`coef(fit, :sigma)` instead.
+"""
+function sigma(fit::DrmFit)
+    ks = sort!(collect(keys(fit.scales)))
+    isempty(ks) && return Dict{Symbol,Vector{Float64}}()
+    (length(ks) == 1 && ks[1] === :sigma) && return fit.scales[:sigma]
+    return fit.scales
+end
+
+"""
     predict(fit, newdata; type = :response) -> Vector or Dict
 
 Population-level prediction on `newdata` (a NamedTuple / column table), random /
