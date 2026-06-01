@@ -37,6 +37,41 @@ end
 # 2-arg convenience: single-column response (the common case).
 DrmFormula(response::Symbol, forms::Vector{Pair{Symbol,Any}}) = DrmFormula(response, forms, nothing)
 
+# Distributional parameters the univariate front end accepts as a *secondary*
+# formula LHS. The mean μ comes from the response formula, so it is not listed
+# here; the two-response parameters live in the keyword form. Whether a given
+# family actually uses a parameter (e.g. Gaussian has no `nu`) is a separate,
+# family-level question handled in `drm`.
+const _UNIVARIATE_DPARS = (:sigma, :nu, :zi, :hu, :zoi, :coi)
+
+# Parameters valid only through the bivariate keyword form
+# `bf(mu1 = …, mu2 = …, sigma1 = …, sigma2 = …, rho12 = …)`.
+const _BIVARIATE_DPARS = (:mu1, :mu2, :sigma1, :sigma2, :rho12)
+
+# Validate one secondary formula's parameter name, mirroring the reserved syntax
+# drmTMB rejects (with parallel intent). `seen` accumulates accepted names so a
+# parameter given twice is caught as a duplicate.
+function _check_dpar_name!(seen::Set{Symbol}, name::Symbol)
+    if name === :mu
+        throw(ArgumentError("bf: the mean μ is set by the response formula (the first " *
+            "argument) — pass the μ predictor there, not a separate `mu ~ …`."))
+    elseif name === :tau
+        throw(ArgumentError("bf: the scale parameter is named `sigma`, never `tau` — " *
+            "write `sigma ~ …`."))
+    elseif name in _BIVARIATE_DPARS
+        throw(ArgumentError("bf: `$name` is a bivariate (two-response) parameter; use the " *
+            "keyword form `bf(mu1 = …, mu2 = …, sigma1 = …, sigma2 = …, rho12 = …)`."))
+    elseif !(name in _UNIVARIATE_DPARS)
+        throw(ArgumentError("bf: unknown distributional parameter `$name`. Valid secondary " *
+            "parameters are " * join(_UNIVARIATE_DPARS, ", ") * "."))
+    elseif name in seen
+        throw(ArgumentError("bf: duplicate formula for `$name` — give one formula per " *
+            "distributional parameter."))
+    end
+    push!(seen, name)
+    return name
+end
+
 """
     bf(response_formula, dpar_formulas...)
     drm_formula(response_formula, dpar_formulas...)
@@ -45,6 +80,13 @@ Bundle one formula per distributional parameter, exactly as drmTMB. The first
 formula `y ~ …` sets the response and the `μ` predictor; each later formula
 `param ~ …` (e.g. `sigma ~ …`) sets that parameter's predictor. `sigma` defaults
 to `~ 1` when omitted.
+
+The secondary parameter on each formula's left-hand side must be one of
+`$(join(_UNIVARIATE_DPARS, ", "))`. Mirroring drmTMB, `bf` rejects reserved /
+mis-typed syntax with a clear error: `tau` (the scale is `sigma`), `mu` as a
+separate formula (μ comes from the response), the two-response parameters
+`mu1/mu2/sigma1/sigma2/rho12` in this positional form (use the keyword form),
+unknown parameter names, and a parameter given more than once.
 """
 function bf(mu::FormulaTerm, dpars::FormulaTerm...)
     lhs = mu.lhs
@@ -54,8 +96,12 @@ function bf(mu::FormulaTerm, dpars::FormulaTerm...)
         response = lhs.sym; response2 = nothing
     end
     forms = Pair{Symbol,Any}[:mu => mu.rhs]
+    seen = Set{Symbol}()
     for f in dpars
-        push!(forms, f.lhs.sym => f.rhs)
+        f.lhs isa Term || throw(ArgumentError("bf: each distributional-parameter formula " *
+            "must read `param ~ …` with a parameter name on the left (got `$(f.lhs)`)."))
+        name = _check_dpar_name!(seen, f.lhs.sym)
+        push!(forms, name => f.rhs)
     end
     any(p -> first(p) === :sigma, forms) || push!(forms, :sigma => ConstantTerm(1))
     return DrmFormula(response, forms, response2)

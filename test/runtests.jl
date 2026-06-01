@@ -27,6 +27,7 @@ end
 
 # Gaussian location–scale front end (drm/bf public API).
 include("test_gaussian_core.jl")
+include("test_bf_grammar.jl")
 include("test_gaussian_bivariate.jl")
 include("test_corpairs.jl")
 include("test_gaussian_ranef.jl")
