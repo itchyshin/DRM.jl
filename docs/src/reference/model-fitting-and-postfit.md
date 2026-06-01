@@ -48,6 +48,15 @@ stderror
 bootstrap_ci
 ```
 
+## Information criteria
+
+```@docs
+loglik
+dof
+aic
+bic
+```
+
 ## Diagnostics
 
 ```@docs
