@@ -39,10 +39,15 @@ function crossed_gaussian_fixture()
     h = [Symbol("h", rand(rng, 1:H)) for _ in 1:n]
     bg = 0.45 .* randn(rng, G)
     bh = 0.35 .* randn(rng, H)
-    y = [0.25 + 0.55 * x[i] + bg[parse(Int, String(g[i])[2:end])] +
-         bh[parse(Int, String(h[i])[2:end])] + 0.45 * randn(rng) for i in 1:n]
+    y = [
+        0.25 +
+        0.55 * x[i] +
+        bg[parse(Int, String(g[i])[2:end])] +
+        bh[parse(Int, String(h[i])[2:end])] +
+        0.45 * randn(rng) for i in 1:n
+    ]
     form = bf(@formula(y ~ x + (1 | g) + (1 | h)), @formula(sigma ~ 1))
-    return form, (; y = Float64.(y), x, g, h)
+    return form, (; y=Float64.(y), x, g, h)
 end
 
 function timecall(f)
@@ -62,7 +67,7 @@ function profiled_nll_warm(nll, θhat, k, v, ustart)
         end
         return nll(θ)
     end
-    res = Optim.optimize(obj, ustart, Optim.LBFGS(); autodiff = :forward)
+    res = Optim.optimize(obj, ustart, Optim.LBFGS(); autodiff=:forward)
     return Optim.minimum(res), Optim.minimizer(res)
 end
 
@@ -94,7 +99,7 @@ function profile_endpoint_warm(nll, θhat, k, nllhat, half, s, dir)
     return θhat[k] + dir * (tlo + thi) / 2
 end
 
-function profile_ci_warm(fit; level = 0.95)
+function profile_ci_warm(fit; level=0.95)
     nll = fit.nll
     θhat = copy(fit.theta)
     nllhat = nll(θhat)
@@ -107,13 +112,13 @@ function profile_ci_warm(fit; level = 0.95)
             s = (isfinite(se[k]) && se[k] > 0) ? se[k] : max(abs(est), 1.0)
             lo = profile_endpoint_warm(nll, θhat, k, nllhat, half, s, -1)
             hi = profile_endpoint_warm(nll, θhat, k, nllhat, half, s, +1)
-            push!(out, (param = pp, coef = nms[j], estimate = est, lower = lo, upper = hi))
+            push!(out, (param=pp, coef=nms[j], estimate=est, lower=lo, upper=hi))
         end
     end
     return out
 end
 
-function profile_ci_threaded_warm(fit; level = 0.95)
+function profile_ci_threaded_warm(fit; level=0.95)
     nll = fit.nll
     θhat = copy(fit.theta)
     nllhat = nll(θhat)
@@ -122,7 +127,7 @@ function profile_ci_threaded_warm(fit; level = 0.95)
     jobs = NamedTuple[]
     for ((pp, r), (_, nms)) in zip(fit.blocks, fit.coefnames)
         for (j, k) in enumerate(r)
-            push!(jobs, (param = pp, coef = nms[j], k = k))
+            push!(jobs, (param=pp, coef=nms[j], k=k))
         end
     end
     out = Vector{NamedTuple}(undef, length(jobs))
@@ -133,66 +138,251 @@ function profile_ci_threaded_warm(fit; level = 0.95)
         s = (isfinite(se[k]) && se[k] > 0) ? se[k] : max(abs(est), 1.0)
         lo = profile_endpoint_warm(nll, θhat, k, nllhat, half, s, -1)
         hi = profile_endpoint_warm(nll, θhat, k, nllhat, half, s, +1)
-        out[i] = (param = job.param, coef = job.coef, estimate = est, lower = lo, upper = hi)
+        out[i] = (param=job.param, coef=job.coef, estimate=est, lower=lo, upper=hi)
     end
     return out
 end
 
+function parameter_surface_cold(fit, k1, k2; npoints=11, span=3.0)
+    nll = fit.nll
+    θhat = copy(fit.theta)
+    nllhat = nll(θhat)
+    se = sqrt.(diag(fit.vcov))
+    s1 = (isfinite(se[k1]) && se[k1] > 0) ? se[k1] : max(abs(θhat[k1]), 1.0)
+    s2 = (isfinite(se[k2]) && se[k2] > 0) ? se[k2] : max(abs(θhat[k2]), 1.0)
+    x = range(θhat[k1] - span * s1, θhat[k1] + span * s1; length=npoints)
+    y = range(θhat[k2] - span * s2, θhat[k2] + span * s2; length=npoints)
+    rest = [i for i in 1:length(θhat) if i != k1 && i != k2]
+    z = Matrix{Float64}(undef, npoints, npoints)
+    for i in 1:npoints, j in 1:npoints
+        function obj(u)
+            θ = Vector{eltype(u)}(undef, length(θhat))
+            θ[k1] = convert(eltype(u), x[i])
+            θ[k2] = convert(eltype(u), y[j])
+            @inbounds for (t, r) in enumerate(rest)
+                θ[r] = u[t]
+            end
+            return nll(θ)
+        end
+        res = Optim.optimize(obj, θhat[rest], Optim.LBFGS(); autodiff=:forward)
+        z[i, j] = max(0.0, 2 * (Optim.minimum(res) - nllhat))
+    end
+    return (x=collect(x), y=collect(y), z=z)
+end
+
 form_fixed, data_fixed = fixed_gaussian_fixture()
-drm(form_fixed, Gaussian(); data = data_fixed)
+drm(form_fixed, Gaussian(); data=data_fixed)
 GC.gc()
-t_fit_fixed, fit_fixed = timecall(() -> drm(form_fixed, Gaussian(); data = data_fixed))
-confint(fit_fixed; method = :wald)
-confint(fit_fixed; method = :profile)
-bootstrap_ci(form_fixed, Gaussian(); data = data_fixed, B = 2, rng = MersenneTwister(90))
-bootstrap_ci(form_fixed, Gaussian(); data = data_fixed, B = 2, rng = MersenneTwister(90), threads = true)
-bootstrap_summary(form_fixed, Gaussian(); data = data_fixed, B = 2, rng = MersenneTwister(90))
+t_fit_fixed, fit_fixed = timecall(() -> drm(form_fixed, Gaussian(); data=data_fixed))
+confint(fit_fixed; method=:wald)
+confint(fit_fixed; method=:profile)
+bootstrap_ci(form_fixed, Gaussian(); data=data_fixed, B=2, rng=MersenneTwister(90))
+bootstrap_ci(
+    form_fixed, Gaussian(); data=data_fixed, B=2, rng=MersenneTwister(90), threads=true
+)
+bootstrap_summary(form_fixed, Gaussian(); data=data_fixed, B=2, rng=MersenneTwister(90))
+profile_curve(fit_fixed, 2; npoints=21)
+parameter_surface(fit_fixed, 1, 2; npoints=7)
 GC.gc()
-t_wald, wald = timecall(() -> confint(fit_fixed; method = :wald))
-t_profile, prof = timecall(() -> confint(fit_fixed; method = :profile))
-t_boot20, boot20 = timecall(() -> bootstrap_ci(form_fixed, Gaussian(); data = data_fixed, B = 20, rng = MersenneTwister(91)))
-t_boot20_threads, boot20_threads = timecall(() -> bootstrap_ci(form_fixed, Gaussian(); data = data_fixed, B = 20, rng = MersenneTwister(91), threads = true))
-t_boot_summary20, boot_summary20 = timecall(() -> bootstrap_summary(form_fixed, Gaussian(); data = data_fixed, B = 20, rng = MersenneTwister(91)))
+t_wald, wald = timecall(() -> confint(fit_fixed; method=:wald))
+t_profile, prof = timecall(() -> confint(fit_fixed; method=:profile))
+t_boot20, boot20 = timecall(
+    () -> bootstrap_ci(
+        form_fixed, Gaussian(); data=data_fixed, B=20, rng=MersenneTwister(91)
+    ),
+)
+t_boot20_threads, boot20_threads = timecall(
+    () -> bootstrap_ci(
+        form_fixed,
+        Gaussian();
+        data=data_fixed,
+        B=20,
+        rng=MersenneTwister(91),
+        threads=true,
+    ),
+)
+t_boot_summary20, boot_summary20 = timecall(
+    () -> bootstrap_summary(
+        form_fixed, Gaussian(); data=data_fixed, B=20, rng=MersenneTwister(91)
+    ),
+)
+t_curve_fixed, curve_fixed = timecall(() -> profile_curve(fit_fixed, 2; npoints=21))
+t_surface_cold, surf_cold = timecall(
+    () -> parameter_surface_cold(fit_fixed, 1, 2; npoints=11)
+)
+t_surface_warm, surf_warm = timecall(() -> parameter_surface(fit_fixed, 1, 2; npoints=11))
+surface_delta = maximum(abs.(surf_warm.z .- surf_cold.z))
+surface_speedup = t_surface_cold / t_surface_warm
 
 form_crossed, data_crossed = crossed_gaussian_fixture()
-drm(form_crossed, Gaussian(); data = data_crossed)
+drm(form_crossed, Gaussian(); data=data_crossed)
 GC.gc()
-t_fit_crossed, fit_crossed = timecall(() -> drm(form_crossed, Gaussian(); data = data_crossed))
-confint(fit_crossed; method = :profile)
-confint(fit_crossed; method = :profile, threads = true)
+t_fit_crossed, fit_crossed = timecall(
+    () -> drm(form_crossed, Gaussian(); data=data_crossed)
+)
+confint(fit_crossed; method=:profile)
+confint(fit_crossed; method=:profile, threads=true)
+profile_curve(fit_crossed, 2; npoints=21)
 GC.gc()
-t_profile_crossed, prof_crossed = timecall(() -> confint(fit_crossed; method = :profile))
-t_profile_crossed_threaded, prof_crossed_threaded = timecall(() -> confint(fit_crossed; method = :profile, threads = true))
-threaded_delta = maximum(max(abs(prof_crossed[i].lower - prof_crossed_threaded[i].lower),
-                             abs(prof_crossed[i].upper - prof_crossed_threaded[i].upper))
-                         for i in eachindex(prof_crossed))
+t_profile_crossed, prof_crossed = timecall(() -> confint(fit_crossed; method=:profile))
+t_profile_crossed_threaded, prof_crossed_threaded = timecall(
+    () -> confint(fit_crossed; method=:profile, threads=true)
+)
+t_curve_crossed, curve_crossed = timecall(() -> profile_curve(fit_crossed, 2; npoints=21))
+threaded_delta = maximum(
+    max(
+        abs(prof_crossed[i].lower - prof_crossed_threaded[i].lower),
+        abs(prof_crossed[i].upper - prof_crossed_threaded[i].upper),
+    ) for i in eachindex(prof_crossed)
+)
 
 mkpath(dirname(OUT))
 open(OUT, "w") do io
     println(io, "# Quick inference profile")
     println(io)
-    println(io, "CPU-aware run: Julia threads = $(Threads.nthreads()), BLAS threads = $(BLAS.get_num_threads()).")
+    println(
+        io,
+        "CPU-aware run: Julia threads = $(Threads.nthreads()), BLAS threads = $(BLAS.get_num_threads()).",
+    )
     println(io)
     println(io, "| task | fixture | n | params | elapsed/s |")
     println(io, "|:-----|:--------|--:|-------:|----------:|")
-    @printf(io, "| fit | fixed Gaussian | %d | %d | %.4f |\n", length(data_fixed.y), length(coef(fit_fixed)), t_fit_fixed)
-    @printf(io, "| Wald CI | fixed Gaussian | %d | %d | %.4f |\n", length(data_fixed.y), length(wald), t_wald)
-    @printf(io, "| profile CI warm | fixed Gaussian | %d | %d | %.4f |\n", length(data_fixed.y), length(prof), t_profile)
-    @printf(io, "| bootstrap CI B=20 serial | fixed Gaussian | %d | %d | %.4f |\n", length(data_fixed.y), length(boot20), t_boot20)
-    @printf(io, "| bootstrap CI B=20 threaded | fixed Gaussian | %d | %d | %.4f |\n", length(data_fixed.y), length(boot20_threads), t_boot20_threads)
-    @printf(io, "| bootstrap summary B=20 serial | fixed Gaussian | %d | %d | %.4f |\n", length(data_fixed.y), length(boot_summary20), t_boot_summary20)
-    @printf(io, "| fit | crossed Gaussian | %d | %d | %.4f |\n", length(data_crossed.y), length(coef(fit_crossed)), t_fit_crossed)
-    @printf(io, "| profile CI warm | crossed Gaussian | %d | %d | %.4f |\n", length(data_crossed.y), length(prof_crossed), t_profile_crossed)
-    @printf(io, "| profile CI threaded warm | crossed Gaussian | %d | %d | %.4f |\n", length(data_crossed.y), length(prof_crossed_threaded), t_profile_crossed_threaded)
+    @printf(
+        io,
+        "| fit | fixed Gaussian | %d | %d | %.4f |\n",
+        length(data_fixed.y),
+        length(coef(fit_fixed)),
+        t_fit_fixed
+    )
+    @printf(
+        io,
+        "| Wald CI | fixed Gaussian | %d | %d | %.4f |\n",
+        length(data_fixed.y),
+        length(wald),
+        t_wald
+    )
+    @printf(
+        io,
+        "| profile CI warm | fixed Gaussian | %d | %d | %.4f |\n",
+        length(data_fixed.y),
+        length(prof),
+        t_profile
+    )
+    @printf(
+        io,
+        "| bootstrap CI B=20 serial | fixed Gaussian | %d | %d | %.4f |\n",
+        length(data_fixed.y),
+        length(boot20),
+        t_boot20
+    )
+    @printf(
+        io,
+        "| bootstrap CI B=20 threaded | fixed Gaussian | %d | %d | %.4f |\n",
+        length(data_fixed.y),
+        length(boot20_threads),
+        t_boot20_threads
+    )
+    @printf(
+        io,
+        "| bootstrap summary B=20 serial | fixed Gaussian | %d | %d | %.4f |\n",
+        length(data_fixed.y),
+        length(boot_summary20),
+        t_boot_summary20
+    )
+    @printf(
+        io,
+        "| profile curve n=21 | fixed Gaussian | %d | %d | %.4f |\n",
+        length(data_fixed.y),
+        length(curve_fixed.x),
+        t_curve_fixed
+    )
+    @printf(
+        io,
+        "| parameter surface n=11 cold | fixed Gaussian | %d | %d | %.4f |\n",
+        length(data_fixed.y),
+        length(surf_cold.z),
+        t_surface_cold
+    )
+    @printf(
+        io,
+        "| parameter surface n=11 warm | fixed Gaussian | %d | %d | %.4f |\n",
+        length(data_fixed.y),
+        length(surf_warm.z),
+        t_surface_warm
+    )
+    @printf(
+        io,
+        "| fit | crossed Gaussian | %d | %d | %.4f |\n",
+        length(data_crossed.y),
+        length(coef(fit_crossed)),
+        t_fit_crossed
+    )
+    @printf(
+        io,
+        "| profile CI warm | crossed Gaussian | %d | %d | %.4f |\n",
+        length(data_crossed.y),
+        length(prof_crossed),
+        t_profile_crossed
+    )
+    @printf(
+        io,
+        "| profile CI threaded warm | crossed Gaussian | %d | %d | %.4f |\n",
+        length(data_crossed.y),
+        length(prof_crossed_threaded),
+        t_profile_crossed_threaded
+    )
+    @printf(
+        io,
+        "| profile curve n=21 | crossed Gaussian | %d | %d | %.4f |\n",
+        length(data_crossed.y),
+        length(curve_crossed.x),
+        t_curve_crossed
+    )
     println(io)
     println(io, "Interpretation guardrails:")
-    println(io, "- This measures DRM.jl local costs only; it is not an R-vs-Julia comparison.")
-    println(io, "- Profile CI now warm-starts nuisance fits in the production `confint(..., method=:profile)` path.")
-    @printf(io, "- Threaded profile max endpoint delta versus serial warm profile CI: %.3e.\n", threaded_delta)
-    println(io, "- Threaded bootstrap uses independent per-replicate RNG seeds; timings are only comparable at the explicit thread count above.")
+    println(
+        io, "- This measures DRM.jl local costs only; it is not an R-vs-Julia comparison."
+    )
+    println(
+        io,
+        "- Profile CI now warm-starts nuisance fits in the production `confint(..., method=:profile)` path.",
+    )
+    @printf(
+        io,
+        "- Threaded profile max endpoint delta versus serial warm profile CI: %.3e.\n",
+        threaded_delta
+    )
+    @printf(
+        io,
+        "- Warm parameter-surface max deviance delta versus cold grid: %.3e; measured speedup %.2fx.\n",
+        surface_delta,
+        surface_speedup
+    )
+    println(
+        io,
+        "- Threaded bootstrap uses independent per-replicate RNG seeds; timings are only comparable at the explicit thread count above.",
+    )
 end
 
-@printf("fixed fit %.4fs, profile %.4fs, bootstrap B=20 %.4fs threaded %.4fs\n", t_fit_fixed, t_profile, t_boot20, t_boot20_threads)
-@printf("crossed fit %.4fs, crossed profile %.4fs, threaded warm %.4fs, delta %.3e\n",
-    t_fit_crossed, t_profile_crossed, t_profile_crossed_threaded, threaded_delta)
+@printf(
+    "fixed fit %.4fs, profile %.4fs, bootstrap B=20 %.4fs threaded %.4fs\n",
+    t_fit_fixed,
+    t_profile,
+    t_boot20,
+    t_boot20_threads
+)
+@printf(
+    "crossed fit %.4fs, crossed profile %.4fs, threaded warm %.4fs, delta %.3e\n",
+    t_fit_crossed,
+    t_profile_crossed,
+    t_profile_crossed_threaded,
+    threaded_delta
+)
+@printf(
+    "profile surface warm %.4fs vs cold %.4fs, speedup %.2fx, delta %.3e\n",
+    t_surface_warm,
+    t_surface_cold,
+    surface_speedup,
+    surface_delta
+)
 println("wrote ", OUT)

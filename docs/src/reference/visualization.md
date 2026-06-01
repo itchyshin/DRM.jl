@@ -6,6 +6,7 @@
 ## Plotting data providers
 
 ```@docs
+profile_curve
 parameter_surface
 corpairs_data
 ```
