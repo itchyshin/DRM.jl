@@ -25,4 +25,5 @@ deps/deps.jl
 
 # Generated benchmark fixtures/results. Regenerate with bench/*.jl scripts.
 /bench/fixtures/crossed_poisson/
+/bench/fixtures/crossed_family/
 /bench/results/
