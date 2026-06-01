@@ -33,7 +33,11 @@ Confidence intervals for every coefficient, as a vector of
 - `method = :profile` — profile-likelihood interval: the endpoints where
   `2(ℓ̂ − ℓ_profile) = χ²₁(level)`, re-optimising the nuisance parameters at each
   fixed value (asymmetric, and exact under the LR statistic where Wald is only
-  quadratic-approximate). Works on any fitted Gaussian model.
+  quadratic-approximate). Works on any fitted Gaussian model. The endpoint search
+  uses warm-start continuation (each profiled solve starts from the previous
+  point's optimum) and a guarded-Newton root-find driven by the envelope-theorem
+  slope `∂nll/∂θ_k`, falling back to bisection — bracket-guaranteed correctness,
+  far fewer inner re-optimisations than cold-started bisection.
 
 Mirrors drmTMB's `confint(fit, method = "wald" | "profile")`.
 """
@@ -58,11 +62,13 @@ function _wald_ci(fit::DrmFit, level::Real)
 end
 
 # Profiled objective: minimise nll over every component except k, with θ[k] = v.
-# Warm-started at the joint MLE; ForwardDiff through the stored objective.
-function _profiled_nll(nll, θ̂::Vector{Float64}, k::Int, v::Real)
+# Returns (minimum, û_nuisance) so the caller can WARM-START the next solve from
+# the previous point's nuisance optimum (continuation along the profile path) —
+# the dominant speedup over cold-starting each solve from the joint MLE.
+function _profiled_nll(nll, θ̂::Vector{Float64}, k::Int, v::Real, u0::Vector{Float64})
     p = length(θ̂)
     idx = [i for i in 1:p if i != k]
-    isempty(idx) && return nll([float(v)])
+    isempty(idx) && return (nll([float(v)]), Float64[])
     function obj(u)
         θ = Vector{eltype(u)}(undef, p)
         θ[k] = convert(eltype(u), v)
@@ -71,28 +77,62 @@ function _profiled_nll(nll, θ̂::Vector{Float64}, k::Int, v::Real)
         end
         return nll(θ)
     end
-    res = Optim.optimize(obj, θ̂[idx], Optim.LBFGS(); autodiff = :forward)
-    return Optim.minimum(res)
+    res = Optim.optimize(obj, u0, Optim.LBFGS(); autodiff = :forward)
+    return (Optim.minimum(res), Optim.minimizer(res))
+end
+
+# Analytic slope of the PROFILED nll in θ[k], by the envelope theorem: at the
+# profiled optimum the nuisance partials vanish, so d/dv [min_u nll] = ∂nll/∂θ_k
+# evaluated at (v, û). One ForwardDiff gradient component — no extra solves.
+function _profile_slope(nll, θ̂::Vector{Float64}, k::Int, v::Real, û::Vector{Float64})
+    p = length(θ̂)
+    idx = [i for i in 1:p if i != k]
+    θ = Vector{Float64}(undef, p)
+    θ[k] = float(v)
+    @inbounds for (t, i) in enumerate(idx)
+        θ[i] = û[t]
+    end
+    return ForwardDiff.gradient(nll, θ)[k]
 end
 
 # Endpoint in working coordinate where the profiled nll rises by `half` above the
-# minimum, searching from θ̂[k] in direction dir ∈ {-1,+1}. The profiled nll is
-# minimised at θ̂[k] and increases monotonically away from it, so h(t) below is
-# increasing in t ≥ 0 with h(0) = -half < 0 — a clean 1-D bracket + bisection.
-function _profile_endpoint(nll, θ̂, k, nllhat, half, s, dir)
+# minimum, searching from θ̂[k] in direction dir ∈ {-1,+1}. h(t) = profiled_nll −
+# target is increasing in t ≥ 0 with h(0) = −half < 0. We bracket by expansion,
+# then root-find with a GUARDED NEWTON step (using the envelope-theorem slope,
+# h'(t) = dir · ∂nll/∂θ_k): a Newton step that stays inside the maintained
+# bracket is accepted, otherwise we fall back to bisection. Correctness is
+# bracket-guaranteed; the analytic slope only buys faster (quadratic) convergence.
+# Each evaluation warm-starts the nuisance optimisation from the previous û.
+function _profile_endpoint(nll, θ̂, k, nllhat, half, s, dir, u0)
     target = nllhat + half
-    h(t) = _profiled_nll(nll, θ̂, k, θ̂[k] + dir * t) - target
-    tlo = 0.0; thi = s; hval = h(thi); iters = 0
-    while hval < 0 && iters < 40
-        tlo = thi; thi *= 1.6; hval = h(thi); iters += 1
+    p = length(θ̂)
+    nidx = p - 1
+    û = copy(u0)
+    # h(t) and its derivative h'(t); updates û in place for warm-starting.
+    function heval(t)
+        f, unew = _profiled_nll(nll, θ̂, k, θ̂[k] + dir * t, û)
+        isempty(unew) || (û = unew)
+        hp = nidx == 0 ? NaN : dir * _profile_slope(nll, θ̂, k, θ̂[k] + dir * t, û)
+        return (f - target, hp)
     end
-    hval < 0 && return dir < 0 ? -Inf : Inf        # profile never crosses → unbounded
+    # Bracket: expand until h > 0.
+    tlo = 0.0
+    thi = s; (hhi, _) = heval(thi); iters = 0
+    while hhi < 0 && iters < 40
+        tlo = thi; thi *= 1.6; (hhi, _) = heval(thi); iters += 1
+    end
+    hhi < 0 && return dir < 0 ? -Inf : Inf          # profile never crosses → unbounded
+    # Guarded Newton on [tlo, thi].
+    t = (tlo + thi) / 2
     for _ in 1:60
-        tm = (tlo + thi) / 2
-        h(tm) < 0 ? (tlo = tm) : (thi = tm)
-        thi - tlo < 1e-7 && break
+        (ht, hp) = heval(t)
+        abs(ht) < 1e-9 && break
+        ht < 0 ? (tlo = t) : (thi = t)
+        tn = (isfinite(hp) && hp > 0) ? t - ht / hp : (tlo + thi) / 2   # Newton, else bisect
+        t = (tlo < tn < thi) ? tn : (tlo + thi) / 2                     # guard into bracket
+        thi - tlo < 1e-8 && break
     end
-    return θ̂[k] + dir * (tlo + thi) / 2
+    return θ̂[k] + dir * t
 end
 
 function _profile_ci(fit::DrmFit, level::Real)
@@ -103,13 +143,15 @@ function _profile_ci(fit::DrmFit, level::Real)
     nllhat = nll(θ̂)
     half = quantile(Chisq(1), level) / 2           # nll rises by χ²₁/2 at each endpoint
     se = stderror(fit)
+    p = length(θ̂)
     rows = _CIRow[]
     for ((pp, r), (_, nms)) in zip(fit.blocks, fit.coefnames)
         for (j, k) in enumerate(r)
             est = θ̂[k]
             s = (isfinite(se[k]) && se[k] > 0) ? se[k] : max(abs(est), 1.0)
-            lo = _profile_endpoint(nll, θ̂, k, nllhat, half, s, -1)
-            hi = _profile_endpoint(nll, θ̂, k, nllhat, half, s, +1)
+            u0 = θ̂[[i for i in 1:p if i != k]]      # warm start: the joint MLE nuisance block
+            lo = _profile_endpoint(nll, θ̂, k, nllhat, half, s, -1, u0)
+            hi = _profile_endpoint(nll, θ̂, k, nllhat, half, s, +1, u0)
             push!(rows, (param = pp, coef = nms[j], estimate = est, lower = lo, upper = hi))
         end
     end
