@@ -1,6 +1,34 @@
 # Model specification
 
 !!! note "Status — Reference"
-    Mirrors drmTMB's [Model specification](https://itchyshin.github.io/drmTMB/reference/index.html). **In DRM.jl today:** `bf()` / `drm_formula()` + family constructors (13 items in drmTMB).
+    Mirrors drmTMB's [Model specification](https://itchyshin.github.io/drmTMB/reference/index.html) (13 items in drmTMB). A model is one [`bf`](@ref) formula bundle (one linear predictor per distributional parameter) plus a response family. All 13 drmTMB families are available.
 
-*Phase 0 stub — filled via Workflow D (`mirror-article`). See the [roadmap](https://github.com/itchyshin/DRM.jl/blob/main/ROADMAP.md).*
+## Formula bundle
+
+```@docs
+bf
+```
+
+## Response families
+
+```@docs
+Gaussian
+Student
+Poisson
+NegBinomial2
+TruncatedNegBinomial2
+Beta
+BetaBinomial
+Binomial
+Gamma
+LogNormal
+ZeroOneBeta
+Tweedie
+CumulativeLogit
+```
+
+## Two-column response
+
+```@docs
+cbind
+```
