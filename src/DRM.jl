@@ -21,9 +21,10 @@ Verified results (see report/comparison-grid.md):
 
 NOTE (first cleanup task, see HANDOVER.md): the engine files were migrated as the
 poc's script-style includes (chain: fit_q4_sparse_tmb → fit_ml_q4 → sparse_em_fit
-→ sparse_aug_plsm → sparse_phy / takahashi_selinv). The comparison-suite engines
-(REML, inference, location-only, EM) live in `src/experimental/` and are NOT yet
-wired into this module — wiring them into a clean public API is the v0.1 task.
+→ sparse_aug_plsm → sparse_phy / takahashi_selinv). Inference (Wald + profile + parametric
+bootstrap) is wired in `src/inference.jl`; the remaining comparison-suite engines
+(REML, location-only, EM) live in `src/experimental/` and are NOT yet wired into
+this module — wiring them into a clean public API is the v0.1 task.
 """
 module DRM
 
