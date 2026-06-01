@@ -114,7 +114,21 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
     means = Dict(:mu => Xμ * θ̂[1:pμ])
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))   # residual σ (RE excluded)
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    # Conditional RE estimates (BLUPs): b̂_k = C_k / M_k, the per-group posterior
+    # mean of the random intercept at θ̂. M_k = 1/σ_b² + Σ w_i²/D_i, C_k = Σ w_i r_i/D_i.
+    blup = let
+        βμ = θ̂[1:pμ]; βσ = θ̂[pμ+1:pμ+pσ]; σb² = exp(2 * θ̂[pμ+pσ+1])
+        ημ = Xμ * βμ; ησ = Xσ * βσ
+        S = zeros(G); C = zeros(G)
+        @inbounds for i in 1:n
+            invD = exp(-2 * ησ[i]); k = gidx[i]
+            S[k] += w[i]^2 * invD
+            C[k] += w[i] * (y[i] - ημ[i]) * invD
+        end
+        [C[k] / (1 / σb² + S[k]) for k in 1:G]
+    end
+    re = Dict(Symbol(grp) => blup)
+    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll), re)
 end
 
 # Correlated random intercept+slope (1 + x | g): per group (b0,b1) ~ N(0, Σ_re),
@@ -167,7 +181,52 @@ function _fit_correlated_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, xs,
     names = [:mu => nmμ, :sigma => nmσ, :recov => ["$(grp):L11", "$(grp):L22", "$(grp):L21"]]
     means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    # Conditional RE estimates (BLUPs): per group b̂_k = M_k⁻¹ c_k (intercept, slope),
+    # the same posterior-mean solve the marginal nll forms internally, evaluated at θ̂.
+    blup = let
+        βμ = θ̂[1:pμ]; βσ = θ̂[pμ+1:pμ+pσ]
+        a = θ̂[pμ+pσ+1]; b = θ̂[pμ+pσ+2]; cc = θ̂[pμ+pσ+3]
+        ημ = Xμ * βμ; ησ = Xσ * βσ
+        l11 = exp(a); l22 = exp(b)
+        Σ11 = l11^2; Σ21 = cc * l11; Σ22 = cc^2 + l22^2
+        detΣ = Σ11 * Σ22 - Σ21^2
+        Si11 = Σ22 / detΣ; Si22 = Σ11 / detΣ; Si21 = -Σ21 / detΣ
+        b11 = zeros(G); b21 = zeros(G); b22 = zeros(G); c1 = zeros(G); c2 = zeros(G)
+        @inbounds for i in 1:n
+            invD = exp(-2 * ησ[i]); r = y[i] - ημ[i]; ww = xs[i]; k = gidx[i]
+            b11[k] += invD; b21[k] += ww * invD; b22[k] += ww * ww * invD
+            ri = r * invD; c1[k] += ri; c2[k] += ww * ri
+        end
+        B = Matrix{Float64}(undef, G, 2)
+        @inbounds for k in 1:G
+            m11 = Si11 + b11[k]; m21 = Si21 + b21[k]; m22 = Si22 + b22[k]
+            dM = m11 * m22 - m21^2
+            B[k, 1] = (m22 * c1[k] - m21 * c2[k]) / dM    # intercept BLUP
+            B[k, 2] = (-m21 * c1[k] + m11 * c2[k]) / dM   # slope BLUP
+        end
+        B
+    end
+    re = Dict(Symbol(grp) => blup)
+    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll), re)
+end
+
+"""
+    ranef(fit) -> Dict{Symbol,...}
+
+Per-level conditional random-effect estimates (BLUPs), keyed by grouping factor.
+These are the posterior means of the random effects at the fitted variance
+components — drmTMB's `ranef()`.
+
+- Scalar random intercept `(1 | g)`: a `Vector` of length `n_levels(g)`.
+- Correlated `(1 + x | g)`: an `n_levels × 2` matrix (`[intercept slope]`).
+- Multiple components `(1 | g) + (1 | h)`: one entry per factor.
+
+Currently populated for the Gaussian closed-form RE paths (exact GLS conditional
+means). Returns an empty `Dict` for models without random effects. Non-Gaussian
+GLMM posterior modes (GHQ/Laplace) are not yet wired — see issue #73.
+"""
+function ranef(fit::DrmFit)
+    fit.ranef === nothing ? Dict{Symbol,Vector{Float64}}() : fit.ranef
 end
 
 """
@@ -245,7 +304,25 @@ function _fit_multi_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, comps, nmμ, nmσ
     names = [:mu => nmμ, :sigma => nmσ, :resd => [c[4] for c in comps]]
     means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    # Conditional RE estimates (BLUPs) per component. The whitened solve C\ZtDir is
+    # in σ-scaled units; the BLUP is b̂ = σ_col ⊙ (C \ ZtDir), split back per factor.
+    blup = let
+        βμ = θ̂[1:pμ]; βσ = θ̂[pμ+1:pμ+pσ]
+        ησ = clamp.(Xσ * βσ, -30.0, 30.0); invD = exp.(-2 .* ησ); r = y .- Xμ * βμ
+        σk = [exp(clamp(θ̂[pμ+pσ+k], -30.0, 30.0)) for k in 1:K]
+        σcol = [σk[colcomp[c]] for c in 1:q]
+        Z̃ = Z .* σcol'
+        ZtDir = Z̃' * (invD .* r)
+        M = Z̃' * (invD .* Z̃)
+        bscaled = cholesky(Symmetric(M + I)) \ ZtDir   # at θ̂ this is well-conditioned
+        bfull = σcol .* bscaled                         # back to natural RE scale
+        d = Dict{Symbol,Vector{Float64}}()
+        for (k, c) in enumerate(comps)
+            d[Symbol(c[4])] = bfull[(offs[k]+1):offs[k+1]]
+        end
+        d
+    end
+    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll), blup)
 end
 
 # Gauss–Hermite nodes/weights (Golub–Welsch) for ∫ h(x) e^{-x²} dx ≈ Σ wₖ h(xₖ).
