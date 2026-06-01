@@ -5,7 +5,7 @@
 # re-optimising the nuisance parameters at each fixed value. Mirrors drmTMB's
 # `confint(..., method = "wald" | "profile")`.
 
-using LinearAlgebra: diag
+using LinearAlgebra: diag, isposdef, Symmetric, eigvals
 using Distributions: Normal, Chisq, quantile
 import Optim
 import Statistics
@@ -222,4 +222,38 @@ function bootstrap_ci(formula::DrmFormula, family; data, B::Int = 300,
         end
     end
     return rows
+end
+
+"""
+    check_drm(fit) -> NamedTuple
+
+Post-fit convergence / identifiability diagnostics — drmTMB's `check_drm()`.
+Returns a `NamedTuple` and logs a short report:
+
+- `converged` — the optimiser's convergence flag.
+- `max_abs_grad` — `max|∇nll|` at the optimum (≈ 0 at a clean interior optimum;
+  `NaN` if the objective was not stored on the fit).
+- `vcov_posdef` — whether the stored covariance is positive-definite (drmTMB's
+  `sdreport` is all-`NaN` exactly when this fails).
+- `min_eigval` / `cond` — smallest eigenvalue and condition number of the
+  covariance; a near-zero `min_eigval` flags a singular / weakly identified
+  direction (e.g. a variance pinned at the boundary).
+- `ok` — `true` when converged, the gradient is small, and the covariance is PD.
+
+A non-`ok` result is informative, not an error: a model sitting on a variance
+boundary (Watanabe-singular) can be the data's MLE, with valid Wald SEs on the
+remaining directions — see [`confint`](@ref).
+"""
+function check_drm(fit::DrmFit; grad_tol::Real = 1e-3)
+    mag = fit.nll === nothing ? NaN : maximum(abs, ForwardDiff.gradient(fit.nll, fit.theta))
+    V = fit.vcov
+    pd = isposdef(Symmetric(V))
+    ev = eigvals(Symmetric(V))
+    mineig = minimum(ev); maxeig = maximum(ev)
+    cnd = mineig > 0 ? maxeig / mineig : Inf
+    ok = fit.converged && (isnan(mag) || mag <= grad_tol) && pd
+    report = (converged = fit.converged, max_abs_grad = mag, vcov_posdef = pd,
+              min_eigval = mineig, cond = cnd, ok = ok)
+    @info "check_drm" converged=report.converged max_abs_grad=report.max_abs_grad vcov_posdef=report.vcov_posdef min_eigval=report.min_eigval cond=report.cond ok=report.ok
+    return report
 end
