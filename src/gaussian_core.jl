@@ -313,7 +313,35 @@ function simulate(fit::DrmFit; rng = default_rng())
         return Dict(:mu1 => μ1 .+ σ1 .* z1,
                     :mu2 => μ2 .+ σ2 .* (ρ .* z1 .+ sqrt.(1 .- ρ .^ 2) .* z2))
     end
-    error("simulate: unsupported fit")
+    # Non-Gaussian families: draw from the fitted distribution. μ is on the
+    # response scale (fit.means[:mu]); dispersion is read from the constant
+    # `sigma` block (modelled dispersion `sigma ~ x` is not reconstructable here).
+    μ = fit.means[:mu]; fam = fit.family
+    if fam isa Poisson
+        return Float64[rand(rng, Distributions.Poisson(max(m, 0.0))) for m in μ]
+    elseif fam isa NegBinomial2
+        θ = exp(_sigma_scalar(fit))
+        return Float64[rand(rng, Distributions.NegativeBinomial(θ, θ / (θ + m))) for m in μ]
+    elseif fam isa Beta
+        φ = exp(-2 * _sigma_scalar(fit))
+        return Float64[rand(rng, Distributions.Beta(m * φ, (1 - m) * φ)) for m in μ]
+    elseif fam isa Gamma
+        a = exp(-2 * _sigma_scalar(fit))
+        return Float64[rand(rng, Distributions.Gamma(a, m / a)) for m in μ]
+    end
+    error("simulate: not yet supported for $(typeof(fam)) — implemented for " *
+          "Gaussian, Poisson, NegBinomial2, Beta, Gamma (constant dispersion).")
+end
+
+# Constant-dispersion `sigma` coefficient (link scale). Errors on modelled
+# dispersion `sigma ~ x`, which simulate cannot reconstruct from the stored fit.
+function _sigma_scalar(fit::DrmFit)
+    for (p, r) in fit.blocks
+        p === :sigma || continue
+        length(r) == 1 || error("simulate: modelled dispersion (sigma ~ x) not yet supported")
+        return fit.theta[r[1]]
+    end
+    error("simulate: this fit has no sigma block")
 end
 
 """
