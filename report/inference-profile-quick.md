@@ -4,14 +4,14 @@ CPU-aware run: Julia threads = 4, BLAS threads = 1.
 
 | task | fixture | n | params | elapsed/s |
 |:-----|:--------|--:|-------:|----------:|
-| fit | fixed Gaussian | 600 | 4 | 0.0005 |
+| fit | fixed Gaussian | 600 | 4 | 0.0004 |
 | Wald CI | fixed Gaussian | 600 | 4 | 0.0000 |
-| profile CI warm | fixed Gaussian | 600 | 4 | 0.0135 |
-| bootstrap CI B=20 serial | fixed Gaussian | 600 | 4 | 0.0048 |
-| bootstrap CI B=20 threaded | fixed Gaussian | 600 | 4 | 0.0017 |
-| fit | crossed Gaussian | 900 | 5 | 0.1571 |
-| profile CI warm | crossed Gaussian | 900 | 5 | 6.1822 |
-| profile CI threaded warm | crossed Gaussian | 900 | 5 | 2.5753 |
+| profile CI warm | fixed Gaussian | 600 | 4 | 0.0061 |
+| bootstrap CI B=20 serial | fixed Gaussian | 600 | 4 | 0.0143 |
+| bootstrap CI B=20 threaded | fixed Gaussian | 600 | 4 | 0.0029 |
+| fit | crossed Gaussian | 900 | 5 | 0.1640 |
+| profile CI warm | crossed Gaussian | 900 | 5 | 2.3967 |
+| profile CI threaded warm | crossed Gaussian | 900 | 5 | 0.9986 |
 
 Interpretation guardrails:
 - This measures DRM.jl local costs only; it is not an R-vs-Julia comparison.
