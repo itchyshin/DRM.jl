@@ -22,6 +22,9 @@ stderror(fit::DrmFit) = sqrt.(diag(fit.vcov))
 const _CIRow = NamedTuple{(:param, :coef, :estimate, :lower, :upper),
     Tuple{Symbol,String,Float64,Float64,Float64}}
 
+const _BootstrapSummaryRow = NamedTuple{(:param, :coef, :estimate, :std_error, :lower, :upper),
+    Tuple{Symbol,String,Float64,Float64,Float64,Float64}}
+
 """
     confint(fit; level = 0.95, method = :wald, threads = false)
 
@@ -189,6 +192,31 @@ exactly as to [`drm`](@ref).
 function bootstrap_ci(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
         level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
         tree = nothing, threads::Bool = false)
+    rows = bootstrap_summary(formula, family; data, B, level, rng, K, A, tree, threads)
+    return _bootstrap_ci_rows(rows)
+end
+
+# Family-agnostic parametric bootstrap — any family `simulate` supports. No
+# structured-matrix keywords (those are Gaussian-only). Same row shape as the
+# Gaussian method and `confint`.
+function bootstrap_ci(formula::DrmFormula, family; data, B::Int = 300,
+        level::Real = 0.95, rng = default_rng(), threads::Bool = false)
+    rows = bootstrap_summary(formula, family; data, B, level, rng, threads)
+    return _bootstrap_ci_rows(rows)
+end
+
+"""
+    bootstrap_summary(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =)
+
+Parametric bootstrap coefficient summaries in one pass: point estimate,
+bootstrap standard error, and percentile confidence interval. This is the
+bootstrap analogue of using `stderror(fit)` plus `confint(fit)`, avoiding a
+second bootstrap run when both SEs and intervals are needed. Row fields are
+`(param, coef, estimate, std_error, lower, upper)`.
+"""
+function bootstrap_summary(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
+        level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
+        tree = nothing, threads::Bool = false)
     fit0 = drm(formula, family; data, K, A, tree)
     est = coef(fit0)
     p = length(est)
@@ -209,13 +237,12 @@ function bootstrap_ci(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
             draws[b, :] = coef(drm(formula, family; data = datab, K, A, tree))
         end
     end
-    return _bootstrap_rows(fit0, draws, est, level)
+    return _bootstrap_summary_rows(fit0, draws, est, level)
 end
 
-# Family-agnostic parametric bootstrap — any family `simulate` supports. No
-# structured-matrix keywords (those are Gaussian-only). Same row shape as the
-# Gaussian method and `confint`.
-function bootstrap_ci(formula::DrmFormula, family; data, B::Int = 300,
+# Family-agnostic summary method — any family `simulate` supports. No structured
+# matrix keywords; those are Gaussian-only.
+function bootstrap_summary(formula::DrmFormula, family; data, B::Int = 300,
         level::Real = 0.95, rng = default_rng(), threads::Bool = false)
     fit0 = drm(formula, family; data)
     est = coef(fit0)
@@ -237,7 +264,7 @@ function bootstrap_ci(formula::DrmFormula, family; data, B::Int = 300,
             draws[b, :] = coef(drm(formula, family; data = datab))
         end
     end
-    return _bootstrap_rows(fit0, draws, est, level)
+    return _bootstrap_summary_rows(fit0, draws, est, level)
 end
 
 function _bootstrap_data(formula::DrmFormula, data, ysim)
@@ -250,15 +277,20 @@ function _bootstrap_data(formula::DrmFormula, data, ysim)
     return merge(data, NamedTuple{(formula.response, formula.response2)}((ysim, fail)))
 end
 
-function _bootstrap_rows(fit0, draws, est, level)
+function _bootstrap_ci_rows(rows)
+    return _CIRow[(param = r.param, coef = r.coef, estimate = r.estimate,
+        lower = r.lower, upper = r.upper) for r in rows]
+end
+
+function _bootstrap_summary_rows(fit0, draws, est, level)
     α = (1 - level) / 2
-    rows = NamedTuple{(:param, :coef, :estimate, :lower, :upper),
-        Tuple{Symbol,String,Float64,Float64,Float64}}[]
+    rows = _BootstrapSummaryRow[]
     col = 1
     for ((pp, r), (_, nms)) in zip(fit0.blocks, fit0.coefnames)
         for (j, _) in enumerate(r)
             v = @view draws[:, col]
             push!(rows, (param = pp, coef = nms[j], estimate = est[col],
+                std_error = Statistics.std(v),
                 lower = Statistics.quantile(v, α), upper = Statistics.quantile(v, 1 - α)))
             col += 1
         end

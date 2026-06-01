@@ -154,6 +154,13 @@ import Distributions
         @test length(boot) == length(coef(fit))
         @test all(isfinite(r.lower) && isfinite(r.upper) for r in boot)
 
+        bsum = bootstrap_summary(form, Poisson(); data = dat, B = 20,
+            rng = MersenneTwister(14), threads = true)
+        @test length(bsum) == length(boot)
+        @test all(r.std_error > 0 for r in bsum)
+        @test [(r.param, r.coef, r.estimate, r.lower, r.upper) for r in bsum] ==
+              [(r.param, r.coef, r.estimate, r.lower, r.upper) for r in boot]
+
         ntr = fill(6, n)
         p = @. 1 / (1 + exp(-(0.1 + 0.4 * x)))
         s = Float64[rand(rng, Distributions.Binomial(ntr[i], p[i])) for i in 1:n]
