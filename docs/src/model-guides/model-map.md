@@ -36,7 +36,7 @@ is the same: **one formula per distributional parameter**.
 | `fitted` / `residuals` post-fit accessors | **Stable** | on every fitted model |
 | `simulate` (parametric replicate) | **Stable** | residual-level draw; bootstrap building block |
 | Parametric **bootstrap** intervals (`bootstrap_ci`) | **Stable** | simulate + refit percentiles; Gaussian + **Poisson · NB2 · Beta · Gamma** (constant dispersion); Wald & profile cover all families |
-| `predict` (new data, population level) | **Stable** | `Xβ̂` on new rows |
+| `predict` (new data; `type = :response` / `:link`) | **Stable** | response-scale mean (family inverse link) or linear predictor `Xβ̂`; in-sample `≈ fitted` |
 | `summary(fit)` / `coeftable(fit)` — readable fit + Wald coefficient table | **Stable** | REPL summary (family · nobs · logLik) then a per-block Estimate / Std.Error / z / p table (+ CI from `coeftable`) |
 | `σ` random effects `sigma ~ … + (1 \| g)` (RE on the scale) | **Stable** | per-group Gauss–Hermite marginal (32 nodes); `re_sd(fit)` for the scale-RE SD |
 | Random intercept `(1 \| g)` on a **non-Gaussian** mean — Poisson · NB2 · Beta · Gamma · Student-t · LogNormal · Beta-binomial GLMMs | **Stable** | per-group Gauss–Hermite marginal; `re_sd(fit)` for the group SD |
