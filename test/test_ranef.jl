@@ -51,7 +51,9 @@ using Test, Random, LinearAlgebra, Statistics
         Random.seed!(20260603)
         G = 80; H = 60; m = 30; n = G * m
         g = repeat(1:G, inner = m)
-        h = rand(1:H, n)
+        # _group_index keys re[:h] by first-seen order; prepend 1:H so first-seen
+        # order == natural 1:H and the recovered BLUPs line up with bh below.
+        h = vcat(collect(1:H), rand(1:H, n - H))
         β0 = 0.5; σ = 0.4; sd_g = 0.7; sd_h = 0.5
         bg = sd_g .* randn(G); bh = sd_h .* randn(H)
         y = β0 .+ bg[g] .+ bh[h] .+ σ .* randn(n)
