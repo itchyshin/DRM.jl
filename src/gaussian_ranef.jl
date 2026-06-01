@@ -211,13 +211,6 @@ function _fit_correlated_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, xs,
 end
 
 """
-    vc(fit) -> Dict{Symbol,Matrix{Float64}}
-
-Random-effect covariance matrix per grouping factor, for correlated
-random-effect blocks (`(1 + x | g)`). `sqrt.(diag(vc(fit)[:g]))` are the
-intercept/slope SDs; the off-diagonal gives their covariance.
-"""
-"""
     ranef(fit) -> Dict{Symbol,...}
 
 Per-level conditional random-effect estimates (BLUPs), keyed by grouping factor.
@@ -236,6 +229,13 @@ function ranef(fit::DrmFit)
     fit.ranef === nothing ? Dict{Symbol,Vector{Float64}}() : fit.ranef
 end
 
+"""
+    vc(fit) -> Dict{Symbol,Matrix{Float64}}
+
+Random-effect covariance matrix per grouping factor, for correlated
+random-effect blocks (`(1 + x | g)`). `sqrt.(diag(vc(fit)[:g]))` are the
+intercept/slope SDs; the off-diagonal gives their covariance.
+"""
 function vc(fit::DrmFit)
     d = Dict{Symbol,Matrix{Float64}}()
     for (p, r) in fit.blocks
