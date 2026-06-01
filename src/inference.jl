@@ -25,6 +25,9 @@ const _CIRow = NamedTuple{(:param, :coef, :estimate, :lower, :upper),
 const _BootstrapSummaryRow = NamedTuple{(:param, :coef, :estimate, :std_error, :lower, :upper),
     Tuple{Symbol,String,Float64,Float64,Float64,Float64}}
 
+const _BootstrapFailureRow = NamedTuple{(:replicate, :seed, :message),
+    Tuple{Int,UInt,String}}
+
 """
     confint(fit; level = 0.95, method = :wald, threads = false)
 
@@ -187,12 +190,15 @@ replicate responses, refit each, and take percentile intervals per coefficient.
 Univariate-response models (fixed / random-effect / meta / structured). Same row
 shape as [`confint`](@ref). Set `threads = true` to refit bootstrap replicates
 in parallel. Pass through the structured-matrix keywords (`K` / `A` / `tree`)
-exactly as to [`drm`](@ref).
+exactly as to [`drm`](@ref). Use `bootstrap_result` when you need
+attempted/used/failed counts and per-replicate failure messages.
 """
 function bootstrap_ci(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
         level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
-        tree = nothing, threads::Bool = false)
-    rows = bootstrap_summary(formula, family; data, B, level, rng, K, A, tree, threads)
+        tree = nothing, threads::Bool = false, failures::Symbol = :error,
+        check_converged::Bool = false)
+    rows = bootstrap_summary(formula, family; data, B, level, rng, K, A, tree,
+        threads, failures, check_converged)
     return _bootstrap_ci_rows(rows)
 end
 
@@ -200,8 +206,10 @@ end
 # structured-matrix keywords (those are Gaussian-only). Same row shape as the
 # Gaussian method and `confint`.
 function bootstrap_ci(formula::DrmFormula, family; data, B::Int = 300,
-        level::Real = 0.95, rng = default_rng(), threads::Bool = false)
-    rows = bootstrap_summary(formula, family; data, B, level, rng, threads)
+        level::Real = 0.95, rng = default_rng(), threads::Bool = false,
+        failures::Symbol = :error, check_converged::Bool = false)
+    rows = bootstrap_summary(formula, family; data, B, level, rng, threads,
+        failures, check_converged)
     return _bootstrap_ci_rows(rows)
 end
 
@@ -212,59 +220,128 @@ Parametric bootstrap coefficient summaries in one pass: point estimate,
 bootstrap standard error, and percentile confidence interval. This is the
 bootstrap analogue of using `stderror(fit)` plus `confint(fit)`, avoiding a
 second bootstrap run when both SEs and intervals are needed. Row fields are
-`(param, coef, estimate, std_error, lower, upper)`.
+`(param, coef, estimate, std_error, lower, upper)`. By default, any failed
+replicate errors after all failures are recorded. Set `failures = :skip` to
+compute summaries from successful replicates; call `bootstrap_result` to
+inspect the skipped failures.
 """
 function bootstrap_summary(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
         level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
-        tree = nothing, threads::Bool = false)
-    fit0 = drm(formula, family; data, K, A, tree)
-    est = coef(fit0)
-    p = length(est)
-    draws = Matrix{Float64}(undef, B, p)
-    seeds = rand(rng, UInt, B)
-    if threads && Threads.nthreads() > 1
-        Threads.@threads for b in 1:B
-            rr = Random.MersenneTwister(seeds[b])
-            ysim = simulate(fit0; rng = rr)
-            datab = _bootstrap_data(formula, data, ysim)
-            draws[b, :] = coef(drm(formula, family; data = datab, K, A, tree))
-        end
-    else
-        for b in 1:B
-            rr = Random.MersenneTwister(seeds[b])
-            ysim = simulate(fit0; rng = rr)
-            datab = _bootstrap_data(formula, data, ysim)
-            draws[b, :] = coef(drm(formula, family; data = datab, K, A, tree))
-        end
-    end
-    return _bootstrap_summary_rows(fit0, draws, est, level)
+        tree = nothing, threads::Bool = false, failures::Symbol = :error,
+        check_converged::Bool = false)
+    result = bootstrap_result(formula, family; data, B, level, rng, K, A, tree,
+        threads, failures, check_converged)
+    return result.summary
 end
 
 # Family-agnostic summary method — any family `simulate` supports. No structured
 # matrix keywords; those are Gaussian-only.
 function bootstrap_summary(formula::DrmFormula, family; data, B::Int = 300,
-        level::Real = 0.95, rng = default_rng(), threads::Bool = false)
+        level::Real = 0.95, rng = default_rng(), threads::Bool = false,
+        failures::Symbol = :error, check_converged::Bool = false)
+    result = bootstrap_result(formula, family; data, B, level, rng, threads,
+        failures, check_converged)
+    return result.summary
+end
+
+"""
+    bootstrap_result(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, failures = :error, check_converged = false, K =, A =, tree =)
+
+Auditable parametric bootstrap. Returns a `NamedTuple` with:
+
+- `summary` — the same rows returned by `bootstrap_summary`;
+- `failures` — rows `(replicate, seed, message)` for failed refits;
+- `attempted`, `used`, `failed` — replicate counts;
+- `seeds` — the per-replicate seeds used for reproducibility;
+- `threaded` — whether threaded refits were actually used.
+
+`failures = :error` (default) records failures and then errors if any replicate
+failed. `failures = :skip` computes summaries from successful replicates and
+keeps the failure records in the return value. Set `check_converged = true` to
+treat non-converged refits as failed replicates.
+"""
+function bootstrap_result(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
+        level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
+        tree = nothing, threads::Bool = false, failures::Symbol = :error,
+        check_converged::Bool = false)
+    _check_bootstrap_failure_mode(failures)
+    fit0 = drm(formula, family; data, K, A, tree)
+    refit = datab -> drm(formula, family; data = datab, K, A, tree)
+    return _bootstrap_result(fit0, formula, data, B, level, rng, threads, refit;
+        failures, check_converged)
+end
+
+function bootstrap_result(formula::DrmFormula, family; data, B::Int = 300,
+        level::Real = 0.95, rng = default_rng(), threads::Bool = false,
+        failures::Symbol = :error, check_converged::Bool = false)
+    _check_bootstrap_failure_mode(failures)
     fit0 = drm(formula, family; data)
+    refit = datab -> drm(formula, family; data = datab)
+    return _bootstrap_result(fit0, formula, data, B, level, rng, threads, refit;
+        failures, check_converged)
+end
+
+function _bootstrap_result(fit0, formula::DrmFormula, data, B::Int, level::Real,
+        rng, threads::Bool, refit; failures::Symbol = :error,
+        check_converged::Bool = false)
+    _check_bootstrap_failure_mode(failures)
+    B >= 1 || throw(ArgumentError("bootstrap requires B >= 1"))
     est = coef(fit0)
     p = length(est)
     draws = Matrix{Float64}(undef, B, p)
+    ok = falses(B)
+    messages = Vector{Union{Nothing,String}}(nothing, B)
     seeds = rand(rng, UInt, B)
-    if threads && Threads.nthreads() > 1
-        Threads.@threads for b in 1:B
-            rr = Random.MersenneTwister(seeds[b])
+
+    function run_one!(b)
+        rr = Random.MersenneTwister(seeds[b])
+        try
             ysim = simulate(fit0; rng = rr)
             datab = _bootstrap_data(formula, data, ysim)
-            draws[b, :] = coef(drm(formula, family; data = datab))
+            fitb = refit(datab)
+            if check_converged && !fitb.converged
+                error("refit did not converge")
+            end
+            draws[b, :] = coef(fitb)
+            ok[b] = true
+        catch err
+            messages[b] = sprint(showerror, err)
+        end
+        return nothing
+    end
+
+    threaded = threads && Threads.nthreads() > 1
+    if threaded
+        Threads.@threads for b in 1:B
+            run_one!(b)
         end
     else
         for b in 1:B
-            rr = Random.MersenneTwister(seeds[b])
-            ysim = simulate(fit0; rng = rr)
-            datab = _bootstrap_data(formula, data, ysim)
-            draws[b, :] = coef(drm(formula, family; data = datab))
+            run_one!(b)
         end
     end
-    return _bootstrap_summary_rows(fit0, draws, est, level)
+
+    failure_rows = _BootstrapFailureRow[]
+    for b in 1:B
+        messages[b] === nothing && continue
+        push!(failure_rows, (replicate = b, seed = seeds[b], message = messages[b]::String))
+    end
+    if !isempty(failure_rows) && failures === :error
+        first_failure = first(failure_rows)
+        throw(ErrorException("bootstrap failed in $(length(failure_rows)) of $B replicates; first failure replicate $(first_failure.replicate), seed $(first_failure.seed): $(first_failure.message)"))
+    end
+    used = count(ok)
+    used > 0 || throw(ErrorException("all $B bootstrap replicates failed"))
+    summary = _bootstrap_summary_rows(fit0, draws[ok, :], est, level)
+    return (summary = summary, failures = failure_rows, attempted = B, used = used,
+        failed = length(failure_rows), seeds = seeds, threaded = threaded,
+        check_converged = check_converged)
+end
+
+function _check_bootstrap_failure_mode(failures::Symbol)
+    failures === :error && return nothing
+    failures === :skip && return nothing
+    throw(ArgumentError("bootstrap failures must be :error or :skip (got :$failures)"))
 end
 
 function _bootstrap_data(formula::DrmFormula, data, ysim)
