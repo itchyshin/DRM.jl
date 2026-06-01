@@ -1,6 +1,55 @@
 # Model fitting and post-fit tools
 
 !!! note "Status — Reference"
-    Mirrors drmTMB's [Model fitting and post-fit tools](https://itchyshin.github.io/drmTMB/reference/index.html). **In DRM.jl today:** `fit`, `check_drm`, `fixef`, `ranef`, `sigma`, `corpairs`, `predict`, `simulate` (23 in drmTMB).
+    Mirrors drmTMB's [Model fitting and post-fit tools](https://itchyshin.github.io/drmTMB/reference/index.html) (23 in drmTMB). The fitting verb is [`drm`](@ref); the post-fit accessors below cover coefficients, fitted scale / correlation, random-effect estimates, predictions, simulation, inference, and convergence diagnostics.
 
-*Phase 0 stub — filled via Workflow D (`mirror-article`). See the [roadmap](https://github.com/itchyshin/DRM.jl/blob/main/ROADMAP.md).*
+## Fitting
+
+```@docs
+drm
+```
+
+## Coefficients and (co)variance
+
+```@docs
+fixef
+re_sd
+vc
+coeftable
+```
+
+## Fitted scale and correlation
+
+```@docs
+sigma
+corpairs
+```
+
+## Random-effect estimates
+
+```@docs
+ranef
+```
+
+## Prediction and simulation
+
+```@docs
+predict
+simulate
+fitted
+residuals
+```
+
+## Inference
+
+```@docs
+confint
+stderror
+bootstrap_ci
+```
+
+## Diagnostics
+
+```@docs
+check_drm
+```
