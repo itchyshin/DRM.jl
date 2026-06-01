@@ -133,8 +133,9 @@ You will not find these in the donor — they are genuinely new work:
    - Recovery test on a fixture.
    This is a per-family port from drmTMB's C++ source, not from GLLVM.jl.
 
-4. **`meta_known_V()` data carrier.** Per project rule: meta-analysis is
-   `family = gaussian()` plus `meta_known_V(V = V)`. DRM.jl needs a small
+4. **`meta_V()` data carrier.** Per project rule: meta-analysis is
+   `family = gaussian()` plus `meta_V(V = V)` (the older `meta_known_V()`
+   is deprecated, kept only as a parity stub). DRM.jl needs a small
    data adapter that hands the known V down to the Gaussian likelihood.
    No GLLVM.jl analog; trivial (≈ 40 LOC).
 
