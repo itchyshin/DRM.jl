@@ -22,7 +22,8 @@ will implement it. Sources of truth:
   EM/SQUAREM, sparse-phylogenetic precision: all ported from
   `gllvmTMB.jl`. New code: `bf()` parser, per-dpar design matrices,
   the two Gaussian likelihoods.
-- **Syntax.** `bf()`, `phylo(1 | p | g)`, `meta_known_V(V = V)`,
+- **Syntax.** `bf()`, `phylo(1 | p | g)`, `meta_V(V = V)` (the older
+  `meta_known_V()` is deprecated — kept only as a parity stub),
   `sigma`/`rho12`/`nu`/`zi` — verbatim from `drmTMB`. RE forms:
   lme4-style `(1 | g)`, brms-style `(1 | p | g)`, `phylo(... | tree = ...)`.
 - **POC evidence.** Median speedup R/Julia 22.6× (max 83.8×) on the
@@ -99,7 +100,7 @@ Layout mirrors `gllvmTMB.jl/src/` so ports stay line-recognisable.
 | Structural | `phylo(rhs | label | group; tree)` | Phylogenetic RE block; marginal-Gaussian-friendly in v0.1.x. |
 | Structural | `spatial(formula; mesh)` | v0.5+ SPDE block. |
 | Structural | `animal(group; A)`, `relmat(group; A)` | Pedigree / arbitrary positive-definite block. |
-| Structural | `meta_known_V(V = V)` | v0.2+ meta-analysis marker. |
+| Structural | `meta_V(V = V)` | v0.2+ meta-analysis marker (`meta_known_V` deprecated). |
 | Methods | `coef(fit[, :sigma])` | Coefficient vector or per-dpar dict. |
 | Methods | `vcov(fit)`, `logLik(fit)`, `nobs(fit)`, `dof(fit)`, `AIC(fit)`, `BIC(fit)` | Standard fit summaries. |
 | Methods | `confint(fit; method = :wald)` | `:wald`, `:profile`, `:bootstrap`. |
@@ -250,7 +251,7 @@ core engine does not require it.
 | Version | Adds | Major new code | Status |
 |---|---|---|---|
 | **v0.1.x** | Gaussian univariate + bivariate fixed effects; Gaussian-marginal phylo block; SharedRE Gaussian-only; Wald/profile/bootstrap CIs | `formula.jl`, `design.jl`, `likelihood_univ_gaussian.jl`, `likelihood_biv_gaussian.jl`, `likelihood_phylo.jl` (with sparse Q ports) | POC validated; build target |
-| **v0.2.x** | Student-t (univariate, no RE); `meta_known_V`; richer diagnostics | `families.jl` extensions; `meta.jl` thin wrapper | Plan only |
+| **v0.2.x** | Student-t (univariate, no RE); `meta_V`; richer diagnostics | `families.jl` extensions; `meta.jl` thin wrapper | Plan only |
 | **v0.3.x** | **Laplace wrapper** unlocking non-Gaussian + RE on `sigma` etc.; IID + AR1 random effects via Laplace; Tweedie, Beta, NB2, ZI, ordinal families | `laplace.jl` (the major new piece); inner-mode finder + outer AD | Architecture deferred |
 | **v0.4.x** | Phylogenetic random effects on non-Gaussian families (via Laplace) | Hook sparse-Q ports into Laplace inner loop | Architecture deferred |
 | **v0.5.x** | Spatial SPDE | FEM mesh helpers; sparse precision construction | Sketch only |
@@ -273,7 +274,7 @@ Mirroring `drmTMB/AGENTS.md`:
    contrasts; it is not an alias for `sigma`.
 3. **Syntax matches drmTMB verbatim.** `bf(mu1 = y1 ~ x, mu2 = y2 ~ x,
    sigma1 = ~ x, sigma2 = ~ x, rho12 = ~ x)`; `phylo(1 | p | species,
-   tree = tree)`; `meta_known_V(V = V)`. Where a Julia idiom is
+   tree = tree)`; `meta_V(V = V)`. Where a Julia idiom is
    unavoidable (`@formula`, kwargs in `bf()`), keep the rest verbatim.
 4. **Reuse from GLLVM.jl is wholesale.** Ported files (packing,
    profile, `confint_*`, EM, sparse phylo) are copied with file-level
@@ -283,7 +284,8 @@ Mirroring `drmTMB/AGENTS.md`:
    shared blocks (label `p` is significant), `phylo(rhs | label | group;
    tree)` for phylogenetic RE. No further grammar without an explicit
    design decision.
-6. **Meta-analysis is `Gaussian()` + `meta_known_V(V = V)`.** No
+6. **Meta-analysis is `Gaussian()` + `meta_V(V = V)`.** (The older
+   `meta_known_V()` is deprecated, kept only as a parity stub.) No
    `meta_gaussian()` family, no `tau ~` syntax.
 7. **No new family without a simulation test.** A family is "in" only
    when a recovery test on `n ∈ {200, 1000}` matches the truth to the
