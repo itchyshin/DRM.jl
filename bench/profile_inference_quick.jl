@@ -13,6 +13,7 @@ Pkg.activate(dirname(@__DIR__))
 using DRM
 using LinearAlgebra, Printf, Random, Statistics
 using Distributions: Chisq, quantile
+import Distributions
 import Optim
 
 BLAS.set_num_threads(1)
@@ -48,6 +49,20 @@ function crossed_gaussian_fixture()
     ]
     form = bf(@formula(y ~ x + (1 | g) + (1 | h)), @formula(sigma ~ 1))
     return form, (; y=Float64.(y), x, g, h)
+end
+
+function poisson_re_fixture()
+    rng = MersenneTwister(8103)
+    G = 30
+    m = 20
+    n = G * m
+    x = randn(rng, n)
+    g = [Symbol("g", fld(i - 1, m) + 1) for i in 1:n]
+    bg = 0.45 .* randn(rng, G)
+    η = [0.25 + 0.55 * x[i] + bg[fld(i - 1, m) + 1] for i in 1:n]
+    y = Float64[rand(rng, Distributions.Poisson(exp(η[i]))) for i in 1:n]
+    form = bf(@formula(y ~ x + (1 | g)))
+    return form, (; y, x, g)
 end
 
 function timecall(f)
@@ -236,6 +251,37 @@ threaded_delta = maximum(
     ) for i in eachindex(prof_crossed)
 )
 
+form_pois_re, data_pois_re = poisson_re_fixture()
+drm(form_pois_re, Poisson(); data=data_pois_re)
+bootstrap_result(
+    form_pois_re, Poisson(); data=data_pois_re, B=2, rng=MersenneTwister(92),
+    failures=:skip, check_converged=true
+)
+GC.gc()
+t_boot_pois_re_serial, boot_pois_re_serial = timecall(
+    () -> bootstrap_result(
+        form_pois_re,
+        Poisson();
+        data=data_pois_re,
+        B=12,
+        rng=MersenneTwister(93),
+        failures=:skip,
+        check_converged=true,
+    ),
+)
+t_boot_pois_re_threaded, boot_pois_re_threaded = timecall(
+    () -> bootstrap_result(
+        form_pois_re,
+        Poisson();
+        data=data_pois_re,
+        B=12,
+        rng=MersenneTwister(93),
+        threads=true,
+        failures=:skip,
+        check_converged=true,
+    ),
+)
+
 mkpath(dirname(OUT))
 open(OUT, "w") do io
     println(io, "# Quick inference profile")
@@ -338,6 +384,20 @@ open(OUT, "w") do io
         length(curve_crossed.x),
         t_curve_crossed
     )
+    @printf(
+        io,
+        "| bootstrap result B=12 serial | Poisson (1|g) | %d | %d | %.4f |\n",
+        length(data_pois_re.y),
+        length(boot_pois_re_serial.summary),
+        t_boot_pois_re_serial
+    )
+    @printf(
+        io,
+        "| bootstrap result B=12 threaded | Poisson (1|g) | %d | %d | %.4f |\n",
+        length(data_pois_re.y),
+        length(boot_pois_re_threaded.summary),
+        t_boot_pois_re_threaded
+    )
     println(io)
     println(io, "Interpretation guardrails:")
     println(
@@ -362,6 +422,16 @@ open(OUT, "w") do io
         io,
         "- Threaded bootstrap uses independent per-replicate RNG seeds; timings are only comparable at the explicit thread count above.",
     )
+    @printf(
+        io,
+        "- Poisson RE bootstrap accounting: serial used %d/%d (failed %d), threaded used %d/%d (failed %d).\n",
+        boot_pois_re_serial.used,
+        boot_pois_re_serial.attempted,
+        boot_pois_re_serial.failed,
+        boot_pois_re_threaded.used,
+        boot_pois_re_threaded.attempted,
+        boot_pois_re_threaded.failed
+    )
 end
 
 @printf(
@@ -384,5 +454,14 @@ end
     t_surface_cold,
     surface_speedup,
     surface_delta
+)
+@printf(
+    "poisson RE bootstrap B=12 serial %.4fs threaded %.4fs, used %d/%d vs %d/%d\n",
+    t_boot_pois_re_serial,
+    t_boot_pois_re_threaded,
+    boot_pois_re_serial.used,
+    boot_pois_re_serial.attempted,
+    boot_pois_re_threaded.used,
+    boot_pois_re_threaded.attempted
 )
 println("wrote ", OUT)

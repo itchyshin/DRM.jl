@@ -91,6 +91,15 @@ Returns the same `(param, coef, estimate, lower, upper)` rows as `confint`. Use
 Wald (`confint`) for speed; bootstrap when you want fewer distributional
 assumptions.
 
+For longer jobs, use `bootstrap_result` to keep the audit trail:
+
+```julia
+bres = bootstrap_result(bf(@formula(y ~ x), @formula(sigma ~ x)), Gaussian();
+                        data = dat, B = 500, threads = true,
+                        failures = :skip)
+(bres.attempted, bres.used, bres.failed)
+```
+
 ## See also
 
 - [Get started](../get-started.md) · [When variance carries signal](../tutorials/location-scale.md)

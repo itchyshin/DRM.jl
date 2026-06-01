@@ -161,6 +161,13 @@ import Distributions
         @test [(r.param, r.coef, r.estimate, r.lower, r.upper) for r in bsum] ==
               [(r.param, r.coef, r.estimate, r.lower, r.upper) for r in boot]
 
+        bres = bootstrap_result(form, Poisson(); data = dat, B = 12,
+            rng = MersenneTwister(16), threads = true)
+        @test bres.attempted == bres.used == 12
+        @test bres.failed == 0
+        @test isempty(bres.failures)
+        @test length(bres.summary) == length(coef(fit))
+
         ntr = fill(6, n)
         p = @. 1 / (1 + exp(-(0.1 + 0.4 * x)))
         s = Float64[rand(rng, Distributions.Binomial(ntr[i], p[i])) for i in 1:n]
