@@ -8,6 +8,7 @@
 using LinearAlgebra: diag, isposdef, Symmetric, eigvals
 using Distributions: Normal, Chisq, quantile
 import Optim
+import Random
 import Statistics
 import StatsAPI: stderror, confint
 
@@ -22,7 +23,7 @@ const _CIRow = NamedTuple{(:param, :coef, :estimate, :lower, :upper),
     Tuple{Symbol,String,Float64,Float64,Float64}}
 
 """
-    confint(fit; level = 0.95, method = :wald)
+    confint(fit; level = 0.95, method = :wald, threads = false)
 
 Confidence intervals for every coefficient, as a vector of
 `(param, coef, estimate, lower, upper)` rows on each parameter's working scale
@@ -38,12 +39,15 @@ Confidence intervals for every coefficient, as a vector of
   point's optimum) and a guarded-Newton root-find driven by the envelope-theorem
   slope `∂nll/∂θ_k`, falling back to bisection — bracket-guaranteed correctness,
   far fewer inner re-optimisations than cold-started bisection.
+  Pass `threads = true` to profile coefficients in parallel when the fitted
+  objective is thread-safe.
 
 Mirrors drmTMB's `confint(fit, method = "wald" | "profile")`.
 """
-function confint(fit::DrmFit; level::Real = 0.95, method::Symbol = :wald)
+function confint(fit::DrmFit; level::Real = 0.95, method::Symbol = :wald,
+                 threads::Bool = false)
     method === :wald && return _wald_ci(fit, level)
-    method === :profile && return _profile_ci(fit, level)
+    method === :profile && return _profile_ci(fit, level; threads = threads)
     throw(ArgumentError("confint: method must be :wald or :profile (got :$method)"))
 end
 
@@ -135,7 +139,7 @@ function _profile_endpoint(nll, θ̂, k, nllhat, half, s, dir, u0)
     return θ̂[k] + dir * t
 end
 
-function _profile_ci(fit::DrmFit, level::Real)
+function _profile_ci(fit::DrmFit, level::Real; threads::Bool = false)
     fit.nll === nothing &&
         throw(ArgumentError("profile intervals require the fitted objective; this model was not built with one"))
     nll = fit.nll
@@ -143,72 +147,110 @@ function _profile_ci(fit::DrmFit, level::Real)
     nllhat = nll(θ̂)
     half = quantile(Chisq(1), level) / 2           # nll rises by χ²₁/2 at each endpoint
     se = stderror(fit)
-    p = length(θ̂)
-    rows = _CIRow[]
+    jobs = NamedTuple{(:param, :coef, :k),Tuple{Symbol,String,Int}}[]
     for ((pp, r), (_, nms)) in zip(fit.blocks, fit.coefnames)
         for (j, k) in enumerate(r)
-            est = θ̂[k]
-            s = (isfinite(se[k]) && se[k] > 0) ? se[k] : max(abs(est), 1.0)
-            u0 = θ̂[[i for i in 1:p if i != k]]      # warm start: the joint MLE nuisance block
-            lo = _profile_endpoint(nll, θ̂, k, nllhat, half, s, -1, u0)
-            hi = _profile_endpoint(nll, θ̂, k, nllhat, half, s, +1, u0)
-            push!(rows, (param = pp, coef = nms[j], estimate = est, lower = lo, upper = hi))
+            push!(jobs, (param = pp, coef = nms[j], k = k))
+        end
+    end
+    rows = Vector{_CIRow}(undef, length(jobs))
+    if threads && Threads.nthreads() > 1
+        Threads.@threads for i in eachindex(jobs)
+            rows[i] = _profile_row(jobs[i], nll, θ̂, nllhat, half, se)
+        end
+    else
+        for i in eachindex(jobs)
+            rows[i] = _profile_row(jobs[i], nll, θ̂, nllhat, half, se)
         end
     end
     return rows
 end
 
+function _profile_row(job, nll, θ̂, nllhat, half, se)
+    k = job.k
+    est = θ̂[k]
+    s = (isfinite(se[k]) && se[k] > 0) ? se[k] : max(abs(est), 1.0)
+    u0 = θ̂[[i for i in 1:length(θ̂) if i != k]]
+    lo = _profile_endpoint(nll, θ̂, k, nllhat, half, s, -1, u0)
+    hi = _profile_endpoint(nll, θ̂, k, nllhat, half, s, +1, u0)
+    return (param = job.param, coef = job.coef, estimate = est, lower = lo, upper = hi)
+end
+
 """
-    bootstrap_ci(formula, family; data, B = 300, level = 0.95, rng = default_rng(), K =, A =, tree =)
+    bootstrap_ci(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =)
 
 Parametric bootstrap confidence intervals: fit the model, then `simulate` `B`
 replicate responses, refit each, and take percentile intervals per coefficient.
 Univariate-response models (fixed / random-effect / meta / structured). Same row
-shape as [`confint`](@ref). Pass through the structured-matrix keywords (`K` /
-`A` / `tree`) exactly as to [`drm`](@ref).
+shape as [`confint`](@ref). Set `threads = true` to refit bootstrap replicates
+in parallel. Pass through the structured-matrix keywords (`K` / `A` / `tree`)
+exactly as to [`drm`](@ref).
 """
 function bootstrap_ci(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
-        level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing, tree = nothing)
+        level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
+        tree = nothing, threads::Bool = false)
     fit0 = drm(formula, family; data, K, A, tree)
-    response = formula.response
     est = coef(fit0)
     p = length(est)
     draws = Matrix{Float64}(undef, B, p)
-    for b in 1:B
-        ysim = simulate(fit0; rng)
-        datab = merge(data, NamedTuple{(response,)}((ysim,)))
-        draws[b, :] = coef(drm(formula, family; data = datab, K, A, tree))
-    end
-    α = (1 - level) / 2
-    rows = NamedTuple{(:param, :coef, :estimate, :lower, :upper),
-        Tuple{Symbol,String,Float64,Float64,Float64}}[]
-    col = 1
-    for ((pp, r), (_, nms)) in zip(fit0.blocks, fit0.coefnames)
-        for (j, _) in enumerate(r)
-            v = @view draws[:, col]
-            push!(rows, (param = pp, coef = nms[j], estimate = est[col],
-                lower = Statistics.quantile(v, α), upper = Statistics.quantile(v, 1 - α)))
-            col += 1
+    seeds = rand(rng, UInt, B)
+    if threads && Threads.nthreads() > 1
+        Threads.@threads for b in 1:B
+            rr = Random.MersenneTwister(seeds[b])
+            ysim = simulate(fit0; rng = rr)
+            datab = _bootstrap_data(formula, data, ysim)
+            draws[b, :] = coef(drm(formula, family; data = datab, K, A, tree))
+        end
+    else
+        for b in 1:B
+            rr = Random.MersenneTwister(seeds[b])
+            ysim = simulate(fit0; rng = rr)
+            datab = _bootstrap_data(formula, data, ysim)
+            draws[b, :] = coef(drm(formula, family; data = datab, K, A, tree))
         end
     end
-    return rows
+    return _bootstrap_rows(fit0, draws, est, level)
 end
 
-# Family-agnostic parametric bootstrap — any family `simulate` supports
-# (Poisson / NegBinomial2 / Beta / Gamma). No structured-matrix keywords (those
-# are Gaussian-only). Same row shape as the Gaussian method and `confint`.
+# Family-agnostic parametric bootstrap — any family `simulate` supports. No
+# structured-matrix keywords (those are Gaussian-only). Same row shape as the
+# Gaussian method and `confint`.
 function bootstrap_ci(formula::DrmFormula, family; data, B::Int = 300,
-        level::Real = 0.95, rng = default_rng())
+        level::Real = 0.95, rng = default_rng(), threads::Bool = false)
     fit0 = drm(formula, family; data)
-    response = formula.response
     est = coef(fit0)
     p = length(est)
     draws = Matrix{Float64}(undef, B, p)
-    for b in 1:B
-        ysim = simulate(fit0; rng)
-        datab = merge(data, NamedTuple{(response,)}((ysim,)))
-        draws[b, :] = coef(drm(formula, family; data = datab))
+    seeds = rand(rng, UInt, B)
+    if threads && Threads.nthreads() > 1
+        Threads.@threads for b in 1:B
+            rr = Random.MersenneTwister(seeds[b])
+            ysim = simulate(fit0; rng = rr)
+            datab = _bootstrap_data(formula, data, ysim)
+            draws[b, :] = coef(drm(formula, family; data = datab))
+        end
+    else
+        for b in 1:B
+            rr = Random.MersenneTwister(seeds[b])
+            ysim = simulate(fit0; rng = rr)
+            datab = _bootstrap_data(formula, data, ysim)
+            draws[b, :] = coef(drm(formula, family; data = datab))
+        end
     end
+    return _bootstrap_rows(fit0, draws, est, level)
+end
+
+function _bootstrap_data(formula::DrmFormula, data, ysim)
+    if formula.response2 === nothing
+        return merge(data, NamedTuple{(formula.response,)}((ysim,)))
+    end
+    ntr = Float64.(getproperty(data, formula.response)) .+
+          Float64.(getproperty(data, formula.response2))
+    fail = ntr .- ysim
+    return merge(data, NamedTuple{(formula.response, formula.response2)}((ysim, fail)))
+end
+
+function _bootstrap_rows(fit0, draws, est, level)
     α = (1 - level) / 2
     rows = NamedTuple{(:param, :coef, :estimate, :lower, :upper),
         Tuple{Symbol,String,Float64,Float64,Float64}}[]

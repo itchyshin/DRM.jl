@@ -348,44 +348,129 @@ zero (population level).
 """
 function simulate(fit::DrmFit; rng = default_rng())
     n = fit.nobs
-    if haskey(fit.scales, :sigma)                       # univariate / RE / meta
-        return fit.means[:mu] .+ fit.scales[:sigma] .* randn(rng, n)
-    elseif haskey(fit.scales, :sigma1)                  # bivariate
+    fam = fit.family
+    if fam isa Gaussian && haskey(fit.scales, :sigma1)   # bivariate Gaussian
         μ1, μ2 = fit.means[:mu1], fit.means[:mu2]
         σ1, σ2, ρ = fit.scales[:sigma1], fit.scales[:sigma2], fit.scales[:rho12]
         z1 = randn(rng, n); z2 = randn(rng, n)
         return Dict(:mu1 => μ1 .+ σ1 .* z1,
                     :mu2 => μ2 .+ σ2 .* (ρ .* z1 .+ sqrt.(1 .- ρ .^ 2) .* z2))
+    elseif fam isa Gaussian && haskey(fit.scales, :sigma) # univariate / RE / meta
+        return fit.means[:mu] .+ fit.scales[:sigma] .* randn(rng, n)
     end
     # Non-Gaussian families: draw from the fitted distribution. μ is on the
-    # response scale (fit.means[:mu]); dispersion is read from the constant
-    # `sigma` block (modelled dispersion `sigma ~ x` is not reconstructable here).
-    μ = fit.means[:mu]; fam = fit.family
+    # response scale (fit.means[:mu]); per-row auxiliary parameters are stored in
+    # `fit.scales` by the family fitters.
+    μ = fit.means[:mu]
     if fam isa Poisson
+        if haskey(fit.scales, :zi)
+            zi = fit.scales[:zi]
+            return Float64[rand(rng) < zi[i] ? 0 : rand(rng, Distributions.Poisson(max(μ[i], 0.0))) for i in 1:n]
+        elseif haskey(fit.scales, :hu)
+            hu = fit.scales[:hu]
+            return Float64[rand(rng) < hu[i] ? 0 : _rand_positive_poisson(rng, max(μ[i], eps())) for i in 1:n]
+        end
         return Float64[rand(rng, Distributions.Poisson(max(m, 0.0))) for m in μ]
     elseif fam isa NegBinomial2
-        θ = exp(_sigma_scalar(fit))
-        return Float64[rand(rng, Distributions.NegativeBinomial(θ, θ / (θ + m))) for m in μ]
+        θ = _scale_vector(fit, :sigma)
+        if haskey(fit.scales, :zi)
+            zi = fit.scales[:zi]
+            return Float64[rand(rng) < zi[i] ? 0 : rand(rng, Distributions.NegativeBinomial(θ[i], θ[i] / (θ[i] + μ[i]))) for i in 1:n]
+        elseif haskey(fit.scales, :hu)
+            hu = fit.scales[:hu]
+            return Float64[rand(rng) < hu[i] ? 0 : _rand_positive_negbin(rng, θ[i], θ[i] / (θ[i] + μ[i])) for i in 1:n]
+        end
+        return Float64[rand(rng, Distributions.NegativeBinomial(θ[i], θ[i] / (θ[i] + μ[i]))) for i in 1:n]
+    elseif fam isa TruncatedNegBinomial2
+        θ = _scale_vector(fit, :sigma)
+        return Float64[_rand_positive_negbin(rng, θ[i], θ[i] / (θ[i] + μ[i])) for i in 1:n]
     elseif fam isa Beta
-        φ = exp(-2 * _sigma_scalar(fit))
-        return Float64[rand(rng, Distributions.Beta(m * φ, (1 - m) * φ)) for m in μ]
+        σ = _scale_vector(fit, :sigma); φ = @. 1 / (σ * σ)
+        return Float64[rand(rng, Distributions.Beta(clamp(μ[i], eps(), 1 - eps()) * φ[i], (1 - clamp(μ[i], eps(), 1 - eps())) * φ[i])) for i in 1:n]
+    elseif fam isa BetaBinomial
+        σ = _scale_vector(fit, :sigma); φ = @. 1 / (σ * σ)
+        ntr = round.(Int, _scale_vector(fit, :trials))
+        return Float64[rand(rng, Distributions.BetaBinomial(ntr[i], clamp(μ[i], eps(), 1 - eps()) * φ[i], (1 - clamp(μ[i], eps(), 1 - eps())) * φ[i])) for i in 1:n]
+    elseif fam isa Binomial
+        ntr = round.(Int, _scale_vector(fit, :trials))
+        return Float64[rand(rng, Distributions.Binomial(ntr[i], clamp(μ[i], eps(), 1 - eps()))) for i in 1:n]
     elseif fam isa Gamma
-        a = exp(-2 * _sigma_scalar(fit))
-        return Float64[rand(rng, Distributions.Gamma(a, m / a)) for m in μ]
+        σ = _scale_vector(fit, :sigma); a = @. 1 / (σ * σ)
+        return Float64[rand(rng, Distributions.Gamma(a[i], μ[i] / a[i])) for i in 1:n]
+    elseif fam isa LogNormal
+        σ = _scale_vector(fit, :sigma)
+        return Float64[exp(log(max(μ[i], eps())) + σ[i] * randn(rng)) for i in 1:n]
+    elseif fam isa Student
+        σ = _scale_vector(fit, :sigma)
+        ν = _scale_vector(fit, :nu)
+        return Float64[μ[i] + σ[i] * rand(rng, Distributions.TDist(ν[i])) for i in 1:n]
+    elseif fam isa ZeroOneBeta
+        μb = _scale_vector(fit, :beta_mu)
+        σ = _scale_vector(fit, :sigma); φ = @. 1 / (σ * σ)
+        zoi = _scale_vector(fit, :zoi); coi = _scale_vector(fit, :coi)
+        return Float64[_rand_zeroonebeta(rng, μb[i], φ[i], zoi[i], coi[i]) for i in 1:n]
+    elseif fam isa Tweedie
+        σ = _scale_vector(fit, :sigma)
+        p = _scale_vector(fit, :nu)
+        return Float64[_rand_tweedie(rng, μ[i], σ[i]^2, p[i]) for i in 1:n]
+    elseif fam isa CumulativeLogit
+        η = _scale_vector(fit, :ordinal_eta)
+        cuts = _scale_vector(fit, :ordinal_cuts)
+        return Float64[_rand_cumulative_logit(rng, η[i], cuts) for i in 1:n]
     end
-    error("simulate: not yet supported for $(typeof(fam)) — implemented for " *
-          "Gaussian, Poisson, NegBinomial2, Beta, Gamma (constant dispersion).")
+    error("simulate: not yet supported for $(typeof(fam)).")
 end
 
-# Constant-dispersion `sigma` coefficient (link scale). Errors on modelled
-# dispersion `sigma ~ x`, which simulate cannot reconstruct from the stored fit.
-function _sigma_scalar(fit::DrmFit)
-    for (p, r) in fit.blocks
-        p === :sigma || continue
-        length(r) == 1 || error("simulate: modelled dispersion (sigma ~ x) not yet supported")
-        return fit.theta[r[1]]
+function _scale_vector(fit::DrmFit, key::Symbol)
+    haskey(fit.scales, key) || error("simulate: fitted $(typeof(fit.family)) object does not carry `$key`; refit with current DRM.jl")
+    return fit.scales[key]
+end
+
+function _rand_positive_poisson(rng, λ)
+    for _ in 1:10_000
+        y = rand(rng, Distributions.Poisson(λ))
+        y > 0 && return y
     end
-    error("simulate: this fit has no sigma block")
+    return 1
+end
+
+function _rand_positive_negbin(rng, r, p)
+    for _ in 1:10_000
+        y = rand(rng, Distributions.NegativeBinomial(r, p))
+        y > 0 && return y
+    end
+    return 1
+end
+
+function _rand_zeroonebeta(rng, μ, φ, zoi, coi)
+    u = rand(rng)
+    if u < zoi
+        return rand(rng) < coi ? 1.0 : 0.0
+    end
+    m = clamp(μ, eps(), 1 - eps())
+    return rand(rng, Distributions.Beta(m * φ, (1 - m) * φ))
+end
+
+function _rand_tweedie(rng, μ, φ, p)
+    λ = μ^(2 - p) / (φ * (2 - p))
+    γ = φ * (p - 1) * μ^(p - 1)
+    sh = (2 - p) / (p - 1)
+    N = rand(rng, Distributions.Poisson(λ))
+    return N == 0 ? 0.0 : rand(rng, Distributions.Gamma(N * sh, γ))
+end
+
+function _rand_cumulative_logit(rng, η, cuts)
+    K = length(cuts) + 1
+    u = rand(rng)
+    acc = 0.0
+    for k in 1:K
+        pk = k == 1 ? _logistic(cuts[1] - η) :
+             k == K ? 1 - _logistic(cuts[end] - η) :
+             _logistic(cuts[k] - η) - _logistic(cuts[k-1] - η)
+        acc += max(pk, 0.0)
+        u <= acc && return k
+    end
+    return K
 end
 
 """

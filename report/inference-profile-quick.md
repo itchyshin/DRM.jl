@@ -4,18 +4,17 @@ CPU-aware run: Julia threads = 4, BLAS threads = 1.
 
 | task | fixture | n | params | elapsed/s |
 |:-----|:--------|--:|-------:|----------:|
-| fit | fixed Gaussian | 600 | 4 | 0.0004 |
+| fit | fixed Gaussian | 600 | 4 | 0.0005 |
 | Wald CI | fixed Gaussian | 600 | 4 | 0.0000 |
-| profile CI | fixed Gaussian | 600 | 4 | 0.0198 |
-| bootstrap CI B=20 | fixed Gaussian | 600 | 4 | 0.0062 |
-| fit | crossed Gaussian | 900 | 5 | 0.1521 |
-| profile CI | crossed Gaussian | 900 | 5 | 8.0421 |
-| profile CI warm prototype | crossed Gaussian | 900 | 5 | 5.8248 |
-| profile CI threaded warm prototype | crossed Gaussian | 900 | 5 | 2.5637 |
+| profile CI warm | fixed Gaussian | 600 | 4 | 0.0135 |
+| bootstrap CI B=20 serial | fixed Gaussian | 600 | 4 | 0.0048 |
+| bootstrap CI B=20 threaded | fixed Gaussian | 600 | 4 | 0.0017 |
+| fit | crossed Gaussian | 900 | 5 | 0.1571 |
+| profile CI warm | crossed Gaussian | 900 | 5 | 6.1822 |
+| profile CI threaded warm | crossed Gaussian | 900 | 5 | 2.5753 |
 
 Interpretation guardrails:
 - This measures DRM.jl local costs only; it is not an R-vs-Julia comparison.
-- Profile CI refits the nuisance parameters many times per coefficient, so this is the next pipeline target after bootstrap.
-- Warm prototype max endpoint delta versus current profile CI: 0.000e+00.
-- Threaded warm prototype max endpoint delta versus current profile CI: 0.000e+00.
-- The bootstrap row is serial in this script; threaded bootstrap should be measured separately with explicit thread counts.
+- Profile CI now warm-starts nuisance fits in the production `confint(..., method=:profile)` path.
+- Threaded profile max endpoint delta versus serial warm profile CI: 0.000e+00.
+- Threaded bootstrap uses independent per-replicate RNG seeds; timings are only comparable at the explicit thread count above.

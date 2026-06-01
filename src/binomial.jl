@@ -85,7 +85,7 @@ function _fit_binomial(fam::Binomial, s, ntr, Xμ, nmμ, g_tol)
     blocks = [:mu => 1:pμ]; names = [:mu => nmμ]
     means = Dict(:mu => _logistic.(Xμ * θ̂))                # fitted success probability
     obs = Dict(:mu => s ./ ntr)                            # observed proportion (for residuals)
-    scales = Dict{Symbol,Vector{Float64}}()
+    scales = Dict(:trials => Float64.(nint))
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
 
@@ -129,6 +129,6 @@ function _fit_binomial_ranef(fam::Binomial, s, ntr, Xμ, gidx, G, nmμ, grp, g_t
     blocks = [:mu => 1:pμ, :resd => (pμ+1):(pμ+1)]
     names = [:mu => nmμ, :resd => [String(grp)]]
     means = Dict(:mu => _logistic.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => s ./ ntr)   # population μ (b=0)
-    scales = Dict{Symbol,Vector{Float64}}()
+    scales = Dict(:trials => Float64.(nint))
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
