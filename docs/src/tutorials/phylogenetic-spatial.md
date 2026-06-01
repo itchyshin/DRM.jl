@@ -67,5 +67,5 @@ of the one you keep (it absorbs the signal of the one you dropped) and can bias
 the fixed effects if the omitted structure is correlated with a covariate. Until
 the combined fit lands, the practical recommendation is to fit each structure
 separately, compare the variance components and the fixed-effect estimates across
-the two fits with [`aic`](@ref) / [`bic`](@ref), and treat a large shift as a
+the two fits with `aic` / `bic`, and treat a large shift as a
 warning that both dependences are active and a joint model is needed.
