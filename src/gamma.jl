@@ -14,12 +14,15 @@ Gamma response family for positive continuous data: log link on the mean `μ`, a
 the `sigma` slot carries `σ` = the coefficient of variation, mapped to the shape
 `α = 1/σ²` (`coef(fit, :sigma)` is `log σ`; recover the shape as `exp(-2·log σ)`).
 Likelihood `Gamma(α, μ/α)`; variance `μ²σ²`. Mirrors `drmTMB`'s `Gamma` family.
+Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
+sparse-Laplace engine when `sigma ~ 1`.
 
 !!! note
     `DRM.Gamma` shadows `Distributions.Gamma`; qualify the latter if you need it.
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), Gamma(); data = dat)
+fit = drm(bf(y ~ x + (1 | g) + (1 | h), sigma ~ 1), Gamma(); data = dat)
 exp(-2 * coef(fit, :sigma)[1])     # estimated shape α
 ```
 """
@@ -39,9 +42,16 @@ function drm(f::DrmFormula, fam::Gamma; data, g_tol::Real = 1e-8)
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> yi > 0, y) || error("Gamma() requires strictly positive responses")
-    if !isempty(re)                    # random effect on the log mean → GHQ
-        length(re) == 1 ||
-            error("Gamma() supports a single random-effect term on the mean")
+    if !isempty(re)                    # random effect on the log mean → GHQ/Laplace
+        if length(re) > 1
+            all(_re_kind(r[1])[1] === :intercept for r in re) ||
+                error("Gamma() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
+            comps = map(re) do r
+                grp = r[2]; gidx, G = _group_index(getproperty(data, grp))
+                (ones(length(y)), gidx, G, String(grp))
+            end
+            return _withformula(_fit_gamma_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol), f)
+        end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]
         gidx, G = _group_index(getproperty(data, grp))
         if rk === :intercept           # (1 | g) → 1-D Gauss–Hermite

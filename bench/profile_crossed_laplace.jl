@@ -3,7 +3,9 @@
 # This is an engine-lane diagnostic, not a public API benchmark. Poisson uses the
 # drmTMB-comparison path from #70; Binomial/NB2/Gamma use the internal generic
 # crossed-Laplace kernels to prove that the same sparse mode/gradient spine
-# carries beyond Poisson.
+# carries beyond Poisson. NB2/Gamma/Beta estimate their scalar nuisance
+# parameter in the Laplace objective; the fixed-nuisance helpers remain covered
+# by unit tests only.
 #
 # Run:
 #   julia --project=bench bench/profile_crossed_laplace.jl
@@ -68,40 +70,51 @@ function family_rows(cell)
                                          se = false, polish_iterations = 0)
     end
     push!(rows, (family = "Poisson", nuisance = "none", median_s = t, times = times,
-        converged = fit.converged, beta1 = coef(fit, :mu)[2], sd_g = re_sd(fit)[:g], sd_h = re_sd(fit)[:h]))
+        nuisance_hat = NaN, nuisance_truth = NaN, converged = fit.converged,
+        beta1 = coef(fit, :mu)[2], sd_g = re_sd(fit)[:g], sd_h = re_sd(fit)[:h]))
 
     ntr = fill(8.0, n)
     s = Float64.([rand(cell.rng, Distributions.Binomial(round(Int, ntr[i]), logistic(cell.η[i]))) for i in 1:n])
     t, times, fit = median_fit_time(; reps = cell.n <= 5000 ? 5 : 3) do
-        DRM._fit_binomial_crossed_laplace(DRM.Binomial(), s, ntr, cell.X, cell.comps, ["(Intercept)", "x"], 1e-7)
+        DRM._fit_binomial_crossed_laplace(DRM.Binomial(), s, ntr, cell.X, cell.comps, ["(Intercept)", "x"], 1e-7;
+                                          polish_iterations = 10)
     end
     push!(rows, (family = "Binomial", nuisance = "none", median_s = t, times = times,
-        converged = fit.converged, beta1 = coef(fit, :mu)[2], sd_g = re_sd(fit)[:g], sd_h = re_sd(fit)[:h]))
+        nuisance_hat = NaN, nuisance_truth = NaN, converged = fit.converged,
+        beta1 = coef(fit, :mu)[2], sd_g = re_sd(fit)[:g], sd_h = re_sd(fit)[:h]))
 
     size = 3.0
     ynb = Float64.([rand(cell.rng, Distributions.NegativeBinomial(size, size / (size + μ[i]))) for i in 1:n])
     t, times, fit = median_fit_time(; reps = cell.n <= 5000 ? 5 : 3) do
-        DRM._fit_nb2_fixed_crossed_laplace(DRM.NegBinomial2(), ynb, size, cell.X, cell.comps, ["(Intercept)", "x"], 1e-7)
+        DRM._fit_nb2_crossed_laplace(DRM.NegBinomial2(), ynb, cell.X, ones(n, 1),
+                                     cell.comps, ["(Intercept)", "x"], ["(Intercept)"], 1e-7)
     end
-    push!(rows, (family = "NB2", nuisance = "size fixed at 3", median_s = t, times = times,
+    push!(rows, (family = "NB2", nuisance = "size estimated", median_s = t, times = times,
+        nuisance_hat = exp(coef(fit, :sigma)[1]), nuisance_truth = size,
         converged = fit.converged, beta1 = coef(fit, :mu)[2], sd_g = re_sd(fit)[:g], sd_h = re_sd(fit)[:h]))
 
     shape = 7.0
     yg = Float64.([rand(cell.rng, Distributions.Gamma(shape, μ[i] / shape)) for i in 1:n])
     t, times, fit = median_fit_time(; reps = cell.n <= 5000 ? 5 : 3) do
-        DRM._fit_gamma_fixed_crossed_laplace(DRM.Gamma(), yg, shape, cell.X, cell.comps, ["(Intercept)", "x"], 1e-7)
+        DRM._fit_gamma_crossed_laplace(DRM.Gamma(), yg, cell.X, ones(n, 1),
+                                       cell.comps, ["(Intercept)", "x"], ["(Intercept)"], 1e-7)
     end
-    push!(rows, (family = "Gamma", nuisance = "shape fixed at 7", median_s = t, times = times,
+    push!(rows, (family = "Gamma", nuisance = "shape estimated", median_s = t, times = times,
+        nuisance_hat = exp(-2 * coef(fit, :sigma)[1]), nuisance_truth = shape,
         converged = fit.converged, beta1 = coef(fit, :mu)[2], sd_g = re_sd(fit)[:g], sd_h = re_sd(fit)[:h]))
 
-    precision = 25.0
-    p = logistic.(cell.η)
-    ybeta = Float64.([rand(cell.rng, Distributions.Beta(p[i] * precision, (1 - p[i]) * precision)) for i in 1:n])
-    t, times, fit = median_fit_time(; reps = cell.n <= 5000 ? 5 : 3) do
-        DRM._fit_beta_fixed_crossed_laplace(DRM.Beta(), ybeta, precision, cell.X, cell.comps, ["(Intercept)", "x"], 1e-7)
+    if n <= 5000
+        precision = 25.0
+        p = logistic.(cell.η)
+        ybeta = Float64.([rand(cell.rng, Distributions.Beta(p[i] * precision, (1 - p[i]) * precision)) for i in 1:n])
+        t, times, fit = median_fit_time(; reps = cell.n <= 5000 ? 5 : 3) do
+            DRM._fit_beta_crossed_laplace(DRM.Beta(), ybeta, cell.X, ones(n, 1),
+                                          cell.comps, ["(Intercept)", "x"], ["(Intercept)"], 1e-7)
+        end
+        push!(rows, (family = "Beta", nuisance = "precision estimated", median_s = t, times = times,
+            nuisance_hat = exp(-2 * coef(fit, :sigma)[1]), nuisance_truth = precision,
+            converged = fit.converged, beta1 = coef(fit, :mu)[2], sd_g = re_sd(fit)[:g], sd_h = re_sd(fit)[:h]))
     end
-    push!(rows, (family = "Beta", nuisance = "precision fixed at 25", median_s = t, times = times,
-        converged = fit.converged, beta1 = coef(fit, :mu)[2], sd_g = re_sd(fit)[:g], sd_h = re_sd(fit)[:h]))
 
     return rows
 end
@@ -128,19 +141,23 @@ open(OUT, "w") do io
     println(io, "# Crossed sparse-Laplace family profile")
     println(io)
     println(io, "CPU-aware run: Julia threads = $(Threads.nthreads()), BLAS threads = $(BLAS.get_num_threads()).")
-    println(io, "Poisson is drmTMB-comparable through the #70 paired benchmark. Binomial/NB2/Gamma/Beta here are internal Julia engine proofs; NB2/Gamma/Beta fix the nuisance parameter to isolate the crossed-Laplace mean engine.")
+    println(io, "Poisson is drmTMB-comparable through the #70 paired benchmark. Binomial/NB2/Gamma/Beta here are internal Julia engine proofs; NB2/Gamma/Beta estimate one constant nuisance parameter in the Laplace objective.")
     println(io, "The crossed Hessian path is adaptive: dense factorisation for q ≤ $(DRM.CROSSED_SPARSE_Q_THRESHOLD), sparse CHOLMOD + Takahashi selected inverse for larger q.")
     println(io)
-    println(io, "| cell | family | n | G | H | median/s | beta1 | sd_g | sd_h | converged | nuisance |")
-    println(io, "|:-----|:-------|--:|--:|--:|---------:|------:|-----:|-----:|:----------|:---------|")
+    println(io, "| cell | family | n | G | H | median/s | beta1 | sd_g | sd_h | nuisance hat | nuisance truth | converged | nuisance |")
+    println(io, "|:-----|:-------|--:|--:|--:|---------:|------:|-----:|-----:|-------------:|---------------:|:----------|:---------|")
     for r in allrows
-        @printf(io, "| %s | %s | %d | %d | %d | %.4f | %.3f | %.3f | %.3f | %s | %s |\n",
-            r.name, r.family, r.n, r.G, r.H, r.median_s, r.beta1, r.sd_g, r.sd_h, r.converged, r.nuisance)
+        nhat = isfinite(r.nuisance_hat) ? @sprintf("%.3f", r.nuisance_hat) : "-"
+        ntruth = isfinite(r.nuisance_truth) ? @sprintf("%.3f", r.nuisance_truth) : "-"
+        @printf(io, "| %s | %s | %d | %d | %d | %.4f | %.3f | %.3f | %.3f | %s | %s | %s | %s |\n",
+            r.name, r.family, r.n, r.G, r.H, r.median_s, r.beta1, r.sd_g, r.sd_h,
+            nhat, ntruth, r.converged, r.nuisance)
     end
     println(io)
     println(io, "Interpretation guardrails:")
-    println(io, "- Do not compare NB2/Gamma/Beta rows to drmTMB yet; nuisance parameters are fixed in this diagnostic.")
+    println(io, "- Do not compare NB2/Gamma/Beta rows to drmTMB from this report alone; use the paired R benchmark report for parity claims.")
     println(io, "- The fixed-q large cell is the scaling check: n grows while q stays at G+H=100.")
+    println(io, "- Beta is skipped for n > 5000 in this quick profile because the current exact beta d3 path is dominated by polygamma cost.")
     println(io, "- Timings are medians from repeated warm-started fits inside this process, not extrapolations.")
 end
 

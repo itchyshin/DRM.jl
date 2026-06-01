@@ -18,7 +18,8 @@ Logit link on the mean success probability `μ`; no scale/dispersion parameter
 [`cbind`](@ref) (`trials = successes + failures`) or a plain `0/1` Bernoulli
 vector. Likelihood `Binomial(n, μ)` with `μ = logistic(η)`. Mirrors `drmTMB`'s
 `binomial` family. A random intercept `(1 | g)` on the mean fits a logistic
-GLMM (the group effect is integrated out by Gauss–Hermite quadrature).
+GLMM; crossed intercepts such as `(1 | g) + (1 | h)` use the sparse-Laplace
+engine.
 
 !!! note
     `DRM.Binomial` shadows `Distributions.Binomial`; if you need the
@@ -27,6 +28,7 @@ GLMM (the group effect is integrated out by Gauss–Hermite quadrature).
 ```julia
 fit = drm(bf(cbind(successes, failures) ~ x), Binomial(); data = dat)   # logistic regression
 fit = drm(bf(y ~ x + (1 | g)), Binomial(); data = dat)                  # 0/1 logistic GLMM
+fit = drm(bf(cbind(successes, failures) ~ x + (1 | g) + (1 | h)), Binomial(); data = dat)
 fitted(fit)        # fitted success probabilities μ̂ = logistic(Xβ̂)
 ```
 """
@@ -56,8 +58,16 @@ function drm(f::DrmFormula, fam::Binomial; data, g_tol::Real = 1e-8)
         ntr = s .+ fl                                     # trials
     end
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)      # successes column is a dummy LHS
-    if !isempty(re)                                       # random intercept (1|g) → GHQ marginal
-        length(re) == 1 || error("Binomial() supports a single random-effect term on the mean")
+    if !isempty(re)                                       # random intercept (1|g) → GHQ/Laplace marginal
+        if length(re) > 1
+            all(_re_kind(r[1])[1] === :intercept for r in re) ||
+                error("Binomial() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
+            comps = map(re) do r
+                grp = r[2]; gidx, G = _group_index(getproperty(data, grp))
+                (ones(length(s)), gidx, G, String(grp))
+            end
+            return _withformula(_fit_binomial_crossed_laplace(fam, s, ntr, Xμ, comps, nmμ, g_tol), f)
+        end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
         rk === :intercept ||
             error("Binomial() supports `(1 | g)` on the mean")
