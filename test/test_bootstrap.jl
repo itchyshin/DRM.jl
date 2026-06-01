@@ -24,4 +24,13 @@ using Test, Random
 
     # and the true slope is covered at this n
     @test mu[2].lower ≤ 0.7 ≤ mu[2].upper
+
+    bs = bootstrap_summary(form, Gaussian(); data = (; y, x), B = 40,
+        level = 0.95, rng = MersenneTwister(2))
+    bci2 = bootstrap_ci(form, Gaussian(); data = (; y, x), B = 40,
+        level = 0.95, rng = MersenneTwister(2))
+    @test length(bs) == length(bci2) == 4
+    @test all(r.std_error > 0 for r in bs)
+    @test [(r.param, r.coef, r.estimate, r.lower, r.upper) for r in bs] ==
+          [(r.param, r.coef, r.estimate, r.lower, r.upper) for r in bci2]
 end
