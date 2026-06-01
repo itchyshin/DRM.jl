@@ -55,9 +55,8 @@ function fit_cell(cell)
         push!(comps, (ones(length(y)), hidx, H, "h"))
     end
 
-    polish = startswith(cell.id, "fixedq_") ? 80 : 35
     DRM._fit_poisson_crossed_laplace(DRM.Poisson(), y, X, comps, ["(Intercept)", "x"], 1e-7;
-                                     se = false, polish_iterations = polish)
+                                     se = false, polish_iterations = 0)
 end
 
 function run_cell(cell)
