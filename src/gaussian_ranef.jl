@@ -145,9 +145,9 @@ function _fit_correlated_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, xs,
         T = eltype(θ)
         l11 = exp(a); l22 = exp(b)                 # L = [l11 0; cc l22], Σ_re = L Lᵀ
         Σ11 = l11^2; Σ21 = cc * l11; Σ22 = cc^2 + l22^2
-        detΣ = Σ11 * Σ22 - Σ21^2
+        detΣ = Σ11 * l22^2                         # det(L Lᵀ), stable even when cc is large
         Si11 = Σ22 / detΣ; Si22 = Σ11 / detΣ; Si21 = -Σ21 / detΣ
-        logdetΣre = log(detΣ)
+        logdetΣre = 2a + 2b
         b11 = zeros(T, G); b21 = zeros(T, G); b22 = zeros(T, G)
         c1 = zeros(T, G); c2 = zeros(T, G)
         q1 = zero(T); logdetD = zero(T)
@@ -189,7 +189,7 @@ function _fit_correlated_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, xs,
         ημ = Xμ * βμ; ησ = Xσ * βσ
         l11 = exp(a); l22 = exp(b)
         Σ11 = l11^2; Σ21 = cc * l11; Σ22 = cc^2 + l22^2
-        detΣ = Σ11 * Σ22 - Σ21^2
+        detΣ = Σ11 * l22^2
         Si11 = Σ22 / detΣ; Si22 = Σ11 / detΣ; Si21 = -Σ21 / detΣ
         b11 = zeros(G); b21 = zeros(G); b22 = zeros(G); c1 = zeros(G); c2 = zeros(G)
         @inbounds for i in 1:n
