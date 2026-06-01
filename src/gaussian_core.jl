@@ -275,6 +275,21 @@ function sigma(fit::DrmFit)
 end
 
 """
+    corpairs(fit)
+
+Fitted between-response residual correlation(s) — drmTMB's `corpairs()`. For a
+bivariate co-scale model this is the per-observation `ρ12 = tanh(Xρ·β̂_ρ)`
+(constant when `rho12 ~ 1`, varying when `rho12 ~ x`). Univariate models have no
+between-response correlation and return an empty `Dict`.
+
+For random-effect (within-group) correlations, see [`vc`](@ref).
+"""
+function corpairs(fit::DrmFit)
+    haskey(fit.scales, :rho12) && return fit.scales[:rho12]
+    return Dict{Symbol,Vector{Float64}}()
+end
+
+"""
     predict(fit, newdata; type = :response) -> Vector or Dict
 
 Population-level prediction on `newdata` (a NamedTuple / column table), random /
