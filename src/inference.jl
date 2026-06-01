@@ -151,3 +151,33 @@ function bootstrap_ci(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
     end
     return rows
 end
+
+# Family-agnostic parametric bootstrap — any family `simulate` supports
+# (Poisson / NegBinomial2 / Beta / Gamma). No structured-matrix keywords (those
+# are Gaussian-only). Same row shape as the Gaussian method and `confint`.
+function bootstrap_ci(formula::DrmFormula, family; data, B::Int = 300,
+        level::Real = 0.95, rng = default_rng())
+    fit0 = drm(formula, family; data)
+    response = formula.response
+    est = coef(fit0)
+    p = length(est)
+    draws = Matrix{Float64}(undef, B, p)
+    for b in 1:B
+        ysim = simulate(fit0; rng)
+        datab = merge(data, NamedTuple{(response,)}((ysim,)))
+        draws[b, :] = coef(drm(formula, family; data = datab))
+    end
+    α = (1 - level) / 2
+    rows = NamedTuple{(:param, :coef, :estimate, :lower, :upper),
+        Tuple{Symbol,String,Float64,Float64,Float64}}[]
+    col = 1
+    for ((pp, r), (_, nms)) in zip(fit0.blocks, fit0.coefnames)
+        for (j, _) in enumerate(r)
+            v = @view draws[:, col]
+            push!(rows, (param = pp, coef = nms[j], estimate = est[col],
+                lower = Statistics.quantile(v, α), upper = Statistics.quantile(v, 1 - α)))
+            col += 1
+        end
+    end
+    return rows
+end
