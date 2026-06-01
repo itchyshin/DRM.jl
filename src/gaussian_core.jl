@@ -246,14 +246,16 @@ function residuals(fit::DrmFit)
 end
 
 """
-    predict(fit, newdata) -> Vector or Dict
+    predict(fit, newdata; type = :response) -> Vector or Dict
 
-Population-level mean prediction on `newdata` (a NamedTuple / column table):
-`Xβ̂` with random / structured effects integrated out. Univariate models return
-a vector; bivariate models return `Dict(:mu1 => …, :mu2 => …)`. Predictors must
-be present in `newdata` (continuous; categorical levels must match training).
+Population-level prediction on `newdata` (a NamedTuple / column table), random /
+structured effects integrated out. `type = :response` (default) returns the
+response-scale mean — the family inverse link applied to `Xβ̂` (`exp` for
+Poisson/Gamma, `logistic` for Beta/Binomial, identity for Gaussian); `type = :link`
+returns `Xβ̂`. In-sample, `predict(fit, data) ≈ fitted(fit)`. Univariate returns a
+vector; bivariate returns `Dict(:mu1 => …, :mu2 => …)`.
 """
-function predict(fit::DrmFit, newdata)
+function predict(fit::DrmFit, newdata; type::Symbol = :response)
     f = fit.formula
     f === nothing && error("predict: this fit did not retain its formula")
     nd = NamedTuple(pairs(newdata))
@@ -262,7 +264,9 @@ function predict(fit::DrmFit, newdata)
         fixed_mu, _, _, _ = _split_ranef(Dict(f.forms)[:mu])
         ndr = merge(nd, NamedTuple{(f.response,)}((zeros(nrows),)))
         _, Xnew, _ = _design(f.response, fixed_mu, ndr)
-        return Xnew * coef(fit, :mu)
+        type in (:response, :link) || error("predict: `type` must be :response or :link")
+        η = Xnew * coef(fit, :mu)
+        return type === :link ? η : _mean_response(fit.family, η)
     else  # BivariateDrmFormula
         fm = Dict(f.forms)
         fixed1, _, _, _ = _split_ranef(fm[:mu1])
@@ -272,6 +276,20 @@ function predict(fit::DrmFit, newdata)
         _, X1, _ = _design(f.response1, fixed1, nd1)
         _, X2, _ = _design(f.response2, fixed2, nd2)
         return Dict(:mu1 => X1 * coef(fit, :mu1), :mu2 => X2 * coef(fit, :mu2))
+    end
+end
+
+# Inverse mean-link per family: maps the linear predictor Xβ to the response
+# scale (matching `fitted`). Identity for Gaussian/Student; exp for log-link
+# families; logistic for logit-link families; linear predictor otherwise.
+function _mean_response(fam, η)
+    if fam isa Poisson || fam isa NegBinomial2 || fam isa TruncatedNegBinomial2 ||
+       fam isa Gamma || fam isa LogNormal || fam isa Tweedie
+        return exp.(clamp.(η, -30.0, 30.0))
+    elseif fam isa Beta || fam isa Binomial || fam isa BetaBinomial
+        return _logistic.(clamp.(η, -30.0, 30.0))
+    else
+        return η
     end
 end
 
