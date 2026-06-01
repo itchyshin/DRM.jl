@@ -51,6 +51,7 @@ include("tweedie.jl")
 include("cumulative.jl")
 include("inference.jl")
 include("summary.jl")
+include("visualization.jl")
 
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
@@ -61,6 +62,7 @@ export AugProblem, make_problem,
 
 # Public API — the Gaussian distributional-regression front end.
 export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
-       coef, vcov, loglik, nobs, dof, aic, bic, fixef, re_sd, vc, ranef, sigma, corpairs, stderror, confint, coeftable, fitted, residuals, predict, simulate, bootstrap_ci, check_drm
+       coef, vcov, loglik, nobs, dof, aic, bic, fixef, re_sd, vc, ranef, sigma, corpairs, stderror, confint, coeftable, fitted, residuals, predict, simulate, bootstrap_ci, check_drm,
+       parameter_surface, corpairs_data
 
 end # module DRM
