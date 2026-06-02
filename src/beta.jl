@@ -13,12 +13,15 @@ Beta response family for proportions in `(0,1)`: logit link on the mean `μ`, an
 the `sigma` slot carries `σ` with the precision mapping `φ = 1/σ²` (so
 `coef(fit, :sigma)` is `log σ`; recover precision as `exp(-2·log σ)`). Likelihood
 `Beta(μφ, (1-μ)φ)`. Mirrors `drmTMB`'s `beta_family`.
+Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
+sparse-Laplace engine when `sigma ~ 1`.
 
 !!! note
     `DRM.Beta` shadows `Distributions.Beta`; qualify the latter if you need it.
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), Beta(); data = dat)
+fit = drm(bf(y ~ x + (1 | g) + (1 | h), sigma ~ 1), Beta(); data = dat)
 exp(-2 * coef(fit, :sigma)[1])     # estimated precision φ
 ```
 """
@@ -41,9 +44,16 @@ function drm(f::DrmFormula, fam::Beta; data, g_tol::Real = 1e-8)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> 0 < yi < 1, y) ||
         error("Beta() requires responses strictly in the open interval (0, 1)")
-    if !isempty(re)                    # random effect on the logit mean → GHQ
-        length(re) == 1 ||
-            error("Beta() supports a single random-effect term `(1 | g)` or `(1 + x | g)` on the mean")
+    if !isempty(re)                    # random effect on the logit mean → GHQ/Laplace
+        if length(re) > 1
+            all(_re_kind(r[1])[1] === :intercept for r in re) ||
+                error("Beta() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
+            comps = map(re) do r
+                grp = r[2]; gidx, G = _group_index(getproperty(data, grp))
+                (ones(length(y)), gidx, G, String(grp))
+            end
+            return _withformula(_fit_beta_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol), f)
+        end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]
         gidx, G = _group_index(getproperty(data, grp))
         if rk === :intercept            # (1 | g) → 1-D Gauss–Hermite marginal

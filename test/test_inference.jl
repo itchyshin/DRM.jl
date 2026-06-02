@@ -36,3 +36,29 @@ using Test, Random, LinearAlgebra
     ci90 = confint(fit; level = 0.90)
     @test (ci90[1].upper - ci90[1].lower) < (ci[1].upper - ci[1].lower)
 end
+
+@testset "Wald SE at a singular boundary (non-PD vcov ⇒ Inf, not NaN)" begin
+    # At the Watanabe-singular boundary the observed information is not
+    # positive-definite, so inv(I_obs) carries a non-positive variance for the
+    # unidentified direction. stderror must report Inf there (not NaN), and the
+    # Wald interval must be unbounded — matching the experimental infer_q4.jl
+    # boundary handling that this wires into the public API (#10).
+    blocks = [:mu => 1:2]
+    coefnames = [:mu => ["(Intercept)", "x"]]
+    theta = [0.5, -0.8]
+    # slot 1 identified (var 0.04); slot 2 on the boundary (negative variance)
+    V = [0.04 0.0; 0.0 -1.0e-6]
+    empty = Dict{Symbol,Vector{Float64}}()
+    fit = DRM.DrmFit(Gaussian(), blocks, coefnames, theta, V, -10.0, 100, false,
+                     empty, empty, empty)
+
+    se = stderror(fit)
+    @test se[1] ≈ 0.2
+    @test isinf(se[2]) && se[2] > 0          # undefined SE, not NaN
+    @test !any(isnan, se)
+
+    ci = confint(fit; method = :wald)
+    @test ci[1].lower < ci[1].estimate < ci[1].upper      # identified: finite CI
+    @test ci[2].lower == -Inf && ci[2].upper == Inf       # unidentified: unbounded
+    @test !any(isnan(c.lower) || isnan(c.upper) for c in ci)
+end
