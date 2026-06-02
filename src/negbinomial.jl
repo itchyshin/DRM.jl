@@ -14,9 +14,12 @@ Negative-binomial (NB2) family for overdispersed counts: log link on the mean
 `μ`, and log link on the dispersion/size `θ` (the `sigma` formula slot, so
 `coef(fit, :sigma)` is `log θ`). Var = `μ + μ²/θ`; as `θ → ∞` it tends to
 [`Poisson`](@ref). Mirrors `drmTMB`'s `nbinom2` family.
+Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
+sparse-Laplace engine when `sigma ~ 1`.
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), NegBinomial2(); data = dat)
+fit = drm(bf(y ~ x + (1 | g) + (1 | h), sigma ~ 1), NegBinomial2(); data = dat)
 exp(coef(fit, :sigma)[1])     # estimated dispersion θ (size)
 ```
 """
@@ -37,11 +40,18 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, g_tol::Real = 1e-8)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> yi ≥ 0 && isinteger(yi), y) ||
         error("NegBinomial2() requires non-negative integer counts as the response")
-    if !isempty(re)                                       # random effect on the mean → GHQ
+    if !isempty(re)                                       # random effect on the mean → GHQ/Laplace
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
             error("NegBinomial2() random effects cannot be combined with `zi`/`hu` yet")
-        length(re) == 1 ||
-            error("NegBinomial2() supports a single random-effect term on the mean")
+        if length(re) > 1
+            all(_re_kind(r[1])[1] === :intercept for r in re) ||
+                error("NegBinomial2() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
+            comps = map(re) do r
+                grp = r[2]; gidx, G = _group_index(getproperty(data, grp))
+                (ones(length(y)), gidx, G, String(grp))
+            end
+            return _withformula(_fit_nb2_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol), f)
+        end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]
         gidx, G = _group_index(getproperty(data, grp))
         if rk === :intercept                              # (1 | g) → 1-D GHQ
