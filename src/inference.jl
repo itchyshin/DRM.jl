@@ -16,8 +16,21 @@ import StatsAPI: stderror, confint
     stderror(fit) -> Vector{Float64}
 
 Wald standard errors (√diag of the covariance), in the fit's coefficient order.
+
+A coefficient's Wald SE is defined only where its estimated variance is finite
+and positive. At a singular boundary the observed information is not
+positive-definite, so the stored covariance carries a non-positive (or
+non-finite) variance for the unidentified direction. Rather than return a silent
+`NaN` there, that coefficient reports `Inf` — an undefined, infinitely wide
+standard error — which propagates to an unbounded `(-Inf, Inf)` Wald interval.
+[`check_drm`](@ref) flags the same situation via `vcov_posdef`; drmTMB returns
+all-`NaN` from `sdreport` in this case.
 """
-stderror(fit::DrmFit) = sqrt.(diag(fit.vcov))
+stderror(fit::DrmFit) = _boundary_se.(diag(fit.vcov))
+
+# √v where the variance is identified (finite, positive); Inf otherwise. Keeps a
+# non-PD boundary direction from poisoning the whole SE vector with NaN.
+_boundary_se(v::Real) = (isfinite(v) && v > 0) ? sqrt(v) : Inf
 
 const _CIRow = NamedTuple{(:param, :coef, :estimate, :lower, :upper),
     Tuple{Symbol,String,Float64,Float64,Float64}}
