@@ -11,7 +11,7 @@ Closes #
 - [ ] Implementation wired into the module
 - [ ] Tests (failing-first where applicable) in `test/runtests.jl`
 - [ ] Docstrings + a worked example
-- [ ] `docs/dev-log/check-log.md` updated
+- [ ] Per-slice entry added to `docs/dev-log/check-log.d/` (not the frozen `check-log.md` table)
 - [ ] After-task report in `docs/dev-log/after-task/`
 - [ ] Rose audit — claim-vs-evidence, status tag honest, no doc drift
 

@@ -33,6 +33,7 @@ tryrun(`git diff --stat`)
 section("dev-log artifacts (read these next)")
 for f in [
     "docs/dev-log/check-log.md",
+    "docs/dev-log/check-log.d",
     "docs/dev-log/coordination-board.md",
     "ROADMAP.md",
     "HANDOVER.md",

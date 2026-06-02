@@ -120,7 +120,10 @@ A slice is done when **all** hold (mirrors the drmTMB-grade routine):
    where applicable (TDD).
 3. **Docstrings** — public symbols documented.
 4. **Worked example** — a runnable example (or `@example` in Documenter).
-5. **Check-log** — `docs/dev-log/check-log.md` updated with the gate status.
+5. **Check-log** — add a per-slice entry as a new file in
+   `docs/dev-log/check-log.d/` (one table row; see its README). Do not append to
+   the frozen `docs/dev-log/check-log.md` table — per-file entries are
+   collision-free across parallel PRs.
 6. **After-task report** — `docs/dev-log/after-task/YYYY-MM-DD-<slice>.md`.
 7. **Rose audit** — claim-vs-evidence verdict; scope honesty; no drift.
 
