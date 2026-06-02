@@ -142,6 +142,7 @@ open(OUT, "w") do io
     println(io)
     println(io, "CPU-aware run: Julia threads = $(Threads.nthreads()), BLAS threads = $(BLAS.get_num_threads()).")
     println(io, "Poisson is drmTMB-comparable through the #70 paired benchmark. Binomial/NB2/Gamma/Beta here are internal Julia engine proofs; NB2/Gamma/Beta estimate one constant nuisance parameter in the Laplace objective with exact implicit nuisance-gradient corrections.")
+    println(io, "The generic non-Gaussian path uses fused per-observation derivative kernels so value, mean derivatives, and nuisance derivatives share expensive link/special-function work.")
     println(io, "The crossed Hessian path is adaptive: dense factorisation for q ≤ $(DRM.CROSSED_SPARSE_Q_THRESHOLD), sparse CHOLMOD + Takahashi selected inverse for larger q.")
     println(io)
     println(io, "| cell | family | n | G | H | median/s | beta1 | sd_g | sd_h | nuisance hat | nuisance truth | converged | nuisance |")
@@ -157,7 +158,7 @@ open(OUT, "w") do io
     println(io, "Interpretation guardrails:")
     println(io, "- Do not compare NB2/Gamma/Beta rows to drmTMB from this report alone; use the paired R benchmark report for parity claims.")
     println(io, "- The fixed-q large cell is the scaling check: n grows while q stays at G+H=100.")
-    println(io, "- Beta is skipped for n > 5000 in this quick profile because the current exact beta d3 path is dominated by polygamma cost.")
+    println(io, "- Beta is skipped for n > 5000 in this quick profile because exact beta d3/nuisance derivatives remain polygamma-heavy even after derivative fusion.")
     println(io, "- Timings are medians from repeated warm-started fits inside this process, not extrapolations.")
 end
 
