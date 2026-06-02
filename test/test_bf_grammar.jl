@@ -33,6 +33,31 @@ end
     @test_throws ArgumentError bf(@formula(y ~ x), @formula(sigma ~ x), @formula(sigma ~ z))
 end
 
+@testset "bf() grammar: bivariate keyword form" begin
+    # valid bivariate form still builds (placeholder LHS = parameter name)
+    @test bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
+             sigma1 = @formula(sigma1 ~ x), sigma2 = @formula(sigma2 ~ x),
+             rho12 = @formula(rho12 ~ x)) isa BivariateDrmFormula
+    # σ1/σ2/ρ12 default to ~ 1 when omitted
+    @test bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x)) isa BivariateDrmFormula
+
+    # a placeholder LHS that is not its own parameter name is rejected
+    @test_throws ArgumentError bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
+                                  sigma1 = @formula(tau ~ x))
+    @test_throws ArgumentError bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
+                                  rho12 = @formula(rho ~ x))
+    # swapped sigma1/sigma2 placeholders are caught
+    @test_throws ArgumentError bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
+                                  sigma1 = @formula(sigma2 ~ x))
+    # a two-column cbind response is univariate-only
+    @test_throws ArgumentError bf(mu1 = @formula(cbind(s, f) ~ x), mu2 = @formula(y2 ~ x))
+
+    # the tau→sigma message points at the right placeholder
+    e_tau = try; bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
+                    sigma1 = @formula(tau ~ x)); catch e; e; end
+    @test e_tau isa ArgumentError && occursin("sigma1", e_tau.msg)
+end
+
 @testset "bf() grammar: error messages are actionable" begin
     # the `tau` error points at `sigma`
     e_tau = try; bf(@formula(y ~ x), @formula(tau ~ x)); catch e; e; end
