@@ -6,6 +6,7 @@
 # closely matches the Wald interval — that is the cross-check here.
 using DRM
 using Test, Random
+import Distributions
 
 @testset "Profile-likelihood CI: confint(fit; method=:profile)" begin
     Random.seed!(20260612)
@@ -34,6 +35,37 @@ using Test, Random
     end
 
     @test confint(fit) == wald                                 # default stays Wald
+    @test [r.param for r in confint(fit; method = :wald, parm = :mu)] == fill(:mu, 3)
+end
+
+@testset "Profile CI on crossed Poisson random-effect SDs" begin
+    rng = MersenneTwister(20260613)
+    G = 8
+    H = 7
+    n = 420
+    x = randn(rng, n)
+    gid = rand(rng, 1:G, n)
+    hid = rand(rng, 1:H, n)
+    g = Symbol.("g", gid)
+    h = Symbol.("h", hid)
+    bg = 0.55 .* randn(rng, G)
+    bh = 0.40 .* randn(rng, H)
+    η = @. 0.2 + 0.45 * x + bg[gid] + bh[hid]
+    y = Float64[rand(rng, Distributions.Poisson(exp(η[i]))) for i in 1:n]
+
+    fit = drm(bf(@formula(y ~ x + (1 | g) + (1 | h))), Poisson(); data = (; y, x, g, h))
+    resd = confint(fit; method = :profile, parm = :resd)
+
+    @test [r.coef for r in resd] == ["g", "h"]
+    @test all(isfinite(r.lower) && isfinite(r.upper) for r in resd)
+    @test all(r.lower < r.estimate < r.upper for r in resd)
+    @test all(exp(r.lower) < exp(r.estimate) < exp(r.upper) for r in resd)
+
+    curve = profile_curve(fit, fit.blocks[2].second[1]; npoints = 9)
+    @test curve.param === :resd
+    @test curve.coef == "g"
+    @test length(curve.x) == length(curve.deviance) == 9
+    @test all(isfinite, curve.deviance)
 end
 
 # The fast endpoint finder (warm-start continuation + guarded-Newton using the
