@@ -377,7 +377,7 @@ function _fit_poisson_crossed_intercepts_laplace(fam::Poisson, y, Xμ, gidx, G, 
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict{Symbol,Vector{Float64}}()
     fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
-    return _withnll(fit, nll)
+    return _withnll(fit, nll, grad!)
 end
 
 """
@@ -494,7 +494,7 @@ function _fit_poisson_crossed_laplace(fam::Poisson, y, Xμ, comps, nmμ, g_tol; 
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict{Symbol,Vector{Float64}}()
     fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nll(θ̂), n, Optim.converged(res), means, obs, scales)
-    return _withnll(fit, nll)
+    return _withnll(fit, nll, grad!)
 end
 
 _laplace_logistic(η) = 1 / (1 + exp(-η))
@@ -1045,7 +1045,7 @@ function _fit_crossed_mean_laplace(fam, kind, aux, n::Int, Xμ, gidx, G, hidx, H
     obs = Dict(:mu => [_laplace_obs(kind, aux, i) for i in 1:n])
     scales = Dict{Symbol,Vector{Float64}}()
     fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
-    return _withnll(fit, nll)
+    return _withnll(fit, nll, grad!)
 end
 
 function _crossed_mean_laplace_nuisance_fg(kind, aux_from, n::Int, Xμ, gidx, G,
@@ -1212,7 +1212,7 @@ function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gi
     obs = Dict(:mu => [_laplace_obs(kind, auxhat, i) for i in 1:n])
     scales = Dict(:sigma => fill(sigma_scale(θ̂[pμ+1]), n))
     fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
-    return _withnll(fit, nll)
+    return _withnll(fit, nll, grad!)
 end
 
 function _fit_binomial_crossed_laplace(fam, s, ntr, Xμ, comps, nmμ, g_tol; se::Bool = false,
