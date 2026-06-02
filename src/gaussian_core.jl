@@ -129,27 +129,28 @@ struct DrmFit{F}
     scales::Dict{Symbol,Vector{Float64}}   # residual scale(s) for simulation
     formula::Any                           # the DrmFormula / BivariateDrmFormula (for predict)
     nll::Any                               # objective θ ↦ nll(θ) (for profile intervals)
+    nllgrad::Any                           # optional gradient callback (g, θ) -> g
     ranef::Any                             # per-group conditional RE estimates (BLUPs); nothing if no RE
 end
 
-# 11-arg outer constructor: formula + nll + ranef default to nothing (the fitters
-# use this; drm() attaches the formula via _withformula, the objective via
-# _withnll, and the BLUPs via _withranef).
+# 11-arg outer constructor: formula + nll + nllgrad + ranef default to nothing
+# (the fitters use this; drm() attaches the formula via _withformula, the
+# objective via _withnll, and the BLUPs via _withranef).
 DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales) =
-    DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales, nothing, nothing, nothing)
+    DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales, nothing, nothing, nothing, nothing)
 
 _withformula(fit::DrmFit, f) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
-    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, f, fit.nll, fit.ranef)
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, f, fit.nll, fit.nllgrad, fit.ranef)
 
 # Attach the (negative) log-likelihood closure so profile intervals can re-optimise
 # the nuisance parameters at each fixed value. nll(θ) must accept the full θ vector.
-_withnll(fit::DrmFit, nll) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
-    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, nll, fit.ranef)
+_withnll(fit::DrmFit, nll, nllgrad = nothing) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, nll, nllgrad, fit.ranef)
 
 # Attach per-group conditional random-effect estimates (BLUPs). `re` is a
 # Dict{Symbol,...} keyed by grouping factor; see ranef(fit) for the public accessor.
 _withranef(fit::DrmFit, re) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
-    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, re)
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, re)
 
 # Build a design matrix for one parameter's RHS. We reuse the (real) response as
 # a dummy LHS so the formula is always valid for `schema`/`modelcols`, then keep
