@@ -290,6 +290,42 @@ function _fit_multi_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, comps, nmμ, nmσ
         logdetV = sum(2 .* ησ) + logdet(C)
         return 0.5 * (logdetV + quad) + 0.5 * n * log(2π)
     end
+
+    function grad!(Gout, θ)
+        fill!(Gout, 0.0)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
+        ημ = Xμ * βμ
+        ησ = clamp.(Xσ * βσ, -30.0, 30.0)
+        invD = exp.(-2 .* ησ)
+        r = y .- ημ
+        σk = [exp(clamp(θ[pμ+pσ+k], -30.0, 30.0)) for k in 1:K]
+        σcol = [σk[colcomp[c]] for c in 1:q]
+        Z̃ = Z .* σcol'
+        ZtDir = Z̃' * (invD .* r)
+        M = Z̃' * (invD .* Z̃)
+        C = cholesky(Symmetric(M + I); check = false)
+        issuccess(C) || return Gout
+
+        Hinv = C \ Matrix{Float64}(I, q, q)
+        bscaled = Hinv * ZtDir
+        α = invD .* (r .- Z̃ * bscaled)             # V⁻¹r
+
+        Gout[1:pμ] .= -(Xμ' * α)
+
+        # d nll / d ησᵢ = Dᵢ[(V⁻¹)ᵢᵢ - αᵢ²], Dᵢ = exp(2ησᵢ).
+        lever = vec(sum((Z̃ * Hinv) .* Z̃, dims = 2))
+        diagVinv = invD .- invD .^ 2 .* lever
+        Gout[pμ+1:pμ+pσ] .= Xσ' * ((diagVinv .- α .^ 2) ./ invD)
+
+        # With whitened Z̃, dV/dlogσₖ = 2 Z̃ₖZ̃ₖᵀ, and
+        # Z̃ᵀV⁻¹Z̃ = I - (I + Z̃ᵀD⁻¹Z̃)⁻¹.
+        dH = diag(Hinv)
+        @inbounds for k in 1:K
+            cols = (offs[k]+1):offs[k+1]
+            Gout[pμ+pσ+k] = sum(1 .- dH[cols]) - sum(abs2, bscaled[cols])
+        end
+        return Gout
+    end
     βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
     s0 = std(res0) / sqrt(K + 1)                   # balanced variance split: resid + K REs
     θ0 = zeros(pμ + pσ + K)
@@ -298,7 +334,8 @@ function _fit_multi_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, comps, nmμ, nmσ
     for k in 1:K
         θ0[pμ+pσ+k] = log(s0 + eps())
     end
-    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    od = Optim.OnceDifferentiable(nll, grad!, θ0)
+    res = Optim.optimize(od, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol))
     θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+K)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [c[4] for c in comps]]
@@ -322,7 +359,7 @@ function _fit_multi_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, comps, nmμ, nmσ
         end
         d
     end
-    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll), blup)
+    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll, grad!), blup)
 end
 
 # Gauss–Hermite nodes/weights (Golub–Welsch) for ∫ h(x) e^{-x²} dx ≈ Σ wₖ h(xₖ).
