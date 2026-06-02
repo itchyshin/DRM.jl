@@ -13,6 +13,19 @@ function crossed_components(g, h)
     ]
 end
 
+function central_gradient(f, θ; h = 1e-5)
+    g = similar(θ)
+    for k in eachindex(θ)
+        step = h * max(abs(θ[k]), 1.0)
+        θp = copy(θ)
+        θm = copy(θ)
+        θp[k] += step
+        θm[k] -= step
+        g[k] = (f(θp) - f(θm)) / (2step)
+    end
+    return g
+end
+
 @testset "Generic crossed sparse-Laplace non-Gaussian kernels" begin
     rng = MersenneTwister(70)
     G = 28
@@ -91,6 +104,65 @@ end
     @test abs(exp(-2 * coef(fit_beta_est, :sigma)[1]) - φ) < 7.0
     @test abs(sd_beta_est[:g] - σg) < 0.12
     @test abs(sd_beta_est[:h] - σh) < 0.12
+end
+
+@testset "Crossed sparse-Laplace nuisance exact gradient" begin
+    rng = MersenneTwister(72)
+    G = 6
+    H = 5
+    n = 220
+    x = randn(rng, n)
+    gidx = [rand(rng, 1:G) for _ in 1:n]
+    hidx = [rand(rng, 1:H) for _ in 1:n]
+    X = hcat(ones(n), x)
+    β = [0.15, 0.35]
+    bg = 0.35 .* randn(rng, G)
+    bh = 0.25 .* randn(rng, H)
+    η = [β[1] + β[2] * x[i] + bg[gidx[i]] + bh[hidx[i]] for i in 1:n]
+    μ = exp.(η)
+
+    y_nb = Float64.([rand(rng, Distributions.NegativeBinomial(2.5, 2.5 / (2.5 + μ[i]))) for i in 1:n])
+    yint = round.(Int, y_nb)
+    nb_aux(logsize) = begin
+        r = exp(clamp(logsize, -8.0, 8.0))
+        lconst = [DRM.loggamma(yint[i] + r) - DRM.loggamma(r) - DRM._logfactorial(yint[i]) for i in eachindex(yint)]
+        (y = Float64.(yint), size = r, lconst = lconst)
+    end
+
+    y_gamma = Float64.([rand(rng, Distributions.Gamma(6.0, μ[i] / 6.0)) for i in 1:n])
+    gamma_aux(logsigma) = begin
+        α = exp(clamp(-2 * logsigma, -8.0, 8.0))
+        lconst = [α * log(α) - DRM.loggamma(α) + (α - 1) * log(y_gamma[i]) for i in eachindex(y_gamma)]
+        (y = y_gamma, shape = α, lconst = lconst)
+    end
+
+    p = logistic.(η)
+    y_beta = Float64.([rand(rng, Distributions.Beta(p[i] * 20.0, (1 - p[i]) * 20.0)) for i in 1:n])
+    ylogit = log.(y_beta) .- log1p.(-y_beta)
+    beta_aux(logsigma) = begin
+        φ = exp(clamp(-2 * logsigma, -8.0, 8.0))
+        (y = y_beta, precision = φ, ylogit = ylogit, lgammaφ = DRM.loggamma(φ))
+    end
+
+    θ_nb = [0.12, 0.32, log(2.3), log(0.32), log(0.24)]
+    θ_gamma = [0.12, 0.32, -0.5 * log(6.3), log(0.32), log(0.24)]
+    θ_beta = [0.12, 0.32, -0.5 * log(22.0), log(0.32), log(0.24)]
+
+    for (kind, aux_from, θ) in (
+        (Val(:nb2_fixed), nb_aux, θ_nb),
+        (Val(:gamma_fixed), gamma_aux, θ_gamma),
+        (Val(:beta_fixed), beta_aux, θ_beta),
+    )
+        val, grad, _, ok = DRM._crossed_mean_laplace_nuisance_fg(
+            kind, aux_from, n, X, gidx, G, hidx, H, θ; grad = true
+        )
+        @test ok
+        @test isfinite(val)
+        fd = central_gradient(θp -> DRM._crossed_mean_laplace_nuisance_fg(
+            kind, aux_from, n, X, gidx, G, hidx, H, θp; grad = false
+        )[1], θ)
+        @test maximum(abs.(grad .- fd)) <= 1e-6
+    end
 end
 
 @testset "Crossed sparse-Laplace public routing smoke" begin

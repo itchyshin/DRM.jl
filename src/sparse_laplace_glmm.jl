@@ -99,6 +99,13 @@ function _finite_hessian(f, x; h::Real = 1e-3)
     return H
 end
 
+function _laplace_outer_converged(res, nllhat, gfinal, θ, n::Int, g_tol)
+    isfinite(nllhat) && nllhat < 1e17 || return false
+    Optim.converged(res) && return true
+    grad_limit = max(1e-4 * (1 + norm(θ, Inf)), g_tol * max(n, 1))
+    return norm(gfinal, Inf) <= grad_limit
+end
+
 function _poisson_fixed_start(y, X)
     p = size(X, 2)
     β = zeros(p)
@@ -353,8 +360,7 @@ function _fit_poisson_crossed_intercepts_laplace(fam::Poisson, y, Xμ, gidx, G, 
     gfinal = zeros(length(θ̂))
     grad!(gfinal, θ̂)
     nllhat = nll(θ̂)
-    converged = isfinite(nllhat) && nllhat < 1e17 &&
-        (Optim.converged(res) || norm(gfinal, Inf) <= 1e-4 * (1 + norm(θ̂, Inf)))
+    converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
         try
@@ -549,6 +555,28 @@ end
 _laplace_mean(::Val{:nb2_fixed}, η) = exp(clamp(η, -30.0, 30.0))
 _laplace_obs(::Val{:nb2_fixed}, aux, i) = aux.y[i]
 
+function _laplace_nuisance_value(::Val{:nb2_fixed}, aux, i, η)
+    μ = exp(clamp(η, -30.0, 30.0))
+    y = aux.y[i]
+    r = aux.size
+    dldr = -(digamma(y + r) - digamma(r)) - log(r) - 1 + log(r + μ) + (y + r) / (r + μ)
+    return r * dldr
+end
+
+function _laplace_nuisance_d1(::Val{:nb2_fixed}, aux, i, η)
+    μ = exp(clamp(η, -30.0, 30.0))
+    y = aux.y[i]
+    r = aux.size
+    return r * μ * (μ - y) / (r + μ)^2
+end
+
+function _laplace_nuisance_d2(::Val{:nb2_fixed}, aux, i, η)
+    μ = exp(clamp(η, -30.0, 30.0))
+    y = aux.y[i]
+    r = aux.size
+    return r * μ * ((y + 2r) / (r + μ)^2 - 2r * (y + r) / (r + μ)^3)
+end
+
 function _laplace_value(::Val{:gamma_fixed}, aux, i, η)
     μ = exp(clamp(η, -30.0, 30.0))
     y = aux.y[i]
@@ -574,6 +602,25 @@ end
 
 _laplace_mean(::Val{:gamma_fixed}, η) = exp(clamp(η, -30.0, 30.0))
 _laplace_obs(::Val{:gamma_fixed}, aux, i) = aux.y[i]
+
+function _laplace_nuisance_value(::Val{:gamma_fixed}, aux, i, η)
+    μ = exp(clamp(η, -30.0, 30.0))
+    y = aux.y[i]
+    α = aux.shape
+    dldα = -log(α) - 1 + digamma(α) - log(y) + log(μ) + y / μ
+    return -2α * dldα
+end
+
+function _laplace_nuisance_d1(::Val{:gamma_fixed}, aux, i, η)
+    μ = exp(clamp(η, -30.0, 30.0))
+    α = aux.shape
+    return -2α * (1 - aux.y[i] / μ)
+end
+
+function _laplace_nuisance_d2(::Val{:gamma_fixed}, aux, i, η)
+    μ = exp(clamp(η, -30.0, 30.0))
+    return -2 * aux.shape * aux.y[i] / μ
+end
 
 function _laplace_beta_terms(aux, i, η)
     μ = _laplace_logistic(clamp(η, -30.0, 30.0))
@@ -617,6 +664,38 @@ end
 
 _laplace_mean(::Val{:beta_fixed}, η) = _laplace_logistic(clamp(η, -30.0, 30.0))
 _laplace_obs(::Val{:beta_fixed}, aux, i) = aux.y[i]
+
+function _laplace_beta_nuisance_terms(aux, i, η)
+    μ = _laplace_logistic(clamp(η, -30.0, 30.0))
+    φ = aux.precision
+    a = μ * φ
+    b = (1 - μ) * φ
+    y = aux.y[i]
+    v = μ * (1 - μ)
+    vp = v * (1 - 2μ)
+    ta = trigamma(a)
+    tb = trigamma(b)
+    dA = digamma(a) - digamma(b) - aux.ylogit[i] + φ * (μ * ta - (1 - μ) * tb)
+    dB = 2φ * (ta + tb) + φ^2 * (μ * polygamma(2, a) + (1 - μ) * polygamma(2, b))
+    dL = -digamma(φ) + μ * digamma(a) + (1 - μ) * digamma(b) -
+         μ * log(y) - (1 - μ) * log1p(-y)
+    return φ, v, vp, dL, dA, dB
+end
+
+function _laplace_nuisance_value(::Val{:beta_fixed}, aux, i, η)
+    φ, _, _, dL, _, _ = _laplace_beta_nuisance_terms(aux, i, η)
+    return -2φ * dL
+end
+
+function _laplace_nuisance_d1(::Val{:beta_fixed}, aux, i, η)
+    φ, v, _, _, dA, _ = _laplace_beta_nuisance_terms(aux, i, η)
+    return -2φ * dA * v
+end
+
+function _laplace_nuisance_d2(::Val{:beta_fixed}, aux, i, η)
+    φ, v, vp, _, dA, dB = _laplace_beta_nuisance_terms(aux, i, η)
+    return -2φ * (dB * v^2 + dA * vp)
+end
 
 function _crossed_mean_mode(kind, aux, η0, gidx, G, hidx, Hh, logσ; b0 = nothing,
                             maxiter::Int = 60, tol::Real = 1e-8)
@@ -788,8 +867,7 @@ function _fit_crossed_mean_laplace(fam, kind, aux, n::Int, Xμ, gidx, G, hidx, H
     gfinal = zeros(length(θ̂))
     grad!(gfinal, θ̂)
     nllhat = nll(θ̂)
-    converged = isfinite(nllhat) && nllhat < 1e17 &&
-        (Optim.converged(res) || norm(gfinal, Inf) <= 1e-4 * (1 + norm(θ̂, Inf)))
+    converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
         try
@@ -809,13 +887,83 @@ function _fit_crossed_mean_laplace(fam, kind, aux, n::Int, Xμ, gidx, G, hidx, H
     return _withnll(fit, nll)
 end
 
-function _finite_diff_scalar(f, θ, k; h::Real = 1e-4)
-    step = h * max(abs(θ[k]), 1.0)
-    θp = copy(θ)
-    θm = copy(θ)
-    θp[k] += step
-    θm[k] -= step
-    return (f(θp) - f(θm)) / (2step)
+function _crossed_mean_laplace_nuisance_fg(kind, aux_from, n::Int, Xμ, gidx, G,
+                                           hidx, Hh, θ; grad::Bool = false,
+                                           b0 = nothing)
+    pμ = length(θ) - 3
+    βμ = θ[1:pμ]
+    θσ = clamp(θ[pμ+1], -8.0, 8.0)
+    logσ = clamp.(θ[pμ+2:pμ+3], -8.0, 3.0)
+    aux = aux_from(θσ)
+    η0 = Xμ * βμ
+    b, ch, _, ok = _crossed_mean_mode(kind, aux, η0, gidx, G, hidx, Hh, logσ; b0 = b0)
+    if !ok
+        return grad ? (1e18, zeros(length(θ)), b, false) : (1e18, b, false)
+    end
+
+    invg = exp(-2 * logσ[1])
+    invh = exp(-2 * logσ[2])
+    data = zero(eltype(θ))
+    prior = 0.5 * invg * sum(abs2, @view b[1:G]) +
+            0.5 * invh * sum(abs2, @view b[G+1:G+Hh])
+    gradβ_raw = zeros(eltype(θ), pμ)
+    dataν = zero(eltype(θ))
+    wstore = Vector{eltype(θ)}(undef, n)
+    tstore = Vector{eltype(θ)}(undef, n)
+    rνstore = Vector{eltype(θ)}(undef, n)
+    wνstore = Vector{eltype(θ)}(undef, n)
+    @inbounds for i in 1:n
+        η = η0[i] + b[gidx[i]] + b[G+hidx[i]]
+        data += _laplace_value(kind, aux, i, η)
+        r = _laplace_d1(kind, aux, i, η)
+        w = _laplace_d2(kind, aux, i, η)
+        t = _laplace_d3(kind, aux, i, η)
+        wstore[i] = w
+        tstore[i] = t
+        dataν += _laplace_nuisance_value(kind, aux, i, η)
+        rνstore[i] = _laplace_nuisance_d1(kind, aux, i, η)
+        wνstore[i] = _laplace_nuisance_d2(kind, aux, i, η)
+        for k in 1:pμ
+            gradβ_raw[k] += Xμ[i, k] * r
+        end
+    end
+    val = data + prior + G * logσ[1] + Hh * logσ[2] + 0.5 * logdet(ch)
+    grad || return val, b, true
+
+    hd, crossinv = _crossed_selected_inverse_entries(ch, gidx, G, hidx, Hh)
+    tlogdet = zeros(eltype(θ), G + Hh)
+    crossβ = zeros(eltype(θ), G + Hh, pμ)
+    crossν = zeros(eltype(θ), G + Hh)
+    gβ = gradβ_raw
+    gnuis = dataν
+    @inbounds for i in 1:n
+        gi = gidx[i]
+        hi = G + hidx[i]
+        lever = hd[gi] + hd[hi] + 2 * crossinv[i]
+        tlever = tstore[i] * lever
+        tlogdet[gi] += tlever
+        tlogdet[hi] += tlever
+        adj = 0.5 * tlever
+        gnuis += 0.5 * wνstore[i] * lever
+        crossν[gi] += rνstore[i]
+        crossν[hi] += rνstore[i]
+        for k in 1:pμ
+            xik = Xμ[i, k]
+            gβ[k] += xik * adj
+            crossβ[gi, k] += wstore[i] * xik
+            crossβ[hi, k] += wstore[i] * xik
+        end
+    end
+    implicit = ch \ tlogdet
+    @inbounds for k in 1:pμ
+        gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
+    end
+    gnuis -= 0.5 * dot(crossν, implicit)
+    gσ1 = G - invg * (sum(abs2, @view b[1:G]) + sum(@view hd[1:G]))
+    gσ2 = Hh - invh * (sum(abs2, @view b[G+1:G+Hh]) + sum(@view hd[G+1:G+Hh]))
+    gσ1 += dot(@view(implicit[1:G]), invg .* @view(b[1:G]))
+    gσ2 += dot(@view(implicit[G+1:G+Hh]), invh .* @view(b[G+1:G+Hh]))
+    return val, vcat(gβ, [gnuis, gσ1, gσ2]), b, true
 end
 
 function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gidx, G,
@@ -827,70 +975,33 @@ function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gi
     last_b = zeros(G + Hh)
 
     function eval_laplace(θ; grad::Bool = false)
-        βμ = θ[1:pμ]
-        θσ = clamp(θ[pμ+1], -8.0, 8.0)
-        logσ = clamp.(θ[pμ+2:pμ+3], -8.0, 3.0)
-        aux = aux_from(θσ)
-        η0 = Xμ * βμ
-        b, ch, _, ok = _crossed_mean_mode(kind, aux, η0, gidx, G, hidx, Hh, logσ; b0 = last_b)
-        if !ok
-            b, ch, _, ok = _crossed_mean_mode(kind, aux, η0, gidx, G, hidx, Hh, logσ; b0 = zeros(G + Hh))
-        end
-        ok || return grad ? (1e18, zeros(length(θ))) : 1e18
-        last_b .= b
-
-        invg = exp(-2 * logσ[1])
-        invh = exp(-2 * logσ[2])
-        data = zero(eltype(θ))
-        gradβ_raw = zeros(eltype(θ), pμ)
-        wstore = Vector{eltype(θ)}(undef, n)
-        tstore = Vector{eltype(θ)}(undef, n)
-        @inbounds for i in 1:n
-            η = η0[i] + b[gidx[i]] + b[G+hidx[i]]
-            data += _laplace_value(kind, aux, i, η)
-            r = _laplace_d1(kind, aux, i, η)
-            w = _laplace_d2(kind, aux, i, η)
-            t = _laplace_d3(kind, aux, i, η)
-            wstore[i] = w
-            tstore[i] = t
-            for k in 1:pμ
-                gradβ_raw[k] += Xμ[i, k] * r
+        if grad
+            val, g, b, ok = _crossed_mean_laplace_nuisance_fg(
+                kind, aux_from, n, Xμ, gidx, G, hidx, Hh, θ; grad = true, b0 = last_b
+            )
+            if !ok
+                val, g, b, ok = _crossed_mean_laplace_nuisance_fg(
+                    kind, aux_from, n, Xμ, gidx, G, hidx, Hh, θ;
+                    grad = true, b0 = zeros(G + Hh)
+                )
             end
-        end
-        prior = 0.5 * invg * sum(abs2, @view b[1:G]) +
-                0.5 * invh * sum(abs2, @view b[G+1:G+Hh])
-        val = data + prior + G * logσ[1] + Hh * logσ[2] + 0.5 * logdet(ch)
-        grad || return val
-
-        hd, crossinv = _crossed_selected_inverse_entries(ch, gidx, G, hidx, Hh)
-        tlogdet = zeros(eltype(θ), G + Hh)
-        crossβ = zeros(eltype(θ), G + Hh, pμ)
-        gβ = gradβ_raw
-        @inbounds for i in 1:n
-            gi = gidx[i]
-            hi = G + hidx[i]
-            lever = hd[gi] + hd[hi] + 2 * crossinv[i]
-            tlever = tstore[i] * lever
-            tlogdet[gi] += tlever
-            tlogdet[hi] += tlever
-            adj = 0.5 * tlever
-            for k in 1:pμ
-                xik = Xμ[i, k]
-                gβ[k] += xik * adj
-                crossβ[gi, k] += wstore[i] * xik
-                crossβ[hi, k] += wstore[i] * xik
+            ok || return 1e18, zeros(length(θ))
+            last_b .= b
+            return val, g
+        else
+            val, b, ok = _crossed_mean_laplace_nuisance_fg(
+                kind, aux_from, n, Xμ, gidx, G, hidx, Hh, θ; grad = false, b0 = last_b
+            )
+            if !ok
+                val, b, ok = _crossed_mean_laplace_nuisance_fg(
+                    kind, aux_from, n, Xμ, gidx, G, hidx, Hh, θ;
+                    grad = false, b0 = zeros(G + Hh)
+                )
             end
+            ok || return 1e18
+            last_b .= b
+            return val
         end
-        implicit = ch \ tlogdet
-        @inbounds for k in 1:pμ
-            gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
-        end
-        gσ1 = G - invg * (sum(abs2, @view b[1:G]) + sum(@view hd[1:G]))
-        gσ2 = Hh - invh * (sum(abs2, @view b[G+1:G+Hh]) + sum(@view hd[G+1:G+Hh]))
-        gσ1 += dot(@view(implicit[1:G]), invg .* @view(b[1:G]))
-        gσ2 += dot(@view(implicit[G+1:G+Hh]), invh .* @view(b[G+1:G+Hh]))
-        gnuis = _finite_diff_scalar(t -> eval_laplace(t; grad = false), θ, pμ + 1)
-        return val, vcat(gβ, [gnuis, gσ1, gσ2])
     end
 
     nll(θ) = eval_laplace(θ; grad = false)
@@ -910,9 +1021,10 @@ function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gi
     res_fast = Optim.optimize(od, θ0, method, Optim.Options(g_tol = g_tol, iterations = 250))
     res = if polish_iterations > 0
         try
-            Optim.optimize(nll, Optim.minimizer(res_fast), Optim.LBFGS(),
-                           Optim.Options(g_tol = g_tol, iterations = polish_iterations);
-                           autodiff = :finite)
+            θp = Optim.minimizer(res_fast)
+            odp = Optim.OnceDifferentiable(nll, grad!, θp)
+            Optim.optimize(odp, θp, Optim.LBFGS(),
+                           Optim.Options(g_tol = g_tol, iterations = polish_iterations))
         catch
             res_fast
         end
@@ -922,7 +1034,8 @@ function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gi
     θ̂ = Optim.minimizer(res)
     gfinal = zeros(length(θ̂))
     grad!(gfinal, θ̂)
-    converged = Optim.converged(res) || norm(gfinal, Inf) <= 1e-4 * (1 + norm(θ̂, Inf))
+    nllhat = nll(θ̂)
+    converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
         try
@@ -939,7 +1052,7 @@ function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gi
     means = Dict(:mu => [_laplace_mean(kind, dot(@view(Xμ[i, :]), θ̂[1:pμ])) for i in 1:n])
     obs = Dict(:mu => [_laplace_obs(kind, auxhat, i) for i in 1:n])
     scales = Dict(:sigma => fill(sigma_scale(θ̂[pμ+1]), n))
-    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nll(θ̂), n, converged, means, obs, scales)
+    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
     return _withnll(fit, nll)
 end
 
@@ -984,7 +1097,7 @@ function _fit_nb2_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol;
 end
 
 function _fit_gamma_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol;
-                                    se::Bool = false, polish_iterations::Int = 0)
+                                    se::Bool = false, polish_iterations::Int = 5)
     length(comps) == 2 || error("_fit_gamma_crossed_laplace requires two random-intercept components")
     size(Xσ, 2) == 1 || error("_fit_gamma_crossed_laplace currently supports a constant sigma formula")
     yv = Float64.(y)
