@@ -38,6 +38,47 @@ import Distributions
     @test [r.param for r in confint(fit; method = :wald, parm = :mu)] == fill(:mu, 3)
 end
 
+@testset "Gaussian crossed profile uses stored gradient" begin
+    rng = MersenneTwister(20260614)
+    G = 7
+    H = 6
+    n = 260
+    x = randn(rng, n)
+    gid = rand(rng, 1:G, n)
+    hid = rand(rng, 1:H, n)
+    g = Symbol.("g", gid)
+    h = Symbol.("h", hid)
+    bg = 0.45 .* randn(rng, G)
+    bh = 0.35 .* randn(rng, H)
+    y = Float64[
+        0.25 + 0.55 * x[i] + bg[gid[i]] + bh[hid[i]] + 0.45 * randn(rng)
+        for i in 1:n
+    ]
+
+    fit = drm(
+        bf(@formula(y ~ x + (1 | g) + (1 | h)), @formula(sigma ~ 1)),
+        Gaussian();
+        data = (; y, x, g, h),
+    )
+    @test fit.nllgrad !== nothing
+
+    θ = fit.theta .+ [0.01, -0.02, 0.015, 0.01, -0.012]
+    gstored = zeros(length(θ))
+    fit.nllgrad(gstored, θ)
+    hfd = 1e-5
+    gfd = similar(gstored)
+    for j in eachindex(θ)
+        step = zeros(length(θ))
+        step[j] = hfd
+        gfd[j] = (fit.nll(θ .+ step) - fit.nll(θ .- step)) / (2hfd)
+    end
+    @test maximum(abs.(gstored .- gfd)) < 1e-5
+
+    resd = confint(fit; method = :profile, parm = :resd)
+    @test [r.coef for r in resd] == ["g", "h"]
+    @test all(isfinite(r.lower) && isfinite(r.upper) for r in resd)
+end
+
 @testset "Profile CI on crossed Poisson random-effect SDs" begin
     rng = MersenneTwister(20260613)
     G = 8
