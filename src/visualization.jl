@@ -33,8 +33,9 @@ function profile_curve(
     npoints >= 3 || throw(ArgumentError("npoints must be at least 3"))
     θ̂ = copy(fit.theta)
     nll = fit.nll
+    nllgrad = fit.nllgrad
     nllhat = nll(θ̂)
-    autodiff = _profile_autodiff_mode(nll, θ̂)
+    autodiff = _profile_autodiff_mode(nll, nllgrad, θ̂)
     se = stderror(fit)
     s = (isfinite(se[k]) && se[k] > 0) ? se[k] : max(abs(θ̂[k]), 1.0)
     offsets = collect(range(-span, span; length=npoints))
@@ -47,12 +48,12 @@ function profile_curve(
     u0 = θ̂[[i for i in 1:p if i != k]]
     dev[mid] = 0.0
     for idx in (mid + 1):npoints
-        f, u0 = _profiled_nll(nll, θ̂, k, x[idx], u0; autodiff)
+        f, u0 = _profiled_nll(nll, θ̂, k, x[idx], u0; autodiff, nllgrad)
         dev[idx] = max(0.0, 2 * (f - nllhat))
     end
     u0 = θ̂[[i for i in 1:p if i != k]]
     for idx in (mid - 1):-1:1
-        f, u0 = _profiled_nll(nll, θ̂, k, x[idx], u0; autodiff)
+        f, u0 = _profiled_nll(nll, θ̂, k, x[idx], u0; autodiff, nllgrad)
         dev[idx] = max(0.0, 2 * (f - nllhat))
     end
     param, cname = _coef_metadata(fit, k)
@@ -96,9 +97,10 @@ function parameter_surface(fit::DrmFit, k1::Int, k2::Int; npoints::Int=25, span:
         throw(ArgumentError("k1, k2 must be distinct indices in 1:$p"))
     npoints >= 2 || throw(ArgumentError("npoints must be at least 2"))
     nll = fit.nll
+    nllgrad = fit.nllgrad
     θ̂ = copy(fit.theta)
     nllhat = nll(θ̂)
-    autodiff = _profile_autodiff_mode(nll, θ̂)
+    autodiff = _profile_autodiff_mode(nll, nllgrad, θ̂)
     se = stderror(fit)
     s1 = (isfinite(se[k1]) && se[k1] > 0) ? se[k1] : max(abs(θ̂[k1]), 1.0)
     s2 = (isfinite(se[k2]) && se[k2] > 0) ? se[k2] : max(abs(θ̂[k2]), 1.0)
@@ -125,7 +127,25 @@ function parameter_surface(fit::DrmFit, k1::Int, k2::Int; npoints::Int=25, span:
                     end
                     return nll(θ)
                 end
-                res = _profile_optimize(obj, ustart, autodiff)
+                grad_u! = if autodiff === :stored && nllgrad !== nothing
+                    gfull = zeros(p)
+                    function (Gout, u)
+                        θ = Vector{Float64}(undef, p)
+                        θ[k1] = x[i]
+                        θ[k2] = y[j]
+                        @inbounds for (t, r) in enumerate(rest)
+                            θ[r] = u[t]
+                        end
+                        nllgrad(gfull, θ)
+                        @inbounds for (t, r) in enumerate(rest)
+                            Gout[t] = gfull[r]
+                        end
+                        return Gout
+                    end
+                else
+                    nothing
+                end
+                res = _profile_optimize(obj, ustart, autodiff; grad! = grad_u!)
                 ustart = Optim.minimizer(res)
                 z[i, j] = max(0.0, 2 * (Optim.minimum(res) - nllhat))
             end

@@ -99,7 +99,8 @@ end
 # Returns (minimum, û_nuisance) so the caller can WARM-START the next solve from
 # the previous point's nuisance optimum (continuation along the profile path) —
 # the dominant speedup over cold-starting each solve from the joint MLE.
-function _profile_autodiff_mode(nll, θ̂::Vector{Float64})
+function _profile_autodiff_mode(nll, nllgrad, θ̂::Vector{Float64})
+    nllgrad !== nothing && return :stored
     try
         ForwardDiff.gradient(nll, θ̂)
         return :forward
@@ -118,7 +119,7 @@ function _profile_autodiff_mode(nll, θ̂::Vector{Float64})
 end
 
 function _profiled_nll(nll, θ̂::Vector{Float64}, k::Int, v::Real, u0::Vector{Float64};
-                       autodiff::Symbol = :forward)
+                       autodiff::Symbol = :forward, nllgrad = nothing)
     p = length(θ̂)
     idx = [i for i in 1:p if i != k]
     isempty(idx) && return (nll([float(v)]), Float64[])
@@ -130,11 +131,37 @@ function _profiled_nll(nll, θ̂::Vector{Float64}, k::Int, v::Real, u0::Vector{F
         end
         return nll(θ)
     end
-    res = _profile_optimize(obj, u0, autodiff)
+    grad_u! = if autodiff === :stored && nllgrad !== nothing
+        gfull = zeros(p)
+        function (Gout, u)
+            θ = Vector{Float64}(undef, p)
+            θ[k] = float(v)
+            @inbounds for (t, i) in enumerate(idx)
+                θ[i] = u[t]
+            end
+            nllgrad(gfull, θ)
+            @inbounds for (t, i) in enumerate(idx)
+                Gout[t] = gfull[i]
+            end
+            return Gout
+        end
+    else
+        nothing
+    end
+    res = _profile_optimize(obj, u0, autodiff; grad! = grad_u!)
     return (Optim.minimum(res), Optim.minimizer(res))
 end
 
-function _profile_optimize(obj, u0::Vector{Float64}, autodiff::Symbol)
+function _profile_optimize(obj, u0::Vector{Float64}, autodiff::Symbol; grad! = nothing)
+    if grad! !== nothing
+        try
+            od = Optim.OnceDifferentiable(obj, grad!, u0)
+            method = Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking())
+            return Optim.optimize(od, u0, method, Optim.Options(iterations = 80))
+        catch
+            return Optim.optimize(obj, u0, Optim.LBFGS(); autodiff = :finite)
+        end
+    end
     try
         return Optim.optimize(obj, u0, Optim.LBFGS(); autodiff)
     catch err
@@ -149,13 +176,18 @@ end
 # Analytic slope of the PROFILED nll in θ[k], by the envelope theorem: at the
 # profiled optimum the nuisance partials vanish, so d/dv [min_u nll] = ∂nll/∂θ_k
 # evaluated at (v, û). One ForwardDiff gradient component — no extra solves.
-function _profile_slope(nll, θ̂::Vector{Float64}, k::Int, v::Real, û::Vector{Float64})
+function _profile_slope(nll, nllgrad, θ̂::Vector{Float64}, k::Int, v::Real, û::Vector{Float64})
     p = length(θ̂)
     idx = [i for i in 1:p if i != k]
     θ = Vector{Float64}(undef, p)
     θ[k] = float(v)
     @inbounds for (t, i) in enumerate(idx)
         θ[i] = û[t]
+    end
+    if nllgrad !== nothing
+        g = zeros(p)
+        nllgrad(g, θ)
+        return g[k]
     end
     return ForwardDiff.gradient(nll, θ)[k]
 end
@@ -168,17 +200,17 @@ end
 # bracket is accepted, otherwise we fall back to bisection. Correctness is
 # bracket-guaranteed; the analytic slope only buys faster (quadratic) convergence.
 # Each evaluation warm-starts the nuisance optimisation from the previous û.
-function _profile_endpoint(nll, θ̂, k, nllhat, half, s, dir, u0, autodiff)
+function _profile_endpoint(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u0, autodiff)
     target = nllhat + half
     p = length(θ̂)
     nidx = p - 1
     û = copy(u0)
     # h(t) and its derivative h'(t); updates û in place for warm-starting.
     function heval(t)
-        f, unew = _profiled_nll(nll, θ̂, k, θ̂[k] + dir * t, û; autodiff)
+        f, unew = _profiled_nll(nll, θ̂, k, θ̂[k] + dir * t, û; autodiff, nllgrad)
         isempty(unew) || (û = unew)
-        hp = (nidx == 0 || autodiff !== :forward) ? NaN :
-            dir * _profile_slope(nll, θ̂, k, θ̂[k] + dir * t, û)
+        hp = (nidx == 0 || autodiff === :finite) ? NaN :
+            dir * _profile_slope(nll, nllgrad, θ̂, k, θ̂[k] + dir * t, û)
         return (f - target, hp)
     end
     # Bracket: expand until h > 0.
@@ -205,9 +237,10 @@ function _profile_ci(fit::DrmFit, level::Real; threads::Bool = false, parm = not
     fit.nll === nothing &&
         throw(ArgumentError("profile intervals require the fitted objective; this model was not built with one"))
     nll = fit.nll
+    nllgrad = fit.nllgrad
     θ̂ = copy(fit.theta)
     nllhat = nll(θ̂)
-    autodiff = _profile_autodiff_mode(nll, θ̂)
+    autodiff = _profile_autodiff_mode(nll, nllgrad, θ̂)
     half = quantile(Chisq(1), level) / 2           # nll rises by χ²₁/2 at each endpoint
     se = stderror(fit)
     jobs = NamedTuple{(:param, :coef, :k),Tuple{Symbol,String,Int}}[]
@@ -220,23 +253,23 @@ function _profile_ci(fit::DrmFit, level::Real; threads::Bool = false, parm = not
     rows = Vector{_CIRow}(undef, length(jobs))
     if threads && Threads.nthreads() > 1
         Threads.@threads for i in eachindex(jobs)
-            rows[i] = _profile_row(jobs[i], nll, θ̂, nllhat, half, se, autodiff)
+            rows[i] = _profile_row(jobs[i], nll, nllgrad, θ̂, nllhat, half, se, autodiff)
         end
     else
         for i in eachindex(jobs)
-            rows[i] = _profile_row(jobs[i], nll, θ̂, nllhat, half, se, autodiff)
+            rows[i] = _profile_row(jobs[i], nll, nllgrad, θ̂, nllhat, half, se, autodiff)
         end
     end
     return rows
 end
 
-function _profile_row(job, nll, θ̂, nllhat, half, se, autodiff)
+function _profile_row(job, nll, nllgrad, θ̂, nllhat, half, se, autodiff)
     k = job.k
     est = θ̂[k]
     s = (isfinite(se[k]) && se[k] > 0) ? se[k] : max(abs(est), 1.0)
     u0 = θ̂[[i for i in 1:length(θ̂) if i != k]]
-    lo = _profile_endpoint(nll, θ̂, k, nllhat, half, s, -1, u0, autodiff)
-    hi = _profile_endpoint(nll, θ̂, k, nllhat, half, s, +1, u0, autodiff)
+    lo = _profile_endpoint(nll, nllgrad, θ̂, k, nllhat, half, s, -1, u0, autodiff)
+    hi = _profile_endpoint(nll, nllgrad, θ̂, k, nllhat, half, s, +1, u0, autodiff)
     return (param = job.param, coef = job.coef, estimate = est, lower = lo, upper = hi)
 end
 
