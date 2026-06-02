@@ -1,23 +1,23 @@
 # Crossed non-Gaussian sparse-Laplace family benchmark (#80)
 
-Measured median speedup R/Julia across successful paired cells: 39.70x (min 17.91x, max 133.16x)
+Measured median speedup R/Julia across successful paired cells: 41.52x (min 25.53x, max 175.16x)
 
 | cell | family | n | R med/s | Julia med/s | speedup | max d_beta | d nuisance | max d_SD | abs d_LL | conv R/J |
 |:-----|:-------|--:|--------:|------------:|--------:|--------:|-----------:|--------:|------:|:---------|
-| small         | poisson  |   1000 |    0.2240 |    0.0053 |   42.10x | 7.553e-07 |         - |    0.000 | 1.125e-07 | TRUE/TRUE |
-| small         | binomial |   1000 |         - |    0.0481 |        - |         - |         - |        - |        - | FALSE/TRUE |
-| small         | nb2      |   1000 |    2.1330 |    0.0160 |  133.16x | 1.321e-06 |     0.000 |    0.000 | 2.078e-10 | TRUE/TRUE |
-| small         | gamma    |   1000 |         - |    0.0248 |        - |         - |         - |        - |        - | FALSE/TRUE |
-| small         | beta     |   1000 |         - |    0.1456 |        - |         - |         - |        - |        - | FALSE/TRUE |
-| medium        | poisson  |   5000 |    1.0200 |    0.0294 |   34.67x | 4.429e-07 |         - |    0.000 | 2.218e-09 | TRUE/TRUE |
-| medium        | binomial |   5000 |         - |    0.3016 |        - |         - |         - |        - |        - | FALSE/TRUE |
-| medium        | nb2      |   5000 |   15.0390 |    0.1163 |  129.34x | 8.069e-06 |     0.000 |    0.000 | 1.477e-08 | TRUE/TRUE |
-| medium        | gamma    |   5000 |         - |    0.1682 |        - |         - |         - |        - |        - | FALSE/TRUE |
-| medium        | beta     |   5000 |         - |    0.9746 |        - |         - |         - |        - |        - | FALSE/TRUE |
-| fixedq_n20000 | poisson  |  20000 |    3.6875 |    0.2059 |   17.91x | 2.056e-06 |         - |    0.000 | 3.379e-07 | TRUE/TRUE |
-| fixedq_n20000 | binomial |  20000 |         - |    2.0570 |        - |         - |         - |        - |        - | FALSE/TRUE |
-| fixedq_n20000 | nb2      |  20000 |   66.8330 |    1.7917 |   37.30x | 1.349e-05 |     0.000 |    0.000 | 1.029e-07 | TRUE/TRUE |
-| fixedq_n20000 | gamma    |  20000 |         - |    0.7267 |        - |         - |         - |        - |        - | FALSE/TRUE |
+| small         | poisson  |   1000 |    0.2160 |    0.0051 |   42.22x | 7.553e-07 |         - |    0.000 | 1.125e-07 | TRUE/TRUE |
+| small         | binomial |   1000 |         - |    0.0422 |        - |         - |         - |        - |        - | FALSE/TRUE |
+| small         | nb2      |   1000 |    2.1670 |    0.0129 |  168.25x | 1.321e-06 |     0.000 |    0.000 | 2.078e-10 | TRUE/TRUE |
+| small         | gamma    |   1000 |         - |    0.0190 |        - |         - |         - |        - |        - | FALSE/TRUE |
+| small         | beta     |   1000 |         - |    0.0378 |        - |         - |         - |        - |        - | FALSE/TRUE |
+| medium        | poisson  |   5000 |    1.0330 |    0.0300 |   34.44x | 4.429e-07 |         - |    0.000 | 2.218e-09 | TRUE/TRUE |
+| medium        | binomial |   5000 |         - |    0.2686 |        - |         - |         - |        - |        - | FALSE/TRUE |
+| medium        | nb2      |   5000 |   15.2040 |    0.0868 |  175.16x | 8.069e-06 |     0.000 |    0.000 | 1.621e-08 | TRUE/TRUE |
+| medium        | gamma    |   5000 |         - |    0.1357 |        - |         - |         - |        - |        - | FALSE/TRUE |
+| medium        | beta     |   5000 |         - |    0.2579 |        - |         - |         - |        - |        - | FALSE/TRUE |
+| fixedq_n20000 | poisson  |  20000 |    3.7785 |    0.1480 |   25.53x | 2.056e-06 |         - |    0.000 | 3.379e-07 | TRUE/TRUE |
+| fixedq_n20000 | binomial |  20000 |         - |    1.8849 |        - |         - |         - |        - |        - | FALSE/TRUE |
+| fixedq_n20000 | nb2      |  20000 |   66.8745 |    1.6384 |   40.82x | 1.349e-05 |     0.000 |    0.000 | 1.017e-07 | TRUE/TRUE |
+| fixedq_n20000 | gamma    |  20000 |         - |    0.5720 |        - |         - |         - |        - |        - | FALSE/TRUE |
 
 ## Gates
 
