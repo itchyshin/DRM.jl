@@ -157,7 +157,10 @@ function _profile_optimize(obj, u0::Vector{Float64}, autodiff::Symbol; grad! = n
         try
             od = Optim.OnceDifferentiable(obj, grad!, u0)
             method = Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking())
-            return Optim.optimize(od, u0, method, Optim.Options(iterations = 80))
+            return Optim.optimize(
+                od, u0, method,
+                Optim.Options(iterations = 40, g_tol = 1e-6, x_abstol = 1e-8),
+            )
         catch
             return Optim.optimize(obj, u0, Optim.LBFGS(); autodiff = :finite)
         end
