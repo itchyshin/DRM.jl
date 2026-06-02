@@ -1,8 +1,13 @@
 # check-log.md — DRM.jl gate status
 
-Canonical per-slice gating status. One row per slice; cite the issue, the
-verification command, and the result. This is a **shared resource** — check PR
-overlap before editing. See `AGENTS.md` → *Definition of Done*.
+Per-slice gating status: one entry per slice citing the issue, the verification
+command, and the result. See `AGENTS.md` → *Definition of Done*.
+
+> **📌 Adding an entry?** Do **not** append to the table below — it is **frozen
+> history through 2026-06-02**. Append-only edits to a shared table make every
+> pair of open PRs collide on merge. Instead add a single file to
+> [`check-log.d/`](check-log.d/) (one row per slice; see its README). New files
+> never conflict. View the combined log with `julia tools/build_check_log.jl`.
 
 | Date | Slice / Issue | Gate run | Result | By |
 |---|---|---|---|---|
