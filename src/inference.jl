@@ -5,7 +5,7 @@
 # re-optimising the nuisance parameters at each fixed value. Mirrors drmTMB's
 # `confint(..., method = "wald" | "profile")`.
 
-using LinearAlgebra: diag, isposdef, Symmetric, eigvals
+using LinearAlgebra: diag, isposdef, Symmetric, eigvals, BLAS
 using Distributions: Normal, Chisq, quantile
 import Optim
 import Random
@@ -278,6 +278,7 @@ end
 
 """
     bootstrap_ci(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =)
+    bootstrap_ci(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =)
 
 Parametric bootstrap confidence intervals: fit the model, then `simulate` `B`
 replicate responses, refit each, and take percentile intervals per coefficient.
@@ -285,7 +286,9 @@ Univariate-response models (fixed / random-effect / meta / structured). Same row
 shape as [`confint`](@ref). Set `threads = true` to refit bootstrap replicates
 in parallel. Pass through the structured-matrix keywords (`K` / `A` / `tree`)
 exactly as to [`drm`](@ref). Use `bootstrap_result` when you need
-attempted/used/failed counts and per-replicate failure messages.
+attempted/used/failed counts and per-replicate failure messages. If you already
+have `fit = drm(...)`, pass the fit directly to avoid refitting the base model
+before the bootstrap replicates.
 """
 function bootstrap_ci(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
         level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
@@ -307,8 +310,18 @@ function bootstrap_ci(formula::DrmFormula, family; data, B::Int = 300,
     return _bootstrap_ci_rows(rows)
 end
 
+function bootstrap_ci(fit::DrmFit; data, B::Int = 300, level::Real = 0.95,
+        rng = default_rng(), K = nothing, A = nothing, tree = nothing,
+        threads::Bool = false, failures::Symbol = :error,
+        check_converged::Bool = false)
+    rows = bootstrap_summary(fit; data, B, level, rng, K, A, tree, threads,
+        failures, check_converged)
+    return _bootstrap_ci_rows(rows)
+end
+
 """
     bootstrap_summary(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =)
+    bootstrap_summary(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =)
 
 Parametric bootstrap coefficient summaries in one pass: point estimate,
 bootstrap standard error, and percentile confidence interval. This is the
@@ -338,8 +351,18 @@ function bootstrap_summary(formula::DrmFormula, family; data, B::Int = 300,
     return result.summary
 end
 
+function bootstrap_summary(fit::DrmFit; data, B::Int = 300, level::Real = 0.95,
+        rng = default_rng(), K = nothing, A = nothing, tree = nothing,
+        threads::Bool = false, failures::Symbol = :error,
+        check_converged::Bool = false)
+    result = bootstrap_result(fit; data, B, level, rng, K, A, tree, threads,
+        failures, check_converged)
+    return result.summary
+end
+
 """
     bootstrap_result(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, failures = :error, check_converged = false, K =, A =, tree =)
+    bootstrap_result(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, failures = :error, check_converged = false, K =, A =, tree =)
 
 Auditable parametric bootstrap. Returns a `NamedTuple` with:
 
@@ -348,11 +371,15 @@ Auditable parametric bootstrap. Returns a `NamedTuple` with:
 - `attempted`, `used`, `failed` — replicate counts;
 - `seeds` — the per-replicate seeds used for reproducibility;
 - `threaded` — whether threaded refits were actually used.
+- `julia_threads`, `blas_threads`, `elapsed` — CPU context and wall-clock time
+  for the simulated-refit phase.
 
 `failures = :error` (default) records failures and then errors if any replicate
 failed. `failures = :skip` computes summaries from successful replicates and
 keeps the failure records in the return value. Set `check_converged = true` to
-treat non-converged refits as failed replicates.
+treat non-converged refits as failed replicates. Passing an existing `DrmFit`
+reuses that point estimate as the bootstrap seed fit and starts directly with
+the `B` simulated refits.
 """
 function bootstrap_result(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
         level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
@@ -365,6 +392,17 @@ function bootstrap_result(formula::DrmFormula, family::Gaussian; data, B::Int = 
         failures, check_converged)
 end
 
+function bootstrap_result(fit::DrmFit{<:Gaussian}; data, B::Int = 300,
+        level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
+        tree = nothing, threads::Bool = false, failures::Symbol = :error,
+        check_converged::Bool = false)
+    _check_bootstrap_failure_mode(failures)
+    formula = _bootstrap_fit_formula(fit)
+    refit = datab -> drm(formula, fit.family; data = datab, K, A, tree)
+    return _bootstrap_result(fit, formula, data, B, level, rng, threads, refit;
+        failures, check_converged)
+end
+
 function bootstrap_result(formula::DrmFormula, family; data, B::Int = 300,
         level::Real = 0.95, rng = default_rng(), threads::Bool = false,
         failures::Symbol = :error, check_converged::Bool = false)
@@ -373,6 +411,28 @@ function bootstrap_result(formula::DrmFormula, family; data, B::Int = 300,
     refit = datab -> drm(formula, family; data = datab)
     return _bootstrap_result(fit0, formula, data, B, level, rng, threads, refit;
         failures, check_converged)
+end
+
+function bootstrap_result(fit::DrmFit; data, B::Int = 300, level::Real = 0.95,
+        rng = default_rng(), threads::Bool = false, failures::Symbol = :error,
+        check_converged::Bool = false, kwargs...)
+    for (_, value) in pairs(kwargs)
+        value === nothing ||
+            throw(ArgumentError("bootstrap_result: K/A/tree are only valid for Gaussian fits"))
+    end
+    _check_bootstrap_failure_mode(failures)
+    formula = _bootstrap_fit_formula(fit)
+    refit = datab -> drm(formula, fit.family; data = datab)
+    return _bootstrap_result(fit, formula, data, B, level, rng, threads, refit;
+        failures, check_converged)
+end
+
+function _bootstrap_fit_formula(fit::DrmFit)
+    fit.formula isa DrmFormula && return fit.formula
+    throw(ArgumentError(
+        "fit-based bootstrap requires a univariate `DrmFit` created by `drm`; " *
+        "bivariate and formula-less internal fits are not yet supported",
+    ))
 end
 
 function _bootstrap_result(fit0, formula::DrmFormula, data, B::Int, level::Real,
@@ -405,13 +465,15 @@ function _bootstrap_result(fit0, formula::DrmFormula, data, B::Int, level::Real,
     end
 
     threaded = threads && Threads.nthreads() > 1
-    if threaded
-        Threads.@threads for b in 1:B
-            run_one!(b)
-        end
-    else
-        for b in 1:B
-            run_one!(b)
+    elapsed = @elapsed begin
+        if threaded
+            Threads.@threads for b in 1:B
+                run_one!(b)
+            end
+        else
+            for b in 1:B
+                run_one!(b)
+            end
         end
     end
 
@@ -429,7 +491,8 @@ function _bootstrap_result(fit0, formula::DrmFormula, data, B::Int, level::Real,
     summary = _bootstrap_summary_rows(fit0, draws[ok, :], est, level)
     return (summary = summary, failures = failure_rows, attempted = B, used = used,
         failed = length(failure_rows), seeds = seeds, threaded = threaded,
-        check_converged = check_converged)
+        julia_threads = Threads.nthreads(), blas_threads = BLAS.get_num_threads(),
+        elapsed = elapsed, check_converged = check_converged)
 end
 
 function _check_bootstrap_failure_mode(failures::Symbol)
