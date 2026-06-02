@@ -697,6 +697,170 @@ function _laplace_nuisance_d2(::Val{:beta_fixed}, aux, i, η)
     return -2φ * (dB * v^2 + dA * vp)
 end
 
+function _laplace_d12(kind, aux, i, η)
+    return _laplace_d1(kind, aux, i, η), _laplace_d2(kind, aux, i, η)
+end
+
+function _laplace_v123(kind, aux, i, η)
+    return (_laplace_value(kind, aux, i, η),
+            _laplace_d1(kind, aux, i, η),
+            _laplace_d2(kind, aux, i, η),
+            _laplace_d3(kind, aux, i, η))
+end
+
+function _laplace_v123_nuisance(kind, aux, i, η)
+    return (_laplace_value(kind, aux, i, η),
+            _laplace_d1(kind, aux, i, η),
+            _laplace_d2(kind, aux, i, η),
+            _laplace_d3(kind, aux, i, η),
+            _laplace_nuisance_value(kind, aux, i, η),
+            _laplace_nuisance_d1(kind, aux, i, η),
+            _laplace_nuisance_d2(kind, aux, i, η))
+end
+
+function _laplace_d12(::Val{:binomial}, aux, i, η)
+    p = _laplace_logistic(clamp(η, -30.0, 30.0))
+    w = aux.ntr[i] * p * (1 - p)
+    return aux.ntr[i] * p - aux.s[i], w
+end
+
+function _laplace_v123(::Val{:binomial}, aux, i, η)
+    p = _laplace_logistic(clamp(η, -30.0, 30.0))
+    s = aux.s[i]
+    n = aux.ntr[i]
+    v = -(aux.logchoose[i] + s * log(p) + (n - s) * log1p(-p))
+    w = n * p * (1 - p)
+    return v, n * p - s, w, w * (1 - 2p)
+end
+
+function _laplace_d12(::Val{:nb2_fixed}, aux, i, η)
+    μ = exp(clamp(η, -30.0, 30.0))
+    y = aux.y[i]
+    r = aux.size
+    den = r + μ
+    return (y + r) * μ / den - y, (y + r) * r * μ / den^2
+end
+
+function _laplace_v123(::Val{:nb2_fixed}, aux, i, η)
+    ηc = clamp(η, -30.0, 30.0)
+    μ = exp(ηc)
+    y = aux.y[i]
+    r = aux.size
+    den = r + μ
+    v = -(aux.lconst[i] + y * ηc + r * log(r) - (y + r) * log(den))
+    d1 = (y + r) * μ / den - y
+    d2 = (y + r) * r * μ / den^2
+    d3 = (y + r) * r * μ * (r - μ) / den^3
+    return v, d1, d2, d3
+end
+
+function _laplace_v123_nuisance(::Val{:nb2_fixed}, aux, i, η)
+    ηc = clamp(η, -30.0, 30.0)
+    μ = exp(ηc)
+    y = aux.y[i]
+    r = aux.size
+    den = r + μ
+    v = -(aux.lconst[i] + y * ηc + r * log(r) - (y + r) * log(den))
+    d1 = (y + r) * μ / den - y
+    d2 = (y + r) * r * μ / den^2
+    d3 = (y + r) * r * μ * (r - μ) / den^3
+    dldr = -(digamma(y + r) - digamma(r)) - log(r) - 1 + log(den) + (y + r) / den
+    nv = r * dldr
+    nd1 = r * μ * (μ - y) / den^2
+    nd2 = r * μ * ((y + 2r) / den^2 - 2r * (y + r) / den^3)
+    return v, d1, d2, d3, nv, nd1, nd2
+end
+
+function _laplace_d12(::Val{:gamma_fixed}, aux, i, η)
+    μ = exp(clamp(η, -30.0, 30.0))
+    αy_over_μ = aux.shape * aux.y[i] / μ
+    return aux.shape - αy_over_μ, αy_over_μ
+end
+
+function _laplace_v123(::Val{:gamma_fixed}, aux, i, η)
+    ηc = clamp(η, -30.0, 30.0)
+    μ = exp(ηc)
+    αy_over_μ = aux.shape * aux.y[i] / μ
+    v = -(aux.lconst[i] - aux.shape * ηc - αy_over_μ)
+    return v, aux.shape - αy_over_μ, αy_over_μ, -αy_over_μ
+end
+
+function _laplace_v123_nuisance(::Val{:gamma_fixed}, aux, i, η)
+    ηc = clamp(η, -30.0, 30.0)
+    μ = exp(ηc)
+    y = aux.y[i]
+    α = aux.shape
+    αy_over_μ = α * y / μ
+    v = -(aux.lconst[i] - α * ηc - αy_over_μ)
+    d1 = α - αy_over_μ
+    d2 = αy_over_μ
+    d3 = -αy_over_μ
+    dldα = -log(α) - 1 + digamma(α) - log(y) + ηc + y / μ
+    return v, d1, d2, d3, -2α * dldα, -2α * (1 - y / μ), -2α * y / μ
+end
+
+function _laplace_d12(::Val{:beta_fixed}, aux, i, η)
+    μ = _laplace_logistic(clamp(η, -30.0, 30.0))
+    φ = aux.precision
+    a = μ * φ
+    b = (1 - μ) * φ
+    A = φ * (digamma(a) - digamma(b) - aux.ylogit[i])
+    B = φ^2 * (trigamma(a) + trigamma(b))
+    v = μ * (1 - μ)
+    vp = v * (1 - 2μ)
+    return A * v, B * v^2 + A * vp
+end
+
+function _laplace_v123(::Val{:beta_fixed}, aux, i, η)
+    μ, A, B, C, v, vp, vpp = _laplace_beta_terms(aux, i, η)
+    φ = aux.precision
+    a = μ * φ
+    b = (1 - μ) * φ
+    y = aux.y[i]
+    value = -(aux.lgammaφ - loggamma(a) - loggamma(b) +
+              (a - 1) * log(y) + (b - 1) * log1p(-y))
+    return value, A * v, B * v^2 + A * vp, C * v^3 + 3 * B * v * vp + A * vpp
+end
+
+_laplace_beta_digamma_precision(aux) =
+    hasproperty(aux, :digammaφ) ? aux.digammaφ : digamma(aux.precision)
+
+function _laplace_v123_nuisance(::Val{:beta_fixed}, aux, i, η)
+    μ = _laplace_logistic(clamp(η, -30.0, 30.0))
+    φ = aux.precision
+    a = μ * φ
+    b = (1 - μ) * φ
+    y = aux.y[i]
+    logy = log(y)
+    log1my = log1p(-y)
+    da = digamma(a)
+    db = digamma(b)
+    ta = trigamma(a)
+    tb = trigamma(b)
+    p2a = polygamma(2, a)
+    p2b = polygamma(2, b)
+    v = μ * (1 - μ)
+    u = 1 - 2μ
+    vp = v * u
+    vpp = v * u^2 - 2v^2
+    A = φ * (da - db - aux.ylogit[i])
+    B = φ^2 * (ta + tb)
+    C = φ^3 * (p2a - p2b)
+    value = -(aux.lgammaφ - loggamma(a) - loggamma(b) +
+              (a - 1) * logy + (b - 1) * log1my)
+    dL = -_laplace_beta_digamma_precision(aux) + μ * da + (1 - μ) * db -
+         μ * logy - (1 - μ) * log1my
+    dA = da - db - aux.ylogit[i] + φ * (μ * ta - (1 - μ) * tb)
+    dB = 2φ * (ta + tb) + φ^2 * (μ * p2a + (1 - μ) * p2b)
+    return (value,
+            A * v,
+            B * v^2 + A * vp,
+            C * v^3 + 3 * B * v * vp + A * vpp,
+            -2φ * dL,
+            -2φ * dA * v,
+            -2φ * (dB * v^2 + dA * vp))
+end
+
 function _crossed_mean_mode(kind, aux, η0, gidx, G, hidx, Hh, logσ; b0 = nothing,
                             maxiter::Int = 60, tol::Real = 1e-8)
     q = G + Hh
@@ -726,8 +890,7 @@ function _crossed_mean_mode(kind, aux, η0, gidx, G, hidx, Hh, logσ; b0 = nothi
             gi = gidx[i]
             hi = G + hidx[i]
             η = η0[i] + b[gi] + b[hi]
-            r = _laplace_d1(kind, aux, i, η)
-            w = _laplace_d2(kind, aux, i, η)
+            r, w = _laplace_d12(kind, aux, i, η)
             grad[gi] += r
             grad[hi] += r
             diagH[gi] += w
@@ -790,10 +953,8 @@ function _fit_crossed_mean_laplace(fam, kind, aux, n::Int, Xμ, gidx, G, hidx, H
         tstore = Vector{eltype(θ)}(undef, n)
         @inbounds for i in 1:n
             η = η0[i] + b[gidx[i]] + b[G+hidx[i]]
-            data += _laplace_value(kind, aux, i, η)
-            r = _laplace_d1(kind, aux, i, η)
-            w = _laplace_d2(kind, aux, i, η)
-            t = _laplace_d3(kind, aux, i, η)
+            v, r, w, t = _laplace_v123(kind, aux, i, η)
+            data += v
             wstore[i] = w
             tstore[i] = t
             for k in 1:pμ
@@ -914,15 +1075,13 @@ function _crossed_mean_laplace_nuisance_fg(kind, aux_from, n::Int, Xμ, gidx, G,
     wνstore = Vector{eltype(θ)}(undef, n)
     @inbounds for i in 1:n
         η = η0[i] + b[gidx[i]] + b[G+hidx[i]]
-        data += _laplace_value(kind, aux, i, η)
-        r = _laplace_d1(kind, aux, i, η)
-        w = _laplace_d2(kind, aux, i, η)
-        t = _laplace_d3(kind, aux, i, η)
+        v, r, w, t, nval, nr, nw = _laplace_v123_nuisance(kind, aux, i, η)
+        data += v
         wstore[i] = w
         tstore[i] = t
-        dataν += _laplace_nuisance_value(kind, aux, i, η)
-        rνstore[i] = _laplace_nuisance_d1(kind, aux, i, η)
-        wνstore[i] = _laplace_nuisance_d2(kind, aux, i, η)
+        dataν += nval
+        rνstore[i] = nr
+        wνstore[i] = nw
         for k in 1:pμ
             gradβ_raw[k] += Xμ[i, k] * r
         end
@@ -1127,7 +1286,8 @@ function _fit_beta_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol;
     ylogit = log.(yv) .- log1p.(-yv)
     function aux_from(logsigma)
         φ = exp(clamp(-2 * logsigma, -8.0, 8.0))
-        return (y = yv, precision = φ, ylogit = ylogit, lgammaφ = loggamma(φ))
+        return (y = yv, precision = φ, ylogit = ylogit,
+                lgammaφ = loggamma(φ), digammaφ = digamma(φ))
     end
     ȳ = clamp(sum(yv) / length(yv), 1e-4, 1 - 1e-4)
     v = sum(abs2, yv .- ȳ) / max(length(yv) - 1, 1)
@@ -1178,7 +1338,8 @@ function _fit_beta_fixed_crossed_laplace(fam, y, precision::Real, Xμ, comps, nm
     φ = float(precision)
     yv = Float64.(y)
     ylogit = log.(yv) .- log1p.(-yv)
-    aux = (y = yv, precision = φ, ylogit = ylogit, lgammaφ = loggamma(φ))
+    aux = (y = yv, precision = φ, ylogit = ylogit,
+           lgammaφ = loggamma(φ), digammaφ = digamma(φ))
     ȳ = clamp(sum(yv) / length(yv), 1e-4, 1 - 1e-4)
     θβ0 = zeros(size(Xμ, 2))
     θβ0[1] = log(ȳ / (1 - ȳ))
