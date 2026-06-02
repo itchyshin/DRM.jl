@@ -151,22 +151,35 @@ import Distributions
 
         boot = bootstrap_ci(form, Poisson(); data = dat, B = 20,
             rng = MersenneTwister(14), threads = true)
+        boot_fit = bootstrap_ci(fit; data = dat, B = 20,
+            rng = MersenneTwister(14), threads = true)
         @test length(boot) == length(coef(fit))
         @test all(isfinite(r.lower) && isfinite(r.upper) for r in boot)
+        @test boot_fit == boot
 
         bsum = bootstrap_summary(form, Poisson(); data = dat, B = 20,
+            rng = MersenneTwister(14), threads = true)
+        bsum_fit = bootstrap_summary(fit; data = dat, B = 20,
             rng = MersenneTwister(14), threads = true)
         @test length(bsum) == length(boot)
         @test all(r.std_error > 0 for r in bsum)
         @test [(r.param, r.coef, r.estimate, r.lower, r.upper) for r in bsum] ==
               [(r.param, r.coef, r.estimate, r.lower, r.upper) for r in boot]
+        @test bsum_fit == bsum
 
         bres = bootstrap_result(form, Poisson(); data = dat, B = 12,
+            rng = MersenneTwister(16), threads = true)
+        bres_fit = bootstrap_result(fit; data = dat, B = 12,
             rng = MersenneTwister(16), threads = true)
         @test bres.attempted == bres.used == 12
         @test bres.failed == 0
         @test isempty(bres.failures)
         @test length(bres.summary) == length(coef(fit))
+        @test bres_fit.summary == bres.summary
+        @test bres_fit.seeds == bres.seeds
+        @test bres_fit.attempted == bres.attempted
+        @test bres_fit.used == bres.used
+        @test bres_fit.failed == bres.failed
 
         ntr = fill(6, n)
         p = @. 1 / (1 + exp(-(0.1 + 0.4 * x)))

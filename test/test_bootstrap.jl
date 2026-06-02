@@ -29,12 +29,20 @@ using Test, Random
         level = 0.95, rng = MersenneTwister(2))
     bci2 = bootstrap_ci(form, Gaussian(); data = (; y, x), B = 40,
         level = 0.95, rng = MersenneTwister(2))
+    bs_fit = bootstrap_summary(fit; data = (; y, x), B = 40,
+        level = 0.95, rng = MersenneTwister(2))
+    bci_fit = bootstrap_ci(fit; data = (; y, x), B = 40,
+        level = 0.95, rng = MersenneTwister(2))
     @test length(bs) == length(bci2) == 4
     @test all(r.std_error > 0 for r in bs)
     @test [(r.param, r.coef, r.estimate, r.lower, r.upper) for r in bs] ==
           [(r.param, r.coef, r.estimate, r.lower, r.upper) for r in bci2]
+    @test bs_fit == bs
+    @test bci_fit == bci2
 
     br = bootstrap_result(form, Gaussian(); data = (; y, x), B = 20,
+        level = 0.95, rng = MersenneTwister(3))
+    br_fit = bootstrap_result(fit; data = (; y, x), B = 20,
         level = 0.95, rng = MersenneTwister(3))
     bs2 = bootstrap_summary(form, Gaussian(); data = (; y, x), B = 20,
         level = 0.95, rng = MersenneTwister(3))
@@ -43,9 +51,20 @@ using Test, Random
     @test br.failed == 0
     @test isempty(br.failures)
     @test length(br.seeds) == 20
+    @test br.threaded == false
+    @test br.julia_threads == Threads.nthreads()
+    @test br.blas_threads >= 1
+    @test br.elapsed >= 0
     @test br.summary == bs2
+    @test br_fit.summary == br.summary
+    @test br_fit.seeds == br.seeds
+    @test br_fit.attempted == br.attempted
+    @test br_fit.used == br.used
+    @test br_fit.failed == br.failed
     @test_throws ArgumentError bootstrap_result(form, Gaussian(); data = (; y, x),
         B = 2, failures = :warn)
+    @test_throws ArgumentError bootstrap_result(DRM._withformula(fit, nothing);
+        data = (; y, x), B = 2)
 
     fit0 = drm(form, Gaussian(); data = (; y, x))
     calls = Ref(0)
