@@ -42,7 +42,7 @@ const _BootstrapFailureRow = NamedTuple{(:replicate, :seed, :message),
     Tuple{Int,UInt,String}}
 
 """
-    confint(fit; level = 0.95, method = :wald, threads = false)
+    confint(fit; level = 0.95, method = :wald, threads = false, parm = nothing)
 
 Confidence intervals for every coefficient, as a vector of
 `(param, coef, estimate, lower, upper)` rows on each parameter's working scale
@@ -60,21 +60,32 @@ Confidence intervals for every coefficient, as a vector of
   far fewer inner re-optimisations than cold-started bisection.
   Pass `threads = true` to profile coefficients in parallel when the fitted
   objective is thread-safe.
+- `parm = :resd` or `parm = [:mu, :resd]` — restrict intervals to one or more
+  parameter blocks. This is especially useful for profiling random-effect SDs
+  without also profiling fixed-effect coefficients.
 
 Mirrors drmTMB's `confint(fit, method = "wald" | "profile")`.
 """
 function confint(fit::DrmFit; level::Real = 0.95, method::Symbol = :wald,
-                 threads::Bool = false)
-    method === :wald && return _wald_ci(fit, level)
-    method === :profile && return _profile_ci(fit, level; threads = threads)
+                 threads::Bool = false, parm = nothing)
+    method === :wald && return _wald_ci(fit, level, parm)
+    method === :profile && return _profile_ci(fit, level; threads = threads, parm = parm)
     throw(ArgumentError("confint: method must be :wald or :profile (got :$method)"))
 end
 
-function _wald_ci(fit::DrmFit, level::Real)
+function _ci_param_selected(param::Symbol, parm)
+    parm === nothing && return true
+    parm isa Symbol && return param === parm
+    parm isa AbstractVector{Symbol} && return param in parm
+    throw(ArgumentError("confint: parm must be nothing, a Symbol, or a Vector{Symbol}"))
+end
+
+function _wald_ci(fit::DrmFit, level::Real, parm)
     se = stderror(fit)
     z = quantile(Normal(), 1 - (1 - level) / 2)
     rows = _CIRow[]
     for ((p, r), (_, nms)) in zip(fit.blocks, fit.coefnames)
+        _ci_param_selected(p, parm) || continue
         for (j, idx) in enumerate(r)
             est = fit.theta[idx]
             s = se[idx]
@@ -88,7 +99,26 @@ end
 # Returns (minimum, û_nuisance) so the caller can WARM-START the next solve from
 # the previous point's nuisance optimum (continuation along the profile path) —
 # the dominant speedup over cold-starting each solve from the joint MLE.
-function _profiled_nll(nll, θ̂::Vector{Float64}, k::Int, v::Real, u0::Vector{Float64})
+function _profile_autodiff_mode(nll, θ̂::Vector{Float64})
+    try
+        ForwardDiff.gradient(nll, θ̂)
+        return :forward
+    catch err
+        # Some fitted objectives are exact on Float64 but not dual-number safe
+        # because they solve an inner sparse/Laplace mode with Float64 work
+        # arrays. Keep profiling valid by using finite-difference nuisance
+        # gradients when the Float64 objective itself is fine.
+        try
+            nll(θ̂)
+        catch
+            rethrow(err)
+        end
+        return :finite
+    end
+end
+
+function _profiled_nll(nll, θ̂::Vector{Float64}, k::Int, v::Real, u0::Vector{Float64};
+                       autodiff::Symbol = :forward)
     p = length(θ̂)
     idx = [i for i in 1:p if i != k]
     isempty(idx) && return (nll([float(v)]), Float64[])
@@ -100,8 +130,20 @@ function _profiled_nll(nll, θ̂::Vector{Float64}, k::Int, v::Real, u0::Vector{F
         end
         return nll(θ)
     end
-    res = Optim.optimize(obj, u0, Optim.LBFGS(); autodiff = :forward)
+    res = _profile_optimize(obj, u0, autodiff)
     return (Optim.minimum(res), Optim.minimizer(res))
+end
+
+function _profile_optimize(obj, u0::Vector{Float64}, autodiff::Symbol)
+    try
+        return Optim.optimize(obj, u0, Optim.LBFGS(); autodiff)
+    catch err
+        autodiff === :finite || rethrow()
+        # Finite-difference gradients can occasionally produce a failed line
+        # search on sparse-Laplace profiles. The profile value is what matters;
+        # retry with a value-only method instead of failing the interval.
+        return Optim.optimize(obj, u0, Optim.NelderMead())
+    end
 end
 
 # Analytic slope of the PROFILED nll in θ[k], by the envelope theorem: at the
@@ -126,16 +168,17 @@ end
 # bracket is accepted, otherwise we fall back to bisection. Correctness is
 # bracket-guaranteed; the analytic slope only buys faster (quadratic) convergence.
 # Each evaluation warm-starts the nuisance optimisation from the previous û.
-function _profile_endpoint(nll, θ̂, k, nllhat, half, s, dir, u0)
+function _profile_endpoint(nll, θ̂, k, nllhat, half, s, dir, u0, autodiff)
     target = nllhat + half
     p = length(θ̂)
     nidx = p - 1
     û = copy(u0)
     # h(t) and its derivative h'(t); updates û in place for warm-starting.
     function heval(t)
-        f, unew = _profiled_nll(nll, θ̂, k, θ̂[k] + dir * t, û)
+        f, unew = _profiled_nll(nll, θ̂, k, θ̂[k] + dir * t, û; autodiff)
         isempty(unew) || (û = unew)
-        hp = nidx == 0 ? NaN : dir * _profile_slope(nll, θ̂, k, θ̂[k] + dir * t, û)
+        hp = (nidx == 0 || autodiff !== :forward) ? NaN :
+            dir * _profile_slope(nll, θ̂, k, θ̂[k] + dir * t, û)
         return (f - target, hp)
     end
     # Bracket: expand until h > 0.
@@ -158,16 +201,18 @@ function _profile_endpoint(nll, θ̂, k, nllhat, half, s, dir, u0)
     return θ̂[k] + dir * t
 end
 
-function _profile_ci(fit::DrmFit, level::Real; threads::Bool = false)
+function _profile_ci(fit::DrmFit, level::Real; threads::Bool = false, parm = nothing)
     fit.nll === nothing &&
         throw(ArgumentError("profile intervals require the fitted objective; this model was not built with one"))
     nll = fit.nll
     θ̂ = copy(fit.theta)
     nllhat = nll(θ̂)
+    autodiff = _profile_autodiff_mode(nll, θ̂)
     half = quantile(Chisq(1), level) / 2           # nll rises by χ²₁/2 at each endpoint
     se = stderror(fit)
     jobs = NamedTuple{(:param, :coef, :k),Tuple{Symbol,String,Int}}[]
     for ((pp, r), (_, nms)) in zip(fit.blocks, fit.coefnames)
+        _ci_param_selected(pp, parm) || continue
         for (j, k) in enumerate(r)
             push!(jobs, (param = pp, coef = nms[j], k = k))
         end
@@ -175,23 +220,23 @@ function _profile_ci(fit::DrmFit, level::Real; threads::Bool = false)
     rows = Vector{_CIRow}(undef, length(jobs))
     if threads && Threads.nthreads() > 1
         Threads.@threads for i in eachindex(jobs)
-            rows[i] = _profile_row(jobs[i], nll, θ̂, nllhat, half, se)
+            rows[i] = _profile_row(jobs[i], nll, θ̂, nllhat, half, se, autodiff)
         end
     else
         for i in eachindex(jobs)
-            rows[i] = _profile_row(jobs[i], nll, θ̂, nllhat, half, se)
+            rows[i] = _profile_row(jobs[i], nll, θ̂, nllhat, half, se, autodiff)
         end
     end
     return rows
 end
 
-function _profile_row(job, nll, θ̂, nllhat, half, se)
+function _profile_row(job, nll, θ̂, nllhat, half, se, autodiff)
     k = job.k
     est = θ̂[k]
     s = (isfinite(se[k]) && se[k] > 0) ? se[k] : max(abs(est), 1.0)
     u0 = θ̂[[i for i in 1:length(θ̂) if i != k]]
-    lo = _profile_endpoint(nll, θ̂, k, nllhat, half, s, -1, u0)
-    hi = _profile_endpoint(nll, θ̂, k, nllhat, half, s, +1, u0)
+    lo = _profile_endpoint(nll, θ̂, k, nllhat, half, s, -1, u0, autodiff)
+    hi = _profile_endpoint(nll, θ̂, k, nllhat, half, s, +1, u0, autodiff)
     return (param = job.param, coef = job.coef, estimate = est, lower = lo, upper = hi)
 end
 
