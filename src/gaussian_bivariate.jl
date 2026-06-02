@@ -21,6 +21,39 @@ end
 
 _rhs_or_intercept(f) = f === nothing ? ConstantTerm(1) : f.rhs
 
+# Validate a bivariate placeholder formula's LHS. The σ1/σ2/ρ12 formulas carry a
+# *placeholder* left-hand side, so — mirroring the univariate rejection
+# discipline (and drmTMB) — that placeholder must be the parameter's own name.
+# `nothing` (the parameter omitted ⇒ `~ 1`) is always allowed.
+function _check_bivariate_lhs(f, expected::Symbol)
+    f === nothing && return f
+    f isa FormulaTerm || throw(ArgumentError("bf: `$expected` must be a formula " *
+        "`$expected ~ …` (got `$(repr(f))`)."))
+    lhs = f.lhs
+    lhs isa Term || throw(ArgumentError("bf: the `$expected` formula must read " *
+        "`$expected ~ …` with the parameter name on the left (got `$lhs`)."))
+    name = lhs.sym
+    if name === :tau && (expected === :sigma1 || expected === :sigma2)
+        throw(ArgumentError("bf: the scale parameter is named `sigma1`/`sigma2`, never " *
+            "`tau` — write `$expected ~ …`."))
+    elseif name !== expected
+        throw(ArgumentError("bf: the `$expected` formula must read `$expected ~ …` " *
+            "(got `$name ~ …`); in the bivariate keyword form each placeholder LHS " *
+            "must be its own parameter name."))
+    end
+    return f
+end
+
+# The two mean formulas each name a single response column on the left. Reject a
+# two-column `cbind(…)` (univariate-only) with a clear message rather than a
+# cryptic `getproperty` error on a FunctionTerm.
+function _bivariate_response_sym(f::FormulaTerm, kw::Symbol)
+    f.lhs isa Term || throw(ArgumentError("bf: `$kw = response ~ …` needs a single " *
+        "response column on the left (got `$(f.lhs)`); the bivariate form takes one " *
+        "response per mean, not `cbind(…)`."))
+    return f.lhs.sym
+end
+
 """
     bf(; mu1, mu2, sigma1=…, sigma2=…, rho12=…)
 
@@ -29,8 +62,15 @@ Bivariate Gaussian formula bundle, mirroring drmTMB. `mu1 = y1 ~ …` and
 `sigma2` (log σ) and `rho12` (atanh ρ) default to `~ 1`. For one-sided
 predictors give the parameter name as a placeholder LHS, e.g.
 `sigma1 = @formula(sigma1 ~ x)`.
+
+Like the univariate form, `bf` rejects reserved / mis-typed syntax: a placeholder
+LHS that is not its own parameter name (e.g. `sigma1 = @formula(tau ~ x)` or a
+swapped `sigma1`/`sigma2`), and a two-column `cbind(…)` response on `mu1`/`mu2`.
 """
 function bf(; mu1::FormulaTerm, mu2::FormulaTerm, sigma1 = nothing, sigma2 = nothing, rho12 = nothing)
+    _check_bivariate_lhs(sigma1, :sigma1)
+    _check_bivariate_lhs(sigma2, :sigma2)
+    _check_bivariate_lhs(rho12, :rho12)
     forms = Pair{Symbol,Any}[
         :mu1 => mu1.rhs,
         :mu2 => mu2.rhs,
@@ -38,7 +78,8 @@ function bf(; mu1::FormulaTerm, mu2::FormulaTerm, sigma1 = nothing, sigma2 = not
         :sigma2 => _rhs_or_intercept(sigma2),
         :rho12 => _rhs_or_intercept(rho12),
     ]
-    return BivariateDrmFormula(mu1.lhs.sym, mu2.lhs.sym, forms)
+    return BivariateDrmFormula(_bivariate_response_sym(mu1, :mu1),
+                               _bivariate_response_sym(mu2, :mu2), forms)
 end
 
 function drm(f::BivariateDrmFormula, fam::Gaussian; data, g_tol::Real = 1e-8)
