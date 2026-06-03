@@ -7,11 +7,19 @@
 
 ## Where we are
 
-**Phase 0 — Team & workflows** (current). Stand up the team, the scripted
-workflows, the GitHub work ledger, the memory/dev-log discipline, and a
-Documenter shell that mirrors drmTMB's pkgdown navbar from day 1. **No engine
-changes.** The verified q=4 PLSM engine (2.18× over drmTMB, O(p) to p=10,000)
-stays exactly as handed over.
+**Phase 2 (families) effectively complete; Phase 3 (articles) nearly complete.**
+Phase 0 (team/workflows/ledger/docs shell) is done; the `bf()` / `drm()` front
+end ships with drmTMB-exact grammar (Phase 1.1, Workflow B); inference graduated
+from `experimental/` into `src/inference.jl` (`infer_q4` wired — Wald + profile +
+bootstrap); and **all 13 families** (12 univariate + bivariate Gaussian) are
+implemented, exported, and recovery-tested. **v0.1.0 and v0.1.1 are tagged.**
+Many Phase 3 articles are filled (formula-grammar, adding-families,
+testing-likelihoods, source-map, large-data, convergence, structural-dependence,
+Rosetta). The variational-approximation track is newly opened (issue #136).
+**Still open:** the numerical RCall.jl drmTMB-parity gate (#17, Workflow G), the
+remaining `experimental/` wiring (`reml_q4` / `location_only` / `fit_em_natgrad`),
+and the Phase 1.5 R-side bridge. **The verified q=4 PLSM engine (2.18× over
+drmTMB, O(p) to p=10,000) stays exactly as handed over.**
 
 ## Target
 
@@ -24,7 +32,7 @@ call DRM.jl from R via `engine = "julia"`. Parity anchor: **drmTMB v0.1.3**.
 
 ## Phases
 
-### Phase 0 — Team & workflows  ·  *milestone: `Phase 0 — Team & workflows`*
+### Phase 0 — Team & workflows  ·  *milestone: `Phase 0 — Team & workflows`*  ·  ✅ complete
 
 - 12-persona `AGENTS.md`, project `CLAUDE.md`, this file.
 - 10 scripted workflows in `.claude/workflows/` (W0/Q/A/B/D/F/G/H/S/R).
@@ -38,28 +46,32 @@ call DRM.jl from R via `engine = "julia"`. Parity anchor: **drmTMB v0.1.3**.
 - **Gate:** engine still loads + `bench/run_sparse_tmb_nd.jl` still logLik
   −256.51; docs build locally; ledger live; Rose scope pass.
 
-### Phase 1.0 — Hygiene + wire `experimental/`  ·  *milestone: `Phase 1.0`*
+### Phase 1.0 — Hygiene + wire `experimental/`  ·  *milestone: `Phase 1.0`*  ·  partial
 
 - Workflow A: wire `infer_q4`, `reml_q4`, `location_only`, `fit_em_natgrad` into
-  the public API; fix the orphan tests.
+  the public API; fix the orphan tests. — ✅ `infer_q4` graduated into
+  `src/inference.jl` (Wald + profile + bootstrap, #106); `reml_q4` /
+  `location_only` / `fit_em_natgrad` **still in `experimental/`, not wired**.
 - Workflow D ×N: fill the "Get Started" + easy stubs (first-fit,
   what-can-I-fit-today, working-with-large-data — the verified engine supports
-  them today).
+  them today). — ✅ large-data / convergence guides filled.
 - Workflow Q: complete FD + Allocs gates, the multi-shape sweep.
 - `docs/Manifest.toml` + `bench/Manifest.toml` pinned (root Manifest stays
   uncommitted — DRM.jl is a library).
 - Workflow R: first real estimator-optimisation run on the verified bench.
 
-### Phase 1.1 — `bf()` front end + inference + R-parity live  ·  *milestone: `Phase 1.1`*
+### Phase 1.1 — `bf()` front end + inference + R-parity live  ·  *milestone: `Phase 1.1`*  ·  mostly complete
 
 - Workflow B: `bf(mu, sigma, rho12)` + structured markers — drmTMB-exact,
   including the reserved-syntax rejections. Resolves the **public-verb** and
-  **tree-I/O** design issues.
+  **tree-I/O** design issues. — ✅ `bf()` shipped, including bivariate
+  keyword-form grammar (#115) and reserved-syntax rejections (#109).
 - Workflow G: RCall.jl parity gate (`DRM_PARITY_TESTS=1`) against vendored
-  drmTMB v0.1.3 outputs in `test/parity/fixtures/`.
+  drmTMB v0.1.3 outputs in `test/parity/fixtures/`. — open (numerical gate #17).
 - Fisher: thread the bootstrap and *measure* the speedup (currently unrun).
+  — ✅ bootstrap entry points + threaded timing fixture (#131/#132).
 - Pat / Florence: first application articles (location–scale, bivariate
-  `rho12`) + the R↔Julia Rosetta page.
+  `rho12`) + the R↔Julia Rosetta page. — ✅ Rosetta phrasebook filled (#112).
 
 ### Phase 1.5 — R-side bridge ships  ·  *milestone: `Phase 1.5`*
 
@@ -67,15 +79,22 @@ call DRM.jl from R via `engine = "julia"`. Parity anchor: **drmTMB v0.1.3**.
   calls DRM.jl via JuliaCall, returns a drmTMB-shaped result. The bridge glue
   lives in the drmTMB (R) repo. Hopper's parity gate guards equivalence.
 
-### Phase 2 — Family expansion  ·  *milestone: `Phase 2`*
+### Phase 2 — Family expansion  ·  *milestone: `Phase 2`*  ·  ✅ effectively complete
 
 - Workflow H ×8: Student / lognormal / Gamma / Tweedie / beta / Poisson /
   nbinom2 / cumulative_logit, with `zi` / `hu` modifiers where applicable.
+  — ✅ all 13 families implemented + exported + recovery-tested (full set:
+  Gaussian, Student-t, LogNormal, Gamma, Tweedie, Beta, zero-one-inflated beta,
+  beta-binomial, Binomial, Poisson, NegBinomial2, truncated-NB2,
+  cumulative-logit, + bivariate Gaussian); see `NEWS.md` v0.1.0 / v0.1.1. The
+  numerical drmTMB-parity gate (#17) is still open.
 
-### Phase 3 — Articles to mirror drmTMB  ·  *milestone: `Phase 3`*
+### Phase 3 — Articles to mirror drmTMB  ·  *milestone: `Phase 3`*  ·  nearly complete
 
 - Workflow D: fill the remaining Tutorials, Diagnostics & Validation, and
-  Developer Notes articles. Target = drmTMB's 26 articles.
+  Developer Notes articles. Target = drmTMB's 26 articles. — many filled
+  (formula-grammar, adding-families, testing-likelihoods, source-map,
+  large-data, convergence, structural-dependence, Rosetta); remainder in flight.
 
 ### v0.1.0  ·  *milestone: `v0.1.0`*
 
