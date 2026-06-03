@@ -48,6 +48,7 @@ residuals
 ```@docs
 confint
 stderror
+profile_result
 bootstrap_ci
 bootstrap_summary
 bootstrap_result
