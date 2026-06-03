@@ -64,6 +64,10 @@ include("test_cumulative.jl")
 include("test_poisson_re.jl")
 include("test_poisson_slope_re.jl")
 include("test_poisson_crossed_laplace.jl")
+include("test_poisson_phylo_laplace.jl")
+include("test_nb2_phylo_laplace.jl")
+include("test_gamma_beta_phylo_laplace.jl")
+include("test_binomial_phylo_laplace.jl")
 include("test_crossed_laplace_generic.jl")
 include("test_crossed_selected_inverse.jl")
 include("test_nbinom2_slope_re.jl")
@@ -93,3 +97,16 @@ include("test_summary_method.jl")
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
 # script-style include paths and need path/`using DRM` updates before wiring
 # into this suite.
+
+# Always-on R-parity HARNESS smoke test (machinery only, no R, no fixtures).
+# Placed at the END to avoid colliding with other in-flight branches' includes.
+include("test_parity_harness.jl")
+
+# Gated real-parity suite vs committed drmTMB fixtures (off by default).
+if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
+    @testset "R-parity vs drmTMB v0.1.3" begin
+        include("parity/runparity.jl")
+    end
+else
+    @info "R-parity suite skipped (set DRM_PARITY_TESTS=1 to run)"
+end
