@@ -3,7 +3,6 @@
 # plus sanity-check the `coef`/`vcov`/`nobs` accessor shapes.
 using DRM
 using Test, Random
-using StatsModels: CoefTable
 
 @testset "summary(fit) method + coef/vcov/nobs shapes" begin
     Random.seed!(20260603)
@@ -14,8 +13,10 @@ using StatsModels: CoefTable
 
     fit = drm(bf(@formula(y ~ 1 + x), @formula(sigma ~ 1 + x)), Gaussian(); data = data)
 
-    # summary(fit) is the drmTMB-parity analogue of coeftable(fit).
-    @test summary(fit) isa CoefTable
+    # summary(fit) is the drmTMB-parity analogue of coeftable(fit): same type,
+    # same content. (Avoid naming CoefTable directly so the test needs no extra
+    # dependency — StatsModels isn't in the test environment.)
+    @test summary(fit) isa typeof(coeftable(fit))
     @test summary(fit) == coeftable(fit)
 
     # Accessor shapes: 4 coefficients (mu intercept+slope, sigma intercept+slope).
