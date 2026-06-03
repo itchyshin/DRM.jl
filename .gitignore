@@ -27,4 +27,5 @@ deps/deps.jl
 /bench/fixtures/crossed_poisson/
 /bench/fixtures/crossed_family/
 /bench/fixtures/phylo_poisson/
+/bench/fixtures/phylo_nb2/
 /bench/results/
