@@ -17,20 +17,35 @@ act on `log λ`). No scale parameter. Mirrors `drmTMB`'s `poisson` family.
 ```julia
 fit = drm(bf(y ~ x), Poisson(); data = dat)
 fitted(fit)        # fitted counts λ = exp(Xβ̂), on the response scale
+
+fit_phy = drm(bf(@formula(y ~ x + phylo(1 | species))), Poisson();
+              data = dat, tree = tr, se = false)
 ```
 """
 struct Poisson end
 
 _logfactorial(k::Integer) = sum(log, 2:k; init = 0.0)   # log k!  (0 for k = 0, 1)
 
-function drm(f::DrmFormula, fam::Poisson; data, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, g_tol::Real = 1e-8, se::Bool = true)
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
-    (mv === nothing && st === nothing) ||
-        error("Poisson() does not support meta_V / structured markers")
+    mv === nothing ||
+        error("Poisson() does not support meta_V markers")
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     all(yi -> yi ≥ 0 && isinteger(yi), y) ||
         error("Poisson() requires non-negative integer counts as the response")
+    if st !== nothing
+        isempty(re) ||
+            error("Poisson() phylo structured effects cannot be combined with ordinary random effects yet")
+        (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
+            error("Poisson() phylo structured effects cannot be combined with `zi`/`hu` yet")
+        kind, grp = st
+        kind === :phylo ||
+            error("Poisson() currently supports only phylo(1 | group) among structured markers")
+        tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
+        labels = getproperty(data, grp)
+        return _withformula(_fit_poisson_phylo_laplace(fam, y, Xμ, labels, tree, nmμ, grp, g_tol; se = se), f)
+    end
     if !isempty(re)                                       # random intercept (1|g) → GHQ marginal
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
             error("Poisson() random effects cannot be combined with `zi`/`hu` yet")
@@ -41,7 +56,7 @@ function drm(f::DrmFormula, fam::Poisson; data, g_tol::Real = 1e-8)
                 grp = r[2]; gidx, G = _group_index(getproperty(data, grp))
                 (ones(length(y)), gidx, G, String(grp))
             end
-            return _withformula(_fit_poisson_crossed_laplace(fam, y, Xμ, comps, nmμ, g_tol), f)
+            return _withformula(_fit_poisson_crossed_laplace(fam, y, Xμ, comps, nmμ, g_tol; se = se), f)
         end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
         if rk === :intercept                              # (1 | g) → 1-D GHQ
