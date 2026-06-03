@@ -1,10 +1,7 @@
-## fit_crossed_family.R -- drmTMB side of the #80 crossed-family benchmark.
+## fit_phylo_family.R -- drmTMB side of the non-Gaussian phylo benchmark.
 ##
 ## Run from repo root after fixtures exist:
-##   Rscript bench/R/fit_crossed_family.R
-##
-## To benchmark a source checkout instead of an installed drmTMB:
-##   DRMTMB_SOURCE=/path/to/drmTMB Rscript bench/R/fit_crossed_family.R
+##   DRMTMB_SOURCE=/path/to/drmTMB Rscript bench/R/fit_phylo_family.R
 
 suppressPackageStartupMessages({
   drmtmb_source <- Sys.getenv("DRMTMB_SOURCE", unset = "")
@@ -15,14 +12,8 @@ suppressPackageStartupMessages({
     devtools::load_all(drmtmb_source, quiet = TRUE)
   } else {
     ok <- requireNamespace("drmTMB", quietly = TRUE)
-    if (!ok) {
-      if (!requireNamespace("devtools", quietly = TRUE)) {
-        stop("drmTMB not installed and devtools not available to load_all().")
-      }
-      devtools::load_all("/Users/z3437171/Dropbox/Github Local/drmTMB", quiet = TRUE)
-    } else {
-      library(drmTMB)
-    }
+    if (!ok) stop("drmTMB not installed; set DRMTMB_SOURCE to a source checkout.")
+    library(drmTMB)
   }
   library(jsonlite)
 })
@@ -40,30 +31,49 @@ here <- function() {
   dirname(dirname(script_path))
 }
 
+phylo_tree <- function(n_tip) {
+  edges <- matrix(integer(), ncol = 2L)
+  edge_lengths <- numeric()
+  next_node <- n_tip + 1L
+  build <- function(tips) {
+    if (length(tips) == 1L) return(tips)
+    node <- next_node
+    next_node <<- next_node + 1L
+    mid <- length(tips) / 2L
+    left <- build(tips[seq_len(mid)])
+    right <- build(tips[seq.int(mid + 1L, length(tips))])
+    edges <<- rbind(edges, c(node, left), c(node, right))
+    edge_lengths <<- c(edge_lengths, 1, 1)
+    node
+  }
+  build(seq_len(n_tip))
+  structure(
+    list(
+      edge = edges,
+      edge.length = edge_lengths,
+      tip.label = paste0("sp_", seq_len(n_tip)),
+      Nnode = n_tip - 1L
+    ),
+    class = "phylo"
+  )
+}
+
 bench_root <- tryCatch(here(), error = function(e) file.path(getwd(), "bench"))
-fixtures_dir <- file.path(bench_root, "fixtures", "crossed_family")
-results_dir <- file.path(bench_root, "results", "crossed_family")
+fixtures_dir <- file.path(bench_root, "fixtures", "phylo_family")
+results_dir <- file.path(bench_root, "results", "phylo_family")
 dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
 
 cells <- list(
-  list(id = "small", G = 20, H = 20, n = 1000, reps = 3),
-  list(id = "medium", G = 50, H = 50, n = 5000, reps = 3),
-  list(id = "fixedq_n20000", G = 50, H = 50, n = 20000, reps = 2)
+  list(id = "small", p = 16L, n_each = 20L, reps = 3L),
+  list(id = "medium", p = 64L, n_each = 20L, reps = 3L)
 )
-
-families <- c("poisson", "binomial", "nb2", "gamma", "beta")
-
-families_for <- function(cell) {
-  if (cell$n > 5000) setdiff(families, "beta") else families
-}
+families <- c("nb2", "gamma", "beta")
 
 nsfun <- function(name) getFromNamespace(name, "drmTMB")
 
 family_object <- function(family) {
   switch(
     family,
-    poisson = stats::poisson(),
-    binomial = stats::binomial(),
     nb2 = nsfun("nbinom2")(),
     gamma = stats::Gamma(link = "log"),
     beta = nsfun("beta")(),
@@ -71,24 +81,18 @@ family_object <- function(family) {
   )
 }
 
-formula_object <- function(family) {
-  if (identical(family, "binomial")) {
-    return(do.call(drmTMB::bf, list(cbind(s, fail) ~ x + (1 | g) + (1 | h))))
-  }
+formula_object <- function(family, tree) {
   response <- switch(
     family,
-    poisson = "y_pois",
     nb2 = "y_nb",
     gamma = "y_gamma",
     beta = "y_beta",
     stop("unknown family: ", family)
   )
-  mu <- stats::as.formula(sprintf("%s ~ x + (1 | g) + (1 | h)", response))
-  if (identical(family, "poisson")) {
-    return(do.call(drmTMB::bf, list(mu)))
-  } else {
-    do.call(drmTMB::bf, list(mu, sigma ~ 1))
-  }
+  mu <- stats::as.formula(
+    sprintf("%s ~ x + phylo(1 | species, tree = tree)", response)
+  )
+  do.call(drmTMB::bf, list(mu, sigma ~ 1))
 }
 
 coef_block <- function(fit, block) {
@@ -96,14 +100,6 @@ coef_block <- function(fit, block) {
   if (is.list(cf) && !is.null(cf[[block]])) return(unname(as.numeric(cf[[block]])))
   if (identical(block, "mu")) return(unname(as.numeric(cf)))
   numeric()
-}
-
-re_sd_from_fit <- function(fit, term) {
-  sp <- fit$sdpars$mu
-  if (is.null(sp)) return(NA_real_)
-  nm <- names(sp)
-  hit <- which(nm == paste0("(1 | ", term, ")"))
-  if (length(hit)) unname(as.numeric(sp[[hit[[1]]]])) else NA_real_
 }
 
 nuisance_value <- function(family, fit) {
@@ -114,24 +110,34 @@ nuisance_value <- function(family, fit) {
   NA_real_
 }
 
+phylo_sd_from_fit <- function(fit) {
+  sp <- fit$sdpars$mu
+  if (is.null(sp)) return(NA_real_)
+  hit <- grep("^phylo\\(1 \\| species\\)", names(sp))
+  if (length(hit)) unname(as.numeric(sp[[hit[[1]]]])) else NA_real_
+}
+
 fit_one <- function(cell, family) {
   df <- read.csv(file.path(fixtures_dir, paste0(cell$id, ".csv")))
-  df$g <- factor(df$g)
-  df$h <- factor(df$h)
-  form <- formula_object(family)
+  df$species <- factor(df$species, levels = paste0("sp_", seq_len(cell$p)))
+  tree <- phylo_tree(cell$p)
+  form <- formula_object(family, tree)
   fam <- family_object(family)
-  ctrl <- drmTMB::drm_control(se = FALSE)
+  ctrl <- drmTMB::drm_control(
+    se = FALSE,
+    optimizer = list(eval.max = 600L, iter.max = 600L)
+  )
   warm <- tryCatch(
     drmTMB::drmTMB(form, data = df, family = fam, control = ctrl),
-    error = function(e) structure(list(error = conditionMessage(e)), class = "drm_crossed_err")
+    error = function(e) structure(list(error = conditionMessage(e)), class = "drm_phylo_err")
   )
-  if (inherits(warm, "drm_crossed_err")) {
+  if (inherits(warm, "drm_phylo_err")) {
     return(list(
-      cell_id = cell$id, family = family, engine = "r_drmTMB", n = cell$n,
-      G = cell$G, H = cell$H, time_s = NA_real_, time_s_med = NA_real_,
+      cell_id = cell$id, family = family, engine = "r_drmTMB",
+      n = nrow(df), p = cell$p, time_s = NA_real_, time_s_med = NA_real_,
       times_all = rep(NA_real_, cell$reps), logLik = NA_real_,
       converged = FALSE, beta_mu = numeric(), nuisance = NA_real_,
-      sd_g = NA_real_, sd_h = NA_real_, note = paste("warm-up failed:", warm$error)
+      sd_phylo = NA_real_, note = paste("warm-up failed:", warm$error)
     ))
   }
 
@@ -149,9 +155,8 @@ fit_one <- function(cell, family) {
     cell_id = cell$id,
     family = family,
     engine = "r_drmTMB",
-    n = cell$n,
-    G = cell$G,
-    H = cell$H,
+    n = nrow(df),
+    p = cell$p,
     time_s = mean(times),
     time_s_med = stats::median(times),
     times_all = times,
@@ -159,13 +164,12 @@ fit_one <- function(cell, family) {
     converged = isTRUE(fit$opt$convergence == 0L),
     beta_mu = beta,
     nuisance = nuisance_value(family, fit),
-    sd_g = re_sd_from_fit(fit, "g"),
-    sd_h = re_sd_from_fit(fit, "h")
+    sd_phylo = phylo_sd_from_fit(fit)
   )
   cat(sprintf(
-    "[R %-8s %-13s] n=%d med=%.4fs conv=%s beta1=%.3f sd=(%.3f,%.3f) nuis=%.3f\n",
-    family, cell$id, cell$n, res$time_s_med, res$converged,
-    if (length(beta) >= 2) beta[[2]] else NA_real_, res$sd_g, res$sd_h,
+    "[R %-5s %-6s] p=%d n=%d med=%.4fs conv=%s beta1=%.3f sd=%.3f nuis=%.3f\n",
+    family, cell$id, cell$p, nrow(df), res$time_s_med, res$converged,
+    if (length(beta) >= 2) beta[[2]] else NA_real_, res$sd_phylo,
     res$nuisance
   ))
   res
@@ -173,10 +177,12 @@ fit_one <- function(cell, family) {
 
 results <- list()
 for (cell in cells) {
-  for (family in families_for(cell)) {
+  for (family in families) {
     results[[length(results) + 1L]] <- fit_one(cell, family)
   }
 }
 
-jsonlite::write_json(results, file.path(results_dir, "r_crossed_family.json"),
-                     auto_unbox = TRUE, pretty = TRUE, digits = NA)
+jsonlite::write_json(
+  results, file.path(results_dir, "r_phylo_family.json"),
+  auto_unbox = TRUE, pretty = TRUE, digits = NA
+)

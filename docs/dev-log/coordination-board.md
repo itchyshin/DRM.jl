@@ -27,7 +27,7 @@ Full Codex brief: **#76** (pinned).
 | Branch | Owner | Touching | Status |
 |---|---|---|---|
 | `main` | — | current through #132 (`1c5094e`): fit-based bootstrap entry points; no merged VA work | live `/dev/` source |
-| `codex/status-ledger-cleanup` | Codex | `README.md`, `ROADMAP.md`, this board, source docstrings/comments, `check-log.d/`, after-task | local status cleanup branch from `origin/main`; avoids `docs/src/r-julia-bridge.md` because PR #135 owns it |
+| `codex/status-ledger-cleanup` | Codex | `README.md`, `ROADMAP.md`, this board, source docstrings/comments, `src/gaussian_core.jl`, `src/gaussian_ranef.jl`, `src/sparse_laplace_glmm.jl`, `src/negbinomial.jl`, `src/gamma.jl`, `src/beta.jl`, `src/binomial.jl`, crossed/phylo benchmark scripts, `report/`, `test/runtests.jl`, `test/test_phylo_laplace_nongaussian.jl`, `check-log.d/`, after-task | local branch now also carries #80 benchmark/engine follow-up slices; avoids `docs/src/r-julia-bridge.md` because PR #135 owns it |
 | `codex/profile-ci-bootstrap-speed` | Codex | `src/inference.jl`, `src/DRM.jl`, profile/bootstrap tests/docs, reports, `check-log.d/`, after-task | PR #137 open: auditable `profile_result` + endpoint threading |
 | `docs-reference-bridge-stubs` | Shannon (Claude) | `docs/src/reference/deprecated-marker-internals.md`, `docs/src/r-julia-bridge.md`, `check-log.d/` | PR #135 open; owns R-bridge stub fill |
 | `docs-implementation-map` | Shannon (Claude) | implementation-map docs, `check-log.d/` | PR #129 open |

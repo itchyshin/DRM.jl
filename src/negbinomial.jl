@@ -14,22 +14,22 @@ Negative-binomial (NB2) family for overdispersed counts: log link on the mean
 `μ`, and log link on the dispersion/size `θ` (the `sigma` formula slot, so
 `coef(fit, :sigma)` is `log θ`). Var = `μ + μ²/θ`; as `θ → ∞` it tends to
 [`Poisson`](@ref). Mirrors `drmTMB`'s `nbinom2` family.
-Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
-sparse-Laplace engine when `sigma ~ 1`.
+Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, and
+phylogenetic intercepts `phylo(1 | species)` use the sparse-Laplace engine when
+`sigma ~ 1`.
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), NegBinomial2(); data = dat)
 fit = drm(bf(y ~ x + (1 | g) + (1 | h), sigma ~ 1), NegBinomial2(); data = dat)
+fit = drm(bf(y ~ x + phylo(1 | species), sigma ~ 1), NegBinomial2(); data = dat, tree = phy)
 exp(coef(fit, :sigma)[1])     # estimated dispersion θ (size)
 ```
 """
 struct NegBinomial2 end
 
-function drm(f::DrmFormula, fam::NegBinomial2; data, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, g_tol::Real = 1e-8)
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
-    (mv === nothing && st === nothing) ||
-        error("NegBinomial2() does not support meta_V / structured markers")
     for (pname, r) in f.forms          # only the mean may carry a random effect
         pname === :mu && continue
         _, re2, mv2, st2 = _split_ranef(r)
@@ -40,6 +40,16 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, g_tol::Real = 1e-8)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> yi ≥ 0 && isinteger(yi), y) ||
         error("NegBinomial2() requires non-negative integer counts as the response")
+    phy = _nongaussian_phylo_structure("NegBinomial2()", st, re, mv, data, tree)
+    if phy !== nothing
+        (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
+            error("NegBinomial2() phylo route cannot be combined with `zi`/`hu` yet")
+        return _withformula(
+            _fit_nb2_phylo_laplace(fam, y, Xμ, Xσ, phy.gidx, phy.G, phy.K, nmμ,
+                                   nmσ, phy.label, g_tol),
+            f
+        )
+    end
     if !isempty(re)                                       # random effect on the mean → GHQ/Laplace
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
             error("NegBinomial2() random effects cannot be combined with `zi`/`hu` yet")

@@ -19,7 +19,7 @@ Logit link on the mean success probability `μ`; no scale/dispersion parameter
 vector. Likelihood `Binomial(n, μ)` with `μ = logistic(η)`. Mirrors `drmTMB`'s
 `binomial` family. A random intercept `(1 | g)` on the mean fits a logistic
 GLMM; crossed intercepts such as `(1 | g) + (1 | h)` use the sparse-Laplace
-engine.
+engine, as does `phylo(1 | species)` when `tree = ...` is supplied.
 
 !!! note
     `DRM.Binomial` shadows `Distributions.Binomial`; if you need the
@@ -29,16 +29,15 @@ engine.
 fit = drm(bf(cbind(successes, failures) ~ x), Binomial(); data = dat)   # logistic regression
 fit = drm(bf(y ~ x + (1 | g)), Binomial(); data = dat)                  # 0/1 logistic GLMM
 fit = drm(bf(cbind(successes, failures) ~ x + (1 | g) + (1 | h)), Binomial(); data = dat)
+fit = drm(bf(cbind(successes, failures) ~ x + phylo(1 | species)), Binomial(); data = dat, tree = phy)
 fitted(fit)        # fitted success probabilities μ̂ = logistic(Xβ̂)
 ```
 """
 struct Binomial end
 
-function drm(f::DrmFormula, fam::Binomial; data, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, g_tol::Real = 1e-8)
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
-    (mv === nothing && st === nothing) ||
-        error("Binomial() does not support meta_V / structured markers")
     for (pname, r) in f.forms          # Binomial is mean-only — reject any other parameter formula
         pname === :mu && continue
         pname === :sigma || error("Binomial() is mean-only; no sigma/dispersion parameter")
@@ -58,6 +57,14 @@ function drm(f::DrmFormula, fam::Binomial; data, g_tol::Real = 1e-8)
         ntr = s .+ fl                                     # trials
     end
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)      # successes column is a dummy LHS
+    phy = _nongaussian_phylo_structure("Binomial()", st, re, mv, data, tree)
+    if phy !== nothing
+        return _withformula(
+            _fit_binomial_phylo_laplace(fam, s, ntr, Xμ, phy.gidx, phy.G, phy.K,
+                                        nmμ, phy.label, g_tol),
+            f
+        )
+    end
     if !isempty(re)                                       # random intercept (1|g) → GHQ/Laplace marginal
         if length(re) > 1
             all(_re_kind(r[1])[1] === :intercept for r in re) ||

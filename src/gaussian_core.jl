@@ -192,7 +192,11 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         return _withformula(_fit_sigma_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, sgrp, g_tol), f)
     end
     if structured !== nothing
-        kind, grp = structured
+        kind = structured[1]
+        grp = structured[2]
+        lhs = length(structured) >= 3 ? structured[3] : ConstantTerm(1)
+        _re_kind(lhs)[1] === :intercept ||
+            error("structured effects currently support q=1 random intercepts only")
         gidx, G = _group_index(getproperty(data, grp))
         if kind === :spatial
             coords === nothing && error("spatial(1 | $grp) needs `coords = …`")

@@ -6,7 +6,7 @@
 # Laplace marginal is
 #   data_nll(b̂) + 0.5 b̂'Pb̂ + Σ_k G_k log σ_k + 0.5 logdet(Z'WZ + P).
 
-using LinearAlgebra: Symmetric, cholesky, logdet, I, diag, norm
+using LinearAlgebra: Symmetric, cholesky, logdet, I, diag, norm, Diagonal, dot, inv
 using SparseArrays: sparse, spdiagm
 using SpecialFunctions: digamma, loggamma, polygamma, trigamma
 
@@ -1213,6 +1213,445 @@ function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gi
     scales = Dict(:sigma => fill(sigma_scale(θ̂[pμ+1]), n))
     fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
     return _withnll(fit, nll, grad!)
+end
+
+function _structured_prior_mats(K)
+    Kfac = cholesky(Symmetric(Matrix{Float64}(K)))
+    return inv(Kfac), -logdet(Kfac)
+end
+
+function _structured_inverse(ch)
+    q = size(ch, 1)
+    return ch \ Matrix{Float64}(I, q, q)
+end
+
+_structured_trace(S, Q) = sum(S .* Q)
+
+function _structured_mean_mode(kind, aux, η0, gidx, G, Q, logsd; b0 = nothing,
+                               maxiter::Int = 60, tol::Real = 1e-8)
+    b = b0 === nothing ? zeros(G) : copy(b0)
+    invvar = exp(-2 * logsd)
+
+    function joint(bb)
+        s = zero(eltype(bb))
+        @inbounds for i in eachindex(η0)
+            s += _laplace_value(kind, aux, i, η0[i] + bb[gidx[i]])
+        end
+        return s + 0.5 * invvar * dot(bb, Q * bb)
+    end
+
+    ch = nothing
+    iters = 0
+    for iter in 1:maxiter
+        iters = iter
+        T = eltype(b)
+        grad = zeros(T, G)
+        diagH = zeros(Float64, G)
+        @inbounds for i in eachindex(η0)
+            gi = gidx[i]
+            r, w = _laplace_d12(kind, aux, i, η0[i] + b[gi])
+            grad[gi] += r
+            diagH[gi] += w
+        end
+        grad .+= invvar .* (Q * b)
+        Hmat = Matrix(Diagonal(diagH)) .+ invvar .* Q
+        ch = cholesky(Symmetric(Hmat); check = false)
+        issuccess(ch) || return b, ch, iters, false
+        step = ch \ grad
+        norm(step) <= tol * (1 + norm(b)) && return b, ch, iters, true
+
+        f0 = joint(b)
+        α = 1.0
+        accepted = false
+        while α >= 1e-4
+            trial = b .- α .* step
+            if joint(trial) <= f0
+                b = trial
+                accepted = true
+                break
+            end
+            α *= 0.5
+        end
+        accepted || return b, ch, iters, false
+    end
+    return b, ch, iters, ch !== nothing
+end
+
+function _fit_structured_mean_laplace(fam, kind, aux, n::Int, Xμ, gidx, G, K,
+                                      nmμ, labels, g_tol; θβ0 = nothing,
+                                      se::Bool = false, polish_iterations::Int = 0)
+    pμ = size(Xμ, 2)
+    Q, logdetQ = _structured_prior_mats(K)
+    last_b = zeros(G)
+
+    function eval_laplace(θ; grad::Bool = false)
+        βμ = θ[1:pμ]
+        logsd = clamp(θ[pμ+1], -8.0, 3.0)
+        η0 = Xμ * βμ
+        b, ch, _, ok = _structured_mean_mode(kind, aux, η0, gidx, G, Q, logsd; b0 = last_b)
+        if !ok
+            b, ch, _, ok = _structured_mean_mode(kind, aux, η0, gidx, G, Q, logsd; b0 = zeros(G))
+        end
+        ok || return grad ? (1e18, zeros(length(θ))) : 1e18
+        last_b .= b
+
+        invvar = exp(-2 * logsd)
+        data = zero(eltype(θ))
+        gradβ_raw = zeros(eltype(θ), pμ)
+        wstore = Vector{eltype(θ)}(undef, n)
+        tstore = Vector{eltype(θ)}(undef, n)
+        @inbounds for i in 1:n
+            η = η0[i] + b[gidx[i]]
+            v, r, w, t = _laplace_v123(kind, aux, i, η)
+            data += v
+            wstore[i] = w
+            tstore[i] = t
+            for k in 1:pμ
+                gradβ_raw[k] += Xμ[i, k] * r
+            end
+        end
+        Qb = Q * b
+        prior = 0.5 * invvar * dot(b, Qb)
+        val = data + prior + G * logsd - 0.5 * logdetQ + 0.5 * logdet(ch)
+        grad || return val
+
+        S = _structured_inverse(ch)
+        hd = diag(S)
+        tlogdet = zeros(eltype(θ), G)
+        crossβ = zeros(eltype(θ), G, pμ)
+        gβ = gradβ_raw
+        @inbounds for i in 1:n
+            gi = gidx[i]
+            lever = hd[gi]
+            tlever = tstore[i] * lever
+            tlogdet[gi] += tlever
+            adj = 0.5 * tlever
+            for k in 1:pμ
+                xik = Xμ[i, k]
+                gβ[k] += xik * adj
+                crossβ[gi, k] += wstore[i] * xik
+            end
+        end
+        implicit = ch \ tlogdet
+        @inbounds for k in 1:pμ
+            gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
+        end
+        glogsd = G - invvar * (dot(b, Qb) + _structured_trace(S, Q))
+        glogsd += dot(implicit, invvar .* Qb)
+        return val, vcat(gβ, [glogsd])
+    end
+
+    nll(θ) = eval_laplace(θ; grad = false)
+    function grad!(Gout, θ)
+        _, g = eval_laplace(θ; grad = true)
+        Gout .= g
+        return Gout
+    end
+
+    θ0 = zeros(pμ + 1)
+    θ0[1:pμ] .= θβ0 === nothing ? zeros(pμ) : θβ0
+    θ0[pμ+1] = log(0.4)
+    od = Optim.OnceDifferentiable(nll, grad!, θ0)
+    method = Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking())
+    res_fast = Optim.optimize(od, θ0, method, Optim.Options(g_tol = g_tol, iterations = 250))
+    res = if polish_iterations > 0
+        try
+            θp = Optim.minimizer(res_fast)
+            odp = Optim.OnceDifferentiable(nll, grad!, θp)
+            Optim.optimize(odp, θp, Optim.LBFGS(),
+                           Optim.Options(g_tol = g_tol, iterations = polish_iterations))
+        catch
+            res_fast
+        end
+    else
+        res_fast
+    end
+    θ̂ = Optim.minimizer(res)
+    gfinal = zeros(length(θ̂))
+    grad!(gfinal, θ̂)
+    nllhat = nll(θ̂)
+    converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
+    V = if se
+        Hθ = _finite_hessian(nll, θ̂)
+        try
+            inv(Symmetric(Hθ))
+        catch
+            Matrix{Float64}(I, length(θ̂), length(θ̂))
+        end
+    else
+        fill(NaN, length(θ̂), length(θ̂))
+    end
+    blocks = [:mu => 1:pμ, :resd => (pμ+1):(pμ+1)]
+    names = [:mu => nmμ, :resd => labels]
+    means = Dict(:mu => [_laplace_mean(kind, dot(@view(Xμ[i, :]), θ̂[1:pμ])) for i in 1:n])
+    obs = Dict(:mu => [_laplace_obs(kind, aux, i) for i in 1:n])
+    scales = Dict{Symbol,Vector{Float64}}()
+    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
+    return _withnll(fit, nll, grad!)
+end
+
+function _structured_mean_laplace_nuisance_fg(kind, aux_from, n::Int, Xμ, gidx, G,
+                                              Q, logdetQ, θ; grad::Bool = false,
+                                              b0 = nothing)
+    pμ = length(θ) - 2
+    βμ = θ[1:pμ]
+    θσ = clamp(θ[pμ+1], -8.0, 8.0)
+    logsd = clamp(θ[pμ+2], -8.0, 3.0)
+    aux = aux_from(θσ)
+    η0 = Xμ * βμ
+    b, ch, _, ok = _structured_mean_mode(kind, aux, η0, gidx, G, Q, logsd; b0 = b0)
+    if !ok
+        return grad ? (1e18, zeros(length(θ)), b, false) : (1e18, b, false)
+    end
+
+    invvar = exp(-2 * logsd)
+    data = zero(eltype(θ))
+    gradβ_raw = zeros(eltype(θ), pμ)
+    dataν = zero(eltype(θ))
+    wstore = Vector{eltype(θ)}(undef, n)
+    tstore = Vector{eltype(θ)}(undef, n)
+    rνstore = Vector{eltype(θ)}(undef, n)
+    wνstore = Vector{eltype(θ)}(undef, n)
+    @inbounds for i in 1:n
+        η = η0[i] + b[gidx[i]]
+        v, r, w, t, nval, nr, nw = _laplace_v123_nuisance(kind, aux, i, η)
+        data += v
+        wstore[i] = w
+        tstore[i] = t
+        dataν += nval
+        rνstore[i] = nr
+        wνstore[i] = nw
+        for k in 1:pμ
+            gradβ_raw[k] += Xμ[i, k] * r
+        end
+    end
+    Qb = Q * b
+    prior = 0.5 * invvar * dot(b, Qb)
+    val = data + prior + G * logsd - 0.5 * logdetQ + 0.5 * logdet(ch)
+    grad || return val, b, true
+
+    S = _structured_inverse(ch)
+    hd = diag(S)
+    tlogdet = zeros(eltype(θ), G)
+    crossβ = zeros(eltype(θ), G, pμ)
+    crossν = zeros(eltype(θ), G)
+    gβ = gradβ_raw
+    gnuis = dataν
+    @inbounds for i in 1:n
+        gi = gidx[i]
+        lever = hd[gi]
+        tlever = tstore[i] * lever
+        tlogdet[gi] += tlever
+        adj = 0.5 * tlever
+        gnuis += 0.5 * wνstore[i] * lever
+        crossν[gi] += rνstore[i]
+        for k in 1:pμ
+            xik = Xμ[i, k]
+            gβ[k] += xik * adj
+            crossβ[gi, k] += wstore[i] * xik
+        end
+    end
+    implicit = ch \ tlogdet
+    @inbounds for k in 1:pμ
+        gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
+    end
+    gnuis -= 0.5 * dot(crossν, implicit)
+    glogsd = G - invvar * (dot(b, Qb) + _structured_trace(S, Q))
+    glogsd += dot(implicit, invvar .* Qb)
+    return val, vcat(gβ, [gnuis, glogsd]), b, true
+end
+
+function _fit_structured_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ,
+                                               gidx, G, K, nmμ, nmσ, labels, g_tol;
+                                               θβ0, θσ0::Real, sigma_scale,
+                                               se::Bool = false,
+                                               polish_iterations::Int = 0)
+    pμ = size(Xμ, 2)
+    Q, logdetQ = _structured_prior_mats(K)
+    last_b = zeros(G)
+
+    function eval_laplace(θ; grad::Bool = false)
+        if grad
+            val, g, b, ok = _structured_mean_laplace_nuisance_fg(
+                kind, aux_from, n, Xμ, gidx, G, Q, logdetQ, θ; grad = true, b0 = last_b
+            )
+            if !ok
+                val, g, b, ok = _structured_mean_laplace_nuisance_fg(
+                    kind, aux_from, n, Xμ, gidx, G, Q, logdetQ, θ;
+                    grad = true, b0 = zeros(G)
+                )
+            end
+            ok || return 1e18, zeros(length(θ))
+            last_b .= b
+            return val, g
+        else
+            val, b, ok = _structured_mean_laplace_nuisance_fg(
+                kind, aux_from, n, Xμ, gidx, G, Q, logdetQ, θ; grad = false, b0 = last_b
+            )
+            if !ok
+                val, b, ok = _structured_mean_laplace_nuisance_fg(
+                    kind, aux_from, n, Xμ, gidx, G, Q, logdetQ, θ;
+                    grad = false, b0 = zeros(G)
+                )
+            end
+            ok || return 1e18
+            last_b .= b
+            return val
+        end
+    end
+
+    nll(θ) = eval_laplace(θ; grad = false)
+    function grad!(Gout, θ)
+        _, g = eval_laplace(θ; grad = true)
+        Gout .= g
+        return Gout
+    end
+
+    θ0 = zeros(pμ + 2)
+    θ0[1:pμ] .= θβ0
+    θ0[pμ+1] = θσ0
+    θ0[pμ+2] = log(0.4)
+    od = Optim.OnceDifferentiable(nll, grad!, θ0)
+    method = Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking())
+    res_fast = Optim.optimize(od, θ0, method, Optim.Options(g_tol = g_tol, iterations = 250))
+    res = if polish_iterations > 0
+        try
+            θp = Optim.minimizer(res_fast)
+            odp = Optim.OnceDifferentiable(nll, grad!, θp)
+            Optim.optimize(odp, θp, Optim.LBFGS(),
+                           Optim.Options(g_tol = g_tol, iterations = polish_iterations))
+        catch
+            res_fast
+        end
+    else
+        res_fast
+    end
+    θ̂ = Optim.minimizer(res)
+    gfinal = zeros(length(θ̂))
+    grad!(gfinal, θ̂)
+    nllhat = nll(θ̂)
+    converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
+    V = if se
+        Hθ = _finite_hessian(nll, θ̂)
+        try
+            inv(Symmetric(Hθ))
+        catch
+            Matrix{Float64}(I, length(θ̂), length(θ̂))
+        end
+    else
+        fill(NaN, length(θ̂), length(θ̂))
+    end
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+1), :resd => (pμ+2):(pμ+2)]
+    names = [:mu => nmμ, :sigma => nmσ, :resd => labels]
+    auxhat = aux_from(clamp(θ̂[pμ+1], -8.0, 8.0))
+    means = Dict(:mu => [_laplace_mean(kind, dot(@view(Xμ[i, :]), θ̂[1:pμ])) for i in 1:n])
+    obs = Dict(:mu => [_laplace_obs(kind, auxhat, i) for i in 1:n])
+    scales = Dict(:sigma => fill(sigma_scale(θ̂[pμ+1]), n))
+    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
+    return _withnll(fit, nll, grad!)
+end
+
+function _nongaussian_phylo_structure(family_label::AbstractString, st, re, mv, data, tree)
+    if st === nothing
+        mv === nothing || error("$family_label does not support meta_V / structured markers")
+        return nothing
+    end
+
+    mv === nothing || error("$family_label phylo route cannot be combined with meta_V")
+    isempty(re) || error("$family_label phylo route cannot be combined with ordinary random effects")
+
+    kind = st[1]
+    grp = st[2]
+    lhs = length(st) >= 3 ? st[3] : ConstantTerm(1)
+    kind === :phylo ||
+        error("$family_label currently supports only phylo(1 | group) structured mean effects")
+    _re_kind(lhs)[1] === :intercept ||
+        error("$family_label phylo route currently supports q=1 random intercepts only")
+    tree === nothing && error("$family_label phylo(1 | $grp) needs `tree = ...`")
+
+    gidx, G = _group_index(getproperty(data, grp))
+    K = _phylo_correlation(tree)
+    size(K) == (G, G) ||
+        error("phylo correlation matrix must be $(G)x$(G) (the number of `$grp` levels)")
+    return (gidx = gidx, G = G, K = K, grp = grp,
+            label = "phylo(1 | $(String(grp)))")
+end
+
+function _fit_binomial_phylo_laplace(fam, s, ntr, Xμ, gidx, G, K, nmμ, label, g_tol;
+                                     se::Bool = false, polish_iterations::Int = 0)
+    sint = round.(Int, s)
+    nint = round.(Int, ntr)
+    logchoose = [_logfactorial(nint[i]) - _logfactorial(sint[i]) - _logfactorial(nint[i] - sint[i]) for i in eachindex(sint)]
+    aux = (s = sint, ntr = nint, logchoose = logchoose)
+    pbar = clamp(sum(s) / max(sum(ntr), 1), 1e-4, 1 - 1e-4)
+    θβ0 = zeros(size(Xμ, 2))
+    θβ0[1] = log(pbar / (1 - pbar))
+    return _fit_structured_mean_laplace(
+        fam, Val(:binomial), aux, length(s), Xμ, gidx, G, K, nmμ, [label], g_tol;
+        θβ0 = θβ0, se = se, polish_iterations = polish_iterations
+    )
+end
+
+function _fit_nb2_phylo_laplace(fam, y, Xμ, Xσ, gidx, G, K, nmμ, nmσ, label, g_tol;
+                                se::Bool = false, polish_iterations::Int = 0)
+    size(Xσ, 2) == 1 || error("_fit_nb2_phylo_laplace currently supports a constant sigma formula")
+    yint = round.(Int, y)
+    function aux_from(logsize)
+        r = exp(clamp(logsize, -8.0, 8.0))
+        lconst = [loggamma(yint[i] + r) - loggamma(r) - _logfactorial(yint[i]) for i in eachindex(yint)]
+        return (y = Float64.(yint), size = r, lconst = lconst)
+    end
+    m = sum(y) / length(y)
+    v = sum(abs2, y .- m) / max(length(y) - 1, 1)
+    θσ0 = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    return _fit_structured_mean_laplace_nuisance(
+        fam, Val(:nb2_fixed), aux_from, length(y), Xμ, gidx, G, K, nmμ, nmσ,
+        [label], g_tol; θβ0 = _poisson_fixed_start(y, Xμ), θσ0 = θσ0,
+        sigma_scale = exp, se = se, polish_iterations = polish_iterations
+    )
+end
+
+function _fit_gamma_phylo_laplace(fam, y, Xμ, Xσ, gidx, G, K, nmμ, nmσ, label, g_tol;
+                                  se::Bool = false, polish_iterations::Int = 5)
+    size(Xσ, 2) == 1 || error("_fit_gamma_phylo_laplace currently supports a constant sigma formula")
+    yv = Float64.(y)
+    function aux_from(logsigma)
+        α = exp(clamp(-2 * logsigma, -8.0, 8.0))
+        lconst = [α * log(α) - loggamma(α) + (α - 1) * log(yv[i]) for i in eachindex(yv)]
+        return (y = yv, shape = α, lconst = lconst)
+    end
+    ybar = sum(yv) / length(yv)
+    v = sum(abs2, yv .- ybar) / max(length(yv) - 1, 1)
+    α0 = max(ybar^2 / max(v, eps()), 3.0)
+    θβ0 = zeros(size(Xμ, 2))
+    θβ0[1] = log(ybar + eps())
+    return _fit_structured_mean_laplace_nuisance(
+        fam, Val(:gamma_fixed), aux_from, length(yv), Xμ, gidx, G, K, nmμ, nmσ,
+        [label], g_tol; θβ0 = θβ0, θσ0 = -0.5 * log(α0), sigma_scale = exp,
+        se = se, polish_iterations = polish_iterations
+    )
+end
+
+function _fit_beta_phylo_laplace(fam, y, Xμ, Xσ, gidx, G, K, nmμ, nmσ, label, g_tol;
+                                 se::Bool = false, polish_iterations::Int = 0)
+    size(Xσ, 2) == 1 || error("_fit_beta_phylo_laplace currently supports a constant sigma formula")
+    yv = Float64.(y)
+    ylogit = log.(yv) .- log1p.(-yv)
+    function aux_from(logsigma)
+        φ = exp(clamp(-2 * logsigma, -8.0, 8.0))
+        return (y = yv, precision = φ, ylogit = ylogit,
+                lgammaφ = loggamma(φ), digammaφ = digamma(φ))
+    end
+    ybar = clamp(sum(yv) / length(yv), 1e-4, 1 - 1e-4)
+    v = sum(abs2, yv .- ybar) / max(length(yv) - 1, 1)
+    φ0 = max(ybar * (1 - ybar) / max(v, eps()) - 1, 0.5)
+    θβ0 = zeros(size(Xμ, 2))
+    θβ0[1] = log(ybar / (1 - ybar))
+    return _fit_structured_mean_laplace_nuisance(
+        fam, Val(:beta_fixed), aux_from, length(yv), Xμ, gidx, G, K, nmμ, nmσ,
+        [label], g_tol; θβ0 = θβ0, θσ0 = -0.5 * log(φ0), sigma_scale = exp,
+        se = se, polish_iterations = polish_iterations
+    )
 end
 
 function _fit_binomial_crossed_laplace(fam, s, ntr, Xμ, comps, nmμ, g_tol; se::Bool = false,

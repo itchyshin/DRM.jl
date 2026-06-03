@@ -13,8 +13,9 @@ Beta response family for proportions in `(0,1)`: logit link on the mean `μ`, an
 the `sigma` slot carries `σ` with the precision mapping `φ = 1/σ²` (so
 `coef(fit, :sigma)` is `log σ`; recover precision as `exp(-2·log σ)`). Likelihood
 `Beta(μφ, (1-μ)φ)`. Mirrors `drmTMB`'s `beta_family`.
-Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
-sparse-Laplace engine when `sigma ~ 1`.
+Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, and
+phylogenetic intercepts `phylo(1 | species)` use the sparse-Laplace engine when
+`sigma ~ 1`.
 
 !!! note
     `DRM.Beta` shadows `Distributions.Beta`; qualify the latter if you need it.
@@ -22,6 +23,7 @@ sparse-Laplace engine when `sigma ~ 1`.
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), Beta(); data = dat)
 fit = drm(bf(y ~ x + (1 | g) + (1 | h), sigma ~ 1), Beta(); data = dat)
+fit = drm(bf(y ~ x + phylo(1 | species), sigma ~ 1), Beta(); data = dat, tree = phy)
 exp(-2 * coef(fit, :sigma)[1])     # estimated precision φ
 ```
 """
@@ -29,11 +31,9 @@ struct Beta end
 
 _logistic(η) = 1 / (1 + exp(-η))
 
-function drm(f::DrmFormula, fam::Beta; data, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::Beta; data, tree = nothing, g_tol::Real = 1e-8)
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
-    (mv === nothing && st === nothing) ||
-        error("Beta() does not support meta_V / structured markers")
     for (pname, r) in f.forms          # only the mean may carry a random effect
         pname === :mu && continue
         _, re2, mv2, st2 = _split_ranef(r)
@@ -44,6 +44,14 @@ function drm(f::DrmFormula, fam::Beta; data, g_tol::Real = 1e-8)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> 0 < yi < 1, y) ||
         error("Beta() requires responses strictly in the open interval (0, 1)")
+    phy = _nongaussian_phylo_structure("Beta()", st, re, mv, data, tree)
+    if phy !== nothing
+        return _withformula(
+            _fit_beta_phylo_laplace(fam, y, Xμ, Xσ, phy.gidx, phy.G, phy.K, nmμ,
+                                    nmσ, phy.label, g_tol),
+            f
+        )
+    end
     if !isempty(re)                    # random effect on the logit mean → GHQ/Laplace
         if length(re) > 1
             all(_re_kind(r[1])[1] === :intercept for r in re) ||

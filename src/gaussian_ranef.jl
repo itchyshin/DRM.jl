@@ -7,25 +7,32 @@
 # diagonal G×G capacitance (one random-intercept term), all ForwardDiff-friendly.
 
 # Split a μ right-hand side into its fixed part and any `(lhs | g)` terms.
+function _structured_marker(kind::Symbol, t::FunctionTerm)
+    inner = t.args[1]
+    (inner isa FunctionTerm && inner.f === (|)) ||
+        error("$(kind)(...) expects an inner `(1 | group)` random-effect term")
+    return (kind, inner.args[2].sym, inner.args[1])
+end
+
 function _split_ranef(rhs)
     terms = rhs isa Tuple ? collect(rhs) : Any[rhs]
     fixed = Any[]
     re = Tuple{Any,Symbol}[]
     metav = nothing                                   # meta_V(v) known-variance column
-    structured = nothing                              # (:relmat, grouping) — known K
+    structured = nothing                              # (:relmat, grouping, lhs) — known K
     for t in terms
         if t isa FunctionTerm && t.f === (|)
             push!(re, (t.args[1], t.args[2].sym))     # (re-lhs, grouping symbol)
         elseif t isa FunctionTerm && t.f === meta_V
             metav = t.args[1].sym
         elseif t isa FunctionTerm && t.f === relmat
-            structured = (:relmat, t.args[1].args[2].sym)   # inner (1 | grp)
+            structured = _structured_marker(:relmat, t)     # inner (1 | grp)
         elseif t isa FunctionTerm && t.f === animal
-            structured = (:animal, t.args[1].args[2].sym)
+            structured = _structured_marker(:animal, t)
         elseif t isa FunctionTerm && t.f === phylo
-            structured = (:phylo, t.args[1].args[2].sym)
+            structured = _structured_marker(:phylo, t)
         elseif t isa FunctionTerm && t.f === spatial
-            structured = (:spatial, t.args[1].args[2].sym)
+            structured = _structured_marker(:spatial, t)
         else
             push!(fixed, t)
         end
