@@ -19,7 +19,8 @@ Logit link on the mean success probability `μ`; no scale/dispersion parameter
 vector. Likelihood `Binomial(n, μ)` with `μ = logistic(η)`. Mirrors `drmTMB`'s
 `binomial` family. A random intercept `(1 | g)` on the mean fits a logistic
 GLMM; crossed intercepts such as `(1 | g) + (1 | h)` use the sparse-Laplace
-engine.
+engine. A phylogenetic random intercept on the mean, `phylo(1 | species)`, also
+uses the sparse-Laplace engine.
 
 !!! note
     `DRM.Binomial` shadows `Distributions.Binomial`; if you need the
@@ -29,16 +30,19 @@ engine.
 fit = drm(bf(cbind(successes, failures) ~ x), Binomial(); data = dat)   # logistic regression
 fit = drm(bf(y ~ x + (1 | g)), Binomial(); data = dat)                  # 0/1 logistic GLMM
 fit = drm(bf(cbind(successes, failures) ~ x + (1 | g) + (1 | h)), Binomial(); data = dat)
+fit_phy = drm(bf(@formula(cbind(successes, failures) ~ x + phylo(1 | species))),
+              Binomial(); data = dat, tree = tr, se = false)
 fitted(fit)        # fitted success probabilities μ̂ = logistic(Xβ̂)
 ```
 """
 struct Binomial end
 
-function drm(f::DrmFormula, fam::Binomial; data, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, g_tol::Real = 1e-8,
+             se::Bool = true)
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
-    (mv === nothing && st === nothing) ||
-        error("Binomial() does not support meta_V / structured markers")
+    mv === nothing ||
+        error("Binomial() does not support meta_V markers")
     for (pname, r) in f.forms          # Binomial is mean-only — reject any other parameter formula
         pname === :mu && continue
         pname === :sigma || error("Binomial() is mean-only; no sigma/dispersion parameter")
@@ -58,6 +62,16 @@ function drm(f::DrmFormula, fam::Binomial; data, g_tol::Real = 1e-8)
         ntr = s .+ fl                                     # trials
     end
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)      # successes column is a dummy LHS
+    if st !== nothing
+        isempty(re) ||
+            error("Binomial() phylo structured effects cannot be combined with ordinary random effects yet")
+        kind, grp = st
+        kind === :phylo ||
+            error("Binomial() currently supports only phylo(1 | group) among structured markers")
+        tree === nothing && error("phylo(1 | $grp) needs `tree = ...`")
+        labels = getproperty(data, grp)
+        return _withformula(_fit_binomial_phylo_laplace(fam, s, ntr, Xμ, labels, tree, nmμ, grp, g_tol; se = se), f)
+    end
     if !isempty(re)                                       # random intercept (1|g) → GHQ/Laplace marginal
         if length(re) > 1
             all(_re_kind(r[1])[1] === :intercept for r in re) ||

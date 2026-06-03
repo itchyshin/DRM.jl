@@ -15,21 +15,25 @@ Negative-binomial (NB2) family for overdispersed counts: log link on the mean
 `coef(fit, :sigma)` is `log θ`). Var = `μ + μ²/θ`; as `θ → ∞` it tends to
 [`Poisson`](@ref). Mirrors `drmTMB`'s `nbinom2` family.
 Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
-sparse-Laplace engine when `sigma ~ 1`.
+sparse-Laplace engine when `sigma ~ 1`. A phylogenetic random intercept on the
+mean, `phylo(1 | species)`, also uses the sparse-Laplace engine.
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), NegBinomial2(); data = dat)
 fit = drm(bf(y ~ x + (1 | g) + (1 | h), sigma ~ 1), NegBinomial2(); data = dat)
+fit_phy = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
+              NegBinomial2(); data = dat, tree = tr, se = false)
 exp(coef(fit, :sigma)[1])     # estimated dispersion θ (size)
 ```
 """
 struct NegBinomial2 end
 
-function drm(f::DrmFormula, fam::NegBinomial2; data, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, g_tol::Real = 1e-8,
+             se::Bool = true)
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
-    (mv === nothing && st === nothing) ||
-        error("NegBinomial2() does not support meta_V / structured markers")
+    mv === nothing ||
+        error("NegBinomial2() does not support meta_V markers")
     for (pname, r) in f.forms          # only the mean may carry a random effect
         pname === :mu && continue
         _, re2, mv2, st2 = _split_ranef(r)
@@ -40,6 +44,20 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, g_tol::Real = 1e-8)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> yi ≥ 0 && isinteger(yi), y) ||
         error("NegBinomial2() requires non-negative integer counts as the response")
+    if st !== nothing
+        isempty(re) ||
+            error("NegBinomial2() phylo structured effects cannot be combined with ordinary random effects yet")
+        (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
+            error("NegBinomial2() phylo structured effects cannot be combined with `zi`/`hu` yet")
+        (size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])) ||
+            error("NegBinomial2() phylo sparse Laplace currently supports `sigma ~ 1`")
+        kind, grp = st
+        kind === :phylo ||
+            error("NegBinomial2() currently supports only phylo(1 | group) among structured markers")
+        tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
+        labels = getproperty(data, grp)
+        return _withformula(_fit_nb2_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp, g_tol; se = se), f)
+    end
     if !isempty(re)                                       # random effect on the mean → GHQ/Laplace
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
             error("NegBinomial2() random effects cannot be combined with `zi`/`hu` yet")
@@ -50,7 +68,7 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, g_tol::Real = 1e-8)
                 grp = r[2]; gidx, G = _group_index(getproperty(data, grp))
                 (ones(length(y)), gidx, G, String(grp))
             end
-            return _withformula(_fit_nb2_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol), f)
+            return _withformula(_fit_nb2_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol; se = se), f)
         end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]
         gidx, G = _group_index(getproperty(data, grp))
