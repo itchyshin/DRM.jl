@@ -7,7 +7,7 @@ using Test, Random
     Random.seed!(20260602)
     n = 500
     x = randn(n)
-    y = 0.5 .- 0.8 .* x .+ exp(-0.3 .+ 0.4 .* x) .* randn(n)
+    y = 0.5 .- 0.8 .* x .+ exp.(-0.3 .+ 0.4 .* x) .* randn(n)
     data = (; y, x)
 
     fit = drm(bf(@formula(y ~ 1 + x), @formula(sigma ~ 1 + x)), Gaussian(); data = data)
