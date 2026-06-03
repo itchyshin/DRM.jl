@@ -20,9 +20,14 @@
 - **Verified:** **2.18× faster than drmTMB** on the q=4 single fit (same data,
   same marginal), **near-perfect O(p) to 10,000 species**, and **valid confidence
   intervals where drmTMB's Hessian fails entirely**.
-- **State:** published at **https://github.com/itchyshin/DRM.jl** (MIT, public).
-  `src/` engine loads; `src/experimental/` is migrated but not yet wired.
-- **Next:** Roadmap step A — wire `experimental/` into a clean public API.
+- **State:** published at **https://github.com/itchyshin/DRM.jl** (MIT, public);
+  **v0.1.0 and v0.1.1 tagged**. The `drm()` / `bf()` front end is wired, all
+  **13 families** (12 univariate + bivariate Gaussian) are implemented, exported,
+  and recovery-tested, and **inference is wired** in `src/inference.jl` (Wald +
+  profile + bootstrap; `infer_q4` graduated). `src/experimental/` (REML,
+  location-only, EM variants) remains migrated but **not yet wired**.
+- **Next:** Phase 1.1 R-parity gate + Phase 3 articles, and the
+  variational-approximation track (issue #136).
 
 ---
 
@@ -44,8 +49,8 @@ yes — 2.18× at p=100, and it scales where the alternatives can't.**
 ## 2. Bottom line — verified results
 
 Same model, same real `q4_p100` data, same Laplace ML marginal as drmTMB.
-Reproduced independently (`bench/run_sparse_tmb_nd.jl`, `bench/run_scaling.jl`,
-`src/experimental/infer_q4.jl`). Full grid + caveats: `report/comparison-grid.md`.
+Reproduced independently (`bench/run_sparse_tmb_nd.jl`, `bench/run_scaling.jl`;
+inference now in `src/inference.jl`). Full grid + caveats: `report/comparison-grid.md`.
 
 | Claim | Number | Status |
 |---|---|---|
@@ -109,12 +114,15 @@ data attach only at the p leaf nodes.
 
 **Core files** (`src/`, wired): `sparse_phy` · `takahashi_selinv` ·
 `sparse_aug_plsm` · `sparse_em_fit` (`make_problem(...; species=)`, `mstep_*`) ·
-`fit_ml_q4` · `fit_q4_sparse_tmb` · `DRM.jl`.
-**Experimental** (`src/experimental/`, migrated, NOT wired): `infer_q4` (Wald +
-bootstrap) · `reml_q4` (Laplace-REML) · `location_only` (conjugate EM vs LBFGS) ·
-`fit_em_natgrad` (natural-gradient EM) · `estep_{lm,trustregion,armijoguard,
-initprior}` (mode-finder candidates) · dense oracle (`q4_em_dense`,
-`fit_q4_tmbgrad`).
+`fit_ml_q4` · `fit_q4_sparse_tmb` · the family modules (`gaussian_*`, `student`,
+`poisson`, `negbinomial`, `beta`, `betabinomial`, `binomial`, `gamma`,
+`lognormal`, `zeroonebeta`, `tweedie`, `cumulative`) · `inference` (Wald +
+profile + bootstrap; `infer_q4` graduated here) · `summary` · `visualization` ·
+`DRM.jl`.
+**Experimental** (`src/experimental/`, migrated, still NOT wired): `reml_q4`
+(Laplace-REML) · `location_only` (conjugate EM vs LBFGS) · `fit_em_natgrad`
+(natural-gradient EM) · `estep_{lm,trustregion,armijoguard,initprior}`
+(mode-finder candidates) · dense oracle (`q4_em_dense`, `fit_q4_tmbgrad`).
 
 ---
 
@@ -177,13 +185,17 @@ initprior}` (mode-finder candidates) · dense oracle (`q4_em_dense`,
 
 ## 7. Current repo state
 
-Published, MIT, public. `src/` core loads cleanly (`using DRM` resolves the
-include chain + exports). `src/experimental/` migrated but not wired. `bench/`
-has runnable benchmarks + the `q4_p100` fixtures + the R fixture-gen. `report/`
-has all 13 design/provenance docs. CI is Linux-only, PR + `workflow_dispatch`
-(cost-disciplined). **Honest:** engine files are the poc's script-style includes
-(one stray load-time print fires from `sparse_aug_plsm.jl`; removed in Phase 1.0 via Workflow A); this is a *scaffold ready to develop*, not a
-polished v0.1.
+Published, MIT, public; **v0.1.0 and v0.1.1 tagged**. `src/` core loads cleanly
+(`using DRM` resolves the include chain + exports). The `drm()` / `bf()` front
+end, all 13 families (12 univariate + bivariate Gaussian), and the inference
+surface (Wald + profile + bootstrap) are wired and exported; families are
+validated by simulation parameter recovery (the numerical drmTMB-parity gate is
+#17). `src/experimental/` (REML, location-only, EM variants) is migrated but
+**not wired**. `bench/` has runnable benchmarks + the `q4_p100` fixtures + the R
+fixture-gen. `report/` has all 13 design/provenance docs. CI is Linux-only, PR +
+`workflow_dispatch` (cost-disciplined). **Honest:** the engine still carries some
+of the PoC's script-style includes (one stray load-time print still fires from
+`sparse_aug_plsm.jl:267`; cleanup tracked under Workflow A).
 
 ---
 

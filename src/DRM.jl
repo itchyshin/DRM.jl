@@ -51,6 +51,7 @@ include("zeroonebeta.jl")
 include("tweedie.jl")
 include("cumulative.jl")
 include("inference.jl")
+include("variational.jl")
 include("summary.jl")
 include("visualization.jl")
 
@@ -65,5 +66,10 @@ export AugProblem, make_problem,
 export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
        coef, vcov, loglik, nobs, dof, aic, bic, fixef, re_sd, vc, ranef, sigma, corpairs, stderror, confint, coeftable, fitted, residuals, predict, simulate, bootstrap_ci, bootstrap_summary, bootstrap_result, check_drm, family,
        profile_curve, parameter_surface, corpairs_data
+
+# Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
+# purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare
+# `Laplace` would clash with `Distributions.Laplace`. Reach them as
+# `DRM.Variational` etc. if needed.
 
 end # module DRM
