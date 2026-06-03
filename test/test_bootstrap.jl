@@ -54,6 +54,8 @@ using Test, Random
     @test br.threaded == false
     @test br.julia_threads == Threads.nthreads()
     @test br.blas_threads >= 1
+    @test br.worker_threads == 1
+    @test br.blas_oversubscribed == false
     @test br.elapsed >= 0
     @test br.summary == bs2
     @test br_fit.summary == br.summary
@@ -61,6 +63,16 @@ using Test, Random
     @test br_fit.attempted == br.attempted
     @test br_fit.used == br.used
     @test br_fit.failed == br.failed
+
+    br_serial = bootstrap_result(fit; data = (; y, x), B = 12,
+        level = 0.95, rng = MersenneTwister(8))
+    br_threaded = bootstrap_result(fit; data = (; y, x), B = 12,
+        level = 0.95, rng = MersenneTwister(8), threads = true)
+    @test br_threaded.summary == br_serial.summary
+    @test br_threaded.seeds == br_serial.seeds
+    @test br_threaded.threaded == (Threads.nthreads() > 1)
+    @test br_threaded.worker_threads == (Threads.nthreads() > 1 ? min(12, Threads.nthreads()) : 1)
+    @test br_threaded.blas_oversubscribed == (br_threaded.threaded && br_threaded.blas_threads > 1)
     @test_throws ArgumentError bootstrap_result(form, Gaussian(); data = (; y, x),
         B = 2, failures = :warn)
     @test_throws ArgumentError bootstrap_result(DRM._withformula(fit, nothing);

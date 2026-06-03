@@ -36,6 +36,25 @@ import Distributions
 
     @test confint(fit) == wald                                 # default stays Wald
     @test [r.param for r in confint(fit; method = :wald, parm = :mu)] == fill(:mu, 3)
+
+    pres = profile_result(fit)
+    @test pres.ci == prof
+    @test pres.attempted == pres.used == length(prof)
+    @test pres.failed == 0
+    @test pres.threaded == false
+    @test pres.worker_threads == 1
+    @test pres.julia_threads == Threads.nthreads()
+    @test pres.blas_threads >= 1
+    @test pres.elapsed >= 0
+    @test pres.autodiff in (:stored, :forward, :finite)
+    @test length(pres.stats) == length(prof)
+    @test all(s.evaluations > 0 for s in pres.stats)
+
+    sigma_serial = profile_result(fit; parm = :sigma)
+    sigma_threaded = profile_result(fit; parm = :sigma, threads = true)
+    @test sigma_threaded.ci == sigma_serial.ci
+    @test sigma_threaded.threaded == (Threads.nthreads() > 1)
+    @test sigma_threaded.worker_threads == (Threads.nthreads() > 1 ? min(2, Threads.nthreads()) : 1)
 end
 
 @testset "Gaussian crossed profile uses stored gradient" begin
@@ -77,6 +96,14 @@ end
     resd = confint(fit; method = :profile, parm = :resd)
     @test [r.coef for r in resd] == ["g", "h"]
     @test all(isfinite(r.lower) && isfinite(r.upper) for r in resd)
+
+    one_serial = profile_result(fit; parm = :resd)
+    one_threaded = profile_result(fit; parm = :resd, threads = true)
+    @test one_threaded.ci == one_serial.ci
+    @test one_threaded.stats[1].evaluations == one_serial.stats[1].evaluations
+    @test one_threaded.threaded == (Threads.nthreads() > 1)
+    @test one_threaded.worker_threads == (Threads.nthreads() > 1 ? min(2, Threads.nthreads()) : 1)
+    @test one_threaded.blas_oversubscribed == (one_threaded.threaded && one_threaded.blas_threads > 1)
 end
 
 @testset "Profile CI on crossed Poisson random-effect SDs" begin

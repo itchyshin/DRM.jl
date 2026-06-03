@@ -180,6 +180,16 @@ import Distributions
         @test bres_fit.attempted == bres.attempted
         @test bres_fit.used == bres.used
         @test bres_fit.failed == bres.failed
+        @test bres.threaded == (Threads.nthreads() > 1)
+        @test bres.worker_threads == (Threads.nthreads() > 1 ? min(12, Threads.nthreads()) : 1)
+        @test bres.blas_oversubscribed == (bres.threaded && bres.blas_threads > 1)
+
+        bres_serial = bootstrap_result(fit; data = dat, B = 12,
+            rng = MersenneTwister(17))
+        bres_threaded = bootstrap_result(fit; data = dat, B = 12,
+            rng = MersenneTwister(17), threads = true)
+        @test bres_threaded.summary == bres_serial.summary
+        @test bres_threaded.seeds == bres_serial.seeds
 
         ntr = fill(6, n)
         p = @. 1 / (1 + exp(-(0.1 + 0.4 * x)))

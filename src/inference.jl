@@ -41,6 +41,13 @@ const _BootstrapSummaryRow = NamedTuple{(:param, :coef, :estimate, :std_error, :
 const _BootstrapFailureRow = NamedTuple{(:replicate, :seed, :message),
     Tuple{Int,UInt,String}}
 
+const _ProfileStatsRow = NamedTuple{(:param, :coef, :evaluations, :gradient_evaluations,
+        :bracket_expansions, :root_iterations, :lower_unbounded, :upper_unbounded),
+    Tuple{Symbol,String,Int,Int,Int,Int,Bool,Bool}}
+
+_worker_threads(active::Bool, ntasks::Int) = active ? min(max(ntasks, 1), Threads.nthreads()) : 1
+_blas_oversubscribed(active::Bool) = active && Threads.nthreads() > 1 && BLAS.get_num_threads() > 1
+
 """
     confint(fit; level = 0.95, method = :wald, threads = false, parm = nothing)
 
@@ -59,7 +66,8 @@ Confidence intervals for every coefficient, as a vector of
   slope `∂nll/∂θ_k`, falling back to bisection — bracket-guaranteed correctness,
   far fewer inner re-optimisations than cold-started bisection.
   Pass `threads = true` to profile coefficients in parallel when the fitted
-  objective is thread-safe.
+  objective is thread-safe; if only one coefficient is profiled, its lower and
+  upper endpoint searches are run in parallel instead.
 - `parm = :resd` or `parm = [:mu, :resd]` — restrict intervals to one or more
   parameter blocks. This is especially useful for profiling random-effect SDs
   without also profiling fixed-effect coefficients.
@@ -69,8 +77,65 @@ Mirrors drmTMB's `confint(fit, method = "wald" | "profile")`.
 function confint(fit::DrmFit; level::Real = 0.95, method::Symbol = :wald,
                  threads::Bool = false, parm = nothing)
     method === :wald && return _wald_ci(fit, level, parm)
-    method === :profile && return _profile_ci(fit, level; threads = threads, parm = parm)
+    method === :profile && return profile_result(fit; level, threads, parm).ci
     throw(ArgumentError("confint: method must be :wald or :profile (got :$method)"))
+end
+
+"""
+    profile_result(fit; level = 0.95, threads = false, parm = nothing)
+
+Auditable profile-likelihood confidence intervals. Returns a `NamedTuple` with:
+
+- `ci` — the same rows returned by `confint(fit; method = :profile)`;
+- `stats` — per-coefficient endpoint work counts;
+- `attempted`, `used`, `failed` — coefficient counts;
+- `threaded`, `worker_threads`, `julia_threads`, `blas_threads`,
+  `blas_oversubscribed`, `elapsed` — CPU context and wall-clock timing;
+- `autodiff` — profile nuisance-gradient backend (`:stored`, `:forward`, or
+  `:finite`).
+
+Set `threads = true` to parallelise independent profile coefficients. When only
+one coefficient is profiled, the two endpoint arms are run in parallel instead.
+"""
+function profile_result(fit::DrmFit; level::Real = 0.95, threads::Bool = false,
+        parm = nothing)
+    fit.nll === nothing &&
+        throw(ArgumentError("profile intervals require the fitted objective; this model was not built with one"))
+    nll = fit.nll
+    nllgrad = fit.nllgrad
+    θ̂ = copy(fit.theta)
+    nllhat = nll(θ̂)
+    autodiff = _profile_autodiff_mode(nll, nllgrad, θ̂)
+    half = quantile(Chisq(1), level) / 2
+    se = stderror(fit)
+    jobs = _profile_jobs(fit, parm)
+    rows = Vector{_CIRow}(undef, length(jobs))
+    stats = Vector{_ProfileStatsRow}(undef, length(jobs))
+    threaded = threads && Threads.nthreads() > 1
+    coefficient_threaded = threaded && length(jobs) > 1
+    endpoint_threaded = threaded && length(jobs) == 1
+    elapsed = @elapsed begin
+        if coefficient_threaded
+            Threads.@threads for i in eachindex(jobs)
+                rows[i], stats[i] = _profile_row_result(
+                    jobs[i], nll, nllgrad, θ̂, nllhat, half, se, autodiff,
+                )
+            end
+        else
+            for i in eachindex(jobs)
+                rows[i], stats[i] = _profile_row_result(
+                    jobs[i], nll, nllgrad, θ̂, nllhat, half, se, autodiff;
+                    endpoint_threads = endpoint_threaded,
+                )
+            end
+        end
+    end
+    return (ci = rows, stats = stats, attempted = length(jobs), used = length(rows),
+        failed = 0, threaded = threaded,
+        worker_threads = _worker_threads(threaded, endpoint_threaded ? 2 : length(jobs)),
+        julia_threads = Threads.nthreads(), blas_threads = BLAS.get_num_threads(),
+        blas_oversubscribed = _blas_oversubscribed(threaded), elapsed = elapsed,
+        autodiff = autodiff, level = float(level))
 end
 
 function _ci_param_selected(param::Symbol, parm)
@@ -93,6 +158,17 @@ function _wald_ci(fit::DrmFit, level::Real, parm)
         end
     end
     return rows
+end
+
+function _profile_jobs(fit::DrmFit, parm)
+    jobs = NamedTuple{(:param, :coef, :k),Tuple{Symbol,String,Int}}[]
+    for ((pp, r), (_, nms)) in zip(fit.blocks, fit.coefnames)
+        _ci_param_selected(pp, parm) || continue
+        for (j, k) in enumerate(r)
+            push!(jobs, (param = pp, coef = nms[j], k = k))
+        end
+    end
+    return jobs
 end
 
 # Profiled objective: minimise nll over every component except k, with θ[k] = v.
@@ -204,16 +280,28 @@ end
 # bracket-guaranteed; the analytic slope only buys faster (quadratic) convergence.
 # Each evaluation warm-starts the nuisance optimisation from the previous û.
 function _profile_endpoint(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u0, autodiff)
+    value, _ = _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u0, autodiff)
+    return value
+end
+
+function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u0, autodiff)
     target = nllhat + half
     p = length(θ̂)
     nidx = p - 1
     û = copy(u0)
+    evaluations = 0
+    gradient_evaluations = 0
     # h(t) and its derivative h'(t); updates û in place for warm-starting.
     function heval(t)
         f, unew = _profiled_nll(nll, θ̂, k, θ̂[k] + dir * t, û; autodiff, nllgrad)
         isempty(unew) || (û = unew)
-        hp = (nidx == 0 || autodiff === :finite) ? NaN :
+        evaluations += 1
+        hp = if nidx == 0 || autodiff === :finite
+            NaN
+        else
+            gradient_evaluations += 1
             dir * _profile_slope(nll, nllgrad, θ̂, k, θ̂[k] + dir * t, û)
+        end
         return (f - target, hp)
     end
     # Bracket: expand until h > 0.
@@ -222,10 +310,17 @@ function _profile_endpoint(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u0, auto
     while hhi < 0 && iters < 40
         tlo = thi; thi *= 1.6; (hhi, _) = heval(thi); iters += 1
     end
-    hhi < 0 && return dir < 0 ? -Inf : Inf          # profile never crosses → unbounded
+    if hhi < 0
+        value = dir < 0 ? -Inf : Inf
+        stats = (evaluations = evaluations, gradient_evaluations = gradient_evaluations,
+            bracket_expansions = iters, root_iterations = 0, unbounded = true)
+        return value, stats
+    end
     # Guarded Newton on [tlo, thi].
     t = (tlo + thi) / 2
+    root_iterations = 0
     for _ in 1:60
+        root_iterations += 1
         (ht, hp) = heval(t)
         abs(ht) < 1e-9 && break
         ht < 0 ? (tlo = t) : (thi = t)
@@ -233,47 +328,48 @@ function _profile_endpoint(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u0, auto
         t = (tlo < tn < thi) ? tn : (tlo + thi) / 2                     # guard into bracket
         thi - tlo < 1e-8 && break
     end
-    return θ̂[k] + dir * t
-end
-
-function _profile_ci(fit::DrmFit, level::Real; threads::Bool = false, parm = nothing)
-    fit.nll === nothing &&
-        throw(ArgumentError("profile intervals require the fitted objective; this model was not built with one"))
-    nll = fit.nll
-    nllgrad = fit.nllgrad
-    θ̂ = copy(fit.theta)
-    nllhat = nll(θ̂)
-    autodiff = _profile_autodiff_mode(nll, nllgrad, θ̂)
-    half = quantile(Chisq(1), level) / 2           # nll rises by χ²₁/2 at each endpoint
-    se = stderror(fit)
-    jobs = NamedTuple{(:param, :coef, :k),Tuple{Symbol,String,Int}}[]
-    for ((pp, r), (_, nms)) in zip(fit.blocks, fit.coefnames)
-        _ci_param_selected(pp, parm) || continue
-        for (j, k) in enumerate(r)
-            push!(jobs, (param = pp, coef = nms[j], k = k))
-        end
-    end
-    rows = Vector{_CIRow}(undef, length(jobs))
-    if threads && Threads.nthreads() > 1
-        Threads.@threads for i in eachindex(jobs)
-            rows[i] = _profile_row(jobs[i], nll, nllgrad, θ̂, nllhat, half, se, autodiff)
-        end
-    else
-        for i in eachindex(jobs)
-            rows[i] = _profile_row(jobs[i], nll, nllgrad, θ̂, nllhat, half, se, autodiff)
-        end
-    end
-    return rows
+    value = θ̂[k] + dir * t
+    stats = (evaluations = evaluations, gradient_evaluations = gradient_evaluations,
+        bracket_expansions = iters, root_iterations = root_iterations, unbounded = false)
+    return value, stats
 end
 
 function _profile_row(job, nll, nllgrad, θ̂, nllhat, half, se, autodiff)
+    row, _ = _profile_row_result(job, nll, nllgrad, θ̂, nllhat, half, se, autodiff)
+    return row
+end
+
+function _profile_row_result(job, nll, nllgrad, θ̂, nllhat, half, se, autodiff;
+        endpoint_threads::Bool = false)
     k = job.k
     est = θ̂[k]
     s = (isfinite(se[k]) && se[k] > 0) ? se[k] : max(abs(est), 1.0)
     u0 = θ̂[[i for i in 1:length(θ̂) if i != k]]
-    lo = _profile_endpoint(nll, nllgrad, θ̂, k, nllhat, half, s, -1, u0, autodiff)
-    hi = _profile_endpoint(nll, nllgrad, θ̂, k, nllhat, half, s, +1, u0, autodiff)
-    return (param = job.param, coef = job.coef, estimate = est, lower = lo, upper = hi)
+    if endpoint_threads && Threads.nthreads() > 1
+        left = Threads.@spawn _profile_endpoint_result(
+            nll, nllgrad, θ̂, k, nllhat, half, s, -1, u0, autodiff,
+        )
+        right = Threads.@spawn _profile_endpoint_result(
+            nll, nllgrad, θ̂, k, nllhat, half, s, +1, u0, autodiff,
+        )
+        lo, lstats = fetch(left)
+        hi, rstats = fetch(right)
+    else
+        lo, lstats = _profile_endpoint_result(
+            nll, nllgrad, θ̂, k, nllhat, half, s, -1, u0, autodiff,
+        )
+        hi, rstats = _profile_endpoint_result(
+            nll, nllgrad, θ̂, k, nllhat, half, s, +1, u0, autodiff,
+        )
+    end
+    row = (param = job.param, coef = job.coef, estimate = est, lower = lo, upper = hi)
+    stats = (param = job.param, coef = job.coef,
+        evaluations = lstats.evaluations + rstats.evaluations,
+        gradient_evaluations = lstats.gradient_evaluations + rstats.gradient_evaluations,
+        bracket_expansions = lstats.bracket_expansions + rstats.bracket_expansions,
+        root_iterations = lstats.root_iterations + rstats.root_iterations,
+        lower_unbounded = lstats.unbounded, upper_unbounded = rstats.unbounded)
+    return row, stats
 end
 
 """
@@ -371,8 +467,8 @@ Auditable parametric bootstrap. Returns a `NamedTuple` with:
 - `attempted`, `used`, `failed` — replicate counts;
 - `seeds` — the per-replicate seeds used for reproducibility;
 - `threaded` — whether threaded refits were actually used.
-- `julia_threads`, `blas_threads`, `elapsed` — CPU context and wall-clock time
-  for the simulated-refit phase.
+- `worker_threads`, `julia_threads`, `blas_threads`, `blas_oversubscribed`,
+  `elapsed` — CPU context and wall-clock time for the simulated-refit phase.
 
 `failures = :error` (default) records failures and then errors if any replicate
 failed. `failures = :skip` computes summaries from successful replicates and
@@ -491,7 +587,8 @@ function _bootstrap_result(fit0, formula::DrmFormula, data, B::Int, level::Real,
     summary = _bootstrap_summary_rows(fit0, draws[ok, :], est, level)
     return (summary = summary, failures = failure_rows, attempted = B, used = used,
         failed = length(failure_rows), seeds = seeds, threaded = threaded,
-        julia_threads = Threads.nthreads(), blas_threads = BLAS.get_num_threads(),
+        worker_threads = _worker_threads(threaded, B), julia_threads = Threads.nthreads(),
+        blas_threads = BLAS.get_num_threads(), blas_oversubscribed = _blas_oversubscribed(threaded),
         elapsed = elapsed, check_converged = check_converged)
 end
 

@@ -252,12 +252,20 @@ threaded_delta = maximum(
 )
 
 form_pois_re, data_pois_re = poisson_re_fixture()
-drm(form_pois_re, Poisson(); data=data_pois_re)
+fit_pois_re = drm(form_pois_re, Poisson(); data=data_pois_re)
+profile_result(fit_pois_re; parm=:resd)
+profile_result(fit_pois_re; parm=:resd, threads=true)
 bootstrap_result(
     form_pois_re, Poisson(); data=data_pois_re, B=2, rng=MersenneTwister(92),
     failures=:skip, check_converged=true
 )
 GC.gc()
+t_profile_pois_re_serial, prof_pois_re_serial = timecall(
+    () -> profile_result(fit_pois_re; parm=:resd)
+)
+t_profile_pois_re_threaded, prof_pois_re_threaded = timecall(
+    () -> profile_result(fit_pois_re; parm=:resd, threads=true)
+)
 t_boot_pois_re_serial, boot_pois_re_serial = timecall(
     () -> bootstrap_result(
         form_pois_re,
@@ -268,6 +276,12 @@ t_boot_pois_re_serial, boot_pois_re_serial = timecall(
         failures=:skip,
         check_converged=true,
     ),
+)
+profile_pois_re_delta = maximum(
+    max(
+        abs(prof_pois_re_serial.ci[i].lower - prof_pois_re_threaded.ci[i].lower),
+        abs(prof_pois_re_serial.ci[i].upper - prof_pois_re_threaded.ci[i].upper),
+    ) for i in eachindex(prof_pois_re_serial.ci)
 )
 t_boot_pois_re_threaded, boot_pois_re_threaded = timecall(
     () -> bootstrap_result(
@@ -386,6 +400,20 @@ open(OUT, "w") do io
     )
     @printf(
         io,
+        "| profile result resd serial | Poisson (1|g) | %d | %d | %.4f |\n",
+        length(data_pois_re.y),
+        length(prof_pois_re_serial.ci),
+        t_profile_pois_re_serial
+    )
+    @printf(
+        io,
+        "| profile result resd threaded endpoints | Poisson (1|g) | %d | %d | %.4f |\n",
+        length(data_pois_re.y),
+        length(prof_pois_re_threaded.ci),
+        t_profile_pois_re_threaded
+    )
+    @printf(
+        io,
         "| bootstrap result B=12 serial | Poisson (1|g) | %d | %d | %.4f |\n",
         length(data_pois_re.y),
         length(boot_pois_re_serial.summary),
@@ -421,6 +449,13 @@ open(OUT, "w") do io
     println(
         io,
         "- Threaded bootstrap uses independent per-replicate RNG seeds; timings are only comparable at the explicit thread count above.",
+    )
+    @printf(
+        io,
+        "- Poisson RE profile endpoint-thread max CI delta versus serial: %.3e; serial endpoint evaluations %d, threaded worker threads %d.\n",
+        profile_pois_re_delta,
+        prof_pois_re_serial.stats[1].evaluations,
+        prof_pois_re_threaded.worker_threads
     )
     @printf(
         io,
@@ -463,5 +498,11 @@ end
     boot_pois_re_serial.attempted,
     boot_pois_re_threaded.used,
     boot_pois_re_threaded.attempted
+)
+@printf(
+    "poisson RE profile resd serial %.4fs threaded endpoints %.4fs, delta %.3e\n",
+    t_profile_pois_re_serial,
+    t_profile_pois_re_threaded,
+    profile_pois_re_delta
 )
 println("wrote ", OUT)
