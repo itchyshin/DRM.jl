@@ -5,10 +5,10 @@
 Fast **distributional regression models** in Julia — the Julia twin of
 the R package [drmTMB](https://github.com/itchyshin/drmTMB).
 
-> **Scaffold / pilot (v0.1.0-DEV).** This repo migrates a *verified proof-of-
-> concept* engine; the public API and module layout will change before v0.1.0.
-> See [HANDOVER.md](HANDOVER.md) (verified engine), [ROADMAP.md](ROADMAP.md)
-> (phases), and [AGENTS.md](AGENTS.md) (the team) for what is solid vs. planned.
+> **Current status (v0.1.1).** DRM.jl has a public `bf()` / `drm()` front end,
+> all drmTMB response families, the Gaussian structured/random-effect surface,
+> and expanding non-Gaussian GLMM support. See [ROADMAP.md](ROADMAP.md) for the
+> active gaps and [HANDOVER.md](HANDOVER.md) for the verified q=4 engine.
 > The [Documenter site](https://itchyshin.github.io/DRM.jl/) mirrors drmTMB's
 > navbar, with every page status-tagged.
 
@@ -72,21 +72,19 @@ julia --project=. bench/run_scaling.jl           # O(p) curve to p=10,000
 ## Repository layout (mirrors GLLVM.jl)
 
 ```
-src/                core engine (verified): sparse_phy, takahashi_selinv,
-                    sparse_aug_plsm (robust mode-finder), sparse_em_fit,
-                    fit_ml_q4, fit_q4_sparse_tmb; DRM.jl module
-src/experimental/   migrated but NOT yet wired: REML (reml_q4), inference
-                    (infer_q4), location-only (location_only), EM variants,
-                    mode-finder candidates, dense oracle
-bench/              runnable benchmarks + the q4_p100 fixtures + R fixture gen
-test/               runtests.jl + migrated correctness checks (need path fixes)
+src/                verified q=4 engine; public bf()/drm() front end; Gaussian
+                    and non-Gaussian families; inference, summary, visualization
+src/experimental/   migrated but NOT yet wired: REML (reml_q4), location-only,
+                    EM variants, mode-finder candidates, dense oracle
+bench/              runnable benchmarks + q4/crossed-family fixtures + R compare scripts
+test/               runtests.jl + recovery, grammar, inference, and engine tests
 report/             13 design/provenance reports (the full poc record)
 docs/               Documenter site (mirrors drmTMB navbar) + dev-log; CONTRACT.md
 AGENTS.md ROADMAP.md   the 12-persona team + the phase plan
 .claude/workflows/  10 scripted workflows (W0/Q/A/B/D/F/G/H/S/R)
 ```
 
-## Status — honest (v0.1.0)
+## Status — honest (v0.1.1)
 
 **Public `drm()` / `bf()` front end** — recovery-tested, drmTMB-mirroring syntax:
 
@@ -95,9 +93,13 @@ AGENTS.md ROADMAP.md   the 12-persona team + the phase plan
   (`sigma ~ (1|g)`, Gauss–Hermite), structured effects (`relmat` / `animal` /
   `phylo` / `spatial`), `meta_V`; Wald + profile + bootstrap intervals;
   `predict` / `simulate`.
-- **8 families** — Gaussian, Student-t, Poisson, NegBinomial2,
-  TruncatedNegBinomial2, Beta, Gamma, LogNormal — plus the `zi` / `hu` count
+- **All drmTMB response families** — Gaussian, Student-t, LogNormal, Gamma,
+  Tweedie, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial,
+  Binomial, ZeroOneBeta, and CumulativeLogit — plus the `zi` / `hu` count
   modifiers.
+- **Non-Gaussian GLMMs** — single-factor mean random intercepts/slopes on the
+  main families, plus crossed/nested scalar random-intercept sparse-Laplace
+  paths for Poisson, Binomial, NB2, Gamma, and Beta.
 - **Docs** — a DocumenterVitepress site (the docs.makie.org look) with CairoMakie
   figures (incl. the Confidence Eye), executed examples, honest per-page tags.
 
@@ -108,10 +110,10 @@ drmTMB-parity gate (RCall vs. drmTMB v0.1.3 outputs) is tracked in
 **Verified engine (foundation):** the q=4 ML location-scale single fit — 2.18×
 over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
 
-**Not yet wired:** `src/experimental/` (REML `reml_q4`, inference `infer_q4`,
-location-only, EM variants), the bivariate-phylo q=4 public front end, and the
-R↔Julia bridge (`engine = "julia"`). See [HANDOVER.md](HANDOVER.md) /
-[ROADMAP.md](ROADMAP.md).
+**Still open:** R numerical parity fixtures (#17), structured/correlated
+non-Gaussian RE expansion (#80), selected `src/experimental/` estimators
+(`#11`-`#13`), the bivariate-phylo q=4 public front end, and the R↔Julia bridge
+(`#5` / `#19`). See [ROADMAP.md](ROADMAP.md).
 
 ## License
 

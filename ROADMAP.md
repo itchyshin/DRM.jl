@@ -1,95 +1,186 @@
 # ROADMAP.md — DRM.jl
 
 > The phase plan. Each phase is a **GitHub Milestone**; each slice is an
-> **Issue**. This file is the human-readable overview — the live status is on
-> the [Milestones page](https://github.com/itchyshin/DRM.jl/milestones).
-> Owner: **Ada**. Source of truth for the engine: [`HANDOVER.md`](HANDOVER.md).
+> **Issue**. This file is the human-readable overview; the live work ledger is
+> the [Issues page](https://github.com/itchyshin/DRM.jl/issues) and the
+> current capability matrix is
+> [`docs/src/model-guides/model-map.md`](docs/src/model-guides/model-map.md).
+> Owner: **Ada**. Source of truth for the q=4 engine:
+> [`HANDOVER.md`](HANDOVER.md).
 
 ## Where we are
 
-**Phase 0 — Team & workflows** (current). Stand up the team, the scripted
-workflows, the GitHub work ledger, the memory/dev-log discipline, and a
-Documenter shell that mirrors drmTMB's pkgdown navbar from day 1. **No engine
-changes.** The verified q=4 PLSM engine (2.18× over drmTMB, O(p) to p=10,000)
-stays exactly as handed over.
+**Current state (2026-06-02): v0.1.1 + active #80/#136 engine expansion.**
+
+DRM.jl now has a public `bf()` / `drm()` front end, all drmTMB response families
+implemented and recovery-tested, non-Gaussian random effects on the main mean
+paths, and a sparse-Laplace crossed-intercept engine for non-Gaussian GLMMs.
+Recent work also landed formula-grammar rejection parity, Rosetta docs, faster
+profile paths, crossed-Laplace profile CIs for random-effect SDs, and fit-based
+bootstrap entry points.
+
+The stale Phase-0/Phase-1 wording is intentionally retired here. Remaining work
+is no longer "add non-Gaussian families"; it is **finish the parity and engine
+hardening around the implemented surface**.
 
 ## Target
 
-A faithful **twin** of [drmTMB](https://itchyshin.github.io/drmTMB/) —
-the same `bf()` formula surface, the same families, the same articles — running
-on a Julia engine that wins on speed, with an R↔Julia bridge so biologists can
-call DRM.jl from R via `engine = "julia"`. Parity anchor: **drmTMB v0.1.3**.
+A faithful **twin** of [drmTMB](https://itchyshin.github.io/drmTMB/) — the same
+`bf()` formula surface, the same families, the same articles — running on a
+Julia engine that wins on speed, with an R↔Julia bridge so biologists can call
+DRM.jl from R via `engine = "julia"`. Parity anchor: **drmTMB v0.1.3**.
 
 ---
 
-## Phases
+## Completed Milestones
 
-### Phase 0 — Team & workflows  ·  *milestone: `Phase 0 — Team & workflows`*
+### Phase 0 — Team & Workflows
 
-- 12-persona `AGENTS.md`, project `CLAUDE.md`, this file.
-- 10 scripted workflows in `.claude/workflows/` (W0/Q/A/B/D/F/G/H/S/R).
-- 12 `.codex/agents/*.toml`.
-- GitHub ledger: labels, 8 milestones, ~18 near-term issues.
-- `docs/dev-log/` (check-log, coordination-board, after-task, decisions,
-  recovery-checkpoints, scout) + `tools/drm-checkpoint.jl`.
-- Documenter shell: navbar = drmTMB's, 36 status-tagged stub pages.
-- Project meta: `bench/Project.toml`, `test/Project.toml`, `NEWS.md`,
-  `CITATION.cff`, `.JuliaFormatter.toml`, `Documenter.yml`, `TagBot.yml`.
-- **Gate:** engine still loads + `bench/run_sparse_tmb_nd.jl` still logLik
-  −256.51; docs build locally; ledger live; Rose scope pass.
+Complete. The 12-persona `AGENTS.md`, `CLAUDE.md`, this roadmap, workflow
+scripts, dev-log, Documenter shell, CI, issue labels/milestones, and release
+scaffold are in place.
 
-### Phase 1.0 — Hygiene + wire `experimental/`  ·  *milestone: `Phase 1.0`*
+### Public Front End + Gaussian Surface
 
-- Workflow A: wire `infer_q4`, `reml_q4`, `location_only`, `fit_em_natgrad` into
-  the public API; fix the orphan tests.
-- Workflow D ×N: fill the "Get Started" + easy stubs (first-fit,
-  what-can-I-fit-today, working-with-large-data — the verified engine supports
-  them today).
-- Workflow Q: complete FD + Allocs gates, the multi-shape sweep.
-- `docs/Manifest.toml` + `bench/Manifest.toml` pinned (root Manifest stays
-  uncommitted — DRM.jl is a library).
-- Workflow R: first real estimator-optimisation run on the verified bench.
+Complete for the documented stable surface. Implemented:
 
-### Phase 1.1 — `bf()` front end + inference + R-parity live  ·  *milestone: `Phase 1.1`*
+- univariate Gaussian location-scale models;
+- bivariate Gaussian location-scale models with residual `rho12`;
+- Gaussian mean random effects: intercepts, independent slopes, correlated
+  `(1 + x | g)`, and crossed/nested intercepts;
+- Gaussian scale random effects;
+- Gaussian structured effects: `relmat`, `animal`, `phylo`, `spatial`;
+- `meta_V`;
+- Wald/profile/bootstrap inference, `predict`, `simulate`, `summary`,
+  `coeftable`, information criteria, plotting-data helpers, and auditable
+  bootstrap result metadata.
 
-- Workflow B: `bf(mu, sigma, rho12)` + structured markers — drmTMB-exact,
-  including the reserved-syntax rejections. Resolves the **public-verb** and
-  **tree-I/O** design issues.
-- Workflow G: RCall.jl parity gate (`DRM_PARITY_TESTS=1`) against vendored
-  drmTMB v0.1.3 outputs in `test/parity/fixtures/`.
-- Fisher: thread the bootstrap and *measure* the speedup (currently unrun).
-- Pat / Florence: first application articles (location–scale, bivariate
-  `rho12`) + the R↔Julia Rosetta page.
+The q=4 phylogenetic bivariate location-scale engine remains a **verified
+engine** path: 2.18x over drmTMB on the p=100 single fit, near-linear O(p) to
+p=10,000, and usable boundary-aware inference. Its friendly public tree front
+end is still a separate follow-up.
 
-### Phase 1.5 — R-side bridge ships  ·  *milestone: `Phase 1.5`*
+### Phase 2 — Family Expansion
 
-- Lovelace: `drmTMB(formula, ..., engine = "julia")` lands in the R package,
-  calls DRM.jl via JuliaCall, returns a drmTMB-shaped result. The bridge glue
-  lives in the drmTMB (R) repo. Hopper's parity gate guards equivalence.
+Complete as of v0.1.1. All drmTMB response families are implemented and
+recovery-tested:
 
-### Phase 2 — Family expansion  ·  *milestone: `Phase 2`*
+- Gaussian, Student-t, LogNormal, Gamma, Tweedie;
+- Poisson, NegBinomial2, TruncatedNegBinomial2;
+- Beta, BetaBinomial, ZeroOneBeta;
+- Binomial;
+- CumulativeLogit;
+- `zi` and `hu` count modifiers.
 
-- Workflow H ×8: Student / lognormal / Gamma / Tweedie / beta / Poisson /
-  nbinom2 / cumulative_logit, with `zi` / `hu` modifiers where applicable.
+The numerical R-parity fixture gate remains open as #17; family implementation
+and recovery testing are complete.
 
-### Phase 3 — Articles to mirror drmTMB  ·  *milestone: `Phase 3`*
+### Non-Gaussian Random-Effect Expansion
 
-- Workflow D: fill the remaining Tutorials, Diagnostics & Validation, and
-  Developer Notes articles. Target = drmTMB's 26 articles.
+Implemented:
 
-### v0.1.0  ·  *milestone: `v0.1.0`*
+- single-factor random intercepts and correlated random slopes on the mean for
+  Poisson, NB2, Beta, Gamma, Student-t, LogNormal, and Beta-binomial;
+- Binomial fixed effects plus random-intercept logistic GLMM;
+- crossed/nested scalar random intercepts via sparse Laplace for Poisson,
+  Binomial, NB2, Gamma, and Beta;
+- exact/fused crossed-Laplace derivative paths and profile CIs for crossed
+  random-effect SD rows.
 
-Gaussian univariate + bivariate (q=4 PLSM headline) + inference + docs published
-+ R-bridge functional. Then register in the Julia General registry.
-
-### v1.0  ·  *milestone: `v1.0`*
-
-Full twin — every drmTMB capability matched, with the speed edge
-documented per family.
+Measured paired drmTMB benchmarks currently support the public speed claim for
+successful Poisson/NB2 crossed cells; Binomial/Gamma/Beta crossed rows are
+reported as Julia engine proofs because the local drmTMB target rejects those
+fixtures.
 
 ---
 
-## Open research items (tracked as `idea` issues)
+## Active Work
+
+### #80 — Crossed / Structured Non-Gaussian RE Laplace
+
+Current engine frontier. Completed slices include Poisson crossed intercepts,
+family nuisance fits, exact nuisance gradients, fused derivatives, and profile
+CIs for crossed RE SDs.
+
+Remaining:
+
+- structured non-Gaussian mean effects: `relmat`, `phylo`, `spatial`, `animal`;
+- crossed correlated slopes and more general random-effect design blocks;
+- wider K-component public routing where the generic path is not yet enough;
+- faster profile CI path for larger crossed sparse-Laplace fits;
+- additional paired drmTMB/glmmTMB parity fixtures where the R side supports the
+  same model.
+
+### #136 — Variational / ELBO Marginal Route
+
+Early scaffold and design work are in flight. This lane is planned as an
+alternative marginal method where Laplace approximation error matters, with
+deterministic anchors required before any capability is promoted.
+
+### #17 — R-Parity Gate
+
+Wire `DRM_PARITY_TESTS=1` against generated drmTMB v0.1.3 outputs. Generated
+outputs only; never vendor drmTMB GPL source.
+
+### #14-#16 — Engine Quality Gates
+
+Promote the PoC checks into standing gates:
+
+- finite-difference vs exact gradient <= 1e-6;
+- Allocs.jl / allocation discipline for inner mode-finder loops;
+- balanced + caterpillar scaling sweep over p in {100, 1k, 10k}.
+
+### #11-#13 — Experimental Estimators
+
+Promote selected `src/experimental/` engines into clean public or internal APIs:
+
+- `reml_q4.jl` (ML remains default);
+- `location_only.jl` (conjugate EM);
+- `fit_em_natgrad.jl` and related EM variants.
+
+### #5 / #19 — R Bridge + Object Marshalling
+
+The R-side bridge lives in the drmTMB repo. DRM.jl still needs the bridge design
+and object marshalling decisions for trees, pedigrees, known matrices, and
+result-shape parity.
+
+### #49 — Missing Data
+
+Future drmTMB-parity missing-data work should start from likelihood-based FIML
+or EM handling, not row dropping.
+
+### #7 — Article Completion
+
+Several articles are filled, but remaining Phase-0 stubs should continue to be
+replaced with source-backed pages. Open docs PRs are part of this cleanup.
+
+---
+
+## Release Targets
+
+### Next Patch Release
+
+- Merge or rebase the remaining docs PRs.
+- Close stale roadmap trackers whose scope is already complete.
+- Keep README, ROADMAP, model-map, and check-log aligned.
+
+### v0.2
+
+- R-parity fixture gate (#17) active for a representative cross-section of the
+  implemented families.
+- #80 narrowed to genuinely missing structured/correlated non-Gaussian RE
+  support.
+- q=4 public front-end/tree I/O design settled or explicitly deferred.
+
+### v1.0
+
+Full twin: every drmTMB capability matched, R bridge usable, and the speed edge
+documented per family with measured parity where both engines support the same
+model.
+
+---
+
+## Open Research Items
 
 - REML scale-axis + exact REML gradient (ML stays default).
 - χ̄² boundary inference (Self–Liang 1987; Stram–Lee 1994).
