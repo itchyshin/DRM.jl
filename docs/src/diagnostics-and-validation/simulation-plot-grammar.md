@@ -1,6 +1,70 @@
 # Simulation plot grammar
 
-!!! note "Status — Planned or reserved"
-    Mirrors drmTMB's [Simulation plot grammar](https://itchyshin.github.io/drmTMB/articles/simulation-plot-grammar.html). **In DRM.jl today:** the ADEMP harness — Curie, Phase 1+.
+!!! note "Status — Implemented"
+    Mirrors drmTMB's [Simulation plot grammar](https://itchyshin.github.io/drmTMB/articles/simulation-plot-grammar.html). DRM.jl keeps the base package **plotting-dependency-free**: the helpers below return the *numbers a plot needs* — grids, deviances, correlations — so any backend (Makie / Plots / …) renders them in a few lines. This is the data behind drmTMB's `plot_parameter_surface` / `plot_corpairs`.
 
-*Phase 0 stub — filled via Workflow D (`mirror-article`). See the [roadmap](https://github.com/itchyshin/DRM.jl/blob/main/ROADMAP.md).*
+There are two ingredients: **`simulate`** (generate replicate data from a fit) and
+the **plot-data providers** (turn a fit into plottable grids).
+
+## Simulating from a fit
+
+`simulate(fit; rng)` draws a parametric replicate of the response from the fitted
+model — the same machinery the parametric bootstrap (`bootstrap_ci`) uses:
+
+```julia
+y_rep = simulate(fit)            # one replicate on the response scale
+```
+
+Re-fitting many replicates and summarising the spread of the estimates is the
+**recovery study** (ADEMP) pattern used throughout `test/` — simulate from known
+coefficients, fit, and check the truth is recovered. That loop is exactly what a
+simulation plot visualises.
+
+## Plot-data providers
+
+All three return a plain `NamedTuple` of numbers; you supply the backend.
+
+### `profile_curve(fit, k; npoints = 41, span = 3.0, level = 0.95)`
+
+The 1-D **profile-likelihood** curve for coefficient index `k`. At each grid value
+of `θ[k]` the nuisance parameters are re-optimised, so it is a genuine
+likelihood-ratio profile, not a quadratic/Wald approximation. Returns
+`(x, deviance, estimate, cutoff, k, param, coef, level)`:
+
+- `x` — grid spanning `θ̂[k] ± span·se[k]`, including the MLE exactly;
+- `deviance` — `2(ℓ̂ − ℓ_profile)` at each `x`;
+- `cutoff` — the `χ²₁(level)` reference line the profile interval inverts.
+
+```julia
+pc = profile_curve(fit, 2)
+# plot(pc.x, pc.deviance); hline!([pc.cutoff]); vline!([pc.estimate])
+```
+
+### `parameter_surface(fit, k1, k2; npoints = 25, span = 3.0)`
+
+The 2-D profile-deviance **surface** over two coefficients — the data behind
+`plot_parameter_surface`. At each node the remaining parameters are profiled out,
+so `z` is the true profile deviance, `0` at the MLE. Returns `(x, y, z, k1, k2)`
+with `z` an `npoints × npoints` matrix; `χ²₂` contours give joint confidence
+regions.
+
+```julia
+ps = parameter_surface(fit, 1, 2)
+# contour(ps.x, ps.y, ps.z')
+```
+
+### `corpairs_data(fit)`
+
+The estimated-coefficient **correlation summary** behind `plot_corpairs` — the
+off-diagonal correlations of the coefficient covariance, ready for a pairs /
+heatmap panel.
+
+## The Confidence Eye
+
+The figure gallery renders a profile interval as a **Confidence Eye** (a pale
+lens with a dark outline and a hollow point estimate) drawn directly from
+`profile_curve` / `confint` — a compact, honest depiction of an asymmetric
+likelihood interval.
+
+Because every provider returns numbers (not figures), the package stays free of a
+plotting dependency while remaining fully plottable.
