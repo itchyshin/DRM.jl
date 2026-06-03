@@ -31,6 +31,9 @@ same CI rows plus timing, thread/BLAS metadata, and endpoint work counts.
 - Extended `bootstrap_result` metadata with `worker_threads` and
   `blas_oversubscribed`.
 - Added serial-vs-threaded determinism tests for Gaussian and Poisson bootstrap.
+- Set fixed-shape crossed-Gamma Laplace fits to use the same small polish pass
+  as the estimated-shape Gamma path, after Julia 1.12 CI reported a false
+  non-convergence flag on recovered estimates.
 - Updated `bench/profile_inference_quick.jl` and regenerated
   `report/inference-profile-quick.md`.
 
@@ -64,6 +67,7 @@ All reported serial/threaded CI deltas were `0.000e+00`.
 - `julia --project=. --threads=4 test/test_profile_ci.jl`
 - `julia --project=. --threads=4 test/test_bootstrap.jl`
 - `julia --project=. --threads=4 test/test_bootstrap_nongaussian.jl`
+- `julia --project=. test/test_crossed_laplace_generic.jl`
 - `julia --project=bench --threads=4 bench/profile_inference_quick.jl`
 - baseline-vs-branch timing check against `origin/main` at `1c5094e`
 

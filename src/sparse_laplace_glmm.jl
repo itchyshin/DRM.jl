@@ -1318,7 +1318,7 @@ function _fit_nb2_fixed_crossed_laplace(fam, y, size::Real, Xμ, comps, nmμ, g_
 end
 
 function _fit_gamma_fixed_crossed_laplace(fam, y, shape::Real, Xμ, comps, nmμ, g_tol;
-                                          se::Bool = false, polish_iterations::Int = 0)
+                                          se::Bool = false, polish_iterations::Int = 5)
     length(comps) == 2 || error("_fit_gamma_fixed_crossed_laplace requires two random-intercept components")
     α = float(shape)
     lconst = [α * log(α) - loggamma(α) + (α - 1) * log(y[i]) for i in eachindex(y)]
