@@ -15,10 +15,13 @@ Three differences cover almost everything:
 | **Scale parameter** | `sigma` | `sigma` (never `tau`) |
 
 !!! note "On the R column"
-    The R snippets show drmTMB's grammar (which itself mirrors **brms**). Exact
-    family-constructor spellings should be confirmed against your installed
-    drmTMB — the parameterisations (e.g. Beta `φ = 1/σ²`) match, but this page is
-    maintained from the Julia side.
+    The R snippets show drmTMB's grammar (which itself mirrors **brms**). The
+    family-constructor and S3 method spellings here were reconciled (2026-06-03)
+    against the verified drmTMB `NAMESPACE` (see
+    `docs/dev-log/decisions/2026-06-03-drmtmb-api-snapshot.md`); the
+    parameterisations (e.g. Beta `φ = 1/σ²`) match. drmTMB reuses the base-R
+    `stats` families (`gaussian()`, `poisson()`, `Gamma()`, `binomial()`) rather
+    than redefining them. This page is maintained from the Julia side.
 
 ## The fit call
 
@@ -45,14 +48,15 @@ distributional parameter (`sigma` defaults to `~ 1`).
 | `poisson()` | `Poisson()` | — (mean only; `zi`, `hu`) |
 | `nbinom2()` | `NegBinomial2()` | `sigma` (dispersion θ); `zi`, `hu` |
 | `truncated_nbinom2()` | `TruncatedNegBinomial2()` | `sigma` |
-| `Beta()` | `Beta()` | `sigma` (precision `φ = 1/σ²`) |
+| `beta()` | `Beta()` | `sigma` (precision `φ = 1/σ²`) |
 | `beta_binomial()` | `BetaBinomial()` | `sigma` (`φ = 1/σ²`) |
 | `binomial()` | `Binomial()` | — (mean only) |
 | `Gamma()` | `Gamma()` | `sigma` (CV; shape `α = 1/σ²`) |
 | `lognormal()` | `LogNormal()` | `sigma` |
-| `zero_one_inflated_beta()` | `ZeroOneBeta()` | `sigma`, `zoi`, `coi` |
+| `zero_one_beta()` | `ZeroOneBeta()` | `sigma`, `zoi`, `coi` |
 | `tweedie()` | `Tweedie()` | `sigma` (`φ`), `nu` (power `p`) |
-| `cumulative()` | `CumulativeLogit()` | — (ordered cutpoints) |
+| `cumulative_logit()` | `CumulativeLogit()` | — (ordered cutpoints) |
+| `biv_gaussian()` | `Gaussian()` + `bf(mu1=…, mu2=…, rho12=…)` | `sigma1`, `sigma2`, `rho12` |
 
 ## Formula grammar
 
@@ -71,7 +75,8 @@ distributional parameter (`sigma` defaults to `~ 1`).
 
 ```r
 # R — drmTMB
-bf(mu1 = y1 ~ x, mu2 = y2 ~ x, sigma1 = ~ x, sigma2 = ~ 1, rho12 = ~ 1)
+drmTMB(bf(mu1 = y1 ~ x, mu2 = y2 ~ x, sigma1 = ~ x, sigma2 = ~ 1, rho12 = ~ 1),
+       family = biv_gaussian(), data = dat)
 ```
 
 ```julia
@@ -98,20 +103,28 @@ bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
 | `coef(fit)` / `fixef(fit)` | `coef(fit)` / `fixef(fit)` |
 | `vcov(fit)` | `vcov(fit)` |
 | `confint(fit, method = "wald")` | `confint(fit; method = :wald)` |
-| `confint(fit, method = "profile")` | `confint(fit; method = :profile)` |
+| `confint(fit, method = "profile")` / `profile(fit)` | `confint(fit; method = :profile)` |
 | parametric bootstrap CIs | `bootstrap_ci(bf(...), Family(); data, B = 300)` |
 | `logLik(fit)` | `loglik(fit)` |
 | `AIC(fit)` / `BIC(fit)` | `aic(fit)` / `bic(fit)` |
 | `nobs(fit)` | `nobs(fit)` |
+| `deviance(fit)` | `deviance(fit)` |
+| `df.residual(fit)` | `dof_residual(fit)` |
 | `ranef(fit)` | `ranef(fit)` |
 | random-effect SDs | `re_sd(fit)` / `vc(fit)` |
-| fitted scale `σ` | `sigma(fit)` |
+| `sigma(fit)` | `sigma(fit)` |
+| `rho12(fit)` | planned (parity gap) |
+| `corpair(fit)` / `corpairs(fit)` | `corpairs(fit)` / `corpairs_data(fit)` |
 | `fitted(fit)` / `residuals(fit)` | `fitted(fit)` / `residuals(fit)` |
 | `predict(fit, newdata)` | `predict(fit, newdata)` |
+| `predict_parameters(fit, newdata)` | planned (parity gap) |
+| `marginal_parameters(fit)` | planned (parity gap) |
+| `prediction_grid(...)` | planned (parity gap) |
 | `simulate(fit)` | `simulate(fit)` |
 | `summary(fit)` | `show(fit)` / `coeftable(fit)` (no `summary` method) |
+| `weights(fit)` | planned (parity gap) |
 | `family(fit)` | `family(fit)` |
-| convergence diagnostics | `check_drm(fit)` |
+| `is_converged(fit)` / convergence diagnostics | `is_converged(fit)` / `check_drm(fit)` |
 
 ## Naming rules to remember
 
