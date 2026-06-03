@@ -109,7 +109,8 @@ bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
 | `fitted(fit)` / `residuals(fit)` | `fitted(fit)` / `residuals(fit)` |
 | `predict(fit, newdata)` | `predict(fit, newdata)` |
 | `simulate(fit)` | `simulate(fit)` |
-| `summary(fit)` | `summary(fit)` / `coeftable(fit)` |
+| `summary(fit)` | `show(fit)` / `coeftable(fit)` (no `summary` method) |
+| `family(fit)` | `family(fit)` |
 | convergence diagnostics | `check_drm(fit)` |
 
 ## Naming rules to remember

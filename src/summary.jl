@@ -44,6 +44,15 @@ end
 # structs, so the type name is the right human label.
 _family_name(fam) = String(nameof(typeof(fam)))
 
+"""
+    family(fit::DrmFit)
+
+Return the response family object the model was fitted with, e.g. `Gaussian()`,
+`Poisson()`, `Student()`. This is the post-fit accessor for the `family` slot
+passed to [`drm`](@ref); `family(fit) === fit.family`.
+"""
+family(fit::DrmFit) = fit.family
+
 function Base.show(io::IO, ::MIME"text/plain", fit::DrmFit)
     se = stderror(fit)
     fam = _family_name(fit.family)
