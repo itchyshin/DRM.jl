@@ -578,6 +578,155 @@ function _fit_phylo_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, labe
     return _withnll(fit, nll, grad!)
 end
 
+function _phylo_mean_laplace_fg(kind, aux, n::Int, Xμ, leaf_node, Q, logdetQ, θ;
+                                grad::Bool = false, b0 = nothing)
+    pμ = length(θ) - 1
+    βμ = θ[1:pμ]
+    logσ = clamp(θ[pμ+1], -8.0, 3.0)
+    η0 = Xμ * βμ
+    b, ch, _, ok = _phylo_mean_mode(kind, aux, η0, leaf_node, Q, logσ; b0 = b0)
+    if !ok
+        return grad ? (1e18, zeros(length(θ)), b, false) : (1e18, b, false)
+    end
+
+    q = size(Q, 1)
+    invσ2 = exp(-2 * logσ)
+    data = zero(eltype(θ))
+    prior = 0.5 * invσ2 * dot(b, Q * b)
+    gradβ_raw = zeros(eltype(θ), pμ)
+    wstore = Vector{eltype(θ)}(undef, n)
+    tstore = Vector{eltype(θ)}(undef, n)
+    @inbounds for i in 1:n
+        η = η0[i] + b[leaf_node[i]]
+        v, r, w, t = _laplace_v123(kind, aux, i, η)
+        data += v
+        wstore[i] = w
+        tstore[i] = t
+        for k in 1:pμ
+            gradβ_raw[k] += Xμ[i, k] * r
+        end
+    end
+    val = data + prior + q * logσ - 0.5 * logdetQ + 0.5 * logdet(ch)
+    grad || return val, b, true
+
+    S = takahashi_selinv(ch)
+    hd = diag(S)
+    traceSQ = _sparse_trace_product(S, Q)
+    tlogdet = zeros(eltype(θ), q)
+    crossβ = zeros(eltype(θ), q, pμ)
+    gβ = gradβ_raw
+    @inbounds for i in 1:n
+        li = leaf_node[i]
+        lever = hd[li]
+        tlever = tstore[i] * lever
+        tlogdet[li] += tlever
+        adj = 0.5 * tlever
+        for k in 1:pμ
+            xik = Xμ[i, k]
+            gβ[k] += xik * adj
+            crossβ[li, k] += wstore[i] * xik
+        end
+    end
+    implicit = ch \ tlogdet
+    @inbounds for k in 1:pμ
+        gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
+    end
+    Qb = Q * b
+    Pu = invσ2 .* Qb
+    gσ = q - invσ2 * (dot(b, Qb) + traceSQ) + dot(implicit, Pu)
+    return val, vcat(gβ, [gσ]), b, true
+end
+
+function _fit_phylo_mean_laplace(fam, kind, aux, n::Int, Xμ, labels, tree, nmμ,
+                                 grp, g_tol; θβ0, se::Bool = false,
+                                 polish_iterations::Int = 0,
+                                 scales = Dict{Symbol,Vector{Float64}}())
+    Q, leaf_node, _ = _poisson_phylo_setup(tree, labels)
+    q = size(Q, 1)
+    pμ = size(Xμ, 2)
+    qchol = cholesky(Symmetric(Q); check = false)
+    issuccess(qchol) || error("phylo(1 | $grp) tree precision is not positive definite after root conditioning")
+    logdetQ = logdet(qchol)
+    last_b = zeros(q)
+
+    function eval_laplace(θ; grad::Bool = false)
+        if grad
+            val, g, b, ok = _phylo_mean_laplace_fg(
+                kind, aux, n, Xμ, leaf_node, Q, logdetQ, θ; grad = true, b0 = last_b
+            )
+            if !ok
+                val, g, b, ok = _phylo_mean_laplace_fg(
+                    kind, aux, n, Xμ, leaf_node, Q, logdetQ, θ;
+                    grad = true, b0 = zeros(q)
+                )
+            end
+            ok || return 1e18, zeros(length(θ))
+            last_b .= b
+            return val, g
+        else
+            val, b, ok = _phylo_mean_laplace_fg(
+                kind, aux, n, Xμ, leaf_node, Q, logdetQ, θ; grad = false, b0 = last_b
+            )
+            if !ok
+                val, b, ok = _phylo_mean_laplace_fg(
+                    kind, aux, n, Xμ, leaf_node, Q, logdetQ, θ;
+                    grad = false, b0 = zeros(q)
+                )
+            end
+            ok || return 1e18
+            last_b .= b
+            return val
+        end
+    end
+
+    nll(θ) = eval_laplace(θ; grad = false)
+    function grad!(Gout, θ)
+        _, g = eval_laplace(θ; grad = true)
+        Gout .= g
+        return Gout
+    end
+
+    θ0 = zeros(pμ + 1)
+    θ0[1:pμ] .= θβ0
+    θ0[pμ+1] = log(0.4)
+    od = Optim.OnceDifferentiable(nll, grad!, θ0)
+    method = Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking())
+    res_fast = Optim.optimize(od, θ0, method, Optim.Options(g_tol = g_tol, iterations = 250))
+    res = if polish_iterations > 0
+        try
+            θp = Optim.minimizer(res_fast)
+            odp = Optim.OnceDifferentiable(nll, grad!, θp)
+            Optim.optimize(odp, θp, Optim.LBFGS(),
+                           Optim.Options(g_tol = g_tol, iterations = polish_iterations))
+        catch
+            res_fast
+        end
+    else
+        res_fast
+    end
+    θ̂ = Optim.minimizer(res)
+    gfinal = zeros(length(θ̂))
+    grad!(gfinal, θ̂)
+    nllhat = nll(θ̂)
+    converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
+    V = if se
+        Hθ = _finite_hessian(nll, θ̂)
+        try
+            inv(Symmetric(Hθ))
+        catch
+            Matrix{Float64}(I, length(θ̂), length(θ̂))
+        end
+    else
+        fill(NaN, length(θ̂), length(θ̂))
+    end
+    blocks = [:mu => 1:pμ, :resd => (pμ+1):(pμ+1)]
+    names = [:mu => nmμ, :resd => [String(grp)]]
+    means = Dict(:mu => [_laplace_mean(kind, dot(@view(Xμ[i, :]), θ̂[1:pμ])) for i in 1:n])
+    obs = Dict(:mu => [_laplace_obs(kind, aux, i) for i in 1:n])
+    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
+    return _withnll(fit, nll, grad!)
+end
+
 function _fit_nb2_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
                                 g_tol; se::Bool = true,
                                 polish_iterations::Int = 0)
@@ -597,6 +746,23 @@ function _fit_nb2_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
         fam, Val(:nb2_fixed), aux_from, length(y), Xμ, labels, tree, nmμ, nmσ,
         grp, g_tol; θβ0 = _poisson_fixed_start(y, Xμ), θσ0 = θσ0,
         sigma_scale = exp, se = se, polish_iterations = polish_iterations
+    )
+end
+
+function _fit_binomial_phylo_laplace(fam, s, ntr, Xμ, labels, tree, nmμ, grp,
+                                     g_tol; se::Bool = true,
+                                     polish_iterations::Int = 0)
+    sint = round.(Int, s)
+    nint = round.(Int, ntr)
+    logchoose = [_logfactorial(nint[i]) - _logfactorial(sint[i]) - _logfactorial(nint[i] - sint[i]) for i in eachindex(sint)]
+    aux = (s = sint, ntr = nint, logchoose = logchoose)
+    p̄ = clamp(sum(s) / max(sum(ntr), 1), 1e-4, 1 - 1e-4)
+    θβ0 = zeros(size(Xμ, 2))
+    θβ0[1] = log(p̄ / (1 - p̄))
+    return _fit_phylo_mean_laplace(
+        fam, Val(:binomial), aux, length(s), Xμ, labels, tree, nmμ, grp, g_tol;
+        θβ0 = θβ0, se = se, polish_iterations = polish_iterations,
+        scales = Dict(:trials => Float64.(nint))
     )
 end
 
