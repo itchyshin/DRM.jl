@@ -54,6 +54,19 @@ passed to [`drm`](@ref); `family(fit) === fit.family`.
 family(fit::DrmFit) = fit.family
 
 """
+    rho12(fit)
+
+Fitted **residual correlation** ρ12 for a bivariate model (`bf(mu1=…, mu2=…, rho12=…)`),
+on the response scale (ρ12 ∈ (-1, 1)), one value per observation. Mirrors drmTMB's
+`rho12`. Errors for univariate fits, which have no residual correlation.
+"""
+function rho12(fit::DrmFit)
+    haskey(fit.scales, :rho12) || throw(ArgumentError(
+        "rho12 is defined only for bivariate models (bf(mu1=…, mu2=…, rho12=…)); this fit has no residual correlation"))
+    return fit.scales[:rho12]
+end
+
+"""
     is_converged(fit::DrmFit) -> Bool
 
 Whether the optimiser reported convergence for this fit — drmTMB's convergence
