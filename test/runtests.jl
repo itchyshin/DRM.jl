@@ -86,6 +86,7 @@ include("test_aic_bic.jl")
 include("test_variational.jl")
 include("test_family_accessor.jl")
 include("test_parity_accessors.jl")
+include("test_summary_method.jl")
 
 # NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's

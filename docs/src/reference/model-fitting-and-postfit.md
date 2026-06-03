@@ -7,10 +7,8 @@
 
 ```@docs
 drm
+DrmFit
 ```
-
-<!-- `DrmFit` is documented once `coef`/`vcov`/`nobs` gain docstrings — its
-docstring cross-references them via `@ref`, which are dead links until then. -->
 
 ## Coefficients and (co)variance
 
@@ -19,6 +17,9 @@ fixef
 re_sd
 vc
 coeftable
+coef
+vcov
+nobs
 ```
 
 ## Fitted scale and correlation

@@ -123,6 +123,14 @@ function Base.show(io::IO, ::MIME"text/plain", fit::DrmFit)
 end
 
 """
+    summary(fit::DrmFit)
+
+Coefficient table for a fitted model — the DRM.jl analogue of drmTMB's `summary()`.
+Returns the same `CoefTable` as [`coeftable`](@ref) (estimates, SEs, z, p, CIs).
+"""
+Base.summary(fit::DrmFit) = coeftable(fit)
+
+"""
     coeftable(fit::DrmFit; level = 0.95) -> StatsBase.CoefTable
 
 Wald coefficient table across every parameter block: columns Estimate,
