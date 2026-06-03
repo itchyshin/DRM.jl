@@ -14,10 +14,11 @@ using Test, Random
     fit = drm(bf(@formula(y ~ 1 + x), @formula(sigma ~ 1 + x)), Gaussian(); data = data)
 
     # summary(fit) is the drmTMB-parity analogue of coeftable(fit): same type,
-    # same content. (Avoid naming CoefTable directly so the test needs no extra
-    # dependency — StatsModels isn't in the test environment.)
+    # same content. CoefTable has no value-equality (`==` is object identity and
+    # each call builds a fresh table), so compare the rendered tables instead.
+    # (Naming CoefTable directly is avoided too — StatsModels isn't a test dep.)
     @test summary(fit) isa typeof(coeftable(fit))
-    @test summary(fit) == coeftable(fit)
+    @test sprint(show, summary(fit)) == sprint(show, coeftable(fit))
 
     # Accessor shapes: 4 coefficients (mu intercept+slope, sigma intercept+slope).
     b = coef(fit)
