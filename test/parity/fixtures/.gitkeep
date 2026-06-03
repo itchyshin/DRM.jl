@@ -1,0 +1,3 @@
+# Real drmTMB v0.1.3 parity fixtures go here, one subdir per case
+# (data.csv + expected.toml + expected.meta.toml). Generated outputs only —
+# never drmTMB GPL source. See ../GENERATING.md for the maintainer recipe.
