@@ -1,6 +1,6 @@
 # Gamma/Beta phylo sparse-Laplace benchmark
 
-beta median Julia time 0.1152s; gamma median Julia time 0.1313s
+beta median Julia time 0.1075s; gamma median Julia time 0.1303s
 
 Local-source drmTMB currently rejects Gamma and Beta `phylo(1 | species)` models, so an R/Julia speedup ratio is unavailable for this slice.
 
@@ -8,14 +8,14 @@ Local-source drmTMB currently rejects Gamma and Beta `phylo(1 | species)` models
 
 | family | cell | p | n | Julia med/s | logLik | sigma | phylo SD | converged |
 |:-------|:-----|--:|--:|------------:|-------:|------:|---------:|:----------|
-| gamma | phylo_p128  |   128 |   512 |    0.0304 |  -475.662 |   0.467 |   0.512 | TRUE |
-| beta  | phylo_p128  |   128 |   512 |    0.0187 |   321.077 |   0.255 |   0.294 | TRUE |
-| gamma | phylo_p512  |   512 |  1536 |    0.0942 | -1337.164 |   0.465 |   0.425 | TRUE |
-| beta  | phylo_p512  |   512 |  1536 |    0.0752 |   931.696 |   0.268 |   0.196 | TRUE |
-| gamma | phylo_p1024 |  1024 |  2048 |    0.1685 | -1854.380 |   0.530 |   0.141 | TRUE |
-| beta  | phylo_p1024 |  1024 |  2048 |    0.1551 |  1234.019 |   0.282 |   0.039 | TRUE |
-| gamma | phylo_p2048 |  2048 |  4096 |    0.4256 | -3870.084 |   0.515 |   0.257 | TRUE |
-| beta  | phylo_p2048 |  2048 |  4096 |    0.3086 |  2493.992 |   0.273 |   0.133 | TRUE |
+| gamma | phylo_p128  |   128 |   512 |    0.0283 |  -475.662 |   0.467 |   0.512 | TRUE |
+| beta  | phylo_p128  |   128 |   512 |    0.0167 |   321.077 |   0.255 |   0.294 | TRUE |
+| gamma | phylo_p512  |   512 |  1536 |    0.0937 | -1337.164 |   0.465 |   0.425 | TRUE |
+| beta  | phylo_p512  |   512 |  1536 |    0.0671 |   931.696 |   0.268 |   0.196 | TRUE |
+| gamma | phylo_p1024 |  1024 |  2048 |    0.1669 | -1854.380 |   0.530 |   0.141 | TRUE |
+| beta  | phylo_p1024 |  1024 |  2048 |    0.1480 |  1234.019 |   0.282 |   0.039 | TRUE |
+| gamma | phylo_p2048 |  2048 |  4096 |    0.4907 | -3870.084 |   0.515 |   0.257 | TRUE |
+| beta  | phylo_p2048 |  2048 |  4096 |    0.2915 |  2493.992 |   0.273 |   0.133 | TRUE |
 
 ## R support smoke
 
