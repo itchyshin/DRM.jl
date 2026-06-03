@@ -271,6 +271,12 @@ function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
 end
 
 # ---- accessors -----------------------------------------------------------
+"""
+    coef(fit::DrmFit)
+
+Estimated coefficients, all parameter blocks concatenated (`coef(fit, :mu)` returns
+one block). Extends `StatsAPI.coef`.
+"""
 coef(fit::DrmFit) = fit.theta
 function coef(fit::DrmFit, param::Symbol)
     for (p, r) in fit.blocks
@@ -278,7 +284,17 @@ function coef(fit::DrmFit, param::Symbol)
     end
     throw(ArgumentError("no parameter $param in fit (have $(first.(fit.blocks)))"))
 end
+"""
+    vcov(fit::DrmFit)
+
+Variance–covariance matrix of the estimated coefficients. Extends `StatsAPI.vcov`.
+"""
 vcov(fit::DrmFit) = fit.vcov
+"""
+    nobs(fit::DrmFit)
+
+Number of observations. Extends `StatsAPI.nobs`.
+"""
 nobs(fit::DrmFit) = fit.nobs
 
 """
