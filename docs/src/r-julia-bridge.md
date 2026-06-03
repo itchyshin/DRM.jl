@@ -1,14 +1,14 @@
 # R ↔ Julia bridge
 
 !!! note "Status — Planned (Phase 1.5)"
-    This page describes the **intended** bridge that lets an R user run drmTMB's front end on the DRM.jl engine: `drmTMB(formula, …, engine = "julia")`. The R-side glue lives in the **drmTMB R repository** (via [JuliaCall](https://github.com/JuliaInterop/JuliaCall)), not in this package, so the steps below are the design + the DRM.jl-side contract, not a shipped feature. For translating R syntax to Julia by hand today, see the [Rosetta — R ↔ Julia](@ref) page.
+    This page describes the **intended** bridge that lets an R user run drmTMB's front end on the DRM.jl engine: `drmTMB(formula, …, engine = "julia")`. The R-side glue lives in the **drmTMB R repository** (via [JuliaCall](https://github.com/JuliaInterop/JuliaCall)), not in this package, so the steps below are the design + the DRM.jl-side contract, not a shipped feature. For translating R syntax to Julia by hand today, see the [Rosetta page](rosetta.md).
 
 ## The idea
 
 Two ways to use DRM.jl from R, in increasing integration:
 
 1. **Translate by hand** — rewrite the model in Julia using `drm` / `bf`. The
-   [Rosetta — R ↔ Julia](@ref) phrasebook is the lookup table. Available today.
+   [Rosetta](rosetta.md) phrasebook is the lookup table. Available today.
 2. **`engine = "julia"`** — keep writing ordinary `drmTMB(...)` R code; drmTMB
    marshals the formula and data across JuliaCall, calls DRM.jl to fit, and
    returns a result object shaped like a native drmTMB fit. Planned (Phase 1.5).
@@ -18,7 +18,7 @@ Two ways to use DRM.jl from R, in increasing integration:
 For the bridge to work, DRM.jl exposes a stable, marshalling-friendly surface:
 
 - **Formula** — the R `bf(mu = y ~ x, sigma = ~ x, …)` is mapped to DRM.jl's
-  `bf(...)` (see the [Formula grammar](@ref) and Rosetta pages for the exact
+  `bf(...)` (see the [Formula grammar](developer-notes/formula-grammar.md) and Rosetta pages for the exact
   spelling map);
 - **Data** — an R `data.frame` crosses as a column table (`NamedTuple` /
   `DataFrame`) keyed by the same column names;

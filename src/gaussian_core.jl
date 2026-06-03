@@ -11,7 +11,7 @@ using StatsModels: @formula, FormulaTerm, Term, ConstantTerm, FunctionTerm,
     schema, apply_schema, modelcols, coefnames
 using Statistics: std
 using Random: default_rng
-import StatsAPI: coef, vcov, nobs, fitted, residuals, predict, aic, bic, dof, StatisticalModel
+import StatsAPI: coef, vcov, nobs, fitted, residuals, predict, aic, bic, dof, deviance, dof_residual, StatisticalModel
 
 """
     Gaussian()

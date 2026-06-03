@@ -1,0 +1,1 @@
+| 2026-06-02 | **Reference @docs coverage** (#7) | CI docs build (no local Julia) | ✅ green (expected); added missing documented exports to the Reference `@docs` blocks so the public surface is fully covered (toward a future strict `warnonly=false`). Symbols exported-but-undocumented are listed for follow-up, not added (would break the build). Docs-only. | Shannon |

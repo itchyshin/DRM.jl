@@ -66,6 +66,31 @@ function rho12(fit::DrmFit)
     return fit.scales[:rho12]
 end
 
+"""
+    is_converged(fit::DrmFit) -> Bool
+
+Whether the optimiser reported convergence for this fit — drmTMB's convergence
+flag (`is_converged(fit) === fit.converged`). A `false` here means the reported
+estimates / standard errors should not be trusted.
+"""
+is_converged(fit::DrmFit) = fit.converged
+
+"""
+    deviance(fit::DrmFit) -> Float64
+
+Deviance of the fitted model, `-2 · loglik(fit)` — drmTMB's `deviance()`.
+Extends `StatsAPI.deviance`.
+"""
+deviance(fit::DrmFit) = -2 * loglik(fit)
+
+"""
+    dof_residual(fit::DrmFit) -> Int
+
+Residual degrees of freedom, `nobs(fit) - dof(fit)` (R's `df.residual`).
+Extends `StatsAPI.dof_residual`.
+"""
+dof_residual(fit::DrmFit) = nobs(fit) - dof(fit)
+
 function Base.show(io::IO, ::MIME"text/plain", fit::DrmFit)
     se = stderror(fit)
     fam = _family_name(fit.family)
