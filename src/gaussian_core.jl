@@ -400,6 +400,111 @@ function _mean_response(fam, η)
     end
 end
 
+# Inverse link for one distributional parameter, mapping its linear predictor
+# Xβ to the response scale exactly as the fitters store it in `fit.scales` /
+# `fit.means`. The mapping lives here so `predict_parameters(:response)`
+# reproduces the in-sample fitted parameters. Sources reused:
+#   :mu    → `_mean_response(fam, η)` (identity/exp/logistic; gaussian_core.jl)
+#   :sigma → exp.(η)                  (e.g. gaussian_core.jl `_fit_fixed_gaussian`)
+#   :nu    → exp.(η) for Student (student.jl), `_logit12.(η)` for Tweedie (tweedie.jl)
+#   :zi    → `_logistic.(η)`          (poisson.jl / negbinomial.jl)
+#   :hu    → `_logistic.(η)`          (poisson.jl / negbinomial.jl)
+#   :zoi   → `_logistic.(η)`          (zeroonebeta.jl)
+#   :coi   → `_logistic.(η)`          (zeroonebeta.jl)
+function _param_response(fam, p::Symbol, η)
+    if p === :mu
+        return _mean_response(fam, η)
+    elseif p === :sigma
+        return exp.(η)
+    elseif p === :nu
+        return fam isa Tweedie ? _logit12.(η) : exp.(η)
+    elseif p === :zi || p === :hu || p === :zoi || p === :coi
+        return _logistic.(η)
+    else
+        throw(ArgumentError("predict_parameters: no inverse link known for parameter `$p`"))
+    end
+end
+
+"""
+    predict_parameters(fit, newdata; type = :response) -> Dict{Symbol,Vector{Float64}}
+
+Population-level prediction of **every** distributional parameter at `newdata`
+(a NamedTuple / column table), random / structured effects integrated out
+(exactly like [`predict`](@ref)). The returned `Dict` has one entry per
+distributional parameter the model carries — always `:mu` and (when the family
+uses it) `:sigma`, plus any family extras present (`:nu`, `:zi`, `:hu`, `:zoi`,
+`:coi`).
+
+`type = :response` (default) applies each parameter's inverse link, so in-sample
+it reproduces [`marginal_parameters`](@ref) (i.e. `fit.means[:mu]`,
+`fit.scales[...]`). `type = :link` returns the linear predictor `Xβ̂` per
+parameter (the working scale).
+
+Univariate models only; bivariate models throw an `ArgumentError` (use
+`predict(fit, newdata)` for the means).
+
+# Example
+```julia
+x = randn(200)
+y = 0.5 .- 0.8 .* x .+ exp.(-0.3 .+ 0.4 .* x) .* randn(200)
+data = (; y, x)
+fit = drm(bf(@formula(y ~ 1 + x), @formula(sigma ~ 1 + x)), Gaussian(); data)
+
+p = predict_parameters(fit, data)              # Dict(:mu => …, :sigma => …)
+p[:mu]    ≈ fit.means[:mu]                      # in-sample reproduction
+p[:sigma] ≈ fit.scales[:sigma]
+
+predict_parameters(fit, data; type = :link)[:mu]   # == Xβ̂ (predict link scale)
+```
+"""
+function predict_parameters(fit::DrmFit, newdata; type::Symbol = :response)
+    f = fit.formula
+    f === nothing && error("predict_parameters: this fit did not retain its formula")
+    f isa DrmFormula || throw(ArgumentError("predict_parameters: bivariate models not yet supported (tracked as a follow-up); use predict(fit, newdata) for the means"))
+    type in (:response, :link) || error("predict_parameters: `type` must be :response or :link")
+    forms = Dict(f.forms)
+    nd = NamedTuple(pairs(newdata))
+    nrows = length(first(values(nd)))
+    ndr = merge(nd, NamedTuple{(f.response,)}((zeros(nrows),)))
+    out = Dict{Symbol,Vector{Float64}}()
+    for (p, _) in fit.blocks
+        haskey(forms, p) || continue          # skip RE-SD / cutpoint blocks (:resd, :recov, :cutpoints, …)
+        fixed_p, _, _, _ = _split_ranef(forms[p])
+        _, Xp, _ = _design(f.response, fixed_p, ndr)
+        ηp = Xp * coef(fit, p)
+        out[p] = type === :link ? ηp : _param_response(fit.family, p, ηp)
+    end
+    return out
+end
+
+"""
+    marginal_parameters(fit) -> Dict{Symbol,Vector{Float64}}
+
+In-sample fitted per-observation distributional parameters, read straight from
+the stored fit — a cheap accessor with no recomputation. Returns `:mu` from
+`fit.means` and every per-observation scale parameter from `fit.scales` (e.g.
+`:sigma`, `:nu`, `:zi`, `:hu`, `:zoi`, `:coi`).
+
+In-sample these equal `predict_parameters(fit, data)` (response scale).
+
+# Example
+```julia
+fit = drm(bf(@formula(y ~ 1 + x), @formula(sigma ~ 1 + x)), Gaussian(); data)
+m = marginal_parameters(fit)
+m[:mu]    == fit.means[:mu]
+m[:sigma] == fit.scales[:sigma]
+```
+"""
+function marginal_parameters(fit::DrmFit)
+    out = Dict{Symbol,Vector{Float64}}()
+    haskey(fit.means, :mu) && (out[:mu] = fit.means[:mu])
+    for (p, _) in fit.blocks
+        p === :mu && continue
+        haskey(fit.scales, p) && (out[p] = fit.scales[p])
+    end
+    return out
+end
+
 """
     simulate(fit; rng = default_rng())
 
