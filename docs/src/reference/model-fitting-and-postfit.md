@@ -9,6 +9,9 @@
 drm
 ```
 
+<!-- `DrmFit` is documented once `coef`/`vcov`/`nobs` gain docstrings — its
+docstring cross-references them via `@ref`, which are dead links until then. -->
+
 ## Coefficients and (co)variance
 
 ```@docs
@@ -46,6 +49,8 @@ residuals
 confint
 stderror
 bootstrap_ci
+bootstrap_summary
+bootstrap_result
 ```
 
 ## Information criteria

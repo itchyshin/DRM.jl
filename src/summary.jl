@@ -44,6 +44,53 @@ end
 # structs, so the type name is the right human label.
 _family_name(fam) = String(nameof(typeof(fam)))
 
+"""
+    family(fit::DrmFit)
+
+Return the response family object the model was fitted with, e.g. `Gaussian()`,
+`Poisson()`, `Student()`. This is the post-fit accessor for the `family` slot
+passed to [`drm`](@ref); `family(fit) === fit.family`.
+"""
+family(fit::DrmFit) = fit.family
+
+"""
+    rho12(fit)
+
+Fitted **residual correlation** ρ12 for a bivariate model (`bf(mu1=…, mu2=…, rho12=…)`),
+on the response scale (ρ12 ∈ (-1, 1)), one value per observation. Mirrors drmTMB's
+`rho12`. Errors for univariate fits, which have no residual correlation.
+"""
+function rho12(fit::DrmFit)
+    haskey(fit.scales, :rho12) || throw(ArgumentError(
+        "rho12 is defined only for bivariate models (bf(mu1=…, mu2=…, rho12=…)); this fit has no residual correlation"))
+    return fit.scales[:rho12]
+end
+
+"""
+    is_converged(fit::DrmFit) -> Bool
+
+Whether the optimiser reported convergence for this fit — drmTMB's convergence
+flag (`is_converged(fit) === fit.converged`). A `false` here means the reported
+estimates / standard errors should not be trusted.
+"""
+is_converged(fit::DrmFit) = fit.converged
+
+"""
+    deviance(fit::DrmFit) -> Float64
+
+Deviance of the fitted model, `-2 · loglik(fit)` — drmTMB's `deviance()`.
+Extends `StatsAPI.deviance`.
+"""
+deviance(fit::DrmFit) = -2 * loglik(fit)
+
+"""
+    dof_residual(fit::DrmFit) -> Int
+
+Residual degrees of freedom, `nobs(fit) - dof(fit)` (R's `df.residual`).
+Extends `StatsAPI.dof_residual`.
+"""
+dof_residual(fit::DrmFit) = nobs(fit) - dof(fit)
+
 function Base.show(io::IO, ::MIME"text/plain", fit::DrmFit)
     se = stderror(fit)
     fam = _family_name(fit.family)

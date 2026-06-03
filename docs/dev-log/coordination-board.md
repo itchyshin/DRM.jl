@@ -4,6 +4,10 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
+_Refreshed to HEAD reality 2026-06-02 (`chore-coordination-board`). All 13
+drmTMB families are implemented / exported / tested; inference is wired;
+v0.1.0 and v0.1.1 are tagged. See the "Verified state" section below._
+
 ## Lane split — Claude ↔ Codex
 
 Full Codex brief: **#76** (pinned).
@@ -11,8 +15,9 @@ Full Codex brief: **#76** (pinned).
 - **Claude (Shannon)** — family front-ends, post-fit, docs.
   Files: family `src/*.jl`
   (`poisson` / `negbinomial` / `beta` / `gamma` / `student` / `lognormal` /
-  `betabinomial` / `binomial`), `summary.jl`, `inference.jl`, `docs/`,
-  `test/runtests.jl`, `model-map.md`, `check-log.md`.
+  `betabinomial` / `binomial` / `zeroonebeta` / `tweedie` / `cumulative`),
+  `summary.jl`, `inference.jl`, `variational.jl`, `docs/`, `test/runtests.jl`,
+  `model-map.md`, `check-log.d/`.
 - **Codex** — engine core + estimators.
   Files: `src/sparse_aug_plsm.jl`, `src/fit_q4_sparse_tmb.jl`,
   `src/takahashi_selinv.jl`, `src/experimental/*`, `bench/*`, `report/*`.
@@ -22,24 +27,38 @@ Full Codex brief: **#76** (pinned).
 - **Shared — coordinate on the PR:** `src/DRM.jl` (include/export list).
   Append engine/experimental symbols in their own spot; flag on the PR.
 
+## Verified state (as of HEAD)
+
+- **All 13 families done / exported / tested.** Each has a `struct … end`
+  marker in `src/` (`gaussian_core.jl` `Gaussian`, `student.jl` `Student`,
+  `poisson.jl` `Poisson`, `negbinomial.jl` `NegBinomial2` + `TruncatedNegBinomial2`,
+  `beta.jl` `Beta`, `betabinomial.jl` `BetaBinomial`, `binomial.jl` `Binomial`,
+  `gamma.jl` `Gamma`, `lognormal.jl` `LogNormal`, `zeroonebeta.jl` `ZeroOneBeta`,
+  `tweedie.jl` `Tweedie`, `cumulative.jl` `CumulativeLogit`) and all 13 appear in
+  the `src/DRM.jl` export list. Family parity completed at **v0.1.1**
+  (see `NEWS.md`).
+- **Inference is wired** in `src/inference.jl` — Wald (`confint(…, method=:wald)`,
+  boundary-aware SEs, #106), profile-likelihood (`method=:profile`, #103), and
+  bootstrap (coefficient summaries #101 / auditable results #105 / fit-based
+  entry points #132).
+- **Tagged releases:** `v0.1.0` and `v0.1.1` (`git tag`).
+- **Engine — crossed/structured Laplace merged.** Codex's lane landed crossed
+  random effects (`closes #70`) plus a series of crossed/structured Laplace
+  speed/correctness merges: #89, #97, #108, #111, #114, #119, #123, #126, #128.
+- **Phase-3 docs + VA scaffold (Claude).** Developer/parity articles filled
+  (#112/#116/#117/#121/#122, etc.); VA/ELBO marginal method-selection surface
+  in progress (#136 — design spec + LA-vs-VA guide + `src/variational.jl`
+  scaffold; Laplace stays the default, `_fit_va` is a stub).
+
 ## Active branches
 
 | Branch | Owner | Touching | Status |
 |---|---|---|---|
-| `main` | — | current through #132 (`1c5094e`): fit-based bootstrap entry points; no merged VA work | live `/dev/` source |
-| `codex/status-ledger-cleanup` | Codex | `README.md`, `ROADMAP.md`, this board, source docstrings/comments, `src/gaussian_core.jl`, `src/gaussian_ranef.jl`, `src/sparse_laplace_glmm.jl`, `src/negbinomial.jl`, `src/gamma.jl`, `src/beta.jl`, `src/binomial.jl`, crossed/phylo benchmark scripts, `report/`, `test/runtests.jl`, `test/test_phylo_laplace_nongaussian.jl`, `check-log.d/`, after-task | local branch now also carries #80 benchmark/engine follow-up slices; avoids `docs/src/r-julia-bridge.md` because PR #135 owns it |
-| `codex/profile-ci-bootstrap-speed` | Codex | `src/inference.jl`, `src/DRM.jl`, profile/bootstrap tests/docs, reports, `check-log.d/`, after-task | PR #137 open: auditable `profile_result` + endpoint threading |
-| `docs-reference-bridge-stubs` | Shannon (Claude) | `docs/src/reference/deprecated-marker-internals.md`, `docs/src/r-julia-bridge.md`, `check-log.d/` | PR #135 open; owns R-bridge stub fill |
-| `docs-implementation-map` | Shannon (Claude) | implementation-map docs, `check-log.d/` | PR #129 open |
-| `docs-simulation-plot-grammar` | Shannon (Claude) | simulation/plot grammar docs, `check-log.d/` | PR #134 open |
-| `va-scaffold` | Shannon (Claude) | `src/variational.jl`, `src/DRM.jl`, `test/runtests.jl`, `test/test_variational.jl` | PR #138 open; shared `src/DRM.jl` include |
-| `va-docs` / `va-design` | Shannon (Claude) | VA/ELBO docs + model-guide nav | PR #139 open; `origin/va-design` also exists |
+| `main` | — | docs deploy (DocumenterVitepress, deploy-on-main) | green / deploying |
+| `codex/status-ledger-cleanup` | Codex | `ROADMAP.md`, this board, `src/gaussian_core.jl`, `src/gaussian_ranef.jl`, `src/sparse_laplace_glmm.jl`, `src/negbinomial.jl`, `src/gamma.jl`, `src/beta.jl`, `src/binomial.jl`, crossed/phylo benchmark scripts, `report/`, `test/runtests.jl`, `test/test_phylo_laplace_nongaussian.jl`, `check-log.d/`, after-task | PR #141 open: #80 non-Gaussian crossed/phylo engine, benchmark, and public-routing slice |
+| Codex engine lane (`codex/crossed-poisson-speed`, `codex/profile-ci-*`) | Codex | engine: `sparse_aug_plsm.jl`, `fit_q4_sparse_tmb.jl`, crossed/structured Laplace + profile-CI speed | prior #80 / #113 follow-ons mostly merged; coordinate before reopening |
+| Claude docs + VA lane (`#136` scaffold) | Shannon (Claude) | `src/variational.jl`, `docs/`, `test/test_variational.jl` | active — Phase-3 docs + VA scaffold (#136) |
 
-## Stale coordination notes
-
-- PR #74 is merged; Binomial and `summary`/`coeftable` are on `main`.
-- #70 is closed; #80 is the active crossed/structured non-Gaussian RE umbrella.
-- #10 is effectively complete through the production inference module and
-  boundary-aware Wald SE slice. Remaining `experimental/` wiring is #11-#13.
-- New check-log entries should use `docs/dev-log/check-log.d/`, not append to
-  `docs/dev-log/check-log.md`.
+> Note: crossed/structured Laplace (#70 and follow-ons) and the 13-family +
+> inference surface are **merged**; no stale "PR #74 open", "Phase 0 current", or
+> "#70 not started" rows remain. Coordinate on `src/DRM.jl` include/export edits.
