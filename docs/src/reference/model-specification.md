@@ -7,6 +7,8 @@
 
 ```@docs
 bf
+DrmFormula
+BivariateDrmFormula
 ```
 
 ## Response families

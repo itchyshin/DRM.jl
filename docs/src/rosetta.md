@@ -108,8 +108,8 @@ bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
 | `logLik(fit)` | `loglik(fit)` |
 | `AIC(fit)` / `BIC(fit)` | `aic(fit)` / `bic(fit)` |
 | `nobs(fit)` | `nobs(fit)` |
-| `deviance(fit)` | planned (parity gap) |
-| `df.residual(fit)` | planned (parity gap) |
+| `deviance(fit)` | `deviance(fit)` |
+| `df.residual(fit)` | `dof_residual(fit)` |
 | `ranef(fit)` | `ranef(fit)` |
 | random-effect SDs | `re_sd(fit)` / `vc(fit)` |
 | `sigma(fit)` | `sigma(fit)` |
@@ -121,10 +121,10 @@ bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
 | `marginal_parameters(fit)` | planned (parity gap) |
 | `prediction_grid(...)` | planned (parity gap) |
 | `simulate(fit)` | `simulate(fit)` |
-| `summary(fit)` | `show(fit)` / `coeftable(fit)` (no `summary` method; parity gap) |
+| `summary(fit)` | `show(fit)` / `coeftable(fit)` (no `summary` method) |
 | `weights(fit)` | planned (parity gap) |
-| `family(fit)` | planned (parity gap) |
-| `is_converged(fit)` / `check_drm(fit)` | `check_drm(fit)` (`is_converged`: parity gap) |
+| `family(fit)` | `family(fit)` |
+| `is_converged(fit)` / convergence diagnostics | `is_converged(fit)` / `check_drm(fit)` |
 
 ## Naming rules to remember
 
