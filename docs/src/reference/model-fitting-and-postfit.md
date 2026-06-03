@@ -7,6 +7,7 @@
 
 ```@docs
 drm
+DrmFit
 ```
 
 ## Coefficients and (co)variance
@@ -46,6 +47,8 @@ residuals
 confint
 stderror
 bootstrap_ci
+bootstrap_summary
+bootstrap_result
 ```
 
 ## Information criteria
