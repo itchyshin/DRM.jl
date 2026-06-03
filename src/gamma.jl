@@ -15,7 +15,8 @@ the `sigma` slot carries `σ` = the coefficient of variation, mapped to the shap
 `α = 1/σ²` (`coef(fit, :sigma)` is `log σ`; recover the shape as `exp(-2·log σ)`).
 Likelihood `Gamma(α, μ/α)`; variance `μ²σ²`. Mirrors `drmTMB`'s `Gamma` family.
 Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
-sparse-Laplace engine when `sigma ~ 1`.
+sparse-Laplace engine when `sigma ~ 1`. A phylogenetic random intercept on the
+mean, `phylo(1 | species)`, also uses the sparse-Laplace engine.
 
 !!! note
     `DRM.Gamma` shadows `Distributions.Gamma`; qualify the latter if you need it.
@@ -23,16 +24,19 @@ sparse-Laplace engine when `sigma ~ 1`.
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), Gamma(); data = dat)
 fit = drm(bf(y ~ x + (1 | g) + (1 | h), sigma ~ 1), Gamma(); data = dat)
+fit_phy = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
+              Gamma(); data = dat, tree = tr, se = false)
 exp(-2 * coef(fit, :sigma)[1])     # estimated shape α
 ```
 """
 struct Gamma end
 
-function drm(f::DrmFormula, fam::Gamma; data, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, g_tol::Real = 1e-8,
+             se::Bool = true)
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
-    (mv === nothing && st === nothing) ||
-        error("Gamma() does not support meta_V / structured markers")
+    mv === nothing ||
+        error("Gamma() does not support meta_V markers")
     for (pname, r) in f.forms          # only the mean may carry a random effect
         pname === :mu && continue
         _, re2, mv2, st2 = _split_ranef(r)
@@ -42,6 +46,18 @@ function drm(f::DrmFormula, fam::Gamma; data, g_tol::Real = 1e-8)
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> yi > 0, y) || error("Gamma() requires strictly positive responses")
+    if st !== nothing
+        isempty(re) ||
+            error("Gamma() phylo structured effects cannot be combined with ordinary random effects yet")
+        (size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])) ||
+            error("Gamma() phylo sparse Laplace currently supports `sigma ~ 1`")
+        kind, grp = st
+        kind === :phylo ||
+            error("Gamma() currently supports only phylo(1 | group) among structured markers")
+        tree === nothing && error("phylo(1 | $grp) needs `tree = ...`")
+        labels = getproperty(data, grp)
+        return _withformula(_fit_gamma_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp, g_tol; se = se), f)
+    end
     if !isempty(re)                    # random effect on the log mean → GHQ/Laplace
         if length(re) > 1
             all(_re_kind(r[1])[1] === :intercept for r in re) ||

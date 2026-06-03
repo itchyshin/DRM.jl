@@ -600,6 +600,55 @@ function _fit_nb2_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
     )
 end
 
+function _fit_gamma_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
+                                  g_tol; se::Bool = true,
+                                  polish_iterations::Int = 5)
+    size(Xσ, 2) == 1 || error("_fit_gamma_phylo_laplace currently supports a constant sigma formula")
+    all(x -> x == 1.0, @view Xσ[:, 1]) ||
+        error("_fit_gamma_phylo_laplace currently supports a constant sigma formula")
+    yv = Float64.(y)
+    function aux_from(logsigma)
+        α = exp(clamp(-2 * logsigma, -8.0, 8.0))
+        lconst = [α * log(α) - loggamma(α) + (α - 1) * log(yv[i]) for i in eachindex(yv)]
+        return (y = yv, shape = α, lconst = lconst)
+    end
+    ȳ = sum(yv) / length(yv)
+    v = sum(abs2, yv .- ȳ) / max(length(yv) - 1, 1)
+    α0 = max(ȳ^2 / max(v, eps()), 3.0)
+    θβ0 = zeros(size(Xμ, 2))
+    θβ0[1] = log(ȳ + eps())
+    return _fit_phylo_mean_laplace_nuisance(
+        fam, Val(:gamma_fixed), aux_from, length(yv), Xμ, labels, tree, nmμ, nmσ,
+        grp, g_tol; θβ0 = θβ0, θσ0 = -0.5 * log(α0), sigma_scale = exp,
+        se = se, polish_iterations = polish_iterations
+    )
+end
+
+function _fit_beta_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
+                                 g_tol; se::Bool = true,
+                                 polish_iterations::Int = 0)
+    size(Xσ, 2) == 1 || error("_fit_beta_phylo_laplace currently supports a constant sigma formula")
+    all(x -> x == 1.0, @view Xσ[:, 1]) ||
+        error("_fit_beta_phylo_laplace currently supports a constant sigma formula")
+    yv = Float64.(y)
+    ylogit = log.(yv) .- log1p.(-yv)
+    function aux_from(logsigma)
+        φ = exp(clamp(-2 * logsigma, -8.0, 8.0))
+        return (y = yv, precision = φ, ylogit = ylogit,
+                lgammaφ = loggamma(φ), digammaφ = digamma(φ))
+    end
+    ȳ = clamp(sum(yv) / length(yv), 1e-4, 1 - 1e-4)
+    v = sum(abs2, yv .- ȳ) / max(length(yv) - 1, 1)
+    φ0 = max(ȳ * (1 - ȳ) / max(v, eps()) - 1, 0.5)
+    θβ0 = zeros(size(Xμ, 2))
+    θβ0[1] = log(ȳ / (1 - ȳ))
+    return _fit_phylo_mean_laplace_nuisance(
+        fam, Val(:beta_fixed), aux_from, length(yv), Xμ, labels, tree, nmμ, nmσ,
+        grp, g_tol; θβ0 = θβ0, θσ0 = -0.5 * log(φ0), sigma_scale = exp,
+        se = se, polish_iterations = polish_iterations
+    )
+end
+
 const CROSSED_SPARSE_Q_THRESHOLD = 512
 
 function _crossed_dense_hessian(diagH, weights, gidx, G, hidx, Hh)
