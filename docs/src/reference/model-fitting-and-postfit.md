@@ -102,6 +102,16 @@ loglik
 dof
 aic
 bic
+aicc
+```
+
+## Model comparison
+
+```@docs
+lrtest
+anova
+weights
+update
 ```
 
 ## Diagnostics and accessors
