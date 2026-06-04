@@ -353,7 +353,7 @@ function corpairs(fit::DrmFit)
 end
 
 """
-    predict(fit, newdata; type = :response) -> Vector or Dict
+    predict(fit, newdata; type = :response, se = false) -> Vector / Dict / NamedTuple
 
 Population-level prediction on `newdata` (a NamedTuple / column table), random /
 structured effects integrated out. `type = :response` (default) returns the
@@ -361,19 +361,35 @@ response-scale mean — the family inverse link applied to `Xβ̂` (`exp` for
 Poisson/Gamma, `logistic` for Beta/Binomial, identity for Gaussian); `type = :link`
 returns `Xβ̂`. In-sample, `predict(fit, data) ≈ fitted(fit)`. Univariate returns a
 vector; bivariate returns `Dict(:mu1 => …, :mu2 => …)`.
+
+`se = false` (default) is the point prediction above. `se = true` adds
+**delta-method standard errors** for the mean (glmmTMB/drmTMB `se.fit` parity):
+
+- univariate → a `NamedTuple` `(; prediction, se)`;
+- bivariate  → a `NamedTuple` `(; prediction::Dict, se::Dict)` keyed `:mu1, :mu2`.
+
+The SE uses the μ-block of `vcov(fit)`: link scale `se_i = sqrt(xᵢ' Vμ xᵢ)`
+(with `Vμ = vcov(fit)[r, r]`, `r` the `:mu` coef range from `fit.blocks`);
+response scale multiplies by the inverse-link derivative `|dμ/dη|` at `η̂`
+(identity → 1, exp → `exp(η)`, logistic → `μ(1−μ)`).
 """
-function predict(fit::DrmFit, newdata; type::Symbol = :response)
+function predict(fit::DrmFit, newdata; type::Symbol = :response, se::Bool = false)
     f = fit.formula
     f === nothing && error("predict: this fit did not retain its formula")
+    type in (:response, :link) || error("predict: `type` must be :response or :link")
     nd = NamedTuple(pairs(newdata))
     nrows = length(first(values(nd)))
+    V = se ? vcov(fit) : nothing
     if f isa DrmFormula
         fixed_mu, _, _, _ = _split_ranef(Dict(f.forms)[:mu])
         ndr = merge(nd, NamedTuple{(f.response,)}((zeros(nrows),)))
         _, Xnew, _ = _design(f.response, fixed_mu, ndr)
-        type in (:response, :link) || error("predict: `type` must be :response or :link")
         η = Xnew * coef(fit, :mu)
-        return type === :link ? η : _mean_response(fit.family, η)
+        pred = type === :link ? η : _mean_response(fit.family, η)
+        se || return pred
+        r = _block_range(fit, :mu)
+        se_vec = _delta_se(Xnew, view(V, r, r), η, type, fit.family, :mu)
+        return (; prediction = pred, se = se_vec)
     else  # BivariateDrmFormula
         fm = Dict(f.forms)
         fixed1, _, _, _ = _split_ranef(fm[:mu1])
@@ -382,7 +398,18 @@ function predict(fit::DrmFit, newdata; type::Symbol = :response)
         nd2 = merge(nd, NamedTuple{(f.response2,)}((zeros(nrows),)))
         _, X1, _ = _design(f.response1, fixed1, nd1)
         _, X2, _ = _design(f.response2, fixed2, nd2)
-        return Dict(:mu1 => X1 * coef(fit, :mu1), :mu2 => X2 * coef(fit, :mu2))
+        η1 = X1 * coef(fit, :mu1)
+        η2 = X2 * coef(fit, :mu2)
+        pred = type === :link ?
+            Dict(:mu1 => η1, :mu2 => η2) :
+            Dict(:mu1 => _mean_response(fit.family, η1),
+                 :mu2 => _mean_response(fit.family, η2))
+        se || return pred
+        r1 = _block_range(fit, :mu1); r2 = _block_range(fit, :mu2)
+        se_dict = Dict(
+            :mu1 => _delta_se(X1, view(V, r1, r1), η1, type, fit.family, :mu1),
+            :mu2 => _delta_se(X2, view(V, r2, r2), η2, type, fit.family, :mu2))
+        return (; prediction = pred, se = se_dict)
     end
 end
 
@@ -431,8 +458,68 @@ function _param_response(fam, p::Symbol, η)
     end
 end
 
+# Inverse-link derivative dμ/dη at the linear predictor η for parameter `p`,
+# mirroring `_param_response` link-by-link. Used by the delta method to map a
+# link-scale standard error to the response scale:
+#   se_response(η) = |dμ/dη| · se_link(η).
+# Derivatives (g⁻¹ is the inverse link applied in `_param_response`):
+#   identity → 1;  exp → exp(η);  logistic μ=σ(η) → μ(1−μ);  tanh ρ=tanh(η) → 1−ρ²;
+#   Tweedie ν via `_logit12` (1 + sigmoid → range (1,2)) → sig·(1−sig) with sig=σ(η).
+function _link_deriv(fam, p::Symbol, η)
+    if p === :mu || p === :mu1 || p === :mu2
+        if fam isa Poisson || fam isa NegBinomial2 || fam isa TruncatedNegBinomial2 ||
+           fam isa Gamma || fam isa LogNormal || fam isa Tweedie
+            return exp.(clamp.(η, -30.0, 30.0))               # log link
+        elseif fam isa Beta || fam isa Binomial || fam isa BetaBinomial
+            μ = _logistic.(clamp.(η, -30.0, 30.0))            # logit link
+            return μ .* (1 .- μ)
+        else
+            return ones(length(η))                            # identity link
+        end
+    elseif p === :sigma || p === :sigma1 || p === :sigma2
+        return exp.(η)                                        # log link
+    elseif p === :rho12
+        ρ = tanh.(η)                                          # atanh link
+        return 1 .- ρ .^ 2
+    elseif p === :nu
+        if fam isa Tweedie
+            s = _logistic.(η)                                 # _logit12 = 1 + σ(η)
+            return s .* (1 .- s)
+        else
+            return exp.(η)                                    # log link
+        end
+    elseif p === :zi || p === :hu || p === :zoi || p === :coi
+        μ = _logistic.(η)                                     # logit link
+        return μ .* (1 .- μ)
+    else
+        throw(ArgumentError("predict: no inverse-link derivative known for parameter `$p`"))
+    end
+end
+
+# Coefficient (vcov / theta) index range for one distributional parameter block,
+# read straight off `fit.blocks` (Vector{Pair{Symbol,UnitRange}}).
+_block_range(fit::DrmFit, p::Symbol) = begin
+    for (q, r) in fit.blocks
+        q === p && return r
+    end
+    throw(ArgumentError("no parameter $p in fit (have $(first.(fit.blocks)))"))
+end
+
+# Delta-method standard errors for one parameter from its design rows `Xp`, the
+# corresponding vcov sub-block `Vp`, and (for the response scale) the inverse-link
+# derivative at η̂. Link-scale: se_i = sqrt(xᵢ' Vp xᵢ). Response-scale multiplies
+# by |dμ/dη| at η̂_i. Centralised so the point value and its SE stay consistent.
+function _delta_se(Xp::AbstractMatrix, Vp::AbstractMatrix, η::AbstractVector,
+                   type::Symbol, fam, p::Symbol)
+    se_link = [sqrt(max(0.0, dot(view(Xp, i, :), Vp, view(Xp, i, :)))) for i in 1:size(Xp, 1)]
+    type === :link && return se_link
+    return abs.(_link_deriv(fam, p, η)) .* se_link
+end
+
 """
-    predict_parameters(fit, newdata; type = :response) -> Dict{Symbol,Vector{Float64}}
+    predict_parameters(fit, newdata; type = :response, se = false)
+        -> Dict{Symbol,Vector{Float64}}  (se = false)
+        -> Dict{Symbol,NamedTuple}        (se = true)
 
 Population-level prediction of **every** distributional parameter at `newdata`
 (a NamedTuple / column table), random / structured effects integrated out
@@ -450,6 +537,13 @@ For a univariate fit the parameters are `:mu`, (`:sigma`) plus family extras; fo
 a bivariate fit they are `:mu1, :mu2, :sigma1, :sigma2, :rho12` (each from its own
 fixed-effects RHS, with the σ links `exp` and the ρ12 link `tanh`).
 
+`se = false` (default) returns `Dict{Symbol,Vector{Float64}}` of point values.
+`se = true` returns `Dict{Symbol,NamedTuple}` with `p => (; value, se)` per
+parameter: each `se` is the **delta-method** standard error using that parameter's
+own coef range `r_p` from `fit.blocks` (`V_p = vcov(fit)[r_p, r_p]`), the response
+scale multiplying by that parameter's inverse-link derivative at `η̂` (`:sigma`→`exp`,
+`:rho12`→`1−ρ²`, etc.). `value` matches the `se = false` point prediction.
+
 # Example
 ```julia
 x = randn(200)
@@ -464,13 +558,15 @@ p[:sigma] ≈ fit.scales[:sigma]
 predict_parameters(fit, data; type = :link)[:mu]   # == Xβ̂ (predict link scale)
 ```
 """
-function predict_parameters(fit::DrmFit, newdata; type::Symbol = :response)
+function predict_parameters(fit::DrmFit, newdata; type::Symbol = :response,
+                            se::Bool = false)
     f = fit.formula
     f === nothing && error("predict_parameters: this fit did not retain its formula")
     type in (:response, :link) || error("predict_parameters: `type` must be :response or :link")
     forms = Dict(f.forms)
     nd = NamedTuple(pairs(newdata))
     nrows = length(first(values(nd)))
+    V = se ? vcov(fit) : nothing
     # A real LHS to dummy into `_design` for each parameter's RHS. The univariate
     # form has one response; the bivariate form has two (use response1 for the
     # σ/ρ placeholder RHS, exactly as the bivariate fitter does). The per-parameter
@@ -480,14 +576,20 @@ function predict_parameters(fit::DrmFit, newdata; type::Symbol = :response)
     ndr = bivar ?
         merge(nd, NamedTuple{(f.response1, f.response2)}((zeros(nrows), zeros(nrows)))) :
         merge(nd, NamedTuple{(f.response,)}((zeros(nrows),)))
-    out = Dict{Symbol,Vector{Float64}}()
-    for (p, _) in fit.blocks
+    out = se ? Dict{Symbol,NamedTuple}() : Dict{Symbol,Vector{Float64}}()
+    for (p, r) in fit.blocks
         haskey(forms, p) || continue          # skip RE-SD / cutpoint blocks (:resd, :recov, :cutpoints, …)
         resp = bivar ? (p === :mu2 ? f.response2 : f.response1) : f.response
         fixed_p, _, _, _ = _split_ranef(forms[p])
         _, Xp, _ = _design(resp, fixed_p, ndr)
         ηp = Xp * coef(fit, p)
-        out[p] = type === :link ? ηp : _param_response(fit.family, p, ηp)
+        val = type === :link ? ηp : _param_response(fit.family, p, ηp)
+        if se
+            se_p = _delta_se(Xp, view(V, r, r), ηp, type, fit.family, p)
+            out[p] = (; value = val, se = se_p)
+        else
+            out[p] = val
+        end
     end
     return out
 end
