@@ -473,19 +473,19 @@ function predict_parameters(fit::DrmFit, newdata; type::Symbol = :response)
     nrows = length(first(values(nd)))
     # A real LHS to dummy into `_design` for each parameter's RHS. The univariate
     # form has one response; the bivariate form has two (use response1 for the
-    # σ/ρ placeholder RHS, exactly as the bivariate fitter does).
-    if f isa DrmFormula
-        respof(_) = f.response
-        ndr = merge(nd, NamedTuple{(f.response,)}((zeros(nrows),)))
-    else  # BivariateDrmFormula
-        respof(p) = p === :mu2 ? f.response2 : f.response1
-        ndr = merge(nd, NamedTuple{(f.response1, f.response2)}((zeros(nrows), zeros(nrows))))
-    end
+    # σ/ρ placeholder RHS, exactly as the bivariate fitter does). The per-parameter
+    # response symbol is chosen inline in the loop below (a conditional inner
+    # function is not reliably bound in local scope).
+    bivar = !(f isa DrmFormula)
+    ndr = bivar ?
+        merge(nd, NamedTuple{(f.response1, f.response2)}((zeros(nrows), zeros(nrows)))) :
+        merge(nd, NamedTuple{(f.response,)}((zeros(nrows),)))
     out = Dict{Symbol,Vector{Float64}}()
     for (p, _) in fit.blocks
         haskey(forms, p) || continue          # skip RE-SD / cutpoint blocks (:resd, :recov, :cutpoints, …)
+        resp = bivar ? (p === :mu2 ? f.response2 : f.response1) : f.response
         fixed_p, _, _, _ = _split_ranef(forms[p])
-        _, Xp, _ = _design(respof(p), fixed_p, ndr)
+        _, Xp, _ = _design(resp, fixed_p, ndr)
         ηp = Xp * coef(fit, p)
         out[p] = type === :link ? ηp : _param_response(fit.family, p, ηp)
     end
