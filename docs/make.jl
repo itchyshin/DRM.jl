@@ -45,6 +45,7 @@ makedocs(
         ],
         "Diagnostics & Validation" => [
             "diagnostics-and-validation/figure-gallery.md",
+            "diagnostics-and-validation/prediction-and-postfit.md",
             "diagnostics-and-validation/implementation-map.md",
             "diagnostics-and-validation/testing-likelihoods.md",
             "diagnostics-and-validation/simulation-plot-grammar.md",

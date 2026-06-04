@@ -47,9 +47,9 @@ loglik(fit) - loglik(fit0)    # gain from letting σ depend on group
 ```
 
 A large positive gain says the variance structure is real signal. Quantify the
-σ effects with [`confint`](../model-guides/model-workflow.md) (Wald or profile);
-dedicated AIC / likelihood-ratio-test helpers are a later convenience on top of
-`loglik`.
+σ effects with [`confint`](../model-guides/model-workflow.md) (Wald or profile),
+or turn the comparison into a formal test with `lrtest` / `aicc` — see
+[Prediction, residuals & model comparison](../diagnostics-and-validation/prediction-and-postfit.md).
 
 ## Random dispersion: a scale that varies by group
 
