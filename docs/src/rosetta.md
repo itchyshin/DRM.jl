@@ -116,15 +116,52 @@ bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
 | `rho12(fit)` | planned (parity gap) |
 | `corpair(fit)` / `corpairs(fit)` | `corpairs(fit)` / `corpairs_data(fit)` |
 | `fitted(fit)` / `residuals(fit)` | `fitted(fit)` / `residuals(fit)` |
-| `predict(fit, newdata)` | `predict(fit, newdata)` |
-| `predict_parameters(fit, newdata)` | planned (parity gap) |
-| `marginal_parameters(fit)` | planned (parity gap) |
-| `prediction_grid(...)` | planned (parity gap) |
+| `predict(fit, newdata)` (response mean) | `predict(fit, newdata; type = :response)` |
+| predict **every** distributional parameter at new data | `predict_parameters(fit, newdata; type = :response)` |
+| in-sample fitted per-observation parameters | `marginal_parameters(fit)` |
+| build a covariate grid for prediction | `prediction_grid(reference; predictor = values, …)` |
 | `simulate(fit)` | `simulate(fit)` |
 | `summary(fit)` | `show(fit)` / `coeftable(fit)` (no `summary` method) |
 | `weights(fit)` | planned (parity gap) |
 | `family(fit)` | `family(fit)` |
 | `is_converged(fit)` / convergence diagnostics | `is_converged(fit)` / `check_drm(fit)` |
+
+### Prediction
+
+drmTMB centres prediction on `predict(fit, newdata)`, which returns the
+response-scale mean. DRM.jl matches that and adds first-class verbs for the
+*other* distributional parameters:
+
+| Intent | drmTMB (R) | DRM.jl (Julia) |
+|---|---|---|
+| Response-scale mean at new data | `predict(fit, newdata)` | `predict(fit, newdata; type = :response)` |
+| Linear-predictor (link) scale | `predict(fit, newdata, type = "link")` | `predict(fit, newdata; type = :link)` |
+| Predict **all** distributional parameters | (capability: predict each `bf()` parameter) | `predict_parameters(fit, newdata; type = :response)` |
+| In-sample fitted per-obs parameters | (capability: per-observation fitted parameters) | `marginal_parameters(fit)` |
+| Build a covariate grid | (capability: hold-others / sweep grid) | `prediction_grid(reference; predictor = values, …)` |
+
+- `predict(fit, newdata; type = :response)` returns the response-scale mean (the
+  family inverse link applied to `Xβ̂` — `exp`/`logistic`/identity); `type =
+  :link` returns `Xβ̂`. Univariate gives a vector; bivariate gives
+  `Dict(:mu1 => …, :mu2 => …)`.
+- `predict_parameters(fit, newdata)` returns a
+  `Dict(:mu => …, :sigma => …, …)` with one entry per distributional parameter
+  the family carries (plus any of `:nu`, `:zi`, `:hu`, `:zoi`, `:coi`); a
+  bivariate fit returns `:mu1, :mu2, :sigma1, :sigma2, :rho12`. `type = :response`
+  (default) applies each parameter's inverse link (σ via `exp`, ρ12 via `tanh`);
+  `type = :link` returns each working-scale linear predictor.
+- `marginal_parameters(fit)` reads the stored in-sample fitted parameters
+  straight from the fit (no recomputation); in-sample it equals
+  `predict_parameters(fit, data)` on the response scale.
+- `prediction_grid(reference; predictor = values, …)` builds a `newdata` column
+  table by sweeping the named predictors over their value ranges (their Cartesian
+  product) while holding every other predictor at its reference (mean for numeric
+  columns). It is pure data, so it composes directly:
+  `predict_parameters(fit, prediction_grid(...))`.
+
+drmTMB's exact R spelling for per-parameter prediction is not asserted here
+(only the capability is); the response-mean `predict` row is the verified parity
+point.
 
 ## Naming rules to remember
 
