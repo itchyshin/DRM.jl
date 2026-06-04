@@ -9,7 +9,7 @@
 
 using StatsModels: @formula, FormulaTerm, Term, ConstantTerm, FunctionTerm,
     schema, apply_schema, modelcols, coefnames
-using Statistics: std
+using Statistics: std, mean
 using Random: default_rng
 import StatsAPI: coef, vcov, nobs, fitted, residuals, predict, aic, bic, dof, deviance, dof_residual, StatisticalModel
 
@@ -476,6 +476,86 @@ function predict_parameters(fit::DrmFit, newdata; type::Symbol = :response)
     end
     return out
 end
+
+"""
+    prediction_grid(reference::NamedTuple; n::Int = 50, kwargs...) -> NamedTuple
+
+Build a `newdata` column table for [`predict`](@ref) / [`predict_parameters`](@ref)
+by sweeping one or more predictors over supplied value ranges (their **Cartesian
+product**) while holding every *other* predictor fixed at a reference value.
+
+Pure data — no fitted model is needed, so it is trivially testable and composes
+directly with `predict_parameters(fit, prediction_grid(...))`.
+
+# Arguments
+- `reference::NamedTuple`: the predictor columns to hold constant. Each held
+  value is reduced to a scalar by this rule:
+  * if `reference[col]` is an `AbstractArray` of numbers → its `mean`;
+  * if `reference[col]` is any other `AbstractArray` → its `first` element;
+  * otherwise → the value itself (already a scalar).
+  Held columns are broadcast to the product length.
+- `n::Int = 50`: reserved for future default-range generation; currently unused
+  (every swept predictor supplies its own explicit values via `kwargs`).
+- `kwargs...`: each `predictor = values` gives a vector/range of values to sweep
+  for that predictor. The output rows enumerate the full Cartesian product of the
+  swept predictors. A swept predictor named in `reference` overrides (replaces)
+  the held value.
+
+# Returns
+A `NamedTuple` of equal-length column vectors. With no swept predictors the grid
+has a single row at the reference; with one swept predictor it is just that range
+(others held); with several, the full Cartesian product.
+
+The swept columns appear first (in `kwargs` order), then the remaining held
+columns (in `reference` order).
+
+# Example
+```julia
+g = prediction_grid((; x = randn(100)), x = range(-2, 2; length = 25))
+length(g.x) == 25                       # a 25-row sweep over x
+
+# Two swept predictors → Cartesian product (5 × 3 = 15 rows), z held at its mean:
+g2 = prediction_grid((; x = [0.0], z = [1.0, 2.0, 3.0]), x = -2:1.0:2)
+length(g2.x) == 5
+all(==(2.0), g2.z)                       # z held at mean([1,2,3])
+
+# Composes with a fit:
+preds = predict_parameters(fit, g)       # Dict(:mu => …, :sigma => …) of length 25
+```
+"""
+function prediction_grid(reference::NamedTuple; n::Int = 50, kwargs...)
+    swept = NamedTuple(kwargs)
+    swept_keys = keys(swept)
+
+    # Reduce each held reference column to a scalar; skip any that are swept
+    # (the swept values override the reference).
+    held_pairs = Pair{Symbol,Any}[]
+    for k in keys(reference)
+        k in swept_keys && continue
+        push!(held_pairs, k => _reference_scalar(reference[k]))
+    end
+
+    # Collect the swept value vectors (in kwarg order) and form the Cartesian
+    # product. `Iterators.product` varies the FIRST argument fastest.
+    swept_vals = [collect(swept[k]) for k in swept_keys]
+    combos = isempty(swept_vals) ? [()] : vec(collect(Iterators.product(swept_vals...)))
+    nrows = length(combos)
+
+    cols = Pair{Symbol,Vector}[]
+    for (i, k) in enumerate(swept_keys)
+        push!(cols, k => [combo[i] for combo in combos])
+    end
+    for (k, v) in held_pairs
+        push!(cols, k => fill(v, nrows))
+    end
+    return (; cols...)
+end
+
+# Reduce a held reference column to the scalar used across the grid: the mean of
+# a numeric array, the first element of any other array, or the value itself.
+_reference_scalar(v::AbstractArray{<:Number}) = mean(v)
+_reference_scalar(v::AbstractArray) = first(v)
+_reference_scalar(v) = v
 
 """
     marginal_parameters(fit) -> Dict{Symbol,Vector{Float64}}
