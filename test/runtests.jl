@@ -115,3 +115,6 @@ end
 
 # Model comparison + accessor parity (lrtest / anova / aicc / weights / update).
 include("test_comparison.jl")
+
+# Randomized quantile residuals (DHARMa/glmmTMB style) — feat-quantile-residuals.
+include("test_quantile_residuals.jl")

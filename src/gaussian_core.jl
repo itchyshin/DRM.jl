@@ -306,13 +306,63 @@ population/marginal mean `Xβ̂`); bivariate models return `Dict(:mu1=>…, :mu2
 fitted(fit::DrmFit) = haskey(fit.means, :mu) ? fit.means[:mu] : fit.means
 
 """
-    residuals(fit)
+    residuals(fit; type = :response, rng = Random.default_rng())
 
-Response residuals (observed − fitted mean), matching [`fitted`](@ref)'s shape.
+Model residuals. `type` selects the kind:
+
+- `:response` (default) — raw response residuals (observed − fitted mean),
+  matching [`fitted`](@ref)'s shape. `residuals(fit)` is unchanged.
+- `:quantile` — randomized quantile residuals (Dunn & Smyth; DHARMa /
+  glmmTMB style). For observation `i` with fitted distribution `F_i`,
+  `r_i = Φ⁻¹(u_i)` where `u_i` is the (randomized, for discrete families)
+  probability-integral transform of `y_i`. Under a correct model the `r_i`
+  are i.i.d. standard normal. Univariate only.
+
+Quantile residuals are currently implemented for the **Gaussian** (continuous;
+`u_i = Φ((y_i − μ_i)/σ_i)`, no RNG used) and **Poisson** (discrete; randomized
+`u_i = F(y_i−1) + (F(y_i) − F(y_i−1))·U`, `U ~ Uniform(0,1)` from `rng`)
+families. Other families throw an `ArgumentError` pending a verified per-family
+CDF mapping.
 """
-function residuals(fit::DrmFit)
-    haskey(fit.means, :mu) && return fit.obs[:mu] .- fit.means[:mu]
-    return Dict(k => fit.obs[k] .- fit.means[k] for k in keys(fit.means))
+function residuals(fit::DrmFit; type::Symbol = :response, rng = Random.default_rng())
+    if type === :response
+        haskey(fit.means, :mu) && return fit.obs[:mu] .- fit.means[:mu]
+        return Dict(k => fit.obs[k] .- fit.means[k] for k in keys(fit.means))
+    elseif type === :quantile
+        return _quantile_residuals(fit, rng)
+    else
+        throw(ArgumentError("residuals: `type` must be :response or :quantile (got :$type)"))
+    end
+end
+
+# Randomized quantile residuals r_i = Φ⁻¹(u_i). Univariate Gaussian / Poisson.
+function _quantile_residuals(fit::DrmFit, rng)
+    haskey(fit.means, :mu) ||
+        throw(ArgumentError("residuals(type=:quantile) is univariate-only"))
+    fam = fit.family
+    y = fit.obs[:mu]
+    μ = fit.means[:mu]
+    n = length(y)
+    lo = eps(); hi = 1 - eps()
+    std_normal = Distributions.Normal()
+    if fam isa Gaussian && haskey(fit.scales, :sigma) && !haskey(fit.scales, :sigma1)
+        σ = fit.scales[:sigma]
+        u = [clamp(Distributions.cdf(Distributions.Normal(μ[i], σ[i]), y[i]), lo, hi) for i in 1:n]
+        return Distributions.quantile.(std_normal, u)
+    elseif fam isa Poisson
+        u = Vector{Float64}(undef, n)
+        @inbounds for i in 1:n
+            d = Distributions.Poisson(max(μ[i], 0.0))
+            a = Distributions.cdf(d, y[i] - 1)
+            b = Distributions.cdf(d, y[i])
+            u[i] = clamp(a + (b - a) * rand(rng), lo, hi)
+        end
+        return Distributions.quantile.(std_normal, u)
+    else
+        throw(ArgumentError("residuals(type=:quantile) is implemented for Gaussian and " *
+            "Poisson; $(nameof(typeof(fam))) needs a verified per-family CDF mapping — " *
+            "tracked in a follow-up issue"))
+    end
 end
 
 """
