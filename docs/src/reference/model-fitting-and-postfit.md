@@ -42,6 +42,7 @@ ranef
 predict
 predict_parameters
 marginal_parameters
+prediction_grid
 simulate
 fitted
 residuals
@@ -55,7 +56,9 @@ regression also models the scale and—bivariately—the correlation. Use
 distributional parameter the model carries (`:mu`, `:sigma`, plus any family
 extras) at new covariate values, with random / structured effects integrated
 out. [`marginal_parameters`](@ref) is the cheap in-sample accessor that reads the
-fitted per-observation parameters straight off the fit.
+fitted per-observation parameters straight off the fit. [`prediction_grid`](@ref)
+builds the new-data table to sweep over (varying chosen predictors, holding the
+rest at a reference value).
 
 ```julia
 using DRM, Random
@@ -69,7 +72,7 @@ data = (; y, x)
 fit = drm(bf(@formula(y ~ 1 + x), @formula(sigma ~ 1 + x)), Gaussian(); data = data)
 
 # Per-distributional-parameter prediction over a covariate sweep.
-grid = (; x = collect(range(-2, 2; length = 11)))
+grid = prediction_grid((; x = data.x), x = range(-2, 2; length = 11))
 p = predict_parameters(fit, grid)   # Dict(:mu => …, :sigma => …) on the response scale
 p[:mu]                              # predicted mean across the sweep
 p[:sigma]                          # predicted scale across the sweep
