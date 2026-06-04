@@ -9,7 +9,7 @@
 
 using StatsModels: @formula, FormulaTerm, Term, ConstantTerm, FunctionTerm,
     schema, apply_schema, modelcols, coefnames
-using Statistics: std
+using Statistics: std, mean
 using Random: default_rng
 import StatsAPI: coef, vcov, nobs, fitted, residuals, predict, aic, bic, dof, deviance, dof_residual, StatisticalModel
 
@@ -411,11 +411,17 @@ end
 #   :hu    → `_logistic.(η)`          (poisson.jl / negbinomial.jl)
 #   :zoi   → `_logistic.(η)`          (zeroonebeta.jl)
 #   :coi   → `_logistic.(η)`          (zeroonebeta.jl)
+# Bivariate Gaussian (gaussian_bivariate.jl `drm(::BivariateDrmFormula, …)`):
+#   :mu1, :mu2     → `_mean_response(fam, η)` (identity for Gaussian)
+#   :sigma1, :sigma2 → exp.(η)
+#   :rho12         → tanh.(η)         (plain tanh / atanh link; no clamp/scale)
 function _param_response(fam, p::Symbol, η)
-    if p === :mu
+    if p === :mu || p === :mu1 || p === :mu2
         return _mean_response(fam, η)
-    elseif p === :sigma
+    elseif p === :sigma || p === :sigma1 || p === :sigma2
         return exp.(η)
+    elseif p === :rho12
+        return tanh.(η)
     elseif p === :nu
         return fam isa Tweedie ? _logit12.(η) : exp.(η)
     elseif p === :zi || p === :hu || p === :zoi || p === :coi
@@ -440,8 +446,9 @@ it reproduces [`marginal_parameters`](@ref) (i.e. `fit.means[:mu]`,
 `fit.scales[...]`). `type = :link` returns the linear predictor `Xβ̂` per
 parameter (the working scale).
 
-Univariate models only; bivariate models throw an `ArgumentError` (use
-`predict(fit, newdata)` for the means).
+For a univariate fit the parameters are `:mu`, (`:sigma`) plus family extras; for
+a bivariate fit they are `:mu1, :mu2, :sigma1, :sigma2, :rho12` (each from its own
+fixed-effects RHS, with the σ links `exp` and the ρ12 link `tanh`).
 
 # Example
 ```julia
@@ -460,17 +467,25 @@ predict_parameters(fit, data; type = :link)[:mu]   # == Xβ̂ (predict link scal
 function predict_parameters(fit::DrmFit, newdata; type::Symbol = :response)
     f = fit.formula
     f === nothing && error("predict_parameters: this fit did not retain its formula")
-    f isa DrmFormula || throw(ArgumentError("predict_parameters: bivariate models not yet supported (tracked as a follow-up); use predict(fit, newdata) for the means"))
     type in (:response, :link) || error("predict_parameters: `type` must be :response or :link")
     forms = Dict(f.forms)
     nd = NamedTuple(pairs(newdata))
     nrows = length(first(values(nd)))
-    ndr = merge(nd, NamedTuple{(f.response,)}((zeros(nrows),)))
+    # A real LHS to dummy into `_design` for each parameter's RHS. The univariate
+    # form has one response; the bivariate form has two (use response1 for the
+    # σ/ρ placeholder RHS, exactly as the bivariate fitter does). The per-parameter
+    # response symbol is chosen inline in the loop below (a conditional inner
+    # function is not reliably bound in local scope).
+    bivar = !(f isa DrmFormula)
+    ndr = bivar ?
+        merge(nd, NamedTuple{(f.response1, f.response2)}((zeros(nrows), zeros(nrows)))) :
+        merge(nd, NamedTuple{(f.response,)}((zeros(nrows),)))
     out = Dict{Symbol,Vector{Float64}}()
     for (p, _) in fit.blocks
         haskey(forms, p) || continue          # skip RE-SD / cutpoint blocks (:resd, :recov, :cutpoints, …)
+        resp = bivar ? (p === :mu2 ? f.response2 : f.response1) : f.response
         fixed_p, _, _, _ = _split_ranef(forms[p])
-        _, Xp, _ = _design(f.response, fixed_p, ndr)
+        _, Xp, _ = _design(resp, fixed_p, ndr)
         ηp = Xp * coef(fit, p)
         out[p] = type === :link ? ηp : _param_response(fit.family, p, ηp)
     end
@@ -478,12 +493,93 @@ function predict_parameters(fit::DrmFit, newdata; type::Symbol = :response)
 end
 
 """
+    prediction_grid(reference::NamedTuple; n::Int = 50, kwargs...) -> NamedTuple
+
+Build a `newdata` column table for [`predict`](@ref) / [`predict_parameters`](@ref)
+by sweeping one or more predictors over supplied value ranges (their **Cartesian
+product**) while holding every *other* predictor fixed at a reference value.
+
+Pure data — no fitted model is needed, so it is trivially testable and composes
+directly with `predict_parameters(fit, prediction_grid(...))`.
+
+# Arguments
+- `reference::NamedTuple`: the predictor columns to hold constant. Each held
+  value is reduced to a scalar by this rule:
+  * if `reference[col]` is an `AbstractArray` of numbers → its `mean`;
+  * if `reference[col]` is any other `AbstractArray` → its `first` element;
+  * otherwise → the value itself (already a scalar).
+  Held columns are broadcast to the product length.
+- `n::Int = 50`: reserved for future default-range generation; currently unused
+  (every swept predictor supplies its own explicit values via `kwargs`).
+- `kwargs...`: each `predictor = values` gives a vector/range of values to sweep
+  for that predictor. The output rows enumerate the full Cartesian product of the
+  swept predictors. A swept predictor named in `reference` overrides (replaces)
+  the held value.
+
+# Returns
+A `NamedTuple` of equal-length column vectors. With no swept predictors the grid
+has a single row at the reference; with one swept predictor it is just that range
+(others held); with several, the full Cartesian product.
+
+The swept columns appear first (in `kwargs` order), then the remaining held
+columns (in `reference` order).
+
+# Example
+```julia
+g = prediction_grid((; x = randn(100)), x = range(-2, 2; length = 25))
+length(g.x) == 25                       # a 25-row sweep over x
+
+# Two swept predictors → Cartesian product (5 × 3 = 15 rows), z held at its mean:
+g2 = prediction_grid((; x = [0.0], z = [1.0, 2.0, 3.0]), x = -2:1.0:2)
+length(g2.x) == 5
+all(==(2.0), g2.z)                       # z held at mean([1,2,3])
+
+# Composes with a fit:
+preds = predict_parameters(fit, g)       # Dict(:mu => …, :sigma => …) of length 25
+```
+"""
+function prediction_grid(reference::NamedTuple; n::Int = 50, kwargs...)
+    swept = NamedTuple(kwargs)
+    swept_keys = keys(swept)
+
+    # Reduce each held reference column to a scalar; skip any that are swept
+    # (the swept values override the reference).
+    held_pairs = Pair{Symbol,Any}[]
+    for k in keys(reference)
+        k in swept_keys && continue
+        push!(held_pairs, k => _reference_scalar(reference[k]))
+    end
+
+    # Collect the swept value vectors (in kwarg order) and form the Cartesian
+    # product. `Iterators.product` varies the FIRST argument fastest.
+    swept_vals = [collect(swept[k]) for k in swept_keys]
+    combos = isempty(swept_vals) ? [()] : vec(collect(Iterators.product(swept_vals...)))
+    nrows = length(combos)
+
+    cols = Pair{Symbol,Vector}[]
+    for (i, k) in enumerate(swept_keys)
+        push!(cols, k => [combo[i] for combo in combos])
+    end
+    for (k, v) in held_pairs
+        push!(cols, k => fill(v, nrows))
+    end
+    return (; cols...)
+end
+
+# Reduce a held reference column to the scalar used across the grid: the mean of
+# a numeric array, the first element of any other array, or the value itself.
+_reference_scalar(v::AbstractArray{<:Number}) = mean(v)
+_reference_scalar(v::AbstractArray) = first(v)
+_reference_scalar(v) = v
+
+"""
     marginal_parameters(fit) -> Dict{Symbol,Vector{Float64}}
 
 In-sample fitted per-observation distributional parameters, read straight from
-the stored fit — a cheap accessor with no recomputation. Returns `:mu` from
-`fit.means` and every per-observation scale parameter from `fit.scales` (e.g.
-`:sigma`, `:nu`, `:zi`, `:hu`, `:zoi`, `:coi`).
+the stored fit — a cheap accessor with no recomputation. Returns the mean(s) from
+`fit.means` (`:mu`, or `:mu1`/`:mu2` for a bivariate fit) and every per-observation
+scale / correlation parameter from `fit.scales` (e.g. `:sigma`, `:nu`, `:zi`,
+`:hu`, `:zoi`, `:coi`; `:sigma1`/`:sigma2`/`:rho12` for a bivariate fit).
 
 In-sample these equal `predict_parameters(fit, data)` (response scale).
 
@@ -497,10 +593,12 @@ m[:sigma] == fit.scales[:sigma]
 """
 function marginal_parameters(fit::DrmFit)
     out = Dict{Symbol,Vector{Float64}}()
-    haskey(fit.means, :mu) && (out[:mu] = fit.means[:mu])
     for (p, _) in fit.blocks
-        p === :mu && continue
-        haskey(fit.scales, p) && (out[p] = fit.scales[p])
+        if haskey(fit.means, p)        # mean parameter(s): :mu (univariate) / :mu1,:mu2 (bivariate)
+            out[p] = fit.means[p]
+        elseif haskey(fit.scales, p)   # scale / correlation parameters: :sigma(1/2), :rho12, family extras
+            out[p] = fit.scales[p]
+        end
     end
     return out
 end

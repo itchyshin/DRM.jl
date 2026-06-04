@@ -30,8 +30,11 @@ y = 0.3 .+ 0.5 .* x .+ u[site] .+ 0.4 .* randn(n)
 fit = drm(bf(@formula(y ~ x + spatial(1 | site)), @formula(sigma ~ 1)),
           Gaussian(); data = (; y, x, site), coords = coords)
 
-re_sd(fit)[:site]      # spatial SD
+re_sd(fit)[:site]      # spatial SD (square it for the spatial variance)
 ```
+
+`re_sd(fit)[:site]` is the spatial SD `σ_s`; `vc(fit)` is the matching
+random-effect (co)variance summary for the structured block.
 
 ```@example sp
 exp(coef(fit, :range)[1])     # estimated spatial range ρ
@@ -42,6 +45,14 @@ its point estimate with care; the spatial **variance** and the fixed effects are
 the robust outputs. `spatial`, `phylo`, `animal`, and `relmat` all share one
 closed-form structured-GLS engine — only the source of the correlation differs
 (coordinates / tree / pedigree / supplied matrix).
+
+!!! note "Gaussian only (for now)"
+    A coordinate spatial effect is currently supported on the **Gaussian** mean.
+    Routing `spatial(1 | site)` through the sparse-Laplace engine for the
+    non-Gaussian families (Poisson, NB2, Gamma, Beta, Binomial) — alongside
+    `relmat` / `animal` — is tracked as future work in
+    [issue #167](https://github.com/itchyshin/DRM.jl/issues/167)
+    (`phylo` already has its non-Gaussian route).
 
 ## See also
 
