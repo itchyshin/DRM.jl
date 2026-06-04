@@ -115,3 +115,6 @@ if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
 else
     @info "R-parity suite skipped (set DRM_PARITY_TESTS=1 to run)"
 end
+
+# Model comparison + accessor parity (lrtest / anova / aicc / weights / update).
+include("test_comparison.jl")

@@ -54,6 +54,7 @@ include("inference.jl")
 include("variational.jl")
 include("summary.jl")
 include("visualization.jl")
+include("comparison.jl")
 
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
@@ -66,7 +67,8 @@ export AugProblem, make_problem,
 export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
        coef, vcov, loglik, nobs, dof, aic, bic, fixef, re_sd, vc, ranef, sigma, corpairs, rho12, stderror, confint, coeftable, fitted, residuals, predict, predict_parameters, marginal_parameters, prediction_grid, simulate, bootstrap_ci, bootstrap_summary, bootstrap_result, check_drm, family,
        profile_result, profile_curve, parameter_surface, corpairs_data,
-       is_converged, deviance, dof_residual
+       is_converged, deviance, dof_residual,
+       lrtest, anova, aicc, weights, update
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare
