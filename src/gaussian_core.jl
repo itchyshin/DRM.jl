@@ -411,11 +411,17 @@ end
 #   :hu    → `_logistic.(η)`          (poisson.jl / negbinomial.jl)
 #   :zoi   → `_logistic.(η)`          (zeroonebeta.jl)
 #   :coi   → `_logistic.(η)`          (zeroonebeta.jl)
+# Bivariate Gaussian (gaussian_bivariate.jl `drm(::BivariateDrmFormula, …)`):
+#   :mu1, :mu2     → `_mean_response(fam, η)` (identity for Gaussian)
+#   :sigma1, :sigma2 → exp.(η)
+#   :rho12         → tanh.(η)         (plain tanh / atanh link; no clamp/scale)
 function _param_response(fam, p::Symbol, η)
-    if p === :mu
+    if p === :mu || p === :mu1 || p === :mu2
         return _mean_response(fam, η)
-    elseif p === :sigma
+    elseif p === :sigma || p === :sigma1 || p === :sigma2
         return exp.(η)
+    elseif p === :rho12
+        return tanh.(η)
     elseif p === :nu
         return fam isa Tweedie ? _logit12.(η) : exp.(η)
     elseif p === :zi || p === :hu || p === :zoi || p === :coi
@@ -440,8 +446,9 @@ it reproduces [`marginal_parameters`](@ref) (i.e. `fit.means[:mu]`,
 `fit.scales[...]`). `type = :link` returns the linear predictor `Xβ̂` per
 parameter (the working scale).
 
-Univariate models only; bivariate models throw an `ArgumentError` (use
-`predict(fit, newdata)` for the means).
+For a univariate fit the parameters are `:mu`, (`:sigma`) plus family extras; for
+a bivariate fit they are `:mu1, :mu2, :sigma1, :sigma2, :rho12` (each from its own
+fixed-effects RHS, with the σ links `exp` and the ρ12 link `tanh`).
 
 # Example
 ```julia
@@ -460,17 +467,25 @@ predict_parameters(fit, data; type = :link)[:mu]   # == Xβ̂ (predict link scal
 function predict_parameters(fit::DrmFit, newdata; type::Symbol = :response)
     f = fit.formula
     f === nothing && error("predict_parameters: this fit did not retain its formula")
-    f isa DrmFormula || throw(ArgumentError("predict_parameters: bivariate models not yet supported (tracked as a follow-up); use predict(fit, newdata) for the means"))
     type in (:response, :link) || error("predict_parameters: `type` must be :response or :link")
     forms = Dict(f.forms)
     nd = NamedTuple(pairs(newdata))
     nrows = length(first(values(nd)))
-    ndr = merge(nd, NamedTuple{(f.response,)}((zeros(nrows),)))
+    # A real LHS to dummy into `_design` for each parameter's RHS. The univariate
+    # form has one response; the bivariate form has two (use response1 for the
+    # σ/ρ placeholder RHS, exactly as the bivariate fitter does). The per-parameter
+    # response symbol is chosen inline in the loop below (a conditional inner
+    # function is not reliably bound in local scope).
+    bivar = !(f isa DrmFormula)
+    ndr = bivar ?
+        merge(nd, NamedTuple{(f.response1, f.response2)}((zeros(nrows), zeros(nrows)))) :
+        merge(nd, NamedTuple{(f.response,)}((zeros(nrows),)))
     out = Dict{Symbol,Vector{Float64}}()
     for (p, _) in fit.blocks
         haskey(forms, p) || continue          # skip RE-SD / cutpoint blocks (:resd, :recov, :cutpoints, …)
+        resp = bivar ? (p === :mu2 ? f.response2 : f.response1) : f.response
         fixed_p, _, _, _ = _split_ranef(forms[p])
-        _, Xp, _ = _design(f.response, fixed_p, ndr)
+        _, Xp, _ = _design(resp, fixed_p, ndr)
         ηp = Xp * coef(fit, p)
         out[p] = type === :link ? ηp : _param_response(fit.family, p, ηp)
     end
@@ -481,9 +496,10 @@ end
     marginal_parameters(fit) -> Dict{Symbol,Vector{Float64}}
 
 In-sample fitted per-observation distributional parameters, read straight from
-the stored fit — a cheap accessor with no recomputation. Returns `:mu` from
-`fit.means` and every per-observation scale parameter from `fit.scales` (e.g.
-`:sigma`, `:nu`, `:zi`, `:hu`, `:zoi`, `:coi`).
+the stored fit — a cheap accessor with no recomputation. Returns the mean(s) from
+`fit.means` (`:mu`, or `:mu1`/`:mu2` for a bivariate fit) and every per-observation
+scale / correlation parameter from `fit.scales` (e.g. `:sigma`, `:nu`, `:zi`,
+`:hu`, `:zoi`, `:coi`; `:sigma1`/`:sigma2`/`:rho12` for a bivariate fit).
 
 In-sample these equal `predict_parameters(fit, data)` (response scale).
 
@@ -497,10 +513,12 @@ m[:sigma] == fit.scales[:sigma]
 """
 function marginal_parameters(fit::DrmFit)
     out = Dict{Symbol,Vector{Float64}}()
-    haskey(fit.means, :mu) && (out[:mu] = fit.means[:mu])
     for (p, _) in fit.blocks
-        p === :mu && continue
-        haskey(fit.scales, p) && (out[p] = fit.scales[p])
+        if haskey(fit.means, p)        # mean parameter(s): :mu (univariate) / :mu1,:mu2 (bivariate)
+            out[p] = fit.means[p]
+        elseif haskey(fit.scales, p)   # scale / correlation parameters: :sigma(1/2), :rho12, family extras
+            out[p] = fit.scales[p]
+        end
     end
     return out
 end

@@ -74,7 +74,7 @@ import Distributions          # qualified — DRM exports its own `Poisson` fami
         @test mp[:mu] == fit.means[:mu]
     end
 
-    @testset "bivariate models throw" begin
+    @testset "bivariate Gaussian: keys + in-sample reproduction (mu1/mu2/sigma1/sigma2/rho12)" begin
         Random.seed!(20260531)
         n = 1500
         x = randn(n)
@@ -90,6 +90,37 @@ import Distributions          # qualified — DRM exports its own `Poisson` fami
                      sigma1 = @formula(sigma1 ~ x), sigma2 = @formula(sigma2 ~ x),
                      rho12 = @formula(rho12 ~ x)), Gaussian(); data = data)
 
-        @test_throws ArgumentError predict_parameters(fit, data)
+        pp = predict_parameters(fit, data)
+        # Keys == the parameters present in the bivariate formula.
+        params = Set(first.(fit.formula.forms))
+        @test params == Set([:mu1, :mu2, :sigma1, :sigma2, :rho12])
+        @test Set(keys(pp)) == params
+
+        # In-sample reproduction of the stored fitted parameters (the anchor):
+        # mu1/mu2 from fit.means (identity link), sigma1/sigma2 (exp link) and
+        # rho12 (tanh link) from fit.scales.
+        @test pp[:mu1]    ≈ fit.means[:mu1]    rtol = 1e-8
+        @test pp[:mu2]    ≈ fit.means[:mu2]    rtol = 1e-8
+        @test pp[:sigma1] ≈ fit.scales[:sigma1] rtol = 1e-8
+        @test pp[:sigma2] ≈ fit.scales[:sigma2] rtol = 1e-8
+        @test pp[:rho12]  ≈ fit.scales[:rho12]  rtol = 1e-8
+
+        # marginal_parameters = cheap accessor straight off the fit.
+        mp = marginal_parameters(fit)
+        @test Set(keys(mp)) == params
+        @test mp[:mu1]    == fit.means[:mu1]
+        @test mp[:mu2]    == fit.means[:mu2]
+        @test mp[:sigma1] == fit.scales[:sigma1]
+        @test mp[:sigma2] == fit.scales[:sigma2]
+        @test mp[:rho12]  == fit.scales[:rho12]
+
+        # link scale: mu link is identity for Gaussian, so == predict link means.
+        ppl = predict_parameters(fit, data; type = :link)
+        @test ppl[:mu1] ≈ predict(fit, data; type = :link)[:mu1] rtol = 1e-10
+        @test ppl[:mu2] ≈ predict(fit, data; type = :link)[:mu2] rtol = 1e-10
+        # exp / tanh of the working scale recovers the response-scale fits.
+        @test exp.(ppl[:sigma1]) ≈ fit.scales[:sigma1] rtol = 1e-8
+        @test exp.(ppl[:sigma2]) ≈ fit.scales[:sigma2] rtol = 1e-8
+        @test tanh.(ppl[:rho12]) ≈ fit.scales[:rho12]  rtol = 1e-8
     end
 end
