@@ -1,0 +1,5 @@
+drmtmb_version = "0.1.3"
+generated_on = "2026-06-03"
+r_call = "drmTMB(drm_formula(y ~ x + meta_V(V = v), sigma ~ 1), family = gaussian(), data = dat)"
+seed = 20260606
+note = "Generated outputs only; no drmTMB source vendored. R drmTMB uses named meta_V(V = v); DRM.jl runner uses meta_V(v)."

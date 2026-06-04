@@ -1,8 +1,9 @@
-# R-parity scaffold (`test/parity/`) — design for #17
+# R-parity suite (`test/parity/`) — Workflow G / #17
 
-**Status:** design only (this README). No `.jl` test exists yet. The harness
-lands in Phase 1.1+ as **Workflow G** (`r-parity-suite`), owned by **Hopper**,
-gated by `engine-quality-battery` gate **R-parity ≤ 1e-6**.
+**Status:** active gated suite. `compare.jl`, `loadfixture.jl`, and
+`runparity.jl` are wired from `test/runtests.jl` behind
+`DRM_PARITY_TESTS=1`; `gen_fixtures.R` regenerates the committed numeric
+fixtures on a maintainer machine with local R + drmTMB.
 
 This directory hosts the DRM.jl ↔ **drmTMB v0.1.3** numerical-parity suite. It
 runs against **pre-generated drmTMB reference outputs** committed under
@@ -31,8 +32,10 @@ drmTMB is **GPL (≥3)**; DRM.jl is **MIT**. The license boundary is absolute:
 ```
 test/parity/
 ├── README.md                 # this design doc
-├── runparity.jl              # (planned) entry point; included by runtests.jl behind the env gate
-├── compare.jl                # (planned) the comparison contract helpers (load fixture, assert within tol)
+├── runparity.jl              # entry point; included by runtests.jl behind the env gate
+├── compare.jl                # comparison contract helpers
+├── loadfixture.jl            # TOML/CSV fixture loaders
+├── gen_fixtures.R            # maintainer-only generator; never run by tests
 └── fixtures/
     ├── gaussian-locscale/
     │   ├── data.csv           # input data (generated / simulated — MIT-clean)
@@ -89,9 +92,8 @@ note           = "Generated outputs only; no drmTMB source vendored (MIT-clean).
 ```
 
 Fixtures are produced **out-of-band** by a maintainer who has R + drmTMB
-installed (a small generator script that lives in the drmTMB-side repo, not
-here), then the resulting `expected.toml` / `data.csv` are copied in. The
-generator is **never required to run the suite** — only the committed outputs.
+installed, using `gen_fixtures.R`. The generator is **never required to run the
+suite** — only the committed outputs.
 
 ---
 
@@ -107,7 +109,7 @@ For each fixture case the harness:
    | Quantity | Comparison | Tolerance (default) |
    |---|---|---|
    | **coef** | name-matched point estimates (μ, σ, ρ12, …) | `rtol = 1e-4`, `atol = 1e-6` |
-   | **vcov** | matrix, reordered to a common name order | `rtol = 1e-3` (Hessian-derived, looser) |
+   | **vcov** | matrix, reordered to a common name order | `rtol = 1e-3`, `atol = 1e-8` (Hessian-derived, looser) |
    | **loglik** | scalar | `atol = 1e-4` |
    | **aic** | scalar (derived from loglik + df) | `atol = 1e-4` |
 
@@ -123,6 +125,14 @@ For each fixture case the harness:
 Tolerances are per-case overridable in `expected.toml` (`[tol]` block) so a hard
 case (e.g. beta-binomial near a boundary) can relax without loosening the whole
 suite.
+
+The committed NB2 and Student fixtures are transformed onto DRM.jl's documented
+working coefficient scales before writing `expected.toml`: NB2 `sigma` from
+drmTMB `log(σ)` to DRM.jl `log(θ) = -2 log(σ)`, and Student `nu` from drmTMB
+`log(ν - 2)` to DRM.jl `log(ν)`. The covariance rows/columns are transformed by
+the same Jacobians. This keeps the fixture values mathematical-parity numbers
+for DRM.jl's public coefficient scale while recording the exact R call in
+`expected.meta.toml`.
 
 ---
 
@@ -142,11 +152,13 @@ else
 end
 ```
 
-`runparity.jl` (planned) globs `fixtures/*/expected.toml`, fits each case with
-DRM.jl, and applies `compare.jl`'s contract. **No RCall at run time** — fixtures
-are static. (A separate, also env-gated `DRM_PARITY_REGEN=1` path *could* call
-RCall.jl to regenerate fixtures on a maintainer machine that has drmTMB, but
-that is out of scope for #17 and never runs on CI.)
+`runparity.jl` globs `fixtures/*/expected.toml`, fits each case with DRM.jl, and
+applies `compare.jl`'s contract. **No RCall at run time** — fixtures are static.
+Regeneration is explicit and local-only:
+
+```sh
+Rscript --vanilla test/parity/gen_fixtures.R
+```
 
 CI: the parity gate is a dedicated `workflow_dispatch` / opt-in job that sets
 `DRM_PARITY_TESTS=1` (Linux-only, cost-disciplined, per the repo's local-checks
@@ -156,7 +168,7 @@ discipline). The default PR test run stays fast and R-free.
 
 ## What #17 delivers vs. defers
 
-- **This scaffold (#17):** directory + fixture format + comparison contract +
-  env-gate wiring design (this README). License-clean by construction.
-- **Deferred to Phase 1.1 (Workflow G / Hopper):** the actual `runparity.jl` /
-  `compare.jl` `.jl` code, the first committed fixtures, and the opt-in CI job.
+- **This suite (#17):** directory + fixture format + comparison contract +
+  env-gate wiring + committed canonical fixtures. License-clean by construction.
+- **Deferred:** opt-in CI scheduling for the parity gate and additional fixture
+  cells beyond the six canonical cases.

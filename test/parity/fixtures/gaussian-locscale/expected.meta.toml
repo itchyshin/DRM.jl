@@ -1,0 +1,5 @@
+drmtmb_version = "0.1.3"
+generated_on = "2026-06-03"
+r_call = "drmTMB(drm_formula(y ~ x, sigma ~ x), family = gaussian(), data = dat)"
+seed = 20260604
+note = "Generated outputs only; no drmTMB source vendored."

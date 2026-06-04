@@ -3,7 +3,7 @@
 The parity suite (`runparity.jl`, gated by `DRM_PARITY_TESTS=1`) compares DRM.jl
 against **committed drmTMB v0.1.3 reference numbers** — it never calls R at run
 time. Those reference numbers are produced **out-of-band** by a maintainer with
-local R + drmTMB, then copied in. This file is the recipe.
+local R + drmTMB using `gen_fixtures.R`. This file is the recipe.
 
 ## License boundary (read first)
 
@@ -28,10 +28,32 @@ Use the tutorial slug (`gaussian-locscale`, `robust-student`, …) so a parity
 case lines up 1:1 with the article it backs. A folder name starting with `_`
 (e.g. `_selftest`) is skipped by the runner.
 
-## R snippet shape (maintainer machine, has drmTMB)
+## Generator
 
-Run a fit, then write out the numbers — example for the Gaussian
-location–scale case:
+From the repository root:
+
+```sh
+Rscript --vanilla test/parity/gen_fixtures.R
+```
+
+The script writes the six canonical fixture folders:
+
+- `gaussian-locscale`
+- `gaussian-bivariate-rho12`
+- `meta-analysis-V`
+- `robust-student`
+- `count-nbinom2`
+- `proportion-beta`
+
+The generator records the exact `drmTMB` package version in each
+`expected.meta.toml`. To force the pinned tag without modifying the user's
+normal R library, prepend a temporary library containing `drmTMB 0.1.3` before
+sourcing the script.
+
+## R snippet shape
+
+The generator does this pattern for each case — run a fit, then write out the
+numbers. Example for the Gaussian location–scale case:
 
 ```r
 set.seed(1)
@@ -46,6 +68,18 @@ fit <- drmTMB(drm_formula(y ~ x, sigma ~ x), family = gaussian(), data = dat)
 write.csv(dat, "data.csv", row.names = FALSE)
 # ... emit expected.toml from coef(fit), vcov(fit), logLik(fit), AIC(fit) ...
 ```
+
+For `meta-analysis-V`, local drmTMB uses `meta_V(V = v)` in the R call; DRM.jl's
+runner uses the current Julia marker spelling `meta_V(v)`.
+
+For NB2 and Student, generated coefficients are written on DRM.jl's public
+working scale:
+
+- NB2: drmTMB `log(σ)` becomes DRM.jl `log(θ) = -2 log(σ)`.
+- Student: drmTMB `log(ν - 2)` becomes DRM.jl `log(ν)`.
+
+The corresponding covariance rows/columns are transformed by the same
+Jacobians before writing `[vcov]`.
 
 ## `expected.toml` format
 

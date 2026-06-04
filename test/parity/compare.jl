@@ -32,7 +32,8 @@ Fields:
 - `vcov::Union{Nothing,Matrix{Float64}}` — reference covariance matrix in
   `vcov_order` order (nothing when not supplied).
 - `tol::Dict{String,Float64}` — per-case tolerance overrides (`[tol]` block); any
-  of `rtol_coef`, `atol_coef`, `rtol_vcov`, `atol_loglik`, `atol_aic`.
+  of `rtol_coef`, `atol_coef`, `rtol_vcov`, `atol_vcov`, `atol_loglik`,
+  `atol_aic`.
 """
 struct ParityExpected
     family::String
@@ -101,7 +102,7 @@ _within(a, b, rtol, atol) = abs(a - b) <= max(atol, rtol * max(abs(a), abs(b)))
 """
     compare_fit(fit, expected::ParityExpected;
                 rtol_coef=1e-4, atol_coef=1e-6,
-                rtol_vcov=1e-3, atol_loglik=1e-4) -> (passed, failures)
+                rtol_vcov=1e-3, atol_vcov=1e-8, atol_loglik=1e-4) -> (passed, failures)
 
 Compare a DRM.jl `fit` against a `ParityExpected` reference under the README's
 tolerance table. Returns a NamedTuple `(passed::Bool, failures::Vector{String})`
@@ -110,34 +111,45 @@ human-readable line per failure of the form
 `"<case quantity>: drmTMB=… DRM.jl=… |Δ|=… > tol"`.
 
 Checks, in order:
-1. coef — every expected coef name must exist in `drm_coef_named(fit)` and be
+1. metadata — `n` and `df` must match the fit.
+2. coef — every expected coef name must exist in `drm_coef_named(fit)` and be
    within (`rtol_coef`, `atol_coef`). A missing name is itself a failure.
-2. loglik — scalar, within `atol_loglik`.
-3. aic — scalar (derived `-2·loglik + 2·df`), within `atol_loglik` by default
+3. loglik — scalar, within `atol_loglik`.
+4. aic — scalar (derived `-2·loglik + 2·df`), within `atol_loglik` by default
    (override with `[tol] atol_aic`).
-4. vcov — if `expected.vcov` is supplied, reorder the fit's `vcov(fit)` to
+5. vcov — if `expected.vcov` is supplied, reorder the fit's `vcov(fit)` to
    `expected.vcov_order` (using `drm_coef_named`'s ordering of the fit) and
-   compare element-wise within (`rtol_vcov`, atol = 0 by default).
+   compare element-wise within (`rtol_vcov`, `atol_vcov`).
 
 Per-case overrides from the fixture's `[tol]` block take precedence over the
 keyword defaults (keys: `rtol_coef`, `atol_coef`, `rtol_vcov`, `atol_loglik`,
-`atol_aic`).
+`atol_vcov`, `atol_aic`).
 """
 function compare_fit(fit, expected::ParityExpected;
         rtol_coef::Real = 1e-4, atol_coef::Real = 1e-6,
-        rtol_vcov::Real = 1e-3, atol_loglik::Real = 1e-4)
+        rtol_vcov::Real = 1e-3, atol_vcov::Real = 1e-8,
+        atol_loglik::Real = 1e-4)
 
     failures = String[]
 
     rc = _tol(expected, "rtol_coef", Float64(rtol_coef))
     ac = _tol(expected, "atol_coef", Float64(atol_coef))
     rv = _tol(expected, "rtol_vcov", Float64(rtol_vcov))
+    av = _tol(expected, "atol_vcov", Float64(atol_vcov))
     al = _tol(expected, "atol_loglik", Float64(atol_loglik))
     aa = _tol(expected, "atol_aic", al)
 
     got = drm_coef_named(fit)
 
-    # 1. coefficients — name-matched.
+    # 1. metadata.
+    nfit = nobs(fit)
+    nfit == expected.n ||
+        push!(failures, "nobs: drmTMB=$(expected.n) DRM.jl=$(nfit)")
+    dfit = dof(fit)
+    dfit == expected.df ||
+        push!(failures, "df: drmTMB=$(expected.df) DRM.jl=$(dfit)")
+
+    # 2. coefficients — name-matched.
     for name in sort!(collect(keys(expected.coef)))
         want = expected.coef[name]
         if !haskey(got, name)
@@ -152,21 +164,21 @@ function compare_fit(fit, expected::ParityExpected;
         end
     end
 
-    # 2. loglik.
+    # 3. loglik.
     llh = loglik(fit)
     if !_within(expected.loglik, llh, 0.0, al)
         push!(failures, "loglik: drmTMB=$(expected.loglik) DRM.jl=$(llh) " *
             "|Δ|=$(abs(expected.loglik - llh)) > atol=$(al)")
     end
 
-    # 3. aic (derived from loglik + df).
+    # 4. aic (derived from loglik + df).
     aic_fit = -2 * llh + 2 * dof(fit)
     if !_within(expected.aic, aic_fit, 0.0, aa)
         push!(failures, "aic: drmTMB=$(expected.aic) DRM.jl=$(aic_fit) " *
             "|Δ|=$(abs(expected.aic - aic_fit)) > atol=$(aa)")
     end
 
-    # 4. vcov (optional) — reorder fit's vcov to the expected name order.
+    # 5. vcov (optional) — reorder fit's vcov to the expected name order.
     if expected.vcov !== nothing && expected.vcov_order !== nothing
         order = expected.vcov_order
         # Build the fit's flat-name → vcov-index map by walking blocks in order
@@ -196,10 +208,10 @@ function compare_fit(fit, expected::ParityExpected;
                 for i in 1:k, j in 1:k
                     want = expected.vcov[i, j]
                     have = Vp[i, j]
-                    if !_within(want, have, rv, 0.0)
+                    if !_within(want, have, rv, av)
                         push!(failures, "vcov[$(order[i]),$(order[j])]: " *
                             "drmTMB=$(want) DRM.jl=$(have) " *
-                            "|Δ|=$(abs(want - have)) > rtol=$(rv)")
+                            "|Δ|=$(abs(want - have)) > (rtol=$(rv), atol=$(av))")
                     end
                 end
             end
