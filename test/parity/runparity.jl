@@ -8,7 +8,7 @@
 # trivially with an @info, because an empty real-fixture set is expected until a
 # maintainer with local R + drmTMB generates them.
 
-using DRM       # exports @formula, bf, drm, Gaussian
+using DRM       # exports @formula, bf, drm, families, markers
 using Test
 using TOML
 
@@ -18,41 +18,72 @@ using TOML
 isdefined(@__MODULE__, :ParityExpected) || include("compare.jl")
 isdefined(@__MODULE__, :load_expected) || include("loadfixture.jl")
 
-# Build the (response formula, sigma formula) and family object for a case from
-# its `expected.toml` [fit] metadata. Returns `nothing` for an unsupported
-# family/shape so the caller can @test_skip rather than error.
-#
-# Supported now: family = "gaussian" univariate location–scale, where the design
-# is reconstructed from the data columns. We do NOT parse arbitrary R formula
-# text here (that lives in the bf() front end); instead the runner uses a simple
-# convention — see _parity_formula below — that covers the committed gaussian
-# location–scale fixtures. Anything else returns nothing.
+# Build the family object for a case from its `expected.toml` [fit] metadata.
+# Returns `nothing` for an unsupported family/shape so the caller can @test_skip
+# rather than error.
 function _parity_family(family::AbstractString)
     fam = lowercase(strip(family))
     fam == "gaussian" && return Gaussian()
+    fam == "biv_gaussian" && return Gaussian()
+    fam == "gaussian_bivariate" && return Gaussian()
+    fam == "student" && return Student()
+    fam == "nbinom2" && return NegBinomial2()
+    fam == "beta" && return Beta()
     return nothing
 end
 
-# Parse the `formula` text from [fit] (e.g. "y ~ x; sigma ~ x") into the
-# response/sigma RHS. We support the two-formula location–scale convention used
-# by the committed gaussian fixtures. Returns (bf_bundle) or nothing if it can't
-# be parsed into the supported shape.
+function _formula_from_expr(expr)
+    (expr isa Expr && expr.head === :call && expr.args[1] === :~) || return nothing
+    return eval(Expr(:macrocall, Symbol("@formula"), LineNumberNode(0), expr))
+end
+
+function _parse_formula_part(part::AbstractString)
+    expr = Meta.parse(part)
+    if expr isa Expr && expr.head === :(=)
+        length(expr.args) == 2 || return nothing
+        key = expr.args[1]
+        key isa Symbol || return nothing
+        form = _formula_from_expr(expr.args[2])
+        form === nothing && return nothing
+        return key => form
+    end
+    form = _formula_from_expr(expr)
+    form === nothing && return nothing
+    return nothing => form
+end
+
+const _BIVARIATE_PARITY_KEYS = Set((:mu1, :mu2, :sigma1, :sigma2, :rho12))
+
 function _parity_formula(formula_text::AbstractString, family::AbstractString)
-    fam = lowercase(strip(family))
-    fam == "gaussian" || return nothing
-    parts = strip.(split(formula_text, ';'))
-    length(parts) == 2 || return nothing
-    # Each part is "<lhs> ~ <rhs>". We reconstruct via Meta.parse + @formula-like
-    # building. To keep dependencies minimal and avoid eval pitfalls, only the
-    # canonical "y ~ <rhs>; sigma ~ <rhs>" forms are accepted; the RHS strings are
-    # parsed by Julia's parser and fed through StatsModels' formula machinery.
-    mu_expr = Meta.parse(parts[1])
-    sg_expr = Meta.parse(parts[2])
-    (mu_expr isa Expr && mu_expr.head === :call && mu_expr.args[1] === :~) || return nothing
-    (sg_expr isa Expr && sg_expr.head === :call && sg_expr.args[1] === :~) || return nothing
-    mu_form = eval(Expr(:macrocall, Symbol("@formula"), LineNumberNode(0), mu_expr))
-    sg_form = eval(Expr(:macrocall, Symbol("@formula"), LineNumberNode(0), sg_expr))
-    return bf(mu_form, sg_form)
+    parts = filter(!isempty, strip.(split(formula_text, ';')))
+    isempty(parts) && return nothing
+
+    parsed = map(_parse_formula_part, parts)
+    any(isnothing, parsed) && return nothing
+
+    keyed = Dict{Symbol,Any}()
+    positional = Any[]
+    for item in parsed
+        key, form = item
+        if key === nothing
+            push!(positional, form)
+        else
+            keyed[key] = form
+        end
+    end
+
+    if any(k -> k in _BIVARIATE_PARITY_KEYS, keys(keyed))
+        (isempty(positional) && haskey(keyed, :mu1) && haskey(keyed, :mu2)) ||
+            return nothing
+        return bf(; mu1 = keyed[:mu1],
+                    mu2 = keyed[:mu2],
+                    sigma1 = get(keyed, :sigma1, nothing),
+                    sigma2 = get(keyed, :sigma2, nothing),
+                    rho12 = get(keyed, :rho12, nothing))
+    end
+
+    isempty(keyed) || return nothing
+    return bf(positional...)
 end
 
 let fixtures_root = joinpath(@__DIR__, "fixtures")
