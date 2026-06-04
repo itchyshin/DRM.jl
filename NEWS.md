@@ -4,6 +4,20 @@ All notable changes are recorded here. The live work ledger is
 [GitHub Issues](https://github.com/itchyshin/DRM.jl/issues); this file is the
 human-readable changelog and mirrors `docs/src/changelog.md`.
 
+## Unreleased
+
+- **Per-parameter prediction** — `predict_parameters` (fitted distributional
+  parameters on new data), `marginal_parameters` (population-averaged), and
+  `prediction_grid` (build a swept `newdata` grid from a reference table).
+- **Auditable profile-likelihood CIs** — `profile_result` exposes the full
+  profile object behind `confint(fit; method = :profile)`.
+- **Post-fit accessors** — `summary`, `family`, `is_converged`, `deviance`,
+  `dof_residual`, and `rho12` (bivariate residual correlation).
+- **Non-Gaussian phylogenetic random effects** — `phylo(1 | species, tree)` on
+  the mean for Poisson, NegBinomial2, Gamma, Beta, and Binomial families
+  (constant `σ`), via a sparse Laplace approximation, plus crossed intercepts
+  `(1 | g) + (1 | h)` for those families.
+
 ## v0.1.1 (2026-05-31)
 
 **drmTMB family parity complete** — the four remaining families, each

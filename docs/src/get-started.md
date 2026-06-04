@@ -64,6 +64,22 @@ exp(coef(fit, :sigma)[2])      # residual-SD ratio per unit x
 from a group-level random-effect SD or a known sampling variance. See
 [Which scale are you modelling?](model-guides/which-scale.md).
 
+## Recent additions
+
+The latest tranche of work extends what you can ask of a fitted model:
+
+- **Per-parameter prediction** — `predict_parameters` (fitted μ/σ/… on new
+  data), `marginal_parameters` (population-averaged), and `prediction_grid` for
+  building a swept `newdata` grid from a reference table.
+- **Auditable profile-likelihood CIs** — `profile_result` returns the full
+  profile object behind `confint(fit; method = :profile)`.
+- **Post-fit accessors** — `summary`, `family`, `is_converged`, `deviance`,
+  `dof_residual`, and `rho12` (bivariate residual correlation).
+- **Non-Gaussian phylogenetic random effects** — `phylo(1 | species, tree)` on
+  the mean for Poisson, NegBinomial2, Gamma, Beta, and Binomial families
+  (constant `σ`), via a sparse Laplace approximation, plus crossed intercepts
+  `(1 | g) + (1 | h)` for the same families.
+
 ## Where to go next
 
 - [When variance carries signal](tutorials/location-scale.md) — a fuller
