@@ -104,6 +104,9 @@ include("test_prediction_grid.jl")
 # Placed at the END to avoid colliding with other in-flight branches' includes.
 include("test_parity_harness.jl")
 
+# Delta-method prediction standard errors (feat-predict-se).
+include("test_predict_se.jl")
+
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
     @testset "R-parity vs drmTMB v0.1.3" begin
