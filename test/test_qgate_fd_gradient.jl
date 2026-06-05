@@ -12,8 +12,9 @@
 #   • pack θ = [β(7); lc(10)] with pack_theta;
 #   • analytic gradient  g_analytic = marginal_and_exact_grad(prob, Q_cond, θ)[2];
 #   • central finite-difference gradient of the TRUE marginal NLL
-#     marginal_nll(prob, Q_cond, θ)[1] (validated to match the dense Laplace
-#     oracle to 1e-10 — the same reference grad_check_p100.jl differences).
+#     marginal_nll(prob, Q_cond, θ)[1], warm-starting perturbed solves from the
+#     base θ-mode so the finite-difference reference is not dominated by
+#     inner-mode stopping noise.
 #
 # A non-diagonal Λ is used (the grad_check_diag.jl "case B / non-diagonal" setup
 # that PASSED), evaluated at θ0 — away from the optimum the exact gradient must
@@ -58,11 +59,11 @@ using Test, LinearAlgebra, Random, Statistics
     θ = pack_theta(β0, Λ0)
 
     # --- analytic exact gradient (engine entry point) ---------------------------
-    _, g_analytic, _, _ = marginal_and_exact_grad(prob, Q_cond, θ; n_newton = 120)
+    _, g_analytic, u_ref, _ = marginal_and_exact_grad(prob, Q_cond, θ; n_newton = 120)
 
     # --- central finite-difference gradient of the TRUE marginal NLL ------------
-    mnll(t) = marginal_nll(prob, Q_cond, Vector{Float64}(t); n_newton = 120)[1]
-    h = 1e-6
+    mnll(t) = marginal_nll(prob, Q_cond, Vector{Float64}(t); u0 = u_ref, n_newton = 120)[1]
+    h = 1e-4
     g_fd = similar(θ)
     for k in eachindex(θ)
         tp = copy(θ); tp[k] += h
@@ -70,5 +71,6 @@ using Test, LinearAlgebra, Random, Statistics
         g_fd[k] = (mnll(tp) - mnll(tm)) / (2h)
     end
 
-    @test maximum(abs, g_analytic .- g_fd) ≤ 1e-6
+    max_abs_diff = maximum(abs, g_analytic .- g_fd)
+    @test max_abs_diff ≤ 1e-6
 end
