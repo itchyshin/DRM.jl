@@ -1,6 +1,7 @@
 # Design: coevolution front end (q=4 PLSM public API) — #187
 
-**Status:** design / implementation map. No engine changes. Implementation +
+**Status:** design / implementation map — **API decision locked** (per-predictor
+`phylo(1 | g)` markers, option A below). No engine changes. Implementation +
 verification happen in a local Julia session (the cloud env has no runtime).
 Part of the coevolution epic **#186**; unblocks accessors **#188** and the
 spatial/relmat variant **#189**.
@@ -51,12 +52,14 @@ that call, plus packaging the result as a `DrmFit`.**
    is **#19** and is a hard dependency for *real-tree* fits (but **not** for
    testing — see "Dependencies").
 
-## Proposed public API
+## Public API — **decided: per-predictor markers (option A)**
 
 The engine is **hardwired to q=4** (all four effects `a_l1, a_l2, a_s1, a_s2`
-share one `Σ_a`). The API must map onto that. Two candidate spellings:
+share one `Σ_a`). The API must map onto that. The chosen spelling is **(A)**
+below (per-predictor `phylo(1 | g)` markers, q=4-required); **(B)** is recorded
+as the considered alternative.
 
-- **(A) Per-predictor markers, all four required** *(recommended)* — drmTMB-faithful:
+- **(A) Per-predictor markers, all four required** ✅ **chosen** — drmTMB-faithful:
   ```julia
   drm(bf(mu1    = y1 ~ x + phylo(1 | species),
          mu2    = y2 ~ x + phylo(1 | species),
@@ -71,12 +74,17 @@ share one `Σ_a`). The API must map onto that. Two candidate spellings:
   ("the verified q=4 engine requires a shared phylogenetic effect on
   μ1, μ2, σ1, σ2").
 
-- **(B) Single shared marker** — `drm(bf(...), Gaussian(); tree, phylo_group=:species)`,
-  no markers in the formulas. Simpler to parse but diverges from drmTMB spelling
-  and the univariate convention.
+- **(B) Single shared marker** *(considered, not chosen)* —
+  `drm(bf(...), Gaussian(); tree, phylo_group=:species)`, no markers in the
+  formulas. Simpler to parse but diverges from drmTMB spelling and the
+  univariate `phylo()` convention.
 
-**Open decision for the maintainer** (the one genuine API fork): A vs B. The doc
-assumes **A** below; switching to B changes only the parsing step.
+**Rationale for A:** it matches drmTMB and the existing univariate `phylo(1 | g)`
+marker (one grammar to learn), and it is forward-compatible — when a variable-q
+engine later allows the σ effects to be dropped (q=2), relaxing the "all four
+required" validation is purely additive, with no API change. The "all four
+required" check is the only A-specific guard; everything downstream of parsing is
+identical under A or B.
 
 ## Internal data flow (implementation)
 
