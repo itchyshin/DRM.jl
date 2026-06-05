@@ -107,6 +107,10 @@ include("test_parity_harness.jl")
 # Delta-method prediction standard errors (feat-predict-se).
 include("test_predict_se.jl")
 
+# Standing Q-gate (issue #14): FD-vs-exact gradient check ≤ 1e-6 for the verified
+# q4 sparse-Laplace engine (Workflow Q).
+include("test_qgate_fd_gradient.jl")
+
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
     @testset "R-parity vs drmTMB v0.1.3" begin
