@@ -34,6 +34,12 @@ struct Gamma end
 function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, g_tol::Real = 1e-8,
              se::Bool = true)
     rhs = Dict(f.forms)
+    # Location–scale: a coupled `(1 | tag | group)` shared by the mean and sigma
+    # formulas → one 2×2 group-level covariance fit by the augmented-state engine.
+    lc = _ls_coupled_re(rhs[:mu], get(rhs, :sigma, ConstantTerm(1)))
+    lc === nothing ||
+        return _withformula(_fit_locscale_frontend(Val(:gamma), fam, f, rhs, lc, data;
+                                                    g_tol = g_tol, se = se), f)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
         error("Gamma() does not support meta_V markers")
