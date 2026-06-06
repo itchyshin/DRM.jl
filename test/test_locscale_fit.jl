@@ -30,7 +30,7 @@ _nb2_draw(η, ψ) = (r = exp(ψ); μ = exp(η);
                    βψ[1] + A[species[i], 2]) for i in 1:n]
 
     Q = sparse(1.0 * I, p, p)
-    fit = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, species, p, Q; iterations = 80)
+    fit = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, species, p, Q)
 
     @test isfinite(fit.nll)
     @test isposdef(Symmetric(fit.Lambda))         # valid group-level covariance
@@ -56,7 +56,7 @@ end
                    βψ[1] + A[species[i], 2]) for i in 1:n]
 
     Q, gidx, G = DRM._locscale_phylo_setup(phy, species)
-    fit = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, gidx, G, Q; iterations = 80)
+    fit = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, gidx, G, Q)
 
     @test isfinite(fit.nll)
     @test isposdef(Symmetric(fit.Lambda))

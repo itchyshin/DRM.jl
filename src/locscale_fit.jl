@@ -3,9 +3,10 @@
 #
 # Outer optimisation of the Laplace marginal (`_ls_marginal_nll`) over the
 # fixed effects (βμ on the mean, βψ on the log-dispersion) and the 2×2
-# group-level covariance Λ (log-Cholesky). This is the correctness-first engine:
-# the outer gradient is finite-differenced by Optim's L-BFGS; the exact O(p)
-# outer gradient (Takahashi) is a later optimisation slice.
+# group-level covariance Λ (log-Cholesky). Correctness-first: a derivative-free
+# optimiser (Nelder–Mead) over the marginal — robust but modest. The exact O(p)
+# outer gradient (Takahashi) + a gradient-based optimiser is the next slice; it
+# unlocks fast, accurate fitting and the deferred variance-component recovery.
 #
 # The fitter is agnostic to where the group structure comes from: pass
 #   Q = I_G                      → independent groups (crossed/i.i.d.), or
@@ -16,22 +17,16 @@
 
 using LinearAlgebra: cholesky, Symmetric
 
-# Packed marginal NLL at θ = [βμ; βψ; λ(3)]. `warm` (a Ref holding the previous
-# inner mode) warm-starts the inner Newton solve across outer iterations — the
-# converged mode is unchanged but the solve is far cheaper, which is essential
-# for the finite-difference outer optimiser.
-function _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ; warm = nothing)
+# Packed marginal NLL at θ = [βμ; βψ; λ(3)]. Each call solves the inner mode from
+# a cold start, so the objective is deterministic — required by the optimiser.
+function _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ = @view θ[1:pμ]
     βψ = @view θ[pμ+1:pμ+pψ]
     λv = @view θ[pμ+pψ+1:pμ+pψ+3]
     Λ = _ls_lc_to_Λ(λv)
     P = prior_precision(Q, inv(Λ))
-    η0 = Xμ * βμ
-    ψ0 = Xψ * βψ
-    a0 = warm === nothing ? nothing : warm[]
-    val, a, ok = _ls_marginal_nll(kind, y, η0, ψ0, gidx, G, P; a0 = a0)
-    (warm !== nothing && ok) && (warm[] = a)
+    val, _, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P)
     return ok ? val : 1e18
 end
 
@@ -45,15 +40,14 @@ group-level covariance `Lambda`, the marginal `nll`, and a `converged` flag.
 function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
                        βμ0 = nothing, βψ0 = nothing,
                        λ0 = [log(0.3), 0.0, log(0.3)],
-                       g_tol = 1e-6, iterations = 200)
+                       g_tol = 1e-8, iterations = 600)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ0 === nothing && (βμ0 = _poisson_fixed_start(y, Xμ))
     βψ0 === nothing && (βψ0 = zeros(pψ))
     θ0 = vcat(βμ0, βψ0, λ0)
 
-    warm = Ref{Union{Nothing,Vector{Float64}}}(nothing)
-    nll(θ) = _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ; warm = warm)
-    res = Optim.optimize(nll, θ0, Optim.LBFGS(),
+    nll(θ) = _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
+    res = Optim.optimize(nll, θ0, Optim.NelderMead(),
                          Optim.Options(g_tol = g_tol, iterations = iterations))
     θ̂ = Optim.minimizer(res)
     Λ̂ = _ls_lc_to_Λ(θ̂[pμ+pψ+1:pμ+pψ+3])
