@@ -54,7 +54,7 @@ transform_expected <- function(case, coefs, V, order) {
   deriv <- rep(1.0, length(order))
   names(deriv) <- order
 
-  if (case %in% c("count-nbinom2", "nbinom2-locscale")) {
+  if (case %in% c("count-nbinom2", "nbinom2-dispersion", "nbinom2-locscale")) {
     idx <- startsWith(names(coefs), "sigma_")
     coefs[idx] <- -2.0 * coefs[idx]
     deriv[startsWith(names(deriv), "sigma_")] <- -2.0
@@ -332,12 +332,45 @@ generate_nbinom2_locscale <- function() {
 dir.create(file.path(repo_root(), "test", "parity", "fixtures"),
            recursive = TRUE, showWarnings = FALSE)
 
+## NB2 with a covariate on the dispersion axis (sigma ~ x), FIXED effects — a
+## location-scale-style model drmTMB DOES support today. Validates the trickiest
+## shared convention (drmTMB sigma = sqrt-dispersion ⇒ DRM.jl log(theta) = -2·sigma)
+## with a covariate, not just an intercept.
+generate_nbinom2_dispersion <- function() {
+  seed <- 20260611
+  set.seed(seed)
+  n <- 200
+  x <- rnorm(n)
+  mu <- exp(0.3 + 0.45 * x)
+  eta_sigma <- -0.10 + 0.25 * x            # drmTMB sigma axis; theta = exp(-2*eta_sigma)
+  y <- rnbinom(n, size = exp(-2 * eta_sigma), mu = mu)
+  dat <- data.frame(y = y, x = x)
+  fit <- drmTMB(drm_formula(y ~ x, sigma ~ x), family = nbinom2(), data = dat)
+  write_case(
+    "nbinom2-dispersion", seed, dat, "y ~ x; sigma ~ x", "nbinom2",
+    "drmTMB(drm_formula(y ~ x, sigma ~ x), family = nbinom2(), data = dat)",
+    fit,
+    "NB2 varying dispersion; sigma coefs ×(-2) to DRM.jl log(theta)."
+  )
+}
+
 generate_gaussian()
 generate_bivariate()
 generate_meta()
 generate_student()
 generate_nbinom2()
 generate_beta()
-generate_nbinom2_locscale()
+generate_nbinom2_dispersion()
+
+## The coupled (1|p|species) mu/sigma correlated random effect is NOT yet
+## supported by drmTMB ("planned for a later non-Gaussian random-effect gate"),
+## so this case is guarded: it activates automatically once drmTMB implements it.
+## DRM.jl already fits this model; until drmTMB catches up it is validated
+## internally (marginal vs Gauss–Hermite, exact gradient vs finite differences,
+## recovery, stationarity), not against drmTMB.
+tryCatch(generate_nbinom2_locscale(),
+         error = function(e) message(
+             "Skipping `nbinom2-locscale`: drmTMB does not yet support the coupled ",
+             "(1|p|species) mu/sigma random effect for nbinom2 — ", conditionMessage(e)))
 
 message("Generated drmTMB parity fixtures under test/parity/fixtures/")
