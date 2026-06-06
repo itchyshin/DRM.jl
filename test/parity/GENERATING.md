@@ -110,6 +110,33 @@ The runner reads `[fit].formula` to rebuild the DRM.jl `bf(@formula(y ~ x),
 @formula(sigma ~ x))` bundle, re-fits by ML, and applies the tolerance table in
 `../README.md`. The `coef` names must match `drm_coef_named(fit)` exactly.
 
+## Location–scale (correlated RE) cases: the `[ranef]` block
+
+For a coupled `(1 | p | group)` location–scale model (a correlated species effect
+on BOTH the mean and the dispersion), add an optional `[ranef]` block giving the
+group-level covariance **in DRM.jl's convention**:
+
+```toml
+[ranef]
+group    = "species"
+sd_mu    = 0.50      # mean-axis SD
+sd_sigma = 0.40      # dispersion-axis SD (DRM.jl ψ = log θ scale)
+cor      = 0.25      # mean ↔ dispersion correlation
+```
+
+The runner compares these against `vc(fit)[Symbol(group)]` (within `[tol]`
+`rtol_ranef` / `atol_ranef`). **Two NB2 reparameterisations** must be applied by
+the generator (both encoded in `gen_fixtures.R::generate_nbinom2_locscale`):
+
+- fixed `sigma` coefficients: `DRM log(θ) = −2 · drmTMB sigma` (handled in
+  `transform_expected` for `count-nbinom2` / `nbinom2-locscale`);
+- the **dispersion-axis** group effect satisfies `a^ψ_DRM = −2 · a^σ_drmTMB`, so
+  `sd_sigma_DRM = 2 · sd_sigma_drmTMB` and the mean↔dispersion **correlation flips
+  sign**; `sd_mu` is unchanged (the mean log-link matches).
+
+⚠️ Verify the `VarCorr(fit)` accessor in `generate_nbinom2_locscale` against
+drmTMB's actual layout before trusting the numbers.
+
 ## `expected.meta.toml` (provenance only)
 
 ```toml
