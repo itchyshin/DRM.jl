@@ -91,3 +91,16 @@ Takahashi selected inverse returns them exactly.
   feature-complete for the single-grouping location–scale model (NB2 & Gamma):
   kernels → marginal → exact gradient → fit → recovery → Wald inference, all
   CI-verified. Remaining: 3b public front-end (needs user API decisions).
+- 2026-06-06: smoke tests made robust to RNG/dep drift (#215): the tiny n=60
+  fixtures sit near the variance boundary, where strict isposdef(Λ) flips under
+  ULP-level BLAS non-determinism (passed on #213's 1.12 run, failed on #214's).
+  Relaxed to feasible-fit + valid-covariance; strict PD stays on the
+  well-identified tests.
+- 2026-06-06: **FINDING (open) — phylo fit robustness.** A full phylogenetic
+  fit+inference e2e at p=16 (n=320) was attempted and DROPPED: the fit was very
+  slow (~8.5 min) and did NOT reach gmax<1e-3, and the observed information gave
+  non-finite SEs. The tree's data-free internal nodes leave the scale axis
+  poorly conditioned, so LBFGS stalls and the Hessian is near-singular. The phylo
+  MARGINAL and exact GRADIENT are verified (vs GHQ / FD on trees); the phylo
+  *fit+inference* at moderate p needs optimizer/conditioning work (e.g. a trust
+  region, a variance floor, or integrating out internal nodes). Tracked for #209.
