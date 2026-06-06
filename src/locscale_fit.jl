@@ -46,19 +46,41 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
     βψ0 === nothing && (βψ0 = zeros(pψ))
     θ0 = vcat(βμ0, βψ0, λ0)
 
-    # Gradient-based fit using the exact O(p) outer gradient (`_ls_marginal_grad`,
-    # verified against finite differences). `grad` is the Optim buffer; `G` is the
-    # group count from the signature, so the two never collide.
-    nll(θ) = _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
-    g!(grad, θ) = (grad .= _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ); grad)
-    nm() = Optim.optimize(nll, θ0, Optim.NelderMead(),
-                          Optim.Options(iterations = max(iterations, 2000)))
+    # Gradient-based fit using the exact O(p) outer gradient (`_ls_marginal_grad`).
+    # Two robustness levers, both essential on tree (phylogenetic) problems:
+    #  * WARM-START the inner mode across outer iterations (`warm` Ref). The outer
+    #    gradient is exact (not finite-differenced), so the converged mode — and
+    #    thus the gradient — is unchanged by the start point; warm-starting only
+    #    makes each inner solve cheap (1–2 Newton steps instead of a cold solve).
+    #  * a TRUST-REGION NEWTON outer optimiser (exact gradient + observed
+    #    information as Hessian), which converges quadratically and tolerates the
+    #    ill-conditioning/indefiniteness that makes LBFGS stall on trees. LBFGS
+    #    then Nelder–Mead are kept as fallbacks.
+    warm = Ref{Union{Nothing,Vector{Float64}}}(nothing)
+    function nll(θ)
+        βμ = @view θ[1:pμ]; βψ = @view θ[pμ+1:pμ+pψ]
+        Λ = _ls_lc_to_Λ(θ[pμ+pψ+1:pμ+pψ+3])
+        P = prior_precision(Q, _ls_inv2x2(Λ))
+        val, a, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P; a0 = warm[])
+        ok && (warm[] = copy(a))
+        return ok ? val : 1e18
+    end
+    g!(grad, θ) = (grad .= _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ; a0 = warm[]); grad)
+    h!(H, θ) = (H .= _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ; a0 = warm[]); H)
+    opts = Optim.Options(g_tol = g_tol, iterations = iterations)
+    nm() = (warm[] = nothing; Optim.optimize(nll, θ0, Optim.NelderMead(),
+                          Optim.Options(iterations = max(iterations, 2000))))
     res = try
-        Optim.optimize(nll, g!, θ0, Optim.LBFGS(),
-                       Optim.Options(g_tol = g_tol, iterations = iterations))
+        Optim.optimize(nll, g!, h!, θ0, Optim.NewtonTrustRegion(), opts)
     catch err
         err isa InterruptException && rethrow(err)
-        nm()
+        warm[] = nothing
+        try
+            Optim.optimize(nll, g!, θ0, Optim.LBFGS(), opts)
+        catch err2
+            err2 isa InterruptException && rethrow(err2)
+            nm()
+        end
     end
     θ̂ = Optim.minimizer(res)
     # Feasibility guard. On weakly-identified fixtures a variance MLE can sit on
@@ -72,8 +94,9 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
         θ̂ = Optim.minimizer(res)
     end
     Λ̂ = _ls_lc_to_Λ(θ̂[pμ+pψ+1:pμ+pψ+3])
+    nll(θ̂)                       # ensure warm[] holds the mode at θ̂ for the SE solve
     # Wald inference (opt-in): observed information = Hessian of the exact gradient.
-    V = se ? _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂) : nothing
+    V = se ? _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; a0 = warm[]) : nothing
     return (θ = θ̂,
             beta_mu = θ̂[1:pμ],
             beta_psi = θ̂[pμ+1:pμ+pψ],

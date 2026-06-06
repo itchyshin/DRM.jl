@@ -38,7 +38,7 @@ Exact gradient of `_ls_fit_nll` at the packed θ = [βμ; βψ; λ(3)]. Returns 
 zero vector if the inner mode fails to converge (rare; the caller treats this as
 a flat step). O(p) in the number of groups.
 """
-function _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ)
+function _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ; a0 = nothing)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ = @view θ[1:pμ]
     βψ = @view θ[pμ+1:pμ+pψ]
@@ -47,7 +47,7 @@ function _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ)
     P = prior_precision(Q, Λinv)
     η0 = Xμ * βμ; ψ0 = Xψ * βψ
 
-    a, ch, ok = _ls_inner_mode(kind, y, η0, ψ0, gidx, G, P)
+    a, ch, ok = _ls_inner_mode(kind, y, η0, ψ0, gidx, G, P; a0 = a0)
     grad = zeros(length(θ))
     ok || return grad
 
