@@ -1124,22 +1124,44 @@ function _fit_poisson_crossed_laplace(fam::Poisson, y, Xμ, comps, nmμ, g_tol; 
         val = data + prior + logprior_scale + 0.5 * logdet(ch)
         grad || return val
 
-        # Fast proving-slice gradient: differentiates the Laplace objective with
-        # b̂ frozen. The exact implicit logdet correction is the next #70
-        # optimisation target; this gradient is used to make the R-vs-Julia grid
-        # executable and expose any remaining parity gap.
+        # Exact Laplace gradient via the implicit-function theorem (#165),
+        # generalising the verified two-block crossed path
+        # (`_fit_crossed_mean_laplace`) to K components. For Poisson the data
+        # Hessian weight and its η-derivative coincide (d²ℓ = d³ℓ = μ), so a
+        # single μ drives both the logdet term and the cross term.
+        #
+        # The marginal is  L(θ) = f(b̂,θ) + ½ logdet H,  H = Z'diag(μ)Z + P.
+        # Because b̂ solves ∂f/∂b = 0, the total derivative splits into an
+        # explicit part (b̂ held fixed) plus an implicit part through db̂/dθ:
+        #   dL/dθ = ∂L/∂θ + (∂[½ logdet H]/∂b)·db̂/dθ,
+        #   db̂/dθ = −H⁻¹ (∂²f/∂b∂θ).
         Hinv = ch \ Matrix{Float64}(I, size(Z, 2), size(Z, 2))
         ZH = Z * Hinv
-        lever = vec(sum(ZH .* Z, dims = 2))              # zᵢ' H⁻¹ zᵢ
+        lever = vec(sum(ZH .* Z, dims = 2))              # zᵢ' H⁻¹ zᵢ  (exact)
+        hd = diag(Hinv)
+
+        # Explicit part (b̂ frozen): data score + ½ tr(H⁻¹ ∂H/∂θ).
         gβ = Vector(Xμ' * (μ .- y .+ 0.5 .* μ .* lever))
         gσ = zeros(K)
-        hd = diag(Hinv)
         @inbounds for j in eachindex(compid)
             k = compid[j]
             gσ[k] += -invvar[j] * b[j]^2 - invvar[j] * hd[j]
         end
         @inbounds for k in 1:K
             gσ[k] += Gks[k]
+        end
+
+        # Implicit part: tlogdet = ∂(2·½ logdet H)/∂b carrier = Z'(μ ⊙ lever),
+        # implicit = H⁻¹ tlogdet, contracted against the mixed second
+        # derivatives ∂²f/∂b∂β = Z'diag(μ)X and ∂²f/∂b∂logσ_k = −2 invvar b.
+        tlogdet = Vector(Z' * (μ .* lever))
+        implicit = Hinv * tlogdet
+        crossβ = Matrix(Z' * (μ .* Xμ))                  # q × pμ
+        @inbounds for k in 1:pμ
+            gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
+        end
+        @inbounds for j in eachindex(compid)
+            gσ[compid[j]] += implicit[j] * invvar[j] * b[j]
         end
         return val, vcat(gβ, gσ)
     end
@@ -1158,13 +1180,18 @@ function _fit_poisson_crossed_laplace(fam::Poisson, y, Xμ, comps, nmμ, g_tol; 
     od = Optim.OnceDifferentiable(nll, grad!, θ0)
     method = Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking())
     res_fast = Optim.optimize(od, θ0, method, Optim.Options(g_tol = g_tol, iterations = 250))
-    res = try
-        # Short exact-objective polish. The fast frozen-mode gradient gets close;
-        # finite-difference LBFGS from that point keeps the reported benchmark on
-        # the true Laplace objective rather than the proving-slice gradient.
-        Optim.optimize(nll, Optim.minimizer(res_fast), Optim.LBFGS(),
-                       Optim.Options(g_tol = g_tol, iterations = polish_iterations))
-    catch
+    res = if polish_iterations > 0
+        try
+            # Short polish on the exact gradient (no longer a finite-difference
+            # step — the analytic gradient above is the true Laplace gradient).
+            θp = Optim.minimizer(res_fast)
+            odp = Optim.OnceDifferentiable(nll, grad!, θp)
+            Optim.optimize(odp, θp, Optim.LBFGS(),
+                           Optim.Options(g_tol = g_tol, iterations = polish_iterations))
+        catch
+            res_fast
+        end
+    else
         res_fast
     end
     θ̂ = Optim.minimizer(res)
