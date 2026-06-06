@@ -56,6 +56,7 @@ include("locscale_marginal.jl")  # #202 groundwork: q=2 Laplace marginal
 include("locscale_fit.jl")       # #202 groundwork: end-to-end location–scale fit
 include("locscale_grad.jl")      # #202 groundwork: exact O(p) outer gradient
 include("locscale_infer.jl")     # #202 groundwork: Wald inference + RE summaries
+include("locscale_profile.jl")   # #202: profile-likelihood CIs (trust-region inner solve)
 include("locscale_frontend.jl")  # #202 slice 3b: drm() routing for (1|tag|group)
 include("inference.jl")
 include("variational.jl")
