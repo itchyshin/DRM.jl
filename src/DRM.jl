@@ -50,6 +50,7 @@ include("lognormal.jl")
 include("zeroonebeta.jl")
 include("tweedie.jl")
 include("cumulative.jl")
+include("locscale_kernels.jl")   # #202 groundwork: two-axis (mean+log-disp) kernels
 include("inference.jl")
 include("variational.jl")
 include("summary.jl")
