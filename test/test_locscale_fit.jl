@@ -64,3 +64,31 @@ end
     @test isposdef(Symmetric(fit.Lambda))
     @test all(isfinite, fit.beta_mu) && isfinite(fit.beta_psi[1])
 end
+
+# With the exact gradient now driving an LBFGS fit, we can assert real
+# convergence and parameter recovery (deferred at the smoke stage). The
+# stationarity check is seed-robust: the optimiser must have driven the EXACT
+# analytic gradient to ~0. Recovery tolerances are generous (single seed).
+@testset "location–scale fit: gradient-based convergence + recovery (NB2)" begin
+    Random.seed!(424242)
+    G = 50; m = 35; n = G * m
+    species = repeat(1:G, inner = m)
+    x = randn(n)
+    βμ = [0.5, 0.4]; βψ = [0.3]
+    Λtrue = [0.25 0.05; 0.05 0.16]                  # sd_μ = 0.5, sd_ψ = 0.4
+    LΛ = cholesky(Symmetric(Λtrue)).L
+    A = [LΛ * randn(2) for _ in 1:G]
+    Xμ = hcat(ones(n), x); Xψ = ones(n, 1)
+    y = [_nb2_draw(βμ[1] + βμ[2] * x[i] + A[species[i]][1],
+                   βψ[1] + A[species[i]][2]) for i in 1:n]
+    Q = sparse(1.0 * I, G, G)
+    fit = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, species, G, Q)
+
+    gmax = maximum(abs.(DRM._ls_marginal_grad(Val(:nb2), y, Xμ, Xψ, species, G, Q, fit.θ)))
+    @test gmax < 1e-3                               # stationarity of the exact gradient (convergence evidence)
+    @test fit.beta_mu[1] ≈ 0.5 atol = 0.2
+    @test fit.beta_mu[2] ≈ 0.4 atol = 0.1
+    @test fit.beta_psi[1] ≈ 0.3 atol = 0.25
+    @test sqrt(fit.Lambda[1, 1]) ≈ 0.5 rtol = 0.3   # mean-axis RE SD
+    @test sqrt(fit.Lambda[2, 2]) ≈ 0.4 rtol = 0.45  # scale-axis RE SD (harder)
+end

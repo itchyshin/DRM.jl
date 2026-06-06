@@ -15,7 +15,6 @@
 # differences of `_ls_fit_nll` for i.i.d. and tree fixtures.
 
 using ForwardDiff: derivative
-using LinearAlgebra: inv
 using SparseArrays: rowvals, nonzeros, nzrange
 
 # Per-observation third derivatives of the kernel in (η, ψ), obtained by
@@ -44,7 +43,7 @@ function _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ)
     βμ = @view θ[1:pμ]
     βψ = @view θ[pμ+1:pμ+pψ]
     λ  = θ[pμ+pψ+1:pμ+pψ+3]
-    Λ = _ls_lc_to_Λ(λ); Λinv = inv(Λ)
+    Λ = _ls_lc_to_Λ(λ); Λinv = _ls_inv2x2(Λ)
     P = prior_precision(Q, Λinv)
     η0 = Xμ * βμ; ψ0 = Xψ * βψ
 

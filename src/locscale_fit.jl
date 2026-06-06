@@ -3,10 +3,10 @@
 #
 # Outer optimisation of the Laplace marginal (`_ls_marginal_nll`) over the
 # fixed effects (βμ on the mean, βψ on the log-dispersion) and the 2×2
-# group-level covariance Λ (log-Cholesky). Correctness-first: a derivative-free
-# optimiser (Nelder–Mead) over the marginal — robust but modest. The exact O(p)
-# outer gradient (Takahashi) + a gradient-based optimiser is the next slice; it
-# unlocks fast, accurate fitting and the deferred variance-component recovery.
+# group-level covariance Λ (log-Cholesky), driven by the exact O(p) outer
+# gradient (`_ls_marginal_grad`) with LBFGS — fast and accurate enough for
+# variance-component recovery. A derivative-free Nelder–Mead fallback guards the
+# rare line-search stall on tiny / weakly-identified fixtures.
 #
 # The fitter is agnostic to where the group structure comes from: pass
 #   Q = I_G                      → independent groups (crossed/i.i.d.), or
@@ -25,7 +25,7 @@ function _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
     βψ = @view θ[pμ+1:pμ+pψ]
     λv = @view θ[pμ+pψ+1:pμ+pψ+3]
     Λ = _ls_lc_to_Λ(λv)
-    P = prior_precision(Q, inv(Λ))
+    P = prior_precision(Q, _ls_inv2x2(Λ))
     val, _, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P)
     return ok ? val : 1e18
 end
@@ -40,16 +40,37 @@ group-level covariance `Lambda`, the marginal `nll`, and a `converged` flag.
 function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
                        βμ0 = nothing, βψ0 = nothing,
                        λ0 = [log(0.3), 0.0, log(0.3)],
-                       g_tol = 1e-8, iterations = 600)
+                       g_tol = 1e-6, iterations = 1000)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ0 === nothing && (βμ0 = _poisson_fixed_start(y, Xμ))
     βψ0 === nothing && (βψ0 = zeros(pψ))
     θ0 = vcat(βμ0, βψ0, λ0)
 
+    # Gradient-based fit using the exact O(p) outer gradient (`_ls_marginal_grad`,
+    # verified against finite differences). `grad` is the Optim buffer; `G` is the
+    # group count from the signature, so the two never collide.
     nll(θ) = _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
-    res = Optim.optimize(nll, θ0, Optim.NelderMead(),
-                         Optim.Options(g_tol = g_tol, iterations = iterations))
+    g!(grad, θ) = (grad .= _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ); grad)
+    nm() = Optim.optimize(nll, θ0, Optim.NelderMead(),
+                          Optim.Options(iterations = max(iterations, 2000)))
+    res = try
+        Optim.optimize(nll, g!, θ0, Optim.LBFGS(),
+                       Optim.Options(g_tol = g_tol, iterations = iterations))
+    catch err
+        err isa InterruptException && rethrow(err)
+        nm()
+    end
     θ̂ = Optim.minimizer(res)
+    # Feasibility guard. On weakly-identified fixtures a variance MLE can sit on
+    # the boundary; LBFGS may then chase λ until Λ underflows to singular, where
+    # the gradient is forced to zero and LBFGS falsely "converges" to an
+    # infeasible (non-finite) θ̂. A feasible point (finite mode solve) provably has
+    # a PD Λ (Λ = LLᵀ, det>0), so if the result is infeasible, fall back to the
+    # conservative derivative-free solve.
+    if any(!isfinite, θ̂) || !(nll(θ̂) < 1e17)
+        res = nm()
+        θ̂ = Optim.minimizer(res)
+    end
     Λ̂ = _ls_lc_to_Λ(θ̂[pμ+pψ+1:pμ+pψ+3])
     return (θ = θ̂,
             beta_mu = θ̂[1:pμ],
