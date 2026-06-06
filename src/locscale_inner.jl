@@ -19,7 +19,7 @@
 # `test/test_locscale_inner.jl` gates the joint gradient/Hessian against
 # ForwardDiff and checks the mode-finder reaches a stationary point.
 
-using LinearAlgebra: Symmetric, cholesky, issuccess, norm, dot
+using LinearAlgebra: Symmetric, cholesky, issuccess, norm, dot, I
 using SparseArrays: sparse, SparseMatrixCSC
 
 # 2×2 log-Cholesky parameterisation of the group-level covariance Λ.
@@ -83,28 +83,49 @@ function _ls_joint_hess(kind, y, η0, ψ0, gidx, G, a, P)
     return P + D
 end
 
-# Inner mode: damped Newton with a backtracking line search on jn(a).
+# Clean Hessian factor at `a` (λ = 0) — used for the marginal's logdet term.
+_ls_hess_chol(kind, y, η0, ψ0, gidx, G, a, P) =
+    cholesky(Symmetric(_ls_joint_hess(kind, y, η0, ψ0, gidx, G, a, P)); check = false)
+
+# Inner mode: Levenberg–Marquardt-damped Newton with a backtracking line search
+# on jn(a). The observed two-axis Hessian can go indefinite far from the mode
+# (the scale axis is non-convex), so when the Cholesky fails or a step is
+# rejected we ridge H by λI and retry with growing λ — the robustness lever the
+# q=4 engine also relies on. At convergence we return the clean (λ=0) Hessian
+# factor so the Laplace marginal logdet is exact.
 function _ls_inner_mode(kind, y, η0, ψ0, gidx, G, P; a0 = nothing,
-                        maxiter::Int = 100, tol::Real = 1e-9)
+                        maxiter::Int = 200, tol::Real = 1e-9)
     a = a0 === nothing ? zeros(2G) : copy(a0)
-    ch = nothing
     for _ in 1:maxiter
         grad = _ls_joint_grad(kind, y, η0, ψ0, gidx, a, P)
-        norm(grad) <= tol * (1 + norm(a)) && return a, ch, true
-        H = _ls_joint_hess(kind, y, η0, ψ0, gidx, G, a, P)
-        ch = cholesky(Symmetric(H); check = false)
-        issuccess(ch) || return a, ch, false
-        step = ch \ grad
-        f0 = _ls_joint(kind, y, η0, ψ0, gidx, a, P)
-        α = 1.0; accepted = false
-        while α >= 1e-6
-            trial = a .- α .* step
-            if _ls_joint(kind, y, η0, ψ0, gidx, trial, P) <= f0
-                a = trial; accepted = true; break
-            end
-            α *= 0.5
+        if norm(grad) <= tol * (1 + norm(a))
+            ch = _ls_hess_chol(kind, y, η0, ψ0, gidx, G, a, P)
+            return a, ch, issuccess(ch)
         end
-        accepted || return a, ch, false
+        H = _ls_joint_hess(kind, y, η0, ψ0, gidx, G, a, P)
+        f0 = _ls_joint(kind, y, η0, ψ0, gidx, a, P)
+        λ = 0.0
+        stepped = false
+        while true
+            F = cholesky(Symmetric(H + λ * I); check = false)
+            if issuccess(F)
+                step = F \ grad
+                α = 1.0
+                while α >= 1e-10
+                    trial = a .- α .* step
+                    ft = _ls_joint(kind, y, η0, ψ0, gidx, trial, P)
+                    if isfinite(ft) && ft <= f0
+                        a = trial; stepped = true; break
+                    end
+                    α *= 0.5
+                end
+                stepped && break
+            end
+            λ = λ == 0.0 ? 1e-8 : 10λ          # increase damping; retry
+            λ > 1e12 && break
+        end
+        stepped || return a, _ls_hess_chol(kind, y, η0, ψ0, gidx, G, a, P), false
     end
-    return a, ch, ch !== nothing
+    ch = _ls_hess_chol(kind, y, η0, ψ0, gidx, G, a, P)
+    return a, ch, issuccess(ch)
 end
