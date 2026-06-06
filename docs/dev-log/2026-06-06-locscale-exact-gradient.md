@@ -86,3 +86,8 @@ Takahashi selected inverse returns them exactly.
   plus named group-level components (sd_mu, sd_psi, cor_mu_psi). Gated by an
   obs-info-vs-nll-second-difference cross-check. The public `bf()`/`drm()` routing
   (3b) is deferred to the user — it needs API/naming decisions (see #209).
+- 2026-06-06: Layer 3a MERGED (#212). Added Gamma end-to-end coverage (fit +
+  inference + components) alongside the existing NB2 path — the engine is now
+  feature-complete for the single-grouping location–scale model (NB2 & Gamma):
+  kernels → marginal → exact gradient → fit → recovery → Wald inference, all
+  CI-verified. Remaining: 3b public front-end (needs user API decisions).
