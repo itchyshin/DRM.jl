@@ -650,7 +650,15 @@ boundary (Watanabe-singular) can be the data's MLE, with valid Wald SEs on the
 remaining directions — see [`confint`](@ref).
 """
 function check_drm(fit::DrmFit; grad_tol::Real = 1e-3)
-    mag = fit.nll === nothing ? NaN : maximum(abs, ForwardDiff.gradient(fit.nll, fit.theta))
+    mag = if fit.nll === nothing
+        NaN
+    elseif fit.nllgrad !== nothing
+        g = zeros(length(fit.theta))
+        fit.nllgrad(g, fit.theta)
+        maximum(abs, g)
+    else
+        maximum(abs, ForwardDiff.gradient(fit.nll, fit.theta))
+    end
     V = fit.vcov
     pd = isposdef(Symmetric(V))
     ev = eigvals(Symmetric(V))

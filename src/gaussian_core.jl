@@ -169,12 +169,19 @@ end
 """
     drm(formula::DrmFormula, family; data) -> DrmFit
 
-Fit a distributional regression model by maximum likelihood. Currently supports
-the univariate `Gaussian()` location–scale model with fixed effects:
+Fit a distributional regression model by maximum likelihood. A formula bundle
+has one linear predictor per distributional parameter:
 
 ```julia
 fit = drm(bf(y ~ x1, sigma ~ x1), Gaussian(); data = dat)
 ```
+
+Univariate Gaussian fits support fixed effects plus the structured-effect
+markers documented under [`phylo`](@ref), [`spatial`](@ref), [`animal`](@ref),
+[`relmat`](@ref), and [`meta_V`](@ref). Bivariate Gaussian fits use
+[`BivariateDrmFormula`](@ref); with no structured marker they fit the residual
+`rho12` model, and with shared `phylo(1 | group)` markers on `mu1`, `mu2`,
+`sigma1`, and `sigma2` they route to the verified q=4 phylogenetic engine.
 """
 function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8)
     rhs = Dict(f.forms)

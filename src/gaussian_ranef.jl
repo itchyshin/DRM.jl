@@ -226,7 +226,11 @@ means). Returns an empty `Dict` for models without random effects. Non-Gaussian
 GLMM posterior modes (GHQ/Laplace) are not yet wired — see issue #73.
 """
 function ranef(fit::DrmFit)
-    fit.ranef === nothing ? Dict{Symbol,Vector{Float64}}() : fit.ranef
+    fit.ranef === nothing && return Dict{Symbol,Vector{Float64}}()
+    if fit.ranef isa NamedTuple && haskey(fit.ranef, :effects)
+        return fit.ranef.effects
+    end
+    return fit.ranef
 end
 
 """

@@ -58,8 +58,14 @@ using DRM
 # Sparse phylogenetic precision foundation:
 phy = random_balanced_tree(8; branch_length = 0.2)
 Σ   = sigma_phy_dense(phy)                       # dense leaf covariance (small p)
-# The q=4 PLSM engine (fit on a prepared AugProblem) is fit_q4_sparse_tmb;
-# see bench/run_sparse_tmb_nd.jl for an end-to-end fit on the q4_p100 fixture.
+
+# Public q=4 PLSM route: put phylo(1 | species) on all four location/scale axes:
+f = bf(mu1 = @formula(y1 ~ x + phylo(1 | species)),
+       mu2 = @formula(y2 ~ x + phylo(1 | species)),
+       sigma1 = @formula(sigma1 ~ 1 + phylo(1 | species)),
+       sigma2 = @formula(sigma2 ~ 1 + phylo(1 | species)),
+       rho12 = @formula(rho12 ~ 1))
+# fit = drm(f, Gaussian(); data = dat, tree = phy)
 ```
 
 Run the head-to-head and the O(p) scaling curve:
@@ -75,8 +81,8 @@ julia --project=. bench/run_scaling.jl           # O(p) curve to p=10,000
 src/                core engine (verified): sparse_phy, takahashi_selinv,
                     sparse_aug_plsm (robust mode-finder), sparse_em_fit,
                     fit_ml_q4, fit_q4_sparse_tmb; DRM.jl module
-src/experimental/   migrated but NOT yet wired: REML (reml_q4), inference
-                    (infer_q4), location-only (location_only), EM variants,
+src/experimental/   migrated but NOT yet wired: REML (reml_q4),
+                    location-only (location_only), EM variants,
                     mode-finder candidates, dense oracle
 bench/              runnable benchmarks + the q4_p100 fixtures + R fixture gen
 test/               runtests.jl + migrated correctness checks (need path fixes)
@@ -93,11 +99,13 @@ AGENTS.md ROADMAP.md   the 12-persona team + the phase plan
 - **Gaussian** — location–scale, bivariate `rho12`, random effects on the mean
   (intercept / slope / correlated / crossed-nested) **and the scale**
   (`sigma ~ (1|g)`, Gauss–Hermite), structured effects (`relmat` / `animal` /
-  `phylo` / `spatial`), `meta_V`; Wald + profile + bootstrap intervals;
-  `predict` / `simulate`.
-- **8 families** — Gaussian, Student-t, Poisson, NegBinomial2,
-  TruncatedNegBinomial2, Beta, Gamma, LogNormal — plus the `zi` / `hu` count
-  modifiers.
+  `phylo` / `spatial`), `meta_V`, and the bivariate q=4 phylogenetic
+  location-scale route with `Σ_a` stored on the fit; Wald + profile + bootstrap
+  intervals; `predict` / `simulate`.
+- **13 families** — Gaussian, Student-t, Poisson, NegBinomial2,
+  TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal,
+  ZeroOneBeta, Tweedie, and CumulativeLogit — plus `zi` / `hu` count modifiers
+  and beta boundary modifiers `zoi` / `coi`.
 - **Docs** — a DocumenterVitepress site (the docs.makie.org look) with CairoMakie
   figures (incl. the Confidence Eye), executed examples, honest per-page tags.
 
@@ -108,10 +116,9 @@ drmTMB-parity gate (RCall vs. drmTMB v0.1.3 outputs) is tracked in
 **Verified engine (foundation):** the q=4 ML location-scale single fit — 2.18×
 over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
 
-**Not yet wired:** `src/experimental/` (REML `reml_q4`, inference `infer_q4`,
-location-only, EM variants), the bivariate-phylo q=4 public front end, and the
-R↔Julia bridge (`engine = "julia"`). See [HANDOVER.md](HANDOVER.md) /
-[ROADMAP.md](ROADMAP.md).
+**Not yet wired:** `src/experimental/` (REML `reml_q4`, location-only,
+EM variants), labelled q=4 coevolution accessors / CIs, and the R↔Julia bridge
+(`engine = "julia"`). See [HANDOVER.md](HANDOVER.md) / [ROADMAP.md](ROADMAP.md).
 
 ## License
 
