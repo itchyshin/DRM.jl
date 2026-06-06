@@ -16,8 +16,11 @@
 
 using LinearAlgebra: cholesky, Symmetric
 
-# Packed marginal NLL at θ = [βμ; βψ; λ(3)].
-function _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
+# Packed marginal NLL at θ = [βμ; βψ; λ(3)]. `warm` (a Ref holding the previous
+# inner mode) warm-starts the inner Newton solve across outer iterations — the
+# converged mode is unchanged but the solve is far cheaper, which is essential
+# for the finite-difference outer optimiser.
+function _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ; warm = nothing)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ = @view θ[1:pμ]
     βψ = @view θ[pμ+1:pμ+pψ]
@@ -26,7 +29,9 @@ function _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
     P = prior_precision(Q, inv(Λ))
     η0 = Xμ * βμ
     ψ0 = Xψ * βψ
-    val, _, ok = _ls_marginal_nll(kind, y, η0, ψ0, gidx, G, P)
+    a0 = warm === nothing ? nothing : warm[]
+    val, a, ok = _ls_marginal_nll(kind, y, η0, ψ0, gidx, G, P; a0 = a0)
+    (warm !== nothing && ok) && (warm[] = a)
     return ok ? val : 1e18
 end
 
@@ -40,13 +45,14 @@ group-level covariance `Lambda`, the marginal `nll`, and a `converged` flag.
 function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
                        βμ0 = nothing, βψ0 = nothing,
                        λ0 = [log(0.3), 0.0, log(0.3)],
-                       g_tol = 1e-6, iterations = 500)
+                       g_tol = 1e-6, iterations = 200)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ0 === nothing && (βμ0 = _poisson_fixed_start(y, Xμ))
     βψ0 === nothing && (βψ0 = zeros(pψ))
     θ0 = vcat(βμ0, βψ0, λ0)
 
-    nll(θ) = _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
+    warm = Ref{Union{Nothing,Vector{Float64}}}(nothing)
+    nll(θ) = _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ; warm = warm)
     res = Optim.optimize(nll, θ0, Optim.LBFGS(),
                          Optim.Options(g_tol = g_tol, iterations = iterations))
     θ̂ = Optim.minimizer(res)
