@@ -137,6 +137,18 @@ the generator (both encoded in `gen_fixtures.R::generate_nbinom2_locscale`):
 ⚠️ Verify the `VarCorr(fit)` accessor in `generate_nbinom2_locscale` against
 drmTMB's actual layout before trusting the numbers.
 
+> **drmTMB support status (2026-06-06).** drmTMB does **not yet** implement the
+> coupled `(1 | p | species)` `mu`/`sigma` correlated random effect for
+> `nbinom2` — it errors with "Only independent NB2 mu random intercepts/slopes
+> are implemented … labelled covariance blocks remain planned for a later
+> non-Gaussian random-effect gate." So `generate_nbinom2_locscale()` is **guarded**
+> (skips cleanly) and the `nbinom2-locscale` fixture cannot be generated until
+> drmTMB adds that feature — **DRM.jl is ahead here**. Until then this model is
+> validated internally (marginal vs Gauss–Hermite, exact gradient vs finite
+> differences, recovery, stationarity), not against drmTMB. The
+> `nbinom2-dispersion` case (`sigma ~ x`, fixed effects) IS supported by drmTMB
+> and exercises the same `−2` sigma↔log-θ reparam with a covariate.
+
 ## `expected.meta.toml` (provenance only)
 
 ```toml
