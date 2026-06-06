@@ -37,6 +37,17 @@ function _ls_Λ_to_lc(Λ)
     return [log(L[1, 1]), L[2, 1], log(L[2, 2])]
 end
 
+# Explicit 2×2 inverse. Unlike `inv(::Matrix)` (which calls `lu` and THROWS a
+# SingularException on a zero pivot), this yields Inf/NaN when Λ degenerates —
+# so an optimiser that transiently pushes λ to an extreme (Λ ≈ singular) sees a
+# non-finite marginal and backtracks instead of crashing. Equals `inv(Λ)` for
+# any non-singular 2×2.
+function _ls_inv2x2(M)
+    a = M[1, 1]; b = M[1, 2]; c = M[2, 1]; d = M[2, 2]
+    det = a * d - b * c
+    return [d -b; -c a] ./ det
+end
+
 # Joint negative log-likelihood at latent a.
 function _ls_joint(kind, y, η0, ψ0, gidx, a, P)
     s = zero(eltype(a))

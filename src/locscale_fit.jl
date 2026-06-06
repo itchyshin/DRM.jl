@@ -3,10 +3,10 @@
 #
 # Outer optimisation of the Laplace marginal (`_ls_marginal_nll`) over the
 # fixed effects (βμ on the mean, βψ on the log-dispersion) and the 2×2
-# group-level covariance Λ (log-Cholesky). Correctness-first: a derivative-free
-# optimiser (Nelder–Mead) over the marginal — robust but modest. The exact O(p)
-# outer gradient (Takahashi) + a gradient-based optimiser is the next slice; it
-# unlocks fast, accurate fitting and the deferred variance-component recovery.
+# group-level covariance Λ (log-Cholesky), driven by the exact O(p) outer
+# gradient (`_ls_marginal_grad`) with LBFGS — fast and accurate enough for
+# variance-component recovery. A derivative-free Nelder–Mead fallback guards the
+# rare line-search stall on tiny / weakly-identified fixtures.
 #
 # The fitter is agnostic to where the group structure comes from: pass
 #   Q = I_G                      → independent groups (crossed/i.i.d.), or
@@ -25,7 +25,7 @@ function _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
     βψ = @view θ[pμ+1:pμ+pψ]
     λv = @view θ[pμ+pψ+1:pμ+pψ+3]
     Λ = _ls_lc_to_Λ(λv)
-    P = prior_precision(Q, inv(Λ))
+    P = prior_precision(Q, _ls_inv2x2(Λ))
     val, _, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P)
     return ok ? val : 1e18
 end
@@ -48,11 +48,19 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
 
     # Gradient-based fit using the exact O(p) outer gradient (`_ls_marginal_grad`,
     # verified against finite differences). `grad` is the Optim buffer; `G` is the
-    # group count from the signature, so the two never collide.
+    # group count from the signature, so the two never collide. As a safety net for
+    # tiny / weakly-identified fixtures where the line search can stall, fall back
+    # to derivative-free Nelder–Mead if the gradient-based solve throws.
     nll(θ) = _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
     g!(grad, θ) = (grad .= _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ); grad)
-    res = Optim.optimize(nll, g!, θ0, Optim.LBFGS(),
-                         Optim.Options(g_tol = g_tol, iterations = iterations))
+    res = try
+        Optim.optimize(nll, g!, θ0, Optim.LBFGS(),
+                       Optim.Options(g_tol = g_tol, iterations = iterations))
+    catch err
+        err isa InterruptException && rethrow(err)
+        Optim.optimize(nll, θ0, Optim.NelderMead(),
+                       Optim.Options(iterations = max(iterations, 2000)))
+    end
     θ̂ = Optim.minimizer(res)
     Λ̂ = _ls_lc_to_Λ(θ̂[pμ+pψ+1:pμ+pψ+3])
     return (θ = θ̂,
