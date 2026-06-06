@@ -40,14 +40,18 @@ group-level covariance `Lambda`, the marginal `nll`, and a `converged` flag.
 function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
                        βμ0 = nothing, βψ0 = nothing,
                        λ0 = [log(0.3), 0.0, log(0.3)],
-                       g_tol = 1e-8, iterations = 600)
+                       g_tol = 1e-6, iterations = 1000)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ0 === nothing && (βμ0 = _poisson_fixed_start(y, Xμ))
     βψ0 === nothing && (βψ0 = zeros(pψ))
     θ0 = vcat(βμ0, βψ0, λ0)
 
+    # Gradient-based fit using the exact O(p) outer gradient (`_ls_marginal_grad`,
+    # verified against finite differences). `grad` is the Optim buffer; `G` is the
+    # group count from the signature, so the two never collide.
     nll(θ) = _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
-    res = Optim.optimize(nll, θ0, Optim.NelderMead(),
+    g!(grad, θ) = (grad .= _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ); grad)
+    res = Optim.optimize(nll, g!, θ0, Optim.LBFGS(),
                          Optim.Options(g_tol = g_tol, iterations = iterations))
     θ̂ = Optim.minimizer(res)
     Λ̂ = _ls_lc_to_Λ(θ̂[pμ+pψ+1:pμ+pψ+3])

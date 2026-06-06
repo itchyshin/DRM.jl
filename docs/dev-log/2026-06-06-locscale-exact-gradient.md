@@ -73,3 +73,9 @@ Takahashi selected inverse returns them exactly.
 
 ## Status log
 - 2026-06-06: derivation + Layer 1 implementation written (blind; CI to verify).
+- 2026-06-06: Layer 1 (`_ls_marginal_grad` + FD gate) MERGED (#210). The FD-vs-
+  analytic gate passed first try for NB2 + Gamma × i.i.d. + tree — derivation,
+  signs, indices, ForwardDiff 3rd derivs (incl. trigamma→polygamma) all correct.
+- 2026-06-06: Layer 2 — `_fit_locscale` now uses LBFGS with the exact gradient
+  (replacing derivative-free Nelder–Mead). Test adds a seed-robust stationarity
+  check (‖exact grad‖→0) + generous NB2 recovery. CI to verify.
