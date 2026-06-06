@@ -42,6 +42,13 @@ _nb2_draw_f(η, ψ) = (r = exp(ψ); μ = exp(η);
     # Summary renders, including the group-level covariance block.
     s = sprint(show, MIME("text/plain"), fit)
     @test occursin("Random-effect covariance", s)
+
+    # Public Wald inference surface works end-to-end (mirrors drmTMB's confint).
+    ci = confint(fit)                                  # method = :wald
+    @test !isempty(ci)
+    slope = first(r for r in ci if r.param === :mu && r.coef == "x")
+    @test slope.lower < slope.estimate < slope.upper
+    @test summary(fit) isa typeof(coeftable(fit))      # coeftable/summary build cleanly
 end
 
 @testset "drm() location–scale: a lone coupled tag is an error" begin
