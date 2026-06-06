@@ -52,6 +52,7 @@ include("tweedie.jl")
 include("cumulative.jl")
 include("locscale_kernels.jl")   # #202 groundwork: two-axis (mean+log-disp) kernels
 include("locscale_inner.jl")     # #202 groundwork: q=2 augmented inner mode-finder
+include("locscale_marginal.jl")  # #202 groundwork: q=2 Laplace marginal
 include("inference.jl")
 include("variational.jl")
 include("summary.jl")
