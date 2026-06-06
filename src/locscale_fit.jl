@@ -40,7 +40,7 @@ group-level covariance `Lambda`, the marginal `nll`, and a `converged` flag.
 function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
                        βμ0 = nothing, βψ0 = nothing,
                        λ0 = [log(0.3), 0.0, log(0.3)],
-                       g_tol = 1e-6, iterations = 1000)
+                       g_tol = 1e-6, iterations = 1000, se::Bool = false)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ0 === nothing && (βμ0 = _poisson_fixed_start(y, Xμ))
     βψ0 === nothing && (βψ0 = zeros(pψ))
@@ -72,10 +72,15 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
         θ̂ = Optim.minimizer(res)
     end
     Λ̂ = _ls_lc_to_Λ(θ̂[pμ+pψ+1:pμ+pψ+3])
+    # Wald inference (opt-in): observed information = Hessian of the exact gradient.
+    V = se ? _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂) : nothing
     return (θ = θ̂,
             beta_mu = θ̂[1:pμ],
             beta_psi = θ̂[pμ+1:pμ+pψ],
             Lambda = Λ̂,
+            components = _ls_components(Λ̂),
+            vcov = V,
+            se = _ls_se(V),
             nll = nll(θ̂),
             converged = Optim.converged(res))
 end
