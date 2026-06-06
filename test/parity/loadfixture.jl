@@ -72,6 +72,18 @@ function load_expected(dir)::ParityExpected
         end
     end
 
+    # Optional [ranef] group-level covariance block (location–scale models).
+    ranef_group = nothing
+    ranef = Dict{String,Float64}()
+    if haskey(t, "ranef")
+        r = t["ranef"]
+        haskey(r, "group") || error("load_expected: [ranef] block needs a `group` name")
+        ranef_group = String(r["group"])
+        for key in ("sd_mu", "sd_sigma", "cor")
+            haskey(r, key) && (ranef[key] = Float64(r[key]))
+        end
+    end
+
     return ParityExpected(;
         family = String(fit["family"]),
         coef = Dict{String,Float64}(String(k) => Float64(v) for (k, v) in coef),
@@ -81,7 +93,9 @@ function load_expected(dir)::ParityExpected
         n = Int(fit["n"]),
         vcov_order = vcov_order,
         vcov = vcov,
-        tol = tol)
+        tol = tol,
+        ranef_group = ranef_group,
+        ranef = ranef)
 end
 
 """

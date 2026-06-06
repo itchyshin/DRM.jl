@@ -45,18 +45,26 @@ struct ParityExpected
     vcov_order::Union{Nothing,Vector{String}}
     vcov::Union{Nothing,Matrix{Float64}}
     tol::Dict{String,Float64}
+    # Optional group-level (location–scale) covariance reference: the grouping
+    # factor name + any of "sd_mu", "sd_sigma", "cor" (in DRM.jl's convention —
+    # the generator applies the drmTMB→DRM.jl reparameterisation, see GENERATING.md).
+    ranef_group::Union{Nothing,String}
+    ranef::Dict{String,Float64}
 end
 
-# Convenience constructor: vcov + tol default to nothing/empty.
+# Convenience constructor: vcov, ranef + tol default to nothing/empty.
 function ParityExpected(; family::AbstractString, coef::AbstractDict, loglik::Real,
         aic::Real, df::Integer, n::Integer,
-        vcov_order = nothing, vcov = nothing, tol = Dict{String,Float64}())
+        vcov_order = nothing, vcov = nothing, tol = Dict{String,Float64}(),
+        ranef_group = nothing, ranef = Dict{String,Float64}())
     ParityExpected(String(family),
         Dict{String,Float64}(String(k) => Float64(v) for (k, v) in coef),
         Float64(loglik), Float64(aic), Int(df), Int(n),
         vcov_order === nothing ? nothing : Vector{String}(String.(vcov_order)),
         vcov === nothing ? nothing : Matrix{Float64}(vcov),
-        Dict{String,Float64}(String(k) => Float64(v) for (k, v) in tol))
+        Dict{String,Float64}(String(k) => Float64(v) for (k, v) in tol),
+        ranef_group === nothing ? nothing : String(ranef_group),
+        Dict{String,Float64}(String(k) => Float64(v) for (k, v) in ranef))
 end
 
 """
@@ -213,6 +221,36 @@ function compare_fit(fit, expected::ParityExpected;
                             "drmTMB=$(want) DRM.jl=$(have) " *
                             "|Δ|=$(abs(want - have)) > (rtol=$(rv), atol=$(av))")
                     end
+                end
+            end
+        end
+    end
+
+    # 6. group-level covariance (optional) — drmTMB VarCorr (reparam'd to DRM.jl
+    # convention by the generator) vs DRM.jl's `vc(fit)` for the location–scale Λ.
+    if expected.ranef_group !== nothing
+        rr = _tol(expected, "rtol_ranef", 1e-3)
+        ar = _tol(expected, "atol_ranef", 1e-6)
+        V = vc(fit)
+        gkey = Symbol(expected.ranef_group)
+        if !haskey(V, gkey)
+            push!(failures, "ranef[$(expected.ranef_group)]: group absent from DRM.jl fit " *
+                "(have: $(join(string.(keys(V)), ", ")))")
+        else
+            Σ = V[gkey]
+            sd_mu = sqrt(Σ[1, 1]); sd_sigma = sqrt(Σ[2, 2])
+            cor = Σ[1, 2] / (sd_mu * sd_sigma)
+            got_re = Dict("sd_mu" => sd_mu, "sd_sigma" => sd_sigma, "cor" => cor)
+            for key in sort!(collect(keys(expected.ranef)))
+                want = expected.ranef[key]
+                if !haskey(got_re, key)
+                    push!(failures, "ranef[$key]: unknown key (expected one of sd_mu, sd_sigma, cor)")
+                    continue
+                end
+                have = got_re[key]
+                if !_within(want, have, rr, ar)
+                    push!(failures, "ranef[$key]: drmTMB=$(want) DRM.jl=$(have) " *
+                        "|Δ|=$(abs(want - have)) > (rtol=$(rr), atol=$(ar))")
                 end
             end
         end

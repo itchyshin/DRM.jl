@@ -10,6 +10,7 @@
 using DRM
 using Test, Random
 using TOML
+using LinearAlgebra: I
 
 include("parity/compare.jl")
 include("parity/loadfixture.jl")
@@ -99,5 +100,56 @@ include("parity/loadfixture.jl")
             data = loaded_data)
         res_rt = compare_fit(refit, loaded_exp)
         @test res_rt.passed == true
+    end
+end
+
+@testset "parity harness: group-level covariance (ranef) comparison" begin
+    # Synthetic location–scale DrmFit with a KNOWN 2×2 Λ (no engine run) — Λ from
+    # the log-Cholesky :recov block [log L11, log L22, L21]. This CI-verifies the
+    # new [ranef] comparison + loader without R or a real fit.
+    L11 = 0.5; L22 = sqrt(0.15); L21 = 0.1            # → Λ = [0.25 0.05; 0.05 0.16]
+    theta = [0.3, 0.2, log(L11), log(L22), L21]
+    fit = DrmFit(NegBinomial2(),
+                 [:mu => 1:1, :sigma => 2:2, :recov => 3:5],
+                 [:mu => ["(Intercept)"], :sigma => ["(Intercept)"],
+                  :recov => ["species:L11", "species:L22", "species:L21"]],
+                 theta, Matrix{Float64}(I, 5, 5), -10.0, 10, true,
+                 Dict(:mu => fill(1.0, 10)), Dict(:mu => fill(1.0, 10)),
+                 Dict(:sigma => fill(1.0, 10)))
+
+    @test vc(fit)[:species] ≈ [0.25 0.05; 0.05 0.16] atol = 1e-12
+
+    df = dof(fit); aic = -2 * (-10.0) + 2 * df
+    re = Dict("sd_mu" => 0.5, "sd_sigma" => 0.4, "cor" => 0.25)
+    self_re = ParityExpected(; family = "nbinom2",
+        coef = Dict("mu_(Intercept)" => 0.3, "sigma_(Intercept)" => 0.2),
+        loglik = -10.0, aic = aic, df = df, n = 10,
+        ranef_group = "species", ranef = re)
+    res_ok = compare_fit(fit, self_re)
+    @test res_ok.passed
+    @test isempty(res_ok.failures)
+
+    # Perturb the correlation → the harness MUST detect it.
+    bad_re = ParityExpected(; family = "nbinom2",
+        coef = Dict("mu_(Intercept)" => 0.3, "sigma_(Intercept)" => 0.2),
+        loglik = -10.0, aic = aic, df = df, n = 10,
+        ranef_group = "species",
+        ranef = Dict("sd_mu" => 0.5, "sd_sigma" => 0.4, "cor" => 0.80))
+    res_bad = compare_fit(fit, bad_re)
+    @test !res_bad.passed
+    @test any(f -> occursin("ranef[cor]", f), res_bad.failures)
+
+    # Loader round-trips a [ranef] block.
+    mktempdir() do dir
+        open(joinpath(dir, "expected.toml"), "w") do io
+            println(io, "[fit]\nfamily = \"nbinom2\"\nformula = \"y ~ 1; sigma ~ 1\"")
+            println(io, "loglik = -10.0\naic = ", aic, "\ndf = ", df, "\nn = 10\n")
+            println(io, "[coef]\n\"mu_(Intercept)\" = 0.3\n\"sigma_(Intercept)\" = 0.2\n")
+            println(io, "[ranef]\ngroup = \"species\"\nsd_mu = 0.5\nsd_sigma = 0.4\ncor = 0.25")
+        end
+        le = load_expected(dir)
+        @test le.ranef_group == "species"
+        @test le.ranef["cor"] ≈ 0.25
+        @test compare_fit(fit, le).passed
     end
 end
