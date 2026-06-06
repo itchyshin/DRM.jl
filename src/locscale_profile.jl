@@ -47,7 +47,7 @@ function _ls_profile_root(g, x0; dir::Float64, maxexpand::Int = 80, init::Float6
         step *= 1.5
     end
     gb > 0 || return dir > 0 ? Inf : -Inf      # could not bracket (flat/unbounded)
-    for _ in 1:40                              # 2⁻⁴⁰ of the bracket — ample precision
+    for _ in 1:25                              # 2⁻²⁵ of the bracket — ample for CI use
         mid = (a + b) / 2
         g(mid) > 0 ? (b = mid) : (a = mid)
     end

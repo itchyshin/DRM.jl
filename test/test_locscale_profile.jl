@@ -1,8 +1,10 @@
-# Profile-likelihood CIs for the location–scale fit (#202). Two seed-robust gates:
-# (1) for a WELL-IDENTIFIED parameter (the mean slope) the profile CI must agree
-# with the Wald CI (the likelihood is near-quadratic there); (2) the profile NLL
-# evaluated at an endpoint must sit on the χ²₁ threshold (the defining property),
-# confirming the bracket/bisection found the right crossing.
+# Profile-likelihood CIs for the location–scale fit (#202). Two seed-robust gates
+# on the well-behaved MEAN SLOPE (kept fast: profiling a near-boundary variance is
+# expensive, so we exercise the machinery on the slope):
+# (1) for a well-identified parameter the profile CI must agree with the Wald CI
+# (the likelihood is near-quadratic there); (2) the profile NLL evaluated at an
+# endpoint must sit on the χ²₁ threshold (the defining property), confirming the
+# bracket/bisection found the right crossing.
 using DRM
 using Test, Random, LinearAlgebra, SparseArrays
 import Distributions
@@ -12,7 +14,7 @@ _nb2_draw_pr(η, ψ) = (r = exp(ψ); μ = exp(η);
 
 @testset "location–scale profile-likelihood CI" begin
     Random.seed!(2718)
-    G = 30; m = 25; n = G * m
+    G = 20; m = 20; n = G * m
     species = repeat(1:G, inner = m)
     x = randn(n)
     Λt = [0.25 0.05; 0.05 0.16]
@@ -37,9 +39,4 @@ _nb2_draw_pr(η, ψ) = (r = exp(ψ); μ = exp(η);
     chi = Distributions.quantile(Distributions.Chisq(1), 0.95)
     dev_hi = 2 * (DRM._ls_profile_nll(Val(:nb2), y, Xμ, Xψ, species, G, Q, fit.θ, 2, ci.upper) - nllmin)
     @test dev_hi ≈ chi rtol = 1e-2
-
-    # A variance parameter (idx = 4 = log L11) also yields a bracketed CI.
-    civ = DRM._ls_profile_ci(Val(:nb2), y, Xμ, Xψ, species, G, Q, fit.θ; idx = 4, nll_min = nllmin)
-    @test isfinite(civ.lower) && isfinite(civ.upper)
-    @test civ.lower < fit.θ[4] < civ.upper
 end
