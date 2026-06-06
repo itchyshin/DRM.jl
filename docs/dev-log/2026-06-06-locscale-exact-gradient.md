@@ -78,4 +78,11 @@ Takahashi selected inverse returns them exactly.
   signs, indices, ForwardDiff 3rd derivs (incl. trigamma→polygamma) all correct.
 - 2026-06-06: Layer 2 — `_fit_locscale` now uses LBFGS with the exact gradient
   (replacing derivative-free Nelder–Mead). Test adds a seed-robust stationarity
-  check (‖exact grad‖→0) + generous NB2 recovery. CI to verify.
+  check (‖exact grad‖→0) + generous NB2 recovery. MERGED (#211). Two fixes en
+  route: non-throwing 2×2 inverse + a feasibility guard (LBFGS can chase a
+  boundary variance to a singular Λ; guard falls back to the conservative solve).
+- 2026-06-06: Layer 3a — Wald inference. Observed information = FD Jacobian of the
+  EXACT gradient (`_ls_obs_information`), → `vcov`/`se` on the fit (opt-in `se=true`),
+  plus named group-level components (sd_mu, sd_psi, cor_mu_psi). Gated by an
+  obs-info-vs-nll-second-difference cross-check. The public `bf()`/`drm()` routing
+  (3b) is deferred to the user — it needs API/naming decisions (see #209).

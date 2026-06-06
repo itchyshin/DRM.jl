@@ -55,6 +55,7 @@ include("locscale_inner.jl")     # #202 groundwork: q=2 augmented inner mode-fin
 include("locscale_marginal.jl")  # #202 groundwork: q=2 Laplace marginal
 include("locscale_fit.jl")       # #202 groundwork: end-to-end location–scale fit
 include("locscale_grad.jl")      # #202 groundwork: exact O(p) outer gradient
+include("locscale_infer.jl")     # #202 groundwork: Wald inference + RE summaries
 include("inference.jl")
 include("variational.jl")
 include("summary.jl")
