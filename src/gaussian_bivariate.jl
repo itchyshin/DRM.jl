@@ -218,7 +218,7 @@ function _split_bivariate_q4_rhs(rhs, param::Symbol)
         elseif t isa FunctionTerm && (t.f === relmat || t.f === animal || t.f === phylo || t.f === spatial)
             structured === nothing ||
                 error("`$param` contains multiple structured markers; the q=4 front end accepts exactly one `phylo(1 | group)` marker per predictor")
-            structured = (_structured_marker_kind(t), t.args[1].args[2].sym)
+            structured = (_structured_marker_kind(t), _q4_marker_group(t, param))
         else
             push!(fixed, t)
         end
@@ -226,6 +226,18 @@ function _split_bivariate_q4_rhs(rhs, param::Symbol)
     fixed_rhs = isempty(fixed) ? ConstantTerm(1) :
                 length(fixed) == 1 ? fixed[1] : Tuple(fixed)
     return fixed_rhs, structured
+end
+
+function _q4_marker_group(t, param::Symbol)
+    inner = t.args[1]
+    if !(inner isa FunctionTerm && inner.f === (|) && length(inner.args) == 2 &&
+          inner.args[2] isa Term)
+        error("`$param` structured marker must be written as `phylo(1 | group)`")
+    end
+    lhs = inner.args[1]
+    (lhs isa ConstantTerm && lhs.n == 1) ||
+        error("`$param` uses `$(_structured_marker_kind(t))`, but the bivariate q=4 front end supports only `phylo(1 | group)` markers")
+    return inner.args[2].sym
 end
 
 function _structured_marker_kind(t)
@@ -317,7 +329,11 @@ function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fi
         :rho12 => tanh.(Xr * β̂.rho),
     )
     _, u_hat, _, _ = marginal_nll(prob, Q_cond, θ̂; n_newton = q4_n_newton)
-    blups = reshape(Vector{Float64}(u_hat), 4, prob.n_total)
+    all_blups = reshape(Vector{Float64}(u_hat), 4, prob.n_total)
+    keep = setdiff(1:phy.n_total, [phy.root_index])
+    node_pos = Dict(node => i for (i, node) in enumerate(keep))
+    leaf_pos = [node_pos[phy.leaf_indices[k]] for k in 1:phy.n_leaves]
+    blups = all_blups[:, leaf_pos]
     re = (;
         effects = Dict(Symbol(grp) => blups),
         Sigma_a = Matrix{Float64}(r.Λ),

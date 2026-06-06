@@ -80,6 +80,14 @@ _q4_formula_rho_marker() = bf(
     rho12 = @formula(rho12 ~ 1 + phylo(1 | species)),
 )
 
+_q4_formula_nonintercept_marker() = bf(
+    mu1 = @formula(y1 ~ x + phylo(x | species)),
+    mu2 = @formula(y2 ~ x + phylo(x | species)),
+    sigma1 = @formula(sigma1 ~ 1 + phylo(x | species)),
+    sigma2 = @formula(sigma2 ~ 1 + phylo(x | species)),
+    rho12 = @formula(rho12 ~ 1),
+)
+
 @testset "Bivariate Gaussian q=4 phylo front end" begin
     fixture = _q4_frontend_data()
     fit = drm(
@@ -106,6 +114,7 @@ _q4_formula_rho_marker() = bf(
     @test fit.ranef.axes == (:mu1, :mu2, :sigma1, :sigma2)
     @test haskey(ranef(fit), :species)
     @test size(ranef(fit)[:species], 1) == 4
+    @test size(ranef(fit)[:species], 2) == fixture.phy.n_leaves
 end
 
 @testset "Bivariate q=4 phylo front-end validation" begin
@@ -130,6 +139,14 @@ end
 
     @test_throws ErrorException drm(
         _q4_formula_rho_marker(),
+        Gaussian();
+        data = fixture.data,
+        tree = fixture.phy,
+        q4_vcov = false,
+    )
+
+    @test_throws ErrorException drm(
+        _q4_formula_nonintercept_marker(),
         Gaussian();
         data = fixture.data,
         tree = fixture.phy,
