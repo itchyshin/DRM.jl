@@ -402,7 +402,15 @@ function _fit_two_structured_gaussian_sparse(fam::Gaussian, y, Xμ, gidx1, G1, C
     θ0[pμ+2] = log(s0 / sqrt(3) + eps())
     θ0[pμ+3] = log(s0 / sqrt(3) + eps())
     od = Optim.NLSolversBase.only_fg!(fg!)
-    res = Optim.optimize(od, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol))
+    # BackTracking line search (as in the verified q4 / sparse-Laplace engines):
+    # it shrinks the step when an evaluation returns the large finite penalty or a
+    # non-finite gradient at an infeasible probe, instead of HagerZhang's
+    # finite-derivative assertion (which aborts on Julia ≥1.12) or its stall on a
+    # zero-gradient penalty point (the 1.10 hang). A finite iteration cap is a
+    # belt-and-braces guard against any pathological non-terminating line search.
+    res = Optim.optimize(od, θ0,
+        Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking()),
+        Optim.Options(g_tol = g_tol, iterations = 1000))
     θ̂ = Optim.minimizer(res)
 
     grad_at(θ) = eval_all(θ[1:pμ], θ[pμ+1], θ[pμ+2], θ[pμ+3]; want_grad = true)[2]
