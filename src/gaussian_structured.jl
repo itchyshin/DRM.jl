@@ -10,6 +10,8 @@
 
 using LinearAlgebra: cholesky, Symmetric, Diagonal, dot, logdet, inv, diag, I, issuccess,
     eigen, SymTridiagonal
+using SparseArrays: SparseArrays, SparseMatrixCSC, sparse, nonzeros, rowvals,
+    nzrange, blockdiag, dropzeros!
 
 """
     relmat(1 | id)
@@ -253,4 +255,169 @@ function _fit_spatial_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, coords, nmμ
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+end
+
+# ===========================================================================
+# SPARSE O(p) path for the SAME two-structured Gaussian model (#225 follow-up)
+# ===========================================================================
+# Same model as `_fit_two_structured_gaussian`:
+#     y = Xβ + Z₁a₁ + Z₂a₂ + ε,  aₖ ~ N(0, σₖ²Cₖ),  ε ~ N(0, σ²I),
+#     y ~ N(Xβ, V),   V = σ²I + σ₁² Z₁C₁Z₁ᵀ + σ₂² Z₂C₂Z₂ᵀ.
+#
+# The dense path assembles and factors the n×n V each evaluation — O(n³). This
+# path NEVER forms V. It works with the AUGMENTED LATENT a = [a₁; a₂] (length
+# m = m₁ + m₂) whose prior precision is BLOCK-SPARSE,
+#     P(θ) = blockdiag(σ₁⁻² Q₁, σ₂⁻² Q₂),   Qₖ = Cₖ⁻¹ (sparse for tree / Ainv),
+# and integrates a out EXACTLY via one sparse Cholesky of the m×m
+#     H(θ) = P(θ) + ZᵀZ / σ²,   Z = [Z₁ Z₂].
+#
+# Marginal NLL (matrix-determinant lemma + Woodbury, exact — the Gaussian
+# Laplace is exact, so the "inner mode" is a single linear solve â = H⁻¹ b):
+#     logdet V = n logσ² − logdet P + logdet H,
+#     rᵀV⁻¹r   = rᵀr/σ² − bᵀâ,   b = Zᵀr/σ²,  â = H⁻¹ b,
+#     NLL = ½(logdet V + rᵀV⁻¹r) + ½ n log 2π.
+#
+# Analytic gradient (mirrors the q4 engine's logdet/Takahashi recipe). With
+# u = V⁻¹r = (r − Zâ)/σ² and â = [â₁; â₂] = H⁻¹b = Σ Zᵀu (BLUPs):
+#   ∂NLL/∂β   = −Xᵀu
+#   ∂NLL/∂lσ  = ½(2n − 2 tr(H⁻¹ ZᵀZ)/σ²) − σ²‖u‖²
+#   ∂NLL/∂lσₖ = ½(2mₖ − 2 tr(σₖ⁻²Qₖ H⁻¹)) − wₖᵀâₖ,  wₖ = Zₖᵀu
+# where the traces are read off the Takahashi SELECTED INVERSE of H at the
+# (sparse) pattern of ZᵀZ / Qₖ — never a dense m×m inverse.
+
+# Build the n×m sparse incidence Z mapping each observation to its latent row.
+function _sparse_incidence(rows::AbstractVector{<:Integer}, n::Int, m::Int)
+    return sparse(collect(1:n), collect(rows), ones(Float64, n), n, m)
+end
+
+# tr(Sblock · Hinv) for Sblock = Qk placed at offset `off`, Hinv the selected
+# inverse. Only entries of Hinv at Qk's pattern (⊆ L+Lᵀ) are read.
+function _trace_block_selinv(Hinv::SparseMatrixCSC, Qk::SparseMatrixCSC, off::Int)
+    s = 0.0
+    rv = rowvals(Qk); nzv = nonzeros(Qk)
+    Hcol = Hinv.colptr; Hrow = rowvals(Hinv); Hval = nonzeros(Hinv)
+    @inbounds for jk in 1:size(Qk, 2)
+        jH = jk + off
+        for p in nzrange(Qk, jk)
+            iH = rv[p] + off
+            idx = _csc_rowidx(Hcol, Hrow, jH, iH)
+            idx == -1 && continue
+            s += nzv[p] * Hval[idx]
+        end
+    end
+    return s
+end
+
+# tr(H⁻¹ ZᵀZ): ZᵀZ sparse and ⊆ H's pattern. Read selected-inverse entries.
+function _trace_selinv_full(Hinv::SparseMatrixCSC, ZtZ::SparseMatrixCSC)
+    s = 0.0
+    rv = rowvals(ZtZ); nzv = nonzeros(ZtZ)
+    Hcol = Hinv.colptr; Hrow = rowvals(Hinv); Hval = nonzeros(Hinv)
+    @inbounds for j in 1:size(ZtZ, 2)
+        for p in nzrange(ZtZ, j)
+            idx = _csc_rowidx(Hcol, Hrow, j, rv[p])
+            idx == -1 && continue
+            s += nzv[p] * Hval[idx]
+        end
+    end
+    return s
+end
+
+function _fit_two_structured_gaussian_sparse(fam::Gaussian, y, Xμ, gidx1, G1, C1,
+                                             gidx2, G2, C2, nmμ, grp1, grp2, g_tol)
+    n = length(y)
+    pμ = size(Xμ, 2)
+    m1 = G1; m2 = G2; m = m1 + m2; off2 = m1
+    # Sparse precisions Qₖ = Cₖ⁻¹ (constant in θ).
+    Q1 = dropzeros!(sparse(Symmetric(inv(Symmetric(Matrix(C1))))))
+    Q2 = dropzeros!(sparse(Symmetric(inv(Symmetric(Matrix(C2))))))
+    logdetC1 = logdet(Symmetric(Matrix(C1)))
+    logdetC2 = logdet(Symmetric(Matrix(C2)))
+    Z1 = _sparse_incidence(gidx1, n, m1)
+    Z2 = _sparse_incidence(gidx2, n, m2)
+    Z = hcat(Z1, Z2)
+    ZtZ = dropzeros!(sparse(Symmetric(Z' * Z)))
+    Xt = Matrix(Xμ')
+
+    buildH(σ², σ1², σ2²) = blockdiag(Q1 ./ σ1², Q2 ./ σ2²) + ZtZ ./ σ²
+
+    function eval_all(βμ, lσ, lσ1, lσ2; want_grad::Bool)
+        σ² = exp(2lσ); σ1² = exp(2lσ1); σ2² = exp(2lσ2)
+        r = y .- Xμ * βμ
+        H = buildH(σ², σ1², σ2²)
+        ch = cholesky(Symmetric(H); check = false)
+        issuccess(ch) || return (Inf, Float64[], r, zeros(m), false)
+        b = (Z' * r) ./ σ²
+        â = ch \ b
+        logdetH = logdet(ch)
+        logdetP = -2 * (m1 * lσ1 + m2 * lσ2) - logdetC1 - logdetC2
+        logdetV = n * log(σ²) - logdetP + logdetH
+        quad = dot(r, r) / σ² - dot(b, â)
+        nll = 0.5 * (logdetV + quad) + 0.5 * n * log(2π)
+        isfinite(nll) || return (Inf, Float64[], r, â, false)
+        want_grad || return (nll, Float64[], r, â, true)
+        u = (r .- Z * â) ./ σ²
+        w = Z' * u
+        gβ = -(Xt * u)
+        Hinv = takahashi_selinv(ch)
+        trH_ZtZ = _trace_selinv_full(Hinv, ZtZ)
+        trQ1 = _trace_block_selinv(Hinv, Q1, 0) / σ1²
+        trQ2 = _trace_block_selinv(Hinv, Q2, off2) / σ2²
+        glσ = 0.5 * (2n - 2 * trH_ZtZ / σ²) - σ² * dot(u, u)
+        â1 = @view â[1:m1]; â2 = @view â[off2+1:off2+m2]
+        w1 = @view w[1:m1]; w2 = @view w[off2+1:off2+m2]
+        glσ1 = 0.5 * (2 * m1 - 2 * trQ1) - dot(w1, â1)
+        glσ2 = 0.5 * (2 * m2 - 2 * trQ2) - dot(w2, â2)
+        return (nll, vcat(gβ, glσ, glσ1, glσ2), r, â, true)
+    end
+
+    nll_only(θ) = eval_all(θ[1:pμ], θ[pμ+1], θ[pμ+2], θ[pμ+3]; want_grad = false)[1]
+    function fg!(F, Gout, θ)
+        nll, grad, _, _, ok = eval_all(θ[1:pμ], θ[pμ+1], θ[pμ+2], θ[pμ+3]; want_grad = true)
+        if Gout !== nothing
+            ok ? copyto!(Gout, grad) : fill!(Gout, 0.0)
+        end
+        return nll
+    end
+
+    βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
+    s0 = std(res0)
+    θ0 = zeros(pμ + 3)
+    θ0[1:pμ] .= βμ0
+    θ0[pμ+1] = log(s0 / sqrt(3) + eps())
+    θ0[pμ+2] = log(s0 / sqrt(3) + eps())
+    θ0[pμ+3] = log(s0 / sqrt(3) + eps())
+    od = Optim.NLSolversBase.only_fg!(fg!)
+    res = Optim.optimize(od, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol))
+    θ̂ = Optim.minimizer(res)
+
+    grad_at(θ) = eval_all(θ[1:pμ], θ[pμ+1], θ[pμ+2], θ[pμ+3]; want_grad = true)[2]
+    np = pμ + 3
+    Hmat = zeros(np, np)
+    hstep = 1e-6
+    for k in 1:np
+        θp = copy(θ̂); θm = copy(θ̂)
+        step = hstep * max(abs(θ̂[k]), 1.0)
+        θp[k] += step; θm[k] -= step
+        Hmat[:, k] .= (grad_at(θp) .- grad_at(θm)) ./ (2 * step)
+    end
+    Hmat .= 0.5 .* (Hmat .+ Hmat')
+    V = try
+        Matrix(inv(Symmetric(Hmat)))          # DrmFit expects a plain Matrix vcov
+    catch
+        fill(NaN, np, np)
+    end
+
+    blocks = [:mu => 1:pμ, :resid => (pμ+1):(pμ+1), :resd => (pμ+2):(pμ+3)]
+    names = [:mu => nmμ, :resid => ["residual"], :resd => [String(grp1), String(grp2)]]
+    means = Dict(:mu => Xμ * θ̂[1:pμ])
+    obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict(:sigma => fill(exp(θ̂[pμ+1]), n))
+    blup = let v = eval_all(θ̂[1:pμ], θ̂[pμ+1], θ̂[pμ+2], θ̂[pμ+3]; want_grad = false)
+        â = v[4]
+        Dict(Symbol(grp1) => Vector{Float64}(â[1:m1]),
+             Symbol(grp2) => Vector{Float64}(â[off2+1:off2+m2]))
+    end
+    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll_only(θ̂), n,
+        Optim.converged(res), means, obs, scales), nll_only), blup)
 end

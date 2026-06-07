@@ -202,8 +202,8 @@ fit = drm(bf(y ~ x + phylo(1 | sp), sigma ~ 1), Gaussian();
 ```
 """
 function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto)
-    algorithm in (:auto, :gls, :lbfgs, :em) ||
-        throw(ArgumentError("drm: `algorithm` must be one of :auto, :gls, :lbfgs, :em (got :$algorithm)"))
+    algorithm in (:auto, :gls, :lbfgs, :em, :sparse) ||
+        throw(ArgumentError("drm: `algorithm` must be one of :auto, :gls, :lbfgs, :em, :sparse (got :$algorithm)"))
     rhs = Dict(f.forms)
     fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat/animal/phylo/spatial(1|g)
     fixed_sigma, sigma_re, _, _ = _split_ranef(rhs[:sigma])    # (1|g) on the scale → GHQ marginal
@@ -249,6 +249,13 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         gidx2, G2 = _group_index(getproperty(data, grp2))
         C1 = _resolve_structured_matrix(kind1, grp1, G1; K = K, A = A, tree = tree, coords = coords)
         C2 = _resolve_structured_matrix(kind2, grp2, G2; K = K, A = A, tree = tree, coords = coords)
+        # Opt-in sparse O(p) path (#225 follow-up): augmented-latent + sparse
+        # Cholesky + Takahashi-selected-inverse gradient. Same model, same MLE;
+        # default (:auto) stays on the verified dense path.
+        if algorithm === :sparse
+            return _withformula(_fit_two_structured_gaussian_sparse(fam, y, Xμ, gidx1, G1, C1,
+                gidx2, G2, C2, nmμ, grp1, grp2, g_tol), f)
+        end
         return _withformula(_fit_two_structured_gaussian(fam, y, Xμ, gidx1, G1, C1,
             gidx2, G2, C2, nmμ, grp1, grp2, g_tol), f)
     end
