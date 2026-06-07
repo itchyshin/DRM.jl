@@ -87,12 +87,15 @@ fit_phy = drm(
 
 fit_phy.ranef.Sigma_a      # 4x4 group-level covariance, axes below
 fit_phy.ranef.axes         # (:mu1, :mu2, :sigma1, :sigma2)
+coevolution(fit_phy; method = :none).correlation.s1s2   # group-level ρ_a(s1s2)
 ```
 
 The internal `:phylocov` coefficient block is not a distributional predictor, so
 [`predict_parameters`](@ref) returns `:mu1`, `:mu2`, `:sigma1`, `:sigma2`, and
-`:rho12`, but not `:phylocov`. Labelled coevolution summaries and intervals are
-the next accessor layer; this slice stores the covariance on the fit.
+`:rho12`, but not `:phylocov`. [`coevolution`](@ref) labels the group-level
+phylogenetic SDs and correlations from `Σ_a`. If the fit was run with the
+default `q4_vcov = true`, `coevolution(fit_phy)` also returns Fisher-z Wald
+intervals; with `q4_vcov = false`, use `method = :none` for point summaries.
 
 ## See also
 

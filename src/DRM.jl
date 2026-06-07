@@ -64,6 +64,7 @@ include("locscale_frontend.jl")  # #202 slice 3b: drm() routing for (1|tag|group
 include("inference.jl")
 include("bias_correct.jl")       # TMB-style epsilon-method bias correction (#227 B11)
 include("heritability.jl")       # comparative-biology derived ratios (h²/ICC) + CIs
+include("coevolution.jl")        # q=4 Sigma_a SD/correlation readout (#188)
 include("variational.jl")
 include("summary.jl")
 include("visualization.jl")
@@ -85,6 +86,7 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2,
        lrtest, anova, aicc, weights, update,
        bias_correct,
        heritability, repeatability, icc,
+       coevolution,
        reml_loglik, ml_loglik, estimation_method
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
