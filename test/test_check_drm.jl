@@ -40,8 +40,9 @@ using Test, Random, LinearAlgebra
         empty = Dict{Symbol,Vector{Float64}}()
         nll(_) = error("check_drm should use the stored gradient")
         nllgrad!(g, _) = (fill!(g, 0.0); g)
-        fit = DRM.DrmFit(Gaussian(), blocks, coefnames, theta, V, -1.0, 2, true,
-                         empty, empty, empty, nothing, nll, nllgrad!, nothing)
+        base = DRM.DrmFit(Gaussian(), blocks, coefnames, theta, V, -1.0, 2, true,
+                          empty, empty, empty)
+        fit = DRM._withnll(base, nll, nllgrad!)
 
         r = check_drm(fit)
         @test r.max_abs_grad == 0.0
