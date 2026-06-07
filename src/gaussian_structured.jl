@@ -86,7 +86,11 @@ function _fit_structured_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, K, nmμ, 
             S[k] += invD; C[k] += a; q1 += r * a; logdetD += 2 * ησ[i]
         end
         M = Kinv ./ σs² + Diagonal(S)              # (1/σ_s²)K⁻¹ + ZᵀD⁻¹Z
-        Mfac = cholesky(Symmetric(M))
+        # `check = false` + a large FINITE penalty: a line-search step into a
+        # non-PD region must not throw (PosDefException) nor return Inf — Julia
+        # 1.12's HagerZhang line search asserts the objective is finite.
+        Mfac = cholesky(Symmetric(M); check = false)
+        issuccess(Mfac) || return convert(eltype(θ), 1e18)
         quad = q1 - dot(C, Mfac \ C)
         logdetV = logdetD + G * log(σs²) + logdetK + logdet(Mfac)
         return 0.5 * (logdetV + quad) + 0.5 * n * log(2π)
@@ -171,7 +175,7 @@ function _fit_two_structured_gaussian(fam::Gaussian, y, Xμ, gidx1, G1, C1, gidx
         # numerically non-PD V is rejected with a large finite penalty (the optimiser
         # then backtracks) instead of throwing a `PosDefException`.
         Vfac = cholesky(Symmetric(V); check = false)
-        issuccess(Vfac) || return convert(eltype(θ), Inf)
+        issuccess(Vfac) || return convert(eltype(θ), 1e18)
         r = y .- Xμ * βμ
         quad = dot(r, Vfac \ r)
         return 0.5 * (logdet(Vfac) + quad) + 0.5 * n * log(2π)
@@ -223,7 +227,8 @@ function _fit_spatial_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, coords, nmμ
         ημ = Xμ * βμ; ησ = Xσ * βσ
         σs² = exp(2 * lσs); ρ = exp(lρ)
         K = exp.(-Ddist ./ ρ) + 1e-8 * I           # exponential spatial correlation (+ jitter)
-        Kfac = cholesky(Symmetric(K))
+        Kfac = cholesky(Symmetric(K); check = false)
+        issuccess(Kfac) || return convert(eltype(θ), 1e18)
         T = eltype(θ)
         S = zeros(T, G); C = zeros(T, G)
         q1 = zero(T); logdetD = zero(T)
@@ -232,7 +237,8 @@ function _fit_spatial_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, coords, nmμ
             S[k] += invD; C[k] += a; q1 += r * a; logdetD += 2 * ησ[i]
         end
         M = inv(Kfac) ./ σs² + Diagonal(S)
-        Mfac = cholesky(Symmetric(M))
+        Mfac = cholesky(Symmetric(M); check = false)
+        issuccess(Mfac) || return convert(eltype(θ), 1e18)
         quad = q1 - dot(C, Mfac \ C)
         logdetV = logdetD + G * log(σs²) + logdet(Kfac) + logdet(Mfac)
         return 0.5 * (logdetV + quad) + 0.5 * n * log(2π)
@@ -346,7 +352,7 @@ function _fit_two_structured_gaussian_sparse(fam::Gaussian, y, Xμ, gidx1, G1, C
         r = y .- Xμ * βμ
         H = buildH(σ², σ1², σ2²)
         ch = cholesky(Symmetric(H); check = false)
-        issuccess(ch) || return (Inf, Float64[], r, zeros(m), false)
+        issuccess(ch) || return (1e18, Float64[], r, zeros(m), false)
         b = (Z' * r) ./ σ²
         â = ch \ b
         logdetH = logdet(ch)
@@ -354,7 +360,7 @@ function _fit_two_structured_gaussian_sparse(fam::Gaussian, y, Xμ, gidx1, G1, C
         logdetV = n * log(σ²) - logdetP + logdetH
         quad = dot(r, r) / σ² - dot(b, â)
         nll = 0.5 * (logdetV + quad) + 0.5 * n * log(2π)
-        isfinite(nll) || return (Inf, Float64[], r, â, false)
+        isfinite(nll) || return (1e18, Float64[], r, â, false)
         want_grad || return (nll, Float64[], r, â, true)
         u = (r .- Z * â) ./ σ²
         w = Z' * u
