@@ -674,6 +674,23 @@ function _bootstrap_summary_rows(fit0, draws, est, level)
     return rows
 end
 
+# Max |∂nll/∂θ| at the estimate. A location–scale fit carries a `LocScaleObjective`
+# whose inner mode-solve is Float64-only (not dual-number safe), so ForwardDiff
+# can't differentiate it — use its exact analytic outer gradient instead (which
+# also upgrades the diagnostic from NaN to a real gradient norm). Other fits use
+# ForwardDiff through the stored objective; `nothing` means no objective → NaN.
+function _check_max_abs_grad(fit::DrmFit)
+    fit.nll === nothing && return NaN
+    if fit.nll isa LocScaleObjective
+        o = fit.nll
+        base = size(o.Xμ, 2) + size(o.Xψ, 2)
+        perm = vcat(collect(1:base), [base + 1, base + 3, base + 2])  # recov→engine
+        g = _ls_marginal_grad(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, fit.theta[perm])
+        return maximum(abs, g)
+    end
+    return maximum(abs, ForwardDiff.gradient(fit.nll, fit.theta))
+end
+
 """
     check_drm(fit) -> NamedTuple
 
@@ -694,23 +711,6 @@ A non-`ok` result is informative, not an error: a model sitting on a variance
 boundary (Watanabe-singular) can be the data's MLE, with valid Wald SEs on the
 remaining directions — see [`confint`](@ref).
 """
-# Max |∂nll/∂θ| at the estimate. A location–scale fit carries a `LocScaleObjective`
-# whose inner mode-solve is Float64-only (not dual-number safe), so ForwardDiff
-# can't differentiate it — use its exact analytic outer gradient instead (which
-# also upgrades the diagnostic from NaN to a real gradient norm). Other fits use
-# ForwardDiff through the stored objective; `nothing` means no objective → NaN.
-function _check_max_abs_grad(fit::DrmFit)
-    fit.nll === nothing && return NaN
-    if fit.nll isa LocScaleObjective
-        o = fit.nll
-        base = size(o.Xμ, 2) + size(o.Xψ, 2)
-        perm = vcat(collect(1:base), [base + 1, base + 3, base + 2])  # recov→engine
-        g = _ls_marginal_grad(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, fit.theta[perm])
-        return maximum(abs, g)
-    end
-    return maximum(abs, ForwardDiff.gradient(fit.nll, fit.theta))
-end
-
 function check_drm(fit::DrmFit; grad_tol::Real = 1e-3)
     mag = _check_max_abs_grad(fit)
     V = fit.vcov
