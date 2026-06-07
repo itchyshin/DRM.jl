@@ -128,6 +128,14 @@ include("test_qgate_fd_gradient.jl")
 # phylogenetic sparse-Laplace route — the exact implicit-logdet outer gradient.
 include("test_poisson_phylo_grad_gate.jl")
 
+# Standing FD-vs-exact gradient gate (#165) for the Poisson CROSSED-random-
+# intercepts route — same full-Newton-in-basin inner-mode fix as the phylo route.
+include("test_poisson_crossed_grad_gate.jl")
+
+# Standing FD-vs-exact gradient gates (#165) for the other non-Gaussian phylo
+# routes (NB2, Gamma, Binomial ≤ 1e-6; Beta reported honestly).
+include("test_nongaussian_phylo_grad_gate.jl")
+
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
     @testset "R-parity vs drmTMB v0.1.3" begin
