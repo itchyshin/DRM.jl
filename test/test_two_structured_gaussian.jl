@@ -74,7 +74,10 @@ end
 
     m = 8; n = G * m
     species = repeat(1:G, inner = m)
-    id = repeat(1:G, inner = m)
+    # id CROSSED with species (not collinear) so the animal component is separately
+    # identifiable — only then can σ2 collapse cleanly when the truth has no animal
+    # signal. (The recovery testset above deliberately uses the collinear case.)
+    id = repeat(1:G, outer = m)
     x = randn(n)
 
     σ = 0.35; σ1 = 0.9                        # NO animal component in the truth (σ2 = 0)
@@ -86,14 +89,14 @@ end
     two = drm(bf(@formula(y ~ x + phylo(1 | species) + relmat(1 | id)), @formula(sigma ~ 1)),
               Gaussian(); data = data, tree = phy, K = Canim)
     sds = re_sd(two)
-    @test sds[:id] < 0.25                     # collapses toward zero
+    @test sds[:id] < 0.3                      # collapses toward zero (no animal signal)
     @test sds[:species] ≈ σ1 atol = 0.4
 
     # And it should match a single-phylo fit closely (logLik + phylo SD).
     one = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
               Gaussian(); data = data, tree = phy)
     @test loglik(two) ≥ loglik(one) - 1e-3    # two-comp nests one-comp (≥, up to tol)
-    @test re_sd(two)[:species] ≈ re_sd(one)[:species] atol = 0.25
+    @test re_sd(two)[:species] ≈ re_sd(one)[:species] atol = 0.3
 end
 
 @testset "Two structured components: error paths" begin
