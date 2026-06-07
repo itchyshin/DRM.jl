@@ -165,7 +165,11 @@ function _fit_two_structured_gaussian(fam::Gaussian, y, Xμ, gidx1, G1, C1, gidx
         βμ = θ[1:pμ]; lσ = θ[pμ+1]; lσ1 = θ[pμ+2]; lσ2 = θ[pμ+3]
         σ² = exp(2 * lσ); σ1² = exp(2 * lσ1); σ2² = exp(2 * lσ2)
         V = σ² .* Iₙ .+ σ1² .* ZC1Zt .+ σ2² .* ZC2Zt
-        Vfac = cholesky(Symmetric(V))
+        # `check = false` so a line-search step that drives the residual scale to a
+        # numerically non-PD V is rejected with a large finite penalty (the optimiser
+        # then backtracks) instead of throwing a `PosDefException`.
+        Vfac = cholesky(Symmetric(V); check = false)
+        issuccess(Vfac) || return convert(eltype(θ), Inf)
         r = y .- Xμ * βμ
         quad = dot(r, Vfac \ r)
         return 0.5 * (logdet(Vfac) + quad) + 0.5 * n * log(2π)
