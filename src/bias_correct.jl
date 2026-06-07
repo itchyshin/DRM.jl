@@ -125,9 +125,12 @@ function _bias_correct(g, θ̂::AbstractVector, V::AbstractMatrix; level::Real)
     grad = ForwardDiff.gradient(g, θ)
     H = ForwardDiff.hessian(g, θ)
 
-    # Delta-method variance: ∇gᵀ V ∇g.
+    # Delta-method variance: ∇gᵀ V ∇g. A valid ZERO variance (e.g. a constant g,
+    # or a zero gradient) is a degenerate-but-well-defined point: se = 0 ⇒ the CI
+    # collapses to the corrected value. Only a non-finite or NEGATIVE variance
+    # (numerically broken / non-PD direction) is undefined ⇒ Inf (unbounded CI).
     var = dot(grad, V * grad)
-    se = (isfinite(var) && var > 0) ? sqrt(var) : Inf
+    se = (!isfinite(var) || var < 0) ? Inf : sqrt(var)
 
     # Epsilon-method bias correction: ½·tr(H_g · V) = ½·Σ_ij H_ij V_ij.
     bias = 0.0
