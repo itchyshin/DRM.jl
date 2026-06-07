@@ -7,9 +7,8 @@
 #   4. The model-selection guard fires across different MEAN structures under REML
 #      and stays silent for a variance-only difference.
 #   5. The fit stores reml_loglik + ml_loglik + estimation_method = :REML.
-using DRM
+using DRM                         # re-exports @formula
 using Test, Random, Statistics, LinearAlgebra
-using StatsModels: @formula
 import ForwardDiff
 
 @testset "REML (fixed-effect Gaussian location–scale, method=:REML)" begin
