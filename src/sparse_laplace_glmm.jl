@@ -213,31 +213,34 @@ function _poisson_phylo_mode(y, η0, leaf_node, Q, logσ; b0 = nothing,
         ch = cholesky(Symmetric(Hmat); check = false)
         issuccess(ch) || return b, ch, iters, false
         step = ch \ grad
-        norm(step) <= tol * (1 + norm(b)) && return b, ch, iters, true
+        sn = norm(step)
+        sn <= tol * (1 + norm(b)) && return b, ch, iters, true
 
-        f0 = joint_no_const(b)
-        α = 1.0
-        accepted = false
-        while α >= 1e-4
-            trial = b .- α .* step
-            if joint_no_const(trial) <= f0
-                b = trial
-                accepted = true
-                break
+        # The Poisson phylo joint is strictly convex in b (convex data term + PD
+        # prior). Once inside the quadratic-convergence basin (small step) the
+        # full Newton step is contractive, but a backtracking line search there
+        # STALLS on rounding-level decreases — it cannot verify the tiny strict
+        # improvement, so it would exhaust and leave the mode only loosely
+        # converged (~1e-6), which then shows up as finite-difference noise in the
+        # marginal gradient. So in the basin take the FULL Newton step (driving
+        # the mode to ~`tol`); use the safeguarded line search only far from the
+        # mode, where for a convex objective it is guaranteed to find a decrease.
+        if sn <= 1e-3 * (1 + norm(b))
+            b = b .- step
+        else
+            f0 = joint_no_const(b)
+            α = 1.0
+            accepted = false
+            while α >= 1e-4
+                trial = b .- α .* step
+                if joint_no_const(trial) <= f0
+                    b = trial
+                    accepted = true
+                    break
+                end
+                α *= 0.5
             end
-            α *= 0.5
-        end
-        if !accepted
-            # The Poisson phylo joint is strictly convex in b (convex data term +
-            # PD prior) and the Newton step is a descent direction, so a
-            # backtracking line search can only fail to find a decrease at the
-            # minimum itself. Treat an exhausted line search as CONVERGENCE when
-            # the full Newton step is already small (we are at the mode), rather
-            # than returning a spurious `ok = false` — which surfaces as the 1e18
-            # infeasibility sentinel and corrupts any finite-difference of the
-            # marginal near a tightly-converged mode. A genuinely non-converged
-            # point still has a productive descent step the line search accepts.
-            return b, ch, iters, norm(step) <= 1e-6 * (1 + norm(b))
+            accepted || return b, ch, iters, false
         end
     end
     return b, ch, iters, ch !== nothing
