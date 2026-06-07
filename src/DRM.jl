@@ -71,9 +71,10 @@ include("comparison.jl")
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
        fit_q4_sparse_tmb, marginal_and_exact_grad, marginal_nll,
-       estep_mode, prior_precision, build_Huu, joint_grad, joint_nll,
+       estep_mode, prior_precision, build_Huu, joint_grad, joint_nll, aug_prior_grad!,
        pack_theta, unpack_theta, lc_to_Λ, Λ_to_lc,
-       augmented_phy, random_balanced_tree, sigma_phy_dense, takahashi_selinv
+       augmented_phy, random_balanced_tree, random_caterpillar_tree,
+       augmented_tree_precision, sigma_phy_dense, takahashi_selinv
 
 # Public API — the Gaussian distributional-regression front end.
 export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,

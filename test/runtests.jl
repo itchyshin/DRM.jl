@@ -130,6 +130,11 @@ include("test_predict_se.jl")
 # q4 sparse-Laplace engine (Workflow Q).
 include("test_qgate_fd_gradient.jl")
 
+# Standing engine-quality Q-gate (issue #15): zero-allocation gate on the inner
+# Newton mode-finder's pure-Julia arithmetic (the CHOLMOD factor is excluded as
+# out-of-Julia-control). Cheap → per-PR. (Workflow Q.)
+include("test_qgate_alloc_inner.jl")
+
 # Standing FD-vs-exact gradient gate (issue #165) for the non-Gaussian (Poisson)
 # phylogenetic sparse-Laplace route — the exact implicit-logdet outer gradient.
 include("test_poisson_phylo_grad_gate.jl")

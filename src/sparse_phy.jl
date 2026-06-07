@@ -412,3 +412,56 @@ function random_balanced_tree(p::Integer; branch_length::Real = 0.1)
     root_idx = current_level[1]
     return make_phy(edges, p; root_index = root_idx)
 end
+
+"""
+    random_caterpillar_tree(p::Integer; branch_length::Real = 0.1) :: AugmentedPhy
+
+Build a **caterpillar** (maximally unbalanced "ladder") binary tree with `p`
+leaves: leaves 1 and 2 form the first cherry, that node joins leaf 3 at the next
+internal node, and so on — a chain of `p-1` internal nodes of depth `p-1`.
+
+The shape is the worst case for sparse-Cholesky fill-in: O(p) on a *balanced*
+tree (log-depth) does not by itself prove O(p) on a deep caterpillar, so this
+generator feeds the multi-shape scaling sweep (#16). All branch lengths equal
+`branch_length`.
+"""
+function random_caterpillar_tree(p::Integer; branch_length::Real = 0.1)
+    p > 0 || error("p must be > 0; got $p")
+    b = Float64(branch_length)
+    if p == 1
+        # Degenerate: a single leaf is its own root (n_total = 1, no edges).
+        Q = sparse([1], [1], [1.0 / b], 1, 1)
+        return AugmentedPhy{Float64}(1, 1, Q, [1], ["L1"], [b], 1)
+    end
+    edges = Tuple{Int,Int,Float64}[]
+    next_id = p + 1
+    cur = next_id; next_id += 1            # first cherry over leaves 1 and 2
+    push!(edges, (cur, 1, b))
+    push!(edges, (cur, 2, b))
+    for leaf in 3:p                        # ladder: each leaf gets a new node above
+        parent = next_id; next_id += 1
+        push!(edges, (parent, cur, b))
+        push!(edges, (parent, leaf, b))
+        cur = parent
+    end
+    return make_phy(edges, p; root_index = cur)
+end
+
+"""
+    augmented_tree_precision(phy::AugmentedPhy) -> (Q, leaf_pos, q)
+
+Return the **root-conditioned augmented topology precision** `Q =
+Q_topology[keep, keep]` — a sparse, O(p)-nnz, positive-definite matrix over the
+`q = 2p-2` non-root augmented nodes — together with the map `leaf_pos[t]` from
+leaf `t ∈ 1:p` to its row/column in `Q`, and `q`. This is the sparse precision
+the end-to-end O(p) Gaussian path feeds DIRECTLY as `Qₖ`, bypassing the dense
+leaf-correlation inversion.
+"""
+function augmented_tree_precision(phy::AugmentedPhy)
+    keep = setdiff(1:phy.n_total, [phy.root_index])
+    q = length(keep)
+    Q = phy.Q_topology[keep, keep]
+    pos = Dict(node => i for (i, node) in enumerate(keep))
+    leaf_pos = [pos[phy.leaf_indices[t]] for t in 1:phy.n_leaves]
+    return Q, leaf_pos, q
+end

@@ -285,15 +285,22 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         grp1 === grp2 && error("the two structured components must use different grouping factors")
         gidx1, G1 = _group_index(getproperty(data, grp1))
         gidx2, G2 = _group_index(getproperty(data, grp2))
+        # Opt-in sparse O(p) path (#225/#232): augmented-latent + sparse Cholesky +
+        # Takahashi-selected-inverse gradient. Same model, same MLE; default
+        # (:auto) stays on the verified dense path.
+        if algorithm === :sparse
+            # END-TO-END sparse: a phylo component feeds the ROOT-CONDITIONED
+            # augmented tree precision DIRECTLY (no dense Ck inversion) — true O(p)
+            # (#232). A relmat/animal component still resolves its dense relatedness
+            # K and uses Qk = K⁻¹ (the matrix is the user-supplied input). The
+            # residual scale honours `sigma ~ x` (D → diag).
+            comp1 = _sparse_struct_comp(kind1, grp1, G1, gidx1; K = K, A = A, tree = tree)
+            comp2 = _sparse_struct_comp(kind2, grp2, G2, gidx2; K = K, A = A, tree = tree)
+            return _withformula(_fit_two_structured_gaussian_sparse_spec(fam, y, Xμ, Xσ,
+                comp1, comp2, nmμ, nmσ, g_tol), f)
+        end
         C1 = _resolve_structured_matrix(kind1, grp1, G1; K = K, A = A, tree = tree, coords = coords)
         C2 = _resolve_structured_matrix(kind2, grp2, G2; K = K, A = A, tree = tree, coords = coords)
-        # Opt-in sparse O(p) path (#225 follow-up): augmented-latent + sparse
-        # Cholesky + Takahashi-selected-inverse gradient. Same model, same MLE;
-        # default (:auto) stays on the verified dense path.
-        if algorithm === :sparse
-            return _withformula(_fit_two_structured_gaussian_sparse(fam, y, Xμ, gidx1, G1, C1,
-                gidx2, G2, C2, nmμ, grp1, grp2, g_tol), f)
-        end
         return _withformula(_fit_two_structured_gaussian(fam, y, Xμ, gidx1, G1, C1,
             gidx2, G2, C2, nmμ, grp1, grp2, g_tol), f)
     end
