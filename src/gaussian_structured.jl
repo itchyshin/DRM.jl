@@ -403,7 +403,7 @@ function _fit_two_structured_gaussian_sparse(fam::Gaussian, y, Xμ, gidx1, G1, C
     end
     Hmat .= 0.5 .* (Hmat .+ Hmat')
     V = try
-        inv(Symmetric(Hmat))
+        Matrix(inv(Symmetric(Hmat)))          # DrmFit expects a plain Matrix vcov
     catch
         fill(NaN, np, np)
     end
