@@ -488,7 +488,13 @@ function _fit_two_structured_gaussian_sparse_spec(fam::Gaussian, y, Xμ, Xσ,
         wv1 = @view Zw[1:m1]; wv2 = @view Zw[off2+1:off2+m2]
         glσ1 = 0.5 * (2 * m1 - 2 * trQ1) - dot(wv1, w1pos)
         glσ2 = 0.5 * (2 * m2 - 2 * trQ2) - dot(wv2, w2pos)
-        return (nll, vcat(gβ, gβσ, glσ1, glσ2), r, â, w, true)
+        grad = vcat(gβ, gβσ, glσ1, glσ2)
+        # A finite nll can still pair with a non-finite gradient near a boundary
+        # (overflowing residual precision, ill-conditioned selected-inverse).
+        # LineSearches (HagerZhang) asserts both value and directional derivative
+        # are finite, so fall back to the penalty region instead of emitting NaN/Inf.
+        all(isfinite, grad) || return (1e18, Float64[], r, â, w, false)
+        return (nll, grad, r, â, w, true)
     end
 
     # parameter layout: θ = [βμ(pμ); βσ(pσ); lσ1; lσ2]
