@@ -27,6 +27,10 @@ end
 
 # Gaussian location–scale front end (drm/bf public API).
 include("test_gaussian_core.jl")
+# REML estimation (opt-in, fixed-effect Gaussian location–scale) + the
+# model-selection guard for the classic REML trap (issue #11). Placed early so it
+# runs near the core Gaussian tests.
+include("test_reml.jl")
 include("test_bf_grammar.jl")
 include("test_gaussian_bivariate.jl")
 include("test_gaussian_bivariate_phylo.jl")

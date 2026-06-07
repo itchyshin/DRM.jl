@@ -99,6 +99,9 @@ bootstrap_result
 
 ```@docs
 loglik
+ml_loglik
+reml_loglik
+estimation_method
 dof
 aic
 bic

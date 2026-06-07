@@ -81,7 +81,8 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2,
        profile_result, profile_curve, parameter_surface, corpairs_data,
        is_converged, deviance, dof_residual,
        lrtest, anova, aicc, weights, update,
-       bias_correct
+       bias_correct,
+       reml_loglik, ml_loglik, estimation_method
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare
