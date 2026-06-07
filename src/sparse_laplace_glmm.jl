@@ -227,7 +227,18 @@ function _poisson_phylo_mode(y, η0, leaf_node, Q, logσ; b0 = nothing,
             end
             α *= 0.5
         end
-        accepted || return b, ch, iters, false
+        if !accepted
+            # The Poisson phylo joint is strictly convex in b (convex data term +
+            # PD prior) and the Newton step is a descent direction, so a
+            # backtracking line search can only fail to find a decrease at the
+            # minimum itself. Treat an exhausted line search as CONVERGENCE when
+            # the full Newton step is already small (we are at the mode), rather
+            # than returning a spurious `ok = false` — which surfaces as the 1e18
+            # infeasibility sentinel and corrupts any finite-difference of the
+            # marginal near a tightly-converged mode. A genuinely non-converged
+            # point still has a productive descent step the line search accepts.
+            return b, ch, iters, norm(step) <= 1e-6 * (1 + norm(b))
+        end
     end
     return b, ch, iters, ch !== nothing
 end
