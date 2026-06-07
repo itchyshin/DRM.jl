@@ -10,7 +10,15 @@ using Test, Random, LinearAlgebra
 
 @testset "conjugate EM (#12): :em matches the default phylo-mean fit" begin
     Random.seed!(20260607)
-    G = 48
+    # A power-of-two leaf count makes `random_balanced_tree` perfectly balanced
+    # (no leftover odd node carried up), so every leaf is the SAME depth from the
+    # root. Then the Brownian leaf covariance C has a constant diagonal, i.e.
+    # C = c·Kc with Kc the correlation. The default GLS fitter parametrizes the
+    # phylo effect as σ_s²·Kc while the EM uses σ²_phy·C; with a constant diagonal
+    # these are the SAME marginal model (σ_s² = c·σ²_phy), so β, residual σ, and
+    # logLik coincide — the correctness anchor. (On an unbalanced tree the two
+    # marginals genuinely differ and only logLik/σ stay close, not β.)
+    G = 64
     phy = random_balanced_tree(G; branch_length = 0.3)
     C = sigma_phy_dense(phy; σ²_phy = 1.0)            # phylo covariance over leaves
     d = sqrt.(diag(C)); Kc = C ./ (d * d')            # correlation
