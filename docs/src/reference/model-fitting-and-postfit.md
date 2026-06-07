@@ -16,6 +16,7 @@ DrmFit
 fixef
 re_sd
 vc
+coevolution
 coeftable
 coef
 vcov
@@ -29,6 +30,10 @@ sigma
 corpairs
 rho12
 ```
+
+`coevolution(fit)` is for the q=4 structured bivariate fit: it reports the
+group-level `Σ_a` SDs and correlations. `rho12(fit)` / `corpairs(fit)` remain
+the residual-correlation accessors.
 
 ## Random-effect estimates
 
