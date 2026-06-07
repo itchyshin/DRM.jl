@@ -618,5 +618,6 @@ function _remap_resid_block(fit::DrmFit)
     names = [k === :sigma ? (:resid => ["residual"]) : (k => v) for (k, v) in fit.coefnames]
     return DrmFit(fit.family, blocks, names, fit.theta, fit.vcov, fit.loglik,
                   fit.nobs, fit.converged, fit.means, fit.obs, fit.scales,
-                  fit.formula, fit.nll, fit.nllgrad, fit.ranef)
+                  fit.formula, fit.nll, fit.nllgrad, fit.ranef,
+                  fit.estim_method, fit.reml_loglik, fit.ml_loglik)
 end
