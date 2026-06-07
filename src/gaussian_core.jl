@@ -191,6 +191,25 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         gidx, G = _group_index(getproperty(data, sgrp))
         return _withformula(_fit_sigma_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, sgrp, g_tol), f)
     end
+    # Two structured components in one fit (e.g. phylo(1|species) + relmat(1|id)):
+    # a separate variance component each, latent field = their sum. Dense first cut.
+    all_structured = _collect_structured(rhs[:mu])
+    if length(all_structured) >= 2
+        length(all_structured) == 2 ||
+            error("at most two structured components are supported in one Gaussian fit " *
+                  "(got $(length(all_structured)): $(all_structured))")
+        isempty(re) && isempty(sigma_re) && metav === nothing ||
+            error("two structured components must be the only random structure on the mean, " *
+                  "with a fixed-effect `sigma`")
+        (kind1, grp1), (kind2, grp2) = all_structured
+        grp1 === grp2 && error("the two structured components must use different grouping factors")
+        gidx1, G1 = _group_index(getproperty(data, grp1))
+        gidx2, G2 = _group_index(getproperty(data, grp2))
+        C1 = _resolve_structured_matrix(kind1, grp1, G1; K = K, A = A, tree = tree, coords = coords)
+        C2 = _resolve_structured_matrix(kind2, grp2, G2; K = K, A = A, tree = tree, coords = coords)
+        return _withformula(_fit_two_structured_gaussian(fam, y, Xμ, gidx1, G1, C1,
+            gidx2, G2, C2, nmμ, grp1, grp2, g_tol), f)
+    end
     if structured !== nothing
         kind, grp = structured
         gidx, G = _group_index(getproperty(data, grp))

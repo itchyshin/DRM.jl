@@ -107,6 +107,102 @@ function _fit_structured_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, K, nmμ, 
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
 
+# Resolve one structured marker to its fixed G×G correlation/relatedness matrix
+# from the keyword args. Used by the two-component path (relmat/animal/phylo;
+# spatial estimates a range jointly and is not yet supported alongside a second
+# component — tracked as a follow-up).
+function _resolve_structured_matrix(kind::Symbol, grp::Symbol, G::Int; K, A, tree, coords)
+    Cmat = if kind === :relmat
+        K === nothing && error("relmat(1 | $grp) needs `K = …`")
+        Matrix{Float64}(K)
+    elseif kind === :animal
+        A === nothing && error("animal(1 | $grp) needs the relatedness matrix `A = …`")
+        Matrix{Float64}(A)
+    elseif kind === :phylo
+        tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
+        _phylo_correlation(tree)
+    else  # :spatial
+        error("spatial(1 | $grp) is not yet supported as one of two structured components " *
+              "(it estimates a range jointly); use it as the only structured marker")
+    end
+    size(Cmat) == (G, G) ||
+        error("structured matrix for `$grp` must be $(G)×$(G) (the number of `$grp` levels)")
+    return Cmat
+end
+
+# Build the n×G group-indicator (one-hot) for a structured intercept.
+function _structured_Z(gidx, G)
+    n = length(gidx)
+    Z = zeros(n, G)
+    @inbounds for i in 1:n
+        Z[i, gidx[i]] = 1.0
+    end
+    return Z
+end
+
+# Two structured intercepts on the Gaussian mean in ONE fit (e.g.
+# `phylo(1|species) + relmat(1|id)`). The latent field is the SUM of two
+# structured effects:
+#     y = Xβ + Z₁a₁ + Z₂a₂ + ε,  a₁~N(0,σ₁²C₁),  a₂~N(0,σ₂²C₂),  ε~N(0,σ²I)
+# so the marginal stays exactly Gaussian:
+#     y ~ N(Xβ, V),  V = σ²I + σ₁² Z₁C₁Z₁ᵀ + σ₂² Z₂C₂Z₂ᵀ.
+# FIRST CUT: DENSE assembly of V (correctness first); the residual scale is a
+# single `sigma ~ 1` (homoscedastic), so D = σ²I. θ = [βμ; logσ (resid); logσ₁; logσ₂].
+# Both σ₁ and σ₂ are reported as named variance components via `re_sd`/`vc`.
+# Follow-up: sparse/Woodbury assembly for speed (tracked separately); a `sigma`
+# predictor on the residual is a straightforward extension (D → diag).
+function _fit_two_structured_gaussian(fam::Gaussian, y, Xμ, gidx1, G1, C1, gidx2, G2, C2,
+                                      nmμ, grp1, grp2, g_tol)
+    n = length(y)
+    pμ = size(Xμ, 2)
+    Z1 = _structured_Z(gidx1, G1)
+    Z2 = _structured_Z(gidx2, G2)
+    ZC1Zt = Z1 * C1 * Z1'        # constant building blocks (C₁, C₂ fixed)
+    ZC2Zt = Z2 * C2 * Z2'
+    Iₙ = Matrix{Float64}(I, n, n)
+
+    function nll(θ)
+        βμ = θ[1:pμ]; lσ = θ[pμ+1]; lσ1 = θ[pμ+2]; lσ2 = θ[pμ+3]
+        σ² = exp(2 * lσ); σ1² = exp(2 * lσ1); σ2² = exp(2 * lσ2)
+        T = eltype(θ)
+        V = σ² .* Iₙ .+ σ1² .* ZC1Zt .+ σ2² .* ZC2Zt
+        Vfac = cholesky(Symmetric(V))
+        r = y .- Xμ * βμ
+        quad = dot(r, Vfac \ r)
+        return 0.5 * (logdet(Vfac) + quad) + 0.5 * n * log(2π)
+    end
+
+    βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
+    s0 = std(res0)
+    θ0 = zeros(pμ + 3)
+    θ0[1:pμ] .= βμ0
+    θ0[pμ+1] = log(s0 / sqrt(3) + eps())     # balanced split: resid + 2 structured
+    θ0[pμ+2] = log(s0 / sqrt(3) + eps())
+    θ0[pμ+3] = log(s0 / sqrt(3) + eps())
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res)
+    V = inv(ForwardDiff.hessian(nll, θ̂))
+
+    # :resd carries BOTH structured SD parameters (logσ₁, logσ₂) so `re_sd` and
+    # `vc` report them per grouping factor; :resid carries the residual logσ.
+    blocks = [:mu => 1:pμ, :resid => (pμ+1):(pμ+1), :resd => (pμ+2):(pμ+3)]
+    names = [:mu => nmμ, :resid => ["residual"], :resd => [String(grp1), String(grp2)]]
+    means = Dict(:mu => Xμ * θ̂[1:pμ])
+    obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict(:sigma => fill(exp(θ̂[pμ+1]), n))
+    # Conditional RE estimates (BLUPs): â_j = σ_j² C_j Z_jᵀ V⁻¹ r at θ̂.
+    blup = let
+        βμ = θ̂[1:pμ]; σ1² = exp(2 * θ̂[pμ+2]); σ2² = exp(2 * θ̂[pμ+3])
+        Vh = exp(2 * θ̂[pμ+1]) .* Iₙ .+ σ1² .* ZC1Zt .+ σ2² .* ZC2Zt
+        Vinvr = cholesky(Symmetric(Vh)) \ (y .- Xμ * βμ)
+        a1 = σ1² .* (C1 * (Z1' * Vinvr))
+        a2 = σ2² .* (C2 * (Z2' * Vinvr))
+        Dict(Symbol(grp1) => a1, Symbol(grp2) => a2)
+    end
+    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n,
+        Optim.converged(res), means, obs, scales), nll), blup)
+end
+
 # Coordinate-spatial structured intercept: K(ρ) = exp(-d/ρ) from site distances,
 # with the range ρ estimated jointly (θ gains log σ_s and log ρ). K depends on θ
 # so it is rebuilt each evaluation; otherwise the closed-form marginal is as in
