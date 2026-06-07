@@ -7,6 +7,9 @@
 # diagonal G×G capacitance (one random-intercept term), all ForwardDiff-friendly.
 
 # Split a μ right-hand side into its fixed part and any `(lhs | g)` terms.
+# `structured` is the FIRST structured marker (relmat/animal/phylo/spatial) for
+# backward compatibility; use `_collect_structured` to retrieve the full list
+# (the Gaussian router supports two structured components in one fit).
 function _split_ranef(rhs)
     terms = rhs isa Tuple ? collect(rhs) : Any[rhs]
     fixed = Any[]
@@ -19,13 +22,13 @@ function _split_ranef(rhs)
         elseif t isa FunctionTerm && t.f === meta_V
             metav = t.args[1].sym
         elseif t isa FunctionTerm && t.f === relmat
-            structured = (:relmat, t.args[1].args[2].sym)   # inner (1 | grp)
+            structured === nothing && (structured = (:relmat, t.args[1].args[2].sym))   # inner (1 | grp)
         elseif t isa FunctionTerm && t.f === animal
-            structured = (:animal, t.args[1].args[2].sym)
+            structured === nothing && (structured = (:animal, t.args[1].args[2].sym))
         elseif t isa FunctionTerm && t.f === phylo
-            structured = (:phylo, t.args[1].args[2].sym)
+            structured === nothing && (structured = (:phylo, t.args[1].args[2].sym))
         elseif t isa FunctionTerm && t.f === spatial
-            structured = (:spatial, t.args[1].args[2].sym)
+            structured === nothing && (structured = (:spatial, t.args[1].args[2].sym))
         else
             push!(fixed, t)
         end
@@ -33,6 +36,29 @@ function _split_ranef(rhs)
     fixed_rhs = isempty(fixed) ? ConstantTerm(1) :
                 length(fixed) == 1 ? fixed[1] : Tuple(fixed)
     return fixed_rhs, re, metav, structured
+end
+
+# Collect EVERY structured marker on a right-hand side, in source order, as a
+# Vector of (kind, grouping) tuples (kind ∈ :relmat, :animal, :phylo, :spatial).
+# Empty when none are present. The Gaussian mean path can fit two such components
+# (e.g. `phylo(1|species) + relmat(1|id)`); single-marker callers keep using the
+# `structured` slot returned by `_split_ranef`.
+function _collect_structured(rhs)
+    terms = rhs isa Tuple ? collect(rhs) : Any[rhs]
+    out = Tuple{Symbol,Symbol}[]
+    for t in terms
+        t isa FunctionTerm || continue
+        if t.f === relmat
+            push!(out, (:relmat, t.args[1].args[2].sym))
+        elseif t.f === animal
+            push!(out, (:animal, t.args[1].args[2].sym))
+        elseif t.f === phylo
+            push!(out, (:phylo, t.args[1].args[2].sym))
+        elseif t.f === spatial
+            push!(out, (:spatial, t.args[1].args[2].sym))
+        end
+    end
+    return out
 end
 
 # Per-observation random-effect design weight from the term's lhs:
@@ -232,19 +258,32 @@ end
 """
     vc(fit) -> Dict{Symbol,Matrix{Float64}}
 
-Random-effect covariance matrix per grouping factor, for correlated
-random-effect blocks (`(1 + x | g)`). `sqrt.(diag(vc(fit)[:g]))` are the
-intercept/slope SDs; the off-diagonal gives their covariance.
+Random-effect covariance summary per grouping factor.
+
+- Correlated random-effect block (`(1 + x | g)`): a 2×2 covariance matrix —
+  `sqrt.(diag(vc(fit)[:g]))` are the intercept/slope SDs, the off-diagonal their
+  covariance.
+- Scalar / structured variance components (`(1 | g)`, `relmat`/`animal`/`phylo`):
+  a 1×1 matrix holding that component's variance `σ²`. A fit with two structured
+  components (e.g. `phylo(1|species) + relmat(1|id)`) reports both, keyed by
+  grouping factor.
 """
 function vc(fit::DrmFit)
     d = Dict{Symbol,Matrix{Float64}}()
     for (p, r) in fit.blocks
-        p === :recov || continue
-        a, b, cc = fit.theta[r]
-        l11 = exp(a); l22 = exp(b)
-        Σ = [l11^2 cc*l11; cc*l11 cc^2+l22^2]
-        nm = first(cn[2] for cn in fit.coefnames if cn[1] === :recov)[1]   # "g:L11"
-        d[Symbol(split(nm, ":")[1])] = Σ
+        if p === :recov
+            a, b, cc = fit.theta[r]
+            l11 = exp(a); l22 = exp(b)
+            Σ = [l11^2 cc*l11; cc*l11 cc^2+l22^2]
+            nm = first(cn[2] for cn in fit.coefnames if cn[1] === :recov)[1]   # "g:L11"
+            d[Symbol(split(nm, ":")[1])] = Σ
+        elseif p === :resd
+            nms = first(cn[2] for cn in fit.coefnames if cn[1] === :resd)
+            for (j, nm) in enumerate(nms)
+                σ = exp(fit.theta[r[j]])
+                d[Symbol(nm)] = fill(σ^2, 1, 1)            # 1×1 variance component
+            end
+        end
     end
     return d
 end

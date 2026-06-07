@@ -36,6 +36,7 @@ function _block_title(p::Symbol)
     p === :cutpoints && return "Cutpoints"
     p === :range   && return "Spatial range (log)"
     p === :resd    && return "Random-effect SD (log σ_b)"
+    p === :resid   && return "Residual scale (log σ)"
     p === :recov   && return "Random-effect covariance (Cholesky)"
     return String(p)
 end
