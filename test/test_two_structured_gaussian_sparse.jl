@@ -62,8 +62,12 @@ end
     # σ, σ1, σ2 agree (re_sd reports per grouping factor; sigma() the residual).
     @test sigma(sparse2)[1] ≈ sigma(dense2)[1] rtol = 1e-4
     sd_s = re_sd(sparse2); sd_d = re_sd(dense2)
-    @test sd_s[:species] ≈ sd_d[:species] rtol = 1e-4
-    @test sd_s[:id]      ≈ sd_d[:id]      rtol = 1e-4
+    # A variance component can sit at its near-zero boundary on this fixture, where
+    # a relative tolerance is meaningless (comparing ~1e-8 to ~1e-10); an absolute
+    # tolerance handles that. The logLik/β/σ equivalence above already anchors that
+    # the sparse fit matches the dense one.
+    @test sd_s[:species] ≈ sd_d[:species] rtol = 1e-4 atol = 1e-5
+    @test sd_s[:id]      ≈ sd_d[:id]      rtol = 1e-4 atol = 1e-5
 end
 
 @testset "Sparse two-structured: analytic gradient matches finite differences" begin
