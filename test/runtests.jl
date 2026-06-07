@@ -151,3 +151,7 @@ include("test_comparison.jl")
 
 # Randomized quantile residuals (DHARMa/glmmTMB style) — feat-quantile-residuals.
 include("test_quantile_residuals.jl")
+
+# REML estimation (opt-in, fixed-effect Gaussian location–scale) + the
+# model-selection guard for the classic REML trap (issue #11).
+include("test_reml.jl")
