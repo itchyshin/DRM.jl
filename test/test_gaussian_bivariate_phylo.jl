@@ -160,3 +160,60 @@ end
         q4_vcov = false,
     )
 end
+
+# --- B1: the #187 acceptance — recover the simulated Σ_a / ρ_a / β -------------
+@testset "q=4 phylo front end recovers Σ_a (seeded)" begin
+    fixture = _q4_frontend_data(p = 100, nrep = 4, seed = 2024)   # n = 400
+    fit = drm(_q4_formula(), Gaussian(); data = fixture.data, tree = fixture.phy,
+              q4_g_tol = 1e-3, q4_iterations = 500, q4_n_newton = 40, q4_vcov = false)
+
+    Σ̂ = fit.ranef.Sigma_a; Σ = _Q4_TEST_SIGMA_A
+    sd̂ = sqrt.(diag(Σ̂)); sd = sqrt.(diag(Σ))
+    ρ_(S, s, i, j) = S[i, j] / (s[i] * s[j])
+
+    @test sd̂ ≈ sd rtol = 0.3                              # four phylo SDs (σ_a)
+    for (i, j) in ((1, 2), (3, 4), (1, 3), (2, 4), (1, 4), (2, 3))   # all six ρ_a
+        @test ρ_(Σ̂, sd̂, i, j) ≈ ρ_(Σ, sd, i, j) atol = 0.2
+    end
+    @test coef(fit, :mu1)[2] ≈ _Q4_TEST_BETA.mu1[2] atol = 0.15
+    @test coef(fit, :mu2)[2] ≈ _Q4_TEST_BETA.mu2[2] atol = 0.15
+end
+
+# --- B2: the default public q4_vcov = true path produces a usable vcov ---------
+@testset "q=4 phylo front end: default vcov path" begin
+    fixture = _q4_frontend_data(p = 30, nrep = 3, seed = 99)
+    fit = drm(_q4_formula(), Gaussian(); data = fixture.data, tree = fixture.phy,
+              q4_iterations = 200, q4_n_newton = 30)        # q4_vcov = true (default)
+    V = fit.vcov
+    @test size(V) == (length(fit.theta), length(fit.theta))
+    @test all(isfinite, V) && V ≈ V'
+    se = stderror(fit)
+    nfixed = last(fit.blocks[5].second)                    # end of :rho12 block
+    @test all(isfinite, se[1:nfixed]) && all(>(0), se[1:nfixed])
+    @test !isempty(confint(fit))
+    @test (coeftable(fit); true)
+end
+
+# --- S1: vc(fit) surfaces the raw 4×4 Σ_a (completes #192's storage half) ------
+@testset "vc(fit) surfaces the raw 4×4 Σ_a" begin
+    fixture = _q4_frontend_data(p = 12, nrep = 2)
+    fit = drm(_q4_formula(), Gaussian(); data = fixture.data, tree = fixture.phy,
+              q4_iterations = 120, q4_n_newton = 30, q4_vcov = false)
+    V = vc(fit)
+    @test haskey(V, :species)
+    @test size(V[:species]) == (4, 4)
+    @test V[:species] ≈ fit.ranef.Sigma_a
+end
+
+# --- S2: public accessors don't choke on the NamedTuple ranef / :phylocov -----
+@testset "q=4 fit: accessors don't choke on NamedTuple ranef / :phylocov" begin
+    fixture = _q4_frontend_data(p = 12, nrep = 2)
+    fit = drm(_q4_formula(), Gaussian(); data = fixture.data, tree = fixture.phy,
+              q4_iterations = 120, q4_n_newton = 30, q4_vcov = false)
+    @test ranef(fit) isa AbstractDict
+    @test vc(fit) isa AbstractDict
+    @test (re_sd(fit); true)
+    @test (sprint(show, MIME("text/plain"), fit); true)
+    @test (coeftable(fit); true)
+    @test (check_drm(fit); true)
+end

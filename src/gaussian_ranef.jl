@@ -242,6 +242,11 @@ intercept/slope SDs; the off-diagonal gives their covariance.
 """
 function vc(fit::DrmFit)
     d = Dict{Symbol,Matrix{Float64}}()
+    # q=4 phylogenetic coevolution: the raw 4×4 group-level Σ_a is stashed on
+    # `ranef` (axes mu1,mu2,sigma1,sigma2); surface it here per #192.
+    if fit.ranef isa NamedTuple && haskey(fit.ranef, :Sigma_a)
+        d[Symbol(fit.ranef.group)] = Matrix{Float64}(fit.ranef.Sigma_a)
+    end
     for (p, r) in fit.blocks
         p === :recov || continue
         a, b, cc = fit.theta[r]
