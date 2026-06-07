@@ -71,10 +71,21 @@ function build_Huu(prob::AugProblem, P::SparseMatrixCSC, u::Vector{Float64}, β)
     return H
 end
 
+# Zero-allocation prior-coupling gradient term: g .= P*u via an in-place sparse
+# matvec (no temporary). This is the pure-Julia arithmetic the inner Newton loop
+# repeats every iteration; the engine-quality gate (#15) asserts it allocates
+# nothing and stays flat across p (the CHOLMOD factor/solve is excluded from that
+# gate as out-of-Julia-control). `g` must be a length-4·n_total preallocated buffer.
+@inline function aug_prior_grad!(g::Vector{Float64}, P::SparseMatrixCSC, u::Vector{Float64})
+    mul!(g, P, u)
+    return g
+end
+
 # Gradient of the joint nll wrt u at u: P*u + leaf data gradients (at leaves).
 function joint_grad(prob::AugProblem, P::SparseMatrixCSC, u::Vector{Float64}, β)
     η1, η2, ηs1, ηs2, ηr = leaf_etas(prob, β)
-    g = P * u
+    g = similar(u)
+    aug_prior_grad!(g, P, u)                        # g .= P*u (zero-alloc matvec)
     @inbounds for i in eachindex(prob.leaf_node)   # over DATA ROWS (≥1 per leaf)
         t = prob.leaf_node[i]; base = 4(t - 1)
         ublk = [u[base+1], u[base+2], u[base+3], u[base+4]]

@@ -167,3 +167,107 @@ end
     # default algorithm stays dense (unchanged behaviour).
     @test loglik(drm(form, Gaussian(); data = data, tree = phy, K = Canim)) ≈ loglik(dense)
 end
+
+@testset "augmented_tree_precision: leaf cov == sigma_phy_dense" begin
+    # The root-conditioned augmented precision Q over q = 2p-2 nodes must reproduce
+    # the dense leaf covariance when restricted to leaf positions: (Q⁻¹)[leaf,leaf]
+    # == sigma_phy_dense. The correctness anchor for the END-TO-END feed (#232).
+    for treegen in (random_balanced_tree, random_caterpillar_tree)
+        phy = treegen(12; branch_length = 0.3)
+        Q, leaf_pos, q = augmented_tree_precision(phy)
+        @test q == 2 * 12 - 2
+        Σleaf_aug = inv(Matrix(Q))[leaf_pos, leaf_pos]
+        Σleaf_den = sigma_phy_dense(phy; σ²_phy = 1.0)
+        @test Σleaf_aug ≈ Σleaf_den rtol = 1e-8
+    end
+end
+
+@testset "caterpillar tree: well-formed binary topology" begin
+    for p in (2, 5, 16)
+        phy = random_caterpillar_tree(p; branch_length = 0.2)
+        @test phy.n_leaves == p
+        @test phy.n_total == 2p - 1
+        Q, leaf_pos, q = augmented_tree_precision(phy)
+        @test issuccess(cholesky(Symmetric(Matrix(Q)); check = false))   # PD
+        @test length(leaf_pos) == p
+    end
+end
+
+@testset "END-TO-END sparse phylo: equals dense leaf-correlation fit (#232)" begin
+    # The phylo component feeds the AUGMENTED tree precision directly (no dense Ck
+    # inversion) yet must land on the SAME MLE/logLik as the dense leaf-correlation
+    # path. Anchor: drm(:sparse) (end-to-end) vs drm(:auto) (dense Cphy).
+    Random.seed!(2718281)
+    G = 40
+    phy = random_balanced_tree(G; branch_length = 0.4)
+    Cphy = _corr(sigma_phy_dense(phy; σ²_phy = 1.0))
+    M = randn(G, G); Canim = _corr(M * M' / G + I)
+    m = 6; n = G * m
+    species = repeat(1:G, inner = m); id = repeat(1:G, inner = m)
+    x = randn(n)
+    a1 = 0.8 .* (cholesky(Symmetric(Cphy)).L * randn(G))
+    a2 = 0.5 .* (cholesky(Symmetric(Canim)).L * randn(G))
+    y = 0.3 .+ 0.5 .* x .+ a1[species] .+ a2[id] .+ 0.4 .* randn(n)
+    data = (; y, x, species, id)
+    form = bf(@formula(y ~ x + phylo(1 | species) + relmat(1 | id)), @formula(sigma ~ 1))
+
+    dense  = drm(form, Gaussian(); data = data, tree = phy, K = Canim)               # dense Cphy
+    e2e    = drm(form, Gaussian(); data = data, tree = phy, K = Canim, algorithm = :sparse)
+    @test e2e.converged
+    @test loglik(e2e) ≈ loglik(dense) rtol = 1e-4
+    @test coef(e2e, :mu) ≈ coef(dense, :mu) rtol = 1e-3 atol = 1e-4
+    @test re_sd(e2e)[:species] ≈ re_sd(dense)[:species] rtol = 2e-3
+    @test re_sd(e2e)[:id]      ≈ re_sd(dense)[:id]      rtol = 2e-3
+    @test sigma(e2e)[1] ≈ sigma(dense)[1] rtol = 1e-3
+
+    # Per-leaf BLUPs come back at length G (read out of the augmented latent).
+    re = ranef(e2e)
+    @test length(re[:species]) == G && length(re[:id]) == G
+end
+
+@testset "END-TO-END sparse phylo: sigma ~ x heteroscedastic (D → diag)" begin
+    # The D → diag(σ_i²) extension: a residual-scale covariate. Anchor against a
+    # direct dense GLS NLL at the sparse MLE — its gradient must be ≈ 0 there.
+    Random.seed!(13579)
+    G = 30
+    phy = random_balanced_tree(G; branch_length = 0.4)
+    Cphy = _corr(sigma_phy_dense(phy; σ²_phy = 1.0))
+    M = randn(G, G); Canim = _corr(M * M' / G + I)
+    m = 6; n = G * m
+    species = repeat(1:G, inner = m); id = repeat(1:G, inner = m)
+    xs = randn(n)                                    # sigma covariate
+    a1 = 0.8 .* (cholesky(Symmetric(Cphy)).L * randn(G))
+    a2 = 0.5 .* (cholesky(Symmetric(Canim)).L * randn(G))
+    σi = exp.(-1.0 .+ 0.3 .* xs)
+    y = 0.3 .+ a1[species] .+ a2[id] .+ σi .* randn(n)
+    data = (; y, x = xs, species, id)
+    form = bf(@formula(y ~ 1 + phylo(1 | species) + relmat(1 | id)), @formula(sigma ~ x))
+
+    fit = drm(form, Gaussian(); data = data, tree = phy, K = Canim, algorithm = :sparse)
+    @test fit.converged
+    @test length(coef(fit, :sigma)) == 2          # intercept + slope on log σ
+
+    # Dense GLS: V = diag(σ_i²) + σ1² Z1 Cphy Z1ᵀ + σ2² Z2 Canim Z2ᵀ. The sparse
+    # fit's gradient of THIS dense NLL must be ≈ 0 at its MLE.
+    Z1 = zeros(n, G); for i in 1:n; Z1[i, species[i]] = 1; end
+    Z2 = zeros(n, G); for i in 1:n; Z2[i, id[i]] = 1; end
+    A1 = Z1 * Cphy * Z1'; A2 = Z2 * Canim * Z2'
+    Xσ = hcat(ones(n), xs)
+    function densenll(θ)
+        β0 = θ[1]; bσ = θ[2:3]; lσ1 = θ[4]; lσ2 = θ[5]
+        d = exp.(2 .* (Xσ * bσ))
+        V = Diagonal(d) + exp(2lσ1) .* A1 + exp(2lσ2) .* A2
+        Vf = cholesky(Symmetric(Matrix(V)))
+        r = y .- β0
+        0.5 * (logdet(Vf) + dot(r, Vf \ r)) + 0.5 * n * log(2π)
+    end
+    θ̂ = vcat(coef(fit, :mu), coef(fit, :sigma),
+             log(re_sd(fit)[:species]), log(re_sd(fit)[:id]))
+    g = zeros(5); ε = 1e-6
+    for k in 1:5
+        θp = copy(θ̂); θm = copy(θ̂)
+        s = ε * max(abs(θ̂[k]), 1.0); θp[k] += s; θm[k] -= s
+        g[k] = (densenll(θp) - densenll(θm)) / (2s)
+    end
+    @test maximum(abs, g) < 5e-3      # at the sparse MLE the dense GLS gradient ≈ 0
+end

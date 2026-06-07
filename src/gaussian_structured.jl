@@ -8,7 +8,7 @@
 # `relmat(1 | id)` supplies K directly; `animal()` / `phylo()` / `spatial()`
 # reuse this engine with K from a pedigree / tree / coordinates.
 
-using LinearAlgebra: cholesky, Symmetric, Diagonal, dot, logdet, inv, diag, I, issuccess,
+using LinearAlgebra: cholesky, cholesky!, Symmetric, Diagonal, dot, logdet, inv, diag, I, issuccess,
     eigen, SymTridiagonal
 using SparseArrays: SparseArrays, SparseMatrixCSC, sparse, nonzeros, rowvals,
     nzrange, blockdiag, dropzeros!
@@ -285,9 +285,14 @@ end
 # where the traces are read off the Takahashi SELECTED INVERSE of H at the
 # (sparse) pattern of ZᵀZ / Qₖ — never a dense m×m inverse.
 
-# Build the n×m sparse incidence Z mapping each observation to its latent row.
-function _sparse_incidence(rows::AbstractVector{<:Integer}, n::Int, m::Int)
-    return sparse(collect(1:n), collect(rows), ones(Float64, n), n, m)
+# Build the n×m sparse incidence Z mapping each observation to its latent row,
+# with per-observation weight `wts` (defaults to 1). A non-unit weight folds a
+# diagonal rescaling of the latent into Z — used to convert the augmented tree
+# COVARIANCE into the leaf CORRELATION (the dense path's parameterisation) by
+# scaling each leaf's contribution by 1/√(leaf variance), which keeps Z sparse.
+function _sparse_incidence(rows::AbstractVector{<:Integer}, n::Int, m::Int,
+                           wts::AbstractVector{<:Real} = ones(n))
+    return sparse(collect(1:n), collect(rows), Float64.(wts), n, m)
 end
 
 # tr(Sblock · Hinv) for Sblock = Qk placed at offset `off`, Hinv the selected
@@ -323,57 +328,169 @@ function _trace_selinv_full(Hinv::SparseMatrixCSC, ZtZ::SparseMatrixCSC)
     return s
 end
 
-function _fit_two_structured_gaussian_sparse(fam::Gaussian, y, Xμ, gidx1, G1, C1,
-                                             gidx2, G2, C2, nmμ, grp1, grp2, g_tol)
+# One structured component for the spec-based sparse engine. `Q` is the SPARSE
+# prior precision over the component's latent (m rows); `rows[i]` maps obs i to a
+# latent row and `wts[i]` weights that obs's incidence; `logdetCprior =
+# logdet(Q⁻¹) = −logdet Q` is the constant in the Woodbury logdet. `leaf_pos[t]`
+# maps level/leaf t → latent row and `blup_scale[t]` rescales that level's BLUP
+# (so per-level estimates read out of an AUGMENTED, covariance-parameterised
+# latent match the leaf-CORRELATION model). `grp` names the grouping factor.
+struct _StructComp
+    Q::SparseMatrixCSC{Float64,Int}
+    rows::Vector{Int}
+    wts::Vector{Float64}
+    m::Int
+    logdetCprior::Float64
+    leaf_pos::Vector{Int}
+    blup_scale::Vector{Float64}
+    grp::Symbol
+end
+
+# DENSE-correlation component: Qₖ = Cₖ⁻¹ (inverts the dense leaf correlation —
+# the original #231 behaviour). Latent rows ARE the levels, so leaf_pos = 1:G,
+# unit weights / BLUP scales.
+function _dense_comp(gidx, G, C, grp::Symbol)
+    Q = dropzeros!(sparse(Symmetric(inv(Symmetric(Matrix(C))))))
+    logdetC = logdet(Symmetric(Matrix(C)))
+    rows = collect(Int, gidx)
+    return _StructComp(Q, rows, ones(length(rows)), G, logdetC,
+                       collect(1:G), ones(G), grp)
+end
+
+# END-TO-END SPARSE phylo component (#232): feed the root-conditioned augmented
+# tree precision Q (O(p) nnz) DIRECTLY — no dense Ck, no dense inversion. The
+# latent ã spans q = 2p−2 augmented nodes with prior precision Q (covariance
+# Σ = Q⁻¹); obs attach at leaf nodes via leaf_pos.
+#
+# The dense `phylo(1|g)` path models the leaf CORRELATION C = D^{-1/2} Σ D^{-1/2}
+# (D = diag of leaf variances). To match it EXACTLY while keeping the augmented
+# precision sparse, reparametrise a_c = D^{-1/2} ã: the correlation effect on obs
+# i becomes (1/√v_leaf(i)) · ã_leaf(i), i.e. a per-obs incidence WEIGHT
+# 1/√v_leaf. The leaf variances v_t = (Q⁻¹)_{leaf,leaf} are read once from the
+# Takahashi selected inverse of Q (O(p)). logdet(Σ) = −logdet(Q) is unchanged
+# (the D-rescale lives in Z, not in the prior). Per-level BLUPs are scaled back
+# by 1/√v_t.
+function _phylo_aug_comp(gidx, G, tree, grp::Symbol)
+    phy = tree isa AbstractString ? augmented_phy(tree) : tree
+    phy.n_leaves == G ||
+        error("phylo($grp): tree has $(phy.n_leaves) tips but `$grp` has $G levels")
+    Q, leaf_pos, q = augmented_tree_precision(phy)
+    Qs = dropzeros!(sparse(Symmetric(Matrix(Q))))   # symmetric, sparse, PD over kept nodes
+    chQ = cholesky(Symmetric(Qs); check = false)
+    issuccess(chQ) ||
+        error("phylo($grp): root-conditioned augmented precision is not PD")
+    logdetCprior = -logdet(chQ)                       # logdet(Σ) = logdet(Q⁻¹)
+    # Leaf variances from the selected inverse of Q (diagonal entries are always
+    # in the Takahashi pattern) — O(p), never forms a dense Q⁻¹.
+    Qinv = takahashi_selinv(chQ)
+    leaf_var = [Qinv[leaf_pos[t], leaf_pos[t]] for t in 1:G]
+    inv_sd = [1.0 / sqrt(leaf_var[t]) for t in 1:G]   # D^{-1/2} per leaf
+    rows = [leaf_pos[g] for g in gidx]                # obs → augmented leaf node
+    wts = [inv_sd[g] for g in gidx]                   # incidence weight = 1/√v_leaf
+    return _StructComp(Qs, rows, wts, q, logdetCprior, leaf_pos, inv_sd, grp)
+end
+
+# Spec-based sparse fitter for the two-structured Gaussian mean model. Integrates
+# the augmented latent a = [a₁; a₂] via ONE sparse Cholesky of
+#     H(θ) = blockdiag(σ₁⁻²Q₁, σ₂⁻²Q₂) + ZᵀWZ,   W = diag(σ⁻²) (the residual prec)
+# reusing a SINGLE symbolic factorisation across all evaluations (cholesky! into a
+# pre-analysed factor). `Xσ` carries the residual-scale design: `sigma ~ 1` ⇒
+# homoscedastic (one logσ); `sigma ~ x` ⇒ D → diag (a logσ per row). logLik via
+# det-lemma + Woodbury, variance-component gradient via Takahashi selected inverse.
+function _fit_two_structured_gaussian_sparse_spec(fam::Gaussian, y, Xμ, Xσ,
+                                                  comp1::_StructComp, comp2::_StructComp,
+                                                  nmμ, nmσ, g_tol)
     n = length(y)
-    pμ = size(Xμ, 2)
-    m1 = G1; m2 = G2; m = m1 + m2; off2 = m1
-    # Sparse precisions Qₖ = Cₖ⁻¹ (constant in θ).
-    Q1 = dropzeros!(sparse(Symmetric(inv(Symmetric(Matrix(C1))))))
-    Q2 = dropzeros!(sparse(Symmetric(inv(Symmetric(Matrix(C2))))))
-    logdetC1 = logdet(Symmetric(Matrix(C1)))
-    logdetC2 = logdet(Symmetric(Matrix(C2)))
-    Z1 = _sparse_incidence(gidx1, n, m1)
-    Z2 = _sparse_incidence(gidx2, n, m2)
+    pμ = size(Xμ, 2); pσ = size(Xσ, 2)
+    Q1 = comp1.Q; Q2 = comp2.Q
+    m1 = comp1.m; m2 = comp2.m; m = m1 + m2; off2 = m1
+    Z1 = _sparse_incidence(comp1.rows, n, m1, comp1.wts)
+    Z2 = _sparse_incidence(comp2.rows, n, m2, comp2.wts)
     Z = hcat(Z1, Z2)
-    ZtZ = dropzeros!(sparse(Symmetric(Z' * Z)))
     Xt = Matrix(Xμ')
+    Xσt = Matrix(Xσ')
+    logdetCprior1 = comp1.logdetCprior; logdetCprior2 = comp2.logdetCprior
 
-    buildH(σ², σ1², σ2²) = blockdiag(Q1 ./ σ1², Q2 ./ σ2²) + ZtZ ./ σ²
+    # ZᵀWZ at W = I gives the FIXED sparsity pattern of the data contribution; with
+    # a heteroscedastic W only the VALUES move, so the union pattern of
+    # H = blockdiag(Q1,Q2)+ZᵀWZ is CONSTANT across θ. We analyse it ONCE (the
+    # `chol_ref` factor) and reuse that symbolic analysis via `cholesky!` (numeric
+    # refactor only — no re-analysis). The `+ 0·H_template` term forces every
+    # evaluation's H to carry the full analysed pattern; if a CHOLMOD pattern check
+    # ever rejects the in-place update we fall back to a fresh `cholesky` (still
+    # tree-sparse O(p)), so correctness never depends on the reuse succeeding.
+    ZtZ_pat = dropzeros!(sparse(Symmetric(Z' * Z)))
+    H_template = blockdiag(Q1, Q2) + ZtZ_pat
+    Hzero = 0.0 .* H_template               # pattern carrier (all-structural-zero)
+    chol_ref = Ref(cholesky(Symmetric(H_template); check = false))
+    issuccess(chol_ref[]) ||
+        error("sparse two-structured: template Cholesky failed (non-PD pattern)")
 
-    function eval_all(βμ, lσ, lσ1, lσ2; want_grad::Bool)
-        σ² = exp(2lσ); σ1² = exp(2lσ1); σ2² = exp(2lσ2)
-        r = y .- Xμ * βμ
-        H = buildH(σ², σ1², σ2²)
-        ch = cholesky(Symmetric(H); check = false)
-        issuccess(ch) || return (Inf, Float64[], r, zeros(m), false)
-        b = (Z' * r) ./ σ²
-        â = ch \ b
-        logdetH = logdet(ch)
-        logdetP = -2 * (m1 * lσ1 + m2 * lσ2) - logdetC1 - logdetC2
-        logdetV = n * log(σ²) - logdetP + logdetH
-        quad = dot(r, r) / σ² - dot(b, â)
-        nll = 0.5 * (logdetV + quad) + 0.5 * n * log(2π)
-        isfinite(nll) || return (Inf, Float64[], r, â, false)
-        want_grad || return (nll, Float64[], r, â, true)
-        u = (r .- Z * â) ./ σ²
-        w = Z' * u
-        gβ = -(Xt * u)
-        Hinv = takahashi_selinv(ch)
-        trH_ZtZ = _trace_selinv_full(Hinv, ZtZ)
-        trQ1 = _trace_block_selinv(Hinv, Q1, 0) / σ1²
-        trQ2 = _trace_block_selinv(Hinv, Q2, off2) / σ2²
-        glσ = 0.5 * (2n - 2 * trH_ZtZ / σ²) - σ² * dot(u, u)
-        â1 = @view â[1:m1]; â2 = @view â[off2+1:off2+m2]
-        w1 = @view w[1:m1]; w2 = @view w[off2+1:off2+m2]
-        glσ1 = 0.5 * (2 * m1 - 2 * trQ1) - dot(w1, â1)
-        glσ2 = 0.5 * (2 * m2 - 2 * trQ2) - dot(w2, â2)
-        return (nll, vcat(gβ, glσ, glσ1, glσ2), r, â, true)
+    # ZᵀWZ for a diagonal residual precision w (length n). Same nnz pattern as ZtZ_pat.
+    function _ZtWZ(w)
+        ZtW = Z' * Diagonal(w)
+        return dropzeros!(sparse(Symmetric(ZtW * Z)))
     end
 
-    nll_only(θ) = eval_all(θ[1:pμ], θ[pμ+1], θ[pμ+2], θ[pμ+3]; want_grad = false)[1]
+    function eval_all(βμ, βσ, lσ1, lσ2; want_grad::Bool)
+        ησ = Xσ * βσ                       # log residual SD per row
+        w = exp.(-2 .* ησ)                 # residual precision diag W
+        σ1² = exp(2lσ1); σ2² = exp(2lσ2)
+        r = y .- Xμ * βμ
+        ZtWZ = _ZtWZ(w)
+        H = blockdiag(Q1 ./ σ1², Q2 ./ σ2²) + ZtWZ + Hzero
+        ch = try
+            cholesky!(chol_ref[], H; check = false); chol_ref[]
+        catch
+            cholesky(Symmetric(H); check = false)
+        end
+        issuccess(ch) || return (Inf, Float64[], r, zeros(m), w, false)
+        b = Z' * (w .* r)
+        â = ch \ b
+        logdetH = logdet(ch)
+        logdetP = -2 * (m1 * lσ1 + m2 * lσ2) - logdetCprior1 - logdetCprior2
+        logdetD = -sum(log, w)             # logdet(D) = Σ 2 ησ = −Σ log w
+        logdetV = logdetD - logdetP + logdetH
+        quad = dot(r, w .* r) - dot(b, â)
+        nll = 0.5 * (logdetV + quad) + 0.5 * n * log(2π)
+        isfinite(nll) || return (Inf, Float64[], r, â, w, false)
+        want_grad || return (nll, Float64[], r, â, w, true)
+        # u = V⁻¹ r = W(r − Zâ); ∂NLL/∂β = −Xᵀu.
+        u = w .* (r .- Z * â)
+        gβ = -(Xt * u)
+        Hinv = takahashi_selinv(ch)
+        # ∂NLL/∂βσ_j: D=diag(σ_i²), ∂logσ_i. ½(2·#rows·... ) with the residual trace.
+        # tr(V⁻¹ ∂D/∂(2ησ_i)) − uᵢ² ∂(σ_i²). The residual log-det trace through H is
+        # tr(H⁻¹ Zᵀ(∂W)Z) with ∂W/∂ησ_i = −2 w_i e_iᵀ. Collapsed per σ-covariate.
+        # diag of V⁻¹ at row i: w_i − w_i (ZH⁻¹Zᵀ)_ii w_i = w_i − sᵢ, where
+        # sᵢ = w_i² (Z Hinv Zᵀ)_ii. We need diag(Z Hinv Zᵀ).
+        zHz = _diag_ZHinvZt(Hinv, comp1.rows, comp1.wts, comp2.rows, comp2.wts, off2, n)
+        gβσ = zeros(pσ)
+        @inbounds for i in 1:n
+            vinv_ii = w[i] - w[i]^2 * zHz[i]          # (V⁻¹)_ii
+            # ∂NLL/∂ησ_i = (V⁻¹)_ii σ_i² − u_i² σ_i², with σ_i² = 1/w_i ⇒
+            #             = (V⁻¹)_ii / w_i − u_i² / w_i. Times design row.
+            dη = vinv_ii / w[i] - (u[i]^2) / w[i]
+            for k in 1:pσ
+                gβσ[k] += Xσt[k, i] * dη
+            end
+        end
+        trQ1 = _trace_block_selinv(Hinv, Q1, 0) / σ1²
+        trQ2 = _trace_block_selinv(Hinv, Q2, off2) / σ2²
+        w1pos = @view â[1:m1]; w2pos = @view â[off2+1:off2+m2]
+        Zw = Z' * u                                   # = Σ Zᵀu (BLUP-conjugate)
+        wv1 = @view Zw[1:m1]; wv2 = @view Zw[off2+1:off2+m2]
+        glσ1 = 0.5 * (2 * m1 - 2 * trQ1) - dot(wv1, w1pos)
+        glσ2 = 0.5 * (2 * m2 - 2 * trQ2) - dot(wv2, w2pos)
+        return (nll, vcat(gβ, gβσ, glσ1, glσ2), r, â, w, true)
+    end
+
+    # parameter layout: θ = [βμ(pμ); βσ(pσ); lσ1; lσ2]
+    iβμ = 1:pμ; iβσ = (pμ+1):(pμ+pσ); il1 = pμ + pσ + 1; il2 = pμ + pσ + 2
+    unpack(θ) = (θ[iβμ], θ[iβσ], θ[il1], θ[il2])
+    nll_only(θ) = (p = unpack(θ); eval_all(p...; want_grad = false)[1])
     function fg!(F, Gout, θ)
-        nll, grad, _, _, ok = eval_all(θ[1:pμ], θ[pμ+1], θ[pμ+2], θ[pμ+3]; want_grad = true)
+        nll, grad, _, _, _, ok = eval_all(unpack(θ)...; want_grad = true)
         if Gout !== nothing
             ok ? copyto!(Gout, grad) : fill!(Gout, 0.0)
         end
@@ -382,17 +499,17 @@ function _fit_two_structured_gaussian_sparse(fam::Gaussian, y, Xμ, gidx1, G1, C
 
     βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
     s0 = std(res0)
-    θ0 = zeros(pμ + 3)
-    θ0[1:pμ] .= βμ0
-    θ0[pμ+1] = log(s0 / sqrt(3) + eps())
-    θ0[pμ+2] = log(s0 / sqrt(3) + eps())
-    θ0[pμ+3] = log(s0 / sqrt(3) + eps())
+    np = pμ + pσ + 2
+    θ0 = zeros(np)
+    θ0[iβμ] .= βμ0
+    θ0[first(iβσ)] = log(s0 / sqrt(3) + eps())   # intercept of log σ; slopes start 0
+    θ0[il1] = log(s0 / sqrt(3) + eps())
+    θ0[il2] = log(s0 / sqrt(3) + eps())
     od = Optim.NLSolversBase.only_fg!(fg!)
     res = Optim.optimize(od, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol))
     θ̂ = Optim.minimizer(res)
 
-    grad_at(θ) = eval_all(θ[1:pμ], θ[pμ+1], θ[pμ+2], θ[pμ+3]; want_grad = true)[2]
-    np = pμ + 3
+    grad_at(θ) = eval_all(unpack(θ)...; want_grad = true)[2]
     Hmat = zeros(np, np)
     hstep = 1e-6
     for k in 1:np
@@ -403,21 +520,91 @@ function _fit_two_structured_gaussian_sparse(fam::Gaussian, y, Xμ, gidx1, G1, C
     end
     Hmat .= 0.5 .* (Hmat .+ Hmat')
     V = try
-        Matrix(inv(Symmetric(Hmat)))          # DrmFit expects a plain Matrix vcov
+        Matrix(inv(Symmetric(Hmat)))
     catch
         fill(NaN, np, np)
     end
 
-    blocks = [:mu => 1:pμ, :resid => (pμ+1):(pμ+1), :resd => (pμ+2):(pμ+3)]
-    names = [:mu => nmμ, :resid => ["residual"], :resd => [String(grp1), String(grp2)]]
-    means = Dict(:mu => Xμ * θ̂[1:pμ])
+    grp1 = comp1.grp; grp2 = comp2.grp
+    blocks = [:mu => iβμ, :sigma => iβσ, :resd => (il1):(il2)]
+    names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp1), String(grp2)]]
+    means = Dict(:mu => Xμ * θ̂[iβμ])
     obs = Dict(:mu => Vector{Float64}(y))
-    scales = Dict(:sigma => fill(exp(θ̂[pμ+1]), n))
-    blup = let v = eval_all(θ̂[1:pμ], θ̂[pμ+1], θ̂[pμ+2], θ̂[pμ+3]; want_grad = false)
+    scales = Dict(:sigma => exp.(Xσ * θ̂[iβσ]))
+    blup = let v = eval_all(unpack(θ̂)...; want_grad = false)
         â = v[4]
-        Dict(Symbol(grp1) => Vector{Float64}(â[1:m1]),
-             Symbol(grp2) => Vector{Float64}(â[off2+1:off2+m2]))
+        # Read per-LEVEL BLUPs out of the (possibly augmented) latent, rescaling
+        # by blup_scale (= 1/√v_leaf for the correlation-matched phylo latent).
+        a1 = Float64[comp1.blup_scale[t] * â[comp1.leaf_pos[t]] for t in eachindex(comp1.leaf_pos)]
+        a2 = Float64[comp2.blup_scale[t] * â[off2+comp2.leaf_pos[t]] for t in eachindex(comp2.leaf_pos)]
+        Dict(grp1 => a1, grp2 => a2)
     end
     return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll_only(θ̂), n,
         Optim.converged(res), means, obs, scales), nll_only), blup)
+end
+
+# diag(Z H⁻¹ Zᵀ) where Z rows map obs → augmented latent with per-obs weights
+# (wts1/wts2). Hinv is the Takahashi selected inverse (diagonal entries are always
+# in its pattern). Used only by the `sigma ~ x` (heteroscedastic) gradient.
+function _diag_ZHinvZt(Hinv::SparseMatrixCSC, rows1, wts1, rows2, wts2, off2, n)
+    Hcol = Hinv.colptr; Hrow = rowvals(Hinv); Hval = nonzeros(Hinv)
+    out = zeros(n)
+    @inbounds for i in 1:n
+        # obs i hits latent row r1 (comp1, weight w1) and r2+off2 (comp2, weight
+        # w2); (ZH⁻¹Zᵀ)_ii = w1²(H⁻¹)_{r1,r1} + w2²(H⁻¹)_{r2,r2} + 2 w1 w2 (H⁻¹)_{r1,r2}.
+        a = rows1[i]; bcol = rows2[i] + off2
+        w1 = wts1[i]; w2 = wts2[i]
+        ia = _csc_rowidx(Hcol, Hrow, a, a); out[i] += ia == -1 ? 0.0 : w1^2 * Hval[ia]
+        ib = _csc_rowidx(Hcol, Hrow, bcol, bcol); out[i] += ib == -1 ? 0.0 : w2^2 * Hval[ib]
+        iab = _csc_rowidx(Hcol, Hrow, max(a, bcol), min(a, bcol))
+        out[i] += iab == -1 ? 0.0 : 2 * w1 * w2 * Hval[iab]
+    end
+    return out
+end
+
+# Resolve ONE structured marker to a sparse `_StructComp` for the end-to-end
+# sparse engine. A phylo component feeds the augmented tree precision DIRECTLY
+# (O(p), no dense Ck inversion, #232); relmat/animal use the user-supplied dense
+# relatedness matrix with Qk = K⁻¹ (the matrix IS the input — no tree to exploit).
+function _sparse_struct_comp(kind::Symbol, grp::Symbol, G::Int, gidx;
+                             K, A, tree)
+    if kind === :phylo
+        tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
+        return _phylo_aug_comp(gidx, G, tree, grp)
+    elseif kind === :relmat
+        K === nothing && error("relmat(1 | $grp) needs `K = …`")
+        return _dense_comp(gidx, G, Matrix{Float64}(K), grp)
+    elseif kind === :animal
+        A === nothing && error("animal(1 | $grp) needs the relatedness matrix `A = …`")
+        return _dense_comp(gidx, G, Matrix{Float64}(A), grp)
+    else
+        error("the sparse two-structured path supports phylo / relmat / animal " *
+              "components (got $kind for `$grp`)")
+    end
+end
+
+# Backward-compatible entry (#231 signature): two DENSE leaf correlations,
+# homoscedastic residual (`sigma ~ 1`). Builds dense-C specs and delegates.
+function _fit_two_structured_gaussian_sparse(fam::Gaussian, y, Xμ, gidx1, G1, C1,
+                                             gidx2, G2, C2, nmμ, grp1, grp2, g_tol)
+    n = length(y)
+    Xσ = ones(n, 1)
+    comp1 = _dense_comp(gidx1, G1, C1, grp1)
+    comp2 = _dense_comp(gidx2, G2, C2, grp2)
+    fit = _fit_two_structured_gaussian_sparse_spec(fam, y, Xμ, Xσ, comp1, comp2,
+                                                   nmμ, ["(Intercept)"], g_tol)
+    # #231 reported the residual under :resid and used :sigma in scales; map the
+    # homoscedastic intercept back to the historical block names for compatibility.
+    return _remap_resid_block(fit)
+end
+
+# The #231 entry exposed blocks [:mu,:resid,:resd]; the spec engine exposes
+# [:mu,:sigma,:resd]. For the homoscedastic wrapper, rename :sigma → :resid so the
+# existing accessors/tests (which read `:resid => ["residual"]`) are unchanged.
+function _remap_resid_block(fit::DrmFit)
+    blocks = [k === :sigma ? (:resid => v) : (k => v) for (k, v) in fit.blocks]
+    names = [k === :sigma ? (:resid => ["residual"]) : (k => v) for (k, v) in fit.coefnames]
+    return DrmFit(fit.family, blocks, names, fit.theta, fit.vcov, fit.loglik,
+                  fit.nobs, fit.converged, fit.means, fit.obs, fit.scales,
+                  fit.formula, fit.nll, fit.nllgrad, fit.ranef)
 end
