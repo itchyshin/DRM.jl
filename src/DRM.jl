@@ -51,6 +51,8 @@ include("lognormal.jl")
 include("zeroonebeta.jl")
 include("tweedie.jl")
 include("cumulative.jl")
+include("quantile_residuals.jl") # #183: per-family Dunn–Smyth quantile residuals
+                                 # (included after all family types are defined)
 include("locscale_kernels.jl")   # #202 groundwork: two-axis (mean+log-disp) kernels
 include("locscale_inner.jl")     # #202 groundwork: q=2 augmented inner mode-finder
 include("locscale_marginal.jl")  # #202 groundwork: q=2 Laplace marginal
