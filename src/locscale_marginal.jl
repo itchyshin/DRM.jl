@@ -16,7 +16,7 @@
 # `test/test_locscale_marginal.jl` checks it against a 2-D Gauss–Hermite integral
 # (Laplace → exact as obs-per-group grows).
 
-using LinearAlgebra: logdet, cholesky, Symmetric
+using LinearAlgebra: logdet, cholesky, Symmetric, issuccess
 
 """
     _ls_marginal_nll(kind, y, η0, ψ0, gidx, G, P; a0=nothing)
@@ -30,6 +30,12 @@ function _ls_marginal_nll(kind, y, η0, ψ0, gidx, G, P; a0 = nothing)
     ok || return Inf, a, false
     jn = _ls_joint(kind, y, η0, ψ0, gidx, a, P)
     logdetH = logdet(ch)
-    logdetP = logdet(cholesky(Symmetric(P)))
+    # The prior precision P = kron(Q, Λ⁻¹) is PD in exact arithmetic, but profiling
+    # a variance/covariance parameter toward its boundary drives Λ near-singular,
+    # so Λ⁻¹ can overflow and the factorisation fail numerically. Treat that as an
+    # infeasible point (the documented `ok = false` path) instead of throwing.
+    chP = cholesky(Symmetric(P); check = false)
+    issuccess(chP) || return Inf, a, false
+    logdetP = logdet(chP)
     return jn + 0.5 * logdetH - 0.5 * logdetP, a, true
 end
