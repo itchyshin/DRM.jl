@@ -45,7 +45,22 @@ import Distributions
 
     # Tightly-converged base mode, reused as the warm start for every solve so
     # the FD reference sees the same inner mode the analytic gradient froze.
-    ntol = 1e-13
+    #
+    # Tolerance note (the recipe that makes 1e-6 attainable, mirroring the q4
+    # Q-gate's estep_mode default `tol = 1e-8`): the inner Newton mode uses a
+    # step-norm stop, `norm(step) <= ntol * (1 + norm(b))`, followed by a
+    # backtracking line search that requires a STRICT joint decrease. When a
+    # perturbed solve is warm-started *exactly at the mode*, `step ≈ 0` and the
+    # line search cannot find a further decrease, so an over-tight `ntol`
+    # (≈ machine-eps) skips the step-norm stop and then fails the line search,
+    # returning the inner solve's `1e18` infeasibility sentinel. Differencing
+    # that sentinel — not any analytic-gradient error — is what blew the central
+    # difference up to ~5e22. A tight-but-sane `ntol = 1e-10` (well above the
+    # ~1e-12 roundoff floor of the warm-started step) lets the step-norm stop
+    # fire first, so every probed point returns the genuine marginal NLL. The
+    # mode is still converged far tighter than the marginal needs: the NLL is
+    # first-order flat at b̂, so a 1e-10 mode error perturbs it by O(1e-20).
+    ntol = 1e-10
     nmax = 400
     val0, g_an, b_base, ok = DRM._poisson_phylo_laplace_fg(
         y, Xμ, leaf_node, Q, logdetQ, lf, θ;
@@ -53,13 +68,24 @@ import Distributions
     )
     @test ok
     @test isfinite(val0)
+    @test val0 < 1e17                      # genuine marginal, never the sentinel
 
-    mnll(t) = DRM._poisson_phylo_laplace_fg(
-        y, Xμ, leaf_node, Q, logdetQ, lf, Vector{Float64}(t);
-        grad = false, b0 = copy(b_base), newton_tol = ntol, newton_maxiter = nmax,
-    )[1]
+    function mnll(t)
+        v = DRM._poisson_phylo_laplace_fg(
+            y, Xμ, leaf_node, Q, logdetQ, lf, Vector{Float64}(t);
+            grad = false, b0 = copy(b_base), newton_tol = ntol, newton_maxiter = nmax,
+        )[1]
+        # Guard the FD reference: if any probed point ever returns the inner
+        # solve's 1e18 sentinel, surface it as a clear failure here rather than
+        # as ~1e22 finite-difference noise downstream.
+        @assert isfinite(v) && v < 1e17 "marginal NLL infeasible (sentinel) at probed θ = $t"
+        return v
+    end
 
-    h = 1e-5
+    # h = 1e-4 matches the verified q4 Q-gate (test_qgate_fd_gradient.jl): large
+    # enough that central-difference truncation error O(h²) ≈ 1e-8 stays under the
+    # 1e-6 gate, small enough that the marginal is locally quadratic.
+    h = 1e-4
     g_fd = similar(g_an)
     for k in eachindex(θ)
         tp = copy(θ); tp[k] += h
