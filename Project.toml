@@ -1,7 +1,7 @@
 name = "DRM"
 uuid = "6c755ef2-eed4-4cdd-aafe-b639090bd215"
 authors = ["Shinichi Nakagawa <itchyshin@gmail.com>"]
-version = "0.1.1"
+version = "0.1.0"
 
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
@@ -22,6 +22,7 @@ Distributions = "0.25"
 ForwardDiff = "0.10, 1"
 Optim = "1.7"
 SpecialFunctions = "2"
+Statistics = "1"
 StatsAPI = "1"
 StatsModels = "0.7"
 Tables = "1"
