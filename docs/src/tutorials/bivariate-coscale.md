@@ -50,10 +50,53 @@ scales were held constant (`~ 1`).
     come from a shared phylogeny / spatial field / study are *group-level*
     covariance summaries, reported separately — not `rho12`.
 
+## Phylogenetic location-scale coevolution
+
+For the q=4 phylogenetic location-scale model, put the same
+`phylo(1 | species)` marker on all four location/scale predictors: `mu1`,
+`mu2`, `sigma1`, and `sigma2`. The residual `rho12` formula stays separate.
+
+```julia
+using DRM, Random
+Random.seed!(42)
+
+phy = random_balanced_tree(6; branch_length = 0.2)
+species = repeat(phy.leaf_names, inner = 3)
+n = length(species)
+x = randn(n)
+
+# Tiny runnable smoke fixture. Use larger seeded simulations for recovery checks.
+u = Dict(name => 0.15 .* randn(4) for name in phy.leaf_names)
+y1 = [1 + 0.4*x[i] + u[species[i]][1] +
+      exp(-0.4 + u[species[i]][3]) * randn() for i in 1:n]
+y2 = [-0.2 + 0.3*x[i] + u[species[i]][2] +
+      exp(-0.5 + u[species[i]][4]) * randn() for i in 1:n]
+dat = (; y1, y2, x, species)
+
+fit_phy = drm(
+    bf(mu1 = @formula(y1 ~ x + phylo(1 | species)),
+       mu2 = @formula(y2 ~ x + phylo(1 | species)),
+       sigma1 = @formula(sigma1 ~ 1 + phylo(1 | species)),
+       sigma2 = @formula(sigma2 ~ 1 + phylo(1 | species)),
+       rho12 = @formula(rho12 ~ 1)),
+    Gaussian();
+    data = dat,
+    tree = phy,
+    q4_vcov = false,
+)
+
+fit_phy.ranef.Sigma_a      # 4x4 group-level covariance, axes below
+fit_phy.ranef.axes         # (:mu1, :mu2, :sigma1, :sigma2)
+```
+
+The internal `:phylocov` coefficient block is not a distributional predictor, so
+[`predict_parameters`](@ref) returns `:mu1`, `:mu2`, `:sigma1`, `:sigma2`, and
+`:rho12`, but not `:phylocov`. Labelled coevolution summaries and intervals are
+the next accessor layer; this slice stores the covariance on the fit.
+
 ## See also
 
 - [When variance carries signal](location-scale.md) — the single-response
   location–scale model.
 - The verified **q=4 phylogenetic** bivariate location–scale engine (the speed
-  headline) — see [`HANDOVER.md`](https://github.com/itchyshin/DRM.jl/blob/main/HANDOVER.md);
-  its public `phylo()` front end lands in a later slice.
+  headline) — see [`HANDOVER.md`](https://github.com/itchyshin/DRM.jl/blob/main/HANDOVER.md).

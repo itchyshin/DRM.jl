@@ -52,6 +52,7 @@ t.pvalue       # < 0.05 when x is truly predictive
 ```
 """
 function lrtest(reduced::DrmFit, full::DrmFit)
+    _reml_compare_guard(reduced, full, "lrtest")
     Δdof = dof(full) - dof(reduced)
     Δdof > 0 || throw(ArgumentError(
         "lrtest: `full` must have more parameters than `reduced` " *
@@ -60,6 +61,35 @@ function lrtest(reduced::DrmFit, full::DrmFit)
     statistic = 2 * (loglik(full) - loglik(reduced))
     pvalue = ccdf(Chisq(Δdof), max(statistic, 0))
     return (; statistic, dof = Δdof, pvalue)
+end
+
+# Mean-structure fingerprint for the REML guard: the :mu block's coefficient
+# names (falls back to the :mu block width when names are absent).
+function _mean_structure(fit::DrmFit)
+    for (p, nms) in fit.coefnames
+        p === :mu && return nms
+    end
+    for (p, r) in fit.blocks
+        p === :mu && return string.(collect(r))
+    end
+    return String[]
+end
+
+# REML model-selection guard (issue #11): the classic REML trap is comparing
+# likelihoods of REML fits with DIFFERENT fixed-effect (mean) structures — the
+# restricted likelihoods are built on different error-contrast bases and are not
+# comparable. Comparing REML fits that differ only in VARIANCE structure (same
+# mean) is valid. ML fits are always fine. We ERROR on the invalid case (the LR
+# test would be meaningless) and stay silent otherwise.
+function _reml_compare_guard(a::DrmFit, b::DrmFit, verb::AbstractString)
+    (a.estim_method === :REML || b.estim_method === :REML) || return nothing
+    if _mean_structure(a) != _mean_structure(b)
+        throw(ArgumentError(
+            "$verb: cannot compare REML fits with different fixed-effect (mean) structures — " *
+            "REML log-likelihoods are not comparable across mean structures (only across " *
+            "variance structures). Refit both with method = :ML for a cross-mean-structure test."))
+    end
+    return nothing
 end
 
 """

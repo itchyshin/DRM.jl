@@ -51,6 +51,8 @@ include("lognormal.jl")
 include("zeroonebeta.jl")
 include("tweedie.jl")
 include("cumulative.jl")
+include("quantile_residuals.jl") # #183: per-family Dunn–Smyth quantile residuals
+                                 # (included after all family types are defined)
 include("locscale_kernels.jl")   # #202 groundwork: two-axis (mean+log-disp) kernels
 include("locscale_inner.jl")     # #202 groundwork: q=2 augmented inner mode-finder
 include("locscale_marginal.jl")  # #202 groundwork: q=2 Laplace marginal
@@ -70,9 +72,10 @@ include("comparison.jl")
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
        fit_q4_sparse_tmb, marginal_and_exact_grad, marginal_nll,
-       estep_mode, prior_precision, build_Huu, joint_grad, joint_nll,
+       estep_mode, prior_precision, build_Huu, joint_grad, joint_nll, aug_prior_grad!,
        pack_theta, unpack_theta, lc_to_Λ, Λ_to_lc,
-       augmented_phy, random_balanced_tree, sigma_phy_dense, takahashi_selinv
+       augmented_phy, random_balanced_tree, random_caterpillar_tree,
+       augmented_tree_precision, sigma_phy_dense, takahashi_selinv
 
 # Public API — the Gaussian distributional-regression front end.
 export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
@@ -81,7 +84,8 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2,
        is_converged, deviance, dof_residual,
        lrtest, anova, aicc, weights, update,
        bias_correct,
-       heritability, repeatability, icc
+       heritability, repeatability, icc,
+       reml_loglik, ml_loglik, estimation_method
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare

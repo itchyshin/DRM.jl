@@ -131,26 +131,41 @@ struct DrmFit{F}
     nll::Any                               # objective θ ↦ nll(θ) (for profile intervals)
     nllgrad::Any                           # optional gradient callback (g, θ) -> g
     ranef::Any                             # per-group conditional RE estimates (BLUPs); nothing if no RE
+    estim_method::Symbol                   # :ML (default) or :REML — the estimator used
+    reml_loglik::Float64                   # REML log-likelihood (NaN unless estim_method == :REML)
+    ml_loglik::Float64                     # ML log-likelihood (always set; for cross-structure comparison)
 end
 
-# 11-arg outer constructor: formula + nll + nllgrad + ranef default to nothing
+# 11-arg outer constructor: formula + nll + nllgrad + ranef default to nothing;
+# estim_method defaults to :ML and reml/ml loglik to NaN / the supplied loglik
 # (the fitters use this; drm() attaches the formula via _withformula, the
-# objective via _withnll, and the BLUPs via _withranef).
+# objective via _withnll, the BLUPs via _withranef, and REML metadata via _withreml).
 DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales) =
-    DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales, nothing, nothing, nothing, nothing)
+    DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales,
+           nothing, nothing, nothing, nothing, :ML, NaN, loglik)
 
 _withformula(fit::DrmFit, f) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
-    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, f, fit.nll, fit.nllgrad, fit.ranef)
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, f, fit.nll, fit.nllgrad, fit.ranef,
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik)
 
 # Attach the (negative) log-likelihood closure so profile intervals can re-optimise
 # the nuisance parameters at each fixed value. nll(θ) must accept the full θ vector.
 _withnll(fit::DrmFit, nll, nllgrad = nothing) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
-    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, nll, nllgrad, fit.ranef)
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, nll, nllgrad, fit.ranef,
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik)
 
 # Attach per-group conditional random-effect estimates (BLUPs). `re` is a
 # Dict{Symbol,...} keyed by grouping factor; see ranef(fit) for the public accessor.
 _withranef(fit::DrmFit, re) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
-    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, re)
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, re,
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik)
+
+# Mark the fit as REML-estimated, recording both the REML and ML log-likelihoods.
+# The public `loglik` slot is set to the REML value (with the documented
+# cross-structure caveat); `ml_loglik` stays available for ML-style comparison.
+_withreml(fit::DrmFit, reml_ll::Real, ml_ll::Real) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
+    fit.vcov, Float64(reml_ll), fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
+    :REML, Float64(reml_ll), Float64(ml_ll))
 
 # Build a design matrix for one parameter's RHS. We reuse the (real) response as
 # a dummy LHS so the formula is always valid for `schema`/`modelcols`, then keep
@@ -169,12 +184,16 @@ end
 """
     drm(formula::DrmFormula, family; data) -> DrmFit
 
-Fit a distributional regression model by maximum likelihood. Currently supports
-the univariate `Gaussian()` location–scale model with fixed effects:
+Fit a distributional regression model by maximum likelihood. A formula bundle
+has one linear predictor per distributional parameter:
 
 ```julia
 fit = drm(bf(y ~ x1, sigma ~ x1), Gaussian(); data = dat)
 ```
+
+Univariate Gaussian fits support fixed effects plus the structured-effect
+markers documented under [`phylo`](@ref), [`spatial`](@ref), [`animal`](@ref),
+[`relmat`](@ref), and [`meta_V`](@ref).
 
 ## `algorithm` — solver selection
 
@@ -200,15 +219,34 @@ fit = drm(bf(y ~ x1, sigma ~ x1), Gaussian(); data = dat)
 fit = drm(bf(y ~ x + phylo(1 | sp), sigma ~ 1), Gaussian();
           data = dat, tree = tree, algorithm = :em)
 ```
+
+Bivariate Gaussian fits use [`BivariateDrmFormula`](@ref); with no structured
+marker they fit the residual `rho12` model, and with shared `phylo(1 | group)`
+markers on `mu1`, `mu2`, `sigma1`, and `sigma2` they route to the verified q=4
+phylogenetic engine.
 """
-function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto)
+function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML)
     algorithm in (:auto, :gls, :lbfgs, :em, :sparse) ||
         throw(ArgumentError("drm: `algorithm` must be one of :auto, :gls, :lbfgs, :em, :sparse (got :$algorithm)"))
+    method in (:ML, :REML) ||
+        throw(ArgumentError("drm: `method` must be :ML (default) or :REML (got :$method)"))
     rhs = Dict(f.forms)
     fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat/animal/phylo/spatial(1|g)
     fixed_sigma, sigma_re, _, _ = _split_ranef(rhs[:sigma])    # (1|g) on the scale → GHQ marginal
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, fixed_sigma, data)
+    if method === :REML
+        # REML (opt-in, experimental) is implemented only for the fixed-effect
+        # univariate Gaussian location–scale cell in this slice (the standard
+        # Patterson–Thompson correction for β_μ). Random-effect / structured /
+        # meta cells and the bivariate q=4 path are gated by their own REML work
+        # (report/reml-wiring-design.md, slice 1 / #187); reject them clearly.
+        (isempty(re) && isempty(sigma_re) && structured === nothing && metav === nothing &&
+         length(_collect_structured(rhs[:mu])) == 0) ||
+            throw(ArgumentError("drm: method = :REML is currently implemented only for the " *
+                "fixed-effect Gaussian location–scale model (no random effects, no structured " *
+                "/ phylo / meta terms). Use method = :ML (the default) for those models."))
+    end
     if algorithm === :em
         # Conjugate EM only fits the supported cell: a single structured (phylo)
         # mean random effect with a constant residual scale (issue #12). Reject
@@ -247,15 +285,22 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         grp1 === grp2 && error("the two structured components must use different grouping factors")
         gidx1, G1 = _group_index(getproperty(data, grp1))
         gidx2, G2 = _group_index(getproperty(data, grp2))
+        # Opt-in sparse O(p) path (#225/#232): augmented-latent + sparse Cholesky +
+        # Takahashi-selected-inverse gradient. Same model, same MLE; default
+        # (:auto) stays on the verified dense path.
+        if algorithm === :sparse
+            # END-TO-END sparse: a phylo component feeds the ROOT-CONDITIONED
+            # augmented tree precision DIRECTLY (no dense Ck inversion) — true O(p)
+            # (#232). A relmat/animal component still resolves its dense relatedness
+            # K and uses Qk = K⁻¹ (the matrix is the user-supplied input). The
+            # residual scale honours `sigma ~ x` (D → diag).
+            comp1 = _sparse_struct_comp(kind1, grp1, G1, gidx1; K = K, A = A, tree = tree)
+            comp2 = _sparse_struct_comp(kind2, grp2, G2, gidx2; K = K, A = A, tree = tree)
+            return _withformula(_fit_two_structured_gaussian_sparse_spec(fam, y, Xμ, Xσ,
+                comp1, comp2, nmμ, nmσ, g_tol), f)
+        end
         C1 = _resolve_structured_matrix(kind1, grp1, G1; K = K, A = A, tree = tree, coords = coords)
         C2 = _resolve_structured_matrix(kind2, grp2, G2; K = K, A = A, tree = tree, coords = coords)
-        # Opt-in sparse O(p) path (#225 follow-up): augmented-latent + sparse
-        # Cholesky + Takahashi-selected-inverse gradient. Same model, same MLE;
-        # default (:auto) stays on the verified dense path.
-        if algorithm === :sparse
-            return _withformula(_fit_two_structured_gaussian_sparse(fam, y, Xμ, gidx1, G1, C1,
-                gidx2, G2, C2, nmμ, grp1, grp2, g_tol), f)
-        end
         return _withformula(_fit_two_structured_gaussian(fam, y, Xμ, gidx1, G1, C1,
             gidx2, G2, C2, nmμ, grp1, grp2, g_tol), f)
     end
@@ -290,7 +335,12 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         vv = Float64.(getproperty(data, metav))    # known sampling variances
         return _withformula(_fit_meta_gaussian(fam, y, Xμ, Xσ, vv, nmμ, nmσ, g_tol), f)
     end
-    isempty(re) && return _withformula(_fit_fixed_gaussian(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol), f)
+    if isempty(re)
+        if method === :REML
+            return _withformula(_fit_fixed_gaussian_reml(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol), f)
+        end
+        return _withformula(_fit_fixed_gaussian(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol), f)
+    end
     re_kinds = [_re_kind(rl) for (rl, _) in re]
     if length(re) == 1 && re_kinds[1][1] === :corr           # (1 + x | g)
         (_, grp) = re[1]; (_, var) = re_kinds[1]
@@ -343,6 +393,125 @@ function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
 
+# ---------------------------------------------------------------------------
+# REML for the fixed-effect Gaussian location–scale model (issue #11, slice 2).
+#
+# Standard restricted maximum likelihood (Patterson & Thompson 1971; Harville
+# 1974) for the heteroscedastic linear model
+#
+#     y_i ~ N(Xμ_i β_μ, σ_i²),   log σ_i = Xσ_i β_σ.
+#
+# REML profiles out the mean fixed effects β_μ jointly with the scale, and adds
+# the −½ logdet(Xμ' Σ⁻¹ Xμ) restriction term to the profile log-likelihood. With
+# W = diag(σ_i⁻²) the profiled β̂_μ(β_σ) is the weighted-least-squares estimate
+# solving (Xμ' W Xμ) β̂_μ = Xμ' W y, and the restricted log-likelihood is
+#
+#     ℓ_R(β_σ) = ℓ_P(β̂_μ(β_σ), β_σ) − ½ logdet(Xμ' W Xμ) + (pμ/2) log(2π),
+#
+# i.e. the same data fit as ML but with the residual scale corrected for the pμ
+# degrees of freedom spent estimating β_μ. The defining consequence is that the
+# REML residual variance is LARGER (less downward-biased) than the ML one — the
+# classic n vs (n − pμ) divisor in the homoscedastic special case.
+#
+# HONEST LIMITS (ship these — see report/reml-wiring-design.md):
+#   * Scope: fixed-effect univariate Gaussian location–scale ONLY (no random
+#     effects, no structured/phylo/meta terms, not the bivariate q=4 path — those
+#     are gated by slice 1 / #187). REML is OPT-IN and EXPERIMENTAL.
+#   * The correction inflates the SCALE estimate; it does not change β̂_μ at the
+#     optimum (β̂_μ is the same WLS estimate ML would give at the REML β_σ).
+#   * REML log-likelihoods are NOT comparable across different MEAN structures
+#     (the error-contrast basis differs) — model selection must stay on ML. The
+#     aic/bic/lrtest guard enforces this.
+"""
+    _fit_fixed_gaussian_reml(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol) -> DrmFit
+
+REML fit of the fixed-effect Gaussian location–scale model. Profiles out β_μ by
+weighted least squares and optimises the restricted log-likelihood over β_σ; β̂_μ
+is recovered as the final WLS estimate. The returned `DrmFit` carries
+`estim_method = :REML`, `reml_loglik`, and `ml_loglik` (the plain ML log-lik at
+the REML parameters, for reference). Internal — reached via `drm(...; method = :REML)`.
+"""
+function _fit_fixed_gaussian_reml(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
+    n = length(y)
+    pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    const_2pi = 0.5 * n * log(2π)
+
+    # Profiled β̂_μ(β_σ): weighted least squares with W = diag(exp(-2 ησ)).
+    # Returns (β̂_μ, residuals, logdet(Xμ' W Xμ)) — all differentiable in β_σ.
+    function profile_bmu(βσ)
+        ησ = Xσ * βσ
+        w = exp.(-2 .* ησ)                 # σ_i^{-2}
+        XtW = Xμ' * (w .* Xμ)              # pμ × pμ, Xμ' W Xμ
+        XtWy = Xμ' * (w .* y)
+        βμ = XtW \ XtWy
+        r = y .- Xμ * βμ
+        return βμ, r, ησ, logdet(XtW)
+    end
+
+    # Restricted NEGATIVE log-likelihood over β_σ alone (β_μ profiled out).
+    function nll_reml(βσ)
+        _, r, ησ, ld = profile_bmu(βσ)
+        s = zero(eltype(βσ))
+        @inbounds for i in 1:n
+            s += ησ[i] + 0.5 * r[i] * r[i] * exp(-2 * ησ[i])
+        end
+        # ℓ_R = -s - const_2pi - 0.5*ld + 0.5*pμ*log(2π);  nll = -ℓ_R.
+        return s + const_2pi + 0.5 * ld - 0.5 * pμ * log(2π)
+    end
+
+    # Warm-start β_σ from the homoscedastic residual scale (intercept), zeros else.
+    βσ0 = zeros(pσ)
+    βμ_ols = Xμ \ y
+    βσ0[1] = log(std(y - Xμ * βμ_ols) + eps())
+    res = Optim.optimize(nll_reml, βσ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    βσ̂ = Optim.minimizer(res)
+    βμ̂, r̂, ησ̂, _ = profile_bmu(βσ̂)
+    θ̂ = vcat(βμ̂, βσ̂)
+
+    # vcov: for the mean block, the REML/WLS covariance (Xμ' W Xμ)^{-1}; for the
+    # scale block, the inverse Fisher information of the restricted objective.
+    # We assemble a block-diagonal vcov (mean ⟂ scale at the optimum for Gaussian
+    # location–scale), reusing the WLS information for β_μ and the FD Hessian of
+    # the restricted objective for β_σ.
+    w = exp.(-2 .* ησ̂)
+    Vμ = inv(Symmetric(Xμ' * (w .* Xμ)))
+    Hσ = ForwardDiff.hessian(nll_reml, βσ̂)
+    Vσ = inv(Symmetric(Hσ))
+    V = zeros(pμ + pσ, pμ + pσ)
+    V[1:pμ, 1:pμ] .= Vμ
+    V[(pμ+1):(pμ+pσ), (pμ+1):(pμ+pσ)] .= Vσ
+
+    # Both log-likelihoods at the REML estimate.
+    reml_ll = -nll_reml(βσ̂)
+    # Plain ML log-lik at the SAME (β̂_μ, β̂_σ) — for reference / cross-structure use.
+    ml_ll = let s = 0.0
+        @inbounds for i in 1:n
+            s += ησ̂[i] + 0.5 * r̂[i] * r̂[i] * exp(-2 * ησ̂[i])
+        end
+        -(s + const_2pi)
+    end
+
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ)]
+    names = [:mu => nmμ, :sigma => nmσ]
+    means = Dict(:mu => Xμ * βμ̂)
+    obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict(:sigma => exp.(ησ̂))
+    # Reconstruct a full-θ ML objective closure for profile intervals (matches the
+    # ML fitter's nll layout): the standard location–scale negative log-likelihood.
+    function nll_full(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
+        ημ = Xμ * βμ; eσ = Xσ * βσ
+        s = zero(eltype(θ))
+        @inbounds for i in 1:n
+            rr = y[i] - ημ[i]
+            s += eσ[i] + 0.5 * rr * rr * exp(-2 * eσ[i])
+        end
+        return s + const_2pi
+    end
+    fit = DrmFit(fam, blocks, names, θ̂, V, reml_ll, n, Optim.converged(res), means, obs, scales)
+    return _withreml(_withnll(fit, nll_full), reml_ll, ml_ll)
+end
+
 # ---- accessors -----------------------------------------------------------
 """
     coef(fit::DrmFit)
@@ -391,11 +560,18 @@ Model residuals. `type` selects the kind:
   probability-integral transform of `y_i`. Under a correct model the `r_i`
   are i.i.d. standard normal. Univariate only.
 
-Quantile residuals are currently implemented for the **Gaussian** (continuous;
-`u_i = Φ((y_i − μ_i)/σ_i)`, no RNG used) and **Poisson** (discrete; randomized
-`u_i = F(y_i−1) + (F(y_i) − F(y_i−1))·U`, `U ~ Uniform(0,1)` from `rng`)
-families. Other families throw an `ArgumentError` pending a verified per-family
-CDF mapping.
+Quantile residuals are implemented for every DRM.jl response family except
+Tweedie (no closed-form CDF in `Distributions.jl`):
+
+- **continuous** (PIT `u_i = F(y_i)`, no RNG): Gaussian, Student-t, LogNormal,
+  Gamma, Beta;
+- **discrete, randomized** (`u_i = F(y_i−1) + (F(y_i) − F(y_i−1))·U`,
+  `U ~ Uniform(0,1)` drawn from `rng`): Poisson, NegBinomial2,
+  TruncatedNegBinomial2, Binomial, BetaBinomial, CumulativeLogit (ordinal);
+- **atomic** (point-mass mixture; the mass is randomized across): ZeroOneBeta.
+
+The per-family parameter → distribution map lives in `_conditional_dist`
+(reused by future `simulate`/PIT checks). Tweedie throws an `ArgumentError`.
 """
 function residuals(fit::DrmFit; type::Symbol = :response, rng = Random.default_rng())
     if type === :response
@@ -405,36 +581,6 @@ function residuals(fit::DrmFit; type::Symbol = :response, rng = Random.default_r
         return _quantile_residuals(fit, rng)
     else
         throw(ArgumentError("residuals: `type` must be :response or :quantile (got :$type)"))
-    end
-end
-
-# Randomized quantile residuals r_i = Φ⁻¹(u_i). Univariate Gaussian / Poisson.
-function _quantile_residuals(fit::DrmFit, rng)
-    haskey(fit.means, :mu) ||
-        throw(ArgumentError("residuals(type=:quantile) is univariate-only"))
-    fam = fit.family
-    y = fit.obs[:mu]
-    μ = fit.means[:mu]
-    n = length(y)
-    lo = eps(); hi = 1 - eps()
-    std_normal = Distributions.Normal()
-    if fam isa Gaussian && haskey(fit.scales, :sigma) && !haskey(fit.scales, :sigma1)
-        σ = fit.scales[:sigma]
-        u = [clamp(Distributions.cdf(Distributions.Normal(μ[i], σ[i]), y[i]), lo, hi) for i in 1:n]
-        return Distributions.quantile.(std_normal, u)
-    elseif fam isa Poisson
-        u = Vector{Float64}(undef, n)
-        @inbounds for i in 1:n
-            d = Distributions.Poisson(max(μ[i], 0.0))
-            a = Distributions.cdf(d, y[i] - 1)
-            b = Distributions.cdf(d, y[i])
-            u[i] = clamp(a + (b - a) * rand(rng), lo, hi)
-        end
-        return Distributions.quantile.(std_normal, u)
-    else
-        throw(ArgumentError("residuals(type=:quantile) is implemented for Gaussian and " *
-            "Poisson; $(nameof(typeof(fam))) needs a verified per-family CDF mapping — " *
-            "tracked in a follow-up issue"))
     end
 end
 
@@ -968,8 +1114,41 @@ end
     loglik(fit) -> Float64
 
 Maximised log-likelihood of the fitted model.
+
+For a **REML** fit (`drm(...; method = :REML)`) this returns the **restricted**
+log-likelihood (`reml_loglik(fit)`). REML log-likelihoods are **not comparable
+across different fixed-effect (mean) structures** — the error-contrast basis
+differs — so do not use them for model selection across mean structures; the
+`aic`/`bic`/`lrtest` guard enforces this. Use [`ml_loglik`](@ref) (the plain ML
+log-likelihood at the REML estimate) when an ML-comparable value is needed.
 """
 loglik(fit::DrmFit) = fit.loglik
+
+"""
+    estimation_method(fit) -> Symbol
+
+The estimator used to fit the model: `:ML` (default) or `:REML`
+(`drm(...; method = :REML)`).
+"""
+estimation_method(fit::DrmFit) = fit.estim_method
+
+"""
+    reml_loglik(fit) -> Float64
+
+The restricted (REML) log-likelihood. Returns `NaN` for an ML fit (REML was not
+used). See [`loglik`](@ref) for the cross-structure-comparison caveat.
+"""
+reml_loglik(fit::DrmFit) = fit.reml_loglik
+
+"""
+    ml_loglik(fit) -> Float64
+
+The plain (unrestricted) maximum-likelihood log-likelihood. For an ML fit this
+equals [`loglik`](@ref); for a REML fit it is the ML log-likelihood evaluated at
+the REML parameter estimate — the value to use when an ML-comparable log-likelihood
+is needed (e.g. across different mean structures).
+"""
+ml_loglik(fit::DrmFit) = fit.ml_loglik
 
 """
     dof(fit) -> Int
@@ -978,20 +1157,47 @@ Degrees of freedom — the number of estimated parameters (length of θ).
 """
 dof(fit::DrmFit) = length(fit.theta)
 
+# REML model-selection guard (issue #11): AIC/BIC built on a REML log-likelihood
+# are only meaningful when comparing models with the SAME fixed-effect (mean)
+# structure (REML compares variance structure, not mean structure). We cannot see
+# the other model from a single-fit accessor, so we warn once that the value is
+# only valid for variance-only comparisons. `lrtest`/`anova` (which see both fits)
+# enforce the stronger, comparison-aware guard.
+function _reml_infocrit_warn(fit::DrmFit, which::AbstractString)
+    fit.estim_method === :REML && @warn(
+        "$which on a REML fit: REML log-likelihoods are only comparable across models with " *
+        "the SAME fixed-effect (mean) structure (variance-only differences). For model " *
+        "selection across mean structures, refit with method = :ML.", maxlog = 1)
+    return nothing
+end
+
 """
     aic(fit) -> Float64
 
 Akaike information criterion, `-2·loglik + 2·dof`. Lower is better; compares
 models fit by **ML** (not REML) on the same data.
+
+On a **REML** fit this uses the restricted log-likelihood and is only valid for
+comparing models that differ in **variance structure only** (same mean structure);
+a one-time warning is emitted. Use ML for cross-mean-structure selection.
 """
-aic(fit::DrmFit) = -2 * fit.loglik + 2 * length(fit.theta)
+function aic(fit::DrmFit)
+    _reml_infocrit_warn(fit, "aic")
+    return -2 * fit.loglik + 2 * length(fit.theta)
+end
 
 """
     bic(fit) -> Float64
 
 Bayesian (Schwarz) information criterion, `-2·loglik + dof·log(nobs)`.
+
+On a **REML** fit this carries the same variance-only-comparison caveat as
+[`aic`](@ref) and emits a one-time warning.
 """
-bic(fit::DrmFit) = -2 * fit.loglik + length(fit.theta) * log(fit.nobs)
+function bic(fit::DrmFit)
+    _reml_infocrit_warn(fit, "bic")
+    return -2 * fit.loglik + length(fit.theta) * log(fit.nobs)
+end
 
 """
     re_sd(fit) -> Dict{Symbol,Float64}

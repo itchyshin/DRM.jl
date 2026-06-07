@@ -252,7 +252,11 @@ means). Returns an empty `Dict` for models without random effects. Non-Gaussian
 GLMM posterior modes (GHQ/Laplace) are not yet wired — see issue #73.
 """
 function ranef(fit::DrmFit)
-    fit.ranef === nothing ? Dict{Symbol,Vector{Float64}}() : fit.ranef
+    fit.ranef === nothing && return Dict{Symbol,Vector{Float64}}()
+    if fit.ranef isa NamedTuple && haskey(fit.ranef, :effects)
+        return fit.ranef.effects
+    end
+    return fit.ranef
 end
 
 """
@@ -270,6 +274,11 @@ Random-effect covariance summary per grouping factor.
 """
 function vc(fit::DrmFit)
     d = Dict{Symbol,Matrix{Float64}}()
+    # q=4 phylogenetic coevolution: the raw 4×4 group-level Σ_a is stashed on
+    # `ranef` (axes mu1,mu2,sigma1,sigma2); surface it here per #192.
+    if fit.ranef isa NamedTuple && haskey(fit.ranef, :Sigma_a)
+        d[Symbol(fit.ranef.group)] = Matrix{Float64}(fit.ranef.Sigma_a)
+    end
     for (p, r) in fit.blocks
         if p === :recov
             a, b, cc = fit.theta[r]

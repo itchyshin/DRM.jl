@@ -1,7 +1,7 @@
 # check_drm(fit): post-fit convergence / identifiability diagnostics,
 # mirroring drmTMB's check_drm().
 using DRM
-using Test, Random
+using Test, Random, LinearAlgebra
 
 @testset "check_drm() — convergence / identifiability report" begin
     @testset "well-identified model → ok" begin
@@ -30,5 +30,21 @@ using Test, Random
         @test r.vcov_posdef isa Bool
         @test r.ok isa Bool
         @test r.max_abs_grad isa Float64
+    end
+
+    @testset "stored objective gradient is used when available" begin
+        blocks = [:mu => 1:2]
+        coefnames = [:mu => ["(Intercept)", "x"]]
+        theta = [0.0, 0.0]
+        V = Matrix{Float64}(I, 2, 2)
+        empty = Dict{Symbol,Vector{Float64}}()
+        nll(_) = error("check_drm should use the stored gradient")
+        nllgrad!(g, _) = (fill!(g, 0.0); g)
+        fit = DRM.DrmFit(Gaussian(), blocks, coefnames, theta, V, -1.0, 2, true,
+                         empty, empty, empty, nothing, nll, nllgrad!, nothing)
+
+        r = check_drm(fit)
+        @test r.max_abs_grad == 0.0
+        @test r.ok
     end
 end
