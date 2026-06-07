@@ -29,6 +29,7 @@ end
 include("test_gaussian_core.jl")
 include("test_bf_grammar.jl")
 include("test_gaussian_bivariate.jl")
+include("test_gaussian_bivariate_phylo.jl")
 include("test_corpairs.jl")
 include("test_gaussian_ranef.jl")
 include("test_inference.jl")

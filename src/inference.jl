@@ -677,8 +677,9 @@ end
 # Max |∂nll/∂θ| at the estimate. A location–scale fit carries a `LocScaleObjective`
 # whose inner mode-solve is Float64-only (not dual-number safe), so ForwardDiff
 # can't differentiate it — use its exact analytic outer gradient instead (which
-# also upgrades the diagnostic from NaN to a real gradient norm). Other fits use
-# ForwardDiff through the stored objective; `nothing` means no objective → NaN.
+# also upgrades the diagnostic from NaN to a real gradient norm). Sparse q=4
+# fits can store a Float64-only gradient callback; use it before trying
+# ForwardDiff through the objective. `nothing` means no objective → NaN.
 function _check_max_abs_grad(fit::DrmFit)
     fit.nll === nothing && return NaN
     if fit.nll isa LocScaleObjective
@@ -686,6 +687,11 @@ function _check_max_abs_grad(fit::DrmFit)
         base = size(o.Xμ, 2) + size(o.Xψ, 2)
         perm = vcat(collect(1:base), [base + 1, base + 3, base + 2])  # recov→engine
         g = _ls_marginal_grad(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, fit.theta[perm])
+        return maximum(abs, g)
+    end
+    if fit.nllgrad !== nothing
+        g = zeros(length(fit.theta))
+        fit.nllgrad(g, fit.theta)
         return maximum(abs, g)
     end
     return maximum(abs, ForwardDiff.gradient(fit.nll, fit.theta))

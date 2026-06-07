@@ -79,10 +79,12 @@ q=4 PLSM, the bivariate location–scale instance: responses `(y1, y2)`, with a
 shared phylogenetic random effect on four axes `(μ1, μ2, log σ1, log σ2)` via a
 4×4 between-species covariance Λ (a **separate phylo variance per axis** + cross-
 covariances — biologically richer than one global variance), and a residual
-correlation ρ. The general drmTMB API (planned front end): `bf(mu1=…, mu2=…,
-sigma1=…, sigma2=…, rho12=…)`. **Keep `sigma` (not `tau`), `rho12` for residual
-correlation. ML is the default** (REML likelihoods aren't comparable across
-fixed-effect structures — needed for model selection); REML is an option.
+correlation ρ. The public drmTMB-shaped front end is
+`bf(mu1=…, mu2=…, sigma1=…, sigma2=…, rho12=…)`, with matching
+`phylo(1 | species)` markers required on the four location/scale axes for the
+q=4 route. **Keep `sigma` (not `tau`), `rho12` for residual correlation. ML is
+the default** (REML likelihoods aren't comparable across fixed-effect structures
+— needed for model selection); REML is an option.
 
 ---
 
@@ -212,10 +214,10 @@ load-time prints, deliberate public API); make `Pkg.instantiate(); using DRM;
 Pkg.test()` green (the migrated `test/*.jl` need path/`using DRM` fixes); add
 `Manifest.toml`, `docs/` Documenter site, `TagBot.yml`/`Documenter.yml`,
 `bench/Project.toml`.
-**B. Wire `experimental/` into the API.** `fit` dispatch + a `bf()` multi-formula
-front end (StatsModels.jl; mirror drmTMB). Inference module from `infer_q4.jl`
-(port GLLVM.jl `confint*` patterns — `report/GLLVM-porting-playbook.md`); **thread
-the bootstrap** and *measure* the speedup (currently unrun end-to-end).
+**B. Wire `experimental/` into the API.** The q=4 bivariate `bf()` front end and
+`infer_q4` inference path are now public; remaining migrated pieces include
+`reml_q4`, `location_only`, and EM variants. **Thread the bootstrap** and
+*measure* the speedup (currently unrun end-to-end).
 **C. Open research items.** REML scale-axis + exact REML gradient (keep ML
 default); χ̄² boundary inference (Self–Liang 1987; Stram–Lee 1994); drmTMB
 head-to-head at nrep=4/p>100 to replace the extrapolated scaling comparison.
