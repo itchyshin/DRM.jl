@@ -97,5 +97,9 @@ function _fit_locscale_frontend(kind, fam, f, rhs, lc, data; g_tol, se)
     gidx, G = _group_index(getproperty(data, lc.group))
     Q = sparse(1.0 * I, G, G)
     fitres = _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q; g_tol = g_tol, se = se)
-    return _build_locscale_drmfit(fam, fitres, y, Xμ, Xψ, nmμ, nmσ, String(lc.group))
+    fit = _build_locscale_drmfit(fam, fitres, y, Xμ, Xψ, nmμ, nmσ, String(lc.group))
+    # Carry the structured design so `confint(:profile)` can route to the robust
+    # location–scale profiler. The objective uses the engine packing; the DrmFit
+    # `theta` is in `:recov` order, so the profile router permutes between them.
+    return _withnll(fit, LocScaleObjective(kind, y, Xμ, Xψ, gidx, G, Q))
 end

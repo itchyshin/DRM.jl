@@ -30,6 +30,25 @@ function _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
     return ok ? val : 1e18
 end
 
+# Callable objective that ALSO carries the structured design (kind + data +
+# grouping precision). Stored in the `DrmFit.nll` slot (typed `Any`): it is a
+# valid θ ↦ marginal-NLL objective in the engine's packing `[βμ; βψ; λ(3)]`, so
+# generic code that merely evaluates the objective still works, while
+# `confint(:profile)` / `profile_result` recognise the type and route to the
+# robust trust-region profiler `_ls_profile_ci` (the generic LBFGS profiler
+# throws on the variance boundary, which is exactly where profile CIs matter).
+struct LocScaleObjective{K,Y,MX,PX,GI,QT}
+    kind::K
+    y::Y
+    Xμ::MX
+    Xψ::PX
+    gidx::GI
+    G::Int
+    Q::QT
+end
+
+(o::LocScaleObjective)(θ) = _ls_fit_nll(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ)
+
 """
     _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q; ...)
 
