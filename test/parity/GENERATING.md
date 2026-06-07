@@ -110,6 +110,45 @@ The runner reads `[fit].formula` to rebuild the DRM.jl `bf(@formula(y ~ x),
 @formula(sigma ~ x))` bundle, re-fits by ML, and applies the tolerance table in
 `../README.md`. The `coef` names must match `drm_coef_named(fit)` exactly.
 
+## Location–scale (correlated RE) cases: the `[ranef]` block
+
+For a coupled `(1 | p | group)` location–scale model (a correlated species effect
+on BOTH the mean and the dispersion), add an optional `[ranef]` block giving the
+group-level covariance **in DRM.jl's convention**:
+
+```toml
+[ranef]
+group    = "species"
+sd_mu    = 0.50      # mean-axis SD
+sd_sigma = 0.40      # dispersion-axis SD (DRM.jl ψ = log θ scale)
+cor      = 0.25      # mean ↔ dispersion correlation
+```
+
+The runner compares these against `vc(fit)[Symbol(group)]` (within `[tol]`
+`rtol_ranef` / `atol_ranef`). **Two NB2 reparameterisations** must be applied by
+the generator (both encoded in `gen_fixtures.R::generate_nbinom2_locscale`):
+
+- fixed `sigma` coefficients: `DRM log(θ) = −2 · drmTMB sigma` (handled in
+  `transform_expected` for `count-nbinom2` / `nbinom2-locscale`);
+- the **dispersion-axis** group effect satisfies `a^ψ_DRM = −2 · a^σ_drmTMB`, so
+  `sd_sigma_DRM = 2 · sd_sigma_drmTMB` and the mean↔dispersion **correlation flips
+  sign**; `sd_mu` is unchanged (the mean log-link matches).
+
+⚠️ Verify the `VarCorr(fit)` accessor in `generate_nbinom2_locscale` against
+drmTMB's actual layout before trusting the numbers.
+
+> **drmTMB support status (2026-06-06).** drmTMB does **not yet** implement the
+> coupled `(1 | p | species)` `mu`/`sigma` correlated random effect for
+> `nbinom2` — it errors with "Only independent NB2 mu random intercepts/slopes
+> are implemented … labelled covariance blocks remain planned for a later
+> non-Gaussian random-effect gate." So `generate_nbinom2_locscale()` is **guarded**
+> (skips cleanly) and the `nbinom2-locscale` fixture cannot be generated until
+> drmTMB adds that feature — **DRM.jl is ahead here**. Until then this model is
+> validated internally (marginal vs Gauss–Hermite, exact gradient vs finite
+> differences, recovery, stationarity), not against drmTMB. The
+> `nbinom2-dispersion` case (`sigma ~ x`, fixed effects) IS supported by drmTMB
+> and exercises the same `−2` sigma↔log-θ reparam with a covariate.
+
 ## `expected.meta.toml` (provenance only)
 
 ```toml

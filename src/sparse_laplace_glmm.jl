@@ -213,23 +213,120 @@ function _poisson_phylo_mode(y, η0, leaf_node, Q, logσ; b0 = nothing,
         ch = cholesky(Symmetric(Hmat); check = false)
         issuccess(ch) || return b, ch, iters, false
         step = ch \ grad
-        norm(step) <= tol * (1 + norm(b)) && return b, ch, iters, true
+        sn = norm(step)
+        sn <= tol * (1 + norm(b)) && return b, ch, iters, true
 
-        f0 = joint_no_const(b)
-        α = 1.0
-        accepted = false
-        while α >= 1e-4
-            trial = b .- α .* step
-            if joint_no_const(trial) <= f0
-                b = trial
-                accepted = true
-                break
+        # The Poisson phylo joint is strictly convex in b (convex data term + PD
+        # prior). Once inside the quadratic-convergence basin (small step) the
+        # full Newton step is contractive, but a backtracking line search there
+        # STALLS on rounding-level decreases — it cannot verify the tiny strict
+        # improvement, so it would exhaust and leave the mode only loosely
+        # converged (~1e-6), which then shows up as finite-difference noise in the
+        # marginal gradient. So in the basin take the FULL Newton step (driving
+        # the mode to ~`tol`); use the safeguarded line search only far from the
+        # mode, where for a convex objective it is guaranteed to find a decrease.
+        if sn <= 1e-3 * (1 + norm(b))
+            b = b .- step
+        else
+            f0 = joint_no_const(b)
+            α = 1.0
+            accepted = false
+            while α >= 1e-4
+                trial = b .- α .* step
+                if joint_no_const(trial) <= f0
+                    b = trial
+                    accepted = true
+                    break
+                end
+                α *= 0.5
             end
-            α *= 0.5
+            accepted || return b, ch, iters, false
         end
-        accepted || return b, ch, iters, false
     end
     return b, ch, iters, ch !== nothing
+end
+
+"""
+    _poisson_phylo_laplace_fg(y, Xμ, leaf_node, Q, logdetQ, lf, θ; grad, b0, newton_tol, newton_maxiter)
+
+Module-level f/g evaluation of the Poisson phylogenetic-Laplace marginal NLL at a
+single θ, used both by `_fit_poisson_phylo_laplace` and by the standing
+FD-vs-analytic gradient gate (#165). Hoisting it out of the fit closure lets the
+gate drive a *controlled, tightly-converged, warm-started* inner mode (the same
+recipe `marginal_and_exact_grad` / the q4 Q-gate use to reach ≤ 1e-6).
+
+The marginal is
+
+    L(θ) = data(b̂) + ½ σ⁻² b̂'Q b̂ + q logσ − ½ logdet Q + ½ logdet H,
+    H = σ⁻² Q + diag(Σ_{i∈leaf} μ_i).
+
+Because b̂ solves ∂(data+prior)/∂b = 0, the total θ-gradient is the explicit part
+(b̂ frozen) plus the implicit logdet correction through
+db̂/dθ = −H⁻¹ ∂²(data+prior)/∂b∂θ. For Poisson the data Hessian weight and its
+η-derivative coincide (d²ℓ = d³ℓ = μ), so a single μ drives both the logdet trace
+and the cross term — this is the family-specific third-derivative term the IFT
+introduces. Returns `(val[, grad], b, ok)`; on a non-PD inner solve `ok = false`.
+"""
+function _poisson_phylo_laplace_fg(y, Xμ, leaf_node, Q, logdetQ, lf, θ;
+                                   grad::Bool = false, b0 = nothing,
+                                   newton_tol::Real = 1e-8, newton_maxiter::Int = 60)
+    n = length(y)
+    pμ = length(θ) - 1
+    q = size(Q, 1)
+    βμ = θ[1:pμ]
+    logσ = clamp(θ[pμ+1], -8.0, 3.0)
+    invσ2 = exp(-2 * logσ)
+    η0 = Xμ * βμ
+    b, ch, _, ok = _poisson_phylo_mode(y, η0, leaf_node, Q, logσ;
+                                       b0 = b0, tol = newton_tol, maxiter = newton_maxiter)
+    if !ok
+        return grad ? (1e18, zeros(length(θ)), b, false) : (1e18, b, false)
+    end
+
+    data = zero(eltype(θ))
+    gradβ_raw = zeros(eltype(θ), pμ)
+    μstore = Vector{eltype(θ)}(undef, n)
+    @inbounds for i in eachindex(y)
+        η = clamp(η0[i] + b[leaf_node[i]], -30.0, 30.0)
+        μ = exp(η)
+        μstore[i] = μ
+        data += μ - y[i] * η + lf[i]
+        r = μ - y[i]
+        for k in 1:pμ
+            gradβ_raw[k] += Xμ[i, k] * r
+        end
+    end
+    Qb = Q * b
+    prior = 0.5 * invσ2 * dot(b, Qb)
+    val = data + prior + q * logσ - 0.5 * logdetQ + 0.5 * logdet(ch)
+    grad || return val, b, true
+
+    S = takahashi_selinv(ch)
+    hd = diag(S)
+    traceSQ = _sparse_trace_product(S, Q)
+    tlogdet = zeros(eltype(θ), q)
+    crossβ = zeros(eltype(θ), q, pμ)
+    gβ = gradβ_raw
+    @inbounds for i in eachindex(y)
+        li = leaf_node[i]
+        μi = μstore[i]
+        lever = hd[li]
+        μlever = μi * lever
+        tlogdet[li] += μlever
+        adj = 0.5 * μlever
+        for k in 1:pμ
+            xik = Xμ[i, k]
+            gβ[k] += xik * adj
+            crossβ[li, k] += μi * xik
+        end
+    end
+    implicit = ch \ tlogdet
+    @inbounds for k in 1:pμ
+        gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
+    end
+    Pu = invσ2 .* Qb
+    gσ = q - invσ2 * (dot(b, Qb) + traceSQ) + dot(implicit, Pu)
+    return val, vcat(gβ, [gσ]), b, true
 end
 
 """
@@ -254,61 +351,31 @@ function _fit_poisson_phylo_laplace(fam::Poisson, y, Xμ, labels, tree, nmμ, gr
     last_b = zeros(q)
 
     function eval_laplace(θ; grad::Bool = false)
-        βμ = θ[1:pμ]
-        logσ = clamp(θ[pμ+1], -8.0, 3.0)
-        invσ2 = exp(-2 * logσ)
-        η0 = Xμ * βμ
-        b, ch, _, ok = _poisson_phylo_mode(y, η0, leaf_node, Q, logσ; b0 = last_b)
-        if !ok
-            b, ch, _, ok = _poisson_phylo_mode(y, η0, leaf_node, Q, logσ; b0 = zeros(q))
-        end
-        ok || return grad ? (1e18, zeros(length(θ))) : 1e18
-        last_b .= b
-
-        data = zero(eltype(θ))
-        gradβ_raw = zeros(eltype(θ), pμ)
-        μstore = Vector{eltype(θ)}(undef, n)
-        @inbounds for i in eachindex(y)
-            η = clamp(η0[i] + b[leaf_node[i]], -30.0, 30.0)
-            μ = exp(η)
-            μstore[i] = μ
-            data += μ - y[i] * η + lf[i]
-            r = μ - y[i]
-            for k in 1:pμ
-                gradβ_raw[k] += Xμ[i, k] * r
+        if grad
+            val, g, b, ok = _poisson_phylo_laplace_fg(
+                y, Xμ, leaf_node, Q, logdetQ, lf, θ; grad = true, b0 = last_b
+            )
+            if !ok
+                val, g, b, ok = _poisson_phylo_laplace_fg(
+                    y, Xμ, leaf_node, Q, logdetQ, lf, θ; grad = true, b0 = zeros(q)
+                )
             end
-        end
-        Qb = Q * b
-        prior = 0.5 * invσ2 * dot(b, Qb)
-        val = data + prior + q * logσ - 0.5 * logdetQ + 0.5 * logdet(ch)
-        grad || return val
-
-        S = takahashi_selinv(ch)
-        hd = diag(S)
-        traceSQ = _sparse_trace_product(S, Q)
-        tlogdet = zeros(eltype(θ), q)
-        crossβ = zeros(eltype(θ), q, pμ)
-        gβ = gradβ_raw
-        @inbounds for i in eachindex(y)
-            li = leaf_node[i]
-            μi = μstore[i]
-            lever = hd[li]
-            μlever = μi * lever
-            tlogdet[li] += μlever
-            adj = 0.5 * μlever
-            for k in 1:pμ
-                xik = Xμ[i, k]
-                gβ[k] += xik * adj
-                crossβ[li, k] += μi * xik
+            ok || return 1e18, zeros(length(θ))
+            last_b .= b
+            return val, g
+        else
+            val, b, ok = _poisson_phylo_laplace_fg(
+                y, Xμ, leaf_node, Q, logdetQ, lf, θ; grad = false, b0 = last_b
+            )
+            if !ok
+                val, b, ok = _poisson_phylo_laplace_fg(
+                    y, Xμ, leaf_node, Q, logdetQ, lf, θ; grad = false, b0 = zeros(q)
+                )
             end
+            ok || return 1e18
+            last_b .= b
+            return val
         end
-        implicit = ch \ tlogdet
-        @inbounds for k in 1:pμ
-            gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
-        end
-        Pu = invσ2 .* Qb
-        gσ = q - invσ2 * (dot(b, Qb) + traceSQ) + dot(implicit, Pu)
-        return val, vcat(gβ, [gσ])
     end
 
     nll(θ) = eval_laplace(θ; grad = false)
@@ -380,47 +447,66 @@ function _phylo_mean_mode(kind, aux, η0, leaf_node, Q, logσ; b0 = nothing,
         T = eltype(b)
         grad = zeros(T, q)
         diagH = zeros(Float64, q)
+        all_w_nonneg = true
         @inbounds for i in eachindex(η0)
             li = leaf_node[i]
             η = η0[i] + b[li]
             r, w = _laplace_d12(kind, aux, i, η)
             grad[li] += r
             diagH[li] += w
+            w < 0 && (all_w_nonneg = false)
         end
         grad .+= invσ2 .* (Q * b)
         Hmat = invσ2 .* Q + spdiagm(0 => diagH)
         ch = cholesky(Symmetric(Hmat); check = false)
         issuccess(ch) || return b, ch, iters, false
         step = ch \ grad
-        norm(step) <= tol * (1 + norm(b)) && return b, ch, iters, true
+        sn = norm(step)
+        sn <= tol * (1 + norm(b)) && return b, ch, iters, true
 
-        f0 = joint(b)
-        α = 1.0
-        accepted = false
-        while α >= 1e-4
-            trial = b .- α .* step
-            if joint(trial) <= f0
-                b = trial
-                accepted = true
-                break
+        # Mirror the `_poisson_phylo_mode` basin fix: once inside the
+        # quadratic-convergence basin (small step) the backtracking line search
+        # STALLS on rounding-level decreases, leaving the mode only loosely
+        # converged (~1e-6) and polluting the marginal FD gradient. Where the
+        # data-term Hessian weights are all nonnegative the joint is locally
+        # convex (binomial/nb2/gamma data terms have w ≥ 0 everywhere), so the
+        # full Newton step in the basin is safe and drives the mode to ~`tol`.
+        # For a family whose data weight can go negative (e.g. beta's d² is not
+        # sign-definite) we fall back to the safeguarded line search — never an
+        # unsafe full step.
+        if all_w_nonneg && sn <= 1e-3 * (1 + norm(b))
+            b = b .- step
+        else
+            f0 = joint(b)
+            α = 1.0
+            accepted = false
+            while α >= 1e-4
+                trial = b .- α .* step
+                if joint(trial) <= f0
+                    b = trial
+                    accepted = true
+                    break
+                end
+                α *= 0.5
             end
-            α *= 0.5
+            accepted || return b, ch, iters, false
         end
-        accepted || return b, ch, iters, false
     end
     return b, ch, iters, ch !== nothing
 end
 
 function _phylo_mean_laplace_nuisance_fg(kind, aux_from, n::Int, Xμ, leaf_node,
                                          Q, logdetQ, θ; grad::Bool = false,
-                                         b0 = nothing)
+                                         b0 = nothing, newton_tol::Real = 1e-8,
+                                         newton_maxiter::Int = 60)
     pμ = length(θ) - 2
     βμ = θ[1:pμ]
     θσ = clamp(θ[pμ+1], -8.0, 8.0)
     logσ = clamp(θ[pμ+2], -8.0, 3.0)
     aux = aux_from(θσ)
     η0 = Xμ * βμ
-    b, ch, _, ok = _phylo_mean_mode(kind, aux, η0, leaf_node, Q, logσ; b0 = b0)
+    b, ch, _, ok = _phylo_mean_mode(kind, aux, η0, leaf_node, Q, logσ; b0 = b0,
+                                    tol = newton_tol, maxiter = newton_maxiter)
     if !ok
         return grad ? (1e18, zeros(length(θ)), b, false) : (1e18, b, false)
     end
@@ -579,12 +665,14 @@ function _fit_phylo_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, labe
 end
 
 function _phylo_mean_laplace_fg(kind, aux, n::Int, Xμ, leaf_node, Q, logdetQ, θ;
-                                grad::Bool = false, b0 = nothing)
+                                grad::Bool = false, b0 = nothing,
+                                newton_tol::Real = 1e-8, newton_maxiter::Int = 60)
     pμ = length(θ) - 1
     βμ = θ[1:pμ]
     logσ = clamp(θ[pμ+1], -8.0, 3.0)
     η0 = Xμ * βμ
-    b, ch, _, ok = _phylo_mean_mode(kind, aux, η0, leaf_node, Q, logσ; b0 = b0)
+    b, ch, _, ok = _phylo_mean_mode(kind, aux, η0, leaf_node, Q, logσ; b0 = b0,
+                                    tol = newton_tol, maxiter = newton_maxiter)
     if !ok
         return grad ? (1e18, zeros(length(θ)), b, false) : (1e18, b, false)
     end
@@ -935,23 +1023,109 @@ function _poisson_crossed_mode(y, η0, gidx, G, hidx, Hh, logσ; b0 = nothing,
         ch = cholesky(Symmetric(Hmat); check = false)
         issuccess(ch) || return b, ch, iters, false
         step = ch \ grad
-        norm(step) <= tol * (1 + norm(b)) && return b, ch, iters, true
+        sn = norm(step)
+        sn <= tol * (1 + norm(b)) && return b, ch, iters, true
 
-        f0 = joint_no_const(b)
-        α = 1.0
-        accepted = false
-        while α >= 1e-4
-            trial = b .- α .* step
-            if joint_no_const(trial) <= f0
-                b = trial
-                accepted = true
-                break
+        # The crossed-Poisson joint is strictly convex in b (convex Poisson data
+        # term + diagonal Gaussian prior), so the same fix as `_poisson_phylo_mode`
+        # applies: inside the quadratic-convergence basin (small step) the full
+        # Newton step is contractive, but the backtracking line search there STALLS
+        # on rounding-level decreases and would exhaust, leaving the mode only
+        # loosely converged (~1e-6) — which then shows up as finite-difference noise
+        # in the marginal gradient. So in the basin take the FULL Newton step;
+        # keep the safeguarded line search only far from the mode.
+        if sn <= 1e-3 * (1 + norm(b))
+            b = b .- step
+        else
+            f0 = joint_no_const(b)
+            α = 1.0
+            accepted = false
+            while α >= 1e-4
+                trial = b .- α .* step
+                if joint_no_const(trial) <= f0
+                    b = trial
+                    accepted = true
+                    break
+                end
+                α *= 0.5
             end
-            α *= 0.5
+            accepted || return b, ch, iters, false
         end
-        accepted || return b, ch, iters, false
     end
     return b, ch, iters, ch !== nothing
+end
+
+"""
+    _poisson_crossed_laplace_fg(y, Xμ, gidx, G, hidx, Hh, lf, θ; grad, b0, newton_tol, newton_maxiter)
+
+Module-level f/g evaluation of the Poisson crossed-random-intercepts Laplace
+marginal NLL at a single θ, used both by `_fit_poisson_crossed_intercepts_laplace`
+and by the standing FD-vs-analytic gradient gate (#165). Hoisting it out of the
+fit closure lets the gate drive a *controlled, tightly-converged, warm-started*
+inner mode (the same recipe the q4 Q-gate / the Poisson-phylo gate use to reach
+≤ 1e-6). Returns `(val[, grad], b, ok)`; on a non-PD inner solve `ok = false`.
+"""
+function _poisson_crossed_laplace_fg(y, Xμ, gidx, G, hidx, Hh, lf, θ;
+                                     grad::Bool = false, b0 = nothing,
+                                     newton_tol::Real = 1e-8, newton_maxiter::Int = 60)
+    n = length(y)
+    pμ = length(θ) - 2
+    logσ = clamp.(θ[pμ+1:pμ+2], -8.0, 3.0)
+    η0 = Xμ * θ[1:pμ]
+    b, ch, _, ok = _poisson_crossed_mode(y, η0, gidx, G, hidx, Hh, logσ;
+                                         b0 = b0, tol = newton_tol, maxiter = newton_maxiter)
+    if !ok
+        return grad ? (1e18, zeros(length(θ)), b, false) : (1e18, b, false)
+    end
+    data = zero(eltype(θ))
+    invg = exp(-2 * logσ[1])
+    invh = exp(-2 * logσ[2])
+    prior = 0.5 * invg * sum(abs2, @view b[1:G]) +
+            0.5 * invh * sum(abs2, @view b[G+1:G+Hh])
+    gradβ_raw = zeros(eltype(θ), pμ)
+    μstore = Vector{eltype(θ)}(undef, n)
+    @inbounds for i in eachindex(y)
+        η = clamp(η0[i] + b[gidx[i]] + b[G+hidx[i]], -30.0, 30.0)
+        μ = exp(η)
+        μstore[i] = μ
+        data += μ - y[i] * η + lf[i]
+        r = μ - y[i]
+        for k in 1:pμ
+            gradβ_raw[k] += Xμ[i, k] * r
+        end
+    end
+    val = data + prior + G * logσ[1] + Hh * logσ[2] + 0.5 * logdet(ch)
+    grad || return val, b, true
+
+    hd, crossinv = _crossed_selected_inverse_entries(ch, gidx, G, hidx, Hh)
+    tlogdet = zeros(eltype(θ), G + Hh)             # Z' * (μ .* leverage)
+    crossβ = zeros(eltype(θ), G + Hh, pμ)          # Z' * (μ .* Xβ_col)
+    gβ = gradβ_raw
+    @inbounds for i in eachindex(y)
+        gi = gidx[i]
+        hi = G + hidx[i]
+        lever = hd[gi] + hd[hi] + 2 * crossinv[i]
+        μi = μstore[i]
+        μlever = μi * lever
+        tlogdet[gi] += μlever
+        tlogdet[hi] += μlever
+        adj = 0.5 * μlever
+        for k in 1:pμ
+            xik = Xμ[i, k]
+            gβ[k] += xik * adj
+            crossβ[gi, k] += μi * xik
+            crossβ[hi, k] += μi * xik
+        end
+    end
+    implicit = ch \ tlogdet
+    @inbounds for k in 1:pμ
+        gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
+    end
+    gσ1 = G - invg * (sum(abs2, @view b[1:G]) + sum(@view hd[1:G]))
+    gσ2 = Hh - invh * (sum(abs2, @view b[G+1:G+Hh]) + sum(@view hd[G+1:G+Hh]))
+    gσ1 += dot(@view(implicit[1:G]), invg .* @view(b[1:G]))
+    gσ2 += dot(@view(implicit[G+1:G+Hh]), invh .* @view(b[G+1:G+Hh]))
+    return val, vcat(gβ, [gσ1, gσ2]), b, true
 end
 
 function _fit_poisson_crossed_intercepts_laplace(fam::Poisson, y, Xμ, gidx, G, hidx, Hh,
@@ -963,64 +1137,31 @@ function _fit_poisson_crossed_intercepts_laplace(fam::Poisson, y, Xμ, gidx, G, 
     last_b = zeros(G + Hh)
 
     function eval_laplace(θ; grad::Bool = false)
-        βμ = θ[1:pμ]
-        logσ = clamp.(θ[pμ+1:pμ+2], -8.0, 3.0)
-        η0 = Xμ * βμ
-        b, ch, _, ok = _poisson_crossed_mode(y, η0, gidx, G, hidx, Hh, logσ; b0 = last_b)
-        if !ok
-            b, ch, _, ok = _poisson_crossed_mode(y, η0, gidx, G, hidx, Hh, logσ; b0 = zeros(G + Hh))
-        end
-        ok || return grad ? (1e18, zeros(length(θ))) : 1e18
-        last_b .= b
-        data = zero(eltype(θ))
-        invg = exp(-2 * logσ[1])
-        invh = exp(-2 * logσ[2])
-        prior = 0.5 * invg * sum(abs2, @view b[1:G]) +
-                0.5 * invh * sum(abs2, @view b[G+1:G+Hh])
-        gradβ_raw = zeros(eltype(θ), pμ)
-        μstore = Vector{eltype(θ)}(undef, n)
-        @inbounds for i in eachindex(y)
-            η = clamp(η0[i] + b[gidx[i]] + b[G+hidx[i]], -30.0, 30.0)
-            μ = exp(η)
-            μstore[i] = μ
-            data += μ - y[i] * η + lf[i]
-            r = μ - y[i]
-            for k in 1:pμ
-                gradβ_raw[k] += Xμ[i, k] * r
+        if grad
+            val, g, b, ok = _poisson_crossed_laplace_fg(
+                y, Xμ, gidx, G, hidx, Hh, lf, θ; grad = true, b0 = last_b
+            )
+            if !ok
+                val, g, b, ok = _poisson_crossed_laplace_fg(
+                    y, Xμ, gidx, G, hidx, Hh, lf, θ; grad = true, b0 = zeros(G + Hh)
+                )
             end
-        end
-        val = data + prior + G * logσ[1] + Hh * logσ[2] + 0.5 * logdet(ch)
-        grad || return val
-
-        hd, crossinv = _crossed_selected_inverse_entries(ch, gidx, G, hidx, Hh)
-        tlogdet = zeros(eltype(θ), G + Hh)             # Z' * (μ .* leverage)
-        crossβ = zeros(eltype(θ), G + Hh, pμ)          # Z' * (μ .* Xβ_col)
-        gβ = gradβ_raw
-        @inbounds for i in eachindex(y)
-            gi = gidx[i]
-            hi = G + hidx[i]
-            lever = hd[gi] + hd[hi] + 2 * crossinv[i]
-            μi = μstore[i]
-            μlever = μi * lever
-            tlogdet[gi] += μlever
-            tlogdet[hi] += μlever
-            adj = 0.5 * μlever
-            for k in 1:pμ
-                xik = Xμ[i, k]
-                gβ[k] += xik * adj
-                crossβ[gi, k] += μi * xik
-                crossβ[hi, k] += μi * xik
+            ok || return 1e18, zeros(length(θ))
+            last_b .= b
+            return val, g
+        else
+            val, b, ok = _poisson_crossed_laplace_fg(
+                y, Xμ, gidx, G, hidx, Hh, lf, θ; grad = false, b0 = last_b
+            )
+            if !ok
+                val, b, ok = _poisson_crossed_laplace_fg(
+                    y, Xμ, gidx, G, hidx, Hh, lf, θ; grad = false, b0 = zeros(G + Hh)
+                )
             end
+            ok || return 1e18
+            last_b .= b
+            return val
         end
-        implicit = ch \ tlogdet
-        @inbounds for k in 1:pμ
-            gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
-        end
-        gσ1 = G - invg * (sum(abs2, @view b[1:G]) + sum(@view hd[1:G]))
-        gσ2 = Hh - invh * (sum(abs2, @view b[G+1:G+Hh]) + sum(@view hd[G+1:G+Hh]))
-        gσ1 += dot(@view(implicit[1:G]), invg .* @view(b[1:G]))
-        gσ2 += dot(@view(implicit[G+1:G+Hh]), invh .* @view(b[G+1:G+Hh]))
-        return val, vcat(gβ, [gσ1, gσ2])
     end
 
     nll(θ) = eval_laplace(θ; grad = false)
@@ -1124,22 +1265,44 @@ function _fit_poisson_crossed_laplace(fam::Poisson, y, Xμ, comps, nmμ, g_tol; 
         val = data + prior + logprior_scale + 0.5 * logdet(ch)
         grad || return val
 
-        # Fast proving-slice gradient: differentiates the Laplace objective with
-        # b̂ frozen. The exact implicit logdet correction is the next #70
-        # optimisation target; this gradient is used to make the R-vs-Julia grid
-        # executable and expose any remaining parity gap.
+        # Exact Laplace gradient via the implicit-function theorem (#165),
+        # generalising the verified two-block crossed path
+        # (`_fit_crossed_mean_laplace`) to K components. For Poisson the data
+        # Hessian weight and its η-derivative coincide (d²ℓ = d³ℓ = μ), so a
+        # single μ drives both the logdet term and the cross term.
+        #
+        # The marginal is  L(θ) = f(b̂,θ) + ½ logdet H,  H = Z'diag(μ)Z + P.
+        # Because b̂ solves ∂f/∂b = 0, the total derivative splits into an
+        # explicit part (b̂ held fixed) plus an implicit part through db̂/dθ:
+        #   dL/dθ = ∂L/∂θ + (∂[½ logdet H]/∂b)·db̂/dθ,
+        #   db̂/dθ = −H⁻¹ (∂²f/∂b∂θ).
         Hinv = ch \ Matrix{Float64}(I, size(Z, 2), size(Z, 2))
         ZH = Z * Hinv
-        lever = vec(sum(ZH .* Z, dims = 2))              # zᵢ' H⁻¹ zᵢ
+        lever = vec(sum(ZH .* Z, dims = 2))              # zᵢ' H⁻¹ zᵢ  (exact)
+        hd = diag(Hinv)
+
+        # Explicit part (b̂ frozen): data score + ½ tr(H⁻¹ ∂H/∂θ).
         gβ = Vector(Xμ' * (μ .- y .+ 0.5 .* μ .* lever))
         gσ = zeros(K)
-        hd = diag(Hinv)
         @inbounds for j in eachindex(compid)
             k = compid[j]
             gσ[k] += -invvar[j] * b[j]^2 - invvar[j] * hd[j]
         end
         @inbounds for k in 1:K
             gσ[k] += Gks[k]
+        end
+
+        # Implicit part: tlogdet = ∂(2·½ logdet H)/∂b carrier = Z'(μ ⊙ lever),
+        # implicit = H⁻¹ tlogdet, contracted against the mixed second
+        # derivatives ∂²f/∂b∂β = Z'diag(μ)X and ∂²f/∂b∂logσ_k = −2 invvar b.
+        tlogdet = Vector(Z' * (μ .* lever))
+        implicit = Hinv * tlogdet
+        crossβ = Matrix(Z' * (μ .* Xμ))                  # q × pμ
+        @inbounds for k in 1:pμ
+            gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
+        end
+        @inbounds for j in eachindex(compid)
+            gσ[compid[j]] += implicit[j] * invvar[j] * b[j]
         end
         return val, vcat(gβ, gσ)
     end
@@ -1158,13 +1321,18 @@ function _fit_poisson_crossed_laplace(fam::Poisson, y, Xμ, comps, nmμ, g_tol; 
     od = Optim.OnceDifferentiable(nll, grad!, θ0)
     method = Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking())
     res_fast = Optim.optimize(od, θ0, method, Optim.Options(g_tol = g_tol, iterations = 250))
-    res = try
-        # Short exact-objective polish. The fast frozen-mode gradient gets close;
-        # finite-difference LBFGS from that point keeps the reported benchmark on
-        # the true Laplace objective rather than the proving-slice gradient.
-        Optim.optimize(nll, Optim.minimizer(res_fast), Optim.LBFGS(),
-                       Optim.Options(g_tol = g_tol, iterations = polish_iterations))
-    catch
+    res = if polish_iterations > 0
+        try
+            # Short polish on the exact gradient (no longer a finite-difference
+            # step — the analytic gradient above is the true Laplace gradient).
+            θp = Optim.minimizer(res_fast)
+            odp = Optim.OnceDifferentiable(nll, grad!, θp)
+            Optim.optimize(odp, θp, Optim.LBFGS(),
+                           Optim.Options(g_tol = g_tol, iterations = polish_iterations))
+        catch
+            res_fast
+        end
+    else
         res_fast
     end
     θ̂ = Optim.minimizer(res)
@@ -1577,6 +1745,7 @@ function _crossed_mean_mode(kind, aux, η0, gidx, G, hidx, Hh, logσ; b0 = nothi
         grad = zeros(T, q)
         diagH = zeros(Float64, q)
         weights = Vector{Float64}(undef, length(η0))
+        all_w_nonneg = true
         @inbounds for i in eachindex(η0)
             gi = gidx[i]
             hi = G + hidx[i]
@@ -1587,6 +1756,7 @@ function _crossed_mean_mode(kind, aux, η0, gidx, G, hidx, Hh, logσ; b0 = nothi
             diagH[gi] += w
             diagH[hi] += w
             weights[i] = w
+            w < 0 && (all_w_nonneg = false)
         end
         @inbounds for j in 1:G
             grad[j] += invg * b[j]
@@ -1600,21 +1770,29 @@ function _crossed_mean_mode(kind, aux, η0, gidx, G, hidx, Hh, logσ; b0 = nothi
         ch = cholesky(Symmetric(Hmat); check = false)
         issuccess(ch) || return b, ch, iters, false
         step = ch \ grad
-        norm(step) <= tol * (1 + norm(b)) && return b, ch, iters, true
+        sn = norm(step)
+        sn <= tol * (1 + norm(b)) && return b, ch, iters, true
 
-        f0 = joint(b)
-        α = 1.0
-        accepted = false
-        while α >= 1e-4
-            trial = b .- α .* step
-            if joint(trial) <= f0
-                b = trial
-                accepted = true
-                break
+        # Same convexity-gated full-Newton-in-basin fix as `_phylo_mean_mode` /
+        # `_poisson_crossed_mode`: avoid the line search stalling on rounding-level
+        # decreases near the mode when the data term is locally convex.
+        if all_w_nonneg && sn <= 1e-3 * (1 + norm(b))
+            b = b .- step
+        else
+            f0 = joint(b)
+            α = 1.0
+            accepted = false
+            while α >= 1e-4
+                trial = b .- α .* step
+                if joint(trial) <= f0
+                    b = trial
+                    accepted = true
+                    break
+                end
+                α *= 0.5
             end
-            α *= 0.5
+            accepted || return b, ch, iters, false
         end
-        accepted || return b, ch, iters, false
     end
     return b, ch, iters, ch !== nothing
 end

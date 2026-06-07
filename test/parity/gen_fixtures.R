@@ -54,7 +54,7 @@ transform_expected <- function(case, coefs, V, order) {
   deriv <- rep(1.0, length(order))
   names(deriv) <- order
 
-  if (case == "count-nbinom2") {
+  if (case %in% c("count-nbinom2", "nbinom2-dispersion", "nbinom2-locscale")) {
     idx <- startsWith(names(coefs), "sigma_")
     coefs[idx] <- -2.0 * coefs[idx]
     deriv[startsWith(names(deriv), "sigma_")] <- -2.0
@@ -71,7 +71,7 @@ transform_expected <- function(case, coefs, V, order) {
   list(coef = coefs, vcov = D %*% V %*% D)
 }
 
-write_expected <- function(dir, family, formula, fit, case) {
+write_expected <- function(dir, family, formula, fit, case, ranef = NULL) {
   coefs <- flat_coef(fit)
   V <- vcov(fit)
   order <- vcov_order(fit)
@@ -103,7 +103,7 @@ write_expected <- function(dir, family, formula, fit, case) {
   for (name in sort(names(coefs))) {
     writeLines(paste0(toml_string(name), " = ", toml_num(coefs[[name]])), con)
   }
-  writeLines(c(
+  tol_lines <- c(
     "",
     "[vcov]",
     paste0("order = ", toml_array(order)),
@@ -112,7 +112,19 @@ write_expected <- function(dir, family, formula, fit, case) {
     "[tol]",
     "atol_loglik = 1e-3",
     "atol_aic = 1e-3"
-  ), con)
+  )
+  if (!is.null(ranef)) tol_lines <- c(tol_lines, "rtol_ranef = 5e-2", "atol_ranef = 5e-2")
+  writeLines(tol_lines, con)
+  if (!is.null(ranef)) {
+    writeLines(c(
+      "",
+      "[ranef]",
+      paste0("group = ", toml_string(ranef$group)),
+      paste0("sd_mu = ", toml_num(ranef$sd_mu)),
+      paste0("sd_sigma = ", toml_num(ranef$sd_sigma)),
+      paste0("cor = ", toml_num(ranef$cor))
+    ), con)
+  }
 }
 
 write_meta <- function(dir, r_call, seed, note_extra = "") {
@@ -129,12 +141,12 @@ write_meta <- function(dir, r_call, seed, note_extra = "") {
 }
 
 write_case <- function(slug, seed, data, formula, family_label, r_call, fit,
-                       note_extra = "") {
+                       note_extra = "", ranef = NULL) {
   dir <- file.path(repo_root(), "test", "parity", "fixtures", slug)
   if (dir.exists(dir)) unlink(dir, recursive = TRUE)
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   write.csv(data, file.path(dir, "data.csv"), row.names = FALSE)
-  write_expected(dir, family_label, formula, fit, slug)
+  write_expected(dir, family_label, formula, fit, slug, ranef = ranef)
   write_meta(dir, r_call, seed, note_extra)
 }
 
@@ -263,8 +275,84 @@ generate_beta <- function() {
   )
 }
 
+## NB2 LOCATION–SCALE with a correlated species effect on BOTH the mean and the
+## dispersion axis: bf(y ~ x + (1|p|species), sigma ~ x + (1|p|species)). This is
+## the model DRM.jl's augmented-state engine fits. Two reparameterisations apply
+## between drmTMB and DRM.jl, both already encoded here:
+##   * fixed sigma coefs: DRM log(theta) = -2 * drmTMB sigma  (see transform_expected)
+##   * group covariance on the sigma axis: a^psi_DRM = -2 * a^sigma_drmTMB, hence
+##     sd_sigma_DRM = 2 * sd_sigma_drmTMB and cor(mu,sigma) flips sign.
+generate_nbinom2_locscale <- function() {
+  seed <- 20260610
+  set.seed(seed)
+  G <- 40; m <- 30; n <- G * m
+  species <- factor(rep(seq_len(G), each = m))
+  x <- rnorm(n)
+  # True correlated species effects in drmTMB's parameterisation (mu axis,
+  # drmTMB sigma axis). drmTMB NB2 sigma is a sqrt-dispersion: theta = exp(-2*eta_sigma).
+  sd_mu <- 0.5; sd_sig <- 0.2; rho <- 0.3
+  S <- matrix(c(sd_mu^2, rho * sd_mu * sd_sig,
+                rho * sd_mu * sd_sig, sd_sig^2), 2, 2)
+  A <- matrix(rnorm(G * 2), G, 2) %*% chol(S)        # G x 2: [a_mu, a_sigma_drm]
+  eta_mu  <- 0.3 + 0.45 * x + A[species, 1]
+  eta_sig <- -0.10 + 0.20 * x + A[species, 2]
+  theta_i <- exp(-2 * eta_sig)
+  y <- rnbinom(n, size = theta_i, mu = exp(eta_mu))
+  dat <- data.frame(y = y, x = x, species = species)
+
+  fit <- drmTMB(drm_formula(y ~ x + (1 | p | species), sigma ~ x + (1 | p | species)),
+                family = nbinom2(), data = dat)
+
+  ## Extract the fitted group covariance. NOTE: adjust this accessor to drmTMB's
+  ## actual VarCorr layout if it differs (glmmTMB-style assumed: a 2x2 covariance
+  ## of [mu_(Intercept), sigma_(Intercept)] for the `species` grouping).
+  vcc <- VarCorr(fit)
+  Sigma <- vcc$cond$species
+  sd_mu_hat  <- sqrt(Sigma[1, 1])
+  sd_sig_hat <- sqrt(Sigma[2, 2])
+  rho_hat    <- Sigma[1, 2] / (sd_mu_hat * sd_sig_hat)
+  ranef <- list(group = "species",
+                sd_mu = sd_mu_hat,
+                sd_sigma = 2 * sd_sig_hat,   # ψ_DRM = -2·σ_drmTMB ⇒ SD ×2
+                cor = -rho_hat)              # correlation flips sign under the -2 reparam
+
+  write_case(
+    "nbinom2-locscale", seed, dat,
+    "y ~ x + (1|p|species); sigma ~ x + (1|p|species)", "nbinom2",
+    paste("drmTMB(drm_formula(y ~ x + (1|p|species), sigma ~ x + (1|p|species)),",
+          "family = nbinom2(), data = dat)"),
+    fit,
+    note_extra = paste("Location-scale NB2: sigma fixed coefs ×(-2) and the",
+                       "sigma-axis group covariance reparam'd (sd ×2, cor sign-flip)",
+                       "to DRM.jl's log(theta) convention."),
+    ranef = ranef
+  )
+}
+
 dir.create(file.path(repo_root(), "test", "parity", "fixtures"),
            recursive = TRUE, showWarnings = FALSE)
+
+## NB2 with a covariate on the dispersion axis (sigma ~ x), FIXED effects — a
+## location-scale-style model drmTMB DOES support today. Validates the trickiest
+## shared convention (drmTMB sigma = sqrt-dispersion ⇒ DRM.jl log(theta) = -2·sigma)
+## with a covariate, not just an intercept.
+generate_nbinom2_dispersion <- function() {
+  seed <- 20260611
+  set.seed(seed)
+  n <- 200
+  x <- rnorm(n)
+  mu <- exp(0.3 + 0.45 * x)
+  eta_sigma <- -0.10 + 0.25 * x            # drmTMB sigma axis; theta = exp(-2*eta_sigma)
+  y <- rnbinom(n, size = exp(-2 * eta_sigma), mu = mu)
+  dat <- data.frame(y = y, x = x)
+  fit <- drmTMB(drm_formula(y ~ x, sigma ~ x), family = nbinom2(), data = dat)
+  write_case(
+    "nbinom2-dispersion", seed, dat, "y ~ x; sigma ~ x", "nbinom2",
+    "drmTMB(drm_formula(y ~ x, sigma ~ x), family = nbinom2(), data = dat)",
+    fit,
+    "NB2 varying dispersion; sigma coefs ×(-2) to DRM.jl log(theta)."
+  )
+}
 
 generate_gaussian()
 generate_bivariate()
@@ -272,5 +360,17 @@ generate_meta()
 generate_student()
 generate_nbinom2()
 generate_beta()
+generate_nbinom2_dispersion()
+
+## The coupled (1|p|species) mu/sigma correlated random effect is NOT yet
+## supported by drmTMB ("planned for a later non-Gaussian random-effect gate"),
+## so this case is guarded: it activates automatically once drmTMB implements it.
+## DRM.jl already fits this model; until drmTMB catches up it is validated
+## internally (marginal vs Gauss–Hermite, exact gradient vs finite differences,
+## recovery, stationarity), not against drmTMB.
+tryCatch(generate_nbinom2_locscale(),
+         error = function(e) message(
+             "Skipping `nbinom2-locscale`: drmTMB does not yet support the coupled ",
+             "(1|p|species) mu/sigma random effect for nbinom2 — ", conditionMessage(e)))
 
 message("Generated drmTMB parity fixtures under test/parity/fixtures/")

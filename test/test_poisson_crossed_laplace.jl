@@ -47,6 +47,51 @@ end
     @test loglik(fit_laplace_gate) ≈ loglik(fit_ghq) atol = 1e-10
 end
 
+@testset "Poisson K=3 crossed — exact Laplace gradient (#165)" begin
+    # K ≥ 3 components exercise the generic `_fit_poisson_crossed_laplace`
+    # path (K = 1 → GHQ, K = 2 → the dense two-block path). This gate pins the
+    # exact implicit-function gradient that replaced the frozen-mode + FD polish.
+    Random.seed!(20260709)
+    G = 12; H = 10; L = 8; n = 700
+    g = rand(1:G, n); h = rand(1:H, n); l = rand(1:L, n); x = randn(n)
+    β = [0.2, 0.4]; σg = 0.45; σh = 0.35; σl = 0.30
+    bg = σg .* randn(G); bh = σh .* randn(H); bl = σl .* randn(L)
+    λ = exp.(β[1] .+ β[2] .* x .+ bg[g] .+ bh[h] .+ bl[l])
+    y = Float64.([rand(Distributions.Poisson(λi)) for λi in λ])
+    X = hcat(ones(n), x)
+    gidx, Gfit = DRM._group_index(g)
+    hidx, Hfit = DRM._group_index(h)
+    lidx, Lfit = DRM._group_index(l)
+    comps = [(ones(n), gidx, Gfit, "g"),
+             (ones(n), hidx, Hfit, "h"),
+             (ones(n), lidx, Lfit, "l")]
+
+    fit = DRM._fit_poisson_crossed_laplace(DRM.Poisson(), y, X, comps,
+                                           ["(Intercept)", "x"], 1e-7)
+
+    # Recovery (loose — three small grouping factors).
+    @test coef(fit, :mu)[2] ≈ β[2] atol = 0.15
+    rs = re_sd(fit)
+    @test rs[:g] ≈ σg atol = 0.22
+    @test rs[:h] ≈ σh atol = 0.22
+    @test rs[:l] ≈ σl atol = 0.22
+    @test isfinite(loglik(fit))
+
+    # Exact-gradient gate: evaluate OFF the optimum so the implicit (db̂/dθ)
+    # terms are nonzero and a frozen-mode gradient would fail.
+    θ̂ = coef(fit)
+    θtest = θ̂ .+ [0.10, -0.08, 0.12, -0.10, 0.09]
+    g_an = zeros(length(θtest))
+    fit.nllgrad(g_an, θtest)
+    h = 1e-5
+    g_fd = similar(g_an)
+    for k in eachindex(θtest)
+        e = zeros(length(θtest)); e[k] = h
+        g_fd[k] = (fit.nll(θtest .+ e) - fit.nll(θtest .- e)) / (2h)
+    end
+    @test g_an ≈ g_fd rtol = 1e-4 atol = 1e-4
+end
+
 @testset "Poisson crossed intercepts via drm() routing" begin
     Random.seed!(20260708)
     G = 20; H = 16; n = 800

@@ -60,14 +60,19 @@ Confidence intervals for every coefficient, as a vector of
 - `method = :profile` — profile-likelihood interval: the endpoints where
   `2(ℓ̂ − ℓ_profile) = χ²₁(level)`, re-optimising the nuisance parameters at each
   fixed value (asymmetric, and exact under the LR statistic where Wald is only
-  quadratic-approximate). Works on any fitted Gaussian model. The endpoint search
-  uses warm-start continuation (each profiled solve starts from the previous
-  point's optimum) and a guarded-Newton root-find driven by the envelope-theorem
-  slope `∂nll/∂θ_k`, falling back to bisection — bracket-guaranteed correctness,
-  far fewer inner re-optimisations than cold-started bisection.
+  quadratic-approximate). Works on any fitted Gaussian model, and on the
+  non-Gaussian location–scale fit (`(1 | tag | group)` coupled RE), where it
+  routes to a trust-region inner solve that is robust on the variance boundary —
+  exactly where profile intervals are most needed and Wald is least trustworthy.
+  The endpoint search uses warm-start continuation (each profiled solve starts
+  from the previous point's optimum) and a guarded-Newton root-find driven by the
+  envelope-theorem slope `∂nll/∂θ_k`, falling back to bisection — bracket-
+  guaranteed correctness, far fewer inner re-optimisations than cold-started
+  bisection.
   Pass `threads = true` to profile coefficients in parallel when the fitted
   objective is thread-safe; if only one coefficient is profiled, its lower and
-  upper endpoint searches are run in parallel instead.
+  upper endpoint searches are run in parallel instead. (Threading is not yet used
+  for the location–scale route, which profiles serially.)
 - `parm = :resd` or `parm = [:mu, :resd]` — restrict intervals to one or more
   parameter blocks. This is especially useful for profiling random-effect SDs
   without also profiling fixed-effect coefficients.
@@ -99,6 +104,8 @@ one coefficient is profiled, the two endpoint arms are run in parallel instead.
 """
 function profile_result(fit::DrmFit; level::Real = 0.95, threads::Bool = false,
         parm = nothing)
+    fit.nll isa LocScaleObjective &&
+        return _ls_profile_result(fit; level = level, parm = parm)
     fit.nll === nothing &&
         throw(ArgumentError("profile intervals require the fitted objective; this model was not built with one"))
     nll = fit.nll
@@ -169,6 +176,44 @@ function _profile_jobs(fit::DrmFit, parm)
         end
     end
     return jobs
+end
+
+# Profile-likelihood CIs for the location–scale fit, routed to the robust
+# trust-region profiler `_ls_profile_ci` (locscale_profile.jl). The DrmFit packs
+# the covariance block in `:recov` order [logL11, logL22, L21] while the engine
+# packs [logL11, L21, logL22]; the permutation below (an involution that swaps
+# the last two covariance entries) maps a DrmFit coefficient index to the engine
+# index the profiler expects, and the engine θ̂ back from the stored `theta`.
+function _ls_profile_result(fit::DrmFit; level::Real = 0.95, parm = nothing)
+    obj = fit.nll::LocScaleObjective
+    base = size(obj.Xμ, 2) + size(obj.Xψ, 2)
+    perm = vcat(collect(1:base), [base + 1, base + 3, base + 2])  # involution
+    θengine = fit.theta[perm]
+    se = stderror(fit)                                    # DrmFit (recov) order
+    jobs = _profile_jobs(fit, parm)
+    rows = Vector{_CIRow}(undef, length(jobs))
+    stats = Vector{_ProfileStatsRow}(undef, length(jobs))
+    elapsed = @elapsed begin
+        nmin = obj(θengine)                               # marginal NLL at θ̂ (once)
+        for (i, job) in enumerate(jobs)
+            s = se[job.k]
+            se_arg = (isfinite(s) && s > 0) ? s : nothing
+            ci = _ls_profile_ci(obj.kind, obj.y, obj.Xμ, obj.Xψ, obj.gidx, obj.G, obj.Q,
+                                θengine; idx = perm[job.k], level = level,
+                                nll_min = nmin, se = se_arg)
+            rows[i] = (param = job.param, coef = job.coef, estimate = fit.theta[job.k],
+                       lower = ci.lower, upper = ci.upper)
+            stats[i] = (param = job.param, coef = job.coef, evaluations = 0,
+                        gradient_evaluations = 0, bracket_expansions = 0,
+                        root_iterations = 0, lower_unbounded = !isfinite(ci.lower),
+                        upper_unbounded = !isfinite(ci.upper))
+        end
+    end
+    return (ci = rows, stats = stats, attempted = length(jobs), used = length(rows),
+        failed = 0, threaded = false, worker_threads = 1,
+        julia_threads = Threads.nthreads(), blas_threads = BLAS.get_num_threads(),
+        blas_oversubscribed = false, elapsed = elapsed, autodiff = :locscale,
+        level = float(level))
 end
 
 # Profiled objective: minimise nll over every component except k, with θ[k] = v.
@@ -629,6 +674,29 @@ function _bootstrap_summary_rows(fit0, draws, est, level)
     return rows
 end
 
+# Max |∂nll/∂θ| at the estimate. A location–scale fit carries a `LocScaleObjective`
+# whose inner mode-solve is Float64-only (not dual-number safe), so ForwardDiff
+# can't differentiate it — use its exact analytic outer gradient instead (which
+# also upgrades the diagnostic from NaN to a real gradient norm). Sparse q=4
+# fits can store a Float64-only gradient callback; use it before trying
+# ForwardDiff through the objective. `nothing` means no objective → NaN.
+function _check_max_abs_grad(fit::DrmFit)
+    fit.nll === nothing && return NaN
+    if fit.nll isa LocScaleObjective
+        o = fit.nll
+        base = size(o.Xμ, 2) + size(o.Xψ, 2)
+        perm = vcat(collect(1:base), [base + 1, base + 3, base + 2])  # recov→engine
+        g = _ls_marginal_grad(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, fit.theta[perm])
+        return maximum(abs, g)
+    end
+    if fit.nllgrad !== nothing
+        g = zeros(length(fit.theta))
+        fit.nllgrad(g, fit.theta)
+        return maximum(abs, g)
+    end
+    return maximum(abs, ForwardDiff.gradient(fit.nll, fit.theta))
+end
+
 """
     check_drm(fit) -> NamedTuple
 
@@ -650,15 +718,7 @@ boundary (Watanabe-singular) can be the data's MLE, with valid Wald SEs on the
 remaining directions — see [`confint`](@ref).
 """
 function check_drm(fit::DrmFit; grad_tol::Real = 1e-3)
-    mag = if fit.nll === nothing
-        NaN
-    elseif fit.nllgrad !== nothing
-        g = zeros(length(fit.theta))
-        fit.nllgrad(g, fit.theta)
-        maximum(abs, g)
-    else
-        maximum(abs, ForwardDiff.gradient(fit.nll, fit.theta))
-    end
+    mag = _check_max_abs_grad(fit)
     V = fit.vcov
     pd = isposdef(Symmetric(V))
     ev = eigvals(Symmetric(V))

@@ -178,17 +178,61 @@ fit = drm(bf(y ~ x1, sigma ~ x1), Gaussian(); data = dat)
 
 Univariate Gaussian fits support fixed effects plus the structured-effect
 markers documented under [`phylo`](@ref), [`spatial`](@ref), [`animal`](@ref),
-[`relmat`](@ref), and [`meta_V`](@ref). Bivariate Gaussian fits use
-[`BivariateDrmFormula`](@ref); with no structured marker they fit the residual
-`rho12` model, and with shared `phylo(1 | group)` markers on `mu1`, `mu2`,
-`sigma1`, and `sigma2` they route to the verified q=4 phylogenetic engine.
+[`relmat`](@ref), and [`meta_V`](@ref).
+
+## `algorithm` — solver selection
+
+`algorithm` (default `:auto`) chooses how the model is fit:
+
+- `:auto` (default) — today's behaviour exactly: the closed-form GLS / LBFGS
+  fitters per cell. **Unchanged.**
+- `:gls`, `:lbfgs` — aliases for the current default fitters (`:auto`).
+- `:em` — **opt-in conjugate EM** (issue #12), implemented *only* for the
+  Gaussian phylogenetic-mean cell: a single `phylo(1 | g)` structured mean
+  random effect (with `tree = …`) and a **constant** residual scale
+  (`sigma ~ 1`, no random effect on `sigma`). It reaches the same MLE as the
+  default fit (same β, residual σ, and marginal logLik) via closed-form E/M
+  steps with exact O(p) Takahashi traces — previously measured ~3.1× faster
+  than LBFGS at p=200/1000 (report/comparison-grid.md §4). Any other model
+  cell raises a clear `ArgumentError`. The EM path has **no coefficient
+  vcov** (the M-steps are closed-form), so `vcov(fit)` is filled with `NaN`s
+  — refit with `:auto` for Wald inference. `re_sd(fit)` reports the EM's
+  Brownian phylo SD `σ_phy` (a different scale from the GLS fit's
+  correlation-matrix `σ_s`).
+
+```julia
+fit = drm(bf(y ~ x + phylo(1 | sp), sigma ~ 1), Gaussian();
+          data = dat, tree = tree, algorithm = :em)
+```
+
+Bivariate Gaussian fits use [`BivariateDrmFormula`](@ref); with no structured
+marker they fit the residual `rho12` model, and with shared `phylo(1 | group)`
+markers on `mu1`, `mu2`, `sigma1`, and `sigma2` they route to the verified q=4
+phylogenetic engine.
 """
-function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto)
+    algorithm in (:auto, :gls, :lbfgs, :em, :sparse) ||
+        throw(ArgumentError("drm: `algorithm` must be one of :auto, :gls, :lbfgs, :em, :sparse (got :$algorithm)"))
     rhs = Dict(f.forms)
     fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat/animal/phylo/spatial(1|g)
     fixed_sigma, sigma_re, _, _ = _split_ranef(rhs[:sigma])    # (1|g) on the scale → GHQ marginal
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, fixed_sigma, data)
+    if algorithm === :em
+        # Conjugate EM only fits the supported cell: a single structured (phylo)
+        # mean random effect with a constant residual scale (issue #12). Reject
+        # anything else with a clear, specific error.
+        (structured !== nothing && structured[1] === :phylo) ||
+            throw(ArgumentError("drm: algorithm = :em is implemented only for the Gaussian " *
+                "phylogenetic-mean cell — a single `phylo(1 | g)` structured mean random " *
+                "effect with a tree. Use algorithm = :auto for any other structure."))
+        (isempty(sigma_re) && size(Xσ, 2) == 1) ||
+            throw(ArgumentError("drm: algorithm = :em requires a CONSTANT residual scale " *
+                "(`sigma ~ 1` and no random effect on sigma)."))
+        isempty(re) && metav === nothing ||
+            throw(ArgumentError("drm: algorithm = :em supports exactly one structured mean " *
+                "random effect (no additional `(1 | g)` / meta_V terms)."))
+    end
     if !isempty(sigma_re)                                      # random effect on log σ
         (isempty(re) && structured === nothing && metav === nothing) ||
             error("a random effect on `sigma` must be the only random structure (the mean must be fixed effects)")
@@ -197,6 +241,32 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         sgrp = sigma_re[1][2]
         gidx, G = _group_index(getproperty(data, sgrp))
         return _withformula(_fit_sigma_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, sgrp, g_tol), f)
+    end
+    # Two structured components in one fit (e.g. phylo(1|species) + relmat(1|id)):
+    # a separate variance component each, latent field = their sum. Dense first cut.
+    all_structured = _collect_structured(rhs[:mu])
+    if length(all_structured) >= 2
+        length(all_structured) == 2 ||
+            error("at most two structured components are supported in one Gaussian fit " *
+                  "(got $(length(all_structured)): $(all_structured))")
+        isempty(re) && isempty(sigma_re) && metav === nothing ||
+            error("two structured components must be the only random structure on the mean, " *
+                  "with a fixed-effect `sigma`")
+        (kind1, grp1), (kind2, grp2) = all_structured
+        grp1 === grp2 && error("the two structured components must use different grouping factors")
+        gidx1, G1 = _group_index(getproperty(data, grp1))
+        gidx2, G2 = _group_index(getproperty(data, grp2))
+        C1 = _resolve_structured_matrix(kind1, grp1, G1; K = K, A = A, tree = tree, coords = coords)
+        C2 = _resolve_structured_matrix(kind2, grp2, G2; K = K, A = A, tree = tree, coords = coords)
+        # Opt-in sparse O(p) path (#225 follow-up): augmented-latent + sparse
+        # Cholesky + Takahashi-selected-inverse gradient. Same model, same MLE;
+        # default (:auto) stays on the verified dense path.
+        if algorithm === :sparse
+            return _withformula(_fit_two_structured_gaussian_sparse(fam, y, Xμ, gidx1, G1, C1,
+                gidx2, G2, C2, nmμ, grp1, grp2, g_tol), f)
+        end
+        return _withformula(_fit_two_structured_gaussian(fam, y, Xμ, gidx1, G1, C1,
+            gidx2, G2, C2, nmμ, grp1, grp2, g_tol), f)
     end
     if structured !== nothing
         kind, grp = structured
@@ -215,6 +285,11 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             Matrix{Float64}(A)
         else  # :phylo
             tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
+            if algorithm === :em
+                phy = tree isa AbstractString ? augmented_phy(tree) : tree
+                return _withformula(
+                    _fit_structured_gaussian_em(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol), f)
+            end
             _phylo_correlation(tree)
         end
         size(Kmat) == (G, G) || error("structured matrix must be $(G)×$(G) (the number of `$grp` levels)")

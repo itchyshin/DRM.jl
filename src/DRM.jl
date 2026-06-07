@@ -38,6 +38,7 @@ include("gaussian_bivariate.jl")
 include("gaussian_ranef.jl")
 include("gaussian_meta.jl")
 include("gaussian_structured.jl")
+include("location_only.jl")      # #12: opt-in conjugate-EM for the Gaussian phylo-mean cell
 include("student.jl")
 include("poisson.jl")
 include("sparse_laplace_glmm.jl")
@@ -50,7 +51,16 @@ include("lognormal.jl")
 include("zeroonebeta.jl")
 include("tweedie.jl")
 include("cumulative.jl")
+include("locscale_kernels.jl")   # #202 groundwork: two-axis (mean+log-disp) kernels
+include("locscale_inner.jl")     # #202 groundwork: q=2 augmented inner mode-finder
+include("locscale_marginal.jl")  # #202 groundwork: q=2 Laplace marginal
+include("locscale_fit.jl")       # #202 groundwork: end-to-end location–scale fit
+include("locscale_grad.jl")      # #202 groundwork: exact O(p) outer gradient
+include("locscale_infer.jl")     # #202 groundwork: Wald inference + RE summaries
+include("locscale_profile.jl")   # #202: profile-likelihood CIs (trust-region inner solve)
+include("locscale_frontend.jl")  # #202 slice 3b: drm() routing for (1|tag|group)
 include("inference.jl")
+include("bias_correct.jl")       # TMB-style epsilon-method bias correction (#227 B11)
 include("variational.jl")
 include("summary.jl")
 include("visualization.jl")
@@ -68,7 +78,8 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2,
        coef, vcov, loglik, nobs, dof, aic, bic, fixef, re_sd, vc, ranef, sigma, corpairs, rho12, stderror, confint, coeftable, fitted, residuals, predict, predict_parameters, marginal_parameters, prediction_grid, simulate, bootstrap_ci, bootstrap_summary, bootstrap_result, check_drm, family,
        profile_result, profile_curve, parameter_surface, corpairs_data,
        is_converged, deviance, dof_residual,
-       lrtest, anova, aicc, weights, update
+       lrtest, anova, aicc, weights, update,
+       bias_correct
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare

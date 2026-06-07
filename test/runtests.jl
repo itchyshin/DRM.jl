@@ -35,11 +35,15 @@ include("test_gaussian_ranef.jl")
 include("test_inference.jl")
 include("test_profile_ci.jl")
 include("test_check_drm.jl")
+include("test_bias_correct.jl")
 include("test_visualization.jl")
 include("test_postfit.jl")
 include("test_meta.jl")
 include("test_simulate.jl")
 include("test_gaussian_structured.jl")
+include("test_two_structured_gaussian.jl")
+include("test_two_structured_gaussian_sparse.jl")
+include("test_conjugate_em.jl")
 include("test_bootstrap.jl")
 include("test_gaussian_spatial.jl")
 include("test_predict.jl")
@@ -71,6 +75,16 @@ include("test_gamma_beta_phylo_laplace.jl")
 include("test_binomial_phylo_laplace.jl")
 include("test_crossed_laplace_generic.jl")
 include("test_crossed_selected_inverse.jl")
+include("test_locscale_kernels.jl")
+include("test_locscale_inner.jl")
+include("test_locscale_marginal.jl")
+include("test_locscale_fit.jl")
+include("test_locscale_grad.jl")
+include("test_locscale_infer.jl")
+include("test_locscale_profile.jl")
+include("test_locscale_gamma_e2e.jl")
+include("test_locscale_phylo_e2e.jl")
+include("test_locscale_frontend.jl")
 include("test_nbinom2_slope_re.jl")
 include("test_beta_slope_re.jl")
 include("test_gamma_slope_re.jl")
@@ -111,6 +125,18 @@ include("test_predict_se.jl")
 # Standing Q-gate (issue #14): FD-vs-exact gradient check ≤ 1e-6 for the verified
 # q4 sparse-Laplace engine (Workflow Q).
 include("test_qgate_fd_gradient.jl")
+
+# Standing FD-vs-exact gradient gate (issue #165) for the non-Gaussian (Poisson)
+# phylogenetic sparse-Laplace route — the exact implicit-logdet outer gradient.
+include("test_poisson_phylo_grad_gate.jl")
+
+# Standing FD-vs-exact gradient gate (#165) for the Poisson CROSSED-random-
+# intercepts route — same full-Newton-in-basin inner-mode fix as the phylo route.
+include("test_poisson_crossed_grad_gate.jl")
+
+# Standing FD-vs-exact gradient gates (#165) for the other non-Gaussian phylo
+# routes (NB2, Gamma, Binomial ≤ 1e-6; Beta reported honestly).
+include("test_nongaussian_phylo_grad_gate.jl")
 
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
