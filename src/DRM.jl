@@ -38,6 +38,7 @@ include("gaussian_bivariate.jl")
 include("gaussian_ranef.jl")
 include("gaussian_meta.jl")
 include("gaussian_structured.jl")
+include("location_only.jl")      # #12: opt-in conjugate-EM for the Gaussian phylo-mean cell
 include("student.jl")
 include("poisson.jl")
 include("sparse_laplace_glmm.jl")

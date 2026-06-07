@@ -42,3 +42,53 @@ _nb2_draw_pr(η, ψ) = (r = exp(ψ); μ = exp(η);
     @test isfinite(civ.lower) && isfinite(civ.upper)
     @test civ.lower < fit.θ[4] < civ.upper
 end
+
+# Public-API surface: confint(:profile) on a drm()-fitted location–scale model
+# routes to the robust profiler (#202, #209 item 2). The DrmFit covariance block
+# is in :recov order; the router permutes to the engine packing — so the per-
+# coefficient CIs must line up with the right parameters.
+@testset "location–scale profile CI via public confint(:profile)" begin
+    Random.seed!(2026)
+    G = 25; m = 25; n = G * m
+    species = repeat(1:G, inner = m)
+    x = randn(n)
+    Λt = [0.25 0.05; 0.05 0.16]
+    LΛ = cholesky(Symmetric(Λt)).L
+    A = [LΛ * randn(2) for _ in 1:G]
+    y = [_nb2_draw_pr(0.5 + 0.4x[i] + A[species[i]][1], 0.3 + 0.2x[i] + A[species[i]][2])
+         for i in 1:n]
+    data = (; y, x, species)
+    fit = drm(bf(@formula(y ~ x + (1 | p | species)),
+                 @formula(sigma ~ x + (1 | p | species))), NegBinomial2(); data = data)
+
+    wald = confint(fit)                                   # :wald (all coefs)
+    # Profile the well-identified MEAN block. (Profiling a variance/covariance
+    # parameter toward its boundary can drive Λ near-singular so the prior
+    # factorisation fails; the marginal now returns its `ok = false` infeasible
+    # flag there instead of throwing, but hardening the profiler's gradient/Hessian
+    # callbacks for that regime is a follow-up — see PR. The mean block is the
+    # common confint(:profile) use case and is well-conditioned.)
+    prof = confint(fit; method = :profile, parm = :mu)
+    waldmu = [r for r in wald if r.param === :mu]
+    @test !isempty(prof) && all(r -> r.param === :mu, prof)
+    @test length(prof) == length(waldmu)
+    @test all(r -> r.lower ≤ r.estimate ≤ r.upper, prof)
+
+    # Well-identified mean slope: profile ≈ Wald (near-quadratic likelihood).
+    pslope = first(r for r in prof if r.coef == "x")
+    wslope = first(r for r in waldmu if r.coef == "x")
+    @test pslope.lower < pslope.estimate < pslope.upper
+    @test pslope.lower ≈ wslope.lower rtol = 0.35
+    @test pslope.upper ≈ wslope.upper rtol = 0.35
+
+    # profile_result audit surface reports the locscale backend.
+    res = profile_result(fit; parm = :mu)
+    @test res.autodiff === :locscale
+    @test res.attempted == length(prof)
+    @test [r.coef for r in res.ci] == [r.coef for r in prof]
+
+    # check_drm reports a real gradient norm for the location–scale fit
+    # (exact analytic gradient; ForwardDiff can't pierce the Float64 inner solve).
+    rep = check_drm(fit)
+    @test isfinite(rep.max_abs_grad)
+end
