@@ -121,6 +121,10 @@ include("test_predict_se.jl")
 # q4 sparse-Laplace engine (Workflow Q).
 include("test_qgate_fd_gradient.jl")
 
+# Standing FD-vs-exact gradient gate (issue #165) for the non-Gaussian (Poisson)
+# phylogenetic sparse-Laplace route — the exact implicit-logdet outer gradient.
+include("test_poisson_phylo_grad_gate.jl")
+
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
     @testset "R-parity vs drmTMB v0.1.3" begin

@@ -233,6 +233,89 @@ function _poisson_phylo_mode(y, η0, leaf_node, Q, logσ; b0 = nothing,
 end
 
 """
+    _poisson_phylo_laplace_fg(y, Xμ, leaf_node, Q, logdetQ, lf, θ; grad, b0, newton_tol, newton_maxiter)
+
+Module-level f/g evaluation of the Poisson phylogenetic-Laplace marginal NLL at a
+single θ, used both by `_fit_poisson_phylo_laplace` and by the standing
+FD-vs-analytic gradient gate (#165). Hoisting it out of the fit closure lets the
+gate drive a *controlled, tightly-converged, warm-started* inner mode (the same
+recipe `marginal_and_exact_grad` / the q4 Q-gate use to reach ≤ 1e-6).
+
+The marginal is
+
+    L(θ) = data(b̂) + ½ σ⁻² b̂'Q b̂ + q logσ − ½ logdet Q + ½ logdet H,
+    H = σ⁻² Q + diag(Σ_{i∈leaf} μ_i).
+
+Because b̂ solves ∂(data+prior)/∂b = 0, the total θ-gradient is the explicit part
+(b̂ frozen) plus the implicit logdet correction through
+db̂/dθ = −H⁻¹ ∂²(data+prior)/∂b∂θ. For Poisson the data Hessian weight and its
+η-derivative coincide (d²ℓ = d³ℓ = μ), so a single μ drives both the logdet trace
+and the cross term — this is the family-specific third-derivative term the IFT
+introduces. Returns `(val[, grad], b, ok)`; on a non-PD inner solve `ok = false`.
+"""
+function _poisson_phylo_laplace_fg(y, Xμ, leaf_node, Q, logdetQ, lf, θ;
+                                   grad::Bool = false, b0 = nothing,
+                                   newton_tol::Real = 1e-8, newton_maxiter::Int = 60)
+    n = length(y)
+    pμ = length(θ) - 1
+    q = size(Q, 1)
+    βμ = θ[1:pμ]
+    logσ = clamp(θ[pμ+1], -8.0, 3.0)
+    invσ2 = exp(-2 * logσ)
+    η0 = Xμ * βμ
+    b, ch, _, ok = _poisson_phylo_mode(y, η0, leaf_node, Q, logσ;
+                                       b0 = b0, tol = newton_tol, maxiter = newton_maxiter)
+    if !ok
+        return grad ? (1e18, zeros(length(θ)), b, false) : (1e18, b, false)
+    end
+
+    data = zero(eltype(θ))
+    gradβ_raw = zeros(eltype(θ), pμ)
+    μstore = Vector{eltype(θ)}(undef, n)
+    @inbounds for i in eachindex(y)
+        η = clamp(η0[i] + b[leaf_node[i]], -30.0, 30.0)
+        μ = exp(η)
+        μstore[i] = μ
+        data += μ - y[i] * η + lf[i]
+        r = μ - y[i]
+        for k in 1:pμ
+            gradβ_raw[k] += Xμ[i, k] * r
+        end
+    end
+    Qb = Q * b
+    prior = 0.5 * invσ2 * dot(b, Qb)
+    val = data + prior + q * logσ - 0.5 * logdetQ + 0.5 * logdet(ch)
+    grad || return val, b, true
+
+    S = takahashi_selinv(ch)
+    hd = diag(S)
+    traceSQ = _sparse_trace_product(S, Q)
+    tlogdet = zeros(eltype(θ), q)
+    crossβ = zeros(eltype(θ), q, pμ)
+    gβ = gradβ_raw
+    @inbounds for i in eachindex(y)
+        li = leaf_node[i]
+        μi = μstore[i]
+        lever = hd[li]
+        μlever = μi * lever
+        tlogdet[li] += μlever
+        adj = 0.5 * μlever
+        for k in 1:pμ
+            xik = Xμ[i, k]
+            gβ[k] += xik * adj
+            crossβ[li, k] += μi * xik
+        end
+    end
+    implicit = ch \ tlogdet
+    @inbounds for k in 1:pμ
+        gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
+    end
+    Pu = invσ2 .* Qb
+    gσ = q - invσ2 * (dot(b, Qb) + traceSQ) + dot(implicit, Pu)
+    return val, vcat(gβ, [gσ]), b, true
+end
+
+"""
     _fit_poisson_phylo_laplace(fam, y, Xμ, labels, tree, nmμ, grp, g_tol)
 
 Internal sparse-Laplace fitter for `Poisson()` with a phylogenetic random
@@ -254,61 +337,31 @@ function _fit_poisson_phylo_laplace(fam::Poisson, y, Xμ, labels, tree, nmμ, gr
     last_b = zeros(q)
 
     function eval_laplace(θ; grad::Bool = false)
-        βμ = θ[1:pμ]
-        logσ = clamp(θ[pμ+1], -8.0, 3.0)
-        invσ2 = exp(-2 * logσ)
-        η0 = Xμ * βμ
-        b, ch, _, ok = _poisson_phylo_mode(y, η0, leaf_node, Q, logσ; b0 = last_b)
-        if !ok
-            b, ch, _, ok = _poisson_phylo_mode(y, η0, leaf_node, Q, logσ; b0 = zeros(q))
-        end
-        ok || return grad ? (1e18, zeros(length(θ))) : 1e18
-        last_b .= b
-
-        data = zero(eltype(θ))
-        gradβ_raw = zeros(eltype(θ), pμ)
-        μstore = Vector{eltype(θ)}(undef, n)
-        @inbounds for i in eachindex(y)
-            η = clamp(η0[i] + b[leaf_node[i]], -30.0, 30.0)
-            μ = exp(η)
-            μstore[i] = μ
-            data += μ - y[i] * η + lf[i]
-            r = μ - y[i]
-            for k in 1:pμ
-                gradβ_raw[k] += Xμ[i, k] * r
+        if grad
+            val, g, b, ok = _poisson_phylo_laplace_fg(
+                y, Xμ, leaf_node, Q, logdetQ, lf, θ; grad = true, b0 = last_b
+            )
+            if !ok
+                val, g, b, ok = _poisson_phylo_laplace_fg(
+                    y, Xμ, leaf_node, Q, logdetQ, lf, θ; grad = true, b0 = zeros(q)
+                )
             end
-        end
-        Qb = Q * b
-        prior = 0.5 * invσ2 * dot(b, Qb)
-        val = data + prior + q * logσ - 0.5 * logdetQ + 0.5 * logdet(ch)
-        grad || return val
-
-        S = takahashi_selinv(ch)
-        hd = diag(S)
-        traceSQ = _sparse_trace_product(S, Q)
-        tlogdet = zeros(eltype(θ), q)
-        crossβ = zeros(eltype(θ), q, pμ)
-        gβ = gradβ_raw
-        @inbounds for i in eachindex(y)
-            li = leaf_node[i]
-            μi = μstore[i]
-            lever = hd[li]
-            μlever = μi * lever
-            tlogdet[li] += μlever
-            adj = 0.5 * μlever
-            for k in 1:pμ
-                xik = Xμ[i, k]
-                gβ[k] += xik * adj
-                crossβ[li, k] += μi * xik
+            ok || return 1e18, zeros(length(θ))
+            last_b .= b
+            return val, g
+        else
+            val, b, ok = _poisson_phylo_laplace_fg(
+                y, Xμ, leaf_node, Q, logdetQ, lf, θ; grad = false, b0 = last_b
+            )
+            if !ok
+                val, b, ok = _poisson_phylo_laplace_fg(
+                    y, Xμ, leaf_node, Q, logdetQ, lf, θ; grad = false, b0 = zeros(q)
+                )
             end
+            ok || return 1e18
+            last_b .= b
+            return val
         end
-        implicit = ch \ tlogdet
-        @inbounds for k in 1:pμ
-            gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
-        end
-        Pu = invσ2 .* Qb
-        gσ = q - invσ2 * (dot(b, Qb) + traceSQ) + dot(implicit, Pu)
-        return val, vcat(gβ, [gσ])
     end
 
     nll(θ) = eval_laplace(θ; grad = false)
