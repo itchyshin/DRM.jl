@@ -61,6 +61,7 @@ include("locscale_profile.jl")   # #202: profile-likelihood CIs (trust-region in
 include("locscale_frontend.jl")  # #202 slice 3b: drm() routing for (1|tag|group)
 include("inference.jl")
 include("bias_correct.jl")       # TMB-style epsilon-method bias correction (#227 B11)
+include("heritability.jl")       # comparative-biology derived ratios (h²/ICC) + CIs
 include("variational.jl")
 include("summary.jl")
 include("visualization.jl")
@@ -79,7 +80,8 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2,
        profile_result, profile_curve, parameter_surface, corpairs_data,
        is_converged, deviance, dof_residual,
        lrtest, anova, aicc, weights, update,
-       bias_correct
+       bias_correct,
+       heritability, repeatability, icc
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare
