@@ -374,7 +374,15 @@ function _fit_two_structured_gaussian_sparse(fam::Gaussian, y, Xμ, gidx1, G1, C
         w1 = @view w[1:m1]; w2 = @view w[off2+1:off2+m2]
         glσ1 = 0.5 * (2 * m1 - 2 * trQ1) - dot(w1, â1)
         glσ2 = 0.5 * (2 * m2 - 2 * trQ2) - dot(w2, â2)
-        return (nll, vcat(gβ, glσ, glσ1, glσ2), r, â, true)
+        grad = vcat(gβ, glσ, glσ1, glσ2)
+        # A line-search step can drive a variance component so small that
+        # trQk / σk² overflows, leaving `nll` finite but the gradient non-finite.
+        # LineSearches' HagerZhang asserts the directional derivative is finite, so
+        # flag such a point as infeasible (finite penalty + ok=false): the optimiser
+        # backtracks exactly as for a non-PD H, without aborting. No effect at
+        # feasible points, where the gradient is finite.
+        all(isfinite, grad) || return (1e18, Float64[], r, â, false)
+        return (nll, grad, r, â, true)
     end
 
     nll_only(θ) = eval_all(θ[1:pμ], θ[pμ+1], θ[pμ+2], θ[pμ+3]; want_grad = false)[1]
