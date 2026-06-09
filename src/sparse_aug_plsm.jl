@@ -274,5 +274,3 @@ function laplace_ll(prob::AugProblem, P::SparseMatrixCSC, β, u, ch_H)
     #            = -jn - 0.5 logdetH + 0.5 logdetP
     return -jn - 0.5 * logdetH + 0.5 * logdetP
 end
-
-println("=== sparse_aug_plsm.jl loaded ===")

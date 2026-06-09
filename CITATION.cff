@@ -16,7 +16,7 @@ authors:
 license: MIT
 repository-code: "https://github.com/itchyshin/DRM.jl"
 url: "https://itchyshin.github.io/DRM.jl/"
-version: 0.1.0-DEV
+version: 0.1.0
 keywords:
   - distributional regression
   - location-scale models

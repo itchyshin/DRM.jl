@@ -5,8 +5,9 @@
 Fast **distributional regression models** in Julia — the Julia twin of
 the R package [drmTMB](https://github.com/itchyshin/drmTMB).
 
-> **Scaffold / pilot (v0.1.0-DEV).** This repo migrates a *verified proof-of-
-> concept* engine; the public API and module layout will change before v0.1.0.
+> **Early v0.1.0 release.** This repo migrates a *verified proof-of-concept*
+> engine; the public API and module layout are still expected to evolve across
+> the 0.x series, with breaking changes requiring a minor-version bump.
 > See [HANDOVER.md](HANDOVER.md) (verified engine), [ROADMAP.md](ROADMAP.md)
 > (phases), and [AGENTS.md](AGENTS.md) (the team) for what is solid vs. planned.
 > The [Documenter site](https://itchyshin.github.io/DRM.jl/) mirrors drmTMB's
