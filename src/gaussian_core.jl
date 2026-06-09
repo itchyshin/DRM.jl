@@ -199,25 +199,34 @@ markers documented under [`phylo`](@ref), [`spatial`](@ref), [`animal`](@ref),
 
 `algorithm` (default `:auto`) chooses how the model is fit:
 
-- `:auto` (default) — today's behaviour exactly: the closed-form GLS / LBFGS
-  fitters per cell. **Unchanged.**
-- `:gls`, `:lbfgs` — aliases for the current default fitters (`:auto`).
-- `:em` — **opt-in conjugate EM** (issue #12), implemented *only* for the
+- `:auto` (default) — uses the all-node sparse L-BFGS route for the
   Gaussian phylogenetic-mean cell: a single `phylo(1 | g)` structured mean
   random effect (with `tree = …`) and a **constant** residual scale
-  (`sigma ~ 1`, no random effect on `sigma`). It reaches the same MLE as the
-  default fit (same β, residual σ, and marginal logLik) via closed-form E/M
-  steps with exact O(p) Takahashi traces — previously measured ~3.1× faster
-  than LBFGS at p=200/1000 (report/comparison-grid.md §4). Any other model
-  cell raises a clear `ArgumentError`. The EM path has **no coefficient
-  vcov** (the M-steps are closed-form), so `vcov(fit)` is filled with `NaN`s
-  — refit with `:auto` for Wald inference. `re_sd(fit)` reports the EM's
-  Brownian phylo SD `σ_phy` (a different scale from the GLS fit's
-  correlation-matrix `σ_s`).
+  (`sigma ~ 1`, no random effect on `sigma`). Other Gaussian cells keep their
+  cell-specific default fitters.
+- `:gls`, `:lbfgs` — legacy dense leaf-covariance fitters for the Gaussian
+  phylogenetic-mean cell and aliases for the usual default fitters elsewhere.
+- `:em` — force the all-node sparse conjugate-EM route for the Gaussian
+  phylogenetic-mean cell. It reaches the same MLE as the dense GLS fit (same β,
+  residual σ, and marginal logLik) via closed-form E/M steps with exact O(p)
+  Takahashi traces. Any other model cell raises a clear `ArgumentError`.
+  The EM path has **no coefficient vcov** (the M-steps are closed-form), so
+  `vcov(fit)` is filled with `NaN`s. Refit with `:gls` for dense-fit Wald
+  inference. `re_sd(fit)` reports the EM's Brownian phylo SD `σ_phy` (a
+  different scale from the GLS fit's correlation-matrix `σ_s`).
+- `:sparse` — force the verified sparse structured-Gaussian route where one is
+  implemented, including the two-structured `phylo + animal/relmat` sparse path.
+- `:sparse_lbfgs` — force the default all-node sparse L-BFGS route for the same
+  Gaussian phylogenetic-mean cell. It profiles the mean fixed effects by sparse
+  GLS at each variance trial, optimises the residual and phylogenetic SDs on the
+  log scale with exact Takahashi trace gradients, attaches a sparse
+  full-objective closure and gradient for profile intervals, and stores the
+  cheap fixed-effect covariance block. Variance-component uncertainty should
+  use profile or bootstrap intervals in this first slice.
 
 ```julia
 fit = drm(bf(y ~ x + phylo(1 | sp), sigma ~ 1), Gaussian();
-          data = dat, tree = tree, algorithm = :em)
+          data = dat, tree = tree)
 ```
 
 Bivariate Gaussian fits use [`BivariateDrmFormula`](@ref); with no structured
@@ -226,8 +235,8 @@ markers on `mu1`, `mu2`, `sigma1`, and `sigma2` they route to the verified q=4
 phylogenetic engine.
 """
 function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML)
-    algorithm in (:auto, :gls, :lbfgs, :em, :sparse) ||
-        throw(ArgumentError("drm: `algorithm` must be one of :auto, :gls, :lbfgs, :em, :sparse (got :$algorithm)"))
+    algorithm in (:auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs) ||
+        throw(ArgumentError("drm: `algorithm` must be one of :auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs (got :$algorithm)"))
     method in (:ML, :REML) ||
         throw(ArgumentError("drm: `method` must be :ML (default) or :REML (got :$method)"))
     rhs = Dict(f.forms)
@@ -247,19 +256,19 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                 "fixed-effect Gaussian location–scale model (no random effects, no structured " *
                 "/ phylo / meta terms). Use method = :ML (the default) for those models."))
     end
-    if algorithm === :em
-        # Conjugate EM only fits the supported cell: a single structured (phylo)
-        # mean random effect with a constant residual scale (issue #12). Reject
-        # anything else with a clear, specific error.
+    if algorithm in (:em, :sparse_lbfgs)
+        # The all-node sparse routes fit only the supported cell: a single
+        # structured (phylo) mean random effect with a constant residual scale.
+        # Reject anything else with a clear, specific error.
         (structured !== nothing && structured[1] === :phylo) ||
-            throw(ArgumentError("drm: algorithm = :em is implemented only for the Gaussian " *
+            throw(ArgumentError("drm: algorithm = :$algorithm is implemented only for the Gaussian " *
                 "phylogenetic-mean cell — a single `phylo(1 | g)` structured mean random " *
                 "effect with a tree. Use algorithm = :auto for any other structure."))
         (isempty(sigma_re) && size(Xσ, 2) == 1) ||
-            throw(ArgumentError("drm: algorithm = :em requires a CONSTANT residual scale " *
+            throw(ArgumentError("drm: algorithm = :$algorithm requires a CONSTANT residual scale " *
                 "(`sigma ~ 1` and no random effect on sigma)."))
         isempty(re) && metav === nothing ||
-            throw(ArgumentError("drm: algorithm = :em supports exactly one structured mean " *
+            throw(ArgumentError("drm: algorithm = :$algorithm supports exactly one structured mean " *
                 "random effect (no additional `(1 | g)` / meta_V terms)."))
     end
     if !isempty(sigma_re)                                      # random effect on log σ
@@ -321,8 +330,13 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             Matrix{Float64}(A)
         else  # :phylo
             tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
-            if algorithm === :em
+            use_sparse_phylo = algorithm in (:auto, :em, :sparse, :sparse_lbfgs) &&
+                isempty(re) && metav === nothing &&
+                isempty(sigma_re) && size(Xσ, 2) == 1
+            if use_sparse_phylo
                 phy = tree isa AbstractString ? augmented_phy(tree) : tree
+                algorithm in (:auto, :sparse_lbfgs) && return _withformula(
+                    _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol), f)
                 return _withformula(
                     _fit_structured_gaussian_em(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol), f)
             end

@@ -78,6 +78,32 @@ using Test, Random
     @test_throws ArgumentError bootstrap_result(DRM._withformula(fit, nothing);
         data = (; y, x), B = 2)
 
+    # Gaussian structured bootstrap refits should accept the same solver controls
+    # as drm(...). This is the hook large phylogenetic bootstrap/profile workflows
+    # need when :auto selects the sparse all-node route.
+    Random.seed!(12)
+    G = 16
+    phy = random_balanced_tree(G; branch_length = 0.2)
+    m = 2
+    species = repeat(1:G, inner = m)
+    x_phy = randn(G * m)
+    y_phy = 0.2 .+ 0.5 .* x_phy .+ 0.3 .* randn(G * m)
+    phy_form = bf(@formula(y_phy ~ x_phy + phylo(1 | species)),
+                  @formula(sigma ~ 1))
+    phy_data = (; y_phy, x_phy, species)
+    phy_fit = drm(phy_form, Gaussian(); data = phy_data, tree = phy,
+        algorithm = :em, g_tol = 1e-4)
+    br_phy = bootstrap_result(phy_fit; data = phy_data, tree = phy, B = 2,
+        rng = MersenneTwister(13), algorithm = :em, g_tol = 1e-4)
+    @test br_phy.attempted == 2
+    @test br_phy.used == 2
+    @test br_phy.failed == 0
+    @test length(br_phy.summary) == length(coef(phy_fit))
+    br_phy_formula = bootstrap_result(phy_form, Gaussian(); data = phy_data,
+        tree = phy, B = 1, rng = MersenneTwister(14),
+        algorithm = :em, g_tol = 1e-4)
+    @test br_phy_formula.used == 1
+
     fit0 = drm(form, Gaussian(); data = (; y, x))
     calls = Ref(0)
     function forced_refit(datab)

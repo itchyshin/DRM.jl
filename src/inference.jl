@@ -7,9 +7,9 @@
 
 using LinearAlgebra: diag, isposdef, Symmetric, eigvals, BLAS
 using Distributions: Normal, Chisq, quantile
-import Optim
-import Random
-import Statistics
+using Optim: Optim
+using Random: Random
+using Statistics: Statistics
 import StatsAPI: stderror, confint
 
 """
@@ -32,21 +32,39 @@ stderror(fit::DrmFit) = _boundary_se.(diag(fit.vcov))
 # non-PD boundary direction from poisoning the whole SE vector with NaN.
 _boundary_se(v::Real) = (isfinite(v) && v > 0) ? sqrt(v) : Inf
 
-const _CIRow = NamedTuple{(:param, :coef, :estimate, :lower, :upper),
-    Tuple{Symbol,String,Float64,Float64,Float64}}
+const _CIRow = NamedTuple{
+    (:param, :coef, :estimate, :lower, :upper),Tuple{Symbol,String,Float64,Float64,Float64}
+}
 
-const _BootstrapSummaryRow = NamedTuple{(:param, :coef, :estimate, :std_error, :lower, :upper),
-    Tuple{Symbol,String,Float64,Float64,Float64,Float64}}
+const _BootstrapSummaryRow = NamedTuple{
+    (:param, :coef, :estimate, :std_error, :lower, :upper),
+    Tuple{Symbol,String,Float64,Float64,Float64,Float64},
+}
 
-const _BootstrapFailureRow = NamedTuple{(:replicate, :seed, :message),
-    Tuple{Int,UInt,String}}
+const _BootstrapFailureRow = NamedTuple{
+    (:replicate, :seed, :message),Tuple{Int,UInt,String}
+}
 
-const _ProfileStatsRow = NamedTuple{(:param, :coef, :evaluations, :gradient_evaluations,
-        :bracket_expansions, :root_iterations, :lower_unbounded, :upper_unbounded),
-    Tuple{Symbol,String,Int,Int,Int,Int,Bool,Bool}}
+const _ProfileStatsRow = NamedTuple{
+    (
+        :param,
+        :coef,
+        :evaluations,
+        :gradient_evaluations,
+        :bracket_expansions,
+        :root_iterations,
+        :lower_unbounded,
+        :upper_unbounded,
+    ),
+    Tuple{Symbol,String,Int,Int,Int,Int,Bool,Bool},
+}
 
-_worker_threads(active::Bool, ntasks::Int) = active ? min(max(ntasks, 1), Threads.nthreads()) : 1
-_blas_oversubscribed(active::Bool) = active && Threads.nthreads() > 1 && BLAS.get_num_threads() > 1
+function _worker_threads(active::Bool, ntasks::Int)
+    return active ? min(max(ntasks, 1), Threads.nthreads()) : 1
+end
+function _blas_oversubscribed(active::Bool)
+    return active && Threads.nthreads() > 1 && BLAS.get_num_threads() > 1
+end
 
 """
     confint(fit; level = 0.95, method = :wald, threads = false, parm = nothing)
@@ -79,8 +97,9 @@ Confidence intervals for every coefficient, as a vector of
 
 Mirrors drmTMB's `confint(fit, method = "wald" | "profile")`.
 """
-function confint(fit::DrmFit; level::Real = 0.95, method::Symbol = :wald,
-                 threads::Bool = false, parm = nothing)
+function confint(
+    fit::DrmFit; level::Real=0.95, method::Symbol=:wald, threads::Bool=false, parm=nothing
+)
     method === :wald && return _wald_ci(fit, level, parm)
     method === :profile && return profile_result(fit; level, threads, parm).ci
     throw(ArgumentError("confint: method must be :wald or :profile (got :$method)"))
@@ -102,12 +121,19 @@ Auditable profile-likelihood confidence intervals. Returns a `NamedTuple` with:
 Set `threads = true` to parallelise independent profile coefficients. When only
 one coefficient is profiled, the two endpoint arms are run in parallel instead.
 """
-function profile_result(fit::DrmFit; level::Real = 0.95, threads::Bool = false,
-        parm = nothing)
-    fit.nll isa LocScaleObjective &&
-        return _ls_profile_result(fit; level = level, parm = parm)
-    fit.nll === nothing &&
-        throw(ArgumentError("profile intervals require the fitted objective; this model was not built with one"))
+function profile_result(fit::DrmFit; level::Real=0.95, threads::Bool=false, parm=nothing)
+    fit.nll isa LocScaleObjective && return _ls_profile_result(fit; level=level, parm=parm)
+    if fit.nll isa LocOnlyObjective
+        jobs = _profile_jobs(fit, parm)
+        if !isempty(jobs) && all(job.param === :resd for job in jobs)
+            return _loconly_profile_result(fit; level=level, threads=threads, jobs=jobs)
+        end
+    end
+    fit.nll === nothing && throw(
+        ArgumentError(
+            "profile intervals require the fitted objective; this model was not built with one",
+        ),
+    )
     nll = fit.nll
     nllgrad = fit.nllgrad
     θ̂ = copy(fit.theta)
@@ -125,24 +151,40 @@ function profile_result(fit::DrmFit; level::Real = 0.95, threads::Bool = false,
         if coefficient_threaded
             Threads.@threads for i in eachindex(jobs)
                 rows[i], stats[i] = _profile_row_result(
-                    jobs[i], nll, nllgrad, θ̂, nllhat, half, se, autodiff,
+                    jobs[i], nll, nllgrad, θ̂, nllhat, half, se, autodiff
                 )
             end
         else
             for i in eachindex(jobs)
                 rows[i], stats[i] = _profile_row_result(
-                    jobs[i], nll, nllgrad, θ̂, nllhat, half, se, autodiff;
-                    endpoint_threads = endpoint_threaded,
+                    jobs[i],
+                    nll,
+                    nllgrad,
+                    θ̂,
+                    nllhat,
+                    half,
+                    se,
+                    autodiff;
+                    endpoint_threads=endpoint_threaded,
                 )
             end
         end
     end
-    return (ci = rows, stats = stats, attempted = length(jobs), used = length(rows),
-        failed = 0, threaded = threaded,
-        worker_threads = _worker_threads(threaded, endpoint_threaded ? 2 : length(jobs)),
-        julia_threads = Threads.nthreads(), blas_threads = BLAS.get_num_threads(),
-        blas_oversubscribed = _blas_oversubscribed(threaded), elapsed = elapsed,
-        autodiff = autodiff, level = float(level))
+    return (
+        ci=rows,
+        stats=stats,
+        attempted=length(jobs),
+        used=length(rows),
+        failed=0,
+        threaded=threaded,
+        worker_threads=_worker_threads(threaded, endpoint_threaded ? 2 : length(jobs)),
+        julia_threads=Threads.nthreads(),
+        blas_threads=BLAS.get_num_threads(),
+        blas_oversubscribed=_blas_oversubscribed(threaded),
+        elapsed=elapsed,
+        autodiff=autodiff,
+        level=float(level),
+    )
 end
 
 function _ci_param_selected(param::Symbol, parm)
@@ -161,7 +203,10 @@ function _wald_ci(fit::DrmFit, level::Real, parm)
         for (j, idx) in enumerate(r)
             est = fit.theta[idx]
             s = se[idx]
-            push!(rows, (param = p, coef = nms[j], estimate = est, lower = est - z * s, upper = est + z * s))
+            push!(
+                rows,
+                (param=p, coef=nms[j], estimate=est, lower=est - z * s, upper=est + z * s),
+            )
         end
     end
     return rows
@@ -172,7 +217,7 @@ function _profile_jobs(fit::DrmFit, parm)
     for ((pp, r), (_, nms)) in zip(fit.blocks, fit.coefnames)
         _ci_param_selected(pp, parm) || continue
         for (j, k) in enumerate(r)
-            push!(jobs, (param = pp, coef = nms[j], k = k))
+            push!(jobs, (param=pp, coef=nms[j], k=k))
         end
     end
     return jobs
@@ -184,7 +229,7 @@ end
 # packs [logL11, L21, logL22]; the permutation below (an involution that swaps
 # the last two covariance entries) maps a DrmFit coefficient index to the engine
 # index the profiler expects, and the engine θ̂ back from the stored `theta`.
-function _ls_profile_result(fit::DrmFit; level::Real = 0.95, parm = nothing)
+function _ls_profile_result(fit::DrmFit; level::Real=0.95, parm=nothing)
     obj = fit.nll::LocScaleObjective
     base = size(obj.Xμ, 2) + size(obj.Xψ, 2)
     perm = vcat(collect(1:base), [base + 1, base + 3, base + 2])  # involution
@@ -198,22 +243,220 @@ function _ls_profile_result(fit::DrmFit; level::Real = 0.95, parm = nothing)
         for (i, job) in enumerate(jobs)
             s = se[job.k]
             se_arg = (isfinite(s) && s > 0) ? s : nothing
-            ci = _ls_profile_ci(obj.kind, obj.y, obj.Xμ, obj.Xψ, obj.gidx, obj.G, obj.Q,
-                                θengine; idx = perm[job.k], level = level,
-                                nll_min = nmin, se = se_arg)
-            rows[i] = (param = job.param, coef = job.coef, estimate = fit.theta[job.k],
-                       lower = ci.lower, upper = ci.upper)
-            stats[i] = (param = job.param, coef = job.coef, evaluations = 0,
-                        gradient_evaluations = 0, bracket_expansions = 0,
-                        root_iterations = 0, lower_unbounded = !isfinite(ci.lower),
-                        upper_unbounded = !isfinite(ci.upper))
+            ci = _ls_profile_ci(
+                obj.kind,
+                obj.y,
+                obj.Xμ,
+                obj.Xψ,
+                obj.gidx,
+                obj.G,
+                obj.Q,
+                θengine;
+                idx=perm[job.k],
+                level=level,
+                nll_min=nmin,
+                se=se_arg,
+            )
+            rows[i] = (
+                param=job.param,
+                coef=job.coef,
+                estimate=fit.theta[job.k],
+                lower=ci.lower,
+                upper=ci.upper,
+            )
+            stats[i] = (
+                param=job.param,
+                coef=job.coef,
+                evaluations=0,
+                gradient_evaluations=0,
+                bracket_expansions=0,
+                root_iterations=0,
+                lower_unbounded=!isfinite(ci.lower),
+                upper_unbounded=!isfinite(ci.upper),
+            )
         end
     end
-    return (ci = rows, stats = stats, attempted = length(jobs), used = length(rows),
-        failed = 0, threaded = false, worker_threads = 1,
-        julia_threads = Threads.nthreads(), blas_threads = BLAS.get_num_threads(),
-        blas_oversubscribed = false, elapsed = elapsed, autodiff = :locscale,
-        level = float(level))
+    return (
+        ci=rows,
+        stats=stats,
+        attempted=length(jobs),
+        used=length(rows),
+        failed=0,
+        threaded=false,
+        worker_threads=1,
+        julia_threads=Threads.nthreads(),
+        blas_threads=BLAS.get_num_threads(),
+        blas_oversubscribed=false,
+        elapsed=elapsed,
+        autodiff=:locscale,
+        level=float(level),
+    )
+end
+
+function _loconly_profile_result(
+    fit::DrmFit; level::Real=0.95, threads::Bool=false, jobs=nothing
+)
+    obj = fit.nll::LocOnlyObjective
+    θ̂ = copy(fit.theta)
+    nllhat = _loconly_profile_fg(obj.prob, θ̂[obj.pμ + 1], θ̂[obj.pμ + 2])[1]
+    half = quantile(Chisq(1), level) / 2
+    jobs === nothing && (jobs = _profile_jobs(fit, :resd))
+    rows = Vector{_CIRow}(undef, length(jobs))
+    stats = Vector{_ProfileStatsRow}(undef, length(jobs))
+    threaded = threads && Threads.nthreads() > 1
+    endpoint_threaded = threaded && length(jobs) == 1
+    elapsed = @elapsed begin
+        if threaded && length(jobs) > 1
+            Threads.@threads for i in eachindex(jobs)
+                rows[i], stats[i] = _loconly_profile_row_result(
+                    jobs[i], obj, θ̂, nllhat, half
+                )
+            end
+        else
+            for i in eachindex(jobs)
+                rows[i], stats[i] = _loconly_profile_row_result(
+                    jobs[i], obj, θ̂, nllhat, half; endpoint_threads=endpoint_threaded
+                )
+            end
+        end
+    end
+    return (
+        ci=rows,
+        stats=stats,
+        attempted=length(jobs),
+        used=length(rows),
+        failed=0,
+        threaded=threaded,
+        worker_threads=_worker_threads(threaded, endpoint_threaded ? 2 : length(jobs)),
+        julia_threads=Threads.nthreads(),
+        blas_threads=BLAS.get_num_threads(),
+        blas_oversubscribed=_blas_oversubscribed(threaded),
+        elapsed=elapsed,
+        autodiff=:loconly,
+        level=float(level),
+    )
+end
+
+function _loconly_profile_row_result(
+    job, obj::LocOnlyObjective, θ̂, nllhat, half; endpoint_threads::Bool=false
+)
+    k = job.k
+    est = θ̂[k]
+    lσ0 = θ̂[obj.pμ + 1]
+    if endpoint_threads && Threads.nthreads() > 1
+        left = Threads.@spawn _loconly_profile_endpoint_result(
+            obj, lσ0, est, nllhat, half, -1.0
+        )
+        right = Threads.@spawn _loconly_profile_endpoint_result(
+            obj, lσ0, est, nllhat, half, +1.0
+        )
+        lo, lstats = fetch(left)
+        hi, rstats = fetch(right)
+    else
+        lo, lstats = _loconly_profile_endpoint_result(obj, lσ0, est, nllhat, half, -1.0)
+        hi, rstats = _loconly_profile_endpoint_result(obj, lσ0, est, nllhat, half, +1.0)
+    end
+    row = (param=job.param, coef=job.coef, estimate=est, lower=lo, upper=hi)
+    stats = (
+        param=job.param,
+        coef=job.coef,
+        evaluations=lstats.evaluations + rstats.evaluations,
+        gradient_evaluations=lstats.gradient_evaluations + rstats.gradient_evaluations,
+        bracket_expansions=lstats.bracket_expansions + rstats.bracket_expansions,
+        root_iterations=lstats.root_iterations + rstats.root_iterations,
+        lower_unbounded=lstats.unbounded,
+        upper_unbounded=rstats.unbounded,
+    )
+    return row, stats
+end
+
+function _loconly_profile_endpoint_result(
+    obj::LocOnlyObjective, lσ0::Real, estimate::Real, nllhat::Real, half::Real, dir::Real
+)
+    target = nllhat + half
+    lσ_start = Float64(lσ0)
+    evaluations = 0
+    gradient_evaluations = 0
+
+    function heval(t)
+        f, lσ_opt, slope = _loconly_profiled_resd_nll(obj, lσ_start, estimate + dir * t)
+        lσ_start = lσ_opt
+        evaluations += 1
+        gradient_evaluations += 1
+        return (f - target, dir * slope)
+    end
+
+    tlo = 0.0
+    thi = 0.1
+    hhi, _ = heval(thi)
+    iters = 0
+    while isfinite(hhi) && hhi < 0 && iters < 60
+        tlo = thi
+        thi *= 1.6
+        hhi, _ = heval(thi)
+        iters += 1
+    end
+    if isfinite(hhi) && hhi < 0
+        value = dir < 0 ? -Inf : Inf
+        stats = (
+            evaluations=evaluations,
+            gradient_evaluations=gradient_evaluations,
+            bracket_expansions=iters,
+            root_iterations=0,
+            unbounded=true,
+        )
+        return value, stats
+    end
+
+    t = (tlo + thi) / 2
+    root_iterations = 0
+    for _ in 1:80
+        root_iterations += 1
+        ht, hp = heval(t)
+        abs(ht) < 1e-9 && break
+        ht < 0 ? (tlo = t) : (thi = t)
+        tn = (isfinite(hp) && hp > 0) ? t - ht / hp : (tlo + thi) / 2
+        t = (tlo < tn < thi) ? tn : (tlo + thi) / 2
+        thi - tlo < 1e-8 && break
+    end
+    value = estimate + dir * t
+    stats = (
+        evaluations=evaluations,
+        gradient_evaluations=gradient_evaluations,
+        bracket_expansions=iters,
+        root_iterations=root_iterations,
+        unbounded=false,
+    )
+    return value, stats
+end
+
+function _loconly_profiled_resd_nll(obj::LocOnlyObjective, lσ0::Real, lσ_phy::Real)
+    x0 = [Float64(lσ0)]
+    function fg!(F, G, x)
+        val, grad, _, _ = _loconly_profile_fg(obj.prob, x[1], lσ_phy)
+        G !== nothing && (G[1] = grad[1])
+        return F === nothing ? nothing : val
+    end
+    res = try
+        od = Optim.NLSolversBase.only_fg!(fg!)
+        Optim.optimize(
+            od,
+            x0,
+            Optim.LBFGS(; linesearch=Optim.LineSearches.BackTracking(; order=3)),
+            Optim.Options(; iterations=80, g_tol=1e-8, x_abstol=1e-10),
+        )
+    catch
+        obj1(x) = _loconly_profile_fg(obj.prob, x[1], lσ_phy)[1]
+        Optim.optimize(
+            obj1,
+            x0,
+            Optim.NelderMead(),
+            Optim.Options(; iterations=120, x_abstol=1e-10),
+        )
+    end
+    lσ = Optim.minimizer(res)[1]
+    val, grad, _, _ = _loconly_profile_fg(obj.prob, lσ, lσ_phy)
+    return val, lσ, grad[2]
 end
 
 # Profiled objective: minimise nll over every component except k, with θ[k] = v.
@@ -239,8 +482,15 @@ function _profile_autodiff_mode(nll, nllgrad, θ̂::Vector{Float64})
     end
 end
 
-function _profiled_nll(nll, θ̂::Vector{Float64}, k::Int, v::Real, u0::Vector{Float64};
-                       autodiff::Symbol = :forward, nllgrad = nothing)
+function _profiled_nll(
+    nll,
+    θ̂::Vector{Float64},
+    k::Int,
+    v::Real,
+    u0::Vector{Float64};
+    autodiff::Symbol=:forward,
+    nllgrad=nothing,
+)
     p = length(θ̂)
     idx = [i for i in 1:p if i != k]
     isempty(idx) && return (nll([float(v)]), Float64[])
@@ -269,21 +519,20 @@ function _profiled_nll(nll, θ̂::Vector{Float64}, k::Int, v::Real, u0::Vector{F
     else
         nothing
     end
-    res = _profile_optimize(obj, u0, autodiff; grad! = grad_u!)
+    res = _profile_optimize(obj, u0, autodiff; (grad!)=grad_u!)
     return (Optim.minimum(res), Optim.minimizer(res))
 end
 
-function _profile_optimize(obj, u0::Vector{Float64}, autodiff::Symbol; grad! = nothing)
+function _profile_optimize(obj, u0::Vector{Float64}, autodiff::Symbol; (grad!)=nothing)
     if grad! !== nothing
         try
             od = Optim.OnceDifferentiable(obj, grad!, u0)
-            method = Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking())
+            method = Optim.LBFGS(; linesearch=Optim.LineSearches.BackTracking())
             return Optim.optimize(
-                od, u0, method,
-                Optim.Options(iterations = 40, g_tol = 1e-6, x_abstol = 1e-8),
+                od, u0, method, Optim.Options(; iterations=40, g_tol=1e-6, x_abstol=1e-8)
             )
         catch
-            return Optim.optimize(obj, u0, Optim.LBFGS(); autodiff = :finite)
+            return Optim.optimize(obj, u0, Optim.LBFGS(); autodiff=:finite)
         end
     end
     try
@@ -300,7 +549,9 @@ end
 # Analytic slope of the PROFILED nll in θ[k], by the envelope theorem: at the
 # profiled optimum the nuisance partials vanish, so d/dv [min_u nll] = ∂nll/∂θ_k
 # evaluated at (v, û). One ForwardDiff gradient component — no extra solves.
-function _profile_slope(nll, nllgrad, θ̂::Vector{Float64}, k::Int, v::Real, û::Vector{Float64})
+function _profile_slope(
+    nll, nllgrad, θ̂::Vector{Float64}, k::Int, v::Real, û::Vector{Float64}
+)
     p = length(θ̂)
     idx = [i for i in 1:p if i != k]
     θ = Vector{Float64}(undef, p)
@@ -325,7 +576,9 @@ end
 # bracket-guaranteed; the analytic slope only buys faster (quadratic) convergence.
 # Each evaluation warm-starts the nuisance optimisation from the previous û.
 function _profile_endpoint(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u0, autodiff)
-    value, _ = _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u0, autodiff)
+    value, _ = _profile_endpoint_result(
+        nll, nllgrad, θ̂, k, nllhat, half, s, dir, u0, autodiff
+    )
     return value
 end
 
@@ -351,14 +604,24 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
     end
     # Bracket: expand until h > 0.
     tlo = 0.0
-    thi = s; (hhi, _) = heval(thi); iters = 0
+    thi = s
+    (hhi, _) = heval(thi)
+    iters = 0
     while hhi < 0 && iters < 40
-        tlo = thi; thi *= 1.6; (hhi, _) = heval(thi); iters += 1
+        tlo = thi
+        thi *= 1.6
+        (hhi, _) = heval(thi)
+        iters += 1
     end
     if hhi < 0
         value = dir < 0 ? -Inf : Inf
-        stats = (evaluations = evaluations, gradient_evaluations = gradient_evaluations,
-            bracket_expansions = iters, root_iterations = 0, unbounded = true)
+        stats = (
+            evaluations=evaluations,
+            gradient_evaluations=gradient_evaluations,
+            bracket_expansions=iters,
+            root_iterations=0,
+            unbounded=true,
+        )
         return value, stats
     end
     # Guarded Newton on [tlo, thi].
@@ -374,8 +637,13 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
         thi - tlo < 1e-8 && break
     end
     value = θ̂[k] + dir * t
-    stats = (evaluations = evaluations, gradient_evaluations = gradient_evaluations,
-        bracket_expansions = iters, root_iterations = root_iterations, unbounded = false)
+    stats = (
+        evaluations=evaluations,
+        gradient_evaluations=gradient_evaluations,
+        bracket_expansions=iters,
+        root_iterations=root_iterations,
+        unbounded=false,
+    )
     return value, stats
 end
 
@@ -384,85 +652,169 @@ function _profile_row(job, nll, nllgrad, θ̂, nllhat, half, se, autodiff)
     return row
 end
 
-function _profile_row_result(job, nll, nllgrad, θ̂, nllhat, half, se, autodiff;
-        endpoint_threads::Bool = false)
+function _profile_row_result(
+    job, nll, nllgrad, θ̂, nllhat, half, se, autodiff; endpoint_threads::Bool=false
+)
     k = job.k
     est = θ̂[k]
     s = (isfinite(se[k]) && se[k] > 0) ? se[k] : max(abs(est), 1.0)
     u0 = θ̂[[i for i in 1:length(θ̂) if i != k]]
     if endpoint_threads && Threads.nthreads() > 1
         left = Threads.@spawn _profile_endpoint_result(
-            nll, nllgrad, θ̂, k, nllhat, half, s, -1, u0, autodiff,
+            nll, nllgrad, θ̂, k, nllhat, half, s, -1, u0, autodiff
         )
         right = Threads.@spawn _profile_endpoint_result(
-            nll, nllgrad, θ̂, k, nllhat, half, s, +1, u0, autodiff,
+            nll, nllgrad, θ̂, k, nllhat, half, s, +1, u0, autodiff
         )
         lo, lstats = fetch(left)
         hi, rstats = fetch(right)
     else
         lo, lstats = _profile_endpoint_result(
-            nll, nllgrad, θ̂, k, nllhat, half, s, -1, u0, autodiff,
+            nll, nllgrad, θ̂, k, nllhat, half, s, -1, u0, autodiff
         )
         hi, rstats = _profile_endpoint_result(
-            nll, nllgrad, θ̂, k, nllhat, half, s, +1, u0, autodiff,
+            nll, nllgrad, θ̂, k, nllhat, half, s, +1, u0, autodiff
         )
     end
-    row = (param = job.param, coef = job.coef, estimate = est, lower = lo, upper = hi)
-    stats = (param = job.param, coef = job.coef,
-        evaluations = lstats.evaluations + rstats.evaluations,
-        gradient_evaluations = lstats.gradient_evaluations + rstats.gradient_evaluations,
-        bracket_expansions = lstats.bracket_expansions + rstats.bracket_expansions,
-        root_iterations = lstats.root_iterations + rstats.root_iterations,
-        lower_unbounded = lstats.unbounded, upper_unbounded = rstats.unbounded)
+    row = (param=job.param, coef=job.coef, estimate=est, lower=lo, upper=hi)
+    stats = (
+        param=job.param,
+        coef=job.coef,
+        evaluations=lstats.evaluations + rstats.evaluations,
+        gradient_evaluations=lstats.gradient_evaluations + rstats.gradient_evaluations,
+        bracket_expansions=lstats.bracket_expansions + rstats.bracket_expansions,
+        root_iterations=lstats.root_iterations + rstats.root_iterations,
+        lower_unbounded=lstats.unbounded,
+        upper_unbounded=rstats.unbounded,
+    )
     return row, stats
 end
 
 """
-    bootstrap_ci(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =)
-    bootstrap_ci(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =)
+    bootstrap_ci(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, algorithm = :auto, g_tol = 1e-8)
+    bootstrap_ci(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, algorithm = :auto, g_tol = 1e-8)
 
 Parametric bootstrap confidence intervals: fit the model, then `simulate` `B`
 replicate responses, refit each, and take percentile intervals per coefficient.
 Univariate-response models (fixed / random-effect / meta / structured). Same row
 shape as [`confint`](@ref). Set `threads = true` to refit bootstrap replicates
 in parallel. Pass through the structured-matrix keywords (`K` / `A` / `tree`)
-exactly as to [`drm`](@ref). Use `bootstrap_result` when you need
-attempted/used/failed counts and per-replicate failure messages. If you already
-have `fit = drm(...)`, pass the fit directly to avoid refitting the base model
-before the bootstrap replicates.
+and, for Gaussian fits, the solver controls (`algorithm` / `g_tol`) exactly as
+to [`drm`](@ref). Use `bootstrap_result` when you need attempted/used/failed
+counts and per-replicate failure messages. If you already have
+`fit = drm(...)`, pass the fit directly to avoid refitting the base model before
+the bootstrap replicates.
 """
-function bootstrap_ci(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
-        level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
-        tree = nothing, threads::Bool = false, failures::Symbol = :error,
-        check_converged::Bool = false)
-    rows = bootstrap_summary(formula, family; data, B, level, rng, K, A, tree,
-        threads, failures, check_converged)
+function bootstrap_ci(
+    formula::DrmFormula,
+    family::Gaussian;
+    data,
+    B::Int=300,
+    level::Real=0.95,
+    rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
+    threads::Bool=false,
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+    algorithm::Symbol=:auto,
+    g_tol::Real=1e-8,
+)
+    rows = bootstrap_summary(
+        formula,
+        family;
+        data,
+        B,
+        level,
+        rng,
+        K,
+        A,
+        tree,
+        threads,
+        failures,
+        check_converged,
+        algorithm,
+        g_tol,
+    )
     return _bootstrap_ci_rows(rows)
 end
 
 # Family-agnostic parametric bootstrap — any family `simulate` supports. No
 # structured-matrix keywords (those are Gaussian-only). Same row shape as the
 # Gaussian method and `confint`.
-function bootstrap_ci(formula::DrmFormula, family; data, B::Int = 300,
-        level::Real = 0.95, rng = default_rng(), threads::Bool = false,
-        failures::Symbol = :error, check_converged::Bool = false)
-    rows = bootstrap_summary(formula, family; data, B, level, rng, threads,
-        failures, check_converged)
+function bootstrap_ci(
+    formula::DrmFormula,
+    family;
+    data,
+    B::Int=300,
+    level::Real=0.95,
+    rng=default_rng(),
+    threads::Bool=false,
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+)
+    rows = bootstrap_summary(
+        formula, family; data, B, level, rng, threads, failures, check_converged
+    )
     return _bootstrap_ci_rows(rows)
 end
 
-function bootstrap_ci(fit::DrmFit; data, B::Int = 300, level::Real = 0.95,
-        rng = default_rng(), K = nothing, A = nothing, tree = nothing,
-        threads::Bool = false, failures::Symbol = :error,
-        check_converged::Bool = false)
-    rows = bootstrap_summary(fit; data, B, level, rng, K, A, tree, threads,
-        failures, check_converged)
+function bootstrap_ci(
+    fit::DrmFit;
+    data,
+    B::Int=300,
+    level::Real=0.95,
+    rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
+    threads::Bool=false,
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+)
+    rows = bootstrap_summary(
+        fit; data, B, level, rng, K, A, tree, threads, failures, check_converged
+    )
+    return _bootstrap_ci_rows(rows)
+end
+
+function bootstrap_ci(
+    fit::DrmFit{<:Gaussian};
+    data,
+    B::Int=300,
+    level::Real=0.95,
+    rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
+    threads::Bool=false,
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+    algorithm::Symbol=:auto,
+    g_tol::Real=1e-8,
+)
+    rows = bootstrap_summary(
+        fit;
+        data,
+        B,
+        level,
+        rng,
+        K,
+        A,
+        tree,
+        threads,
+        failures,
+        check_converged,
+        algorithm,
+        g_tol,
+    )
     return _bootstrap_ci_rows(rows)
 end
 
 """
-    bootstrap_summary(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =)
-    bootstrap_summary(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =)
+    bootstrap_summary(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, algorithm = :auto, g_tol = 1e-8)
+    bootstrap_summary(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, algorithm = :auto, g_tol = 1e-8)
 
 Parametric bootstrap coefficient summaries in one pass: point estimate,
 bootstrap standard error, and percentile confidence interval. This is the
@@ -473,37 +825,115 @@ replicate errors after all failures are recorded. Set `failures = :skip` to
 compute summaries from successful replicates; call `bootstrap_result` to
 inspect the skipped failures.
 """
-function bootstrap_summary(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
-        level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
-        tree = nothing, threads::Bool = false, failures::Symbol = :error,
-        check_converged::Bool = false)
-    result = bootstrap_result(formula, family; data, B, level, rng, K, A, tree,
-        threads, failures, check_converged)
+function bootstrap_summary(
+    formula::DrmFormula,
+    family::Gaussian;
+    data,
+    B::Int=300,
+    level::Real=0.95,
+    rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
+    threads::Bool=false,
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+    algorithm::Symbol=:auto,
+    g_tol::Real=1e-8,
+)
+    result = bootstrap_result(
+        formula,
+        family;
+        data,
+        B,
+        level,
+        rng,
+        K,
+        A,
+        tree,
+        threads,
+        failures,
+        check_converged,
+        algorithm,
+        g_tol,
+    )
     return result.summary
 end
 
 # Family-agnostic summary method — any family `simulate` supports. No structured
 # matrix keywords; those are Gaussian-only.
-function bootstrap_summary(formula::DrmFormula, family; data, B::Int = 300,
-        level::Real = 0.95, rng = default_rng(), threads::Bool = false,
-        failures::Symbol = :error, check_converged::Bool = false)
-    result = bootstrap_result(formula, family; data, B, level, rng, threads,
-        failures, check_converged)
+function bootstrap_summary(
+    formula::DrmFormula,
+    family;
+    data,
+    B::Int=300,
+    level::Real=0.95,
+    rng=default_rng(),
+    threads::Bool=false,
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+)
+    result = bootstrap_result(
+        formula, family; data, B, level, rng, threads, failures, check_converged
+    )
     return result.summary
 end
 
-function bootstrap_summary(fit::DrmFit; data, B::Int = 300, level::Real = 0.95,
-        rng = default_rng(), K = nothing, A = nothing, tree = nothing,
-        threads::Bool = false, failures::Symbol = :error,
-        check_converged::Bool = false)
-    result = bootstrap_result(fit; data, B, level, rng, K, A, tree, threads,
-        failures, check_converged)
+function bootstrap_summary(
+    fit::DrmFit;
+    data,
+    B::Int=300,
+    level::Real=0.95,
+    rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
+    threads::Bool=false,
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+)
+    result = bootstrap_result(
+        fit; data, B, level, rng, K, A, tree, threads, failures, check_converged
+    )
+    return result.summary
+end
+
+function bootstrap_summary(
+    fit::DrmFit{<:Gaussian};
+    data,
+    B::Int=300,
+    level::Real=0.95,
+    rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
+    threads::Bool=false,
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+    algorithm::Symbol=:auto,
+    g_tol::Real=1e-8,
+)
+    result = bootstrap_result(
+        fit;
+        data,
+        B,
+        level,
+        rng,
+        K,
+        A,
+        tree,
+        threads,
+        failures,
+        check_converged,
+        algorithm,
+        g_tol,
+    )
     return result.summary
 end
 
 """
-    bootstrap_result(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, failures = :error, check_converged = false, K =, A =, tree =)
-    bootstrap_result(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, failures = :error, check_converged = false, K =, A =, tree =)
+    bootstrap_result(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, failures = :error, check_converged = false, K =, A =, tree =, algorithm = :auto, g_tol = 1e-8)
+    bootstrap_result(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, failures = :error, check_converged = false, K =, A =, tree =, algorithm = :auto, g_tol = 1e-8)
 
 Auditable parametric bootstrap. Returns a `NamedTuple` with:
 
@@ -520,65 +950,123 @@ failed. `failures = :skip` computes summaries from successful replicates and
 keeps the failure records in the return value. Set `check_converged = true` to
 treat non-converged refits as failed replicates. Passing an existing `DrmFit`
 reuses that point estimate as the bootstrap seed fit and starts directly with
-the `B` simulated refits.
+the `B` simulated refits. Gaussian bootstrap refits pass `algorithm` and
+`g_tol` through to `drm(...)`; this is useful for large structured models where
+`:auto` selects a sparse route and the tolerance is part of the benchmarked
+workflow.
 """
-function bootstrap_result(formula::DrmFormula, family::Gaussian; data, B::Int = 300,
-        level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
-        tree = nothing, threads::Bool = false, failures::Symbol = :error,
-        check_converged::Bool = false)
+function bootstrap_result(
+    formula::DrmFormula,
+    family::Gaussian;
+    data,
+    B::Int=300,
+    level::Real=0.95,
+    rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
+    threads::Bool=false,
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+    algorithm::Symbol=:auto,
+    g_tol::Real=1e-8,
+)
     _check_bootstrap_failure_mode(failures)
-    fit0 = drm(formula, family; data, K, A, tree)
-    refit = datab -> drm(formula, family; data = datab, K, A, tree)
-    return _bootstrap_result(fit0, formula, data, B, level, rng, threads, refit;
-        failures, check_converged)
+    fit0 = drm(formula, family; data, K, A, tree, algorithm, g_tol)
+    refit = datab -> drm(formula, family; data=datab, K, A, tree, algorithm, g_tol)
+    return _bootstrap_result(
+        fit0, formula, data, B, level, rng, threads, refit; failures, check_converged
+    )
 end
 
-function bootstrap_result(fit::DrmFit{<:Gaussian}; data, B::Int = 300,
-        level::Real = 0.95, rng = default_rng(), K = nothing, A = nothing,
-        tree = nothing, threads::Bool = false, failures::Symbol = :error,
-        check_converged::Bool = false)
+function bootstrap_result(
+    fit::DrmFit{<:Gaussian};
+    data,
+    B::Int=300,
+    level::Real=0.95,
+    rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
+    threads::Bool=false,
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+    algorithm::Symbol=:auto,
+    g_tol::Real=1e-8,
+)
     _check_bootstrap_failure_mode(failures)
     formula = _bootstrap_fit_formula(fit)
-    refit = datab -> drm(formula, fit.family; data = datab, K, A, tree)
-    return _bootstrap_result(fit, formula, data, B, level, rng, threads, refit;
-        failures, check_converged)
+    refit = datab -> drm(formula, fit.family; data=datab, K, A, tree, algorithm, g_tol)
+    return _bootstrap_result(
+        fit, formula, data, B, level, rng, threads, refit; failures, check_converged
+    )
 end
 
-function bootstrap_result(formula::DrmFormula, family; data, B::Int = 300,
-        level::Real = 0.95, rng = default_rng(), threads::Bool = false,
-        failures::Symbol = :error, check_converged::Bool = false)
+function bootstrap_result(
+    formula::DrmFormula,
+    family;
+    data,
+    B::Int=300,
+    level::Real=0.95,
+    rng=default_rng(),
+    threads::Bool=false,
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+)
     _check_bootstrap_failure_mode(failures)
     fit0 = drm(formula, family; data)
-    refit = datab -> drm(formula, family; data = datab)
-    return _bootstrap_result(fit0, formula, data, B, level, rng, threads, refit;
-        failures, check_converged)
+    refit = datab -> drm(formula, family; data=datab)
+    return _bootstrap_result(
+        fit0, formula, data, B, level, rng, threads, refit; failures, check_converged
+    )
 end
 
-function bootstrap_result(fit::DrmFit; data, B::Int = 300, level::Real = 0.95,
-        rng = default_rng(), threads::Bool = false, failures::Symbol = :error,
-        check_converged::Bool = false, kwargs...)
+function bootstrap_result(
+    fit::DrmFit;
+    data,
+    B::Int=300,
+    level::Real=0.95,
+    rng=default_rng(),
+    threads::Bool=false,
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+    kwargs...,
+)
     for (_, value) in pairs(kwargs)
-        value === nothing ||
-            throw(ArgumentError("bootstrap_result: K/A/tree are only valid for Gaussian fits"))
+        value === nothing || throw(
+            ArgumentError("bootstrap_result: K/A/tree are only valid for Gaussian fits")
+        )
     end
     _check_bootstrap_failure_mode(failures)
     formula = _bootstrap_fit_formula(fit)
-    refit = datab -> drm(formula, fit.family; data = datab)
-    return _bootstrap_result(fit, formula, data, B, level, rng, threads, refit;
-        failures, check_converged)
+    refit = datab -> drm(formula, fit.family; data=datab)
+    return _bootstrap_result(
+        fit, formula, data, B, level, rng, threads, refit; failures, check_converged
+    )
 end
 
 function _bootstrap_fit_formula(fit::DrmFit)
     fit.formula isa DrmFormula && return fit.formula
-    throw(ArgumentError(
-        "fit-based bootstrap requires a univariate `DrmFit` created by `drm`; " *
-        "bivariate and formula-less internal fits are not yet supported",
-    ))
+    throw(
+        ArgumentError(
+            "fit-based bootstrap requires a univariate `DrmFit` created by `drm`; " *
+            "bivariate and formula-less internal fits are not yet supported",
+        ),
+    )
 end
 
-function _bootstrap_result(fit0, formula::DrmFormula, data, B::Int, level::Real,
-        rng, threads::Bool, refit; failures::Symbol = :error,
-        check_converged::Bool = false)
+function _bootstrap_result(
+    fit0,
+    formula::DrmFormula,
+    data,
+    B::Int,
+    level::Real,
+    rng,
+    threads::Bool,
+    refit;
+    failures::Symbol=:error,
+    check_converged::Bool=false,
+)
     _check_bootstrap_failure_mode(failures)
     B >= 1 || throw(ArgumentError("bootstrap requires B >= 1"))
     est = coef(fit0)
@@ -591,7 +1079,7 @@ function _bootstrap_result(fit0, formula::DrmFormula, data, B::Int, level::Real,
     function run_one!(b)
         rr = Random.MersenneTwister(seeds[b])
         try
-            ysim = simulate(fit0; rng = rr)
+            ysim = simulate(fit0; rng=rr)
             datab = _bootstrap_data(formula, data, ysim)
             fitb = refit(datab)
             if check_converged && !fitb.converged
@@ -621,20 +1109,34 @@ function _bootstrap_result(fit0, formula::DrmFormula, data, B::Int, level::Real,
     failure_rows = _BootstrapFailureRow[]
     for b in 1:B
         messages[b] === nothing && continue
-        push!(failure_rows, (replicate = b, seed = seeds[b], message = messages[b]::String))
+        push!(failure_rows, (replicate=b, seed=seeds[b], message=messages[b]::String))
     end
     if !isempty(failure_rows) && failures === :error
         first_failure = first(failure_rows)
-        throw(ErrorException("bootstrap failed in $(length(failure_rows)) of $B replicates; first failure replicate $(first_failure.replicate), seed $(first_failure.seed): $(first_failure.message)"))
+        throw(
+            ErrorException(
+                "bootstrap failed in $(length(failure_rows)) of $B replicates; first failure replicate $(first_failure.replicate), seed $(first_failure.seed): $(first_failure.message)",
+            ),
+        )
     end
     used = count(ok)
     used > 0 || throw(ErrorException("all $B bootstrap replicates failed"))
     summary = _bootstrap_summary_rows(fit0, draws[ok, :], est, level)
-    return (summary = summary, failures = failure_rows, attempted = B, used = used,
-        failed = length(failure_rows), seeds = seeds, threaded = threaded,
-        worker_threads = _worker_threads(threaded, B), julia_threads = Threads.nthreads(),
-        blas_threads = BLAS.get_num_threads(), blas_oversubscribed = _blas_oversubscribed(threaded),
-        elapsed = elapsed, check_converged = check_converged)
+    return (
+        summary=summary,
+        failures=failure_rows,
+        attempted=B,
+        used=used,
+        failed=length(failure_rows),
+        seeds=seeds,
+        threaded=threaded,
+        worker_threads=_worker_threads(threaded, B),
+        julia_threads=Threads.nthreads(),
+        blas_threads=BLAS.get_num_threads(),
+        blas_oversubscribed=_blas_oversubscribed(threaded),
+        elapsed=elapsed,
+        check_converged=check_converged,
+    )
 end
 
 function _check_bootstrap_failure_mode(failures::Symbol)
@@ -647,15 +1149,18 @@ function _bootstrap_data(formula::DrmFormula, data, ysim)
     if formula.response2 === nothing
         return merge(data, NamedTuple{(formula.response,)}((ysim,)))
     end
-    ntr = Float64.(getproperty(data, formula.response)) .+
-          Float64.(getproperty(data, formula.response2))
+    ntr =
+        Float64.(getproperty(data, formula.response)) .+
+        Float64.(getproperty(data, formula.response2))
     fail = ntr .- ysim
     return merge(data, NamedTuple{(formula.response, formula.response2)}((ysim, fail)))
 end
 
 function _bootstrap_ci_rows(rows)
-    return _CIRow[(param = r.param, coef = r.coef, estimate = r.estimate,
-        lower = r.lower, upper = r.upper) for r in rows]
+    return _CIRow[
+        (param=r.param, coef=r.coef, estimate=r.estimate, lower=r.lower, upper=r.upper) for
+        r in rows
+    ]
 end
 
 function _bootstrap_summary_rows(fit0, draws, est, level)
@@ -665,9 +1170,17 @@ function _bootstrap_summary_rows(fit0, draws, est, level)
     for ((pp, r), (_, nms)) in zip(fit0.blocks, fit0.coefnames)
         for (j, _) in enumerate(r)
             v = @view draws[:, col]
-            push!(rows, (param = pp, coef = nms[j], estimate = est[col],
-                std_error = Statistics.std(v),
-                lower = Statistics.quantile(v, α), upper = Statistics.quantile(v, 1 - α)))
+            push!(
+                rows,
+                (
+                    param=pp,
+                    coef=nms[j],
+                    estimate=est[col],
+                    std_error=Statistics.std(v),
+                    lower=Statistics.quantile(v, α),
+                    upper=Statistics.quantile(v, 1 - α),
+                ),
+            )
             col += 1
         end
     end
@@ -717,16 +1230,24 @@ A non-`ok` result is informative, not an error: a model sitting on a variance
 boundary (Watanabe-singular) can be the data's MLE, with valid Wald SEs on the
 remaining directions — see [`confint`](@ref).
 """
-function check_drm(fit::DrmFit; grad_tol::Real = 1e-3)
+function check_drm(fit::DrmFit; grad_tol::Real=1e-3)
     mag = _check_max_abs_grad(fit)
     V = fit.vcov
     pd = isposdef(Symmetric(V))
     ev = eigvals(Symmetric(V))
-    mineig = minimum(ev); maxeig = maximum(ev)
+    mineig = minimum(ev)
+    maxeig = maximum(ev)
     cnd = mineig > 0 ? maxeig / mineig : Inf
     ok = fit.converged && (isnan(mag) || mag <= grad_tol) && pd
-    report = (converged = fit.converged, max_abs_grad = mag, vcov_posdef = pd,
-              min_eigval = mineig, cond = cnd, ok = ok)
-    @info "check_drm" converged=report.converged max_abs_grad=report.max_abs_grad vcov_posdef=report.vcov_posdef min_eigval=report.min_eigval cond=report.cond ok=report.ok
+    report = (
+        converged=fit.converged,
+        max_abs_grad=mag,
+        vcov_posdef=pd,
+        min_eigval=mineig,
+        cond=cnd,
+        ok=ok,
+    )
+    @info "check_drm" converged = report.converged max_abs_grad = report.max_abs_grad vcov_posdef =
+        report.vcov_posdef min_eigval = report.min_eigval cond = report.cond ok = report.ok
     return report
 end

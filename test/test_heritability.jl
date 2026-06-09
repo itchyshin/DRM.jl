@@ -21,8 +21,12 @@ _corr(M) = (d = sqrt.(diag(M)); M ./ (d * d'))
     y = 0.3 .+ 0.5 .* x .+ a1[species] .+ σ .* randn(n)
     data = (; y, x, species)
 
+    # These anchors exercise the dense correlation-matrix parameterisation used by
+    # the delta-method Wald CI. The default sparse all-node route reports the
+    # Brownian phylo SD on a different scale and should get its own derived-ratio
+    # design pass before replacing this reference check.
     fit = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
-              Gaussian(); data = data, tree = phy)
+              Gaussian(); data = data, tree = phy, algorithm = :gls)
     @test fit.converged
 
     # Closed-form anchor: the accessor's point estimate equals the hand-computed
@@ -63,7 +67,7 @@ end
     a1 = σ1 .* (cholesky(Symmetric(Cphy)).L * randn(G))
     y = 0.2 .+ 0.4 .* x .+ a1[species] .+ σ .* randn(n)
     fit = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
-              Gaussian(); data = (; y, x, species), tree = phy)
+              Gaussian(); data = (; y, x, species), tree = phy, algorithm = :gls)
 
     hd = heritability(fit; method = :delta)
     hp = heritability(fit; method = :profile)
@@ -159,7 +163,8 @@ end
     a = 1.0 .* (cholesky(Symmetric(Cphy2)).L * randn(G2))
     y2 = a[sp2] .+ 1e-3 .* randn(n2)            # residual ≈ 0
     fit2 = drm(bf(@formula(y ~ 1 + phylo(1 | species)), @formula(sigma ~ 1)),
-               Gaussian(); data = (; y = y2, species = sp2), tree = phy2)
+               Gaussian(); data = (; y = y2, species = sp2), tree = phy2,
+               algorithm = :gls)
     h2 = heritability(fit2)
     @test h2.estimate > 0.95                     # ≈ 1 (residual negligible)
     @test h2.ci.upper ≤ 1.0                      # clamped at the upper bound

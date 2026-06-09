@@ -214,7 +214,10 @@ structured component (e.g. `+ animal(1 | id)`) the denominator includes it too.
 `:species`); if omitted and the fit has exactly one structured component, that one
 is used. `method` is `:delta` (epsilon-method / generalized-delta via
 [`bias_correct`](@ref), the default) or `:profile` (profile-likelihood CI on the
-ratio).
+ratio). For the dense phylogenetic correlation-scale parameterisation, fit with
+`algorithm = :gls` before using delta-method Wald intervals; the default sparse
+all-node phylogenetic route stores only partial covariance information in this
+slice, so profile intervals are the safer uncertainty path there.
 
 Returns a `NamedTuple`:
 
@@ -235,7 +238,7 @@ there.
 
 ```julia
 fit = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
-          Gaussian(); data, tree)
+          Gaussian(); data, tree, algorithm = :gls)
 h = heritability(fit)             # single component ⇒ no `component` needed
 h.estimate, h.ci
 ```

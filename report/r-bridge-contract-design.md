@@ -1,12 +1,13 @@
 # Design: DRM.jl-side R-bridge contract (`engine = "julia"`) — #5
 
-**Status:** design / implementation map — DRM.jl-side only. The R-side glue
-(`drmTMB(..., engine = "julia")` via JuliaCall) lives in the **drmTMB R repo**,
-which is **outside this repository's scope**; this doc specifies the stable
-Julia surface that glue calls. The numerical parity gate **#17 is already wired**
-(`test/parity/`, `DRM_PARITY_TESTS=1`) — this design *reuses* it as the bridge's
-acceptance test rather than building anything new there. Phase 1.5; part of the
-v0.1.0 "R-bridge functional" gate (#8).
+**Status:** first implementation slice. DRM.jl now exposes `drm_bridge()` as the
+stable Julia surface that R-side glue calls. The companion
+`drmTMB(..., engine = "julia")` JuliaCall glue lives in the **drmTMB R repo**.
+The first tested R-facing slice is Gaussian one-response and two-response; the
+broader parity gate **#17 is already wired** (`test/parity/`,
+`DRM_PARITY_TESTS=1`) and remains the acceptance path before non-Gaussian
+families are admitted through the R bridge. Phase 1.5; part of the v0.1.0
+"R-bridge functional" gate (#8).
 
 ## Goal
 
@@ -26,18 +27,20 @@ bootstrap, power) become cheap **without leaving R**.
 | Newick input | `augmented_phy` (`sparse_phy.jl`) | a Newick string already crosses as text and parses (see #19) |
 
 So the bridge is **not** a from-scratch build: the result accessors, the
-coefficient-scale map, and the parity gate already exist. The missing piece is a
-**single marshalling-friendly entry point** plus a **flattening contract**.
+coefficient-scale map, and the parity gate already exist. The first
+marshalling-friendly entry point plus flattening contract now exists in
+`src/bridge.jl`; coefficient-scale transforms and the parity-harness round-trip
+mode remain follow-up work.
 
 ## Scope split (important)
 
 - **In scope here (DRM.jl / this repo):** the Julia entry point, the
   marshalling/flattening contract, the coefficient-scale exposure, and the
   parity-harness round-trip acceptance.
-- **Out of scope (drmTMB R repo):** the JuliaCall setup, the R `engine="julia"`
-  dispatch, and reconstructing a native `drmTMB` S3/S4 object from the flat list.
-  *(If desired, that repo can be added to a future session via `add_repo`; flagged
-  as an open question below.)*
+- **Companion scope (drmTMB R repo):** the JuliaCall setup, the R
+  `engine="julia"` dispatch, and reconstructing a lightweight `drmTMB_julia`
+  object from the flat list. The first Gaussian-only companion slice was
+  implemented in the sibling drmTMB worktree.
 
 ## The DRM.jl-side contract
 
@@ -145,18 +148,18 @@ obtained **through `drm_bridge`** matches `expected.toml` under the *same*
 
 ## Implementation checklist
 
-- [ ] `drm_bridge(; formula, family, data, tree, K, Ainv, options)` entry point (primitives in, flat `Dict` out).
-- [ ] String→`bf`/`drm_formula` builder reusing the Rosetta map; family-name dispatch table.
-- [ ] `DrmFit` → flat `Dict` flattener with the §5 field map + name order.
+- [x] `drm_bridge(; formula, family, data, tree, K, Ainv, options)` entry point (primitives in, flat `Dict` out; current implementation uses `A` rather than `Ainv` until the alignment convention lands).
+- [x] String→`bf`/`drm_formula` builder reusing the Rosetta map; family-name dispatch table.
+- [x] `DrmFit` → flat `Dict` flattener with the §5 field map + name order.
 - [ ] Coefficient-scale exposure (`scale=:drmtmb` default) reusing the parity transforms/Jacobians.
 - [ ] Handle-based `drm_bridge_predict`.
 - [ ] Parity-harness **round-trip mode** (fits fixtures via `drm_bridge`); formula + flattening round-trip tests.
 - [ ] K/Ainv name-marshalling + tip alignment (with #19).
-- [ ] Docstrings; promote `docs/src/r-julia-bridge.md` from "planned" to "DRM.jl-side shipped; R glue in drmTMB repo".
+- [x] Docstrings; promote `docs/src/r-julia-bridge.md` from "planned" to "DRM.jl-side shipped; R glue in drmTMB repo".
 
 ## Open question for the maintainer
 
-The R-side glue (JuliaCall dispatch + native-object reconstruction) lives in the
-**drmTMB R repository**, not here. Add that repo to a future session (via
-`add_repo`) so the R side and this contract are built together, or keep this PR
-to the DRM.jl-side contract only and hand the R glue to the drmTMB maintainers?
+The next maintainer decision is whether the R bridge should return DRM.jl-native
+coefficient scales for non-Gaussian families or transform them back to drmTMB
+public scales by default. The current R-side companion guard keeps
+`engine = "julia"` Gaussian-only until that policy is tested.
