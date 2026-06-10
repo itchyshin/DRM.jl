@@ -25,6 +25,11 @@ using Test, LinearAlgebra, SparseArrays, Random
     end
 end
 
+# Julia General-registry hygiene (Aqua.jl): deps_compat, stale deps, exports,
+# project-extras, unbound args, piracy. Runs early so packaging regressions
+# surface before the numerical suite.
+include("test_aqua.jl")
+
 # Gaussian location–scale front end (drm/bf public API).
 include("test_gaussian_core.jl")
 # REML estimation (opt-in, fixed-effect Gaussian location–scale) + the

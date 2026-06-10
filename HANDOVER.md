@@ -24,10 +24,21 @@
   **v0.1.0 and v0.1.1 tagged**. The `drm()` / `bf()` front end is wired, all
   **13 families** (12 univariate + bivariate Gaussian) are implemented, exported,
   and recovery-tested, and **inference is wired** in `src/inference.jl` (Wald +
-  profile + bootstrap; `infer_q4` graduated). `src/experimental/` (REML,
-  location-only, EM variants) remains migrated but **not yet wired**.
-- **Next:** Phase 1.1 R-parity gate + Phase 3 articles, and the
-  variational-approximation track (issue #136).
+  profile + bootstrap; `infer_q4` graduated). Since the original handover, several
+  comparison-suite capabilities have **merged and are now wired/exported**:
+  **opt-in REML** (`method = :REML`, Gaussian location–scale, #11/#235) with a
+  model-selection guard against the REML trap; the **conjugate-EM** Gaussian
+  phylo-mean solver (`algorithm = :em`, promoted from `experimental/location_only.jl`,
+  #12/#224); **heritability / repeatability / ICC** accessors with CIs (#233);
+  **DHARMa-style randomised quantile residuals** for all families (#183/#234); the
+  **coevolution q=4 phylo front end** (#201) and its accessors (#187/#188); and the
+  **R bridge** (`drm_bridge`, `drm_bridge_inference`, sparse-phylo companion, #5).
+  `src/experimental/` still retains **alternative estimator prototypes** not in the
+  public API (SQUAREM / natural-gradient EM, trust-region & line-search E-steps,
+  dense q=4 EM, the experimental `reml_q4` path, and warm-start fit variants).
+- **Next:** the Julia General-registry submission (post tests-green + Aqua),
+  Phase 1.1 R-parity gate, Phase 3 articles, and the variational-approximation
+  track (issue #136).
 
 ---
 
@@ -192,12 +203,24 @@ Published, MIT, public; **v0.1.0 and v0.1.1 tagged**. `src/` core loads cleanly
 end, all 13 families (12 univariate + bivariate Gaussian), and the inference
 surface (Wald + profile + bootstrap) are wired and exported; families are
 validated by simulation parameter recovery (the numerical drmTMB-parity gate is
-#17). `src/experimental/` (REML, location-only, EM variants) is migrated but
-**not wired**. `bench/` has runnable benchmarks + the `q4_p100` fixtures + the R
-fixture-gen. `report/` has all 13 design/provenance docs. CI is Linux-only, PR +
-`workflow_dispatch` (cost-disciplined). **Honest:** the engine still carries some
-of the PoC's script-style includes (one stray load-time print still fires from
-`sparse_aug_plsm.jl:267`; cleanup tracked under Workflow A).
+#17). Several comparison-suite capabilities have since been **promoted into the
+public module and exported**: opt-in **REML** (`method = :REML`, #11/#235) with
+the model-selection guard, the **conjugate-EM** Gaussian phylo-mean solver
+(`algorithm = :em`, from `experimental/location_only.jl`, #12/#224),
+**heritability / repeatability / ICC** accessors (#233), **DHARMa quantile
+residuals** (#183/#234), the **coevolution q=4 phylo front end** + accessors
+(#201/#187/#188), and the **R bridge** (`drm_bridge` / `drm_bridge_inference`
+plus the sparse-phylo companion, #5). `src/experimental/` is **no longer the home
+of those features** but still holds alternative estimator prototypes not in the
+public API (SQUAREM / natural-gradient EM, trust-region & line-search E-steps,
+dense q=4 EM, the experimental `reml_q4` path, warm-start fit variants). `bench/`
+has runnable benchmarks + the `q4_p100` fixtures + the R fixture-gen. `report/`
+has all 13 design/provenance docs. CI is Linux-only, PR + `workflow_dispatch`
+(cost-disciplined). **Honest:** the engine still carries some of the PoC's
+script-style includes (one stray load-time print still fires from
+`sparse_aug_plsm.jl:267`; cleanup tracked under Workflow A). The module docstring
+in `src/DRM.jl` still carries the original "experimental … NOT yet wired" note
+and lags this state.
 
 ---
 
