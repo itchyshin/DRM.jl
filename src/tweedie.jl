@@ -58,6 +58,11 @@ struct Tweedie end
 _logit12(η) = 1 + 1 / (1 + exp(-η))            # (1,2) link for the power p
 
 function drm(f::DrmFormula, fam::Tweedie; data, g_tol::Real = 1e-8)
+    missing_fit = _fit_observed_response_rows(f, data) do data_observed
+        drm(f, fam; data = data_observed, g_tol = g_tol)
+    end
+    missing_fit !== nothing && return missing_fit
+
     rhs = Dict(f.forms)
     for (_, r) in f.forms
         _, re, mv, st = _split_ranef(r)

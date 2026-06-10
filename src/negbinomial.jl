@@ -30,6 +30,11 @@ struct NegBinomial2 end
 
 function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, g_tol::Real = 1e-8,
              se::Bool = true)
+    missing_fit = _fit_observed_response_rows(f, data) do data_observed
+        drm(f, fam; data = data_observed, tree = tree, g_tol = g_tol, se = se)
+    end
+    missing_fit !== nothing && return missing_fit
+
     rhs = Dict(f.forms)
     # Location–scale: a coupled `(1 | tag | group)` shared by the mean and sigma
     # formulas → one 2×2 group-level covariance fit by the augmented-state engine.
@@ -316,6 +321,11 @@ fit = drm(bf(y ~ x, sigma ~ 1), TruncatedNegBinomial2(); data = dat)
 struct TruncatedNegBinomial2 end
 
 function drm(f::DrmFormula, fam::TruncatedNegBinomial2; data, g_tol::Real = 1e-8)
+    missing_fit = _fit_observed_response_rows(f, data) do data_observed
+        drm(f, fam; data = data_observed, g_tol = g_tol)
+    end
+    missing_fit !== nothing && return missing_fit
+
     rhs = Dict(f.forms)
     for (_, r) in f.forms
         _, re, mv, st = _split_ranef(r)

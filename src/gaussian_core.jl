@@ -504,6 +504,134 @@ function _fit_fixed_gaussian_missing_response(fam::Gaussian, y, Xμ, Xσ, nmμ, 
     return _with_full_fixed_gaussian_rows(fit_obs, y, Xμ, Xσ)
 end
 
+function _formula_response_observed_mask(f::DrmFormula, data)
+    _, observed1 = _coerce_response_column(_table_column(data, f.response))
+    f.response2 === nothing && return observed1
+    _, observed2 = _coerce_response_column(_table_column(data, f.response2))
+    length(observed1) == length(observed2) ||
+        throw(ArgumentError("drm: the two response columns have different lengths"))
+    return observed1 .& observed2
+end
+
+function _subset_table_rows(data, rows)
+    cols = Tables.columntable(data)
+    names = Tuple(Symbol(k) for k in keys(cols))
+    vals = map(names) do k
+        col = getproperty(cols, k)
+        collect(col)[rows]
+    end
+    return NamedTuple{names}(Tuple(vals))
+end
+
+function _fit_observed_response_rows(fitfun::Function, f::DrmFormula, data)
+    observed = _formula_response_observed_mask(f, data)
+    all(observed) && return nothing
+    count(observed) > 0 ||
+        throw(ArgumentError("drm: at least one response row must be observed"))
+    fit_observed = fitfun(_subset_table_rows(data, observed))
+    return _with_full_response_rows(fit_observed, f, data)
+end
+
+function _full_response_obs(f::DrmFormula, data)
+    y, observed1 = _coerce_response_column(_table_column(data, f.response))
+    f.response2 === nothing && return Dict(:mu => y)
+    y2, observed2 = _coerce_response_column(_table_column(data, f.response2))
+    ntr = y .+ y2
+    prop = y ./ ntr
+    prop[.!(observed1 .& observed2)] .= NaN
+    return Dict(:mu => prop)
+end
+
+function _full_trials(f::DrmFormula, data)
+    y, observed1 = _coerce_response_column(_table_column(data, f.response))
+    f.response2 === nothing && return ones(length(y))
+    y2, observed2 = _coerce_response_column(_table_column(data, f.response2))
+    ntr = y .+ y2
+    ntr[.!(observed1 .& observed2)] .= NaN
+    return ntr
+end
+
+function _cumulative_full_components(fit::DrmFit, data)
+    f = fit.formula
+    forms = Dict(f.forms)
+    fixed_mu, _, _, _ = _split_ranef(forms[:mu])
+    nrows = length(_table_column(data, f.response))
+    ndr = _replace_table_column(data, f.response, zeros(nrows))
+    _, Xμ, nmμ = _design(f.response, fixed_mu, ndr)
+    ic = findfirst(==("(Intercept)"), nmμ)
+    if ic !== nothing
+        keep = setdiff(1:length(nmμ), ic)
+        Xμ = Xμ[:, keep]
+    end
+    β = coef(fit, :mu)
+    δ = coef(fit, :cutpoints)
+    nc = length(δ)
+    K = nc + 1
+    cuts = similar(δ)
+    cuts[1] = δ[1]
+    for k in 2:nc
+        cuts[k] = cuts[k - 1] + exp(δ[k])
+    end
+    η = length(β) == 0 ? zeros(nrows) : Xμ * β
+    score = Vector{Float64}(undef, nrows)
+    for i in 1:nrows
+        sc = 0.0
+        for k in 1:K
+            pk = k == 1 ? _logistic(cuts[1] - η[i]) :
+                 k == K ? 1 - _logistic(cuts[nc] - η[i]) :
+                 _logistic(cuts[k] - η[i]) - _logistic(cuts[k - 1] - η[i])
+            sc += k * pk
+        end
+        score[i] = sc
+    end
+    return score, η, Float64.(cuts)
+end
+
+function _full_means_and_scales(fit::DrmFit, data)
+    if fit.family isa CumulativeLogit
+        score, η, cuts = _cumulative_full_components(fit, data)
+        return Dict(:mu => score), Dict(:ordinal_eta => η, :ordinal_cuts => cuts)
+    end
+
+    if fit.family isa ZeroOneBeta
+        params = predict_parameters(fit, data; type = :link)
+        βmu = _logistic.(clamp.(params[:mu], -30.0, 30.0))
+        zoi = _logistic.(clamp.(params[:zoi], -30.0, 30.0))
+        coi = _logistic.(clamp.(params[:coi], -30.0, 30.0))
+        scales = Dict(
+            :beta_mu => βmu,
+            :sigma => exp.(params[:sigma]),
+            :zoi => zoi,
+            :coi => coi,
+        )
+        return Dict(:mu => (1 .- zoi) .* βmu .+ zoi .* coi), scales
+    end
+
+    params = predict_parameters(fit, data)
+    means = Dict(:mu => params[:mu])
+
+    scales = Dict{Symbol,Vector{Float64}}()
+    for (p, value) in params
+        p === :mu && continue
+        scales[p] = value
+    end
+    if fit.family isa Binomial || fit.family isa BetaBinomial
+        scales[:trials] = _full_trials(fit.formula, data)
+    end
+    return means, scales
+end
+
+function _with_full_response_rows(fit::DrmFit, f::DrmFormula, data)
+    means, scales = _full_means_and_scales(fit, data)
+    obs = _full_response_obs(f, data)
+    return DrmFit(
+        fit.family, fit.blocks, fit.coefnames, fit.theta, fit.vcov,
+        fit.loglik, fit.nobs, fit.converged, means, obs, scales,
+        fit.formula, fit.nll, fit.nllgrad, fit.ranef,
+        fit.estim_method, fit.reml_loglik, fit.ml_loglik,
+    )
+end
+
 # ---------------------------------------------------------------------------
 # REML for the fixed-effect Gaussian location–scale model (issue #11, slice 2).
 #

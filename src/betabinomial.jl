@@ -33,6 +33,11 @@ fit = drm(bf(cbind(successes, failures) ~ x, sigma ~ 1), BetaBinomial(); data = 
 struct BetaBinomial end
 
 function drm(f::DrmFormula, fam::BetaBinomial; data, g_tol::Real = 1e-8)
+    missing_fit = _fit_observed_response_rows(f, data) do data_observed
+        drm(f, fam; data = data_observed, g_tol = g_tol)
+    end
+    missing_fit !== nothing && return missing_fit
+
     f.response2 === nothing &&
         error("BetaBinomial() needs a two-column response: bf(cbind(successes, failures) ~ …)")
     rhs = Dict(f.forms)

@@ -25,6 +25,11 @@ fit = drm(bf(y ~ x), CumulativeLogit(); data = dat)   # y coded 1..K
 struct CumulativeLogit end
 
 function drm(f::DrmFormula, fam::CumulativeLogit; data, g_tol::Real = 1e-8)
+    missing_fit = _fit_observed_response_rows(f, data) do data_observed
+        drm(f, fam; data = data_observed, g_tol = g_tol)
+    end
+    missing_fit !== nothing && return missing_fit
+
     rhs = Dict(f.forms)
     _, re, mv, st = _split_ranef(rhs[:mu])
     (isempty(re) && mv === nothing && st === nothing) ||
