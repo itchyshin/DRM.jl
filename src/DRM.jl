@@ -40,6 +40,7 @@ include("gaussian_meta.jl")
 include("gaussian_structured.jl")
 include("location_only.jl")      # #12: opt-in conjugate-EM for the Gaussian phylo-mean cell
 include("student.jl")
+include("skewnormal.jl")
 include("poisson.jl")
 include("sparse_laplace_glmm.jl")
 include("negbinomial.jl")
@@ -79,7 +80,7 @@ export AugProblem, make_problem,
        augmented_tree_precision, sigma_phy_dense, takahashi_selinv
 
 # Public API — the Gaussian distributional-regression front end.
-export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
+export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
        coef, vcov, loglik, nobs, dof, aic, bic, fixef, re_sd, vc, ranef, sigma, corpairs, rho12, stderror, confint, coeftable, fitted, residuals, predict, predict_parameters, marginal_parameters, prediction_grid, simulate, bootstrap_ci, bootstrap_summary, bootstrap_result, check_drm, family,
        profile_result, profile_curve, parameter_surface, corpairs_data,
        is_converged, deviance, dof_residual,
