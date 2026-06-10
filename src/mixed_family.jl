@@ -77,7 +77,7 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         trials1 = ones(length(y1)), trials2 = ones(length(y2)),
         K::Int = 32, g_tol::Float64 = 1e-6,
         confint::Bool = true, level::Float64 = 0.95,
-        B::Int = 0, rng = Random.default_rng())
+        profile::Bool = false, B::Int = 0, rng = Random.default_rng())
     n = length(y1)
     n == length(y2) || throw(ArgumentError("y1 and y2 must have equal length"))
     p1 = size(X1, 2); p2 = size(X2, 2)
@@ -170,6 +170,40 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         end
     end
 
+    # Profile-likelihood CI on ρ (the recommended interval): penalty-constrained
+    # re-optimisation fixing ρ(θ)=ρ0 on the atanh scale, bisected to a χ²(1, level)
+    # deviance drop. Better-calibrated than Wald near the boundary, cheaper than the
+    # bootstrap. (nll/rho_of are reused; nll's locals are renamed so no Dual leaks.)
+    rho_ci_profile = (NaN, NaN)
+    if profile
+        nllhat = nll(θ̂)
+        q = Distributions.quantile(Distributions.Chisq(1), level)
+        prof_dev = function (ρ0)
+            zr0 = atanh(clamp(ρ0, -0.999999, 0.999999))
+            obj(θ) = nll(θ) + 1.0e4 * (atanh(clamp(rho_of(θ), -0.999999, 0.999999)) - zr0)^2
+            r = Optim.optimize(obj, copy(θ̂), Optim.LBFGS(),
+                               Optim.Options(g_tol = 1e-9); autodiff = :forward)
+            return 2 * (nll(Optim.minimizer(r)) - nllhat)
+        end
+        endpoint = function (a, b)   # dev(a), dev(b) straddle q → bisect for dev = q
+            fa = prof_dev(a) - q
+            for _ in 1:40
+                mid = (a + b) / 2
+                fm = prof_dev(mid) - q
+                if fa * fm <= 0
+                    b = mid
+                else
+                    a = mid; fa = fm
+                end
+                abs(b - a) < 1e-3 && break
+            end
+            (a + b) / 2
+        end
+        lobnd = prof_dev(-0.999) >= q ? endpoint(-0.999, ρ) : -0.999
+        hibnd = prof_dev(0.999) >= q ? endpoint(ρ, 0.999) : 0.999
+        rho_ci_profile = (lobnd, hibnd)
+    end
+
     # Parametric bootstrap CI: resample the shared latent + per-family draws at θ̂,
     # refit, take percentile interval. (β1/λ1/σ1 are concrete Float64 — see the nll
     # local-naming note — so the resampled data is clean and the refits converge.)
@@ -198,7 +232,8 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
     end
 
     return (; β1, β2, λ1, λ2, σ1, σ2, v1, v2, rho_latent = ρ,
-            rho_ci_wald = rho_ci_wald, rho_ci_boot = rho_ci_boot,
+            rho_ci_wald = rho_ci_wald, rho_ci_profile = rho_ci_profile,
+            rho_ci_boot = rho_ci_boot,
             loglik = -nll(θ̂), converged = Optim.converged(res),
             iterations = res.iterations)
 end
