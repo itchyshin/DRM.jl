@@ -19,7 +19,8 @@ Distribution-specific observation variance `v` of `fam` on its link (latent) sca
 - `Poisson`      → `log(1 + 1/μ̂)`; log link (`μ̂` a representative fitted mean).
 - `Binomial`     → `π²/3`; logit link (distribution-free).
 - `Beta`         → `trigamma(μ̂ φ) + trigamma((1-μ̂) φ)`; logit link, `dispersion = φ`.
-- `Gamma`        → `trigamma(1/φ)`; log link, `dispersion = φ`.
+- `Gamma`        → `trigamma(1/φ)`; log link, `dispersion = φ` (the variance σ²).
+- `NegBinomial2` → `trigamma(θ)`; log link, `dispersion = θ` (the size/dispersion).
 
 Feeds the cross-family latent correlation `ρ = λ1 λ2 / sqrt((λ1²+v1)(λ2²+v2))`.
 """
@@ -34,3 +35,6 @@ link_residual(::Binomial, μ̂ = 0.0; dispersion = nothing) = (π^2) / 3
 link_residual(::Beta, μ̂; dispersion) =
     trigamma(μ̂ * dispersion) + trigamma((1 - μ̂) * dispersion)
 link_residual(::Gamma, μ̂ = 0.0; dispersion) = trigamma(inv(dispersion))
+# NB2 (log link): the lognormal-approximation distribution-specific variance term
+# contributed by the size/dispersion θ, matching gllvmTMB's `nbinom2` entry.
+link_residual(::NegBinomial2, μ̂ = 0.0; dispersion) = trigamma(float(dispersion))

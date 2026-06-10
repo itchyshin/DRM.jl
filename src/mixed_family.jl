@@ -17,32 +17,100 @@
 # are; for Gaussian × non-Gaussian (no free residual variance on the non-Gaussian
 # axis) all parameters are identified.
 
+# Which families carry a (log-native) dispersion parameter in the θ vector. The
+# dispersionless families (Poisson, Binomial) are fully pinned by η alone; every
+# other family adds one slot per axis: log σ for Gaussian/Beta/Gamma, log θ for
+# NB2. The natural dispersion value `d = exp(slot)` is what `_mf_obs_ll` receives.
+_mf_has_disp(fam) = !(fam isa Poisson || fam isa Binomial)
+
 # Per-observation conditional log-density at a latent node, dispatched on family.
-_mf_obs_ll(::Gaussian, η, y, trials, σ) =
-    -0.5 * ((y - η) / σ)^2 - log(σ) - 0.9189385332046727  # 0.5*log(2π)
-function _mf_obs_ll(::Poisson, η, y, trials, σ)
+# `d` is the family's NATURAL dispersion (Gaussian/Beta/Gamma: σ; NB2: size θ);
+# dispersionless families ignore it (it is passed as 1).
+_mf_obs_ll(::Gaussian, η, y, trials, d) =
+    -0.5 * ((y - η) / d)^2 - log(d) - 0.9189385332046727  # 0.5*log(2π)
+function _mf_obs_ll(::Poisson, η, y, trials, d)
     ηc = clamp(η, -30.0, 30.0)
     return y * ηc - exp(ηc) - loggamma(y + 1)
 end
-function _mf_obs_ll(::Binomial, η, y, trials, σ)
-    p = logistic(clamp(η, -30.0, 30.0))
+function _mf_obs_ll(::Binomial, η, y, trials, d)
+    p = _logistic(clamp(η, -30.0, 30.0))
     return y * log(p) + (trials - y) * log1p(-p) +
            loggamma(trials + 1) - loggamma(y + 1) - loggamma(trials - y + 1)
+end
+# NB2 (mean μ=exp(η), size θ=d): hand-coded log-pmf with loggamma (ForwardDiff-safe
+# in θ; no Distributions.NegativeBinomial domain checks). Var = μ + μ²/θ. θ is
+# clamped to a finite positive range (cf. negbinomial.jl's ησ∈[-20,20]) so wild
+# line-search steps cannot push the size to 0/∞.
+function _mf_obs_ll(::NegBinomial2, η, y, trials, d)
+    μ = exp(clamp(η, -30.0, 30.0)); θ = clamp(d, 2.0e-9, 4.9e8)   # exp(∓20)
+    return loggamma(y + θ) - loggamma(θ) - loggamma(y + 1) +
+           θ * (log(θ) - log(θ + μ)) + y * (log(μ) - log(θ + μ))
+end
+# Beta (mean μ=logistic(η), precision φ=1/σ², σ=d): Beta(μφ, (1-μ)φ). The
+# existing beta.jl uses exactly this Distributions.logpdf path under ForwardDiff;
+# σ is clamped to beta.jl's range (ησ∈[-15,15]) to keep φ finite & positive.
+function _mf_obs_ll(::Beta, η, y, trials, d)
+    μ = _logistic(clamp(η, -30.0, 30.0)); φ = inv(clamp(d, 3.1e-7, 3.3e6)^2)
+    return Distributions.logpdf(Distributions.Beta(μ * φ, (1 - μ) * φ), y)
+end
+# Gamma (mean μ=exp(η), shape α=1/σ², σ=d): Gamma(α, μ/α). Matches gamma.jl,
+# including the σ clamp (ησ∈[-15,15]) that guards the shape/scale positivity.
+function _mf_obs_ll(::Gamma, η, y, trials, d)
+    μ = exp(clamp(η, -30.0, 30.0)); α = inv(clamp(d, 3.1e-7, 3.3e6)^2)
+    return Distributions.logpdf(Distributions.Gamma(α, μ / α), y)
 end
 
 # Fitted mean on the response scale, for the link-residual evaluation.
 _mf_mean(::Gaussian, η) = η
 _mf_mean(::Poisson, η) = exp(η)
-_mf_mean(::Binomial, η) = logistic(η)
+_mf_mean(::Binomial, η) = _logistic(η)
+_mf_mean(::NegBinomial2, η) = exp(η)
+_mf_mean(::Beta, η) = _logistic(η)
+_mf_mean(::Gamma, η) = exp(η)
 
-# Sensible fixed-effect starting values per family.
+# Sensible fixed-effect starting values per family (link scale).
 _mf_init(::Gaussian, X, y) = X \ y
 _mf_init(::Poisson, X, y) = X \ log.(max.(y, 0.5))
 _mf_init(::Binomial, X, y) = zeros(size(X, 2))  # logit scale; 0 → p = 0.5
+_mf_init(::NegBinomial2, X, y) = X \ log.(max.(y, 0.5))            # log link
+_mf_init(::Beta, X, y) = X \ (log.(clamp.(y, 1e-3, 1 - 1e-3)) .-   # logit link
+                              log1p.(-clamp.(y, 1e-3, 1 - 1e-3)))
+_mf_init(::Gamma, X, y) = X \ log.(max.(y, 1e-3))                  # log link
 
-# Per-observation response sampler (for the parametric bootstrap CI).
-_mf_rand(::Gaussian, η, trials, σ, rng) = η + σ * randn(rng)
-function _mf_rand(::Poisson, η, trials, σ, rng)
+# Starting value for the (log-native) dispersion slot, per disp-carrying family.
+function _mf_disp_init(::Gaussian, y)
+    log(max(Statistics.std(y) / 2, 1e-2))                          # log σ
+end
+function _mf_disp_init(::NegBinomial2, y)                          # log θ (MoM)
+    m = Statistics.mean(y); v = Statistics.var(y)
+    log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+end
+function _mf_disp_init(::Beta, y)                                  # log σ = -½ log φ
+    ȳ = Statistics.mean(y); v = Statistics.var(y)
+    φ0 = max(ȳ * (1 - ȳ) / max(v, eps()) - 1, 0.5)
+    -0.5 * log(φ0)
+end
+function _mf_disp_init(::Gamma, y)                                 # log σ = -½ log α
+    ȳ = Statistics.mean(y); v = Statistics.var(y)
+    α0 = max(ȳ^2 / max(v, eps()), 0.5)
+    -0.5 * log(α0)
+end
+
+# Link-scale residual variance v_k for the latent correlation, given the raw
+# dispersion slot value (or `nothing` for dispersionless families) and a
+# representative fitted mean. Maps the log-native slot to each family's own
+# dispersion convention before calling `link_residual`.
+_mf_disp_v(fam::Gaussian, slot, μ̂) = link_residual(fam; dispersion = exp(2 * slot))      # σ²
+_mf_disp_v(fam::Gamma, slot, μ̂) = link_residual(fam; dispersion = exp(2 * slot))         # σ² → trigamma(1/σ²)
+_mf_disp_v(fam::Beta, slot, μ̂) = link_residual(fam, μ̂; dispersion = exp(-2 * slot))      # φ = 1/σ²
+_mf_disp_v(fam::NegBinomial2, slot, μ̂) = link_residual(fam; dispersion = exp(slot))      # θ
+_mf_disp_v(fam::Poisson, slot, μ̂) = link_residual(fam, μ̂)
+_mf_disp_v(fam::Binomial, slot, μ̂) = link_residual(fam, μ̂)
+
+# Per-observation response sampler (for the parametric bootstrap CI). `d` is the
+# natural dispersion as in `_mf_obs_ll`.
+_mf_rand(::Gaussian, η, trials, d, rng) = η + d * randn(rng)
+function _mf_rand(::Poisson, η, trials, d, rng)
     λ = exp(clamp(η, -20.0, 20.0))
     L = exp(-λ); k = 0; p = 1.0
     while true
@@ -51,13 +119,25 @@ function _mf_rand(::Poisson, η, trials, σ, rng)
         p <= L && return Float64(k - 1)
     end
 end
-function _mf_rand(::Binomial, η, trials, σ, rng)
-    p = logistic(clamp(η, -30.0, 30.0))
+function _mf_rand(::Binomial, η, trials, d, rng)
+    p = _logistic(clamp(η, -30.0, 30.0))
     s = 0
     for _ in 1:Int(trials)
         s += rand(rng) < p
     end
     return Float64(s)
+end
+function _mf_rand(::NegBinomial2, η, trials, d, rng)
+    μ = exp(clamp(η, -20.0, 20.0)); θ = d; p = θ / (θ + μ)
+    return Float64(rand(rng, Distributions.NegativeBinomial(θ, p)))
+end
+function _mf_rand(::Beta, η, trials, d, rng)
+    μ = _logistic(clamp(η, -30.0, 30.0)); φ = inv(d^2)
+    return rand(rng, Distributions.Beta(μ * φ, (1 - μ) * φ))
+end
+function _mf_rand(::Gamma, η, trials, d, rng)
+    μ = exp(clamp(η, -20.0, 20.0)); α = inv(d^2)
+    return rand(rng, Distributions.Gamma(α, μ / α))
 end
 
 """
@@ -65,13 +145,17 @@ end
                        trials1=ones(n), trials2=ones(n), K=32, g_tol=1e-6)
 
 Fit the cross-family bivariate model (shared per-observation latent) and return a
-`NamedTuple` with fixed effects `β1`/`β2`, loadings `λ1`/`λ2`, Gaussian residual
-SDs `σ1`/`σ2` (`NaN` for non-Gaussian axes), link-scale variances `v1`/`v2`, the
-latent-scale correlation `rho_latent`, `loglik`, `converged`, and `iterations`.
+`NamedTuple` with fixed effects `β1`/`β2`, loadings `λ1`/`λ2`, per-axis dispersion
+`σ1`/`σ2` on the natural scale (`NaN` for dispersionless axes), link-scale
+variances `v1`/`v2`, the latent-scale correlation `rho_latent`, `loglik`,
+`converged`, and `iterations`.
 
-`fam1`/`fam2` are DRM family instances; `:gaussian`, `:poisson`, `:binomial` are
-supported in this first slice. `trials*` are Binomial denominators (ignored
-otherwise).
+`fam1`/`fam2` are DRM family instances. Supported: `Gaussian`, `Poisson`,
+`Binomial`, `NegBinomial2`, `Beta`, `Gamma`. Dispersion-carrying families
+(Gaussian/Beta/Gamma → `σ`; NB2 → size `θ`) add one log-native slot per axis;
+`Poisson`/`Binomial` are dispersionless. For those families `σ1`/`σ2` returns the
+natural dispersion (`σ` for Gaussian/Beta/Gamma, `θ` for NB2). `trials*` are
+Binomial denominators (ignored otherwise).
 """
 function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         trials1 = ones(length(y1)), trials2 = ones(length(y2)),
@@ -81,7 +165,9 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
     n = length(y1)
     n == length(y2) || throw(ArgumentError("y1 and y2 must have equal length"))
     p1 = size(X1, 2); p2 = size(X2, 2)
-    s1 = fam1 isa Gaussian; s2 = fam2 isa Gaussian
+    # s1/s2: does each axis carry a (log-native) dispersion slot? log σ for
+    # Gaussian/Beta/Gamma, log θ for NB2; none for Poisson/Binomial.
+    s1 = _mf_has_disp(fam1); s2 = _mf_has_disp(fam2)
     iλ1 = p1 + p2 + 1
     iλ2 = p1 + p2 + 2
     is1 = s1 ? p1 + p2 + 3 : 0
@@ -100,7 +186,7 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         bb1 = θ[1:p1]
         bb2 = θ[p1+1:p1+p2]
         ll1 = exp(θ[iλ1]); ll2 = θ[iλ2]
-        sd1 = s1 ? exp(θ[is1]) : one(eltype(θ))
+        sd1 = s1 ? exp(θ[is1]) : one(eltype(θ))   # natural dispersion (σ or θ) per axis
         sd2 = s2 ? exp(θ[is2]) : one(eltype(θ))
         η1f = X1 * bb1
         η2f = X2 * bb2
@@ -125,8 +211,8 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
     θ0[p1+1:p1+p2] = _mf_init(fam2, X2, y2)
     θ0[iλ1] = log(0.3)
     θ0[iλ2] = 0.1
-    s1 && (θ0[is1] = log(max(std(y1) / 2, 1e-2)))
-    s2 && (θ0[is2] = log(max(std(y2) / 2, 1e-2)))
+    s1 && (θ0[is1] = _mf_disp_init(fam1, y1))   # log-native dispersion slot, per family
+    s2 && (θ0[is2] = _mf_disp_init(fam2, y2))
 
     res = Optim.optimize(nll, θ0, Optim.LBFGS(),
                          Optim.Options(g_tol = g_tol); autodiff = :forward)
@@ -142,13 +228,15 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         b1 = @view θ[1:p1]
         b2 = @view θ[p1+1:p1+p2]
         l1 = exp(θ[iλ1]); l2 = θ[iλ2]
-        vv1 = s1 ? exp(2 * θ[is1]) : link_residual(fam1, mean(_mf_mean.(Ref(fam1), X1 * b1)))
-        vv2 = s2 ? exp(2 * θ[is2]) : link_residual(fam2, mean(_mf_mean.(Ref(fam2), X2 * b2)))
+        μ̄1 = mean(_mf_mean.(Ref(fam1), X1 * b1))
+        μ̄2 = mean(_mf_mean.(Ref(fam2), X2 * b2))
+        vv1 = _mf_disp_v(fam1, s1 ? θ[is1] : nothing, μ̄1)
+        vv2 = _mf_disp_v(fam2, s2 ? θ[is2] : nothing, μ̄2)
         return l1 * l2 / sqrt((l1^2 + vv1) * (l2^2 + vv2))
     end
     ρ = rho_of(θ̂)
-    v1 = s1 ? σ1^2 : link_residual(fam1, mean(_mf_mean.(Ref(fam1), X1 * β1)))
-    v2 = s2 ? σ2^2 : link_residual(fam2, mean(_mf_mean.(Ref(fam2), X2 * β2)))
+    v1 = _mf_disp_v(fam1, s1 ? θ̂[is1] : nothing, mean(_mf_mean.(Ref(fam1), X1 * β1)))
+    v2 = _mf_disp_v(fam2, s2 ? θ̂[is2] : nothing, mean(_mf_mean.(Ref(fam2), X2 * β2)))
 
     # Fisher-z Wald CI: delta method on atanh(ρ(θ)) with the observed-information
     # vcov. NaN interval if the Hessian is not invertible / variance non-positive.
