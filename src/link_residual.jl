@@ -23,8 +23,13 @@ Distribution-specific observation variance `v` of `fam` on its link (latent) sca
 
 Feeds the cross-family latent correlation `ρ = λ1 λ2 / sqrt((λ1²+v1)(λ2²+v2))`.
 """
+# NB: in this shared-latent model the Gaussian axis carries its residual variance
+# σ² in `v` directly — there is no separate Ψ as in GLLVM/gllvmTMB (which report 0
+# for Gaussian because the residual lives in Ψ). So `v = σ²` is correct for THIS
+# parameterisation; verified by the Gaussian×Gaussian ≡ rho12 parity (using 0 here
+# would force ρ = 1).
 link_residual(::Gaussian, μ̂ = 0.0; dispersion) = float(dispersion)
-link_residual(::Poisson, μ̂; dispersion = nothing) = log1p(inv(μ̂))
+link_residual(::Poisson, μ̂; dispersion = nothing) = log1p(inv(max(μ̂, 1e-12)))
 link_residual(::Binomial, μ̂ = 0.0; dispersion = nothing) = (π^2) / 3
 link_residual(::Beta, μ̂; dispersion) =
     trigamma(μ̂ * dispersion) + trigamma((1 - μ̂) * dispersion)

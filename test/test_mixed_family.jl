@@ -68,4 +68,26 @@ end
         @test isapprox(mf.loglik, loglik(biv); atol = 0.1)
         @test isapprox(mf.rho_latent, ρ_true; atol = 0.1)
     end
+
+    @testset "Fisher-z Wald CI on rho (Gaussian x Poisson)" begin
+        rng = MersenneTwister(99)
+        n = 1000
+        x = randn(rng, n)
+        X1 = hcat(ones(n), x); X2 = hcat(ones(n), x)
+        β1 = [0.5, 0.3]; β2 = [0.2, -0.3]; λ1 = 0.8; λ2 = 0.7; σ1 = 0.5
+        u = randn(rng, n)
+        y1 = X1 * β1 .+ λ1 .* u .+ σ1 .* randn(rng, n)
+        η2 = X2 * β2 .+ λ2 .* u
+        y2 = Float64[_rpois(rng, exp(clamp(η2[i], -20.0, 20.0))) for i in 1:n]
+        v2_true = log1p(1 / mean(exp.(η2)))
+        ρ_true = (λ1 * λ2) / sqrt((λ1^2 + σ1^2) * (λ2^2 + v2_true))
+
+        fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gaussian(),
+                                   y2 = y2, X2 = X2, fam2 = Poisson())
+        lo, hi = fit.rho_ci_wald
+        @test isfinite(lo) && isfinite(hi)
+        @test 0 < hi - lo < 0.5                    # finite, sensible Wald width
+        @test lo ≤ fit.rho_latent ≤ hi
+        @test isapprox(fit.rho_latent, ρ_true; atol = 0.12)
+    end
 end

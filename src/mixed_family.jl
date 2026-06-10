@@ -25,7 +25,7 @@ function _mf_obs_ll(::Poisson, η, y, trials, σ)
     return y * ηc - exp(ηc) - loggamma(y + 1)
 end
 function _mf_obs_ll(::Binomial, η, y, trials, σ)
-    p = logistic(η)
+    p = logistic(clamp(η, -30.0, 30.0))
     return y * log(p) + (trials - y) * log1p(-p) +
            loggamma(trials + 1) - loggamma(y + 1) - loggamma(trials - y + 1)
 end
@@ -55,7 +55,8 @@ otherwise).
 """
 function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         trials1 = ones(length(y1)), trials2 = ones(length(y2)),
-        K::Int = 32, g_tol::Float64 = 1e-6)
+        K::Int = 32, g_tol::Float64 = 1e-6,
+        confint::Bool = true, level::Float64 = 0.95)
     n = length(y1)
     n == length(y2) || throw(ArgumentError("y1 and y2 must have equal length"))
     p1 = size(X1, 2); p2 = size(X2, 2)
@@ -100,8 +101,8 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
     θ0[p1+1:p1+p2] = _mf_init(fam2, X2, y2)
     θ0[iλ1] = log(0.3)
     θ0[iλ2] = 0.1
-    s1 && (θ0[is1] = log(std(y1) / 2 + eps()))
-    s2 && (θ0[is2] = log(std(y2) / 2 + eps()))
+    s1 && (θ0[is1] = log(max(std(y1) / 2, 1e-2)))
+    s2 && (θ0[is2] = log(max(std(y2) / 2, 1e-2)))
 
     res = Optim.optimize(nll, θ0, Optim.LBFGS(),
                          Optim.Options(g_tol = g_tol); autodiff = :forward)
@@ -110,10 +111,43 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
     λ1 = exp(θ̂[iλ1]); λ2 = θ̂[iλ2]
     σ1 = s1 ? exp(θ̂[is1]) : NaN
     σ2 = s2 ? exp(θ̂[is2]) : NaN
+
+    # ρ(θ): loadings + link-scale residual variances. Reused by the point estimate
+    # and the Fisher-z delta-method CI.
+    function rho_of(θ)
+        b1 = @view θ[1:p1]
+        b2 = @view θ[p1+1:p1+p2]
+        l1 = exp(θ[iλ1]); l2 = θ[iλ2]
+        vv1 = s1 ? exp(2 * θ[is1]) : link_residual(fam1, mean(_mf_mean.(Ref(fam1), X1 * b1)))
+        vv2 = s2 ? exp(2 * θ[is2]) : link_residual(fam2, mean(_mf_mean.(Ref(fam2), X2 * b2)))
+        return l1 * l2 / sqrt((l1^2 + vv1) * (l2^2 + vv2))
+    end
+    ρ = rho_of(θ̂)
     v1 = s1 ? σ1^2 : link_residual(fam1, mean(_mf_mean.(Ref(fam1), X1 * β1)))
     v2 = s2 ? σ2^2 : link_residual(fam2, mean(_mf_mean.(Ref(fam2), X2 * β2)))
-    ρ = λ1 * λ2 / sqrt((λ1^2 + v1) * (λ2^2 + v2))
+
+    # Fisher-z Wald CI: delta method on atanh(ρ(θ)) with the observed-information
+    # vcov. NaN interval if the Hessian is not invertible / variance non-positive.
+    rho_ci_wald = (NaN, NaN)
+    if confint
+        H = ForwardDiff.hessian(nll, θ̂)
+        V = try
+            inv(H)
+        catch
+            fill(NaN, size(H))
+        end
+        g = ForwardDiff.gradient(t -> atanh(clamp(rho_of(t), -0.999999, 0.999999)), θ̂)
+        var_z = dot(g, V * g)
+        if isfinite(var_z) && var_z > 0
+            zc = Distributions.quantile(Distributions.Normal(), 1 - (1 - level) / 2)
+            zr = atanh(clamp(ρ, -0.999999, 0.999999))
+            se = sqrt(var_z)
+            rho_ci_wald = (tanh(zr - zc * se), tanh(zr + zc * se))
+        end
+    end
+
     return (; β1, β2, λ1, λ2, σ1, σ2, v1, v2, rho_latent = ρ,
+            rho_ci_wald = rho_ci_wald,
             loglik = -nll(θ̂), converged = Optim.converged(res),
             iterations = res.iterations)
 end
