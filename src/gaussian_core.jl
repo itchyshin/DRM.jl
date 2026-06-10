@@ -12,6 +12,7 @@ using StatsModels: @formula, FormulaTerm, Term, ConstantTerm, FunctionTerm,
 using Statistics: std, mean
 using Random: default_rng
 import StatsAPI: coef, vcov, nobs, fitted, residuals, predict, aic, bic, dof, deviance, dof_residual, StatisticalModel
+import Tables
 
 """
     Gaussian()
@@ -167,18 +168,70 @@ _withreml(fit::DrmFit, reml_ll::Real, ml_ll::Real) = DrmFit(fit.family, fit.bloc
     fit.vcov, Float64(reml_ll), fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
     :REML, Float64(reml_ll), Float64(ml_ll))
 
-# Build a design matrix for one parameter's RHS. We reuse the (real) response as
-# a dummy LHS so the formula is always valid for `schema`/`modelcols`, then keep
-# only the predictor matrix.
+# Response-missing helpers. R's `NA_real_` may reach Julia as either `missing`
+# or `NaN`, so the Gaussian response path treats both as absent observations.
+function _is_response_missing(x)
+    x === missing && return true
+    x isa AbstractFloat && isnan(x) && return true
+    return false
+end
+
+function _coerce_response_column(raw)
+    y = Vector{Float64}(undef, length(raw))
+    observed = Vector{Bool}(undef, length(raw))
+    @inbounds for i in eachindex(raw)
+        xi = raw[i]
+        if _is_response_missing(xi)
+            y[i] = NaN
+            observed[i] = false
+        else
+            y[i] = Float64(xi)
+            observed[i] = true
+        end
+    end
+    return y, observed
+end
+
+_observed_response_mask(y) = .!isnan.(Vector{Float64}(y))
+
+function _table_column(data, name::Symbol)
+    if data isa NamedTuple
+        return getproperty(data, name)
+    elseif data isa AbstractDict
+        haskey(data, name) && return data[name]
+        s = String(name)
+        haskey(data, s) && return data[s]
+    end
+    return getproperty(data, name)
+end
+
+function _replace_table_column(data, name::Symbol, replacement)
+    cols = Tables.columntable(data)
+    names = Tuple(Symbol(k) for k in keys(cols))
+    vals = map(names) do k
+        k === name ? replacement : getproperty(cols, k)
+    end
+    return NamedTuple{names}(Tuple(vals))
+end
+
+# Build a design matrix for one parameter's RHS. We reuse the response as a
+# dummy LHS so the formula is valid for `schema`/`modelcols`, then keep only the
+# predictor matrix. If the real response contains `missing` / `NaN`, the formula
+# builder gets a numeric placeholder column while the returned `y` keeps `NaN`
+# at unobserved response positions.
 function _design(response::Symbol, rhs, data)
+    raw_response = _table_column(data, response)
+    y_response, observed = _coerce_response_column(raw_response)
+    design_data = all(observed) ? data :
+        _replace_table_column(data, response, ifelse.(observed, y_response, 0.0))
     ft = FormulaTerm(Term(response), rhs)
     # The 3-arg apply_schema with a StatisticalModel context adds R's implicit
     # intercept (so `y ~ x` means `y ~ 1 + x`, matching drmTMB); explicit
     # `1 + x` / `0 + x` are respected.
-    ft = apply_schema(ft, schema(ft, data), StatisticalModel)
-    y, X = modelcols(ft, data)
+    ft = apply_schema(ft, schema(ft, design_data), StatisticalModel)
+    _, X = modelcols(ft, design_data)
     Xm = X isa AbstractMatrix ? Matrix{Float64}(X) : reshape(Float64.(collect(X)), :, 1)
-    return Float64.(y), Xm, String.(vec(coefnames(ft.rhs)))
+    return y_response, Xm, String.(vec(coefnames(ft.rhs)))
 end
 
 """
@@ -244,6 +297,9 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     fixed_sigma, sigma_re, _, _ = _split_ranef(rhs[:sigma])    # (1|g) on the scale → GHQ marginal
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, fixed_sigma, data)
+    response_observed = _observed_response_mask(y)
+    has_missing_response = !all(response_observed)
+    all_structured = _collect_structured(rhs[:mu])
     if method === :REML
         # REML (opt-in, experimental) is implemented only for the fixed-effect
         # univariate Gaussian location–scale cell in this slice (the standard
@@ -271,6 +327,13 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             throw(ArgumentError("drm: algorithm = :$algorithm supports exactly one structured mean " *
                 "random effect (no additional `(1 | g)` / meta_V terms)."))
     end
+    if has_missing_response
+        (isempty(re) && isempty(sigma_re) && structured === nothing && metav === nothing &&
+         length(all_structured) == 0) ||
+            throw(ArgumentError("drm: missing Gaussian responses are currently supported for " *
+                "fixed-effect univariate location-scale models. Structured, random-effect, " *
+                "and meta-analysis response-missing support need their own likelihood slice."))
+    end
     if !isempty(sigma_re)                                      # random effect on log σ
         (isempty(re) && structured === nothing && metav === nothing) ||
             error("a random effect on `sigma` must be the only random structure (the mean must be fixed effects)")
@@ -282,7 +345,6 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     end
     # Two structured components in one fit (e.g. phylo(1|species) + relmat(1|id)):
     # a separate variance component each, latent field = their sum. Dense first cut.
-    all_structured = _collect_structured(rhs[:mu])
     if length(all_structured) >= 2
         length(all_structured) == 2 ||
             error("at most two structured components are supported in one Gaussian fit " *
@@ -350,6 +412,10 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         return _withformula(_fit_meta_gaussian(fam, y, Xμ, Xσ, vv, nmμ, nmσ, g_tol), f)
     end
     if isempty(re)
+        if has_missing_response
+            return _withformula(_fit_fixed_gaussian_missing_response(
+                fam, y, Xμ, Xσ, nmμ, nmσ, g_tol, method), f)
+        end
         if method === :REML
             return _withformula(_fit_fixed_gaussian_reml(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol), f)
         end
@@ -405,6 +471,37 @@ function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+end
+
+function _with_full_fixed_gaussian_rows(fit::DrmFit, y_full, Xμ_full, Xσ_full)
+    rμ = _block_range(fit, :mu)
+    rσ = _block_range(fit, :sigma)
+    means = Dict(:mu => Xμ_full * fit.theta[rμ])
+    obs = Dict(:mu => Vector{Float64}(y_full))
+    scales = Dict(:sigma => exp.(Xσ_full * fit.theta[rσ]))
+    return DrmFit(
+        fit.family, fit.blocks, fit.coefnames, fit.theta, fit.vcov,
+        fit.loglik, fit.nobs, fit.converged, means, obs, scales,
+        fit.formula, fit.nll, fit.nllgrad, fit.ranef,
+        fit.estim_method, fit.reml_loglik, fit.ml_loglik,
+    )
+end
+
+function _fit_fixed_gaussian_missing_response(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol, method::Symbol)
+    observed = _observed_response_mask(y)
+    n_observed = count(observed)
+    n_observed > 0 ||
+        throw(ArgumentError("drm: at least one Gaussian response must be observed"))
+    n_observed >= size(Xμ, 2) ||
+        throw(ArgumentError("drm: observed Gaussian responses are fewer than the mean coefficients"))
+
+    y_obs = Vector{Float64}(y[observed])
+    Xμ_obs = Matrix{Float64}(Xμ[observed, :])
+    Xσ_obs = Matrix{Float64}(Xσ[observed, :])
+    fit_obs = method === :REML ?
+        _fit_fixed_gaussian_reml(fam, y_obs, Xμ_obs, Xσ_obs, nmμ, nmσ, g_tol) :
+        _fit_fixed_gaussian(fam, y_obs, Xμ_obs, Xσ_obs, nmμ, nmσ, g_tol)
+    return _with_full_fixed_gaussian_rows(fit_obs, y, Xμ, Xσ)
 end
 
 # ---------------------------------------------------------------------------
