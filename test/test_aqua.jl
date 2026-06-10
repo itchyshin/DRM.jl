@@ -2,19 +2,8 @@
 # package's runtime [deps] — adding it there would itself be an Aqua stale-deps
 # violation). Under `Pkg.test()` / CI the test environment is stacked over the
 # package, so `using Aqua` and `using DRM` both resolve and the block below is a
-# no-op. When this file is run standalone against the *package* project (e.g.
-# `julia --project=. -e 'include("test/test_aqua.jl")'`), Aqua is not on the load
-# path; bootstrap the stacked test environment so the battery still runs.
-import Pkg
-if Base.identify_package("Aqua") === nothing
-    let here = @__DIR__, pkgroot = dirname(@__DIR__)
-        Pkg.activate(mktempdir())
-        Pkg.develop(Pkg.PackageSpec(path = pkgroot))
-        testdeps = Pkg.TOML.parsefile(joinpath(here, "Project.toml"))["deps"]
-        Pkg.add([Pkg.PackageSpec(name = n, uuid = Base.UUID(u)) for (n, u) in testdeps])
-    end
-end
-
+# no-op. Run the battery via `Pkg.test()` / CI (not against the bare package
+# project), so `using Aqua` resolves from the stacked test environment.
 using Aqua
 using DRM
 using Test
