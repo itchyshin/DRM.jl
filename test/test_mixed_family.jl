@@ -69,7 +69,7 @@ end
         @test isapprox(mf.rho_latent, ρ_true; atol = 0.1)
     end
 
-    @testset "Fisher-z Wald CI on rho (Gaussian x Poisson)" begin
+    @testset "Fisher-z Wald + bootstrap CI on rho (Gaussian x Poisson)" begin
         rng = MersenneTwister(99)
         n = 1000
         x = randn(rng, n)
@@ -83,11 +83,20 @@ end
         ρ_true = (λ1 * λ2) / sqrt((λ1^2 + σ1^2) * (λ2^2 + v2_true))
 
         fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gaussian(),
-                                   y2 = y2, X2 = X2, fam2 = Poisson())
+                                   y2 = y2, X2 = X2, fam2 = Poisson(),
+                                   B = 60, rng = MersenneTwister(123))
+        # the returned point estimates must be plain Float64 (closure-boxing guard)
+        @test eltype(fit.β1) == Float64 && fit.λ1 isa Float64
+
         lo, hi = fit.rho_ci_wald
         @test isfinite(lo) && isfinite(hi)
         @test 0 < hi - lo < 0.5                    # finite, sensible Wald width
         @test lo ≤ fit.rho_latent ≤ hi
         @test isapprox(fit.rho_latent, ρ_true; atol = 0.12)
+
+        blo, bhi = fit.rho_ci_boot
+        @test isfinite(blo) && isfinite(bhi)
+        @test 0 < bhi - blo < 0.6                       # bootstrap interval finite & sensible
+        @test blo - 0.1 < fit.rho_latent < bhi + 0.1    # brackets the point estimate
     end
 end

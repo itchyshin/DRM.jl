@@ -40,6 +40,26 @@ _mf_init(::Gaussian, X, y) = X \ y
 _mf_init(::Poisson, X, y) = X \ log.(max.(y, 0.5))
 _mf_init(::Binomial, X, y) = zeros(size(X, 2))  # logit scale; 0 → p = 0.5
 
+# Per-observation response sampler (for the parametric bootstrap CI).
+_mf_rand(::Gaussian, η, trials, σ, rng) = η + σ * randn(rng)
+function _mf_rand(::Poisson, η, trials, σ, rng)
+    λ = exp(clamp(η, -20.0, 20.0))
+    L = exp(-λ); k = 0; p = 1.0
+    while true
+        k += 1
+        p *= rand(rng)
+        p <= L && return Float64(k - 1)
+    end
+end
+function _mf_rand(::Binomial, η, trials, σ, rng)
+    p = logistic(clamp(η, -30.0, 30.0))
+    s = 0
+    for _ in 1:Int(trials)
+        s += rand(rng) < p
+    end
+    return Float64(s)
+end
+
 """
     fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
                        trials1=ones(n), trials2=ones(n), K=32, g_tol=1e-6)
@@ -56,7 +76,8 @@ otherwise).
 function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         trials1 = ones(length(y1)), trials2 = ones(length(y2)),
         K::Int = 32, g_tol::Float64 = 1e-6,
-        confint::Bool = true, level::Float64 = 0.95)
+        confint::Bool = true, level::Float64 = 0.95,
+        B::Int = 0, rng = Random.default_rng())
     n = length(y1)
     n == length(y2) || throw(ArgumentError("y1 and y2 must have equal length"))
     p1 = size(X1, 2); p2 = size(X2, 2)
@@ -72,22 +93,25 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
     logw = log.(w)
     half_log_pi = 0.5 * log(π)
 
+    # NB: nll's locals are deliberately NOT named β1/λ1/σ1 etc. Sharing names with
+    # the post-fit outer variables would box them (closure capture), and the
+    # ForwardDiff.hessian below would then write Duals into the returned β1/λ1/σ1.
     function nll(θ)
-        β1 = θ[1:p1]
-        β2 = θ[p1+1:p1+p2]
-        λ1 = exp(θ[iλ1]); λ2 = θ[iλ2]
-        σ1 = s1 ? exp(θ[is1]) : one(eltype(θ))
-        σ2 = s2 ? exp(θ[is2]) : one(eltype(θ))
-        η1f = X1 * β1
-        η2f = X2 * β2
+        bb1 = θ[1:p1]
+        bb2 = θ[p1+1:p1+p2]
+        ll1 = exp(θ[iλ1]); ll2 = θ[iλ2]
+        sd1 = s1 ? exp(θ[is1]) : one(eltype(θ))
+        sd2 = s2 ? exp(θ[is2]) : one(eltype(θ))
+        η1f = X1 * bb1
+        η2f = X2 * bb2
         T = eltype(θ)
         acc = Vector{T}(undef, K)
         total = zero(T)
         @inbounds for i in 1:n
             for k in 1:K
                 u = rt2 * z[k]
-                ll = _mf_obs_ll(fam1, η1f[i] + λ1 * u, y1[i], trials1[i], σ1) +
-                     _mf_obs_ll(fam2, η2f[i] + λ2 * u, y2[i], trials2[i], σ2)
+                ll = _mf_obs_ll(fam1, η1f[i] + ll1 * u, y1[i], trials1[i], sd1) +
+                     _mf_obs_ll(fam2, η2f[i] + ll2 * u, y2[i], trials2[i], sd2)
                 acc[k] = logw[k] + ll
             end
             mx = maximum(acc)
@@ -106,7 +130,7 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
 
     res = Optim.optimize(nll, θ0, Optim.LBFGS(),
                          Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res)
+    θ̂ = Float64.(Optim.minimizer(res))   # concrete Float64; the ForwardDiff calls below get copies
     β1 = θ̂[1:p1]; β2 = θ̂[p1+1:p1+p2]
     λ1 = exp(θ̂[iλ1]); λ2 = θ̂[iλ2]
     σ1 = s1 ? exp(θ̂[is1]) : NaN
@@ -130,13 +154,13 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
     # vcov. NaN interval if the Hessian is not invertible / variance non-positive.
     rho_ci_wald = (NaN, NaN)
     if confint
-        H = ForwardDiff.hessian(nll, θ̂)
+        H = ForwardDiff.hessian(nll, copy(θ̂))
         V = try
             inv(H)
         catch
             fill(NaN, size(H))
         end
-        g = ForwardDiff.gradient(t -> atanh(clamp(rho_of(t), -0.999999, 0.999999)), θ̂)
+        g = ForwardDiff.gradient(t -> atanh(clamp(rho_of(t), -0.999999, 0.999999)), copy(θ̂))
         var_z = dot(g, V * g)
         if isfinite(var_z) && var_z > 0
             zc = Distributions.quantile(Distributions.Normal(), 1 - (1 - level) / 2)
@@ -146,8 +170,35 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         end
     end
 
+    # Parametric bootstrap CI: resample the shared latent + per-family draws at θ̂,
+    # refit, take percentile interval. (β1/λ1/σ1 are concrete Float64 — see the nll
+    # local-naming note — so the resampled data is clean and the refits converge.)
+    rho_ci_boot = (NaN, NaN)
+    if B > 0
+        η1f = X1 * β1; η2f = X2 * β2
+        ρs = Float64[]
+        for _ in 1:B
+            ub = randn(rng, n)
+            y1b = [_mf_rand(fam1, η1f[i] + λ1 * ub[i], trials1[i], σ1, rng) for i in 1:n]
+            y2b = [_mf_rand(fam2, η2f[i] + λ2 * ub[i], trials2[i], σ2, rng) for i in 1:n]
+            fb = try
+                fit_mixed_family(; y1 = y1b, X1 = X1, fam1 = fam1, y2 = y2b, X2 = X2,
+                                 fam2 = fam2, trials1 = trials1, trials2 = trials2,
+                                 K = K, g_tol = g_tol, confint = false)
+            catch
+                nothing
+            end
+            fb === nothing || push!(ρs, fb.rho_latent)
+        end
+        filter!(isfinite, ρs)
+        if length(ρs) >= max(10, B ÷ 2)
+            α = (1 - level) / 2
+            rho_ci_boot = (Statistics.quantile(ρs, α), Statistics.quantile(ρs, 1 - α))
+        end
+    end
+
     return (; β1, β2, λ1, λ2, σ1, σ2, v1, v2, rho_latent = ρ,
-            rho_ci_wald = rho_ci_wald,
+            rho_ci_wald = rho_ci_wald, rho_ci_boot = rho_ci_boot,
             loglik = -nll(θ̂), converged = Optim.converged(res),
             iterations = res.iterations)
 end
