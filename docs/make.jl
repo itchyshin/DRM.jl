@@ -25,6 +25,7 @@ makedocs(
             "model-guides/which-scale.md",
             "model-guides/distribution-families.md",
             "model-guides/model-workflow.md",
+            "model-guides/model-selection.md",
             "model-guides/convergence.md",
             "model-guides/marginal-la-vs-va.md",
             "model-guides/large-data.md",
@@ -46,6 +47,7 @@ makedocs(
         "Diagnostics & Validation" => [
             "diagnostics-and-validation/figure-gallery.md",
             "diagnostics-and-validation/prediction-and-postfit.md",
+            "diagnostics-and-validation/profile-likelihood.md",
             "diagnostics-and-validation/implementation-map.md",
             "diagnostics-and-validation/testing-likelihoods.md",
             "diagnostics-and-validation/simulation-plot-grammar.md",
