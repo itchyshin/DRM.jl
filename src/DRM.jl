@@ -38,6 +38,7 @@ include("gaussian_bivariate.jl")
 include("gaussian_ranef.jl")
 include("gaussian_meta.jl")
 include("gaussian_structured.jl")
+include("phylo_interaction.jl")  # bipartite two-tree interaction RE: V = σ²(C_A⊗C_B) + σ_e²I
 include("location_only.jl")      # #12: opt-in conjugate-EM for the Gaussian phylo-mean cell
 include("student.jl")
 include("poisson.jl")
@@ -76,7 +77,8 @@ export AugProblem, make_problem,
        estep_mode, prior_precision, build_Huu, joint_grad, joint_nll, aug_prior_grad!,
        pack_theta, unpack_theta, lc_to_Λ, Λ_to_lc,
        augmented_phy, random_balanced_tree, random_caterpillar_tree,
-       augmented_tree_precision, sigma_phy_dense, takahashi_selinv
+       augmented_tree_precision, sigma_phy_dense, takahashi_selinv,
+       fit_phylo_interaction, phylo_interaction_nll, phylo_correlation
 
 # Public API — the Gaussian distributional-regression front end.
 export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
