@@ -19,11 +19,13 @@ makedocs(
     ),
     pages = [
         "Home" => "index.md",
+        "Getting started" => "getting-started.md",
         "Get started" => "get-started.md",
         "Model Guides" => [
             "model-guides/model-map.md",
             "model-guides/which-scale.md",
             "model-guides/distribution-families.md",
+            "families.md",
             "model-guides/model-workflow.md",
             "model-guides/convergence.md",
             "model-guides/marginal-la-vs-va.md",
