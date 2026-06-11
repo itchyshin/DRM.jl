@@ -32,6 +32,11 @@ module DRM
 # fit_q4_sparse_tmb.jl transitively pull the whole chain from this src/ dir.
 include("fit_q4_sparse_tmb.jl")
 
+# General-q multivariate-Brownian coevolution block (#188): reuses the q-agnostic
+# sparse precision (kron(Q_tree, Λ⁻¹)) with a q×q Λ and an EXACT conjugate-Gaussian
+# Laplace marginal. Independent of the q=4 location-scale leaf code above.
+include("coevolution_q.jl")
+
 # Gaussian location–scale front end (public bf()/drm() API).
 include("gaussian_core.jl")
 include("gaussian_bivariate.jl")
@@ -85,6 +90,10 @@ export AugProblem, make_problem,
        augmented_phy, random_balanced_tree, random_caterpillar_tree,
        augmented_tree_precision, sigma_phy_dense, takahashi_selinv,
        fit_phylo_interaction, phylo_interaction_nll, phylo_correlation
+       # general-q coevolution block (#188)
+       CoevoProblem, make_coevo_problem, coevo_marginal, fit_coevolution,
+       simulate_coevolution, coevo_pack, coevo_unpack, coevo_theta_len,
+       lc_to_cov, cov_to_lc, lc_len
 
 # Public API — the Gaussian distributional-regression front end.
 export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
