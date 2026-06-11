@@ -1024,12 +1024,11 @@ function _fit_gamma_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp,
     )
 end
 
-function _fit_beta_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
-                                 g_tol; se::Bool = true,
-                                 polish_iterations::Int = 0)
-    size(Xσ, 2) == 1 || error("_fit_beta_phylo_laplace currently supports a constant sigma formula")
-    all(x -> x == 1.0, @view Xσ[:, 1]) ||
-        error("_fit_beta_phylo_laplace currently supports a constant sigma formula")
+# Shared Beta setup for the sparse-Laplace nuisance routes (phylo + general-cov):
+# the precision-dependent `aux_from` (φ = 1/σ², logit-transformed responses cached),
+# the fixed-effect start and the method-of-moments log-σ start. Keeps the tree and
+# relmat fitters numerically identical given the same precision Q.
+function _beta_laplace_setup(y, Xμ)
     yv = Float64.(y)
     ylogit = log.(yv) .- log1p.(-yv)
     function aux_from(logsigma)
@@ -1042,9 +1041,43 @@ function _fit_beta_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp
     φ0 = max(ȳ * (1 - ȳ) / max(v, eps()) - 1, 0.5)
     θβ0 = zeros(size(Xμ, 2))
     θβ0[1] = log(ȳ / (1 - ȳ))
+    return aux_from, θβ0, -0.5 * log(φ0)
+end
+
+function _fit_beta_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
+                                 g_tol; se::Bool = true,
+                                 polish_iterations::Int = 0)
+    size(Xσ, 2) == 1 || error("_fit_beta_phylo_laplace currently supports a constant sigma formula")
+    all(x -> x == 1.0, @view Xσ[:, 1]) ||
+        error("_fit_beta_phylo_laplace currently supports a constant sigma formula")
+    aux_from, θβ0, θσ0 = _beta_laplace_setup(y, Xμ)
     return _fit_phylo_mean_laplace_nuisance(
-        fam, Val(:beta_fixed), aux_from, length(yv), Xμ, labels, tree, nmμ, nmσ,
-        grp, g_tol; θβ0 = θβ0, θσ0 = -0.5 * log(φ0), sigma_scale = exp,
+        fam, Val(:beta_fixed), aux_from, length(y), Xμ, labels, tree, nmμ, nmσ,
+        grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
+        se = se, polish_iterations = polish_iterations
+    )
+end
+
+"""
+    _fit_beta_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp, g_tol; se)
+
+Beta sparse-Laplace fit with a general user-supplied PD covariance `C` on the mean
+(logit) random intercept (`relmat`/`animal`/`spatial(1 | grp)`), with the precision
+`φ` (via the `sigma` slot, σ = 1/√φ) a fixed nuisance parameter. Reuses the verified
+phylo nuisance spine via [`_general_cov_setup`](@ref); only the prior precision
+differs (`C⁻¹` vs the tree topology). Exact O(p) gradient carries over (#167).
+"""
+function _fit_beta_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp,
+                                  g_tol; se::Bool = true,
+                                  polish_iterations::Int = 0)
+    size(Xσ, 2) == 1 || error("_fit_beta_relmat_laplace currently supports a constant sigma formula")
+    all(x -> x == 1.0, @view Xσ[:, 1]) ||
+        error("_fit_beta_relmat_laplace currently supports a constant sigma formula")
+    Q, leaf_node = _general_cov_setup(C, labels)
+    aux_from, θβ0, θσ0 = _beta_laplace_setup(y, Xμ)
+    return _fit_general_mean_laplace_nuisance(
+        fam, Val(:beta_fixed), aux_from, length(y), Xμ, Q, leaf_node, nmμ, nmσ,
+        grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
         se = se, polish_iterations = polish_iterations
     )
 end
