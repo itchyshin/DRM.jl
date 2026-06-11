@@ -34,6 +34,9 @@ include("test_reml.jl")
 include("test_bf_grammar.jl")
 include("test_gaussian_bivariate.jl")
 include("test_gaussian_bivariate_phylo.jl")
+# General-q coevolution block (#188): the among-trait covariance Λ generalised
+# from the q=4 PLSM to q=6/q=8 on the same sparse kron(Q_tree, Λ⁻¹) precision.
+include("test_coevo_q6.jl")
 include("test_corpairs.jl")
 include("test_gaussian_ranef.jl")
 include("test_inference.jl")
