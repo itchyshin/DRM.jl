@@ -68,6 +68,7 @@ include("variational.jl")
 include("summary.jl")
 include("visualization.jl")
 include("comparison.jl")
+include("chibar.jl")             # chi-bar-square boundary p-values for variance-component LRTs
 include("bridge.jl")
 
 # Public API — the verified single-fit + scaling engine.
@@ -84,6 +85,7 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2,
        profile_result, profile_curve, parameter_surface, corpairs_data,
        is_converged, deviance, dof_residual,
        lrtest, anova, aicc, weights, update,
+       chibar_pvalue, lrt_boundary,
        bias_correct,
        heritability, repeatability, icc,
        reml_loglik, ml_loglik, estimation_method,
