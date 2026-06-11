@@ -130,6 +130,7 @@ include("test_variational_nb2.jl")
 include("test_variational_gamma.jl")
 include("test_family_accessor.jl")
 include("test_parity_accessors.jl")
+include("test_coverage_accessors.jl")  # anchors fixef + engine joint_nll/joint_grad/build_Huu/unpack_theta
 include("test_rho12_accessor.jl")
 include("test_summary_method.jl")
 include("test_predict_parameters.jl")
