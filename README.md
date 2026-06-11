@@ -52,22 +52,45 @@ Pkg.instantiate()              # resolve deps the first time
 using DRM
 ```
 
-## Quick look
+## Worked example — a Gaussian location–scale regression
+
+The smallest real **distributional** regression: both the mean **and** the
+(log) scale depend on a covariate. This runs as-is (verified).
 
 ```julia
-using DRM
-# Sparse phylogenetic precision foundation:
-phy = random_balanced_tree(8; branch_length = 0.2)
-Σ   = sigma_phy_dense(phy)                       # dense leaf covariance (small p)
+using DRM, Random
+Random.seed!(1)
 
-# Public q=4 PLSM route: put phylo(1 | species) on all four location/scale axes:
-f = bf(mu1 = @formula(y1 ~ x + phylo(1 | species)),
-       mu2 = @formula(y2 ~ x + phylo(1 | species)),
-       sigma1 = @formula(sigma1 ~ 1 + phylo(1 | species)),
-       sigma2 = @formula(sigma2 ~ 1 + phylo(1 | species)),
-       rho12 = @formula(rho12 ~ 1))
-# fit = drm(f, Gaussian(); data = dat, tree = phy)
+n = 400
+x = randn(n)
+# data-generating process: μ = 0.5 − 0.8·x,  log σ = −0.3 + 0.4·x
+y = (0.5 .- 0.8 .* x) .+ exp.(-0.3 .+ 0.4 .* x) .* randn(n)
+
+fit = drm(bf(@formula(y ~ 1 + x),        # mean μ
+             @formula(sigma ~ 1 + x)),     # log scale σ
+          Gaussian(); data = (; y, x))
+
+coef(fit, :mu)      # ≈ [ 0.50, -0.80]
+coef(fit, :sigma)   # ≈ [-0.32,  0.40]
+coeftable(fit)      # Wald SEs, z, p, 95% CIs for every coefficient
 ```
+
+```
+─────────────────────────────────────────────────────────────────────────
+                    Estimate  Std.Error        z  Pr(>|z|)  Lower 95%  Upper 95%
+─────────────────────────────────────────────────────────────────────────
+mu: (Intercept)     0.50299  0.0398921   12.609    <1e-35   0.424799   0.581173
+mu: x              -0.79985  0.0292344  -27.360    <1e-99  -0.857148  -0.742551
+sigma: (Intercept) -0.32217  0.0353752   -9.107    <1e-19  -0.391506  -0.252838
+sigma: x            0.39537  0.0335957   11.768    <1e-31   0.329524   0.461217
+─────────────────────────────────────────────────────────────────────────
+```
+
+The same `bf(...)` grammar carries the full audited surface — 13 families, random
+effects on the mean **and** scale, structured (`relmat` / `animal` / `phylo` /
+`spatial`) effects, `meta_V` meta-analysis, the bivariate `rho12` model, and the
+q=4 phylogenetic location–scale (PLSM) route — see
+[Capabilities](docs/src/capabilities.md) for the precise, test-cited matrix.
 
 Run the head-to-head and the O(p) scaling curve:
 
@@ -117,9 +140,20 @@ drmTMB-parity gate (RCall vs. drmTMB v0.1.3 outputs) is tracked in
 **Verified engine (foundation):** the q=4 ML location-scale single fit — 2.18×
 over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
 
-**Not yet wired:** `src/experimental/` (REML `reml_q4`, location-only,
-EM variants), labelled q=4 coevolution accessors / CIs, and the R↔Julia bridge
-(`engine = "julia"`). See [HANDOVER.md](HANDOVER.md) / [ROADMAP.md](ROADMAP.md).
+**Inference:** Wald + profile + parametric bootstrap; opt-in **REML** for the
+fixed-effect Gaussian location–scale fit (`method = :REML`, with the
+model-selection guard); epsilon-method bias correction; `heritability` /
+`repeatability` / `icc` with delta + profile CIs. The Julia side of the R↔Julia
+bridge (`drm_bridge` / `drm_bridge_inference`) is wired and tested.
+
+**Not yet wired / absent:** `src/experimental/` (the Laplace-REML `reml_q4`,
+location-only, EM variants); a **labelled q=4 coevolution-correlation accessor
+with CIs** (the raw `Σ_a` is stored and surfaced via `vc(fit)`, but a derived-ρ_a
+accessor is not); **χ̄² boundary inference**; **cross-family bivariate** models;
+the **variational (VA/ELBO)** marginal (`method = :VA` is a stub); and
+**missing-data** handling. The full, test-cited breakdown is in
+[Capabilities](docs/src/capabilities.md); see also
+[HANDOVER.md](HANDOVER.md) / [ROADMAP.md](ROADMAP.md).
 
 ## License
 
