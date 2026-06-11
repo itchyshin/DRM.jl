@@ -27,6 +27,7 @@ makedocs(
             "model-guides/model-workflow.md",
             "model-guides/convergence.md",
             "model-guides/marginal-la-vs-va.md",
+            "model-guides/cross-family-methods.md",
             "model-guides/large-data.md",
         ],
         "Tutorials" => [
