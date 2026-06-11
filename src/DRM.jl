@@ -51,6 +51,8 @@ include("lognormal.jl")
 include("zeroonebeta.jl")
 include("tweedie.jl")
 include("cumulative.jl")
+include("link_residual.jl")      # S3: per-family link-scale variance for cross-family ρ
+include("mixed_family.jl")       # S3: cross-family bivariate via shared-latent GHQ
 include("quantile_residuals.jl") # #183: per-family Dunn–Smyth quantile residuals
                                  # (included after all family types are defined)
 include("locscale_kernels.jl")   # #202 groundwork: two-axis (mean+log-disp) kernels
