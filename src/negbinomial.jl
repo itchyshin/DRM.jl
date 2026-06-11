@@ -90,8 +90,10 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, K = nothing
         gidx, G = _group_index(getproperty(data, grp))
         if rk === :intercept                              # (1 | g) → 1-D GHQ
             return _withformula(_fit_negbin2_ranef(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), f)
-        elseif rk === :corr                               # (1 + x | g) → 2-D GHQ
-            return _withformula(_fit_negbin2_corr_ranef(fam, y, Xμ, Xσ, Float64.(getproperty(data, var)), gidx, G, nmμ, nmσ, grp, g_tol), f)
+        elseif rk === :corr                               # (1 + x | g) → unified q2 Laplace
+            return _withformula(_fit_corr_locscale(fam, _corr_kind(fam), :corr, y, Xμ, Xσ,
+                    Float64.(getproperty(data, var)), gidx, G, nmμ, nmσ, String(grp);
+                    link = :log, se = se, g_tol = g_tol), f)
         else
             error("NegBinomial2() supports (1|g) or (1+x|g) on the mean")
         end
