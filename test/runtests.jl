@@ -159,6 +159,10 @@ include("test_poisson_crossed_grad_gate.jl")
 # routes (NB2, Gamma, Binomial ≤ 1e-6; Beta reported honestly).
 include("test_nongaussian_phylo_grad_gate.jl")
 
+# Non-Gaussian phylogenetic LOCATION–SCALE (#202): scale-axis SD recovery + the
+# ≤ 1e-6 FD gradient gate on the q=2 (mean + log-σ) Laplace marginal.
+include("test_phylo_locscale.jl")
+
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
     @testset "R-parity vs drmTMB v0.1.3" begin
