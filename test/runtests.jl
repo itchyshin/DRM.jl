@@ -90,6 +90,11 @@ include("test_locscale_profile.jl")
 include("test_locscale_gamma_e2e.jl")
 include("test_locscale_phylo_e2e.jl")
 include("test_locscale_frontend.jl")
+# Non-constant dispersion (sigma ~ x) SIMULTANEOUSLY with a random effect for
+# non-Gaussian families (#164): recovery of the dispersion slope + σ-axis RE
+# covariance via the location–scale engine, an FD-vs-exact gradient gate, and a
+# guard pinning the still-open mean-RE-only Laplace sub-case.
+include("test_nonconst_sigma_re.jl")
 include("test_nbinom2_slope_re.jl")
 include("test_beta_slope_re.jl")
 include("test_gamma_slope_re.jl")
