@@ -67,7 +67,7 @@ Gaussian marginal (K is rebuilt each evaluation since it depends on `ρ`).
 """
 spatial(x) = x
 
-function _fit_structured_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, K, nmμ, nmσ, grp, g_tol)
+function _fit_structured_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, K, nmμ, nmσ, grp, g_tol; reml::Bool = false)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     Kfac = cholesky(Symmetric(K))
@@ -101,16 +101,22 @@ function _fit_structured_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, K, nmμ, 
     θ0[1:pμ] .= βμ0
     θ0[pμ+1] = log(std(res0) + eps())
     θ0[pμ+pσ+1] = log(std(res0) / 2 + eps())
-    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    if reml
+        θ̂, conv, reml_ll, ml_ll, V = _reml_optimize(nll, θ0, pμ, g_tol)
+    else
+        res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+        θ̂ = Optim.minimizer(res)
+        V = inv(ForwardDiff.hessian(nll, θ̂))
+        conv = Optim.converged(res)
+    end
 
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
     means = Dict(:mu => Xμ * θ̂[1:pμ])
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    fit = _withnll(DrmFit(fam, blocks, names, θ̂, V, reml ? reml_ll : -nll(θ̂), n, conv, means, obs, scales), nll)
+    return reml ? _withreml(fit, reml_ll, ml_ll) : fit
 end
 
 # Resolve one structured marker to its fixed G×G correlation/relatedness matrix
@@ -158,7 +164,7 @@ end
 # Follow-up: sparse/Woodbury assembly for speed (tracked separately); a `sigma`
 # predictor on the residual is a straightforward extension (D → diag).
 function _fit_two_structured_gaussian(fam::Gaussian, y, Xμ, gidx1, G1, C1, gidx2, G2, C2,
-                                      nmμ, grp1, grp2, g_tol)
+                                      nmμ, grp1, grp2, g_tol; reml::Bool = false)
     n = length(y)
     pμ = size(Xμ, 2)
     Z1 = _structured_Z(gidx1, G1)
@@ -188,9 +194,14 @@ function _fit_two_structured_gaussian(fam::Gaussian, y, Xμ, gidx1, G1, C1, gidx
     θ0[pμ+1] = log(s0 / sqrt(3) + eps())     # balanced split: resid + 2 structured
     θ0[pμ+2] = log(s0 / sqrt(3) + eps())
     θ0[pμ+3] = log(s0 / sqrt(3) + eps())
-    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    if reml
+        θ̂, conv, reml_ll, ml_ll, V = _reml_optimize(nll, θ0, pμ, g_tol)
+    else
+        res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+        θ̂ = Optim.minimizer(res)
+        V = inv(ForwardDiff.hessian(nll, θ̂))
+        conv = Optim.converged(res)
+    end
 
     # :resd carries BOTH structured SD parameters (logσ₁, logσ₂) so `re_sd` and
     # `vc` report them per grouping factor; :resid carries the residual logσ.
@@ -208,15 +219,16 @@ function _fit_two_structured_gaussian(fam::Gaussian, y, Xμ, gidx1, G1, C1, gidx
         a2 = σ2² .* (C2 * (Z2' * Vinvr))
         Dict(Symbol(grp1) => a1, Symbol(grp2) => a2)
     end
-    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n,
-        Optim.converged(res), means, obs, scales), nll), blup)
+    fit = _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, reml ? reml_ll : -nll(θ̂), n,
+        conv, means, obs, scales), nll), blup)
+    return reml ? _withreml(fit, reml_ll, ml_ll) : fit
 end
 
 # Coordinate-spatial structured intercept: K(ρ) = exp(-d/ρ) from site distances,
 # with the range ρ estimated jointly (θ gains log σ_s and log ρ). K depends on θ
 # so it is rebuilt each evaluation; otherwise the closed-form marginal is as in
 # `_fit_structured_gaussian`.
-function _fit_spatial_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, coords, nmμ, nmσ, grp, g_tol)
+function _fit_spatial_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, coords, nmμ, nmσ, grp, g_tol; reml::Bool = false)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     Ddist = [sqrt(sum(abs2, coords[k, :] .- coords[l, :])) for k in 1:G, l in 1:G]
@@ -250,9 +262,14 @@ function _fit_spatial_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, coords, nmμ
     θ0[pμ+1] = log(std(res0) + eps())
     θ0[pμ+pσ+1] = log(std(res0) / 2 + eps())
     θ0[pμ+pσ+2] = log(meandist)
-    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    if reml
+        θ̂, conv, reml_ll, ml_ll, V = _reml_optimize(nll, θ0, pμ, g_tol)
+    else
+        res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+        θ̂ = Optim.minimizer(res)
+        V = inv(ForwardDiff.hessian(nll, θ̂))
+        conv = Optim.converged(res)
+    end
 
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ),
         :resd => (pμ+pσ+1):(pμ+pσ+1), :range => (pμ+pσ+2):(pμ+pσ+2)]
@@ -260,7 +277,8 @@ function _fit_spatial_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, coords, nmμ
     means = Dict(:mu => Xμ * θ̂[1:pμ])
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    fit = _withnll(DrmFit(fam, blocks, names, θ̂, V, reml ? reml_ll : -nll(θ̂), n, conv, means, obs, scales), nll)
+    return reml ? _withreml(fit, reml_ll, ml_ll) : fit
 end
 
 # ===========================================================================

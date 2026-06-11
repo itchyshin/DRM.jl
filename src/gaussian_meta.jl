@@ -16,7 +16,7 @@ planned.)
 """
 meta_V(v) = v     # identity stub; the marker is intercepted during formula parsing
 
-function _fit_meta_gaussian(fam::Gaussian, y, Xμ, Xσ, vv, nmμ, nmσ, g_tol)
+function _fit_meta_gaussian(fam::Gaussian, y, Xμ, Xσ, vv, nmμ, nmσ, g_tol; reml::Bool = false)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     function nll(θ)
@@ -34,13 +34,19 @@ function _fit_meta_gaussian(fam::Gaussian, y, Xμ, Xσ, vv, nmμ, nmσ, g_tol)
     θ0 = zeros(pμ + pσ)
     θ0[1:pμ] .= βμ0
     θ0[pμ+1] = log(std(y - Xμ * βμ0) / 2 + eps())   # τ below the total residual sd
-    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    if reml
+        θ̂, conv, reml_ll, ml_ll, V = _reml_optimize(nll, θ0, pμ, g_tol)
+    else
+        res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+        θ̂ = Optim.minimizer(res)
+        V = inv(ForwardDiff.hessian(nll, θ̂))
+        conv = Optim.converged(res)
+    end
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ)]
     names = [:mu => nmμ, :sigma => nmσ]
     means = Dict(:mu => Xμ * θ̂[1:pμ])
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => sqrt.(vv .+ exp.(2 .* (Xσ * θ̂[(pμ+1):(pμ+pσ)]))))  # √(v + τ²)
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    fit = _withnll(DrmFit(fam, blocks, names, θ̂, V, reml ? reml_ll : -nll(θ̂), n, conv, means, obs, scales), nll)
+    return reml ? _withreml(fit, reml_ll, ml_ll) : fit
 end

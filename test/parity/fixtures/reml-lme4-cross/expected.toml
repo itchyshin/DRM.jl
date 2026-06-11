@@ -1,0 +1,10 @@
+# lme4 REML reference: y ~ 1 + x + (1|g) + (1|h). gen_reml_refs.R (lme4 1.1.37).
+[fit]
+model  = "lmer(y ~ 1 + x + (1|g) + (1|h), REML=TRUE)"
+logLik = -135.4311518
+[reml]
+sd_g     = 1.138630648
+sd_h     = 0.803996734
+sigma    = 0.8055014613
+intercept = 0.8889655767
+slope_x   = 0.5205056707

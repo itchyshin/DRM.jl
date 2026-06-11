@@ -91,7 +91,7 @@ end
 
 # Gaussian location–scale with one random intercept (1 | g) on the mean.
 # θ = [β_μ; β_σ (log σ); log σ_b].
-function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol)
+function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol; reml::Bool = false)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
 
@@ -131,9 +131,14 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
     θ0[pμ+1] = log(std(res0) + eps())
     θ0[pμ+pσ+1] = log(std(res0) / 2 + eps())
 
-    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    if reml
+        θ̂, conv, reml_ll, ml_ll, V = _reml_optimize(nll, θ0, pμ, g_tol)
+    else
+        res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+        θ̂ = Optim.minimizer(res)
+        V = inv(ForwardDiff.hessian(nll, θ̂))
+        conv = Optim.converged(res)
+    end
 
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
@@ -154,14 +159,15 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
         [C[k] / (1 / σb² + S[k]) for k in 1:G]
     end
     re = Dict(Symbol(grp) => blup)
-    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll), re)
+    fit = _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, reml ? reml_ll : -nll(θ̂), n, conv, means, obs, scales), nll), re)
+    return reml ? _withreml(fit, reml_ll, ml_ll) : fit
 end
 
 # Correlated random intercept+slope (1 + x | g): per group (b0,b1) ~ N(0, Σ_re),
 # Σ_re a 2×2 covariance (log-Cholesky parameters a, b, c). Groups are disjoint, so
 # the Woodbury capacitance is block-diagonal in 2×2 blocks → O(G), explicit 2×2
 # inverse/solve/det (ForwardDiff-friendly). θ = [β_μ; β_σ; a, b, c].
-function _fit_correlated_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, xs, nmμ, nmσ, grp, g_tol)
+function _fit_correlated_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, xs, nmμ, nmσ, grp, g_tol; reml::Bool = false)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     function nll(θ)
@@ -201,8 +207,12 @@ function _fit_correlated_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, xs,
     θ0[pμ+1] = log(std(res0) + eps())
     sd0 = log(std(res0) / 2 + eps())
     θ0[pμ+pσ+1] = sd0; θ0[pμ+pσ+2] = sd0; θ0[pμ+pσ+3] = 0.0
-    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    if reml
+        θ̂, conv, reml_ll, ml_ll, V = _reml_optimize(nll, θ0, pμ, g_tol)
+    else
+        res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+        θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂)); conv = Optim.converged(res)
+    end
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :recov => (pμ+pσ+1):(pμ+pσ+3)]
     names = [:mu => nmμ, :sigma => nmσ, :recov => ["$(grp):L11", "$(grp):L22", "$(grp):L21"]]
     means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))
@@ -233,7 +243,8 @@ function _fit_correlated_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, xs,
         B
     end
     re = Dict(Symbol(grp) => blup)
-    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll), re)
+    fit = _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, reml ? reml_ll : -nll(θ̂), n, conv, means, obs, scales), nll), re)
+    return reml ? _withreml(fit, reml_ll, ml_ll) : fit
 end
 
 """
@@ -306,7 +317,7 @@ end
 # Z̃ᵀD⁻¹Z̃ is rank-deficient (crossed intercept columns), so we factor with
 # check=false and return a finite penalty on failure — the optimiser's line
 # search then retreats from those ill-scaled probes. Closed-form GLS; Z precomputed.
-function _fit_multi_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol)
+function _fit_multi_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol; reml::Bool = false)
     n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     K = length(comps)
     Gks = [c[3] for c in comps]
@@ -382,9 +393,16 @@ function _fit_multi_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, comps, nmμ, nmσ
     for k in 1:K
         θ0[pμ+pσ+k] = log(s0 + eps())
     end
-    od = Optim.OnceDifferentiable(nll, grad!, θ0)
-    res = Optim.optimize(od, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol))
-    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    if reml
+        # The analytic `grad!` covers only the ML objective; the REML correction
+        # adds a nested-Hessian term, so the restricted fit uses ForwardDiff
+        # (the route is dense — Z is formed explicitly — so this is cheap).
+        θ̂, conv, reml_ll, ml_ll, V = _reml_optimize(nll, θ0, pμ, g_tol)
+    else
+        od = Optim.OnceDifferentiable(nll, grad!, θ0)
+        res = Optim.optimize(od, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol))
+        θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂)); conv = Optim.converged(res)
+    end
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+K)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [c[4] for c in comps]]
     means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))
@@ -407,7 +425,13 @@ function _fit_multi_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, comps, nmμ, nmσ
         end
         d
     end
-    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll, grad!), blup)
+    # For REML the stored objective is the ML `nll` WITHOUT the analytic `grad!`
+    # (which only differentiates the ML objective); profile intervals then fall
+    # back to autodiff on the ML closure. The ML path keeps the fast `grad!`.
+    inner = reml ? _withnll(DrmFit(fam, blocks, names, θ̂, V, reml_ll, n, conv, means, obs, scales), nll) :
+                   _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, conv, means, obs, scales), nll, grad!)
+    fit = _withranef(inner, blup)
+    return reml ? _withreml(fit, reml_ll, ml_ll) : fit
 end
 
 # Gauss–Hermite nodes/weights (Golub–Welsch) for ∫ h(x) e^{-x²} dx ≈ Σ wₖ h(xₖ).
@@ -426,7 +450,7 @@ end
 # group reduces to Aₘ = Σ η0ᵢ and Bₘ = Σ rᵢ² e^{-2η0ᵢ}. O(n + G·K) per eval and
 # fully differentiable (nodes are constants). drmTMB does this with Laplace; for
 # a 1-D effect AGHQ is the standard, more accurate sibling.
-function _fit_sigma_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
+function _fit_sigma_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol; reml::Bool = false)
     n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     members = [Int[] for _ in 1:G]
     for i in 1:n
@@ -461,11 +485,16 @@ function _fit_sigma_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, nmμ, nm
     θ0[1:pμ] .= βμ0
     θ0[pμ+1] = log(std(res0) + eps())
     θ0[pμ+pσ+1] = log(0.5 * std(res0) + eps())   # σ_b init
-    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    if reml
+        θ̂, conv, reml_ll, ml_ll, V = _reml_optimize(nll, θ0, pμ, g_tol)
+    else
+        res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+        θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂)); conv = Optim.converged(res)
+    end
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
     means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))   # population (b=0) σ
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    fit = _withnll(DrmFit(fam, blocks, names, θ̂, V, reml ? reml_ll : -nll(θ̂), n, conv, means, obs, scales), nll)
+    return reml ? _withreml(fit, reml_ll, ml_ll) : fit
 end

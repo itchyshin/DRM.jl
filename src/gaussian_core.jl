@@ -244,18 +244,15 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     fixed_sigma, sigma_re, _, _ = _split_ranef(rhs[:sigma])    # (1|g) on the scale → GHQ marginal
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, fixed_sigma, data)
-    if method === :REML
-        # REML (opt-in, experimental) is implemented only for the fixed-effect
-        # univariate Gaussian location–scale cell in this slice (the standard
-        # Patterson–Thompson correction for β_μ). Random-effect / structured /
-        # meta cells and the bivariate q=4 path are gated by their own REML work
-        # (report/reml-wiring-design.md, slice 1 / #187); reject them clearly.
-        (isempty(re) && isempty(sigma_re) && structured === nothing && metav === nothing &&
-         length(_collect_structured(rhs[:mu])) == 0) ||
-            throw(ArgumentError("drm: method = :REML is currently implemented only for the " *
-                "fixed-effect Gaussian location–scale model (no random effects, no structured " *
-                "/ phylo / meta terms). Use method = :ML (the default) for those models."))
-    end
+    # REML is supported for EVERY univariate Gaussian route (fixed, random
+    # effects, structured/phylo/spatial/animal/relmat, two-structured, and
+    # meta_V): each adds the standard Gaussian-mixed correction −½ logdet(Xμᵀ
+    # V⁻¹ Xμ) to its marginal (see `_reml_penalty` / `_reml_optimize`). ML stays
+    # the default. Non-Gaussian families never reach here — their `drm` methods
+    # take no `method` kwarg, so `method = :REML` errors for them (the guard is
+    # the absent keyword). The bivariate q=4 path keeps its own gate (handled in
+    # the BivariateDrmFormula `drm` method).
+    reml = method === :REML
     if algorithm in (:em, :sparse_lbfgs)
         # The all-node sparse routes fit only the supported cell: a single
         # structured (phylo) mean random effect with a constant residual scale.
@@ -278,7 +275,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             error("`sigma` random effects support a single random intercept `(1 | g)`")
         sgrp = sigma_re[1][2]
         gidx, G = _group_index(getproperty(data, sgrp))
-        return _withformula(_fit_sigma_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, sgrp, g_tol), f)
+        return _withformula(_fit_sigma_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, sgrp, g_tol; reml), f)
     end
     # Two structured components in one fit (e.g. phylo(1|species) + relmat(1|id)):
     # a separate variance component each, latent field = their sum. Dense first cut.
@@ -296,8 +293,12 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         gidx2, G2 = _group_index(getproperty(data, grp2))
         # Opt-in sparse O(p) path (#225/#232): augmented-latent + sparse Cholesky +
         # Takahashi-selected-inverse gradient. Same model, same MLE; default
-        # (:auto) stays on the verified dense path.
-        if algorithm === :sparse
+        # (:auto) stays on the verified dense path. The sparse spec carries an
+        # ANALYTIC gradient (CHOLMOD — not autodiff-differentiable), so REML (whose
+        # correction adds a nested-Hessian term) routes through the dense
+        # two-structured path instead: same model, same MLE, fully autodiff-able,
+        # and it carries the REML correction.
+        if algorithm === :sparse && !reml
             # END-TO-END sparse: a phylo component feeds the ROOT-CONDITIONED
             # augmented tree precision DIRECTLY (no dense Ck inversion) — true O(p)
             # (#232). A relmat/animal component still resolves its dense relatedness
@@ -311,7 +312,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         C1 = _resolve_structured_matrix(kind1, grp1, G1; K = K, A = A, tree = tree, coords = coords)
         C2 = _resolve_structured_matrix(kind2, grp2, G2; K = K, A = A, tree = tree, coords = coords)
         return _withformula(_fit_two_structured_gaussian(fam, y, Xμ, gidx1, G1, C1,
-            gidx2, G2, C2, nmμ, grp1, grp2, g_tol), f)
+            gidx2, G2, C2, nmμ, grp1, grp2, g_tol; reml), f)
     end
     if structured !== nothing
         kind, grp = structured
@@ -320,7 +321,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             coords === nothing && error("spatial(1 | $grp) needs `coords = …`")
             cmat = Matrix{Float64}(coords)
             size(cmat, 1) == G || error("coords must have $G rows (one per `$grp` level)")
-            return _withformula(_fit_spatial_gaussian(fam, y, Xμ, Xσ, gidx, G, cmat, nmμ, nmσ, grp, g_tol), f)
+            return _withformula(_fit_spatial_gaussian(fam, y, Xμ, Xσ, gidx, G, cmat, nmμ, nmσ, grp, g_tol; reml), f)
         end
         Kmat = if kind === :relmat
             K === nothing && error("relmat(1 | $grp) needs `K = …`")
@@ -335,19 +336,22 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                 isempty(sigma_re) && size(Xσ, 2) == 1
             if use_sparse_phylo
                 phy = tree isa AbstractString ? augmented_phy(tree) : tree
-                algorithm in (:auto, :sparse_lbfgs) && return _withformula(
-                    _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol), f)
+                # The EM path has no marginal-objective closure to correct, so REML
+                # routes to the sparse-L-BFGS phylo fitter (same model, same MLE),
+                # which carries the REML correction; otherwise honour the algorithm.
+                (algorithm in (:auto, :sparse_lbfgs) || (reml && algorithm === :em)) && return _withformula(
+                    _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol; reml), f)
                 return _withformula(
                     _fit_structured_gaussian_em(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol), f)
             end
             _phylo_correlation(tree)
         end
         size(Kmat) == (G, G) || error("structured matrix must be $(G)×$(G) (the number of `$grp` levels)")
-        return _withformula(_fit_structured_gaussian(fam, y, Xμ, Xσ, gidx, G, Kmat, nmμ, nmσ, grp, g_tol), f)
+        return _withformula(_fit_structured_gaussian(fam, y, Xμ, Xσ, gidx, G, Kmat, nmμ, nmσ, grp, g_tol; reml), f)
     end
     if metav !== nothing
         vv = Float64.(getproperty(data, metav))    # known sampling variances
-        return _withformula(_fit_meta_gaussian(fam, y, Xμ, Xσ, vv, nmμ, nmσ, g_tol), f)
+        return _withformula(_fit_meta_gaussian(fam, y, Xμ, Xσ, vv, nmμ, nmσ, g_tol; reml), f)
     end
     if isempty(re)
         if method === :REML
@@ -360,7 +364,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         (_, grp) = re[1]; (_, var) = re_kinds[1]
         gidx, G = _group_index(getproperty(data, grp))
         xs = Float64.(getproperty(data, var))
-        return _withformula(_fit_correlated_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, xs, nmμ, nmσ, grp, g_tol), f)
+        return _withformula(_fit_correlated_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, xs, nmμ, nmσ, grp, g_tol; reml), f)
     end
     any(k -> k[1] === :corr, re_kinds) &&
         error("a correlated `(1 + x | g)` block must be the only random-effect term")
@@ -368,14 +372,14 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         (_, grp) = re[1]; (kind, var) = re_kinds[1]
         gidx, G = _group_index(getproperty(data, grp))
         w = kind === :intercept ? ones(length(y)) : Float64.(getproperty(data, var))
-        return _withformula(_fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol), f)
+        return _withformula(_fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol; reml), f)
     end
     comps = map(zip(re, re_kinds)) do ((_, grp), (kind, var))  # multiple scalar components
         w = kind === :intercept ? ones(length(y)) : Float64.(getproperty(data, var))
         gidx, Gk = _group_index(getproperty(data, grp))
         (w, gidx, Gk, String(grp))
     end
-    return _withformula(_fit_multi_ranef_gaussian(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol), f)
+    return _withformula(_fit_multi_ranef_gaussian(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol; reml), f)
 end
 
 # univariate Gaussian location–scale, fixed effects only (closed form, ML)
@@ -524,6 +528,60 @@ function _fit_fixed_gaussian_reml(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     end
     fit = DrmFit(fam, blocks, names, θ̂, V, reml_ll, n, Optim.converged(res), means, obs, scales)
     return _withreml(_withnll(fit, nll_full), reml_ll, ml_ll)
+end
+
+# ---------------------------------------------------------------------------
+# Generic Gaussian-mixed REML correction (issue: REML-for-all-Gaussian).
+#
+# Every Gaussian route below builds an ML marginal negative log-likelihood
+#     nll_ML(θ) = ½(logdet V(θ) + (y − Xμ β_μ)ᵀ V(θ)⁻¹ (y − Xμ β_μ)) + ½ n log 2π
+# with the mean fixed effects β_μ stored as the FIRST `pμ` entries of θ (the
+# `:mu => 1:pμ` block). For the conjugate-Gaussian marginal the STANDARD
+# restricted likelihood (Patterson–Thompson 1971; Harville 1974; the lme4 /
+# metafor REML) adds the exact correction
+#     ℓ_REML(θ) = ℓ_ML(θ) − ½ logdet(Xμᵀ V(θ)⁻¹ Xμ) + (pμ/2) log 2π.
+# Crucially Xμᵀ V⁻¹ Xμ is exactly the Hessian of nll_ML w.r.t. the β_μ block
+# (∂²/∂β_μ² of ½ (y−Xμβ_μ)ᵀV⁻¹(y−Xμβ_μ) = Xμᵀ V⁻¹ Xμ), so we read it off the
+# route's OWN objective by a small (pμ×pμ) ForwardDiff Hessian — no per-route
+# V machinery is duplicated, and it inherits each route's O(p) / Woodbury cost
+# (pμ is the handful of mean columns). The penalty depends only on the variance
+# parameters, so β̂_μ at the optimum is unchanged (the GLS/WLS estimate ML would
+# give at the REML variance components) and the variance components are inflated
+# — the defining REML property `var_REML ≥ var_ML`.
+#
+# Verified (this slice): byte-identical to `_fit_fixed_gaussian_reml` on the
+# fixed-effect cell, and equal to lme4 REML (variance components, fixed effects,
+# restricted logLik) on a random-intercept fixture.
+
+# REML penalty added to a route's ML negative log-likelihood: +½ logdet(Hββ) −
+# (pμ/2) log 2π, where Hββ = ∂²nll_ML/∂β_μ² (the `:mu` block, = Xμᵀ V⁻¹ Xμ).
+# A `check = false` Cholesky guards against a non-PD probe far from the optimum
+# (the line search then retreats), mirroring the routes' own finite-penalty
+# discipline; `_REML_PENALTY` is the same large finite barrier shape.
+const _REML_LOG2PI = log(2π)
+function _reml_penalty(nll_ml, pμ::Int, θ::AbstractVector)
+    rest = θ[pμ+1:end]
+    Hββ = ForwardDiff.hessian(βμ -> nll_ml(vcat(βμ, rest)), θ[1:pμ])
+    ch = cholesky(Symmetric(Hββ); check = false)
+    issuccess(ch) || return convert(eltype(θ), 1e18)
+    return 0.5 * logdet(ch) - 0.5 * pμ * _REML_LOG2PI
+end
+
+# Run a Gaussian route's REML fit from its ML objective `nll` and warm start
+# `θ0`. Optimises nll(θ) + _reml_penalty(nll, pμ, θ); returns
+# `(θ̂, converged, reml_ll, ml_ll, V)` where `reml_ll = ℓ_REML(θ̂)`, `ml_ll =
+# ℓ_ML(θ̂)` (the plain ML log-lik at the REML estimate, for cross-structure use),
+# and `V` is the inverse Hessian of the RESTRICTED objective (REML standard
+# errors). Callers reuse their own block/name/means/scales/BLUP construction at
+# θ̂ — only the objective and the two log-likelihoods differ from the ML path.
+function _reml_optimize(nll, θ0::AbstractVector, pμ::Int, g_tol)
+    nll_reml = θ -> nll(θ) + _reml_penalty(nll, pμ, θ)
+    res = Optim.optimize(nll_reml, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res)
+    V = inv(ForwardDiff.hessian(nll_reml, θ̂))
+    reml_ll = -nll_reml(θ̂)
+    ml_ll = -nll(θ̂)
+    return θ̂, Optim.converged(res), reml_ll, ml_ll, V
 end
 
 # ---- accessors -----------------------------------------------------------

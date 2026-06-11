@@ -116,10 +116,21 @@ fit = drm(
 function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
              g_tol::Real = 1e-8, q4_g_tol::Real = 1e-3,
              q4_iterations::Int = 300, q4_n_newton::Int = 40,
-             q4_vcov::Bool = true)
+             q4_vcov::Bool = true, method::Symbol = :ML)
+    method in (:ML, :REML) ||
+        throw(ArgumentError("drm: `method` must be :ML (default) or :REML (got :$method)"))
     rhs = Dict(f.forms)
     fixed, q4_marker = _bivariate_q4_marker(rhs)
     if q4_marker !== nothing
+        # The q=4/q6/q8 phylogenetic coevolution engine integrates β_μ jointly
+        # with the latent field through a bordered CHOLMOD Newton solve; its REML
+        # objective (the experimental `reml_q4.jl`, flagged "needs human review")
+        # is not yet wired into the public path (report/reml-wiring-design.md,
+        # slice 1 / #187). Reject REML on this route clearly; ML is unaffected.
+        method === :REML &&
+            throw(ArgumentError("drm: method = :REML is not yet available for the bivariate q=4 " *
+                "phylogenetic coevolution engine (shared `phylo(1 | group)` markers). Use " *
+                "method = :ML; REML there is gated by the q=4 REML wiring (#187)."))
         return _fit_bivariate_q4_phylo(
             f, fam, data, fixed, q4_marker, tree;
             q4_g_tol = q4_g_tol,
@@ -128,10 +139,10 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
             q4_vcov = q4_vcov,
         )
     end
-    return _fit_bivariate_residual(f, fam, data, rhs, g_tol)
+    return _fit_bivariate_residual(f, fam, data, rhs, g_tol; reml = method === :REML)
 end
 
-function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rhs, g_tol::Real)
+function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rhs, g_tol::Real; reml::Bool = false)
     y1, X1, nm1 = _design(f.response1, rhs[:mu1], data)
     y2, X2, nm2 = _design(f.response2, rhs[:mu2], data)
     _, Xs1, nms1 = _design(f.response1, rhs[:sigma1], data)   # reuse a real LHS;
@@ -165,9 +176,18 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
     θ0[offs[3]+1] = log(std(y1 - X1 * β1) + eps())
     θ0[offs[4]+1] = log(std(y2 - X2 * β2) + eps())     # ρ intercept starts at 0
 
-    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    # The two mean blocks β_μ1, β_μ2 are the first `pμ = p1+p2` entries, so the
+    # standard Gaussian-mixed REML correction over the joint (block-diagonal) mean
+    # design applies uniformly (see `_reml_optimize`).
+    pμ = ps[1] + ps[2]
+    if reml
+        θ̂, conv, reml_ll, ml_ll, V = _reml_optimize(nll, θ0, pμ, g_tol)
+    else
+        res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+        θ̂ = Optim.minimizer(res)
+        V = inv(ForwardDiff.hessian(nll, θ̂))
+        conv = Optim.converged(res)
+    end
 
     blocks = [:mu1 => rng(1), :mu2 => rng(2), :sigma1 => rng(3), :sigma2 => rng(4), :rho12 => rng(5)]
     names = [:mu1 => nm1, :mu2 => nm2, :sigma1 => nms1, :sigma2 => nms2, :rho12 => nmr]
@@ -176,7 +196,8 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
     scales = Dict(:sigma1 => exp.(Xs1 * θ̂[rng(3)]),
                   :sigma2 => exp.(Xs2 * θ̂[rng(4)]),
                   :rho12 => tanh.(Xr * θ̂[rng(5)]))
-    return _withformula(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll), f)
+    fit = _withformula(_withnll(DrmFit(fam, blocks, names, θ̂, V, reml ? reml_ll : -nll(θ̂), n, conv, means, obs, scales), nll), f)
+    return reml ? _withreml(fit, reml_ll, ml_ll) : fit
 end
 
 function _bivariate_q4_marker(rhs)

@@ -1,0 +1,9 @@
+# metafor REML reference: rma(yi=y, vi=v, method="REML"). gen_reml_refs.R (metafor 4.8.0).
+# Random-effects meta-analysis = drm(gaussian()) + meta_V(v), sigma ~ 1 (tau).
+[fit]
+model  = "rma(yi=y, vi=v, method=REML)"
+logLik = -22.6273558
+[reml]
+mu    = 1.325294408     # pooled mean
+tau2  = 0.1980951147    # between-study variance (tau^2 = exp(2*sigma_intercept))
+se_mu = 0.1178597422

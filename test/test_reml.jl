@@ -118,16 +118,27 @@ import ForwardDiff
         @test isfinite(bic(full_reml))
     end
 
-    @testset "unsupported REML cells are rejected clearly" begin
-        # A random effect on the mean is outside slice 2's scope → ArgumentError.
+    @testset "RE-on-mean REML now SUPPORTED (was rejected) + remaining guards" begin
+        # A random effect on the mean is now a supported REML cell (the
+        # REML-for-all-Gaussian work): it returns a REML fit, not an error.
         Random.seed!(7)
         g = repeat(1:10, inner = 6)
         yy = 1.0 .+ randn(10)[g] .+ 0.5 .* randn(60)
         d2 = (; y = yy, g = g)
-        @test_throws ArgumentError drm(bf(@formula(y ~ 1 + (1 | g)), @formula(sigma ~ 1)),
-                                       Gaussian(); data = d2, method = :REML)
-        # An unknown method symbol errors.
+        fre = drm(bf(@formula(y ~ 1 + (1 | g)), @formula(sigma ~ 1)),
+                  Gaussian(); data = d2, method = :REML)
+        @test estimation_method(fre) === :REML
+        @test isfinite(reml_loglik(fre))
+        # An unknown method symbol still errors.
         @test_throws ArgumentError drm(bf(@formula(y ~ 1), @formula(sigma ~ 1)),
                                        Gaussian(); data, method = :restricted)
+        # The bivariate q=4 phylo coevolution engine still rejects REML (gated).
+        @test_throws ArgumentError drm(
+            bf(mu1 = @formula(y1 ~ 1 + phylo(1 | sp)),
+               mu2 = @formula(y2 ~ 1 + phylo(1 | sp)),
+               sigma1 = @formula(sigma1 ~ 1 + phylo(1 | sp)),
+               sigma2 = @formula(sigma2 ~ 1 + phylo(1 | sp))),
+            Gaussian(); data = (; y1 = randn(4), y2 = randn(4), sp = 1:4),
+            tree = random_balanced_tree(4; branch_length = 0.2), method = :REML)
     end
 end

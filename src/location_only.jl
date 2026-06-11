@@ -396,8 +396,31 @@ function _fit_structured_gaussian_em(
     return DrmFit(fam, blocks, names, θ̂, V, r.loglik, n, converged, means, obs, scales)
 end
 
+# REML profile objective for the sparse phylo route: the profiled-β ML nll plus
+# the standard Gaussian-mixed correction +½ logdet(Xμᵀ V⁻¹ Xμ). `XtVX` is the
+# GLS information matrix _loconly_profile_beta already forms (= Xμᵀ V⁻¹ Xμ), so
+# the correction reuses the route's O(p) Woodbury solves — no dense V. Returns
+# (reml_nll, β, chM, XtVX); a non-PD probe yields the finite penalty.
+function _loconly_profile_reml(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+        return _LOCONLY_PENALTY, nothing, nothing, nothing
+    σ² = exp(2 * Float64(lσ))
+    try
+        _, _, chM, _ = build_M(prob, exp(2 * Float64(lσ_phy)), σ²)
+        VX = Vinv_mul(prob, chM, σ², prob.X)
+        XtVX = prob.X' * VX
+        β = XtVX \ (prob.X' * Vinv_mul(prob, chM, σ², prob.y))
+        nll = _loconly_marginal_nll(prob, β, lσ, lσ_phy)
+        pμ = size(prob.X, 2)
+        reml_nll = nll + 0.5 * logdet(Symmetric(XtVX)) - 0.5 * pμ * log(2π)
+        return (isfinite(reml_nll) ? reml_nll : _LOCONLY_PENALTY), β, chM, XtVX
+    catch
+        return _LOCONLY_PENALTY, nothing, nothing, nothing
+    end
+end
+
 function _fit_structured_gaussian_sparse_lbfgs(
-    fam::Gaussian, y, Xμ, Xσ, gidx, G, phy::AugmentedPhy, nmμ, nmσ, grp, g_tol
+    fam::Gaussian, y, Xμ, Xσ, gidx, G, phy::AugmentedPhy, nmμ, nmσ, grp, g_tol; reml::Bool = false
 )
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     pσ == 1 || error(
@@ -425,14 +448,22 @@ function _fit_structured_gaussian_sparse_lbfgs(
         G !== nothing && copyto!(G, grad)
         return F === nothing ? nothing : val
     end
+    # REML profile (value-only): the inner Woodbury solves go through CHOLMOD, so
+    # the 2-D variance profile is optimised with a derivative-free method (the
+    # corrected objective adds the +½ logdet(XtVX) mean-information term).
+    reml_obj(v) = _loconly_profile_reml(prob, v[1], v[2])[1]
 
-    ls = Optim.LBFGS(; linesearch=Optim.LineSearches.BackTracking(; order=3))
     opts = Optim.Options(; g_tol=g_tol, iterations=500, f_reltol=1e-9)
-    od = Optim.NLSolversBase.only_fg!(fg!)
     best_res = nothing
     best_val = Inf
     for start in starts
-        res = Optim.optimize(od, start, ls, opts)
+        res = if reml
+            Optim.optimize(reml_obj, start, Optim.NelderMead(),
+                           Optim.Options(; iterations=2000, f_reltol=1e-12, g_tol=g_tol))
+        else
+            ls = Optim.LBFGS(; linesearch=Optim.LineSearches.BackTracking(; order=3))
+            Optim.optimize(Optim.NLSolversBase.only_fg!(fg!), start, ls, opts)
+        end
         val = Optim.minimum(res)
         if isfinite(val) && val < best_val
             best_res = res
@@ -443,8 +474,16 @@ function _fit_structured_gaussian_sparse_lbfgs(
         error("algorithm = :sparse_lbfgs failed to find a finite sparse phylo optimum")
 
     v̂ = Optim.minimizer(best_res)
-    β̂, nllhat, chM = _loconly_profile_beta(prob, v̂[1], v̂[2])
-    β̂ === nothing && error("algorithm = :sparse_lbfgs optimum could not be evaluated")
+    if reml
+        reml_ll_neg, β̂, chM, _ = _loconly_profile_reml(prob, v̂[1], v̂[2])
+        β̂ === nothing && error("algorithm = :sparse_lbfgs REML optimum could not be evaluated")
+        nllhat = _loconly_marginal_nll(prob, β̂, v̂[1], v̂[2])   # ML nll at REML estimate
+        reml_ll = -reml_ll_neg
+        ml_ll = -nllhat
+    else
+        β̂, nllhat, chM = _loconly_profile_beta(prob, v̂[1], v̂[2])
+        β̂ === nothing && error("algorithm = :sparse_lbfgs optimum could not be evaluated")
+    end
     θ̂ = vcat(β̂, v̂[1], v̂[2])
 
     loc_obj = LocOnlyObjective(prob, pμ)
@@ -468,9 +507,10 @@ function _fit_structured_gaussian_sparse_lbfgs(
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => fill(exp(θ̂[pμ + 1]), n))
     fit = DrmFit(
-        fam, blocks, names, θ̂, V, -nllhat, n, Optim.converged(best_res), means, obs, scales
+        fam, blocks, names, θ̂, V, reml ? reml_ll : -nllhat, n, Optim.converged(best_res), means, obs, scales
     )
-    return _withranef(
+    out = _withranef(
         _withnll(fit, loc_obj, nllgrad!), Dict(Symbol(grp) => u_post[prob.leaf_pos])
     )
+    return reml ? _withreml(out, reml_ll, ml_ll) : out
 end

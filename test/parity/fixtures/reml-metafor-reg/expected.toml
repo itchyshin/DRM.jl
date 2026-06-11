@@ -1,0 +1,9 @@
+# metafor REML reference: rma(yi=y, vi=v, mods=~x, method="REML"). gen_reml_refs.R (metafor 4.8.0).
+# Meta-regression = drm(gaussian()) + meta_V(v), mu ~ x, sigma ~ 1 (tau).
+[fit]
+model  = "rma(yi=y, vi=v, mods=~x, method=REML)"
+logLik = -20.50053995
+[reml]
+intercept = 0.5925060747
+slope_x   = 0.7108096117
+tau2      = 0.1477328405
