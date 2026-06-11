@@ -142,37 +142,56 @@ end
 
 """
     fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
-                       trials1=ones(n), trials2=ones(n), K=32, g_tol=1e-6)
+                       trials1=ones(n), trials2=ones(n),
+                       Xsigma1=ones(n,1), Xsigma2=ones(n,1), K=32, g_tol=1e-6)
 
 Fit the cross-family bivariate model (shared per-observation latent) and return a
 `NamedTuple` with fixed effects `β1`/`β2`, loadings `λ1`/`λ2`, per-axis dispersion
-`σ1`/`σ2` on the natural scale (`NaN` for dispersionless axes), link-scale
-variances `v1`/`v2`, the latent-scale correlation `rho_latent`, `loglik`,
-`converged`, and `iterations`.
+`σ1`/`σ2` on the natural scale (`NaN` for dispersionless axes), dispersion
+sub-model coefficients `βσ1`/`βσ2` (log-native scale, empty for dispersionless
+axes), link-scale variances `v1`/`v2`, the latent-scale correlation `rho_latent`,
+`loglik`, `converged`, and `iterations`.
 
 `fam1`/`fam2` are DRM family instances. Supported: `Gaussian`, `Poisson`,
 `Binomial`, `NegBinomial2`, `Beta`, `Gamma`. Dispersion-carrying families
-(Gaussian/Beta/Gamma → `σ`; NB2 → size `θ`) add one log-native slot per axis;
-`Poisson`/`Binomial` are dispersionless. For those families `σ1`/`σ2` returns the
-natural dispersion (`σ` for Gaussian/Beta/Gamma, `θ` for NB2). `trials*` are
-Binomial denominators (ignored otherwise).
+(Gaussian/Beta/Gamma → `σ`; NB2 → size `θ`) carry a per-observation log-native
+dispersion SUB-MODEL `log d_{k,i} = (Xσ_k · β_σk)_i` with `size(Xσ_k, 2)`
+coefficients; `Poisson`/`Binomial` are dispersionless. `Xsigma1`/`Xsigma2` default
+to a single intercept column (`ones(n,1)`), reproducing the intercept-only scalar
+dispersion. For dispersion-carrying families `σ1`/`σ2` returns a representative
+natural dispersion `exp(mean_i log d_{k,i})` (`σ` for Gaussian/Beta/Gamma, `θ` for
+NB2); the full sub-model is in `βσ1`/`βσ2`. `trials*` are Binomial denominators
+(ignored otherwise).
 """
 function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         trials1 = ones(length(y1)), trials2 = ones(length(y2)),
+        Xsigma1 = ones(length(y1), 1), Xsigma2 = ones(length(y2), 1),
         K::Int = 32, g_tol::Float64 = 1e-6,
         confint::Bool = true, level::Float64 = 0.95,
         profile::Bool = false, B::Int = 0, rng = Random.default_rng())
     n = length(y1)
     n == length(y2) || throw(ArgumentError("y1 and y2 must have equal length"))
     p1 = size(X1, 2); p2 = size(X2, 2)
-    # s1/s2: does each axis carry a (log-native) dispersion slot? log σ for
-    # Gaussian/Beta/Gamma, log θ for NB2; none for Poisson/Binomial.
+    # s1/s2: does each axis carry a (log-native) dispersion SUB-MODEL? log σ for
+    # Gaussian/Beta/Gamma, log θ for NB2; none for Poisson/Binomial. The dispersion
+    # is now a per-observation linear predictor on the log-native scale,
+    #     log d_{k,i} = (Xσ_k · β_σk)_i,
+    # with q_k = size(Xσ_k, 2) coefficients (default Xσ_k = ones(n,1) ⇒ q_k = 1,
+    # i.e. the single-scalar intercept-only model — byte-identical to the previous
+    # scalar slot). Dispersionless axes carry no σ coefficients (q_k effectively 0).
     s1 = _mf_has_disp(fam1); s2 = _mf_has_disp(fam2)
+    q1 = s1 ? size(Xsigma1, 2) : 0      # # dispersion coefficients on axis 1
+    q2 = s2 ? size(Xsigma2, 2) : 0      # # dispersion coefficients on axis 2
+    s1 && size(Xsigma1, 1) == n ||
+        (s1 && throw(ArgumentError("Xsigma1 must have $n rows")))
+    s2 && size(Xsigma2, 1) == n ||
+        (s2 && throw(ArgumentError("Xsigma2 must have $n rows")))
     iλ1 = p1 + p2 + 1
     iλ2 = p1 + p2 + 2
-    is1 = s1 ? p1 + p2 + 3 : 0
-    is2 = s2 ? (s1 ? p1 + p2 + 4 : p1 + p2 + 3) : 0
-    ntheta = p1 + p2 + 2 + (s1 ? 1 : 0) + (s2 ? 1 : 0)
+    # is1/is2 are now RANGES of length q1/q2 (the β_σ coefficient blocks), or empty.
+    is1 = s1 ? ((p1 + p2 + 3):(p1 + p2 + 2 + q1)) : (1:0)
+    is2 = s2 ? ((p1 + p2 + 3 + q1):(p1 + p2 + 2 + q1 + q2)) : (1:0)
+    ntheta = p1 + p2 + 2 + q1 + q2
 
     z, w = _gauss_hermite(K)
     rt2 = sqrt(2.0)
@@ -186,14 +205,20 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         bb1 = θ[1:p1]
         bb2 = θ[p1+1:p1+p2]
         ll1 = exp(θ[iλ1]); ll2 = θ[iλ2]
-        sd1 = s1 ? exp(θ[is1]) : one(eltype(θ))   # natural dispersion (σ or θ) per axis
-        sd2 = s2 ? exp(θ[is2]) : one(eltype(θ))
+        T = eltype(θ)
+        # Per-observation natural dispersion (σ or θ) from the log-native sub-model
+        # d_{k,i} = exp((Xσ_k·β_σk)_i). With the default ones-column Xσ this is the
+        # constant exp(θ[isk[1]]) for every i — byte-identical to the old scalar.
+        sd1v = s1 ? exp.(Xsigma1 * θ[is1]) : nothing
+        sd2v = s2 ? exp.(Xsigma2 * θ[is2]) : nothing
+        one_T = one(T)
         η1f = X1 * bb1
         η2f = X2 * bb2
-        T = eltype(θ)
         acc = Vector{T}(undef, K)
         total = zero(T)
         @inbounds for i in 1:n
+            sd1 = s1 ? sd1v[i] : one_T   # natural dispersion (σ or θ) at obs i
+            sd2 = s2 ? sd2v[i] : one_T
             for k in 1:K
                 u = rt2 * z[k]
                 ll = _mf_obs_ll(fam1, η1f[i] + ll1 * u, y1[i], trials1[i], sd1) +
@@ -216,16 +241,26 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
     θ0[p1+1:p1+p2] = _mf_init(fam2, X2, y2)
     θ0[iλ1] = log(0.3)
     θ0[iλ2] = 0.1
-    s1 && (θ0[is1] = _mf_disp_init(fam1, y1))   # log-native dispersion slot, per family
-    s2 && (θ0[is2] = _mf_disp_init(fam2, y2))
+    # Dispersion sub-model start: intercept = the family's scalar log-native init,
+    # covariate slopes (if any) = 0. With the default ones-column this is exactly the
+    # old single-slot start θ0[is1] = _mf_disp_init(...).
+    s1 && (θ0[is1[1]] = _mf_disp_init(fam1, y1))
+    s2 && (θ0[is2[1]] = _mf_disp_init(fam2, y2))
 
     res = Optim.optimize(nll, θ0, Optim.LBFGS(),
                          Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Float64.(Optim.minimizer(res))   # concrete Float64; the ForwardDiff calls below get copies
     β1 = θ̂[1:p1]; β2 = θ̂[p1+1:p1+p2]
     λ1 = exp(θ̂[iλ1]); λ2 = θ̂[iλ2]
-    σ1 = s1 ? exp(θ̂[is1]) : NaN
-    σ2 = s2 ? exp(θ̂[is2]) : NaN
+    # Dispersion sub-model coefficients (log-native scale) and a representative
+    # natural dispersion σ_k = exp(mean_i log d_{k,i}). The mean log-dispersion is
+    # computed as (column-mean of Xσ)·β_σ — algebraically mean(Xσ·β_σ) but, for the
+    # default ones-column, exactly the single intercept (no summation round-off), so
+    # σ_k = exp(θ̂[isk[1]]), byte-identical to the old scalar slot.
+    βσ1 = s1 ? θ̂[is1] : Float64[]
+    βσ2 = s2 ? θ̂[is2] : Float64[]
+    σ1 = s1 ? exp(dot(vec(mean(Xsigma1, dims = 1)), βσ1)) : NaN
+    σ2 = s2 ? exp(dot(vec(mean(Xsigma2, dims = 1)), βσ2)) : NaN
 
     # ρ(θ): loadings + link-scale residual variances. Reused by the point estimate
     # and the Fisher-z delta-method CI.
@@ -235,13 +270,20 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         l1 = exp(θ[iλ1]); l2 = θ[iλ2]
         μ̄1 = mean(_mf_mean.(Ref(fam1), X1 * b1))
         μ̄2 = mean(_mf_mean.(Ref(fam2), X2 * b2))
-        vv1 = _mf_disp_v(fam1, s1 ? θ[is1] : nothing, μ̄1)
-        vv2 = _mf_disp_v(fam2, s2 ? θ[is2] : nothing, μ̄2)
+        # Representative log-native dispersion = mean per-observation linear
+        # predictor, formed as (column-mean of Xσ)·β_σ so the default ones-column
+        # collapses exactly to the single intercept (no summation round-off).
+        ls1 = s1 ? dot(vec(mean(Xsigma1, dims = 1)), θ[is1]) : nothing
+        ls2 = s2 ? dot(vec(mean(Xsigma2, dims = 1)), θ[is2]) : nothing
+        vv1 = _mf_disp_v(fam1, ls1, μ̄1)
+        vv2 = _mf_disp_v(fam2, ls2, μ̄2)
         return l1 * l2 / sqrt((l1^2 + vv1) * (l2^2 + vv2))
     end
     ρ = rho_of(θ̂)
-    v1 = _mf_disp_v(fam1, s1 ? θ̂[is1] : nothing, mean(_mf_mean.(Ref(fam1), X1 * β1)))
-    v2 = _mf_disp_v(fam2, s2 ? θ̂[is2] : nothing, mean(_mf_mean.(Ref(fam2), X2 * β2)))
+    v1 = _mf_disp_v(fam1, s1 ? dot(vec(mean(Xsigma1, dims = 1)), βσ1) : nothing,
+                    mean(_mf_mean.(Ref(fam1), X1 * β1)))
+    v2 = _mf_disp_v(fam2, s2 ? dot(vec(mean(Xsigma2, dims = 1)), βσ2) : nothing,
+                    mean(_mf_mean.(Ref(fam2), X2 * β2)))
 
     # Fisher-z Wald CI: delta method on atanh(ρ(θ)) with the observed-information
     # vcov. NaN interval if the Hessian is not invertible / variance non-positive.
@@ -303,14 +345,19 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
     rho_ci_boot = (NaN, NaN)
     if B > 0
         η1f = X1 * β1; η2f = X2 * β2
+        # Per-observation natural dispersion at θ̂ (constant = σ1/σ2 under the default
+        # ones-column Xσ, so the sampler reduces to the old scalar bootstrap).
+        sd1b = s1 ? exp.(Xsigma1 * βσ1) : fill(σ1, n)
+        sd2b = s2 ? exp.(Xsigma2 * βσ2) : fill(σ2, n)
         ρs = Float64[]
         for _ in 1:B
             ub = randn(rng, n)
-            y1b = [_mf_rand(fam1, η1f[i] + λ1 * ub[i], trials1[i], σ1, rng) for i in 1:n]
-            y2b = [_mf_rand(fam2, η2f[i] + λ2 * ub[i], trials2[i], σ2, rng) for i in 1:n]
+            y1b = [_mf_rand(fam1, η1f[i] + λ1 * ub[i], trials1[i], sd1b[i], rng) for i in 1:n]
+            y2b = [_mf_rand(fam2, η2f[i] + λ2 * ub[i], trials2[i], sd2b[i], rng) for i in 1:n]
             fb = try
                 fit_mixed_family(; y1 = y1b, X1 = X1, fam1 = fam1, y2 = y2b, X2 = X2,
                                  fam2 = fam2, trials1 = trials1, trials2 = trials2,
+                                 Xsigma1 = Xsigma1, Xsigma2 = Xsigma2,
                                  K = K, g_tol = g_tol, confint = false)
             catch
                 nothing
@@ -324,7 +371,7 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         end
     end
 
-    return (; β1, β2, λ1, λ2, σ1, σ2, v1, v2, rho_latent = ρ,
+    return (; β1, β2, λ1, λ2, σ1, σ2, βσ1, βσ2, v1, v2, rho_latent = ρ,
             rho_ci_wald = rho_ci_wald, rho_ci_profile = rho_ci_profile,
             rho_ci_boot = rho_ci_boot,
             loglik = -nll(θ̂), converged = Optim.converged(res),
