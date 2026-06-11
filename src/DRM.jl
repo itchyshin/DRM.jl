@@ -69,6 +69,7 @@ include("summary.jl")
 include("visualization.jl")
 include("comparison.jl")
 include("bridge.jl")
+include("missing_data.jl")       # #49: documented listwise-deletion preprocessing (no engine change)
 
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
@@ -87,7 +88,8 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, Poisson, NegBinomial2,
        bias_correct,
        heritability, repeatability, icc,
        reml_loglik, ml_loglik, estimation_method,
-       drm_bridge, drm_bridge_inference
+       drm_bridge, drm_bridge_inference,
+       drm_listwise
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare

@@ -115,6 +115,10 @@ include("test_summary_method.jl")
 include("test_predict_parameters.jl")
 include("test_prediction_grid.jl")
 include("test_bridge.jl")
+# Missing-data handling (#49): documents that raw missing/NaN responses ERROR
+# (no silent garbage), and anchors the listwise-deletion preprocessing path
+# (drm_listwise) + MAR recovery. FIML / imputation remain follow-up (#49).
+include("test_missing_listwise.jl")
 
 # NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
