@@ -31,8 +31,8 @@ exp(-2 * coef(fit, :sigma)[1])     # estimated shape α
 """
 struct Gamma end
 
-function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, g_tol::Real = 1e-8,
-             se::Bool = true)
+function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, K = nothing,
+             A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true)
     rhs = Dict(f.forms)
     # Location–scale: a coupled `(1 | tag | group)` shared by the mean and sigma
     # formulas → one 2×2 group-level covariance fit by the augmented-state engine.
@@ -58,11 +58,20 @@ function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, g_tol::Real = 1e-8
         (size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])) ||
             error("Gamma() phylo sparse Laplace currently supports `sigma ~ 1`")
         kind, grp = st
-        kind === :phylo ||
-            error("Gamma() currently supports only phylo(1 | group) among structured markers")
-        tree === nothing && error("phylo(1 | $grp) needs `tree = ...`")
         labels = getproperty(data, grp)
-        return _withformula(_fit_gamma_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp, g_tol; se = se), f)
+        if kind === :phylo
+            tree === nothing && error("phylo(1 | $grp) needs `tree = ...`")
+            return _withformula(_fit_gamma_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp, g_tol; se = se), f)
+        elseif kind === :relmat || kind === :animal || kind === :spatial
+            # General user-supplied PD covariance C on the mean intercept
+            # (relatedness / animal model / precomputed spatial), with the Gamma
+            # shape a fixed nuisance. Reuses the phylo nuisance Laplace spine with
+            # the tree precision swapped for C⁻¹ (#167).
+            C = _poisson_structured_cov(kind, grp, K, A, coords)
+            return _withformula(_fit_gamma_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp, g_tol; se = se), f)
+        else
+            error("Gamma() supports phylo/relmat/animal/spatial(1 | group) among structured markers")
+        end
     end
     if !isempty(re)                    # random effect on the log mean → GHQ/Laplace
         if length(re) > 1

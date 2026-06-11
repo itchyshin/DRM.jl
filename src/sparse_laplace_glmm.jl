@@ -625,16 +625,41 @@ function _phylo_mean_laplace_nuisance_fg(kind, aux_from, n::Int, Xμ, leaf_node,
     return val, vcat(gβ, [gnuis, gσ]), b, true
 end
 
+# Tree front end for the nuisance Laplace spine: resolve the tree to its
+# root-conditioned augmented precision and delegate to the Q-generic core. The
+# general-covariance front end (`_fit_*_relmat_laplace`) calls the same core with
+# `_general_cov_setup` instead — the spine is identical once Q is in hand.
 function _fit_phylo_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, labels,
                                           tree, nmμ, nmσ, grp, g_tol; θβ0,
                                           θσ0::Real, sigma_scale,
                                           se::Bool = false,
                                           polish_iterations::Int = 0)
     Q, leaf_node, _ = _poisson_phylo_setup(tree, labels)
+    return _fit_general_mean_laplace_nuisance(
+        fam, kind, aux_from, n, Xμ, Q, leaf_node, nmμ, nmσ, grp, g_tol;
+        θβ0 = θβ0, θσ0 = θσ0, sigma_scale = sigma_scale, se = se,
+        polish_iterations = polish_iterations,
+        prec_error = "phylo(1 | $grp) tree precision is not positive definite after root conditioning"
+    )
+end
+
+# Q-generic core for a nuisance-parameter family (NB2/Gamma/Beta) with a single
+# structured random intercept of arbitrary PD precision `Q` and observation→latent
+# map `leaf_node`. Driven by the tree route (`_fit_phylo_mean_laplace_nuisance`)
+# and the general-covariance route (`_fit_nb2_relmat_laplace` /
+# `_fit_gamma_relmat_laplace`); the only difference is where `(Q, leaf_node)` come
+# from. Exact O(p) implicit-logdet gradient and Takahashi log-det derivatives
+# carry over unchanged from the phylo path.
+function _fit_general_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, Q,
+                                            leaf_node, nmμ, nmσ, grp, g_tol; θβ0,
+                                            θσ0::Real, sigma_scale,
+                                            se::Bool = false,
+                                            polish_iterations::Int = 0,
+                                            prec_error::AbstractString = "structured(1 | $grp) precision is not positive definite")
     q = size(Q, 1)
     pμ = size(Xμ, 2)
     qchol = cholesky(Symmetric(Q); check = false)
-    issuccess(qchol) || error("phylo(1 | $grp) tree precision is not positive definite after root conditioning")
+    issuccess(qchol) || error(prec_error)
     logdetQ = logdet(qchol)
     last_b = zeros(q)
 
@@ -870,12 +895,11 @@ function _fit_phylo_mean_laplace(fam, kind, aux, n::Int, Xμ, labels, tree, nmμ
     return _withnll(fit, nll, grad!)
 end
 
-function _fit_nb2_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
-                                g_tol; se::Bool = true,
-                                polish_iterations::Int = 0)
-    size(Xσ, 2) == 1 || error("_fit_nb2_phylo_laplace currently supports a constant sigma formula")
-    all(x -> x == 1.0, @view Xσ[:, 1]) ||
-        error("_fit_nb2_phylo_laplace currently supports a constant sigma formula")
+# Shared NB2 setup for the sparse-Laplace nuisance routes (phylo + general-cov):
+# build the dispersion-dependent `aux_from`, the fixed-effect start and the
+# method-of-moments dispersion start. Used so the tree and relmat fitters are
+# numerically identical given the same precision Q.
+function _nb2_laplace_setup(y, Xμ)
     yint = round.(Int, y)
     function aux_from(logsize)
         r = exp(clamp(logsize, -8.0, 8.0))
@@ -885,9 +909,44 @@ function _fit_nb2_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
     m = sum(y) / length(y)
     v = sum(abs2, y .- m) / max(length(y) - 1, 1)
     θσ0 = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    return aux_from, _poisson_fixed_start(y, Xμ), θσ0
+end
+
+function _fit_nb2_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
+                                g_tol; se::Bool = true,
+                                polish_iterations::Int = 0)
+    size(Xσ, 2) == 1 || error("_fit_nb2_phylo_laplace currently supports a constant sigma formula")
+    all(x -> x == 1.0, @view Xσ[:, 1]) ||
+        error("_fit_nb2_phylo_laplace currently supports a constant sigma formula")
+    aux_from, θβ0, θσ0 = _nb2_laplace_setup(y, Xμ)
     return _fit_phylo_mean_laplace_nuisance(
         fam, Val(:nb2_fixed), aux_from, length(y), Xμ, labels, tree, nmμ, nmσ,
-        grp, g_tol; θβ0 = _poisson_fixed_start(y, Xμ), θσ0 = θσ0,
+        grp, g_tol; θβ0 = θβ0, θσ0 = θσ0,
+        sigma_scale = exp, se = se, polish_iterations = polish_iterations
+    )
+end
+
+"""
+    _fit_nb2_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp, g_tol; se)
+
+NB2 sparse-Laplace fit with a general user-supplied PD covariance `C` on the mean
+random intercept (`relmat`/`animal`/`spatial(1 | grp)`), with the dispersion `θ`
+(the `sigma` slot) a fixed nuisance parameter. Reuses the verified phylo nuisance
+spine via [`_general_cov_setup`](@ref): the only difference from the phylo route
+is that the prior precision comes from `C⁻¹` instead of the tree topology. Exact
+O(p) gradient and Takahashi log-det derivatives carry over unchanged (#167).
+"""
+function _fit_nb2_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp,
+                                 g_tol; se::Bool = true,
+                                 polish_iterations::Int = 0)
+    size(Xσ, 2) == 1 || error("_fit_nb2_relmat_laplace currently supports a constant sigma formula")
+    all(x -> x == 1.0, @view Xσ[:, 1]) ||
+        error("_fit_nb2_relmat_laplace currently supports a constant sigma formula")
+    Q, leaf_node = _general_cov_setup(C, labels)
+    aux_from, θβ0, θσ0 = _nb2_laplace_setup(y, Xμ)
+    return _fit_general_mean_laplace_nuisance(
+        fam, Val(:nb2_fixed), aux_from, length(y), Xμ, Q, leaf_node, nmμ, nmσ,
+        grp, g_tol; θβ0 = θβ0, θσ0 = θσ0,
         sigma_scale = exp, se = se, polish_iterations = polish_iterations
     )
 end
@@ -909,12 +968,10 @@ function _fit_binomial_phylo_laplace(fam, s, ntr, Xμ, labels, tree, nmμ, grp,
     )
 end
 
-function _fit_gamma_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
-                                  g_tol; se::Bool = true,
-                                  polish_iterations::Int = 5)
-    size(Xσ, 2) == 1 || error("_fit_gamma_phylo_laplace currently supports a constant sigma formula")
-    all(x -> x == 1.0, @view Xσ[:, 1]) ||
-        error("_fit_gamma_phylo_laplace currently supports a constant sigma formula")
+# Shared Gamma setup for the sparse-Laplace nuisance routes (phylo + general-cov):
+# the shape-dependent `aux_from`, the fixed-effect start and the method-of-moments
+# log-σ start (σ = 1/√α). Keeps the tree and relmat fitters identical given Q.
+function _gamma_laplace_setup(y, Xμ)
     yv = Float64.(y)
     function aux_from(logsigma)
         α = exp(clamp(-2 * logsigma, -8.0, 8.0))
@@ -926,9 +983,43 @@ function _fit_gamma_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, gr
     α0 = max(ȳ^2 / max(v, eps()), 3.0)
     θβ0 = zeros(size(Xμ, 2))
     θβ0[1] = log(ȳ + eps())
+    return aux_from, θβ0, -0.5 * log(α0)
+end
+
+function _fit_gamma_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
+                                  g_tol; se::Bool = true,
+                                  polish_iterations::Int = 5)
+    size(Xσ, 2) == 1 || error("_fit_gamma_phylo_laplace currently supports a constant sigma formula")
+    all(x -> x == 1.0, @view Xσ[:, 1]) ||
+        error("_fit_gamma_phylo_laplace currently supports a constant sigma formula")
+    aux_from, θβ0, θσ0 = _gamma_laplace_setup(y, Xμ)
     return _fit_phylo_mean_laplace_nuisance(
-        fam, Val(:gamma_fixed), aux_from, length(yv), Xμ, labels, tree, nmμ, nmσ,
-        grp, g_tol; θβ0 = θβ0, θσ0 = -0.5 * log(α0), sigma_scale = exp,
+        fam, Val(:gamma_fixed), aux_from, length(y), Xμ, labels, tree, nmμ, nmσ,
+        grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
+        se = se, polish_iterations = polish_iterations
+    )
+end
+
+"""
+    _fit_gamma_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp, g_tol; se)
+
+Gamma sparse-Laplace fit with a general user-supplied PD covariance `C` on the
+mean random intercept (`relmat`/`animal`/`spatial(1 | grp)`), with the shape `α`
+(via the `sigma` slot, σ = 1/√α) a fixed nuisance parameter. Reuses the verified
+phylo nuisance spine via [`_general_cov_setup`](@ref); only the prior precision
+differs (`C⁻¹` vs the tree topology). Exact O(p) gradient carries over (#167).
+"""
+function _fit_gamma_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp,
+                                   g_tol; se::Bool = true,
+                                   polish_iterations::Int = 5)
+    size(Xσ, 2) == 1 || error("_fit_gamma_relmat_laplace currently supports a constant sigma formula")
+    all(x -> x == 1.0, @view Xσ[:, 1]) ||
+        error("_fit_gamma_relmat_laplace currently supports a constant sigma formula")
+    Q, leaf_node = _general_cov_setup(C, labels)
+    aux_from, θβ0, θσ0 = _gamma_laplace_setup(y, Xμ)
+    return _fit_general_mean_laplace_nuisance(
+        fam, Val(:gamma_fixed), aux_from, length(y), Xμ, Q, leaf_node, nmμ, nmσ,
+        grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
         se = se, polish_iterations = polish_iterations
     )
 end
