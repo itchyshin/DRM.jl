@@ -44,11 +44,29 @@ function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, K = nothing,
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
         error("Gamma() does not support meta_V markers")
+    # Standalone σ-axis RE: sigma ~ 1 + (1|g) with NO mean RE.
+    # Must be checked BEFORE the "only mean may carry RE" guard.
+    if haskey(rhs, :sigma)
+        _, sigma_re, _, _ = _split_ranef(rhs[:sigma])
+        if !isempty(sigma_re) && isempty(re) && st === nothing
+            (length(sigma_re) == 1 && _re_kind(sigma_re[1][1])[1] === :intercept) ||
+                error("Gamma() sigma RE: only a single random intercept `(1 | g)` is supported on sigma")
+            y, Xμ, nmμ = _design(f.response, fixed_mu, data)
+            all(yi -> yi > 0, y) ||
+                error("Gamma() requires strictly positive responses")
+            sigma_fixed, _, _, _ = _split_ranef(rhs[:sigma])
+            _, Xψ, nmσ = _design(f.response, sigma_fixed, data)
+            sgrp = sigma_re[1][2]
+            gidx, G = _group_index(getproperty(data, sgrp))
+            return _withformula(_fit_sigma_axis_re(fam, _corr_kind(fam), y, Xμ, Xψ, gidx, G, nmμ, nmσ, String(sgrp);
+                                                   link = :log, se = se, g_tol = g_tol), f)
+        end
+    end
     for (pname, r) in f.forms          # only the mean may carry a random effect
         pname === :mu && continue
         _, re2, mv2, st2 = _split_ranef(r)
         (isempty(re2) && mv2 === nothing && st2 === nothing) ||
-            error("Gamma(): only the mean formula may carry a random effect")
+            error("Gamma(): only the mean formula may carry a random effect (use the coupled `(1|tag|g)` syntax for a σ-axis RE alongside a mean RE)")
     end
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
