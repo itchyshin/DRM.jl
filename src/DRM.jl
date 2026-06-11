@@ -83,6 +83,7 @@ include("comparison.jl")
 include("chibar.jl")             # chi-bar-square boundary p-values for variance-component LRTs
 include("bridge.jl")
 include("missing_data.jl")       # #49: documented listwise-deletion preprocessing (no engine change)
+include("rich_bivariate.jl")    # cluster 5b: bivariate non-Gaussian MR-PMM (frequentist sparse O(p))
 
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
@@ -95,7 +96,10 @@ export AugProblem, make_problem,
        # general-q coevolution block (#188)
        CoevoProblem, make_coevo_problem, coevo_marginal, fit_coevolution,
        simulate_coevolution, coevo_pack, coevo_unpack, coevo_theta_len,
-       lc_to_cov, cov_to_lc, lc_len
+       lc_to_cov, cov_to_lc, lc_len,
+       # cluster 5b: bivariate non-Gaussian MR-PMM
+       RichBivarProblem, make_rich_bivar_problem, fit_rich_bivar,
+       simulate_rich_bivar, rich_bivar_rho12, rich_bivar_profile_ci_rho12
 
 # Public API — the Gaussian distributional-regression front end.
 export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,

@@ -223,3 +223,7 @@ include("test_mixed_family_postfit.jl")
 # the fixture is absent) + an independent Monte-Carlo population reference for the
 # genuinely mixed Gaussian × Poisson case + the Gaussian × Gaussian closed form.
 include("test_xfam_external_validation.jl")
+
+# Cluster 5b: bivariate non-Gaussian MR-PMM (frequentist sparse O(p)):
+# HARD GATE (a) Gaussian reduction, (b) FD gradient, (c) recovery, (d) ρ12 CI.
+include("test_rich_bivariate.jl")
