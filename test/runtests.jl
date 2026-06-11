@@ -166,3 +166,5 @@ include("test_quantile_residuals.jl")
 
 # S3: cross-family bivariate (shared-latent GHQ) + link-residual standardization.
 include("test_mixed_family.jl")
+# Post-fit accessors (coef/aic/bic/fitted/summary) for the cross-family fit.
+include("test_mixed_family_postfit.jl")
