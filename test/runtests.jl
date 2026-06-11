@@ -36,6 +36,7 @@ include("test_gaussian_core.jl")
 # model-selection guard for the classic REML trap (issue #11). Placed early so it
 # runs near the core Gaussian tests.
 include("test_reml.jl")
+include("test_reml_parity.jl")
 include("test_bf_grammar.jl")
 include("test_gaussian_bivariate.jl")
 include("test_gaussian_bivariate_phylo.jl")
