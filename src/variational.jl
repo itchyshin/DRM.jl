@@ -38,9 +38,11 @@ end
 # opt-in callers know the state.
 function _fit_va(args...; kwargs...)
     error("The variational (VA/ELBO) marginal is implemented only for the Poisson " *
-          "(`_fit_poisson_ranef_va`) and Binomial/Bernoulli (`_fit_binomial_ranef_va`) " *
-          "random-intercept cases so far; other families are not yet wired — see " *
-          "https://github.com/itchyshin/DRM.jl/issues/136. Use method = :LA (Laplace, the default).")
+          "(`_fit_poisson_ranef_va`), Binomial/Bernoulli (`_fit_binomial_ranef_va`), " *
+          "NegBinomial2 (`_fit_nb2_ranef_va`), Gamma (`_fit_gamma_ranef_va`) and Beta " *
+          "(`_fit_beta_ranef_va`) random-intercept cases so far; other families are not " *
+          "yet wired — see https://github.com/itchyshin/DRM.jl/issues/136. Use " *
+          "method = :LA (Laplace, the default).")
 end
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -415,6 +417,289 @@ function _fit_nb2_ranef_va(fam::NegBinomial2, y, Xμ, Xσ, gidx, G, nmμ, nmσ, 
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # population μ (b=0)
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
+    # loglik field carries the ELBO (a lower bound); label downstream as :VA.
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+end
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase-2 proof kernel: mean-field Gaussian VA for the Gamma random-intercept
+# model (#136). Structurally identical to the NB2 VA: a log link on the mean gives
+# a log-normal-of-the-mean latent integral with **no** closed-form E_q[log p], so
+# the per-group E_q[Gamma log-density] is evaluated by Gauss–Hermite quadrature
+# over the Gaussian q. The only changes from the NB2 VA are the per-observation
+# log-density kernel and that the extra free outer parameter is the Gamma shape
+# α = exp(−2·log σ) (the `sigma` slot carries σ = the coefficient of variation),
+# held fixed during the per-group inner solve. Fully ForwardDiff-differentiable;
+# opt-in, never the default. The verified GHQ baseline (`_fit_gamma_ranef`) is
+# untouched.
+#
+# Model: log μ_i = η0_i + b_{g(i)},  b_g ~ N(0, σ_b²),  σ_b² = exp(2·logσ_b),
+#        y_i ~ Gamma(shape α, scale μ_i/α),  α = exp(−2·log σ),  Var = μ_i²σ².
+# Mean-field q(b_g) = N(m_g, s_g). Writing the b-dependent log-density kernel with
+# μ_i = exp(η0_i + b) (every term that depends on α or b is kept; only `log y_i`
+# is fixed data):
+#   ℓ_i(b) = (α−1)·log y_i − α·y_i/μ_i − α·(η0_i + b) + α·log α − loggamma(α)
+# then with b = m + √(2s)·z_k (z_k, w_k the K-node Gauss–Hermite rule):
+#   E_q[Σ_{i∈g} ℓ_i] ≈ Σ_k (w_k/√π) · Σ_{i∈g} ℓ_i(m + √(2s)·z_k)
+#   KL(N(m,s)‖N(0,σ_b²)) = ½[ s/σ_b² + m²/σ_b² − 1 − log(s/σ_b²) ]
+#   group ELBO  F_g(m,r) = E_q[Σℓ] − KL,     r = log s
+#   ELBO = Σ_g F_g                            (a lower bound on log p(y|θ))
+#
+# We minimise nll = −ELBO. Per outer (β, logσ, logσ_b) the inner (m_g, r_g) are
+# profiled to the ELBO maximiser by a short Newton unroll; because q is mean-field
+# and groups are disjoint the inner problem factorises per group into a smooth 2-D
+# concave solve. The inner gradient/Hessian of F_g in (m, r) are taken by
+# ForwardDiff (nodes and α are constants in the inner solve, so the GHQ sum is
+# smooth); carrying the iterates in the working eltype lets the outer ForwardDiff
+# propagate through both the unrolled steps and the dependence on α.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# b-dependent Gamma log-density kernel summed over a group, as a function of the
+# latent value b. η0idx/yidx/lyidx are the group's linear predictors, responses and
+# precomputed log y_i; `α` is the shape exp(−2·log σ). Same algebraic form as the
+# shape–scale Gamma log-density used in gamma.jl (`Gamma(α, μ/α)`), expanded:
+#   (α−1)·log y − α·y/μ − α·(η0+b) + α·log α − loggamma(α),  μ = e^{η0+b}.
+# Differentiable in b, η0 and α (loggamma is ForwardDiff-safe via SpecialFunctions).
+function _gamma_group_kernel(b, η0idx, yidx, lyidx, α)
+    v = zero(promote_type(typeof(b), eltype(η0idx), typeof(α)))
+    lα = log(α)
+    @inbounds for j in eachindex(η0idx)
+        η = η0idx[j] + b
+        μ = exp(η)
+        # (α−1)·log y − α·y/μ − α·η + α·log α − loggamma(α)
+        v += (α - one(α)) * lyidx[j] - α * yidx[j] / μ - α * η + α * lα - loggamma(α)
+    end
+    return v
+end
+
+# Per-group GHQ ELBO F(m, r) = E_q[Σ ℓ] − KL, with q = N(m, s), s = e^r, the prior
+# precision τ = 1/σ_b², and the Gamma shape `α`. `z` are the Gauss–Hermite nodes,
+# `lwπ = log(w) − ½·log π` the log weights. Smooth in (m, r); used both for the
+# inner solve and (at the optimum) the reported value. `α` is held fixed inside the
+# inner solve, but enters E_q[Σℓ] so the outer AD sees ∂ELBO/∂logσ.
+function _gamma_va_group_elbo(m, r, η0idx, yidx, lyidx, α, τ, z, lwπ)
+    s = exp(r)
+    sd = sqrt(2 * s)                                   # √(2s): b = m + √(2s)·z_k
+    Eqℓ = zero(promote_type(typeof(m), typeof(r), typeof(α)))
+    @inbounds for k in eachindex(z)
+        Eqℓ += exp(lwπ[k]) * _gamma_group_kernel(m + sd * z[k], η0idx, yidx, lyidx, α)
+    end
+    kl = 0.5 * (s * τ + m * m * τ - one(m) - log(s * τ))
+    return Eqℓ - kl
+end
+
+# Inner per-group solve: maximise F(m, r) over (m, r) by a short Newton unroll, at
+# fixed shape `α`. Gradient and Hessian in (m, r) come from ForwardDiff of the
+# group-ELBO closure (nodes and α are constants ⇒ smooth). Iterates carry the
+# working eltype, so the outer ForwardDiff differentiates through the converged
+# (m*, s*). Returns (m, s). `z`, `lwπ` are the GH nodes and log w − ½ log π arrays.
+function _gamma_va_inner(η0idx, yidx, lyidx, α::T, τ::T, z, lwπ; iters::Int = 30) where {T}
+    ȳ = sum(yidx) / length(yidx)
+    # Warm start: a prior-shrunk log of the group mean, modest variance.
+    m = log(ȳ + eps(T)) - sum(η0idx) / length(η0idx)  # centre on the group's mean rate
+    r = log(one(T) / (τ + one(T)))                    # s ≈ 1/(τ + 1): small spread
+    obj = u -> _gamma_va_group_elbo(u[1], u[2], η0idx, yidx, lyidx, α, τ, z, lwπ)
+    for _ in 1:iters
+        u = [m, r]
+        g = ForwardDiff.gradient(obj, u)
+        H = ForwardDiff.hessian(obj, u)               # ∇²F (concave ⇒ H ≺ 0)
+        det = H[1, 1] * H[2, 2] - H[1, 2] * H[2, 1]
+        det = abs(det) < eps(T) ? (det ≥ 0 ? eps(T) : -eps(T)) : det
+        Δm = -(H[2, 2] * g[1] - H[1, 2] * g[2]) / det
+        Δr = -(-H[2, 1] * g[1] + H[1, 1] * g[2]) / det
+        Δr = clamp(Δr, T(-2.0), T(2.0))               # keep s in a sane range
+        m += Δm
+        r += Δr
+    end
+    return m, exp(r)
+end
+
+# Mean-field Gaussian VA fit for the Gamma random-intercept model. Same call shape
+# as `_fit_gamma_ranef`; `loglik` carries the **ELBO** (a lower bound), not the
+# exact marginal log-likelihood. θ = [β_μ; β_σ (= log σ, so α = exp(−2β_σ)); log σ_b],
+# matching the block layout of the GHQ baseline so accessors line up.
+function _fit_gamma_ranef_va(fam::Gamma, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
+    n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    ly = log.(y)                                       # b-/θ-free log responses
+    members = [Int[] for _ in 1:G]
+    for i in 1:n
+        push!(members[gidx[i]], i)
+    end
+    # GHQ node arrays (12 nodes: q is Gaussian so the quadrature is exact for the
+    # latent integral up to high order; cheap and ample for a 1-D effect).
+    z, w = _gauss_hermite(12)
+    lwπ = log.(w) .- 0.5 * log(π)                      # log w − ½ log π
+
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; logσb = θ[pμ+pσ+1]
+        σ2 = exp(2 * logσb); τ = one(eltype(θ)) / σ2
+        η0 = Xμ * βμ
+        ησ = clamp.(Xσ * βσ, -15.0, 15.0)              # log σ per obs (here intercept-only)
+        elbo = zero(eltype(θ))
+        for idx in members
+            isempty(idx) && continue
+            η0idx = @view η0[idx]
+            yidx = @view y[idx]
+            lyidx = @view ly[idx]
+            # Gamma shape for this group's observations. With `sigma ~ 1` (the only
+            # case routed here) ησ is constant across i, so take the group's value.
+            α = exp(-2 * ησ[idx[1]])
+            m, sg = _gamma_va_inner(η0idx, yidx, lyidx, α, τ, z, lwπ)
+            elbo += _gamma_va_group_elbo(m, log(sg), η0idx, yidx, lyidx, α, τ, z, lwπ)
+        end
+        return -elbo
+    end
+
+    ȳ = sum(y) / n; v = sum(abs2, y .- ȳ) / max(n - 1, 1)
+    α0 = max(ȳ^2 / max(v, eps()), 0.5)                 # MoM shape
+    θ0 = zeros(pμ + pσ + 1)
+    θ0[1] = log(ȳ + eps()); θ0[pμ+1] = -0.5 * log(α0)  # σ = 1/√α ⇒ log σ = −½ log α
+    θ0[pμ+pσ+1] = log(0.5)
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
+    names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # population μ (b=0)
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
+    # loglik field carries the ELBO (a lower bound); label downstream as :VA.
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+end
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase-2 proof kernel: mean-field Gaussian VA for the Beta random-intercept model
+# (#136). Structurally identical to the Gamma/NB2 VA: a logit link on the mean
+# gives a logistic-normal latent integral with **no** closed-form E_q[log p], so
+# the per-group E_q[Beta log-density] is evaluated by Gauss–Hermite quadrature over
+# the Gaussian q. The free outer parameter beyond β is the Beta precision
+# φ = exp(−2·log σ) (the `sigma` slot carries σ; drmTMB's precision mapping), held
+# fixed during the per-group inner solve. Fully ForwardDiff-differentiable; opt-in,
+# never the default. The verified GHQ baseline (`_fit_beta_ranef`) is untouched.
+#
+# Model: logit μ_i = η0_i + b_{g(i)},  b_g ~ N(0, σ_b²),  σ_b² = exp(2·logσ_b),
+#        y_i ~ Beta(μ_iφ, (1−μ_i)φ),  φ = exp(−2·log σ),  Var = μ_i(1−μ_i)/(1+φ).
+# Mean-field q(b_g) = N(m_g, s_g). Writing the b-dependent log-density kernel with
+# μ_i = logistic(η0_i + b)  (every term that depends on φ or b is kept; only
+# `log y_i` and `log(1−y_i)` are fixed data):
+#   ℓ_i(b) = loggamma(φ) − loggamma(μ_iφ) − loggamma((1−μ_i)φ)
+#            + (μ_iφ − 1)·log y_i + ((1−μ_i)φ − 1)·log(1−y_i)
+# then with b = m + √(2s)·z_k (z_k, w_k the K-node Gauss–Hermite rule):
+#   E_q[Σ_{i∈g} ℓ_i] ≈ Σ_k (w_k/√π) · Σ_{i∈g} ℓ_i(m + √(2s)·z_k)
+#   KL(N(m,s)‖N(0,σ_b²)) = ½[ s/σ_b² + m²/σ_b² − 1 − log(s/σ_b²) ]
+#   group ELBO  F_g(m,r) = E_q[Σℓ] − KL,     r = log s
+#   ELBO = Σ_g F_g                            (a lower bound on log p(y|θ))
+#
+# We minimise nll = −ELBO; the inner (m_g, r_g) profile and outer AD work exactly
+# as in the Gamma case (nodes and φ constant in the inner solve ⇒ smooth GHQ sum;
+# iterates carry the working eltype so the outer ForwardDiff sees ∂ELBO/∂logσ).
+# ──────────────────────────────────────────────────────────────────────────────
+
+# b-dependent Beta log-density kernel summed over a group, as a function of the
+# latent value b. η0idx/lyidx/l1myidx are the group's linear predictors and the
+# precomputed log y_i and log(1−y_i); `φ` is the precision exp(−2·log σ). Same
+# algebraic form as the Beta log-density used in beta.jl (`Beta(μφ, (1−μ)φ)`):
+#   loggamma(φ) − loggamma(μφ) − loggamma((1−μ)φ) + (μφ−1)·log y + ((1−μ)φ−1)·log(1−y),
+#   μ = logistic(η0+b).
+# Differentiable in b, η0 and φ (loggamma is ForwardDiff-safe via SpecialFunctions).
+function _beta_group_kernel(b, η0idx, lyidx, l1myidx, φ)
+    v = zero(promote_type(typeof(b), eltype(η0idx), typeof(φ)))
+    lgφ = loggamma(φ)
+    @inbounds for j in eachindex(η0idx)
+        μ = _logistic(η0idx[j] + b)
+        a1 = μ * φ; a2 = (one(μ) - μ) * φ
+        v += lgφ - loggamma(a1) - loggamma(a2) +
+             (a1 - one(a1)) * lyidx[j] + (a2 - one(a2)) * l1myidx[j]
+    end
+    return v
+end
+
+# Per-group GHQ ELBO F(m, r) = E_q[Σ ℓ] − KL, with q = N(m, s), s = e^r, the prior
+# precision τ = 1/σ_b², and the Beta precision `φ`. `z` are the Gauss–Hermite nodes,
+# `lwπ = log(w) − ½·log π` the log weights. Smooth in (m, r); used both for the
+# inner solve and (at the optimum) the reported value. `φ` is held fixed inside the
+# inner solve, but enters E_q[Σℓ] so the outer AD sees ∂ELBO/∂logσ.
+function _beta_va_group_elbo(m, r, η0idx, lyidx, l1myidx, φ, τ, z, lwπ)
+    s = exp(r)
+    sd = sqrt(2 * s)                                   # √(2s): b = m + √(2s)·z_k
+    Eqℓ = zero(promote_type(typeof(m), typeof(r), typeof(φ)))
+    @inbounds for k in eachindex(z)
+        Eqℓ += exp(lwπ[k]) * _beta_group_kernel(m + sd * z[k], η0idx, lyidx, l1myidx, φ)
+    end
+    kl = 0.5 * (s * τ + m * m * τ - one(m) - log(s * τ))
+    return Eqℓ - kl
+end
+
+# Inner per-group solve: maximise F(m, r) over (m, r) by a short Newton unroll, at
+# fixed precision `φ`. Gradient and Hessian in (m, r) come from ForwardDiff of the
+# group-ELBO closure (nodes and φ are constants ⇒ smooth). Iterates carry the
+# working eltype, so the outer ForwardDiff differentiates through the converged
+# (m*, s*). Returns (m, s). `z`, `lwπ` are the GH nodes and log w − ½ log π arrays.
+function _beta_va_inner(η0idx, lyidx, l1myidx, φ::T, τ::T, ȳ, z, lwπ; iters::Int = 30) where {T}
+    p̄ = clamp(T(ȳ), T(1e-3), one(T) - T(1e-3))
+    # Warm start: a prior-shrunk logit of the group mean, minus the fixed part.
+    m = log(p̄ / (one(T) - p̄)) - sum(η0idx) / length(η0idx)
+    r = log(one(T) / (τ + one(T)))                    # s ≈ 1/(τ + 1): small spread
+    obj = u -> _beta_va_group_elbo(u[1], u[2], η0idx, lyidx, l1myidx, φ, τ, z, lwπ)
+    for _ in 1:iters
+        u = [m, r]
+        g = ForwardDiff.gradient(obj, u)
+        H = ForwardDiff.hessian(obj, u)               # ∇²F (concave ⇒ H ≺ 0)
+        det = H[1, 1] * H[2, 2] - H[1, 2] * H[2, 1]
+        det = abs(det) < eps(T) ? (det ≥ 0 ? eps(T) : -eps(T)) : det
+        Δm = -(H[2, 2] * g[1] - H[1, 2] * g[2]) / det
+        Δr = -(-H[2, 1] * g[1] + H[1, 1] * g[2]) / det
+        Δr = clamp(Δr, T(-2.0), T(2.0))               # keep s in a sane range
+        m += Δm
+        r += Δr
+    end
+    return m, exp(r)
+end
+
+# Mean-field Gaussian VA fit for the Beta random-intercept model. Same call shape
+# as `_fit_beta_ranef`; `loglik` carries the **ELBO** (a lower bound), not the
+# exact marginal log-likelihood. θ = [β_μ; β_σ (= log σ, so φ = exp(−2β_σ)); log σ_b],
+# matching the block layout of the GHQ baseline so accessors line up.
+function _fit_beta_ranef_va(fam::Beta, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
+    n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    ly = log.(y); l1my = log.(1 .- y)                  # b-/θ-free log responses
+    members = [Int[] for _ in 1:G]
+    for i in 1:n
+        push!(members[gidx[i]], i)
+    end
+    z, w = _gauss_hermite(12)
+    lwπ = log.(w) .- 0.5 * log(π)                      # log w − ½ log π
+
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; logσb = θ[pμ+pσ+1]
+        σ2 = exp(2 * logσb); τ = one(eltype(θ)) / σ2
+        η0 = Xμ * βμ
+        ησ = clamp.(Xσ * βσ, -15.0, 15.0)              # log σ per obs (here intercept-only)
+        elbo = zero(eltype(θ))
+        for idx in members
+            isempty(idx) && continue
+            η0idx = @view η0[idx]
+            lyidx = @view ly[idx]
+            l1myidx = @view l1my[idx]
+            # Beta precision for this group's observations. With `sigma ~ 1` (the
+            # only case routed here) ησ is constant across i, so take the group's value.
+            φ = exp(-2 * ησ[idx[1]])
+            ȳg = sum(@view y[idx]) / length(idx)
+            m, sg = _beta_va_inner(η0idx, lyidx, l1myidx, φ, τ, ȳg, z, lwπ)
+            elbo += _beta_va_group_elbo(m, log(sg), η0idx, lyidx, l1myidx, φ, τ, z, lwπ)
+        end
+        return -elbo
+    end
+
+    ȳ = sum(y) / n; v = sum(abs2, y .- ȳ) / max(n - 1, 1)
+    φ0 = max(ȳ * (1 - ȳ) / max(v, eps()) - 1, 0.5)     # MoM precision
+    θ0 = zeros(pμ + pσ + 1)
+    θ0[1] = log(ȳ / (1 - ȳ)); θ0[pμ+1] = -0.5 * log(φ0)  # σ = 1/√φ ⇒ log σ = −½ log φ
+    θ0[pμ+pσ+1] = log(0.5)
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
+    names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
+    means = Dict(:mu => _logistic.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # population μ (b=0)
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
     # loglik field carries the ELBO (a lower bound); label downstream as :VA.
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
