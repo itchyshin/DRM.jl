@@ -129,6 +129,8 @@ include("test_betabinomial_slope_re.jl")
 # Cross-engine equivalence gate: unified q2 Laplace correlated-slope vs GHQ,
 # plus the independent (0+x|g) slope smoke test via rk=:slope.
 include("test_corr_locscale_equiv.jl")
+# Cluster 2: standalone sigma-axis RE (sigma ~ 1 + (1|g)) for non-Gaussian families.
+include("test_sigma_axis_re.jl")
 include("test_binomial.jl")
 include("test_binomial_re.jl")
 include("test_summary.jl")
