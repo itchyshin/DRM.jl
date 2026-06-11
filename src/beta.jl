@@ -15,7 +15,9 @@ the `sigma` slot carries `σ` with the precision mapping `φ = 1/σ²` (so
 `Beta(μφ, (1-μ)φ)`. Mirrors `drmTMB`'s `beta_family`.
 Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
 sparse-Laplace engine when `sigma ~ 1`. A phylogenetic random intercept on the
-mean, `phylo(1 | species)`, also uses the sparse-Laplace engine.
+mean, `phylo(1 | species)`, also uses the sparse-Laplace engine, as do general
+user-supplied PD-covariance intercepts — `relmat(1 | id)` with `K = C`, the
+`animal(1 | id)` (`A = C`) and `spatial(1 | id)` (`K = C`) aliases.
 
 !!! note
     `DRM.Beta` shadows `Distributions.Beta`; qualify the latter if you need it.
@@ -32,8 +34,8 @@ struct Beta end
 
 _logistic(η) = 1 / (1 + exp(-η))
 
-function drm(f::DrmFormula, fam::Beta; data, tree = nothing, g_tol::Real = 1e-8,
-             se::Bool = true)
+function drm(f::DrmFormula, fam::Beta; data, tree = nothing, K = nothing,
+             A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true)
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
@@ -54,11 +56,20 @@ function drm(f::DrmFormula, fam::Beta; data, tree = nothing, g_tol::Real = 1e-8,
         (size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])) ||
             error("Beta() phylo sparse Laplace currently supports `sigma ~ 1`")
         kind, grp = st
-        kind === :phylo ||
-            error("Beta() currently supports only phylo(1 | group) among structured markers")
-        tree === nothing && error("phylo(1 | $grp) needs `tree = ...`")
         labels = getproperty(data, grp)
-        return _withformula(_fit_beta_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp, g_tol; se = se), f)
+        if kind === :phylo
+            tree === nothing && error("phylo(1 | $grp) needs `tree = ...`")
+            return _withformula(_fit_beta_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp, g_tol; se = se), f)
+        elseif kind === :relmat || kind === :animal || kind === :spatial
+            # General user-supplied PD covariance C on the mean (logit) intercept
+            # (relatedness / animal model / precomputed spatial), with the Beta
+            # precision a fixed nuisance. Reuses the phylo nuisance Laplace spine
+            # with the tree precision swapped for C⁻¹ (#167).
+            C = _poisson_structured_cov(kind, grp, K, A, coords)
+            return _withformula(_fit_beta_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp, g_tol; se = se), f)
+        else
+            error("Beta() supports phylo/relmat/animal/spatial(1 | group) among structured markers")
+        end
     end
     if !isempty(re)                    # random effect on the logit mean → GHQ/Laplace
         if length(re) > 1
