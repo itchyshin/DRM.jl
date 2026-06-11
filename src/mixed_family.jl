@@ -203,7 +203,12 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
             mx = maximum(acc)
             total -= mx + log(sum(exp.(acc .- mx))) - half_log_pi
         end
-        return total
+        # Finite-penalty guard: aggressive line-search steps (e.g. large Poisson
+        # loadings) can make the GHQ objective overflow to NaN/Inf mid-search. Map
+        # a non-finite total to a large finite penalty of the SAME Dual type so
+        # LBFGS backtracks instead of aborting. The finite/well-conditioned path is
+        # untouched, so converged estimates and CIs are unchanged.
+        return isfinite(ForwardDiff.value(total)) ? total : oftype(total, 1e10)
     end
 
     θ0 = zeros(ntheta)
