@@ -149,6 +149,11 @@ include("test_poisson_crossed_grad_gate.jl")
 # routes (NB2, Gamma, Binomial ≤ 1e-6; Beta reported honestly).
 include("test_nongaussian_phylo_grad_gate.jl")
 
+# Covariate dispersion (`sigma ~ x`) with a mean-only phylo RE for NB2 (#164):
+# the per-observation log-dispersion (vector-nuisance) generalisation of the
+# scalar phylo Laplace spine, with its own FD-vs-exact gate ≤ 1e-6.
+include("test_164_mean_re_covariate_sigma.jl")
+
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
     @testset "R-parity vs drmTMB v0.1.3" begin

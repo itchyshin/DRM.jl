@@ -664,6 +664,202 @@ function _fit_phylo_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, labe
     return _withnll(fit, nll, grad!)
 end
 
+"""
+    _phylo_mean_laplace_hetero_fg(kind, aux_from, n, Xμ, Xσ, leaf_node, Q, logdetQ, θ; …)
+
+Heteroscedastic generalisation of `_phylo_mean_laplace_nuisance_fg` (#164): the
+single scalar dispersion nuisance θσ is replaced by a per-observation
+log-dispersion linear predictor `ησ = Xσ·βσ`, so θ = `[βμ(pμ); βσ(pσ); logσ]`.
+`aux_from(ησ::Vector)` returns a per-observation aux whose dispersion is
+`exp.(ησ)` (a vector kind, e.g. `Val(:nb2_hetero)`).
+
+The σ-axis kernel derivatives (`nval, nr, nw`) are taken w.r.t. each
+observation's `log r_i`, so the βσ gradient is the Xσ-chained version of the
+scalar nuisance gradient: where the scalar code accumulates one `gnuis`, this
+accumulates a `pσ`-vector `gν` with each per-observation contribution weighted
+by `Xσ[i, k]`, and the implicit cross-term `crossν` becomes a `q × pσ` matrix —
+structurally identical to how the mean axis already chains `r/w` through `Xμ`.
+A one-column constant `Xσ` reproduces `_phylo_mean_laplace_nuisance_fg` exactly.
+"""
+function _phylo_mean_laplace_hetero_fg(kind, aux_from, n::Int, Xμ, Xσ, leaf_node,
+                                       Q, logdetQ, θ; grad::Bool = false,
+                                       b0 = nothing, newton_tol::Real = 1e-8,
+                                       newton_maxiter::Int = 60)
+    pσ = size(Xσ, 2)
+    pμ = length(θ) - pσ - 1
+    βμ = θ[1:pμ]
+    βσ = θ[pμ+1:pμ+pσ]
+    logσ = clamp(θ[pμ+pσ+1], -8.0, 3.0)
+    ησ = clamp.(Xσ * βσ, -8.0, 8.0)
+    aux = aux_from(ησ)
+    η0 = Xμ * βμ
+    b, ch, _, ok = _phylo_mean_mode(kind, aux, η0, leaf_node, Q, logσ; b0 = b0,
+                                    tol = newton_tol, maxiter = newton_maxiter)
+    if !ok
+        return grad ? (1e18, zeros(length(θ)), b, false) : (1e18, b, false)
+    end
+
+    q = size(Q, 1)
+    invσ2 = exp(-2 * logσ)
+    data = zero(eltype(θ))
+    prior = 0.5 * invσ2 * dot(b, Q * b)
+    gradβ_raw = zeros(eltype(θ), pμ)
+    gν = zeros(eltype(θ), pσ)
+    wstore = Vector{eltype(θ)}(undef, n)
+    tstore = Vector{eltype(θ)}(undef, n)
+    rνstore = Vector{eltype(θ)}(undef, n)
+    wνstore = Vector{eltype(θ)}(undef, n)
+    @inbounds for i in 1:n
+        η = η0[i] + b[leaf_node[i]]
+        v, r, w, t, nval, nr, nw = _laplace_v123_nuisance(kind, aux, i, η)
+        data += v
+        wstore[i] = w
+        tstore[i] = t
+        rνstore[i] = nr
+        wνstore[i] = nw
+        for k in 1:pμ
+            gradβ_raw[k] += Xμ[i, k] * r
+        end
+        for k in 1:pσ
+            gν[k] += Xσ[i, k] * nval
+        end
+    end
+    val = data + prior + q * logσ - 0.5 * logdetQ + 0.5 * logdet(ch)
+    grad || return val, b, true
+
+    S = takahashi_selinv(ch)
+    hd = diag(S)
+    traceSQ = _sparse_trace_product(S, Q)
+    tlogdet = zeros(eltype(θ), q)
+    crossβ = zeros(eltype(θ), q, pμ)
+    crossν = zeros(eltype(θ), q, pσ)
+    gβ = gradβ_raw
+    @inbounds for i in 1:n
+        li = leaf_node[i]
+        lever = hd[li]
+        tlever = tstore[i] * lever
+        tlogdet[li] += tlever
+        adj = 0.5 * tlever
+        nadj = 0.5 * wνstore[i] * lever
+        for k in 1:pμ
+            xik = Xμ[i, k]
+            gβ[k] += xik * adj
+            crossβ[li, k] += wstore[i] * xik
+        end
+        for k in 1:pσ
+            zik = Xσ[i, k]
+            gν[k] += zik * nadj
+            crossν[li, k] += zik * rνstore[i]
+        end
+    end
+    implicit = ch \ tlogdet
+    @inbounds for k in 1:pμ
+        gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
+    end
+    @inbounds for k in 1:pσ
+        gν[k] -= 0.5 * dot(@view(crossν[:, k]), implicit)
+    end
+    Qb = Q * b
+    Pu = invσ2 .* Qb
+    gσ = q - invσ2 * (dot(b, Qb) + traceSQ) + dot(implicit, Pu)
+    return val, vcat(gβ, gν, [gσ]), b, true
+end
+
+function _fit_phylo_mean_laplace_hetero(fam, kind, aux_from, n::Int, Xμ, Xσ,
+                                        labels, tree, nmμ, nmσ, grp, g_tol; θβ0,
+                                        θσ0, sigma_scale, se::Bool = false,
+                                        polish_iterations::Int = 0)
+    Q, leaf_node, _ = _poisson_phylo_setup(tree, labels)
+    q = size(Q, 1)
+    pμ = size(Xμ, 2)
+    pσ = size(Xσ, 2)
+    qchol = cholesky(Symmetric(Q); check = false)
+    issuccess(qchol) || error("phylo(1 | $grp) tree precision is not positive definite after root conditioning")
+    logdetQ = logdet(qchol)
+    last_b = zeros(q)
+
+    function eval_laplace(θ; grad::Bool = false)
+        if grad
+            val, g, b, ok = _phylo_mean_laplace_hetero_fg(
+                kind, aux_from, n, Xμ, Xσ, leaf_node, Q, logdetQ, θ; grad = true, b0 = last_b
+            )
+            if !ok
+                val, g, b, ok = _phylo_mean_laplace_hetero_fg(
+                    kind, aux_from, n, Xμ, Xσ, leaf_node, Q, logdetQ, θ;
+                    grad = true, b0 = zeros(q)
+                )
+            end
+            ok || return 1e18, zeros(length(θ))
+            last_b .= b
+            return val, g
+        else
+            val, b, ok = _phylo_mean_laplace_hetero_fg(
+                kind, aux_from, n, Xμ, Xσ, leaf_node, Q, logdetQ, θ; grad = false, b0 = last_b
+            )
+            if !ok
+                val, b, ok = _phylo_mean_laplace_hetero_fg(
+                    kind, aux_from, n, Xμ, Xσ, leaf_node, Q, logdetQ, θ;
+                    grad = false, b0 = zeros(q)
+                )
+            end
+            ok || return 1e18
+            last_b .= b
+            return val
+        end
+    end
+
+    nll(θ) = eval_laplace(θ; grad = false)
+    function grad!(Gout, θ)
+        _, g = eval_laplace(θ; grad = true)
+        Gout .= g
+        return Gout
+    end
+
+    θ0 = zeros(pμ + pσ + 1)
+    θ0[1:pμ] .= θβ0
+    θ0[pμ+1:pμ+pσ] .= θσ0
+    θ0[pμ+pσ+1] = log(0.4)
+    od = Optim.OnceDifferentiable(nll, grad!, θ0)
+    method = Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking())
+    res_fast = Optim.optimize(od, θ0, method, Optim.Options(g_tol = g_tol, iterations = 250))
+    res = if polish_iterations > 0
+        try
+            θp = Optim.minimizer(res_fast)
+            odp = Optim.OnceDifferentiable(nll, grad!, θp)
+            Optim.optimize(odp, θp, Optim.LBFGS(),
+                           Optim.Options(g_tol = g_tol, iterations = polish_iterations))
+        catch
+            res_fast
+        end
+    else
+        res_fast
+    end
+    θ̂ = Optim.minimizer(res)
+    gfinal = zeros(length(θ̂))
+    grad!(gfinal, θ̂)
+    nllhat = nll(θ̂)
+    converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
+    V = if se
+        Hθ = _finite_hessian(nll, θ̂)
+        try
+            inv(Symmetric(Hθ))
+        catch
+            Matrix{Float64}(I, length(θ̂), length(θ̂))
+        end
+    else
+        fill(NaN, length(θ̂), length(θ̂))
+    end
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
+    names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
+    ησ̂ = clamp.(Xσ * θ̂[pμ+1:pμ+pσ], -8.0, 8.0)
+    auxhat = aux_from(ησ̂)
+    means = Dict(:mu => [_laplace_mean(kind, dot(@view(Xμ[i, :]), θ̂[1:pμ])) for i in 1:n])
+    obs = Dict(:mu => [_laplace_obs(kind, auxhat, i) for i in 1:n])
+    scales = Dict(:sigma => [sigma_scale(ησ̂[i]) for i in 1:n])
+    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
+    return _withnll(fit, nll, grad!)
+end
+
 function _phylo_mean_laplace_fg(kind, aux, n::Int, Xμ, leaf_node, Q, logdetQ, θ;
                                 grad::Bool = false, b0 = nothing,
                                 newton_tol::Real = 1e-8, newton_maxiter::Int = 60)
@@ -818,21 +1014,35 @@ end
 function _fit_nb2_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
                                 g_tol; se::Bool = true,
                                 polish_iterations::Int = 0)
-    size(Xσ, 2) == 1 || error("_fit_nb2_phylo_laplace currently supports a constant sigma formula")
-    all(x -> x == 1.0, @view Xσ[:, 1]) ||
-        error("_fit_nb2_phylo_laplace currently supports a constant sigma formula")
     yint = round.(Int, y)
-    function aux_from(logsize)
-        r = exp(clamp(logsize, -8.0, 8.0))
-        lconst = [loggamma(yint[i] + r) - loggamma(r) - _logfactorial(yint[i]) for i in eachindex(yint)]
-        return (y = Float64.(yint), size = r, lconst = lconst)
-    end
     m = sum(y) / length(y)
     v = sum(abs2, y .- m) / max(length(y) - 1, 1)
     θσ0 = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
-    return _fit_phylo_mean_laplace_nuisance(
-        fam, Val(:nb2_fixed), aux_from, length(y), Xμ, labels, tree, nmμ, nmσ,
-        grp, g_tol; θβ0 = _poisson_fixed_start(y, Xμ), θσ0 = θσ0,
+    if size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])
+        function aux_from(logsize)               # constant-σ (sigma ~ 1) scalar path
+            r = exp(clamp(logsize, -8.0, 8.0))
+            lconst = [loggamma(yint[i] + r) - loggamma(r) - _logfactorial(yint[i]) for i in eachindex(yint)]
+            return (y = Float64.(yint), size = r, lconst = lconst)
+        end
+        return _fit_phylo_mean_laplace_nuisance(
+            fam, Val(:nb2_fixed), aux_from, length(y), Xμ, labels, tree, nmμ, nmσ,
+            grp, g_tol; θβ0 = _poisson_fixed_start(y, Xμ), θσ0 = θσ0,
+            sigma_scale = exp, se = se, polish_iterations = polish_iterations
+        )
+    end
+    # Covariate dispersion (#164): log-size is a per-observation linear predictor
+    # ησ = Xσ·βσ. The hetero aux turns ησ into the per-observation size vector.
+    yf = Float64.(yint)
+    function aux_from_hetero(ησ)
+        r = exp.(clamp.(ησ, -8.0, 8.0))
+        lconst = [loggamma(yf[i] + r[i]) - loggamma(r[i]) - _logfactorial(yint[i]) for i in eachindex(yint)]
+        return (y = yf, size = r, lconst = lconst)
+    end
+    θσ0 = zeros(size(Xσ, 2))
+    θσ0[1] = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))   # intercept; slopes 0
+    return _fit_phylo_mean_laplace_hetero(
+        fam, Val(:nb2_hetero), aux_from_hetero, length(y), Xμ, Xσ, labels, tree,
+        nmμ, nmσ, grp, g_tol; θβ0 = _poisson_fixed_start(y, Xμ), θσ0 = θσ0,
         sigma_scale = exp, se = se, polish_iterations = polish_iterations
     )
 end
@@ -1435,6 +1645,60 @@ function _laplace_nuisance_d2(::Val{:nb2_fixed}, aux, i, η)
     r = aux.size
     return r * μ * ((y + 2r) / (r + μ)^2 - 2r * (y + r) / (r + μ)^3)
 end
+
+# ---- NB2 with a per-observation log-dispersion (`sigma ~ x`; #164) ----------
+# Identical likelihood to `:nb2_fixed`, but the size r is a per-observation
+# vector `aux.size[i] = exp(Xσ[i,:]·βσ)` rather than one scalar. Each nuisance
+# derivative is the derivative w.r.t. that observation's `log r_i` (the σ-axis
+# linear predictor), so the outer fitter can chain it by Xσ to a vector βσ
+# gradient. With a one-column constant Xσ this reduces exactly to `:nb2_fixed`.
+function _laplace_value(::Val{:nb2_hetero}, aux, i, η)
+    μ = exp(clamp(η, -30.0, 30.0))
+    y = aux.y[i]
+    r = aux.size[i]
+    return -(aux.lconst[i] + y * log(μ) + r * log(r) - (y + r) * log(r + μ))
+end
+
+function _laplace_d12(::Val{:nb2_hetero}, aux, i, η)
+    μ = exp(clamp(η, -30.0, 30.0))
+    y = aux.y[i]
+    r = aux.size[i]
+    den = r + μ
+    return (y + r) * μ / den - y, (y + r) * r * μ / den^2
+end
+
+function _laplace_v123(::Val{:nb2_hetero}, aux, i, η)
+    ηc = clamp(η, -30.0, 30.0)
+    μ = exp(ηc)
+    y = aux.y[i]
+    r = aux.size[i]
+    den = r + μ
+    v = -(aux.lconst[i] + y * ηc + r * log(r) - (y + r) * log(den))
+    d1 = (y + r) * μ / den - y
+    d2 = (y + r) * r * μ / den^2
+    d3 = (y + r) * r * μ * (r - μ) / den^3
+    return v, d1, d2, d3
+end
+
+function _laplace_v123_nuisance(::Val{:nb2_hetero}, aux, i, η)
+    ηc = clamp(η, -30.0, 30.0)
+    μ = exp(ηc)
+    y = aux.y[i]
+    r = aux.size[i]
+    den = r + μ
+    v = -(aux.lconst[i] + y * ηc + r * log(r) - (y + r) * log(den))
+    d1 = (y + r) * μ / den - y
+    d2 = (y + r) * r * μ / den^2
+    d3 = (y + r) * r * μ * (r - μ) / den^3
+    dldr = -(digamma(y + r) - digamma(r)) - log(r) - 1 + log(den) + (y + r) / den
+    nv = r * dldr
+    nd1 = r * μ * (μ - y) / den^2
+    nd2 = r * μ * ((y + 2r) / den^2 - 2r * (y + r) / den^3)
+    return v, d1, d2, d3, nv, nd1, nd2
+end
+
+_laplace_mean(::Val{:nb2_hetero}, η) = exp(clamp(η, -30.0, 30.0))
+_laplace_obs(::Val{:nb2_hetero}, aux, i) = aux.y[i]
 
 function _laplace_value(::Val{:gamma_fixed}, aux, i, η)
     μ = exp(clamp(η, -30.0, 30.0))
