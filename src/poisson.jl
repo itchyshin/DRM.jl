@@ -77,9 +77,11 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
         if rk === :intercept                              # (1 | g) → 1-D GHQ
             return _withformula(_fit_poisson_ranef(fam, y, Xμ, gidx, G, nmμ, grp, g_tol), f)
-        elseif rk === :corr                               # (1 + x | g) → 2-D GHQ
+        elseif rk === :corr                               # (1 + x | g) → unified q2 Laplace
             xs = Float64.(getproperty(data, var))
-            return _withformula(_fit_poisson_corr_ranef(fam, y, Xμ, xs, gidx, G, nmμ, grp, g_tol), f)
+            return _withformula(_fit_corr_locscale(fam, _corr_kind(fam), :corr, y, Xμ,
+                    zeros(length(y), 0), xs, gidx, G, nmμ, String[], String(grp);
+                    link = :log, se = se, g_tol = g_tol), f)
         else
             error("Poisson() supports `(1 | g)` or `(1 + x | g)` random effects on the mean")
         end

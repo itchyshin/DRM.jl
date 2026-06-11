@@ -71,6 +71,7 @@ include("locscale_grad.jl")      # #202 groundwork: exact O(p) outer gradient
 include("locscale_infer.jl")     # #202 groundwork: Wald inference + RE summaries
 include("locscale_profile.jl")   # #202: profile-likelihood CIs (trust-region inner solve)
 include("locscale_frontend.jl")  # #202 slice 3b: drm() routing for (1|tag|group)
+include("locscale_corr.jl")      # cluster 1: (1+x|g)/(0+x|g) reroute onto the q2 core
 include("inference.jl")
 include("bias_correct.jl")       # TMB-style epsilon-method bias correction (#227 B11)
 include("heritability.jl")       # comparative-biology derived ratios (h²/ICC) + CIs

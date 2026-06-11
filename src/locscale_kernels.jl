@@ -201,3 +201,58 @@ function _ls_hess(::Val{:betabinomial}, y, η, ψ)
     H = ForwardDiff.hessian(f, [η, ψ])
     return H[1, 1], H[1, 2], H[2, 2]
 end
+
+# ---------------------------------------------------------------------------
+# Poisson (mean μ = exp η; MEAN-ONLY — no free dispersion). The ψ axis is null:
+# the leaf ignores ψ entirely, so under the correlated-RE promotion both latent
+# axes load η (Zη = [1 xᵢ], Zψ = [0 0]) and the scale design is empty (pψ = 0).
+# This is the cleanest case that the two q2 axes are loadings on ONE predictor,
+# not a (mean, scale) pair. The η-axis pieces match the verified Poisson Laplace
+# kernels (`_laplace_d1/_d2` :poisson) up to sign (nll = −logpmf).
+# ---------------------------------------------------------------------------
+
+function _ls_nll(::Val{:poisson}, y, η, ψ)
+    ηc = clamp(η, -LS_CLAMP, LS_CLAMP)
+    return -(y * ηc - exp(ηc) - loggamma(y + 1))
+end
+
+function _ls_grad(::Val{:poisson}, y, η, ψ)
+    μ = exp(clamp(η, -LS_CLAMP, LS_CLAMP))
+    return (μ - y, zero(η))            # ∂nll/∂η = μ − y;  ∂nll/∂ψ = 0
+end
+
+function _ls_hess(::Val{:poisson}, y, η, ψ)
+    μ = exp(clamp(η, -LS_CLAMP, LS_CLAMP))
+    return (μ, zero(η), zero(η))       # ∂²nll/∂η² = μ;  cross/ψψ = 0
+end
+
+# ---------------------------------------------------------------------------
+# LogNormal (log y ~ Normal(μ = η, σ = exp ψ); identity link on the log scale).
+# Equivalent to the Gaussian location–scale on log y. The −log y change-of-
+# variables Jacobian is carried per observation so the Laplace marginal logLik
+# matches the GHQ `_fit_lognormal_*` convention (which adds Σ log y). y is the
+# RAW positive response; log y is taken inside the kernel.
+# ---------------------------------------------------------------------------
+
+function _ls_nll(::Val{:lognormal}, y, η, ψ)
+    ly = log(y)
+    r = ly - η
+    return ψ + 0.5 * r * r * exp(-2 * ψ) + 0.5 * log(2π) + ly   # +log y Jacobian
+end
+
+function _ls_grad(::Val{:lognormal}, y, η, ψ)
+    r = log(y) - η
+    e = exp(-2 * ψ)
+    gη = -r * e                         # ∂nll/∂η
+    gψ = 1 - r * r * e                  # ∂nll/∂ψ  (d/dψ of ψ + ½r²e^{-2ψ})
+    return gη, gψ
+end
+
+function _ls_hess(::Val{:lognormal}, y, η, ψ)
+    r = log(y) - η
+    e = exp(-2 * ψ)
+    hηη = e                             # ∂²nll/∂η²
+    hηψ = 2 * r * e                     # ∂²nll/∂η∂ψ
+    hψψ = 2 * r * r * e                 # ∂²nll/∂ψ²
+    return hηη, hηψ, hψψ
+end
