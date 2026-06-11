@@ -202,7 +202,7 @@ residual correlation ρ12. This is the verified core engine (`src/sparse_phy.jl`
 | Randomized (Dunn–Smyth) quantile residuals, per family | `src/quantile_residuals.jl` | **Tested** — `test/test_quantile_residuals.jl` |
 | Visualization (CairoMakie figures incl. the Confidence Eye) | `src/visualization.jl` | **Tested** — `test/test_visualization.jl` |
 
-## R ↔ Julia bridge
+## R → Julia bridge (engine = "julia")
 
 A marshalling-friendly boundary for `drmTMB(..., engine = "julia")`
 (`src/bridge.jl`). Only primitive R-reconstructable pieces cross the boundary.
