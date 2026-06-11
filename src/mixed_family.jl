@@ -150,7 +150,9 @@ Fit the cross-family bivariate model (shared per-observation latent) and return 
 `σ1`/`σ2` on the natural scale (`NaN` for dispersionless axes), dispersion
 sub-model coefficients `βσ1`/`βσ2` (log-native scale, empty for dispersionless
 axes), link-scale variances `v1`/`v2`, the latent-scale correlation `rho_latent`,
-`loglik`, `converged`, and `iterations`.
+`loglik`, `converged`, `iterations`, and the two family instances `fam1`/`fam2`
+(carried so the post-fit accessors in `mixed_family_postfit.jl` can recover each
+axis's inverse link).
 
 `fam1`/`fam2` are DRM family instances. Supported: `Gaussian`, `Poisson`,
 `Binomial`, `NegBinomial2`, `Beta`, `Gamma`. Dispersion-carrying families
@@ -375,5 +377,6 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
             rho_ci_wald = rho_ci_wald, rho_ci_profile = rho_ci_profile,
             rho_ci_boot = rho_ci_boot,
             loglik = -nll(θ̂), converged = Optim.converged(res),
-            iterations = res.iterations)
+            iterations = res.iterations,
+            fam1 = fam1, fam2 = fam2)   # carried for post-fit accessors (mf_fitted)
 end
