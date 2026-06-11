@@ -166,3 +166,9 @@ include("test_quantile_residuals.jl")
 
 # S3: cross-family bivariate (shared-latent GHQ) + link-residual standardization.
 include("test_mixed_family.jl")
+
+# Independent validation of the cross-family latent correlation against EXTERNAL
+# references: gllvm (Gaussian × Gaussian, identical estimand; guarded — skips if
+# the fixture is absent) + an independent Monte-Carlo population reference for the
+# genuinely mixed Gaussian × Poisson case + the Gaussian × Gaussian closed form.
+include("test_xfam_external_validation.jl")

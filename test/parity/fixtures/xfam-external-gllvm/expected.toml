@@ -1,0 +1,19 @@
+[fit]
+family = "gllvm_gaussian_gaussian_num.lv1"
+estimand = "shared-latent trait correlation (getResidualCor)"
+rho_gllvm = 6.5755186332351734e-01
+rho_true  = 6.6370968340094127e-01
+loglik    = -5.0017802143001081e+03
+n = 2000
+
+[loadings]
+eff1 = 8.8659788498657388e-01
+eff2 = 7.0278514204277642e-01
+phi1 = 5.1214395104921151e-01
+phi2 = 6.0216678066066587e-01
+
+[tol]
+# cross-package: DRM (GHQ) vs gllvm (VA) fit the SAME data; the estimators
+# agree far tighter than sampling error. 0.02 is a conservative engine-vs-
+# engine band (on this data the achieved |DRM-gllvm| was 1.2e-4).
+atol_rho_xpackage = 2e-2
