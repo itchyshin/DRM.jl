@@ -81,6 +81,7 @@ include("visualization.jl")
 include("comparison.jl")
 include("chibar.jl")             # chi-bar-square boundary p-values for variance-component LRTs
 include("bridge.jl")
+include("missing_data.jl")       # #49: documented listwise-deletion preprocessing (no engine change)
 
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
@@ -106,7 +107,8 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
        heritability, repeatability, icc,
        coevolution_cor, coevolution_vc, coevolution_summary,
        reml_loglik, ml_loglik, estimation_method,
-       drm_bridge, drm_bridge_inference
+       drm_bridge, drm_bridge_inference,
+       drm_listwise
 
 # Public API — post-fit accessors for the cross-family bivariate fit
 # (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).
