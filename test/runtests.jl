@@ -116,6 +116,12 @@ include("test_predict_parameters.jl")
 include("test_prediction_grid.jl")
 include("test_bridge.jl")
 
+# Deepened coverage of genuinely-untested exported engine entry points
+# (fit_q4_sparse_tmb end-to-end; marginal_nll / marginal_and_exact_grad return
+# contract + cross-consistency) and the bivariate bf() meta_V/relmat/animal
+# constructor guard rails.
+include("test_coverage_engine.jl")
+
 # NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
 # script-style include paths and need path/`using DRM` updates before wiring
