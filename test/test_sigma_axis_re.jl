@@ -8,7 +8,8 @@
 #   3. Asserts σ-RE SD τ recovered within sampling + finite logLik.
 #   4. FD self-consistency: central 5-point-stencil FD of _sigma_re_nll at an
 #      off-optimum θ = [βμ; βψ; logL11] vs analytic _sigma_re_grad — must be
-#      ≤ 1e-5 for NB2/Gamma/Beta (Beta honest: uses ForwardDiff kernel).
+#      ≤ 1e-6 for NB2/Gamma/Beta via the h-sweep trough (a fixed small h reads
+#      inner-mode-solve noise, not analytic error — the #164 lesson).
 #
 # Families ENABLED: NegBinomial2, Gamma, Beta.
 # Poisson: no free sigma axis → NOT enabled (no _corr_kind dispatch).
@@ -28,6 +29,16 @@ function _fd_grad_5pt(obj, θ; h = 1e-4)
         g[k] = (-obj(tp2) + 8obj(tp1) - 8obj(tm1) + obj(tm2)) / (12h)
     end
     return g
+end
+
+# #164-disciplined FD gate. A single small h makes the marginal-NLL FD reference
+# dominated by inner-mode-solve noise (≈ inner_residual / h), NOT analytic error:
+# the analytic gradient reuses the verified _ls_marginal_grad. Sweep h and take the
+# minimum max-abs discrepancy — the trough of the U-curve where 5-point truncation
+# (O(h⁴)) balances inner noise (O(1/h)) — which recovers the TRUE accuracy.
+# (Verified empirically: the NB2 trough is ≈ 2e-7 at h≈3e-3.)
+function _fd_gate_min(g_an, obj, θ; hs = (1e-2, 3e-3, 1e-3))
+    minimum(maximum(abs, g_an .- _fd_grad_5pt(obj, θ; h = h)) for h in hs)
 end
 
 # Cold-start FD objective for _sigma_re_nll (each evaluation is independent
@@ -78,10 +89,9 @@ end
         θoff = copy(θfit); θoff[1] += 0.05; θoff[end] -= 0.1
         nll_fn = _sigma_re_fd_obj(Val(:nb2), y, Xμ, Xψ, gidx, Gd, Q, Zη, Zψ)
         g_an = DRM._sigma_re_grad(Val(:nb2), y, Xμ, Xψ, gidx, Gd, Q, θoff, Zη, Zψ)
-        g_fd = _fd_grad_5pt(nll_fn, θoff)
-        # Threshold 3e-5: NB2 inner cold solve adds ~1e-9 residual per evaluation;
-        # accumulated across 5 stencil points this reaches ~1e-5 to ~3e-5.
-        @test maximum(abs, g_an .- g_fd) ≤ 3e-5
+        # #164 FD gate via the h-sweep trough — true analytic accuracy ≤ 1e-6
+        # (a fixed small h would instead read inner-mode-solve noise ≈ residual/h).
+        @test _fd_gate_min(g_an, nll_fn, θoff) ≤ 1e-6
     end
 
     # ------------------------------------------------------------------
@@ -120,9 +130,8 @@ end
         θoff = copy(θfit); θoff[1] += 0.05; θoff[end] -= 0.1
         nll_fn = _sigma_re_fd_obj(Val(:gamma), y, Xμ, Xψ, gidx, Gd, Q, Zη, Zψ)
         g_an = DRM._sigma_re_grad(Val(:gamma), y, Xμ, Xψ, gidx, Gd, Q, θoff, Zη, Zψ)
-        g_fd = _fd_grad_5pt(nll_fn, θoff)
-        # Threshold 3e-5: Gamma inner cold solve accumulates ~1e-5 to 3e-5 across stencil.
-        @test maximum(abs, g_an .- g_fd) ≤ 3e-5
+        # #164 FD gate via the h-sweep trough — true analytic accuracy ≤ 1e-6.
+        @test _fd_gate_min(g_an, nll_fn, θoff) ≤ 1e-6
     end
 
     # ------------------------------------------------------------------
@@ -151,7 +160,7 @@ end
         τ_hat = re_sd(fit)[:g]
         @test τ_hat ≈ τ_true atol = 0.20   # Beta: wider tolerance (FD-based kernel)
 
-        # FD gate (Beta: honest threshold 1e-5 due to ForwardDiff-based kernel)
+        # FD gate via the h-sweep trough (Beta uses the ForwardDiff-based kernel).
         Xμ = hcat(ones(n), x)
         Xψ = ones(n, 1)
         gidx, Gd = DRM._group_index(g)
@@ -161,8 +170,7 @@ end
         θoff = copy(θfit); θoff[1] += 0.05; θoff[end] -= 0.1
         nll_fn = _sigma_re_fd_obj(Val(:beta), y, Xμ, Xψ, gidx, Gd, Q, Zη, Zψ)
         g_an = DRM._sigma_re_grad(Val(:beta), y, Xμ, Xψ, gidx, Gd, Q, θoff, Zη, Zψ)
-        g_fd = _fd_grad_5pt(nll_fn, θoff)
-        @test maximum(abs, g_an .- g_fd) ≤ 1e-5
+        @test _fd_gate_min(g_an, nll_fn, θoff) ≤ 1e-6
     end
 
 end
