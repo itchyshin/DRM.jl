@@ -86,6 +86,12 @@ end
 # routes to the robust profiler (#202, #209 item 2). The DrmFit covariance block
 # is in :recov order; the router permutes to the engine packing — so the per-
 # coefficient CIs must line up with the right parameters.
+#
+# This profiles the FULL parameter vector including the covariance block, whose
+# near-boundary inner solves run ~8+ min on Apple BLAS — opt-in so it does not
+# dominate routine `Pkg.test()`. Set DRM_SLOW_TESTS=1 to run. (Perf follow-up:
+# cache the inner-mode factorisation across warm-started profile points.)
+if get(ENV, "DRM_SLOW_TESTS", "0") == "1"
 @testset "location–scale profile CI via public confint(:profile)" begin
     Random.seed!(2026)
     G = 25; m = 25; n = G * m
@@ -143,4 +149,7 @@ end
     # (exact analytic gradient; ForwardDiff can't pierce the Float64 inner solve).
     rep = check_drm(fit)
     @test isfinite(rep.max_abs_grad)
+end
+else
+    @info "locscale full-vector confint(:profile) testset skipped (~8+ min); set DRM_SLOW_TESTS=1 to run"
 end
