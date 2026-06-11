@@ -105,6 +105,9 @@ include("test_locscale_profile.jl")
 include("test_locscale_gamma_e2e.jl")
 include("test_locscale_phylo_e2e.jl")
 include("test_locscale_frontend.jl")
+# Cluster ④: STRUCTURED (relmat/spatial C⁻¹) non-Gaussian location–scale, plus
+# the Beta and Beta-Binomial leaves. Recovery through C⁻¹ + the FD gradient gate.
+include("test_locscale_structured.jl")
 # Non-constant dispersion (sigma ~ x) SIMULTANEOUSLY with a random effect for
 # non-Gaussian families (#164): recovery of the dispersion slope + σ-axis RE
 # covariance via the location–scale engine, an FD-vs-exact gradient gate, and a

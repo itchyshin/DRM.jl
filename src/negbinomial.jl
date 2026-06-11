@@ -36,7 +36,8 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, K = nothing
     lc = _ls_coupled_re(rhs[:mu], get(rhs, :sigma, ConstantTerm(1)))
     lc === nothing ||
         return _withformula(_fit_locscale_frontend(Val(:nb2), fam, f, rhs, lc, data;
-                                                    g_tol = g_tol, se = se), f)
+                                                    g_tol = g_tol, se = se,
+                                                    tree = tree, K = K, A = A, coords = coords), f)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
         error("NegBinomial2() does not support meta_V markers")

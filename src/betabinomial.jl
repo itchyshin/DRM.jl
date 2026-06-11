@@ -32,10 +32,20 @@ fit = drm(bf(cbind(successes, failures) ~ x, sigma ~ 1), BetaBinomial(); data = 
 """
 struct BetaBinomial end
 
-function drm(f::DrmFormula, fam::BetaBinomial; data, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::BetaBinomial; data, tree = nothing, K = nothing,
+             A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true)
     f.response2 === nothing &&
         error("BetaBinomial() needs a two-column response: bf(cbind(successes, failures) ~ …)")
     rhs = Dict(f.forms)
+    # Location–scale: a coupled `(1 | tag | group)` shared by the mean and sigma
+    # formulas → one 2×2 group-level covariance (mean-logit / log-σ axes) fit by
+    # the augmented-state engine. A structured group (`relmat`/`phylo`/…) routes
+    # the group covariance through C⁻¹ / the tree precision.
+    lc = _ls_coupled_re(rhs[:mu], get(rhs, :sigma, ConstantTerm(1)))
+    lc === nothing ||
+        return _withformula(_fit_locscale_frontend(Val(:betabinomial), fam, f, rhs, lc, data;
+                                                    g_tol = g_tol, se = se,
+                                                    tree = tree, K = K, A = A, coords = coords), f)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     (mv === nothing && st === nothing) ||
         error("BetaBinomial() does not support meta_V / structured markers")

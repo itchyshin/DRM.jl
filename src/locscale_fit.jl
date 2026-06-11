@@ -49,6 +49,25 @@ end
 
 (o::LocScaleObjective)(θ) = _ls_fit_nll(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ)
 
+# Family-appropriate mean-axis intercept start. NB2/Gamma use a log link, so the
+# Poisson IRLS warm start applies directly. Beta/BetaBinomial use a logit link
+# and a non-scalar response (BetaBinomial packs `(successes, trials)` per obs),
+# for which `_poisson_fixed_start` is neither correct nor type-valid — start the
+# intercept at the logit of the overall mean proportion instead.
+function _ls_default_betastart(kind, y, Xμ)
+    pμ = size(Xμ, 2)
+    if kind isa Val{:beta}
+        ȳ = clamp(sum(y) / length(y), 1e-3, 1 - 1e-3)
+        β = zeros(pμ); β[1] = log(ȳ / (1 - ȳ)); return β
+    elseif kind isa Val{:betabinomial}
+        s = sum(t -> t[1], y); ntot = sum(t -> t[2], y)
+        p̄ = clamp(s / max(ntot, 1), 1e-3, 1 - 1e-3)
+        β = zeros(pμ); β[1] = log(p̄ / (1 - p̄)); return β
+    else
+        return _poisson_fixed_start(y, Xμ)
+    end
+end
+
 """
     _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q; ...)
 
@@ -61,7 +80,7 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
                        λ0 = [log(0.3), 0.0, log(0.3)],
                        g_tol = 1e-6, iterations = 1000, se::Bool = false)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
-    βμ0 === nothing && (βμ0 = _poisson_fixed_start(y, Xμ))
+    βμ0 === nothing && (βμ0 = _ls_default_betastart(kind, y, Xμ))
     βψ0 === nothing && (βψ0 = zeros(pψ))
     θ0 = vcat(βμ0, βψ0, λ0)
 
@@ -132,4 +151,17 @@ end
 function _locscale_phylo_setup(tree, labels)
     Q, leaf_node, _ = _poisson_phylo_setup(tree, labels)
     return Q, leaf_node, size(Q, 1)
+end
+
+# Convenience: derive (Q, gidx, G) for a general user-supplied PD covariance `C`
+# (relatedness / animal model / precomputed spatial), the non-tree analogue of
+# `_locscale_phylo_setup`. Identical engine contract: the tree precision is
+# swapped for C⁻¹ (rescaled to a unit-diagonal correlation), exactly the swap the
+# mean-only `_fit_*_relmat_laplace` routes already make. `G = size(Q,1)` = the
+# number of distinct group levels and `gidx` hits every level (data at every
+# node, unlike the tree where G > #leaves) — both handled identically by the
+# `_ls_joint*` block assembly.
+function _locscale_relmat_setup(C, labels)
+    Q, gidx = _general_cov_setup(C, labels)
+    return Q, gidx, size(Q, 1)
 end
