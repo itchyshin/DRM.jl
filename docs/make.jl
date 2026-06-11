@@ -20,6 +20,7 @@ makedocs(
     pages = [
         "Home" => "index.md",
         "Get started" => "get-started.md",
+        "Capabilities" => "capabilities.md",
         "Model Guides" => [
             "model-guides/model-map.md",
             "model-guides/which-scale.md",
