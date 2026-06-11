@@ -341,6 +341,61 @@ function _fit_poisson_phylo_laplace(fam::Poisson, y, Xμ, labels, tree, nmμ, gr
                                     g_tol; se::Bool = true,
                                     polish_iterations::Int = 15)
     Q, leaf_node, _ = _poisson_phylo_setup(tree, labels)
+    return _fit_poisson_general_laplace(fam, y, Xμ, Q, leaf_node, nmμ, grp, g_tol;
+                                        se = se, polish_iterations = polish_iterations)
+end
+
+"""
+    _general_cov_setup(C, labels) -> (Q, leaf_node)
+
+Resolve a user-supplied per-group covariance/relatedness matrix `C` (G×G, SPD)
+to the `(precision Q, leaf_node)` pair the sparse-Laplace spine consumes. `C` is
+first rescaled to a unit-diagonal correlation `R` (so the recovered `:resd` block
+is the random-effect SD `σ_b`, with prior `b ~ N(0, σ_b² R)`, matching the phylo
+convention), then `Q = R⁻¹`. `leaf_node` maps each observation to its group level
+via [`_group_index`](@ref) — the relatedness/animal-model/spatial analogue of the
+tree's leaf-to-node map. Mathematically identical to the phylo path with the tree
+precision swapped for an arbitrary PD precision.
+"""
+function _general_cov_setup(C::AbstractMatrix, labels)
+    gidx, G = _group_index(labels)
+    size(C, 1) == size(C, 2) == G ||
+        error("covariance matrix must be $(G)×$(G) (the number of `$(length(labels))`-row group levels = $G)")
+    Cf = Matrix{Float64}(C)
+    d = sqrt.(diag(Cf))
+    all(>(0), d) || error("covariance matrix must have a strictly positive diagonal")
+    R = Symmetric(Cf ./ (d * d'))                       # unit-diagonal correlation
+    Rchol = cholesky(R; check = false)
+    issuccess(Rchol) || error("covariance matrix is not positive definite")
+    Q = sparse(Symmetric(inv(Rchol)))                   # dense precision, sparse-wrapped
+    return Q, gidx
+end
+
+"""
+    _fit_poisson_relmat_laplace(fam, y, Xμ, C, labels, nmμ, grp, g_tol; se)
+
+Poisson sparse-Laplace fit with a general user-supplied PD covariance `C` on the
+mean random intercept (`relmat`/`animal`/`spatial(1 | grp)`). Reuses the verified
+phylo Laplace spine via [`_general_cov_setup`](@ref): the only difference from the
+phylo route is that the prior precision comes from `C⁻¹` instead of the tree
+topology. Exact O(p) gradient and Takahashi log-det derivatives carry over
+unchanged.
+"""
+function _fit_poisson_relmat_laplace(fam::Poisson, y, Xμ, C, labels, nmμ, grp,
+                                     g_tol; se::Bool = true,
+                                     polish_iterations::Int = 15)
+    Q, leaf_node = _general_cov_setup(C, labels)
+    return _fit_poisson_general_laplace(fam, y, Xμ, Q, leaf_node, nmμ, grp, g_tol;
+                                        se = se, polish_iterations = polish_iterations)
+end
+
+# Shared body: Poisson sparse-Laplace fit for an arbitrary precision `Q` and
+# observation→latent map `leaf_node`. Driven by the tree route
+# (`_fit_poisson_phylo_laplace`) and the general-covariance route
+# (`_fit_poisson_relmat_laplace`); see those for the two front ends.
+function _fit_poisson_general_laplace(fam::Poisson, y, Xμ, Q, leaf_node, nmμ, grp,
+                                      g_tol; se::Bool = true,
+                                      polish_iterations::Int = 15)
     n = length(y)
     pμ = size(Xμ, 2)
     q = size(Q, 1)
