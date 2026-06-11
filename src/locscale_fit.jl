@@ -171,3 +171,21 @@ function _locscale_relmat_setup(C, labels)
     Q, gidx = _general_cov_setup(C, labels)
     return Q, gidx, size(Q, 1)
 end
+
+# Cluster 3 helper: resolve (Q, gidx, G) for a structured non-Gaussian slope
+# from the struct kind and the group-level covariance source. Reuses the same
+# helpers used by the structured intercept (phylo/relmat) and the location–scale
+# structured intercept paths. `phylo` builds Q from the tree; relmat/animal/spatial
+# build Q from the user-supplied PD matrix via `_general_cov_setup`. A bare :iid
+# kind (ordinary i.i.d. groups) is not supported here — use `_fit_corr_locscale`
+# directly with the default Q = I.
+function _locscale_structured_q(struct_kind::Symbol, grp_sym::Symbol, labels,
+                                tree, K, A)
+    if struct_kind === :phylo
+        tree === nothing && error("phylo(1 + … | $grp_sym) needs `tree = …`")
+        return _locscale_phylo_setup(tree, labels)     # (Q, gidx, G)
+    else
+        C = _poisson_structured_cov(struct_kind, grp_sym, K, A, nothing)
+        return _locscale_relmat_setup(C, labels)       # (Q, gidx, G)
+    end
+end

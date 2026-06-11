@@ -82,23 +82,59 @@ _corr_λ0(rk::Symbol) = rk === :corr ? [log(0.4), 0.0, log(0.4)] :
 
 """
     _fit_corr_locscale(fam, kind, rk, y, Xμ, Xψ, xs, gidx, G, nmμ, nmσ, grp;
-                       link, se, g_tol, respobs, trials)
+                       link, se, g_tol, respobs, trials, Q)
 
 Fit a correlated (`rk == :corr`) or independent (`rk == :slope`) random
 intercept/slope on the mean of a non-Gaussian family through the unified q2
 location–scale Laplace core, and wrap it as a `DrmFit` with the GHQ `:recov`
 block. `Xψ` is the scale fixed-effect design (`zeros(n,0)` for the mean-only
 Poisson). `link` is the mean inverse link (`:log`/`:logit`/`:identity`).
+`Q` is the G×G group-level precision; default `sparse(I,G,G)` (i.i.d. groups,
+cluster 1 byte-identical behaviour). A structured Q (from `_general_cov_setup`
+or `_locscale_phylo_setup`) routes the kron(Q,Λ⁻¹) prior through the same
+spine (cluster 3: structured non-Gaussian random slopes).
 """
 function _fit_corr_locscale(fam, kind, rk::Symbol, y, Xμ, Xψ, xs, gidx, G,
                             nmμ, nmσ, grp::String; link::Symbol,
                             se::Bool = true, g_tol::Real = 1e-6,
-                            respobs = nothing, trials = nothing)
-    Q = sparse(1.0 * I, G, G)
+                            respobs = nothing, trials = nothing,
+                            Q = sparse(1.0 * I, G, G))
     Zη, Zψ = _corr_loadings(rk, xs)
     fitres = _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
                            Zη = Zη, Zψ = Zψ, λ0 = _corr_λ0(rk),
                            g_tol = g_tol, se = se)
     return _corr_build_drmfit(kind, fam, fitres, Xμ, Xψ, nmμ, nmσ, grp, y, link;
                               respobs = respobs, trials = trials)
+end
+
+# Parse a formula rhs for a structured correlated slope:
+#   `relmat(1 + x | g)`, `animal(1 + x | g)`, `phylo(1 + x | g)`,
+#   `spatial(1 + x | g)`.
+# Returns `(struct_kind::Symbol, slope_var::Symbol, grp_sym::Symbol)` or
+# `nothing`. Does NOT consume ordinary `(1 + x | g)` terms (those are handled
+# by the `re` path).
+function _parse_structured_slope(rhs)
+    terms = rhs isa Tuple ? collect(rhs) : Any[rhs]
+    for t in terms
+        t isa FunctionTerm || continue
+        f = t.f
+        (f === relmat || f === animal || f === phylo || f === spatial) || continue
+        length(t.args) == 1 || continue
+        inner = t.args[1]                              # should be `(1 + x | g)`
+        inner isa FunctionTerm && inner.f === (|) || continue
+        lhs = inner.args[1]
+        grp_term = inner.args[2]
+        grp_term isa Term || continue
+        try
+            rk, var = _re_kind(lhs)
+            rk === :corr || continue                   # only correlated slope
+            struct_kind = f === relmat  ? :relmat  :
+                          f === animal  ? :animal  :
+                          f === phylo   ? :phylo   : :spatial
+            return (struct_kind, var, grp_term.sym)
+        catch
+            continue
+        end
+    end
+    return nothing
 end

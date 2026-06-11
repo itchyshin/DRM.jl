@@ -131,6 +131,9 @@ include("test_betabinomial_slope_re.jl")
 include("test_corr_locscale_equiv.jl")
 # Cluster 2: standalone sigma-axis RE (sigma ~ 1 + (1|g)) for non-Gaussian families.
 include("test_sigma_axis_re.jl")
+# Cluster 3: structured non-Gaussian random slopes relmat/phylo/animal/spatial(1+x|g).
+# kron(Q,Λ⁻¹) prior with Q=C⁻¹; FD gate via h-sweep trough (#164 discipline).
+include("test_structured_slopes.jl")
 include("test_binomial.jl")
 include("test_binomial_re.jl")
 include("test_summary.jl")

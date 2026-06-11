@@ -46,6 +46,22 @@ function drm(f::DrmFormula, fam::Beta; data, tree = nothing, K = nothing,
         return _withformula(_fit_locscale_frontend(Val(:beta), fam, f, rhs, lc, data;
                                                     g_tol = g_tol, se = se,
                                                     tree = tree, K = K, A = A, coords = coords), f)
+    # Cluster 3: structured correlated slope phylo/relmat/animal/spatial(1+x|g)
+    # on the mean — species-level (intercept, slope) effects with structured Q.
+    sslope = _parse_structured_slope(rhs[:mu])
+    if sslope !== nothing
+        struct_kind, slope_var, grp_sym = sslope
+        y2, Xμ2, nmμ2 = _design(f.response, ConstantTerm(1), data)
+        all(yi -> 0 < yi < 1, y2) ||
+            error("Beta() requires responses strictly in the open interval (0, 1)")
+        _, Xσ2, nmσ2 = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
+        xs = Float64.(getproperty(data, slope_var))
+        labels = getproperty(data, grp_sym)
+        Q, gidx, G = _locscale_structured_q(struct_kind, grp_sym, labels, tree, K, A)
+        return _withformula(_fit_corr_locscale(fam, _corr_kind(fam), :corr, y2, Xμ2, Xσ2,
+                xs, gidx, G, nmμ2, nmσ2, String(grp_sym);
+                link = :logit, se = se, g_tol = g_tol, Q = Q, respobs = y2), f)
+    end
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
         error("Beta() does not support meta_V markers")

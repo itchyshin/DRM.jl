@@ -29,6 +29,23 @@ _logfactorial(k::Integer) = sum(log, 2:k; init = 0.0)   # log k!  (0 for k = 0, 
 function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
              A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true)
     rhs = Dict(f.forms)
+    # Cluster 3: structured correlated slope phylo/relmat/animal/spatial(1+x|g) on
+    # the mean → correlated random slope across species/groups with structured Q.
+    sslope = _parse_structured_slope(rhs[:mu])
+    if sslope !== nothing
+        struct_kind, slope_var, grp_sym = sslope
+        (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
+            error("Poisson() structured slopes cannot be combined with `zi`/`hu` yet")
+        y2, Xμ2, nmμ2 = _design(f.response, ConstantTerm(1), data)   # intercept-only fixed
+        all(yi -> yi ≥ 0 && isinteger(yi), y2) ||
+            error("Poisson() requires non-negative integer counts as the response")
+        xs = Float64.(getproperty(data, slope_var))
+        labels = getproperty(data, grp_sym)
+        Q, gidx, G = _locscale_structured_q(struct_kind, grp_sym, labels, tree, K, A)
+        return _withformula(_fit_corr_locscale(fam, _corr_kind(fam), :corr, y2, Xμ2,
+                zeros(length(y2), 0), xs, gidx, G, nmμ2, String[], String(grp_sym);
+                link = :log, se = se, g_tol = g_tol, Q = Q), f)
+    end
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
         error("Poisson() does not support meta_V markers")
