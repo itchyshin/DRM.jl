@@ -19,14 +19,18 @@ using LinearAlgebra: cholesky, Symmetric
 
 # Packed marginal NLL at θ = [βμ; βψ; λ(3)]. Each call solves the inner mode from
 # a cold start, so the objective is deterministic — required by the optimiser.
-function _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
+# `Zη`/`Zψ` are the per-obs latent loadings (default = canonical mean/scale axes);
+# the correlated-slope reroute passes Zη = [1 xᵢ], Zψ = [0 0].
+function _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ,
+                     Zη = _ls_canonical_Zeta(length(y)),
+                     Zψ = _ls_canonical_Zpsi(length(y)))
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ = @view θ[1:pμ]
     βψ = @view θ[pμ+1:pμ+pψ]
     λv = @view θ[pμ+pψ+1:pμ+pψ+3]
     Λ = _ls_lc_to_Λ(λv)
     P = prior_precision(Q, _ls_inv2x2(Λ))
-    val, _, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P)
+    val, _, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P, Zη, Zψ)
     return ok ? val : 1e18
 end
 
@@ -78,6 +82,8 @@ group-level covariance `Lambda`, the marginal `nll`, and a `converged` flag.
 function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
                        βμ0 = nothing, βψ0 = nothing,
                        λ0 = [log(0.3), 0.0, log(0.3)],
+                       Zη = _ls_canonical_Zeta(length(y)),
+                       Zψ = _ls_canonical_Zpsi(length(y)),
                        g_tol = 1e-6, iterations = 1000, se::Bool = false)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ0 === nothing && (βμ0 = _ls_default_betastart(kind, y, Xμ))
@@ -99,12 +105,12 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
         βμ = @view θ[1:pμ]; βψ = @view θ[pμ+1:pμ+pψ]
         Λ = _ls_lc_to_Λ(θ[pμ+pψ+1:pμ+pψ+3])
         P = prior_precision(Q, _ls_inv2x2(Λ))
-        val, a, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P; a0 = warm[])
+        val, a, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P, Zη, Zψ; a0 = warm[])
         ok && (warm[] = copy(a))
         return ok ? val : 1e18
     end
-    g!(grad, θ) = (grad .= _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ; a0 = warm[]); grad)
-    h!(H, θ) = (H .= _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ; a0 = warm[]); H)
+    g!(grad, θ) = (grad .= _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0 = warm[]); grad)
+    h!(H, θ) = (H .= _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0 = warm[]); H)
     opts = Optim.Options(g_tol = g_tol, iterations = iterations)
     nm() = (warm[] = nothing; Optim.optimize(nll, θ0, Optim.NelderMead(),
                           Optim.Options(iterations = max(iterations, 2000))))
@@ -134,7 +140,7 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
     Λ̂ = _ls_lc_to_Λ(θ̂[pμ+pψ+1:pμ+pψ+3])
     nll(θ̂)                       # ensure warm[] holds the mode at θ̂ for the SE solve
     # Wald inference (opt-in): observed information = Hessian of the exact gradient.
-    V = se ? _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; a0 = warm[]) : nothing
+    V = se ? _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ; a0 = warm[]) : nothing
     return (θ = θ̂,
             beta_mu = θ̂[1:pμ],
             beta_psi = θ̂[pμ+1:pμ+pψ],

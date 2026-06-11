@@ -13,14 +13,16 @@ using LinearAlgebra: Symmetric, diag, SingularException
 Observed information ∂²M/∂θ² of the Laplace marginal at θ, as the symmetrised
 central finite-difference Jacobian of the exact gradient `_ls_marginal_grad`.
 """
-function _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ; h = 1e-5, a0 = nothing)
+function _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ,
+                            Zη = _ls_canonical_Zeta(length(y)),
+                            Zψ = _ls_canonical_Zpsi(length(y)); h = 1e-5, a0 = nothing)
     p = length(θ)
     H = zeros(p, p)
     @inbounds for k in 1:p
         θp = copy(θ); θp[k] += h
         θm = copy(θ); θm[k] -= h
-        gp = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θp; a0 = a0)
-        gm = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θm; a0 = a0)
+        gp = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θp, Zη, Zψ; a0 = a0)
+        gm = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θm, Zη, Zψ; a0 = a0)
         H[:, k] = (gp .- gm) ./ (2h)
     end
     return Symmetric((H + H') ./ 2)
@@ -28,8 +30,10 @@ end
 
 # Wald covariance V = (observed information)⁻¹. Returns `nothing` if the
 # information is singular (e.g. a variance pinned at the boundary).
-function _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ; h = 1e-5, a0 = nothing)
-    H = _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ; h = h, a0 = a0)
+function _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ,
+                  Zη = _ls_canonical_Zeta(length(y)),
+                  Zψ = _ls_canonical_Zpsi(length(y)); h = 1e-5, a0 = nothing)
+    H = _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; h = h, a0 = a0)
     return try
         inv(Matrix(H))
     catch err

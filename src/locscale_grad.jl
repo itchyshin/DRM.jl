@@ -38,7 +38,9 @@ Exact gradient of `_ls_fit_nll` at the packed θ = [βμ; βψ; λ(3)]. Returns 
 zero vector if the inner mode fails to converge (rare; the caller treats this as
 a flat step). O(p) in the number of groups.
 """
-function _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ; a0 = nothing)
+function _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ,
+                           Zη = _ls_canonical_Zeta(length(y)),
+                           Zψ = _ls_canonical_Zpsi(length(y)); a0 = nothing)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ = @view θ[1:pμ]
     βψ = @view θ[pμ+1:pμ+pψ]
@@ -47,7 +49,7 @@ function _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ; a0 = nothing)
     P = prior_precision(Q, Λinv)
     η0 = Xμ * βμ; ψ0 = Xψ * βψ
 
-    a, ch, ok = _ls_inner_mode(kind, y, η0, ψ0, gidx, G, P; a0 = a0)
+    a, ch, ok = _ls_inner_mode(kind, y, η0, ψ0, gidx, G, P, Zη, Zψ; a0 = a0)
     grad = zeros(length(θ))
     ok || return grad
 
@@ -58,32 +60,58 @@ function _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ; a0 = nothing)
         α[g] = Hinv[2g-1, 2g-1]; β[g] = Hinv[2g-1, 2g]; δ[g] = Hinv[2g, 2g]
     end
 
-    # Adjoint v_j = ½ tr(H⁻¹ ∂H/∂a_j): group-wise third-derivative sums.
-    Tηηη = zeros(G); Tηηψ = zeros(G); Tηψψ = zeros(G); Tψψψ = zeros(G)
+    # Adjoint v_j = ½ tr(H⁻¹ ∂H/∂a_j). With general loadings the per-obs block is
+    # B_i = hηη·zη zηᵀ + hηψ·(zη zψᵀ+zψ zηᵀ) + hψψ·zψ zψᵀ, so its derivative
+    # along latent slot j (direction d_j = (zη[c_j], zψ[c_j])) contracts the
+    # kernel 3rd-deriv tensor with the per-group selected-inverse block M_g=[α β;
+    # β δ] via the three scalars qηη=zηᵀM zη, qηψ=zηᵀM zψ, qψψ=zψᵀM zψ:
+    #   v_j += ½ (dhηη·qηη + 2 dhηψ·qηψ + dhψψ·qψψ),  dhαβ = tαβη·dη + tαβψ·dψ.
+    # The canonical loadings (zη=[1,0],zψ=[0,1]) recover the original v expression.
+    v = zeros(2G)
     @inbounds for i in eachindex(y)
         g = gidx[i]
-        t1, t2, t3, t4 = _ls_third(kind, y[i], η0[i] + a[2g-1], ψ0[i] + a[2g])
-        Tηηη[g] += t1; Tηηψ[g] += t2; Tηψψ[g] += t3; Tψψψ[g] += t4
-    end
-    v = zeros(2G)
-    @inbounds for g in 1:G
-        v[2g-1] = 0.5 * (α[g] * Tηηη[g] + 2β[g] * Tηηψ[g] + δ[g] * Tηψψ[g])
-        v[2g]   = 0.5 * (α[g] * Tηηψ[g] + 2β[g] * Tηψψ[g] + δ[g] * Tψψψ[g])
+        a1 = a[2g-1]; a2 = a[2g]
+        z1 = Zη[i, 1]; z2 = Zη[i, 2]; w1 = Zψ[i, 1]; w2 = Zψ[i, 2]
+        ηi = η0[i] + z1 * a1 + z2 * a2
+        ψi = ψ0[i] + w1 * a1 + w2 * a2
+        t1, t2, t3, t4 = _ls_third(kind, y[i], ηi, ψi)   # tηηη,tηηψ,tηψψ,tψψψ
+        αg = α[g]; βg = β[g]; δg = δ[g]
+        qηη = αg * z1 * z1 + 2βg * z1 * z2 + δg * z2 * z2   # zηᵀ M zη
+        qηψ = αg * z1 * w1 + βg * (z1 * w2 + z2 * w1) + δg * z2 * w2   # zηᵀ M zψ
+        qψψ = αg * w1 * w1 + 2βg * w1 * w2 + δg * w2 * w2   # zψᵀ M zψ
+        # slot 2g-1: direction d = (z1, w1); slot 2g: direction d = (z2, w2).
+        for (slot, dη, dψ) in ((2g - 1, z1, w1), (2g, z2, w2))
+            dhηη = t1 * dη + t2 * dψ
+            dhηψ = t2 * dη + t3 * dψ
+            dhψψ = t3 * dη + t4 * dψ
+            v[slot] += 0.5 * (dhηη * qηη + 2 * dhηψ * qηψ + dhψψ * qψψ)
+        end
     end
     w = ch \ v
 
-    # βμ / βψ components (one obs loop). Each obs contributes a column-weighted
-    # scalar on the mean axis (cμ) and the scale axis (cψ).
+    # βμ / βψ components (one obs loop). βμ shifts η0 (direction (1,0)); βψ shifts
+    # ψ0 (direction (0,1)) — independent of the loadings. The adjoint enters via
+    # wη = w_g·zη, wψ = w_g·zψ (the group adjoint contracted with each loading).
     @inbounds for i in eachindex(y)
         g = gidx[i]
-        ηi = η0[i] + a[2g-1]; ψi = ψ0[i] + a[2g]
+        z1 = Zη[i, 1]; z2 = Zη[i, 2]; w1 = Zψ[i, 1]; w2 = Zψ[i, 2]
+        ηi = η0[i] + z1 * a[2g-1] + z2 * a[2g]
+        ψi = ψ0[i] + w1 * a[2g-1] + w2 * a[2g]
         gη, gψ = _ls_grad(kind, y[i], ηi, ψi)
         hηη, hηψ, hψψ = _ls_hess(kind, y[i], ηi, ψi)
         t1, t2, t3, t4 = _ls_third(kind, y[i], ηi, ψi)
-        cμ = gη + 0.5 * (α[g] * t1 + 2β[g] * t2 + δ[g] * t3) -
-             (w[2g-1] * hηη + w[2g] * hηψ)
-        cψ = gψ + 0.5 * (α[g] * t2 + 2β[g] * t3 + δ[g] * t4) -
-             (w[2g-1] * hηψ + w[2g] * hψψ)
+        αg = α[g]; βg = β[g]; δg = δ[g]
+        qηη = αg * z1 * z1 + 2βg * z1 * z2 + δg * z2 * z2
+        qηψ = αg * z1 * w1 + βg * (z1 * w2 + z2 * w1) + δg * z2 * w2
+        qψψ = αg * w1 * w1 + 2βg * w1 * w2 + δg * w2 * w2
+        wη = w[2g-1] * z1 + w[2g] * z2     # w_g · zη
+        wψ = w[2g-1] * w1 + w[2g] * w2     # w_g · zψ
+        # mean-axis chain (direction (1,0) on the predictor pair):
+        cμ = gη + 0.5 * (t1 * qηη + 2 * t2 * qηψ + t3 * qψψ) -
+             (hηη * wη + hηψ * wψ)
+        # scale-axis chain (direction (0,1) on the predictor pair):
+        cψ = gψ + 0.5 * (t2 * qηη + 2 * t3 * qηψ + t4 * qψψ) -
+             (hηψ * wη + hψψ * wψ)
         for k in 1:pμ
             grad[k] += Xμ[i, k] * cμ
         end
