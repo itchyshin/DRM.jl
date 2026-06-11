@@ -1067,23 +1067,37 @@ end
 function _fit_gamma_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
                                   g_tol; se::Bool = true,
                                   polish_iterations::Int = 5)
-    size(Xσ, 2) == 1 || error("_fit_gamma_phylo_laplace currently supports a constant sigma formula")
-    all(x -> x == 1.0, @view Xσ[:, 1]) ||
-        error("_fit_gamma_phylo_laplace currently supports a constant sigma formula")
     yv = Float64.(y)
-    function aux_from(logsigma)
-        α = exp(clamp(-2 * logsigma, -8.0, 8.0))
-        lconst = [α * log(α) - loggamma(α) + (α - 1) * log(yv[i]) for i in eachindex(yv)]
-        return (y = yv, shape = α, lconst = lconst)
-    end
     ȳ = sum(yv) / length(yv)
     v = sum(abs2, yv .- ȳ) / max(length(yv) - 1, 1)
     α0 = max(ȳ^2 / max(v, eps()), 3.0)
     θβ0 = zeros(size(Xμ, 2))
     θβ0[1] = log(ȳ + eps())
-    return _fit_phylo_mean_laplace_nuisance(
-        fam, Val(:gamma_fixed), aux_from, length(yv), Xμ, labels, tree, nmμ, nmσ,
-        grp, g_tol; θβ0 = θβ0, θσ0 = -0.5 * log(α0), sigma_scale = exp,
+    if size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])
+        function aux_from(logsigma)          # constant-σ (sigma ~ 1) scalar path
+            α = exp(clamp(-2 * logsigma, -8.0, 8.0))
+            lconst = [α * log(α) - loggamma(α) + (α - 1) * log(yv[i]) for i in eachindex(yv)]
+            return (y = yv, shape = α, lconst = lconst)
+        end
+        return _fit_phylo_mean_laplace_nuisance(
+            fam, Val(:gamma_fixed), aux_from, length(yv), Xμ, labels, tree, nmμ, nmσ,
+            grp, g_tol; θβ0 = θβ0, θσ0 = -0.5 * log(α0), sigma_scale = exp,
+            se = se, polish_iterations = polish_iterations
+        )
+    end
+    # Covariate dispersion (#164): the σ-axis is a per-observation linear
+    # predictor ησ = Xσ·βσ; the hetero aux turns ησ into the per-observation
+    # shape vector α = exp(-2·ησ).
+    function aux_from_hetero(ησ)
+        α = exp.(clamp.(-2 .* ησ, -8.0, 8.0))
+        lconst = [α[i] * log(α[i]) - loggamma(α[i]) + (α[i] - 1) * log(yv[i]) for i in eachindex(yv)]
+        return (y = yv, shape = α, lconst = lconst)
+    end
+    θσ0 = zeros(size(Xσ, 2))
+    θσ0[1] = -0.5 * log(α0)                   # intercept; slopes 0
+    return _fit_phylo_mean_laplace_hetero(
+        fam, Val(:gamma_hetero), aux_from_hetero, length(yv), Xμ, Xσ, labels, tree,
+        nmμ, nmσ, grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
         se = se, polish_iterations = polish_iterations
     )
 end
@@ -1091,24 +1105,38 @@ end
 function _fit_beta_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
                                  g_tol; se::Bool = true,
                                  polish_iterations::Int = 0)
-    size(Xσ, 2) == 1 || error("_fit_beta_phylo_laplace currently supports a constant sigma formula")
-    all(x -> x == 1.0, @view Xσ[:, 1]) ||
-        error("_fit_beta_phylo_laplace currently supports a constant sigma formula")
     yv = Float64.(y)
     ylogit = log.(yv) .- log1p.(-yv)
-    function aux_from(logsigma)
-        φ = exp(clamp(-2 * logsigma, -8.0, 8.0))
-        return (y = yv, precision = φ, ylogit = ylogit,
-                lgammaφ = loggamma(φ), digammaφ = digamma(φ))
-    end
     ȳ = clamp(sum(yv) / length(yv), 1e-4, 1 - 1e-4)
     v = sum(abs2, yv .- ȳ) / max(length(yv) - 1, 1)
     φ0 = max(ȳ * (1 - ȳ) / max(v, eps()) - 1, 0.5)
     θβ0 = zeros(size(Xμ, 2))
     θβ0[1] = log(ȳ / (1 - ȳ))
-    return _fit_phylo_mean_laplace_nuisance(
-        fam, Val(:beta_fixed), aux_from, length(yv), Xμ, labels, tree, nmμ, nmσ,
-        grp, g_tol; θβ0 = θβ0, θσ0 = -0.5 * log(φ0), sigma_scale = exp,
+    if size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])
+        function aux_from(logsigma)          # constant-σ (sigma ~ 1) scalar path
+            φ = exp(clamp(-2 * logsigma, -8.0, 8.0))
+            return (y = yv, precision = φ, ylogit = ylogit,
+                    lgammaφ = loggamma(φ), digammaφ = digamma(φ))
+        end
+        return _fit_phylo_mean_laplace_nuisance(
+            fam, Val(:beta_fixed), aux_from, length(yv), Xμ, labels, tree, nmμ, nmσ,
+            grp, g_tol; θβ0 = θβ0, θσ0 = -0.5 * log(φ0), sigma_scale = exp,
+            se = se, polish_iterations = polish_iterations
+        )
+    end
+    # Covariate dispersion (#164): the σ-axis is a per-observation linear
+    # predictor ησ = Xσ·βσ; the hetero aux turns ησ into the per-observation
+    # precision vector φ = exp(-2·ησ).
+    function aux_from_hetero(ησ)
+        φ = exp.(clamp.(-2 .* ησ, -8.0, 8.0))
+        return (y = yv, precision = φ, ylogit = ylogit,
+                lgammaφ = loggamma.(φ), digammaφ = digamma.(φ))
+    end
+    θσ0 = zeros(size(Xσ, 2))
+    θσ0[1] = -0.5 * log(φ0)                   # intercept; slopes 0
+    return _fit_phylo_mean_laplace_hetero(
+        fam, Val(:beta_hetero), aux_from_hetero, length(yv), Xμ, Xσ, labels, tree,
+        nmμ, nmσ, grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
         se = se, polish_iterations = polish_iterations
     )
 end
@@ -1700,6 +1728,52 @@ end
 _laplace_mean(::Val{:nb2_hetero}, η) = exp(clamp(η, -30.0, 30.0))
 _laplace_obs(::Val{:nb2_hetero}, aux, i) = aux.y[i]
 
+# ---- Gamma with a per-observation log-dispersion (`sigma ~ x`; #164) ---------
+# Identical likelihood to `:gamma_fixed`, but the shape α is a per-observation
+# vector `aux.shape[i] = exp(-2·Xσ[i,:]·βσ)` rather than one scalar. Each
+# nuisance derivative is the derivative w.r.t. that observation's σ-axis linear
+# predictor ησ_i = Xσ[i,:]·βσ (so dα_i/dησ_i = -2α_i), letting the outer fitter
+# chain it by Xσ to a vector βσ gradient. With a one-column constant Xσ this
+# reduces exactly to `:gamma_fixed`.
+function _laplace_value(::Val{:gamma_hetero}, aux, i, η)
+    μ = exp(clamp(η, -30.0, 30.0))
+    y = aux.y[i]
+    α = aux.shape[i]
+    return -(aux.lconst[i] - α * log(μ) - α * y / μ)
+end
+
+function _laplace_d12(::Val{:gamma_hetero}, aux, i, η)
+    μ = exp(clamp(η, -30.0, 30.0))
+    αy_over_μ = aux.shape[i] * aux.y[i] / μ
+    return aux.shape[i] - αy_over_μ, αy_over_μ
+end
+
+function _laplace_v123(::Val{:gamma_hetero}, aux, i, η)
+    ηc = clamp(η, -30.0, 30.0)
+    μ = exp(ηc)
+    α = aux.shape[i]
+    αy_over_μ = α * aux.y[i] / μ
+    v = -(aux.lconst[i] - α * ηc - αy_over_μ)
+    return v, α - αy_over_μ, αy_over_μ, -αy_over_μ
+end
+
+function _laplace_v123_nuisance(::Val{:gamma_hetero}, aux, i, η)
+    ηc = clamp(η, -30.0, 30.0)
+    μ = exp(ηc)
+    y = aux.y[i]
+    α = aux.shape[i]
+    αy_over_μ = α * y / μ
+    v = -(aux.lconst[i] - α * ηc - αy_over_μ)
+    d1 = α - αy_over_μ
+    d2 = αy_over_μ
+    d3 = -αy_over_μ
+    dldα = -log(α) - 1 + digamma(α) - log(y) + ηc + y / μ
+    return v, d1, d2, d3, -2α * dldα, -2α * (1 - y / μ), -2α * y / μ
+end
+
+_laplace_mean(::Val{:gamma_hetero}, η) = exp(clamp(η, -30.0, 30.0))
+_laplace_obs(::Val{:gamma_hetero}, aux, i) = aux.y[i]
+
 function _laplace_value(::Val{:gamma_fixed}, aux, i, η)
     μ = exp(clamp(η, -30.0, 30.0))
     y = aux.y[i]
@@ -1819,6 +1893,91 @@ function _laplace_nuisance_d2(::Val{:beta_fixed}, aux, i, η)
     φ, v, vp, _, dA, dB = _laplace_beta_nuisance_terms(aux, i, η)
     return -2φ * (dB * v^2 + dA * vp)
 end
+
+# ---- Beta with a per-observation log-dispersion (`sigma ~ x`; #164) ----------
+# Identical likelihood to `:beta_fixed`, but the precision φ is a per-observation
+# vector `aux.precision[i] = exp(-2·Xσ[i,:]·βσ)` rather than one scalar. The
+# σ-axis derivatives are taken w.r.t. each observation's ησ_i = Xσ[i,:]·βσ
+# (so dφ_i/dησ_i = -2φ_i), letting the outer fitter chain them by Xσ to a vector
+# βσ gradient. The aux carries per-observation `lgammaφ[i] = loggamma(φ_i)` and
+# `digammaφ[i] = digamma(φ_i)`. A one-column constant Xσ reduces this exactly to
+# `:beta_fixed`.
+function _laplace_value(::Val{:beta_hetero}, aux, i, η)
+    μ = _laplace_logistic(clamp(η, -30.0, 30.0))
+    φ = aux.precision[i]
+    a = μ * φ
+    b = (1 - μ) * φ
+    y = aux.y[i]
+    return -(aux.lgammaφ[i] - loggamma(a) - loggamma(b) + (a - 1) * log(y) + (b - 1) * log1p(-y))
+end
+
+function _laplace_d12(::Val{:beta_hetero}, aux, i, η)
+    μ = _laplace_logistic(clamp(η, -30.0, 30.0))
+    φ = aux.precision[i]
+    a = μ * φ
+    b = (1 - μ) * φ
+    A = φ * (digamma(a) - digamma(b) - aux.ylogit[i])
+    B = φ^2 * (trigamma(a) + trigamma(b))
+    v = μ * (1 - μ)
+    vp = v * (1 - 2μ)
+    return A * v, B * v^2 + A * vp
+end
+
+function _laplace_v123(::Val{:beta_hetero}, aux, i, η)
+    μ = _laplace_logistic(clamp(η, -30.0, 30.0))
+    φ = aux.precision[i]
+    a = μ * φ
+    b = (1 - μ) * φ
+    y = aux.y[i]
+    A = φ * (digamma(a) - digamma(b) - aux.ylogit[i])
+    B = φ^2 * (trigamma(a) + trigamma(b))
+    C = φ^3 * (polygamma(2, a) - polygamma(2, b))
+    v = μ * (1 - μ)
+    u = 1 - 2μ
+    vp = v * u
+    vpp = v * u^2 - 2v^2
+    value = -(aux.lgammaφ[i] - loggamma(a) - loggamma(b) +
+              (a - 1) * log(y) + (b - 1) * log1p(-y))
+    return value, A * v, B * v^2 + A * vp, C * v^3 + 3 * B * v * vp + A * vpp
+end
+
+function _laplace_v123_nuisance(::Val{:beta_hetero}, aux, i, η)
+    μ = _laplace_logistic(clamp(η, -30.0, 30.0))
+    φ = aux.precision[i]
+    a = μ * φ
+    b = (1 - μ) * φ
+    y = aux.y[i]
+    logy = log(y)
+    log1my = log1p(-y)
+    da = digamma(a)
+    db = digamma(b)
+    ta = trigamma(a)
+    tb = trigamma(b)
+    p2a = polygamma(2, a)
+    p2b = polygamma(2, b)
+    v = μ * (1 - μ)
+    u = 1 - 2μ
+    vp = v * u
+    vpp = v * u^2 - 2v^2
+    A = φ * (da - db - aux.ylogit[i])
+    B = φ^2 * (ta + tb)
+    C = φ^3 * (p2a - p2b)
+    value = -(aux.lgammaφ[i] - loggamma(a) - loggamma(b) +
+              (a - 1) * logy + (b - 1) * log1my)
+    dL = -aux.digammaφ[i] + μ * da + (1 - μ) * db - μ * logy - (1 - μ) * log1my
+    dA = da - db - aux.ylogit[i] + φ * (μ * ta - (1 - μ) * tb)
+    dB = 2φ * (ta + tb) + φ^2 * (μ * p2a + (1 - μ) * p2b)
+    return (value,
+            A * v,
+            B * v^2 + A * vp,
+            C * v^3 + 3 * B * v * vp + A * vpp,
+            -2φ * dL,
+            -2φ * dA * v,
+            -2φ * (dB * v^2 + dA * vp))
+end
+
+_laplace_mean(::Val{:beta_hetero}, η) = _laplace_logistic(clamp(η, -30.0, 30.0))
+_laplace_obs(::Val{:beta_hetero}, aux, i) = aux.y[i]
 
 function _laplace_d12(kind, aux, i, η)
     return _laplace_d1(kind, aux, i, η), _laplace_d2(kind, aux, i, η)

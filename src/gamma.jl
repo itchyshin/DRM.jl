@@ -55,8 +55,8 @@ function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, g_tol::Real = 1e-8
     if st !== nothing
         isempty(re) ||
             error("Gamma() phylo structured effects cannot be combined with ordinary random effects yet")
-        (size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])) ||
-            error("Gamma() phylo sparse Laplace currently supports `sigma ~ 1`")
+        # `sigma ~ 1` keeps the scalar-dispersion spine; a covariate `sigma`
+        # formula routes to the per-observation log-dispersion path (#164).
         kind, grp = st
         kind === :phylo ||
             error("Gamma() currently supports only phylo(1 | group) among structured markers")

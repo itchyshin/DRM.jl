@@ -31,10 +31,16 @@ _gb_logistic(x) = 1 / (1 + exp(-x))
     @test isfinite(loglik(fit))
     @test all(fitted(fit) .> 0)
 
-    @test_throws ErrorException drm(
+    # Covariate dispersion now routes to the per-observation log-σ path (#164)
+    # instead of erroring (the dedicated recovery/gradient gates on x-dependent
+    # dispersion live in test_164_gamma_hetero.jl); here we only assert the path
+    # is reachable and returns a 1-column σ block on this slope-only design.
+    fit_het = drm(
         bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 0 + x)),
         Gamma(); data = (; y, x, species), tree = phy, se = false
     )
+    @test length(coef(fit_het, :sigma)) == 1
+    @test isfinite(loglik(fit_het))
 end
 
 @testset "Beta phylo random intercept - sparse Laplace route" begin
@@ -63,10 +69,16 @@ end
     @test isfinite(loglik(fit))
     @test all(0 .< fitted(fit) .< 1)
 
-    @test_throws ErrorException drm(
+    # Covariate dispersion now routes to the per-observation log-σ path (#164)
+    # instead of erroring (the dedicated recovery/gradient gates on x-dependent
+    # dispersion live in test_164_gamma_hetero.jl); here we only assert the path
+    # is reachable and returns a 1-column σ block on this slope-only design.
+    fit_het = drm(
         bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 0 + x)),
         Beta(); data = (; y, x, species), tree = phy, se = false
     )
+    @test length(coef(fit_het, :sigma)) == 1
+    @test isfinite(loglik(fit_het))
 end
 
 @testset "Gamma phylo sparse Laplace gradient" begin
