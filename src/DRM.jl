@@ -90,7 +90,7 @@ export AugProblem, make_problem,
        pack_theta, unpack_theta, lc_to_Λ, Λ_to_lc,
        augmented_phy, random_balanced_tree, random_caterpillar_tree,
        augmented_tree_precision, sigma_phy_dense, takahashi_selinv,
-       fit_phylo_interaction, phylo_interaction_nll, phylo_correlation
+       fit_phylo_interaction, phylo_interaction_nll, phylo_correlation,
        # general-q coevolution block (#188)
        CoevoProblem, make_coevo_problem, coevo_marginal, fit_coevolution,
        simulate_coevolution, coevo_pack, coevo_unpack, coevo_theta_len,
