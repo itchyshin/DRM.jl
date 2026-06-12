@@ -68,6 +68,7 @@ include("locscale_frontend.jl")  # #202 slice 3b: drm() routing for (1|tag|group
 include("inference.jl")
 include("bias_correct.jl")       # TMB-style epsilon-method bias correction (#227 B11)
 include("heritability.jl")       # comparative-biology derived ratios (h²/ICC) + CIs
+include("coevo_accessors.jl")    # #188: q=4 coevolution among-axis correlation + variance accessors
 include("variational.jl")
 include("summary.jl")
 include("visualization.jl")
@@ -93,6 +94,7 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
        chibar_pvalue, lrt_boundary,
        bias_correct,
        heritability, repeatability, icc,
+       coevolution_cor, coevolution_vc, coevolution_summary,
        reml_loglik, ml_loglik, estimation_method,
        drm_bridge, drm_bridge_inference
 
