@@ -21,7 +21,7 @@ using Distributions: TDist
 
     @test coef(fit, :mu)[2] ≈ β[2] atol = 0.10        # population mean slope
     @test exp(coef(fit, :sigma)[1]) ≈ σ atol = 0.12   # scale σ
-    @test exp(coef(fit, :nu)[1]) ≈ ν atol = 2.5       # df is weakly identified — loose
+    @test 2 + exp(coef(fit, :nu)[1]) ≈ ν atol = 2.5   # ν = 2 + exp(η); df weakly identified — loose
     @test re_sd(fit)[:g] ≈ σb atol = 0.15             # group random-intercept SD
     @test isfinite(loglik(fit))
 end

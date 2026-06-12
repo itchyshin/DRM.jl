@@ -1,6 +1,6 @@
 # student.jl — Student-t family: robust location–scale–shape regression.
 # A formula per parameter: μ (location, identity), σ (scale, log link), ν
-# (degrees of freedom, log link → ν > 0). The density is the location-scale t:
+# (degrees of freedom, ν = 2 + exp(η) → ν > 2, finite variance). Location-scale t:
 # logpdf = logpdf(TDist(ν), (y-μ)/σ) − log σ. Heavy tails downweight outliers;
 # ν → ∞ recovers Gaussian. Fixed effects (ML), plus a random intercept `(1|g)` or
 # a correlated random intercept+slope `(1+x|g)` on the mean μ (integrated out by
@@ -12,13 +12,14 @@ using Distributions: TDist, logpdf
     Student()
 
 Student-t response family: identity link on the location `μ`, log link on the
-scale `σ`, and log link on the degrees of freedom `ν` (so `ν` coefficients act
-on `log ν`). Robust sibling of [`Gaussian`](@ref) — heavy tails downweight
-outliers, and `ν → ∞` tends to Gaussian. Mirrors `drmTMB`'s `student` family.
+scale `σ`, and the degrees of freedom as `ν = 2 + exp(η)` (so `ν > 2` and the
+variance is always finite; `ν` coefficients act on `log(ν − 2)`). Robust sibling
+of [`Gaussian`](@ref) — heavy tails downweight outliers, and `ν → ∞` tends to
+Gaussian. Mirrors `drmTMB`'s `student` family.
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1, nu ~ 1), Student(); data = dat)
-exp(coef(fit, :nu)[1])      # estimated degrees of freedom
+2 + exp(coef(fit, :nu)[1])  # estimated degrees of freedom (ν = 2 + exp(η))
 ```
 """
 struct Student end
@@ -79,7 +80,7 @@ function _fit_student_ranef(fam::Student, y, Xμ, Xσ, Xν, gidx, G, nmμ, nmσ,
             for k in 1:K
                 δ = rt2 * σb * z[k]; gll = logw[k]
                 for i in idx
-                    μ = η0[i] + δ; ν = exp(ην[i]); zt = (y[i] - μ) * exp(-ησ[i])
+                    μ = η0[i] + δ; ν = 2 + exp(ην[i]); zt = (y[i] - μ) * exp(-ησ[i])
                     gll += logpdf(TDist(ν), zt) - ησ[i]   # location-scale t, − log σ Jacobian
                 end
                 terms[k] = gll
@@ -101,7 +102,7 @@ function _fit_student_ranef(fam::Student, y, Xμ, Xσ, Xν, gidx, G, nmμ, nmσ,
     names = [:mu => nmμ, :sigma => nmσ, :nu => nmν, :resd => [String(grp)]]
     means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))   # population μ (b=0)
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]),
-                  :nu => exp.(Xν * θ̂[(pμ+pσ+1):(pμ+pσ+pν)]))
+                  :nu => 2 .+ exp.(Xν * θ̂[(pμ+pσ+1):(pμ+pσ+pν)]))
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
 
@@ -133,7 +134,7 @@ function _fit_student_corr_ranef(fam::Student, y, Xμ, Xσ, Xν, xs, gidx, G, nm
                 b0 = rt2 * l11 * z1[j]; b1 = rt2 * (cc * z1[j] + l22 * z1[k])   # √2 L z
                 gll = lw[j] + lw[k]
                 for i in idx
-                    μ = η0[i] + b0 + b1 * xs[i]; ν = exp(ην[i]); zt = (y[i] - μ) * exp(-ησ[i])
+                    μ = η0[i] + b0 + b1 * xs[i]; ν = 2 + exp(ην[i]); zt = (y[i] - μ) * exp(-ησ[i])
                     gll += logpdf(TDist(ν), zt) - ησ[i]
                 end
                 terms[t] = gll
@@ -155,7 +156,7 @@ function _fit_student_corr_ranef(fam::Student, y, Xμ, Xσ, Xν, xs, gidx, G, nm
     names = [:mu => nmμ, :sigma => nmσ, :nu => nmν, :recov => ["$(grp):L11", "$(grp):L22", "$(grp):L21"]]
     means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]),
-                  :nu => exp.(Xν * θ̂[(pμ+pσ+1):(pμ+pσ+pν)]))
+                  :nu => 2 .+ exp.(Xν * θ̂[(pμ+pσ+1):(pμ+pσ+pν)]))
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
 
@@ -167,7 +168,7 @@ function _fit_student(fam::Student, y, Xμ, Xσ, Xν, nmμ, nmσ, nmν, g_tol)
         ημ = Xμ * βμ; ησ = Xσ * βσ; ην = Xν * βν
         s = zero(eltype(θ))
         @inbounds for i in 1:n
-            ν = exp(ην[i]); z = (y[i] - ημ[i]) * exp(-ησ[i])
+            ν = 2 + exp(ην[i]); z = (y[i] - ημ[i]) * exp(-ησ[i])
             s -= logpdf(TDist(ν), z) - ησ[i]       # − log σ Jacobian
         end
         return s
@@ -183,6 +184,6 @@ function _fit_student(fam::Student, y, Xμ, Xσ, Xν, nmμ, nmσ, nmν, g_tol)
     names = [:mu => nmμ, :sigma => nmσ, :nu => nmν]
     means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]),
-                  :nu => exp.(Xν * θ̂[(pμ+pσ+1):(pμ+pσ+pν)]))
+                  :nu => 2 .+ exp.(Xν * θ̂[(pμ+pσ+1):(pμ+pσ+pν)]))
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end

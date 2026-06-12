@@ -25,7 +25,7 @@ using Distributions: TDist
 
     @test coef(fit, :mu)[2] ≈ β[2] atol = 0.12        # population mean slope
     @test exp(coef(fit, :sigma)[1]) ≈ σ atol = 0.10   # scale σ
-    @test exp(coef(fit, :nu)[1]) ≈ ν atol = 3.0       # df is weakly identified — loose
+    @test 2 + exp(coef(fit, :nu)[1]) ≈ ν atol = 3.0   # ν = 2 + exp(η); df weakly identified — loose
     V = vc(fit)[:g]                                    # 2×2 RE covariance
     @test sqrt(V[1, 1]) ≈ sd0 atol = 0.20             # intercept-RE SD
     @test sqrt(V[2, 2]) ≈ sd1 atol = 0.20             # slope-RE SD
