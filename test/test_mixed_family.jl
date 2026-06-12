@@ -266,4 +266,49 @@ end
         @test all(isfinite, fit.β1) && all(isfinite, fit.β2)
         @test isfinite(fit.λ1) && isfinite(fit.λ2)
     end
+
+    # ---- Covariate dispersion sub-model. The Gaussian axis carries a heteroscedastic
+    # log-σ driven by a covariate z (distinct from the mean covariate x):
+    #     log σ1_i = a + b·z_i,
+    # passed via Xsigma1 = [1 z]. Recover the dispersion coefficients β_σ1 = [a, b].
+    # The default ones-column path is exercised everywhere else in this file, so a
+    # passing recovery here together with the unchanged 54 baseline tests confirms the
+    # generalisation is additive (intercept-only ≡ the old scalar slot).
+    @testset "covariate sigma sub-model recovery (Gaussian x Poisson)" begin
+        rng = MersenneTwister(20260611)
+        n = 3000
+        x = randn(rng, n)                       # mean-model covariate
+        z = randn(rng, n)                       # dispersion-model covariate
+        X1 = hcat(ones(n), x); X2 = hcat(ones(n), x)
+        Xsigma1 = hcat(ones(n), z)              # log σ1 = a + b·z
+        β1 = [0.5, 0.8]; β2 = [0.3, -0.5]
+        λ1 = 0.7; λ2 = 0.6
+        a = -0.4; b = 0.5                        # dispersion intercept + slope
+        u = randn(rng, n)
+        σ1 = exp.(a .+ b .* z)                   # per-observation residual SD
+        y1 = X1 * β1 .+ λ1 .* u .+ σ1 .* randn(rng, n)
+        η2 = X2 * β2 .+ λ2 .* u
+        y2 = Float64[_rpois(rng, exp(clamp(η2[i], -20.0, 20.0))) for i in 1:n]
+
+        fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gaussian(),
+                                   y2 = y2, X2 = X2, fam2 = Poisson(),
+                                   Xsigma1 = Xsigma1, confint = false)
+        @test fit.converged
+        @test length(fit.βσ1) == 2                  # intercept + slope recovered as a vector
+        @test isempty(fit.βσ2)                       # Poisson axis: dispersionless
+        @test isapprox(fit.βσ1[1], a; atol = 0.10)   # log-σ intercept
+        @test isapprox(fit.βσ1[2], b; atol = 0.10)   # log-σ slope (the new capability)
+        @test isapprox(fit.β1, β1; atol = 0.10)
+        @test isapprox(fit.β2, β2; atol = 0.10)
+        @test isapprox(fit.λ1, λ1; atol = 0.20)
+        @test isapprox(fit.λ2, λ2; atol = 0.20)
+
+        # An intercept-only refit on the SAME data must reproduce the old scalar slot
+        # exactly (byte-identical default path): σ1 == exp(βσ1_intercept), one coeff.
+        flat = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gaussian(),
+                                    y2 = y2, X2 = X2, fam2 = Poisson(),
+                                    confint = false)
+        @test length(flat.βσ1) == 1
+        @test flat.σ1 == exp(flat.βσ1[1])
+    end
 end
