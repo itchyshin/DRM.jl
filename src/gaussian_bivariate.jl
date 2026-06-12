@@ -161,8 +161,9 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
         s = zero(eltype(θ))
         @inbounds for i in 1:n
             if obs1[i] && obs2[i]
-                ρ = tanh(ηr[i])
-                om = 1 - ρ * ρ
+                ρ = RHO_GUARD * tanh(ηr[i])    # guard ρ off ±1 (tanh saturates to ±1.0 in
+                om = 1 - ρ * ρ                 # Float64 for large η → om=0 → NaN); matches the
+                                               # q4 engine's RHO_GUARD + drmTMB's guarded link
                 z1 = (y1[i] - η1[i]) * exp(-ls1[i])     # standardised residuals
                 z2 = (y2[i] - η2[i]) * exp(-ls2[i])
                 # −log φ₂ = log(2π) + (½ log|Σ|) + (½ rᵀΣ⁻¹r)
@@ -207,7 +208,7 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
     obs = Dict(:mu1 => Vector{Float64}(y1), :mu2 => Vector{Float64}(y2))
     scales = Dict(:sigma1 => exp.(Xs1 * θ̂[rng(3)]),
                   :sigma2 => exp.(Xs2 * θ̂[rng(4)]),
-                  :rho12 => tanh.(Xr * θ̂[rng(5)]))
+                  :rho12 => RHO_GUARD .* tanh.(Xr * θ̂[rng(5)]))   # report the model's guarded ρ
     return _withformula(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n_like, Optim.converged(res), means, obs, scales), nll), f)
 end
 
@@ -365,7 +366,7 @@ function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fi
     scales = Dict(
         :sigma1 => exp.(Xs1 * β̂.s1),
         :sigma2 => exp.(Xs2 * β̂.s2),
-        :rho12 => tanh.(Xr * β̂.rho),
+        :rho12 => RHO_GUARD .* tanh.(Xr * β̂.rho),   # report the model's guarded ρ (engine uses RHO_GUARD)
     )
     _, u_hat, _, _ = marginal_nll(prob, Q_cond, θ̂; n_newton = q4_n_newton)
     all_blups = reshape(Vector{Float64}(u_hat), 4, prob.n_total)
