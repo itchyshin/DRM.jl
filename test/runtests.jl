@@ -170,6 +170,9 @@ end
 # Model comparison + accessor parity (lrtest / anova / aicc / weights / update).
 include("test_comparison.jl")
 
+# Chi-bar-square boundary-corrected p-values for variance-component LR tests.
+include("test_chibar.jl")
+
 # Randomized quantile residuals (DHARMa/glmmTMB style) — feat-quantile-residuals.
 include("test_quantile_residuals.jl")
 
