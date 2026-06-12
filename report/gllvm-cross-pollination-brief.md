@@ -37,12 +37,28 @@ serves every family. Verified ≤ 1e-6 vs finite differences and O(p) to p = 10,
 *Transfers to:* any GLLVM model with a structured (phylogenetic/spatial) latent
 covariance, replacing dense or autodiff-through-Cholesky gradients.
 
-### 2. Boundary-corrected inference (the variance-on-the-boundary problem)
-Latent-variable variance components routinely sit at/near zero, where the Wald
-Hessian is singular and Wald CIs are invalid. We ship **profile-likelihood CIs**
-(Venzon–Moolgavkar guarded-Newton, bracket-safeguarded) and **χ̄² mixture LRTs**
-for boundary parameters — valid where the Hessian fails. *Transfers to:* CIs/tests
-on GLLVM loading/variance parameters at the boundary.
+### 2. Boundary-corrected inference (the variance-on-the-boundary problem) ★
+Latent-variable variance components and loading correlations routinely sit at/near
+their boundaries — a factor variance → 0 when K is over-specified, loadings going
+collinear (ρ → ±1) — where the Wald Hessian is singular and Wald CIs are invalid
+(the classic "my Hessian isn't positive-definite" failure). We built the honest-
+inference toolkit for exactly this, and it transfers directly:
+- **Profile-likelihood CIs** (Venzon–Moolgavkar guarded-Newton, bracket-safeguarded):
+  report `[0, x]` / `[−1, +1]` honestly where Wald fails.
+- **χ̄² (chi-bar-squared) mixture LRTs** (Self & Liang 1987; Stram & Lee 1994): the
+  *correct* 50:50 (cone-geometry for multi-parameter) null for "is this variance /
+  factor 0?", not the naïve χ²₁ that over-rejects. **Directly useful for K-selection /
+  over-factoring** — report "this factor's variance is ≈0" as a *result*, not a crash.
+- **Penalised / weakly-informative stabilisation** (Chung, Rabe-Hesketh, Dorie, Gelman
+  & Liu 2013, the blme penalty): lift a near-0 latent variance off the exact floor → a
+  non-degenerate estimate + a pd Hessian, when you want a point estimate.
+- **The honest framing:** none of these makes an unidentified component identifiable —
+  when the signal is absent, the boundary CI **is** the result. Reparameterisations
+  (log-Cholesky, Fisher-z) keep the optimiser well-behaved but *relocate*, not dissolve,
+  the boundary.
+*Transfers to:* CIs/tests on GLLVM loading/variance parameters, the K-selection problem
+in particular. We share the recipe + our χ̄²/profile verification harness — methods, not
+code (MIT/GPL clean).
 
 ### 3. The location–scale (distributional) model on a structured latent
 Modelling the **dispersion** (not just the mean) as its own structured sub-model,
