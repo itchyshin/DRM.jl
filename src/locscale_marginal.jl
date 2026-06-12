@@ -25,10 +25,12 @@ Laplace-approximate marginal negative log-likelihood for the q=2 location–scal
 model. Returns `(nll, â, ok)`: the marginal NLL, the inner mode, and a success
 flag (the inner Newton solve can fail at extreme parameters).
 """
-function _ls_marginal_nll(kind, y, η0, ψ0, gidx, G, P; a0 = nothing)
-    a, ch, ok = _ls_inner_mode(kind, y, η0, ψ0, gidx, G, P; a0 = a0)
+function _ls_marginal_nll(kind, y, η0, ψ0, gidx, G, P,
+                          Zη = _ls_canonical_Zeta(length(y)),
+                          Zψ = _ls_canonical_Zpsi(length(y)); a0 = nothing)
+    a, ch, ok = _ls_inner_mode(kind, y, η0, ψ0, gidx, G, P, Zη, Zψ; a0 = a0)
     ok || return Inf, a, false
-    jn = _ls_joint(kind, y, η0, ψ0, gidx, a, P)
+    jn = _ls_joint(kind, y, η0, ψ0, gidx, a, P, Zη, Zψ)
     logdetH = logdet(ch)
     # The prior precision P = kron(Q, Λ⁻¹) is PD in exact arithmetic, but profiling
     # a variance/covariance parameter toward its boundary drives Λ near-singular,

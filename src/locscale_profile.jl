@@ -55,13 +55,17 @@ function _ls_profile_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, idx::Int, val::Rea
         gf .= gfull[free]
         return gf
     end
-    function h!(Hf, θf)
-        H = Matrix(_ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, build(θf); a0 = mwarm[]))
-        Hf .= H[free, free]
-        return Hf
-    end
     init = x0 === nothing ? float.(θ̂[free]) : float.(x0)
-    res = Optim.optimize(f, g!, h!, init, Optim.NewtonTrustRegion(),
+    # Hessian-free inner solve (LBFGS + backtracking). The constrained optimum is
+    # the same point a trust-region Newton reaches, but each LBFGS iteration costs
+    # ONE exact-gradient call (`g!`) instead of the 2·p_free `_ls_marginal_grad`
+    # calls the observed-information Hessian (`_ls_obs_information`, a central-
+    # difference Jacobian) needs at every Newton step — the dominant cost, since the
+    # profiler runs this inner solve hundreds of times per CI. The
+    # `_LS_PROFILE_INFEASIBLE` sentinel still fences the line search off the
+    # near-singular-Λ boundary, so boundary robustness is preserved.
+    res = Optim.optimize(f, g!, init,
+                         Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking()),
                          Optim.Options(g_tol = 1e-7, iterations = 200))
     minval = Optim.minimum(res)
     xmin = Optim.minimizer(res)

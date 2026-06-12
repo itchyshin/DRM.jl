@@ -19,14 +19,18 @@ using LinearAlgebra: cholesky, Symmetric
 
 # Packed marginal NLL at θ = [βμ; βψ; λ(3)]. Each call solves the inner mode from
 # a cold start, so the objective is deterministic — required by the optimiser.
-function _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ)
+# `Zη`/`Zψ` are the per-obs latent loadings (default = canonical mean/scale axes);
+# the correlated-slope reroute passes Zη = [1 xᵢ], Zψ = [0 0].
+function _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ,
+                     Zη = _ls_canonical_Zeta(length(y)),
+                     Zψ = _ls_canonical_Zpsi(length(y)))
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ = @view θ[1:pμ]
     βψ = @view θ[pμ+1:pμ+pψ]
     λv = @view θ[pμ+pψ+1:pμ+pψ+3]
     Λ = _ls_lc_to_Λ(λv)
     P = prior_precision(Q, _ls_inv2x2(Λ))
-    val, _, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P)
+    val, _, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P, Zη, Zψ)
     return ok ? val : 1e18
 end
 
@@ -49,6 +53,25 @@ end
 
 (o::LocScaleObjective)(θ) = _ls_fit_nll(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ)
 
+# Family-appropriate mean-axis intercept start. NB2/Gamma use a log link, so the
+# Poisson IRLS warm start applies directly. Beta/BetaBinomial use a logit link
+# and a non-scalar response (BetaBinomial packs `(successes, trials)` per obs),
+# for which `_poisson_fixed_start` is neither correct nor type-valid — start the
+# intercept at the logit of the overall mean proportion instead.
+function _ls_default_betastart(kind, y, Xμ)
+    pμ = size(Xμ, 2)
+    if kind isa Val{:beta}
+        ȳ = clamp(sum(y) / length(y), 1e-3, 1 - 1e-3)
+        β = zeros(pμ); β[1] = log(ȳ / (1 - ȳ)); return β
+    elseif kind isa Val{:betabinomial}
+        s = sum(t -> t[1], y); ntot = sum(t -> t[2], y)
+        p̄ = clamp(s / max(ntot, 1), 1e-3, 1 - 1e-3)
+        β = zeros(pμ); β[1] = log(p̄ / (1 - p̄)); return β
+    else
+        return _poisson_fixed_start(y, Xμ)
+    end
+end
+
 """
     _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q; ...)
 
@@ -59,9 +82,11 @@ group-level covariance `Lambda`, the marginal `nll`, and a `converged` flag.
 function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
                        βμ0 = nothing, βψ0 = nothing,
                        λ0 = [log(0.3), 0.0, log(0.3)],
+                       Zη = _ls_canonical_Zeta(length(y)),
+                       Zψ = _ls_canonical_Zpsi(length(y)),
                        g_tol = 1e-6, iterations = 1000, se::Bool = false)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
-    βμ0 === nothing && (βμ0 = _poisson_fixed_start(y, Xμ))
+    βμ0 === nothing && (βμ0 = _ls_default_betastart(kind, y, Xμ))
     βψ0 === nothing && (βψ0 = zeros(pψ))
     θ0 = vcat(βμ0, βψ0, λ0)
 
@@ -80,12 +105,12 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
         βμ = @view θ[1:pμ]; βψ = @view θ[pμ+1:pμ+pψ]
         Λ = _ls_lc_to_Λ(θ[pμ+pψ+1:pμ+pψ+3])
         P = prior_precision(Q, _ls_inv2x2(Λ))
-        val, a, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P; a0 = warm[])
+        val, a, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P, Zη, Zψ; a0 = warm[])
         ok && (warm[] = copy(a))
         return ok ? val : 1e18
     end
-    g!(grad, θ) = (grad .= _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ; a0 = warm[]); grad)
-    h!(H, θ) = (H .= _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ; a0 = warm[]); H)
+    g!(grad, θ) = (grad .= _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0 = warm[]); grad)
+    h!(H, θ) = (H .= _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0 = warm[]); H)
     opts = Optim.Options(g_tol = g_tol, iterations = iterations)
     nm() = (warm[] = nothing; Optim.optimize(nll, θ0, Optim.NelderMead(),
                           Optim.Options(iterations = max(iterations, 2000))))
@@ -115,7 +140,7 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
     Λ̂ = _ls_lc_to_Λ(θ̂[pμ+pψ+1:pμ+pψ+3])
     nll(θ̂)                       # ensure warm[] holds the mode at θ̂ for the SE solve
     # Wald inference (opt-in): observed information = Hessian of the exact gradient.
-    V = se ? _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; a0 = warm[]) : nothing
+    V = se ? _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ; a0 = warm[]) : nothing
     return (θ = θ̂,
             beta_mu = θ̂[1:pμ],
             beta_psi = θ̂[pμ+1:pμ+pψ],
@@ -132,4 +157,35 @@ end
 function _locscale_phylo_setup(tree, labels)
     Q, leaf_node, _ = _poisson_phylo_setup(tree, labels)
     return Q, leaf_node, size(Q, 1)
+end
+
+# Convenience: derive (Q, gidx, G) for a general user-supplied PD covariance `C`
+# (relatedness / animal model / precomputed spatial), the non-tree analogue of
+# `_locscale_phylo_setup`. Identical engine contract: the tree precision is
+# swapped for C⁻¹ (rescaled to a unit-diagonal correlation), exactly the swap the
+# mean-only `_fit_*_relmat_laplace` routes already make. `G = size(Q,1)` = the
+# number of distinct group levels and `gidx` hits every level (data at every
+# node, unlike the tree where G > #leaves) — both handled identically by the
+# `_ls_joint*` block assembly.
+function _locscale_relmat_setup(C, labels)
+    Q, gidx = _general_cov_setup(C, labels)
+    return Q, gidx, size(Q, 1)
+end
+
+# Cluster 3 helper: resolve (Q, gidx, G) for a structured non-Gaussian slope
+# from the struct kind and the group-level covariance source. Reuses the same
+# helpers used by the structured intercept (phylo/relmat) and the location–scale
+# structured intercept paths. `phylo` builds Q from the tree; relmat/animal/spatial
+# build Q from the user-supplied PD matrix via `_general_cov_setup`. A bare :iid
+# kind (ordinary i.i.d. groups) is not supported here — use `_fit_corr_locscale`
+# directly with the default Q = I.
+function _locscale_structured_q(struct_kind::Symbol, grp_sym::Symbol, labels,
+                                tree, K, A)
+    if struct_kind === :phylo
+        tree === nothing && error("phylo(1 + … | $grp_sym) needs `tree = …`")
+        return _locscale_phylo_setup(tree, labels)     # (Q, gidx, G)
+    else
+        C = _poisson_structured_cov(struct_kind, grp_sym, K, A, nothing)
+        return _locscale_relmat_setup(C, labels)       # (Q, gidx, G)
+    end
 end

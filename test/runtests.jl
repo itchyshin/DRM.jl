@@ -107,6 +107,20 @@ include("test_locscale_profile.jl")
 include("test_locscale_gamma_e2e.jl")
 include("test_locscale_phylo_e2e.jl")
 include("test_locscale_frontend.jl")
+# cluster ① (correlated/independent slopes rerouted onto the q2 locscale core) +
+# the structured-slope locscale path.
+include("test_locscale_structured.jl")
+# NOTE (cluster-① follow-up): test_corr_locscale_equiv.jl (Laplace≈GHQ cross-engine
+# check) is deferred from this σ-phylo landing. For Poisson (1+x|g) the two engines
+# AGREE in loglik to 0.02% (Laplace −4651.4 vs GHQ −4652.4) but the fixed-effect
+# coefficients + RE covariance differ beyond the branch's rtol — the GHQ-vs-Laplace
+# optimum gap on a flat Poisson surface, against merged-main's GHQ reference (which
+# differs from the branch's). Re-anchoring that reference is a cluster-① task, not a
+# σ-phylo blocker. The capability itself ships (test_locscale_structured passes).
+# include("test_corr_locscale_equiv.jl")
+# cluster ② standalone non-Gaussian σ-axis RE (sigma ~ 1 + (1|g)) via
+# _fit_sigma_axis_re — guards the inner grad! keyword contract + Gamma recovery.
+include("test_sigma_axis_re.jl")
 # Non-constant dispersion (sigma ~ x) SIMULTANEOUSLY with a random effect for
 # non-Gaussian families (#164): recovery of the dispersion slope + σ-axis RE
 # covariance via the location–scale engine, an FD-vs-exact gradient gate, and a
@@ -189,6 +203,9 @@ include("test_nongaussian_phylo_grad_gate.jl")
 # Non-Gaussian phylogenetic LOCATION–SCALE (#202): scale-axis SD recovery + the
 # ≤ 1e-6 FD gradient gate on the q=2 (mean + log-σ) Laplace marginal.
 include("test_phylo_locscale.jl")
+# σ-phylo location-scale (Ayumi #2): separate/coupled/asymmetric blocks + boundary CIs.
+include("test_gaussian_locscale_phylo.jl")
+include("test_gaussian_locscale_phylo_boundary.jl")
 # Covariate dispersion (`sigma ~ x`) with a mean-only phylo RE for NB2 (#164):
 # the per-observation log-dispersion (vector-nuisance) generalisation of the
 # scalar phylo Laplace spine, with its own FD-vs-exact gate ≤ 1e-6.

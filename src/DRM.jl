@@ -71,6 +71,9 @@ include("locscale_grad.jl")      # #202 groundwork: exact O(p) outer gradient
 include("locscale_infer.jl")     # #202 groundwork: Wald inference + RE summaries
 include("locscale_profile.jl")   # #202: profile-likelihood CIs (trust-region inner solve)
 include("locscale_frontend.jl")  # #202 slice 3b: drm() routing for (1|tag|group)
+include("locscale_corr.jl")      # cluster ①: (1+x|g)/(0+x|g) reroute onto the q2 core
+include("locscale_sigma.jl")     # cluster ②: standalone sigma ~ 1+(1|g) RE onto the q2 core
+include("gaussian_locscale_phylo.jl")  # B1: Gaussian sigma~phylo(1|g) univariate route — separate/coupled/asymmetric + boundary CIs (Ayumi #2)
 include("inference.jl")
 include("bias_correct.jl")       # TMB-style epsilon-method bias correction (#227 B11)
 include("heritability.jl")       # comparative-biology derived ratios (h²/ICC) + CIs
@@ -99,7 +102,7 @@ export AugProblem, make_problem,
 # Public API — the Gaussian distributional-regression front end.
 export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
        coef, vcov, loglik, nobs, dof, aic, bic, fixef, re_sd, vc, ranef, sigma, corpairs, rho12, stderror, confint, coeftable, fitted, residuals, predict, predict_parameters, marginal_parameters, prediction_grid, simulate, bootstrap_ci, bootstrap_summary, bootstrap_result, check_drm, family,
-       profile_result, profile_curve, parameter_surface, corpairs_data,
+       profile_result, profile_curve, parameter_surface, corpairs_data, gaussian_locscale_phylo_sds,
        is_converged, deviance, dof_residual,
        lrtest, anova, aicc, weights, update,
        chibar_pvalue, lrt_boundary,

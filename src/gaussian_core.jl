@@ -287,19 +287,70 @@ marker they fit the residual `rho12` model, and with shared `phylo(1 | group)`
 markers on `mu1`, `mu2`, `sigma1`, and `sigma2` they route to the verified q=4
 phylogenetic engine.
 """
-function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML)
+function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false)
     algorithm in (:auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs) ||
         throw(ArgumentError("drm: `algorithm` must be one of :auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs (got :$algorithm)"))
     method in (:ML, :REML) ||
         throw(ArgumentError("drm: `method` must be :ML (default) or :REML (got :$method)"))
     rhs = Dict(f.forms)
     fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat/animal/phylo/spatial(1|g)
-    fixed_sigma, sigma_re, _, _ = _split_ranef(rhs[:sigma])    # (1|g) on the scale → GHQ marginal
+    fixed_sigma, sigma_re, _, structured_sigma = _split_ranef(rhs[:sigma])  # (1|g)→GHQ; structured_sigma = phylo(1|g) on σ
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, fixed_sigma, data)
     response_observed = _observed_response_mask(y)
     has_missing_response = !all(response_observed)
     all_structured = _collect_structured(rhs[:mu])
+    # σ-phylo location-scale (B0–B2): a structured phylo marker on `sigma` routes to
+    # the Gaussian location-scale Laplace engine (separate / coupled / asymmetric
+    # blocks + boundary-aware profile CIs). The 4th `_split_ranef` value used to be
+    # dropped, silently fitting `sigma ~ phylo(1|g)` as `sigma ~ 1` — the silent-drop
+    # bug Ayumi found (issue #2). Now it errors-or-fits the real σ-phylo structure.
+    if structured_sigma !== nothing
+        sigma_kind, sigma_grp = structured_sigma
+        if sigma_kind !== :phylo
+            throw(ArgumentError("drm (Gaussian): `$(sigma_kind)(1 | $(sigma_grp))` on `sigma` is " *
+                "not yet supported in the univariate route — only `phylo(1 | g)` is wired for B1. " *
+                "Use `relmat`/`animal`/`spatial` on the MEAN axis, or file an issue."))
+        end
+        tree === nothing && error("phylo(1 | $(sigma_grp)) on sigma needs `tree = …`")
+        phy = tree isa AbstractString ? augmented_phy(tree) : tree
+        labels_sigma = getproperty(data, sigma_grp)
+        Q_sigma, gidx_sigma, G_sigma = _locscale_phylo_setup(phy, labels_sigma)
+
+        # Both-phylo path: mean also carries phylo on the SAME grouping.
+        if structured !== nothing
+            mu_kind, mu_grp = structured
+            mu_kind === :phylo ||
+                error("drm (Gaussian): σ-phylo with a non-phylo structured mean RE is not yet supported")
+            mu_grp === sigma_grp ||
+                error("drm (Gaussian): σ-phylo and μ-phylo must share the same grouping factor " *
+                      "(got :$(mu_grp) vs :$(sigma_grp)); cross-grouping σ-phylo is planned for a later slice")
+            # `structured` only captures the FIRST structured mean marker; guard against a
+            # SECOND being silently dropped (e.g. mu ~ phylo(1|g) + animal(1|g) with σ-phylo).
+            length(all_structured) == 1 ||
+                error("drm (Gaussian): the both-phylo σ-phylo route supports a single structured " *
+                      "mean component, got $(length(all_structured)). A second structured mean RE " *
+                      "alongside σ-phylo is not yet supported.")
+            (isempty(re) && isempty(sigma_re) && metav === nothing) ||
+                error("drm (Gaussian): the both-phylo location-scale route requires no additional " *
+                      "random effects beyond the phylo structured intercept on each axis")
+            fit = _fit_gaussian_locscale_phylo(fam, y, Xμ, Xσ, gidx_sigma, G_sigma, Q_sigma,
+                                               nmμ, nmσ, String(sigma_grp);
+                                               coupled = false, asymmetric = false,
+                                               se = true, profile_ci = profile_ci, g_tol = g_tol)
+            return _withformula(fit, f)
+        end
+
+        # Asymmetric path: σ-phylo only, mean is fixed-effects.
+        (isempty(re) && isempty(sigma_re) && metav === nothing) ||
+            error("drm (Gaussian): the asymmetric σ-phylo route requires no additional " *
+                  "random effects on the mean axis")
+        fit = _fit_gaussian_locscale_phylo(fam, y, Xμ, Xσ, gidx_sigma, G_sigma, Q_sigma,
+                                           nmμ, nmσ, String(sigma_grp);
+                                           coupled = false, asymmetric = true,
+                                           se = true, profile_ci = profile_ci, g_tol = g_tol)
+        return _withformula(fit, f)
+    end
     if method === :REML
         # REML (opt-in, experimental) is implemented only for the fixed-effect
         # univariate Gaussian location–scale cell in this slice (the standard
