@@ -165,3 +165,6 @@ include("test_comparison.jl")
 
 # Randomized quantile residuals (DHARMa/glmmTMB style) — feat-quantile-residuals.
 include("test_quantile_residuals.jl")
+
+# S3: cross-family bivariate (shared-latent GHQ) + link-residual standardization.
+include("test_mixed_family.jl")
