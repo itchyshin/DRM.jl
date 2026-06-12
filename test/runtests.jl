@@ -199,3 +199,9 @@ include("test_quantile_residuals.jl")
 include("test_mixed_family.jl")
 # Post-fit accessors (coef/aic/bic/fitted/summary) for the cross-family fit.
 include("test_mixed_family_postfit.jl")
+
+# Independent validation of the cross-family latent correlation against EXTERNAL
+# references: gllvm (Gaussian × Gaussian, identical estimand; guarded — skips if
+# the fixture is absent) + an independent Monte-Carlo population reference for the
+# genuinely mixed Gaussian × Poisson case + the Gaussian × Gaussian closed form.
+include("test_xfam_external_validation.jl")
