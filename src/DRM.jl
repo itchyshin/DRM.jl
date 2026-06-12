@@ -60,6 +60,7 @@ include("tweedie.jl")
 include("cumulative.jl")
 include("link_residual.jl")      # S3: per-family link-scale variance for cross-family ρ
 include("mixed_family.jl")       # S3: cross-family bivariate via shared-latent GHQ
+include("mixed_family_postfit.jl") # post-fit accessors for fit_mixed_family
 include("quantile_residuals.jl") # #183: per-family Dunn–Smyth quantile residuals
                                  # (included after all family types are defined)
 include("locscale_kernels.jl")   # #202 groundwork: two-axis (mean+log-disp) kernels
@@ -108,6 +109,10 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
        reml_loglik, ml_loglik, estimation_method,
        drm_bridge, drm_bridge_inference,
        drm_listwise
+
+# Public API — post-fit accessors for the cross-family bivariate fit
+# (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).
+export mf_coef, mf_aic, mf_bic, mf_fitted, mf_summary
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare
