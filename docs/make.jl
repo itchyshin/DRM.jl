@@ -21,6 +21,7 @@ makedocs(
         "Home" => "index.md",
         "Getting started" => "getting-started.md",
         "Get started" => "get-started.md",
+        "Capabilities" => "capabilities.md",
         "Model Guides" => [
             "model-guides/model-map.md",
             "model-guides/which-scale.md",
