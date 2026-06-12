@@ -1214,15 +1214,58 @@ function marginal_parameters(fit::DrmFit)
 end
 
 """
-    simulate(fit; rng = default_rng())
+    simulate(fit; nsim = 1, rng = default_rng())
 
-Draw one parametric (residual-level) replicate from the fitted model — the
-building block of a parametric bootstrap. Univariate / random-effect / meta
-models return a response vector; bivariate models return `Dict(:mu1=>…, :mu2=>…)`.
-For random-effect models the draw is conditional on the random effects being
-zero (population level).
+Draw parametric (residual-level) replicate response(s) from the fitted model —
+the building block of a parametric bootstrap and posterior-predictive checks.
+Each draw uses the fitted per-observation mean μ̂ and the fitted dispersion /
+scale parameters for the family; for random-effect models the draw is
+conditional on the random effects being zero (population level).
+
+Return value (univariate / random-effect / meta models):
+- `nsim == 1` → a length-`nobs` response `Vector` (back-compatible).
+- `nsim  > 1` → a `nobs × nsim` `Matrix`, one independent replicate per column.
+
+Bivariate Gaussian models return `Dict(:mu1=>…, :mu2=>…)` for `nsim == 1`, or a
+length-`nsim` `Vector` of such `Dict`s for `nsim > 1` (a matrix of paired
+responses is not well defined).
+
+Supported families: Gaussian (univariate & bivariate), Student-t, Poisson
+(+ zero-inflated / hurdle), NegBinomial2 (+ zero-inflated / hurdle / truncated),
+Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, and
+CumulativeLogit.
+
+# Example
+```julia
+fit = drm(bf(@formula(y ~ x), @formula(sigma ~ x)), Gaussian(); data)
+y1  = simulate(fit)               # Vector, length nobs
+Y   = simulate(fit; nsim = 100)   # nobs × 100 Matrix
+```
 """
-function simulate(fit::DrmFit; rng = default_rng())
+function simulate(fit::DrmFit; nsim::Integer = 1, rng = default_rng())
+    nsim >= 1 || throw(ArgumentError("simulate requires nsim >= 1, got $nsim"))
+    nsim == 1 && return _simulate_once(fit, rng)
+    first_draw = _simulate_once(fit, rng)
+    if first_draw isa AbstractVector       # univariate: stack columns into a Matrix
+        out = Matrix{eltype(first_draw)}(undef, length(first_draw), nsim)
+        out[:, 1] = first_draw
+        for s in 2:nsim
+            out[:, s] = _simulate_once(fit, rng)
+        end
+        return out
+    else                                   # bivariate Dict: collect replicates
+        reps = Vector{typeof(first_draw)}(undef, nsim)
+        reps[1] = first_draw
+        for s in 2:nsim
+            reps[s] = _simulate_once(fit, rng)
+        end
+        return reps
+    end
+end
+
+# One residual-level replicate (the per-draw kernel). Returns a response Vector
+# for univariate / RE / meta fits, or a Dict(:mu1, :mu2) for bivariate Gaussian.
+function _simulate_once(fit::DrmFit, rng)
     n = fit.nobs
     fam = fit.family
     if fam isa Gaussian && haskey(fit.scales, :sigma1)   # bivariate Gaussian
