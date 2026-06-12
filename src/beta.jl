@@ -59,8 +59,8 @@ function drm(f::DrmFormula, fam::Beta; data, tree = nothing, K = nothing,
     if st !== nothing
         isempty(re) ||
             error("Beta() phylo structured effects cannot be combined with ordinary random effects yet")
-        (size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])) ||
-            error("Beta() phylo sparse Laplace currently supports `sigma ~ 1`")
+        # `sigma ~ 1` keeps the scalar-dispersion spine; a covariate `sigma`
+        # formula routes to the per-observation log-dispersion path (#164).
         kind, grp = st
         labels = getproperty(data, grp)
         if kind === :phylo
