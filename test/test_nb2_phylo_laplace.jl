@@ -28,10 +28,17 @@ import Distributions
     @test isfinite(loglik(fit))
     @test all(fitted(fit) .> 0)
 
-    @test_throws ErrorException drm(
+    # Covariate dispersion on the phylo route is now supported (#164): a
+    # non-constant `sigma` formula fits via the per-observation log-size path
+    # instead of hard-erroring. (Full FD gate + recovery in
+    # test_164_mean_re_covariate_sigma.jl.)
+    fit_disp = drm(
         bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 0 + x)),
         NegBinomial2(); data = (; y, x, species), tree = phy, se = false
     )
+    @test fit_disp.converged
+    @test length(coef(fit_disp, :sigma)) == 1
+    @test isfinite(loglik(fit_disp))
 end
 
 @testset "NB2 phylo sparse Laplace gradient" begin

@@ -16,13 +16,17 @@ Negative-binomial (NB2) family for overdispersed counts: log link on the mean
 [`Poisson`](@ref). Mirrors `drmTMB`'s `nbinom2` family.
 Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
 sparse-Laplace engine when `sigma ~ 1`. A phylogenetic random intercept on the
-mean, `phylo(1 | species)`, also uses the sparse-Laplace engine.
+mean, `phylo(1 | species)`, also uses the sparse-Laplace engine; here a covariate
+dispersion formula `sigma ~ x` is supported (a per-observation log-size; #164),
+while the crossed-intercept route still requires `sigma ~ 1`.
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), NegBinomial2(); data = dat)
 fit = drm(bf(y ~ x + (1 | g) + (1 | h), sigma ~ 1), NegBinomial2(); data = dat)
 fit_phy = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
               NegBinomial2(); data = dat, tree = tr, se = false)
+fit_disp = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ x)),
+               NegBinomial2(); data = dat, tree = tr, se = false)  # log-size ~ x
 exp(coef(fit, :sigma)[1])     # estimated dispersion θ (size)
 ```
 """
@@ -60,8 +64,8 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, g_tol::Real
             error("NegBinomial2() phylo structured effects cannot be combined with ordinary random effects yet")
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
             error("NegBinomial2() phylo structured effects cannot be combined with `zi`/`hu` yet")
-        (size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])) ||
-            error("NegBinomial2() phylo sparse Laplace currently supports `sigma ~ 1`")
+        # `sigma ~ 1` keeps the scalar-dispersion spine; a covariate `sigma`
+        # formula routes to the per-observation log-dispersion path (#164).
         kind, grp = st
         kind === :phylo ||
             error("NegBinomial2() currently supports only phylo(1 | group) among structured markers")

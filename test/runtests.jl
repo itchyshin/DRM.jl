@@ -182,6 +182,10 @@ include("test_nongaussian_phylo_grad_gate.jl")
 # Non-Gaussian phylogenetic LOCATION–SCALE (#202): scale-axis SD recovery + the
 # ≤ 1e-6 FD gradient gate on the q=2 (mean + log-σ) Laplace marginal.
 include("test_phylo_locscale.jl")
+# Covariate dispersion (`sigma ~ x`) with a mean-only phylo RE for NB2 (#164):
+# the per-observation log-dispersion (vector-nuisance) generalisation of the
+# scalar phylo Laplace spine, with its own FD-vs-exact gate ≤ 1e-6.
+include("test_164_mean_re_covariate_sigma.jl")
 
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
