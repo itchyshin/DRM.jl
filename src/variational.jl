@@ -32,15 +32,15 @@ function _marginal_method(s::Symbol)
     throw(ArgumentError("unknown marginal method `:$s`; use :LA (Laplace, default) or :VA (variational, #136)"))
 end
 
-# Generic stub entry point. The VA marginal is implemented only for the one
-# tractable proof case below (Poisson random intercept, #136 Phase 2); every other
-# family still errors clearly rather than silently falling back, so opt-in callers
-# know the state.
+# Generic stub entry point. The VA marginal is implemented for the tractable proof
+# cases below (Poisson and Binomial/Bernoulli random intercept, #136 Phase 2);
+# every other family still errors clearly rather than silently falling back, so
+# opt-in callers know the state.
 function _fit_va(args...; kwargs...)
     error("The variational (VA/ELBO) marginal is implemented only for the Poisson " *
-          "random-intercept case so far (`_fit_poisson_ranef_va`); other families are " *
-          "not yet wired — see https://github.com/itchyshin/DRM.jl/issues/136. " *
-          "Use method = :LA (Laplace, the default).")
+          "(`_fit_poisson_ranef_va`) and Binomial/Bernoulli (`_fit_binomial_ranef_va`) " *
+          "random-intercept cases so far; other families are not yet wired — see " *
+          "https://github.com/itchyshin/DRM.jl/issues/136. Use method = :LA (Laplace, the default).")
 end
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -141,6 +141,281 @@ function _fit_poisson_ranef_va(fam::Poisson, y, Xμ, gidx, G, nmμ, grp, g_tol)
     names = [:mu => nmμ, :resd => [String(grp)]]
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict{Symbol,Vector{Float64}}()
+    # loglik field carries the ELBO (a lower bound); label downstream as :VA.
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+end
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase-2 proof kernel: mean-field Gaussian VA for the Binomial/Bernoulli
+# random-intercept (logistic GLMM) model (#136). Unlike Poisson, the logit link
+# gives a logistic-normal latent integral with **no** closed-form E_q[log p]; we
+# evaluate the per-group E_q[log-lik] by a small Gauss–Hermite quadrature over the
+# Gaussian q. The objective is otherwise identical in shape to the Poisson VA:
+# a mean-field Gaussian q per group, profiled inner (m_g, s_g), and the Gaussian–
+# Gaussian KL. Fully ForwardDiff-differentiable; opt-in, never the default. The
+# verified Laplace/GHQ baseline (`_fit_binomial_ranef`) is untouched.
+#
+# Model: logit μ_i = η0_i + b_{g(i)},  b_g ~ N(0, σ²),  σ² = exp(2·logσ),
+#        s_i ~ Binomial(n_i, μ_i).
+# Mean-field q(b_g) = N(m_g, s_g). Writing the b-dependent log-likelihood kernel
+#   ℓ_i(b) = s_i·(η0_i + b) − n_i·log(1 + e^{η0_i + b})           (logit Binomial)
+# (the log C(n_i,s_i) coefficient is b- and θ-free → a global constant), then with
+# the substitution b = m + √(2s)·z_k (z_k, w_k the K-node Gauss–Hermite rule):
+#   E_q[Σ_{i∈g} ℓ_i] ≈ Σ_k (w_k/√π) · Σ_{i∈g} ℓ_i(m + √(2s)·z_k)
+#   KL(N(m,s)‖N(0,σ²)) = ½[ s/σ² + m²/σ² − 1 − log(s/σ²) ]
+#   group ELBO  F_g(m,r) = E_q[Σℓ] − KL,     r = log s
+#   ELBO = Σ_g F_g + Σ_i log C(n_i, s_i)     (a lower bound on log p(y|θ))
+#
+# We minimise nll = −ELBO. Per outer θ, the inner (m_g, r_g) are profiled to the
+# ELBO maximiser by a short Newton unroll; because q is mean-field and groups are
+# disjoint the inner problem factorises per group into a smooth 2-D concave solve.
+# The inner gradient/Hessian of F_g in (m, r) are taken by ForwardDiff (nodes are
+# constants, so the GHQ sum is smooth); carrying the iterates in the working
+# eltype lets the outer ForwardDiff propagate through the unrolled steps.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# b-dependent logit-Binomial log-likelihood kernel summed over a group, as a
+# function of the latent value b (the binomial coefficient is dropped — it is a
+# b-free, θ-free constant handled globally). η0idx/sidx/nidx are the group's
+# linear predictors, successes and trials. Differentiable in b and η0.
+function _binom_group_kernel(b, η0idx, sidx, nidx)
+    v = zero(promote_type(typeof(b), eltype(η0idx)))
+    @inbounds for j in eachindex(η0idx)
+        η = η0idx[j] + b
+        # log(1 + e^η) via a numerically-stable softplus (avoids overflow for η≫0).
+        sp = η > zero(η) ? η + log1p(exp(-η)) : log1p(exp(η))
+        v += sidx[j] * η - nidx[j] * sp
+    end
+    return v
+end
+
+# Per-group GHQ ELBO F(m, r) = E_q[Σ ℓ] − KL, with q = N(m, s), s = e^r and the
+# prior precision τ = 1/σ². `z` are the Gauss–Hermite nodes, `lwπ = log(w) −
+# ½·log π` the log weights. Smooth in (m, r); used both for the inner solve and
+# (at the optimum) the reported value.
+function _binom_va_group_elbo(m, r, η0idx, sidx, nidx, τ, z, lwπ)
+    s = exp(r)
+    sd = sqrt(2 * s)                                   # √(2s): b = m + √(2s)·z_k
+    Eqℓ = zero(promote_type(typeof(m), typeof(r)))
+    @inbounds for k in eachindex(z)
+        Eqℓ += exp(lwπ[k]) * _binom_group_kernel(m + sd * z[k], η0idx, sidx, nidx)
+    end
+    kl = 0.5 * (s * τ + m * m * τ - one(m) - log(s * τ))
+    return Eqℓ - kl
+end
+
+# Inner per-group solve: maximise F(m, r) over (m, r) by a short Newton unroll.
+# Gradient and Hessian in the 2-vector (m, r) come from ForwardDiff of the group
+# ELBO closure (nodes are constants ⇒ smooth). Iterates carry the working eltype,
+# so the outer ForwardDiff differentiates through the converged (m*, s*). Returns
+# (m, s). `z`, `lwπ` are the Gauss–Hermite nodes and log w − ½ log π arrays.
+function _binom_va_inner(η0idx, sidx, nidx, τ::T, z, lwπ; iters::Int = 30) where {T}
+    p̄ = clamp(sum(sidx) / max(sum(nidx), one(T)), T(1e-3), one(T) - T(1e-3))
+    # Warm start: a prior-shrunk logit of the group success rate, modest variance.
+    m = log(p̄ / (one(T) - p̄))
+    r = log(one(T) / (τ + one(T)))                    # s ≈ 1/(τ + 1): small spread
+    obj = u -> _binom_va_group_elbo(u[1], u[2], η0idx, sidx, nidx, τ, z, lwπ)
+    for _ in 1:iters
+        u = [m, r]
+        g = ForwardDiff.gradient(obj, u)
+        H = ForwardDiff.hessian(obj, u)               # ∇²F (concave ⇒ H ≺ 0)
+        det = H[1, 1] * H[2, 2] - H[1, 2] * H[2, 1]
+        det = abs(det) < eps(T) ? (det ≥ 0 ? eps(T) : -eps(T)) : det
+        Δm = -(H[2, 2] * g[1] - H[1, 2] * g[2]) / det
+        Δr = -(-H[2, 1] * g[1] + H[1, 1] * g[2]) / det
+        Δr = clamp(Δr, T(-2.0), T(2.0))               # keep s in a sane range
+        m += Δm
+        r += Δr
+    end
+    return m, exp(r)
+end
+
+# Mean-field Gaussian VA fit for the Binomial/Bernoulli random-intercept model.
+# Same call shape as `_fit_binomial_ranef`; `loglik` carries the **ELBO** (a lower
+# bound), not the exact marginal log-likelihood. θ = [β_μ; log σ_b].
+function _fit_binomial_ranef_va(fam::Binomial, s, ntr, Xμ, gidx, G, nmμ, grp, g_tol)
+    n = length(s); pμ = size(Xμ, 2)
+    sint = round.(Int, s); nint = round.(Int, ntr)
+    members = [Int[] for _ in 1:G]
+    for i in 1:n
+        push!(members[gidx[i]], i)
+    end
+    # GHQ node arrays (12 nodes: q is Gaussian so the quadrature is exact for the
+    # latent integral up to high order; cheap and ample for a 1-D effect).
+    z, w = _gauss_hermite(12)
+    lwπ = log.(w) .- 0.5 * log(π)                      # log w − ½ log π
+    # log C(n_i, s_i): b- and θ-free constant, summed once.
+    lcoef = sum(_logfactorial(nint[i]) - _logfactorial(sint[i]) - _logfactorial(nint[i] - sint[i]) for i in 1:n)
+
+    function nll(θ)
+        βμ = θ[1:pμ]; logσ = θ[pμ+1]
+        σ2 = exp(2 * logσ); τ = one(eltype(θ)) / σ2
+        η0 = Xμ * βμ
+        elbo = zero(eltype(θ))
+        for idx in members
+            isempty(idx) && continue
+            η0idx = @view η0[idx]
+            sidx = @view sint[idx]
+            nidx = @view nint[idx]
+            m, sg = _binom_va_inner(η0idx, sidx, nidx, τ, z, lwπ)
+            elbo += _binom_va_group_elbo(m, log(sg), η0idx, sidx, nidx, τ, z, lwπ)
+        end
+        return -(elbo + lcoef)
+    end
+
+    p̄ = clamp(sum(s) / max(sum(ntr), 1), 1e-3, 1 - 1e-3)
+    θ0 = zeros(pμ + 1)
+    θ0[1] = log(p̄ / (1 - p̄)); θ0[pμ+1] = log(0.5)
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :resd => (pμ+1):(pμ+1)]
+    names = [:mu => nmμ, :resd => [String(grp)]]
+    means = Dict(:mu => _logistic.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => s ./ ntr)   # population μ (b=0)
+    scales = Dict(:trials => Float64.(nint))
+    # loglik field carries the ELBO (a lower bound); label downstream as :VA.
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+end
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase-2 proof kernel: mean-field Gaussian VA for the NegBinomial2 (NB2)
+# random-intercept model (#136). Like the Binomial case, the log link gives a
+# log-normal-of-the-mean latent integral with **no** closed-form E_q[log p]; we
+# evaluate the per-group E_q[NB2 log-pmf] by a small Gauss–Hermite quadrature over
+# the Gaussian q. The only structural differences from the Binomial VA are the
+# log-pmf kernel and one extra free outer parameter — the NB2 size/dispersion
+# θ = exp(logθ) (the `sigma` slot), held fixed during the per-group inner solve.
+# Fully ForwardDiff-differentiable; opt-in, never the default. The verified
+# GHQ/Laplace baseline (`_fit_negbin2_ranef`) is untouched.
+#
+# Model: log μ_i = η0_i + b_{g(i)},  b_g ~ N(0, σ²),  σ² = exp(2·logσ),
+#        y_i ~ NB2(μ_i, θ),  Var = μ_i + μ_i²/θ.
+# Mean-field q(b_g) = N(m_g, s_g). Writing the b-dependent log-pmf kernel
+#   ℓ_i(b) = loggamma(y_i+θ) − loggamma(θ) + θ·log(θ/(θ+μ_i)) + y_i·log(μ_i/(θ+μ_i))
+# with μ_i = exp(η0_i + b)  (the −log y_i! coefficient is b- and θ-free → a global
+# constant), then with b = m + √(2s)·z_k (z_k, w_k the K-node Gauss–Hermite rule):
+#   E_q[Σ_{i∈g} ℓ_i] ≈ Σ_k (w_k/√π) · Σ_{i∈g} ℓ_i(m + √(2s)·z_k)
+#   KL(N(m,s)‖N(0,σ²)) = ½[ s/σ² + m²/σ² − 1 − log(s/σ²) ]
+#   group ELBO  F_g(m,r) = E_q[Σℓ] − KL,     r = log s
+#   ELBO = Σ_g F_g − Σ_i log y_i!            (a lower bound on log p(y|θ))
+#
+# We minimise nll = −ELBO. Per outer (β, logσ, logθ) the inner (m_g, r_g) are
+# profiled to the ELBO maximiser by a short Newton unroll; because q is mean-field
+# and groups are disjoint the inner problem factorises per group into a smooth 2-D
+# concave solve. The inner gradient/Hessian of F_g in (m, r) are taken by
+# ForwardDiff (nodes and θ are constants in the inner solve, so the GHQ sum is
+# smooth); carrying the iterates in the working eltype lets the outer ForwardDiff
+# propagate through both the unrolled steps and the dependence on θ.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# b-dependent NB2 log-pmf kernel summed over a group, as a function of the latent
+# value b (the −log y_i! term is dropped — it is b- and θ-free, handled globally).
+# η0idx/yidx are the group's linear predictors and integer counts; `r` is the size
+# θ. Same algebraic form as the NB2 log-pmf in sparse_laplace_glmm.jl:
+#   loggamma(y+r) − loggamma(r) + r·log(r/(r+μ)) + y·log(μ/(r+μ)),  μ = e^{η0+b}.
+# Differentiable in b, η0 and r (loggamma is ForwardDiff-safe via SpecialFunctions).
+function _nb2_group_kernel(b, η0idx, yidx, r)
+    v = zero(promote_type(typeof(b), eltype(η0idx), typeof(r)))
+    lr = log(r)
+    @inbounds for j in eachindex(η0idx)
+        η = η0idx[j] + b
+        μ = exp(η)
+        lden = log(r + μ)                              # log(r + μ)
+        # r·[log r − log(r+μ)] + y·[log μ − log(r+μ)] + loggamma(y+r) − loggamma(r)
+        v += r * (lr - lden) + yidx[j] * (η - lden) +
+             loggamma(yidx[j] + r) - loggamma(r)
+    end
+    return v
+end
+
+# Per-group GHQ ELBO F(m, r) = E_q[Σ ℓ] − KL, with q = N(m, s), s = e^r, the prior
+# precision τ = 1/σ², and the NB2 size `rsize` = θ. `z` are the Gauss–Hermite
+# nodes, `lwπ = log(w) − ½·log π` the log weights. Smooth in (m, r); used both for
+# the inner solve and (at the optimum) the reported value. `rsize` is held fixed
+# inside the inner solve, but enters E_q[Σℓ] so the outer AD sees ∂ELBO/∂logθ.
+function _nb2_va_group_elbo(m, r, η0idx, yidx, rsize, τ, z, lwπ)
+    s = exp(r)
+    sd = sqrt(2 * s)                                   # √(2s): b = m + √(2s)·z_k
+    Eqℓ = zero(promote_type(typeof(m), typeof(r), typeof(rsize)))
+    @inbounds for k in eachindex(z)
+        Eqℓ += exp(lwπ[k]) * _nb2_group_kernel(m + sd * z[k], η0idx, yidx, rsize)
+    end
+    kl = 0.5 * (s * τ + m * m * τ - one(m) - log(s * τ))
+    return Eqℓ - kl
+end
+
+# Inner per-group solve: maximise F(m, r) over (m, r) by a short Newton unroll, at
+# fixed size `rsize`. Gradient and Hessian in (m, r) come from ForwardDiff of the
+# group-ELBO closure (nodes and θ are constants ⇒ smooth). Iterates carry the
+# working eltype, so the outer ForwardDiff differentiates through the converged
+# (m*, s*). Returns (m, s). `z`, `lwπ` are the GH nodes and log w − ½ log π arrays.
+function _nb2_va_inner(η0idx, yidx, rsize::T, τ::T, z, lwπ; iters::Int = 30) where {T}
+    ȳ = sum(yidx) / length(yidx)
+    # Warm start: a prior-shrunk log of the group mean count, modest variance.
+    m = log(ȳ + one(T)) - sum(η0idx) / length(η0idx)  # centre on the group's mean rate
+    r = log(one(T) / (τ + one(T)))                    # s ≈ 1/(τ + 1): small spread
+    obj = u -> _nb2_va_group_elbo(u[1], u[2], η0idx, yidx, rsize, τ, z, lwπ)
+    for _ in 1:iters
+        u = [m, r]
+        g = ForwardDiff.gradient(obj, u)
+        H = ForwardDiff.hessian(obj, u)               # ∇²F (concave ⇒ H ≺ 0)
+        det = H[1, 1] * H[2, 2] - H[1, 2] * H[2, 1]
+        det = abs(det) < eps(T) ? (det ≥ 0 ? eps(T) : -eps(T)) : det
+        Δm = -(H[2, 2] * g[1] - H[1, 2] * g[2]) / det
+        Δr = -(-H[2, 1] * g[1] + H[1, 1] * g[2]) / det
+        Δr = clamp(Δr, T(-2.0), T(2.0))               # keep s in a sane range
+        m += Δm
+        r += Δr
+    end
+    return m, exp(r)
+end
+
+# Mean-field Gaussian VA fit for the NB2 random-intercept model. Same call shape as
+# `_fit_negbin2_ranef`; `loglik` carries the **ELBO** (a lower bound), not the exact
+# marginal log-likelihood. θ = [β_μ; β_σ (= log θ_size); log σ_b], matching the
+# block layout of the GHQ baseline so accessors line up.
+function _fit_nb2_ranef_va(fam::NegBinomial2, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
+    n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    yint = round.(Int, y)
+    members = [Int[] for _ in 1:G]
+    for i in 1:n
+        push!(members[gidx[i]], i)
+    end
+    # GHQ node arrays (12 nodes: q is Gaussian so the quadrature is exact for the
+    # latent integral up to high order; cheap and ample for a 1-D effect).
+    z, w = _gauss_hermite(12)
+    lwπ = log.(w) .- 0.5 * log(π)                      # log w − ½ log π
+    lfsum = sum(_logfactorial(yint[i]) for i in 1:n)   # Σ log y_i!: b-/θ-free constant
+
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; logσ = θ[pμ+pσ+1]
+        σ2 = exp(2 * logσ); τ = one(eltype(θ)) / σ2
+        η0 = Xμ * βμ
+        ησ = clamp.(Xσ * βσ, -20.0, 20.0)              # log θ_size per obs (here intercept-only)
+        elbo = zero(eltype(θ))
+        for idx in members
+            isempty(idx) && continue
+            η0idx = @view η0[idx]
+            yidx = @view yint[idx]
+            # NB2 size for this group's observations. With `sigma ~ 1` (the only
+            # case routed here) ησ is constant across i, so take the group's value.
+            rsize = exp(ησ[idx[1]])
+            m, sg = _nb2_va_inner(η0idx, yidx, rsize, τ, z, lwπ)
+            elbo += _nb2_va_group_elbo(m, log(sg), η0idx, yidx, rsize, τ, z, lwπ)
+        end
+        return -(elbo - lfsum)
+    end
+
+    m̄ = sum(y) / n; v̄ = sum(abs2, y .- m̄) / max(n - 1, 1)
+    θ0 = zeros(pμ + pσ + 1)
+    θ0[1] = log(m̄ + eps())
+    θ0[pμ+1] = log(max(m̄^2 / max(v̄ - m̄, 0.1 * m̄ + eps()), 0.5))   # MoM dispersion init
+    θ0[pμ+pσ+1] = log(0.5)
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
+    names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # population μ (b=0)
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
     # loglik field carries the ELBO (a lower bound); label downstream as :VA.
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
 end
