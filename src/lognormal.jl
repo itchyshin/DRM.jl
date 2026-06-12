@@ -32,6 +32,11 @@ exp(coef(fit, :sigma)[1])      # SD of log y
 struct LogNormal end
 
 function drm(f::DrmFormula, fam::LogNormal; data, g_tol::Real = 1e-8)
+    missing_fit = _fit_observed_response_rows(f, data) do data_observed
+        drm(f, fam; data = data_observed, g_tol = g_tol)
+    end
+    missing_fit !== nothing && return missing_fit
+
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     (mv === nothing && st === nothing) ||

@@ -39,6 +39,11 @@ struct Binomial end
 
 function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, g_tol::Real = 1e-8,
              se::Bool = true)
+    missing_fit = _fit_observed_response_rows(f, data) do data_observed
+        drm(f, fam; data = data_observed, tree = tree, g_tol = g_tol, se = se)
+    end
+    missing_fit !== nothing && return missing_fit
+
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||

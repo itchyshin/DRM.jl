@@ -153,6 +153,17 @@ end
         q4_vcov = false,
     )
 
+    y1_missing = Vector{Union{Missing,Float64}}(fixture.data.y1)
+    y1_missing[1] = missing
+    missing_data = merge(fixture.data, (; y1 = y1_missing))
+    @test_throws ArgumentError drm(
+        _q4_formula(),
+        Gaussian();
+        data = missing_data,
+        tree = fixture.phy,
+        q4_vcov = false,
+    )
+
     @test_throws ErrorException drm(
         _q4_formula(),
         Gaussian();

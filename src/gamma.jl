@@ -33,6 +33,11 @@ struct Gamma end
 
 function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, g_tol::Real = 1e-8,
              se::Bool = true)
+    missing_fit = _fit_observed_response_rows(f, data) do data_observed
+        drm(f, fam; data = data_observed, tree = tree, g_tol = g_tol, se = se)
+    end
+    missing_fit !== nothing && return missing_fit
+
     rhs = Dict(f.forms)
     # Location–scale: a coupled `(1 | tag | group)` shared by the mean and sigma
     # formulas → one 2×2 group-level covariance fit by the augmented-state engine.

@@ -139,6 +139,18 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
     _, Xr, nmr = _design(f.response1, rhs[:rho12], data)
 
     n = length(y1)
+    obs1 = _observed_response_mask(y1)
+    obs2 = _observed_response_mask(y2)
+    n_like = count(obs1 .| obs2)
+    n_like > 0 ||
+        throw(ArgumentError("drm: at least one bivariate Gaussian response cell must be observed"))
+    count(obs1) >= size(X1, 2) ||
+        throw(ArgumentError("drm: observed `$(f.response1)` values are fewer than the mu1 coefficients"))
+    count(obs2) >= size(X2, 2) ||
+        throw(ArgumentError("drm: observed `$(f.response2)` values are fewer than the mu2 coefficients"))
+    count(obs1 .& obs2) > 0 ||
+        throw(ArgumentError("drm: at least one row must observe both bivariate Gaussian responses to estimate rho12"))
+
     ps = (size(X1, 2), size(X2, 2), size(Xs1, 2), size(Xs2, 2), size(Xr, 2))
     offs = cumsum([0, ps...])
     rng(k) = (offs[k]+1):offs[k+1]
@@ -148,26 +160,46 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
         η1 = X1 * b1; η2 = X2 * b2; ls1 = Xs1 * bs1; ls2 = Xs2 * bs2; ηr = Xr * br
         s = zero(eltype(θ))
         @inbounds for i in 1:n
-            ρ = tanh(ηr[i])
-            om = 1 - ρ * ρ
-            z1 = (y1[i] - η1[i]) * exp(-ls1[i])     # standardised residuals
-            z2 = (y2[i] - η2[i]) * exp(-ls2[i])
-            # −log φ₂ = log(2π) + (½ log|Σ|) + (½ rᵀΣ⁻¹r)
-            s += ls1[i] + ls2[i] + 0.5 * log(om) + 0.5 * (z1 * z1 - 2ρ * z1 * z2 + z2 * z2) / om
+            if obs1[i] && obs2[i]
+                ρ = tanh(ηr[i])
+                om = 1 - ρ * ρ
+                z1 = (y1[i] - η1[i]) * exp(-ls1[i])     # standardised residuals
+                z2 = (y2[i] - η2[i]) * exp(-ls2[i])
+                # −log φ₂ = log(2π) + (½ log|Σ|) + (½ rᵀΣ⁻¹r)
+                s += log(2π) + ls1[i] + ls2[i] + 0.5 * log(om) +
+                     0.5 * (z1 * z1 - 2ρ * z1 * z2 + z2 * z2) / om
+            elseif obs1[i]
+                z1 = (y1[i] - η1[i]) * exp(-ls1[i])
+                s += 0.5 * log(2π) + ls1[i] + 0.5 * z1 * z1
+            elseif obs2[i]
+                z2 = (y2[i] - η2[i]) * exp(-ls2[i])
+                s += 0.5 * log(2π) + ls2[i] + 0.5 * z2 * z2
+            end
         end
-        return s + n * log(2π)
+        return s
     end
 
     θ0 = zeros(offs[end])
-    β1 = X1 \ y1; β2 = X2 \ y2
+    X1_obs = Matrix{Float64}(X1[obs1, :])
+    X2_obs = Matrix{Float64}(X2[obs2, :])
+    y1_obs = Vector{Float64}(y1[obs1])
+    y2_obs = Vector{Float64}(y2[obs2])
+    β1 = X1_obs \ y1_obs
+    β2 = X2_obs \ y2_obs
     θ0[rng(1)] .= β1
     θ0[rng(2)] .= β2
-    θ0[offs[3]+1] = log(std(y1 - X1 * β1) + eps())
-    θ0[offs[4]+1] = log(std(y2 - X2 * β2) + eps())     # ρ intercept starts at 0
+    θ0[offs[3]+1] = log(sqrt(mean((y1_obs - X1_obs * β1) .^ 2)) + eps())
+    θ0[offs[4]+1] = log(sqrt(mean((y2_obs - X2_obs * β2) .^ 2)) + eps())     # ρ intercept starts at 0
 
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    H = Matrix(Symmetric(ForwardDiff.hessian(nll, θ̂)))
+    V0 = try
+        inv(H)
+    catch
+        pinv(H)
+    end
+    V = Matrix(Symmetric((V0 + V0') / 2))
 
     blocks = [:mu1 => rng(1), :mu2 => rng(2), :sigma1 => rng(3), :sigma2 => rng(4), :rho12 => rng(5)]
     names = [:mu1 => nm1, :mu2 => nm2, :sigma1 => nms1, :sigma2 => nms2, :rho12 => nmr]
@@ -176,7 +208,7 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
     scales = Dict(:sigma1 => exp.(Xs1 * θ̂[rng(3)]),
                   :sigma2 => exp.(Xs2 * θ̂[rng(4)]),
                   :rho12 => tanh.(Xr * θ̂[rng(5)]))
-    return _withformula(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll), f)
+    return _withformula(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n_like, Optim.converged(res), means, obs, scales), nll), f)
 end
 
 function _bivariate_q4_marker(rhs)
@@ -261,6 +293,13 @@ function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fi
     _, Xs1, nms1 = _design(f.response1, fixed[:sigma1], data)
     _, Xs2, nms2 = _design(f.response1, fixed[:sigma2], data)
     _, Xr, nmr = _design(f.response1, fixed[:rho12], data)
+    if !all(_observed_response_mask(y1)) || !all(_observed_response_mask(y2))
+        throw(ArgumentError("drm: missing responses are not yet implemented for the " *
+            "bivariate q=4 phylogenetic location-scale engine. The residual " *
+            "bivariate Gaussian engine supports partial response rows; q=4 needs " *
+            "a sparse-kernel mask slice so the latent phylogenetic likelihood can " *
+            "condition on observed response cells only."))
+    end
 
     species = _phylo_species_index(phy, getproperty(data, grp))
     prob, Q_cond = make_problem(phy, y1, y2, X1, X2, Xs1, Xs2, Xr; species = species)
