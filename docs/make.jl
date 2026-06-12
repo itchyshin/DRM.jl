@@ -43,6 +43,7 @@ makedocs(
             "tutorials/relmat-known-matrices.md",
             "tutorials/phylogenetic-spatial.md",
         ],
+        "Cross-family bivariate" => "cross-family.md",
         "Diagnostics & Validation" => [
             "diagnostics-and-validation/figure-gallery.md",
             "diagnostics-and-validation/prediction-and-postfit.md",
