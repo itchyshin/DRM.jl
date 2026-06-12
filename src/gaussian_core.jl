@@ -495,6 +495,13 @@ function _fit_fixed_gaussian_missing_response(fam::Gaussian, y, Xμ, Xσ, nmμ, 
     n_observed >= size(Xμ, 2) ||
         throw(ArgumentError("drm: observed Gaussian responses are fewer than the mean coefficients"))
 
+    # Drop missing/NaN-response rows (observed-rows fit), matching glmmTMB's default
+    # na.action — but WARN so it is never silent (the #258 contract; mirrors the
+    # non-Gaussian _fit_observed_response_rows wrapper).
+    @warn "drm: $(length(observed) - n_observed) of $(length(observed)) rows have a missing/NaN " *
+          "response and were dropped (observed-rows fit, like glmmTMB's default na.action). " *
+          "Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this."
+
     y_obs = Vector{Float64}(y[observed])
     Xμ_obs = Matrix{Float64}(Xμ[observed, :])
     Xσ_obs = Matrix{Float64}(Xσ[observed, :])
@@ -528,6 +535,13 @@ function _fit_observed_response_rows(fitfun::Function, f::DrmFormula, data)
     all(observed) && return nothing
     count(observed) > 0 ||
         throw(ArgumentError("drm: at least one response row must be observed"))
+    # Missing/NaN RESPONSE rows are dropped (observed-rows fit), matching glmmTMB's
+    # default `na.action`. Warn so it is never SILENT (reconciles #241 auto-handling
+    # with #258's "not silently fit" contract). Predictor missingness still errors.
+    ndrop = count(!, observed)
+    @warn "drm: $(ndrop) of $(length(observed)) rows have a missing/NaN response and were " *
+          "dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` " *
+          "to preprocess explicitly, or supply complete responses, to silence this."
     fit_observed = fitfun(_subset_table_rows(data, observed))
     return _with_full_response_rows(fit_observed, f, data)
 end

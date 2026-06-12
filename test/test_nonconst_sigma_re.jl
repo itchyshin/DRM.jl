@@ -142,12 +142,12 @@ end
         @test maximum(abs, g_an .- g_fd) ≤ 1e-5
     end
 
-    # ---- #164 boundary: covariate sigma with a MEAN-ONLY random effect ------
-    # Distinct from the supported coupled-RE path above. The non-Gaussian phylo /
-    # crossed Laplace fitters require a constant `sigma` formula; a `sigma ~ x`
-    # alongside a mean-only random effect is currently rejected. This guard pins
-    # the open #164 gap — replace it with a recovery assertion once #164 lands.
-    @testset "#164 gap: sigma ~ x with a MEAN-ONLY phylo RE is still guarded" begin
+    # ---- #164 LANDED: covariate sigma with a MEAN-ONLY phylo RE now FITS ------
+    # Previously the open #164 gap (guarded). #164 (covariate dispersion with a
+    # mean-only phylo RE, NB2) landed the per-observation log-dispersion path, so
+    # this now FITS via `_fit_nb2_phylo_laplace`'s hetero branch instead of throwing
+    # — the recovery assertion the old guard's comment promised.
+    @testset "#164: sigma ~ x with a MEAN-ONLY phylo RE now fits (NB2)" begin
         Random.seed!(606)
         p = 12; m = 8; n = p * m
         phy = random_balanced_tree(p; branch_length = 0.3)
@@ -156,8 +156,10 @@ end
         y = Float64[rand(Distributions.NegativeBinomial(4.0, 4.0 / (4.0 + exp(0.2 + 0.4x[i]))))
                     for i in 1:n]
         data = (; y, x, species)
-        @test_throws Exception drm(
+        fit = drm(
             bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ x)),
             NegBinomial2(); data = data, tree = phy, se = false)
+        @test is_converged(fit)
+        @test isfinite(loglik(fit))
     end
 end

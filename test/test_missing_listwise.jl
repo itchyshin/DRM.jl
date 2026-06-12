@@ -15,22 +15,29 @@ using Test, Random
 
 @testset "Missing data — listwise deletion path (#49)" begin
 
-    @testset "(A) current behaviour: raw missing/NaN responses ERROR, not silently fit" begin
+    @testset "(A) response missingness → warn + observed-rows fit; predictor missingness → error" begin
+        # Reconciliation of #241 (auto-fit on observed rows) with #258 ("not SILENTLY
+        # fit"): a missing/NaN RESPONSE is now dropped (observed-rows fit) WITH A
+        # WARNING — glmmTMB's default na.action behaviour, made non-silent. A missing
+        # PREDICTOR still errors (out of scope, both PRs agree).
         Random.seed!(20260610)
         n = 200; x = randn(n)
         ybase = 1.0 .+ 0.5 .* x .+ 0.5 .* randn(n)
 
-        # `missing` in the response → StatsModels schema rejects it.
-        ymiss = Vector{Union{Missing,Float64}}(ybase); ymiss[5] = missing
-        @test_throws Exception drm(bf(@formula(y ~ x), @formula(sigma ~ 1)),
-                                   Gaussian(); data = (; y = ymiss, x))
+        # `missing` AND `NaN` in the response → warn + fit on the observed rows.
+        # Captured via a logger (robust; avoids the @test_logs failure-recording quirk).
+        for bad in (missing, NaN)
+            yb = bad === missing ? Vector{Union{Missing,Float64}}(ybase) : copy(ybase)
+            yb[5] = bad
+            io = IOBuffer()
+            fit = Base.CoreLogging.with_logger(Base.CoreLogging.SimpleLogger(io, Base.CoreLogging.Warn)) do
+                drm(bf(@formula(y ~ x), @formula(sigma ~ 1)), Gaussian(); data = (; y = yb, x))
+            end
+            @test occursin("dropped", String(take!(io)))   # not SILENT — it warns
+            @test isfinite(loglik(fit))                     # not garbage — the bad row was dropped
+        end
 
-        # `NaN` in the response → linear-algebra solve rejects it (no silent garbage).
-        ynan = copy(ybase); ynan[5] = NaN
-        @test_throws Exception drm(bf(@formula(y ~ x), @formula(sigma ~ 1)),
-                                   Gaussian(); data = (; y = ynan, x))
-
-        # `NaN` in a predictor → also errors (predictor missingness is out of scope).
+        # `NaN` in a predictor → still errors (predictor missingness is out of scope).
         xnan = copy(x); xnan[5] = NaN
         @test_throws Exception drm(bf(@formula(y ~ x), @formula(sigma ~ 1)),
                                    Gaussian(); data = (; y = ybase, x = xnan))
