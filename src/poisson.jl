@@ -26,9 +26,11 @@ struct Poisson end
 
 _logfactorial(k::Integer) = sum(log, 2:k; init = 0.0)   # log k!  (0 for k = 0, 1)
 
-function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, g_tol::Real = 1e-8, se::Bool = true)
+function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
+             A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true)
     missing_fit = _fit_observed_response_rows(f, data) do data_observed
-        drm(f, fam; data = data_observed, tree = tree, g_tol = g_tol, se = se)
+        drm(f, fam; data = data_observed, tree = tree, K = K, A = A,
+            coords = coords, g_tol = g_tol, se = se)
     end
     missing_fit !== nothing && return missing_fit
 
@@ -41,15 +43,23 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, g_tol::Real = 1e
         error("Poisson() requires non-negative integer counts as the response")
     if st !== nothing
         isempty(re) ||
-            error("Poisson() phylo structured effects cannot be combined with ordinary random effects yet")
+            error("Poisson() structured effects cannot be combined with ordinary random effects yet")
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
-            error("Poisson() phylo structured effects cannot be combined with `zi`/`hu` yet")
+            error("Poisson() structured effects cannot be combined with `zi`/`hu` yet")
         kind, grp = st
-        kind === :phylo ||
-            error("Poisson() currently supports only phylo(1 | group) among structured markers")
-        tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
         labels = getproperty(data, grp)
-        return _withformula(_fit_poisson_phylo_laplace(fam, y, Xμ, labels, tree, nmμ, grp, g_tol; se = se), f)
+        if kind === :phylo
+            tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
+            return _withformula(_fit_poisson_phylo_laplace(fam, y, Xμ, labels, tree, nmμ, grp, g_tol; se = se), f)
+        elseif kind === :relmat || kind === :animal || kind === :spatial
+            # General user-supplied PD covariance C on the mean intercept
+            # (relatedness / animal model / precomputed spatial). Reuses the phylo
+            # sparse-Laplace spine with the tree precision swapped for C⁻¹ (#167).
+            C = _poisson_structured_cov(kind, grp, K, A, coords)
+            return _withformula(_fit_poisson_relmat_laplace(fam, y, Xμ, C, labels, nmμ, grp, g_tol; se = se), f)
+        else
+            error("Poisson() supports phylo/relmat/animal/spatial(1 | group) among structured markers")
+        end
     end
     if !isempty(re)                                       # random intercept (1|g) → GHQ marginal
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
@@ -84,6 +94,26 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, g_tol::Real = 1e
         return _withformula(_fit_poisson_hu(fam, y, Xμ, Xhu, nmμ, nmhu, g_tol), f)
     end
     return _withformula(_fit_poisson(fam, y, Xμ, nmμ, g_tol), f)
+end
+
+# Resolve a structured marker (relmat/animal/spatial) for a count family to its
+# user-supplied G×G PD covariance from the keyword args. `relmat`/`animal` take
+# the matrix directly (`K`/`A`); `spatial` here requires a precomputed covariance
+# `K` (coordinate-based joint range estimation is a Gaussian-only path for now —
+# pass the spatial covariance via `K`). Mirrors `_resolve_structured_matrix`
+# (gaussian_structured.jl) but for the count Laplace route.
+function _poisson_structured_cov(kind::Symbol, grp::Symbol, K, A, coords)
+    if kind === :relmat
+        K === nothing && error("relmat(1 | $grp) needs `K = …` (the relatedness/covariance matrix)")
+        return Matrix{Float64}(K)
+    elseif kind === :animal
+        A === nothing && error("animal(1 | $grp) needs the relatedness matrix `A = …`")
+        return Matrix{Float64}(A)
+    else  # :spatial
+        K !== nothing && return Matrix{Float64}(K)
+        error("spatial(1 | $grp) for counts needs a precomputed spatial covariance via `K = …` " *
+              "(coordinate-based joint range estimation is not yet supported for non-Gaussian families)")
+    end
 end
 
 # Poisson count GLMM with a random intercept (1|g) on log λ. b_g ~ N(0,σ_b²) is
