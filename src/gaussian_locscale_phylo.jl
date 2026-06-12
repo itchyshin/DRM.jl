@@ -82,6 +82,50 @@ function _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ;
     return grad
 end
 
+# REML (Patterson–Thompson) penalty for integrating out the mean fixed effects β_μ.
+# By the marginal-Hessian identity, S = ∂²nll_marginal/∂β_μ² equals the Schur
+# complement H_ββ − H_βuᵀ H_uu⁻¹ H_βu — the marginal information of β_μ. We form S
+# by finite-differencing the route's analytic β_μ-gradient block (positions 1:pμ),
+# and return the restricted correction 0.5·logdet(S). ML stays the default; REML is
+# opt-in (method = :REML), reducing the n→n−pμ downward bias in the variance comps.
+function _glsp_reml_penalty(grad_fn, θ, pμ::Int; h::Real = 1e-3)
+    S = zeros(pμ, pμ)
+    for j in 1:pμ
+        θp = copy(θ); θp[j] += h
+        θm = copy(θ); θm[j] -= h
+        gp = grad_fn(θp); gm = grad_fn(θm)
+        @views S[:, j] .= (gp[1:pμ] .- gm[1:pμ]) ./ (2h)
+    end
+    S .= 0.5 .* (S .+ S')                        # symmetrise FD asymmetry
+    ch = cholesky(Symmetric(S); check = false)
+    issuccess(ch) || return Inf                 # β_μ information not PD ⇒ degenerate fit
+    return sum(log, diag(ch.U))                 # = 0.5·logdet(S)
+end
+
+# REML re-fit: starting from the ML estimate θ̂_ml, minimise nll_REML = nll_ML + the
+# Patterson–Thompson penalty over θ. Returns (θ̂, converged, ml_nll, reml_nll).
+#
+# The penalty is a logdet of a FINITE-DIFFERENCE-formed β_μ-information, so its own
+# gradient is a second finite difference — too noisy for LBFGS's gradient-convergence
+# flag to fire near the (flat) variance-component optimum (a false negative: the search
+# parks at the right θ̂ but Optim reports `converged = false`). The re-fit is a small
+# polish of the ALREADY-converged ML estimate, so judge convergence on substance, not on
+# that noisy flag: the ML fit converged, the restricted objective is finite (β_μ-info PD
+# ⇒ non-degenerate), and θ̂ stayed in a neighbourhood of θ̂_ml (no runaway to a boundary).
+# The exact analytic REML gradient (the AI-REML milestone) will restore a clean flag.
+function _glsp_reml_refit(obj, grad_fn, θ̂_ml, pμ::Int; ml_converged::Bool = true)
+    reml_obj(θ) = obj(θ) + _glsp_reml_penalty(grad_fn, θ, pμ)
+    # LBFGS with a finite-difference gradient, warm-started from the ML estimate (the REML
+    # optimum is nearby) — a handful of steps, far cheaper than the hundreds NelderMead
+    # burns near a flat variance-component optimum.
+    res = Optim.optimize(reml_obj, θ̂_ml, Optim.LBFGS(),
+                         Optim.Options(g_tol = 1e-3, iterations = 100))
+    θ̂ = Optim.minimizer(res)
+    reml_nll = reml_obj(θ̂)
+    converged = ml_converged && isfinite(reml_nll) && norm(θ̂ .- θ̂_ml) < 5.0
+    return θ̂, converged, obj(θ̂), reml_nll
+end
+
 # B2 — boundary-aware PROFILE-LIKELIHOOD CI for one variance (log-SD) parameter.
 # `nll(θ)::Real` and `grad(θ)::Vector` are the route's own marginal NLL and analytic
 # gradient; `idx` is the profiled log-SD position. Profiles θ[idx]: re-optimises the
@@ -235,6 +279,7 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
                                        asymmetric::Bool = false,
                                        se::Bool = true,
                                        profile_ci::Bool = false,
+                                       reml::Bool = false,
                                        g_tol::Real = 1e-6)
     kind = Val(:gaussian_mean)
     n = length(y)
@@ -256,7 +301,12 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
         logL22_0 = log(0.3)
         θ0 = vcat(βμ0, βψ0, logL22_0)
         θ̂, conv = _glsp_optimise(asym_obj, asym_grad!, θ0; g_tol = g_tol)
-        nll_val = asym_obj(θ̂)
+        ml_nll = asym_obj(θ̂); reml_nll = NaN
+        if reml
+            asym_grad_fn(θ) = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
+            θ̂, conv, ml_nll, reml_nll = _glsp_reml_refit(asym_obj, asym_grad_fn, θ̂, pμ; ml_converged = conv)
+        end
+        nll_val = reml ? reml_nll : ml_nll
         βμ̂ = θ̂[1:pμ]; βψ̂ = θ̂[pμ+1:pμ+pψ]; logL22 = θ̂[pμ+pψ+1]
         # Wald covariance via FD of the gradient
         V = if se
@@ -299,7 +349,8 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
             ci_s = _glsp_profile_ci(asym_nll_θ, asym_grad_θ, θ̂, pμ + pψ + 1)
             scales[:profile_ci_sd_sigma] = [ci_s.sd_lo, ci_s.sd_hi]
         end
-        return DrmFit(fam, blocks, names, θ̂, V, -nll_val, n, conv, means, obs, scales)
+        fit = DrmFit(fam, blocks, names, θ̂, V, -nll_val, n, conv, means, obs, scales)
+        return reml ? _withreml(fit, -reml_nll, -ml_nll) : fit
     end
 
     # ---- BOTH-PHYLO: separate (MUST-HAVE) or coupled ----------------------
@@ -323,7 +374,12 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
         βψ0 = zeros(pψ)
         θ0 = vcat(βμ0, βψ0, log(0.3), log(0.3))   # [βμ; βψ; logL11; logL22]
         θ̂, conv = _glsp_optimise(sep_obj, sep_grad!, θ0; g_tol = g_tol)
-        nll_val = sep_obj(θ̂)
+        ml_nll = sep_obj(θ̂); reml_nll = NaN
+        if reml
+            sep_grad_fn(θ) = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
+            θ̂, conv, ml_nll, reml_nll = _glsp_reml_refit(sep_obj, sep_grad_fn, θ̂, pμ; ml_converged = conv)
+        end
+        nll_val = reml ? reml_nll : ml_nll
         βμ̂ = θ̂[1:pμ]; βψ̂ = θ̂[pμ+1:pμ+pψ]
         logL11 = θ̂[pμ+pψ+1]; logL22 = θ̂[pμ+pψ+2]
         # Λ for reporting
@@ -377,7 +433,8 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
             scales[:profile_ci_sd_sigma] = [ci_s.sd_lo, ci_s.sd_hi]
             scales[:profile_ci_sd_mu]    = [ci_m.sd_lo, ci_m.sd_hi]
         end
-        return DrmFit(fam, blocks, names, θ̂, V, -nll_val, n, conv, means, obs, scales)
+        fit = DrmFit(fam, blocks, names, θ̂, V, -nll_val, n, conv, means, obs, scales)
+        return reml ? _withreml(fit, -reml_nll, -ml_nll) : fit
 
     else
         # COUPLED block: 3 free variance params [logL11, L21, logL22]

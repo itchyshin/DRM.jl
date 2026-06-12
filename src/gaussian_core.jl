@@ -317,6 +317,13 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         labels_sigma = getproperty(data, sigma_grp)
         Q_sigma, gidx_sigma, G_sigma = _locscale_phylo_setup(phy, labels_sigma)
 
+        # method = :REML integrates β_μ out of the Laplace marginal (Patterson–Thompson
+        # restricted likelihood). This branch returns BEFORE the generic :REML validator
+        # below, so capture it here and thread it to the engine. (REML across the phylo
+        # RE structure is not comparable across mean structures — the aic/bic/lrtest guard
+        # keys off estim_method; ML stays the default.)
+        reml = method === :REML
+
         # Both-phylo path: mean also carries phylo on the SAME grouping.
         if structured !== nothing
             mu_kind, mu_grp = structured
@@ -337,7 +344,8 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             fit = _fit_gaussian_locscale_phylo(fam, y, Xμ, Xσ, gidx_sigma, G_sigma, Q_sigma,
                                                nmμ, nmσ, String(sigma_grp);
                                                coupled = false, asymmetric = false,
-                                               se = true, profile_ci = profile_ci, g_tol = g_tol)
+                                               se = true, profile_ci = profile_ci,
+                                               reml = reml, g_tol = g_tol)
             return _withformula(fit, f)
         end
 
@@ -348,7 +356,8 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         fit = _fit_gaussian_locscale_phylo(fam, y, Xμ, Xσ, gidx_sigma, G_sigma, Q_sigma,
                                            nmμ, nmσ, String(sigma_grp);
                                            coupled = false, asymmetric = true,
-                                           se = true, profile_ci = profile_ci, g_tol = g_tol)
+                                           se = true, profile_ci = profile_ci,
+                                           reml = reml, g_tol = g_tol)
         return _withformula(fit, f)
     end
     if method === :REML
