@@ -140,7 +140,7 @@ function _fit_negbin2_ranef(fam::NegBinomial2, y, Xμ, Xσ, gidx, G, nmμ, nmσ,
                 δ = rt2 * σb * z[k]
                 gll = logw[k]
                 for i in idx
-                    μ = exp(clamp(η0[i] + δ, -20.0, 20.0)); r = exp(ησ[i]); p = r / (r + μ)
+                    μ = exp(clamp(η0[i] + δ, -20.0, 20.0)); r = exp(-2 * ησ[i]); p = r / (r + μ)
                     gll += logpdf(NegativeBinomial(r, p), yint[i])
                 end
                 terms[k] = gll
@@ -194,7 +194,7 @@ function _fit_negbin2_corr_ranef(fam::NegBinomial2, y, Xμ, Xσ, xs, gidx, G, nm
                 b0 = rt2 * l11 * z1[j]; b1 = rt2 * (cc * z1[j] + l22 * z1[k])   # √2 L z
                 gll = lw[j] + lw[k]
                 for i in idx
-                    μ = exp(clamp(η0[i] + b0 + b1 * xs[i], -20.0, 20.0)); r = exp(ησ[i]); p = r / (r + μ)
+                    μ = exp(clamp(η0[i] + b0 + b1 * xs[i], -20.0, 20.0)); r = exp(-2 * ησ[i]); p = r / (r + μ)
                     gll += logpdf(NegativeBinomial(r, p), yint[i])
                 end
                 terms[t] = gll
@@ -229,7 +229,7 @@ function _fit_negbin2_zi(fam::NegBinomial2, y, Xμ, Xσ, Xzi, nmμ, nmσ, nmzi, 
         ηz = clamp.(Xzi * βz, -30.0, 30.0)
         s = zero(eltype(θ))
         @inbounds for i in 1:n
-            μ = exp(ημ[i]); r = exp(ησ[i]); p = r / (r + μ)
+            μ = exp(ημ[i]); r = exp(-2 * ησ[i]); p = r / (r + μ)
             lπ = _log_logistic(ηz[i]); l1mπ = _log1m_logistic(ηz[i])
             nb = logpdf(NegativeBinomial(r, p), yint[i])
             if iszero_y[i]
@@ -270,7 +270,7 @@ function _fit_negbin2_hu(fam::NegBinomial2, y, Xμ, Xσ, Xhu, nmμ, nmσ, nmhu, 
             if iszero_y[i]
                 s -= lπ
             else
-                μ = exp(ημ[i]); r = exp(ησ[i]); p = r / (r + μ)
+                μ = exp(ημ[i]); r = exp(-2 * ησ[i]); p = r / (r + μ)
                 d = NegativeBinomial(r, p)
                 s -= l1mπ + logpdf(d, yint[i]) - _log1mexp(logpdf(d, 0))
             end
@@ -301,7 +301,7 @@ function _fit_negbin2(fam::NegBinomial2, y, Xμ, Xσ, nmμ, nmσ, g_tol)
         ησ = clamp.(Xσ * βσ, -20.0, 20.0)        # (NegativeBinomial rejects p ≤ 0 / size ≤ 0)
         s = zero(eltype(θ))
         @inbounds for i in 1:n
-            μ = exp(ημ[i]); r = exp(ησ[i]); p = r / (r + μ)   # r = θ (size)
+            μ = exp(ημ[i]); r = exp(-2 * ησ[i]); p = r / (r + μ)   # r = θ (size)
             s -= logpdf(NegativeBinomial(r, p), yint[i])
         end
         return s
@@ -361,7 +361,7 @@ function _fit_truncated_negbin2(fam::TruncatedNegBinomial2, y, Xμ, Xσ, nmμ, n
         ημ = clamp.(Xμ * βμ, -20.0, 20.0); ησ = clamp.(Xσ * βσ, -20.0, 20.0)
         s = zero(eltype(θ))
         @inbounds for i in 1:n
-            μ = exp(ημ[i]); r = exp(ησ[i]); p = r / (r + μ)
+            μ = exp(ημ[i]); r = exp(-2 * ησ[i]); p = r / (r + μ)
             d = NegativeBinomial(r, p)
             s -= logpdf(d, yint[i]) - _log1mexp(logpdf(d, 0))   # divide out P(0): zero-truncated
         end

@@ -68,7 +68,7 @@ end
     sd_nb_est = re_sd(fit_nb_est)
     @test fit_nb_est.converged
     @test abs(coef(fit_nb_est, :mu)[2] - β[2]) < 0.08
-    @test abs(exp(coef(fit_nb_est, :sigma)[1]) - size) < 0.8
+    @test abs(exp(-2 * coef(fit_nb_est, :sigma)[1]) - size) < 0.8
     @test abs(sd_nb_est[:g] - σg) < 0.12
     @test abs(sd_nb_est[:h] - σh) < 0.12
 
@@ -124,7 +124,7 @@ end
     y_nb = Float64.([rand(rng, Distributions.NegativeBinomial(2.5, 2.5 / (2.5 + μ[i]))) for i in 1:n])
     yint = round.(Int, y_nb)
     nb_aux(logsize) = begin
-        r = exp(clamp(logsize, -8.0, 8.0))
+        r = exp(clamp(-2 * logsize, -8.0, 8.0))
         lconst = [DRM.loggamma(yint[i] + r) - DRM.loggamma(r) - DRM._logfactorial(yint[i]) for i in eachindex(yint)]
         (y = Float64.(yint), size = r, lconst = lconst)
     end
@@ -144,7 +144,7 @@ end
         (y = y_beta, precision = φ, ylogit = ylogit, lgammaφ = DRM.loggamma(φ))
     end
 
-    θ_nb = [0.12, 0.32, log(2.3), log(0.32), log(0.24)]
+    θ_nb = [0.12, 0.32, -0.5 * log(2.3), log(0.32), log(0.24)]
     θ_gamma = [0.12, 0.32, -0.5 * log(6.3), log(0.32), log(0.24)]
     θ_beta = [0.12, 0.32, -0.5 * log(22.0), log(0.32), log(0.24)]
 

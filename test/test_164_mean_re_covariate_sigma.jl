@@ -26,7 +26,7 @@ using SpecialFunctions: loggamma
 # Per-observation NB2 hetero aux: ησ ↦ size vector + lconst.
 function _nb2_hetero_aux(yint, yf)
     return ησ -> begin
-        r = exp.(clamp.(ησ, -8.0, 8.0))
+        r = exp.(clamp.(-2 .* ησ, -8.0, 8.0))
         lconst = [loggamma(yf[i] + r[i]) - loggamma(r[i]) - DRM._logfactorial(yint[i])
                   for i in eachindex(yint)]
         return (y = yf, size = r, lconst = lconst)
@@ -103,7 +103,7 @@ end
     @test fit.converged
     @test length(coef(fit, :sigma)) == 2            # intercept + slope on log-size
     @test coef(fit, :mu)[2] ≈ βμ[2] atol = 0.20
-    @test coef(fit, :sigma)[2] ≈ βσ[2] atol = 0.30  # the heteroscedastic σ slope
+    @test coef(fit, :sigma)[2] ≈ -0.5 * βσ[2] atol = 0.30  # the heteroscedastic σ slope (log σ = -0.5 log size)
     @test re_sd(fit)[:species] > 0.10
     @test isfinite(loglik(fit))
     @test all(fitted(fit) .> 0)
@@ -139,8 +139,8 @@ end
     yint = [rand(Distributions.NegativeBinomial(sizep, sizep / (sizep + μi))) for μi in μ]
     yf = Float64.(yint)
 
-    aux_scalar(ls) = (y = yf, size = exp(clamp(ls, -8, 8)),
-        lconst = [loggamma(yf[i] + exp(clamp(ls, -8, 8))) - loggamma(exp(clamp(ls, -8, 8))) -
+    aux_scalar(ls) = (y = yf, size = exp(clamp(-2 * ls, -8, 8)),
+        lconst = [loggamma(yf[i] + exp(clamp(-2 * ls, -8, 8))) - loggamma(exp(clamp(-2 * ls, -8, 8))) -
                   DRM._logfactorial(yint[i]) for i in eachindex(yint)])
     aux_hetero = _nb2_hetero_aux(yint, yf)
     Xσ1 = ones(n, 1)

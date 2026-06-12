@@ -82,7 +82,7 @@ end
     @test coef(fit, :mu)[1] ≈ β[1] atol = 0.25       # intercept (mean(u) ≈ 0 here)
     @test coef(fit, :mu)[2] ≈ β[2] atol = 0.15       # slope (independent of the RE)
     @test re_sd(fit)[:id] ≈ σb atol = 0.20           # variance component recovered
-    @test exp(coef(fit, :sigma)[1]) ≈ sizep rtol = 0.6   # dispersion in the right ballpark
+    @test exp(-2 * coef(fit, :sigma)[1]) ≈ sizep rtol = 0.6   # dispersion in the right ballpark
     @test isfinite(loglik(fit))
     @test all(fitted(fit) .> 0)
 end
@@ -106,13 +106,13 @@ end
     q = size(Q, 1)
     logdetQ = logdet(cholesky(Symmetric(Q); check = false))
     Xμ = hcat(ones(n), x)
-    function aux_from(logsize)
-        r = exp(clamp(logsize, -8.0, 8.0))
+    function aux_from(logσ)
+        r = exp(clamp(-2 * logσ, -8.0, 8.0))   # size r = 1/σ² = exp(−2ψ); ψ = log σ (drmTMB)
         lconst = [loggamma(yint[i] + r) - loggamma(r) - DRM._logfactorial(yint[i]) for i in eachindex(yint)]
         return (y = y, size = r, lconst = lconst)
     end
-    # θ = [βμ(2); logsize; logσ_relmat], OFF the optimum.
-    θ = [0.10, 0.45, log(3.0), log(0.55)]
+    # θ = [βμ(2); logσ (= −0.5·log size); logσ_relmat], OFF the optimum.
+    θ = [0.10, 0.45, -0.5 * log(3.0), log(0.55)]
     val0, g_an, b_base, ok = DRM._phylo_mean_laplace_nuisance_fg(
         Val(:nb2_fixed), aux_from, n, Xμ, leaf_node, Q, logdetQ, θ;
         grad = true, b0 = zeros(q), newton_tol = _NB_NTOL, newton_maxiter = _NB_NMAX,

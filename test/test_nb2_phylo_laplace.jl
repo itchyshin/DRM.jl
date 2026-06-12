@@ -23,7 +23,7 @@ import Distributions
 
     @test fit.converged
     @test coef(fit, :mu)[2] ≈ β[2] atol = 0.25
-    @test 0.5 < exp(coef(fit, :sigma)[1]) < 20.0
+    @test 0.5 < exp(-2 * coef(fit, :sigma)[1]) < 20.0
     @test re_sd(fit)[:species] > 0.05
     @test isfinite(loglik(fit))
     @test all(fitted(fit) .> 0)

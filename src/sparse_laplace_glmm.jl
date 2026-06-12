@@ -1098,14 +1098,15 @@ end
 # covariate-dispersion #164 path builds its own per-observation aux in-place.)
 function _nb2_laplace_setup(y, Xμ)
     yint = round.(Int, y)
-    function aux_from(logsize)
-        r = exp(clamp(logsize, -8.0, 8.0))
+    function aux_from(logσ)
+        r = exp(clamp(-2 * logσ, -8.0, 8.0))      # ψ = log σ; size r = 1/σ² = exp(−2ψ) (drmTMB)
         lconst = [loggamma(yint[i] + r) - loggamma(r) - _logfactorial(yint[i]) for i in eachindex(yint)]
         return (y = Float64.(yint), size = r, lconst = lconst)
     end
     m = sum(y) / length(y)
     v = sum(abs2, y .- m) / max(length(y) - 1, 1)
-    θσ0 = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    # θσ start is in log σ now (size r = exp(−2ψ)): MoM gives a size, so logσ = −0.5·log(size)
+    θσ0 = -0.5 * log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
     return aux_from, _poisson_fixed_start(y, Xμ), θσ0
 end
 
@@ -1128,12 +1129,12 @@ function _fit_nb2_phylo_laplace(fam, y, Xμ, Xσ, labels, tree, nmμ, nmσ, grp,
     m = sum(y) / length(y)
     v = sum(abs2, y .- m) / max(length(y) - 1, 1)
     function aux_from_hetero(ησ)
-        r = exp.(clamp.(ησ, -8.0, 8.0))
+        r = exp.(clamp.(-2 .* ησ, -8.0, 8.0))      # ψ = log σ; size r = 1/σ² = exp(−2ψ) (drmTMB)
         lconst = [loggamma(yf[i] + r[i]) - loggamma(r[i]) - _logfactorial(yint[i]) for i in eachindex(yint)]
         return (y = yf, size = r, lconst = lconst)
     end
     θσ0 = zeros(size(Xσ, 2))
-    θσ0[1] = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))   # intercept; slopes 0
+    θσ0[1] = -0.5 * log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))   # intercept (log σ); slopes 0
     return _fit_phylo_mean_laplace_hetero(
         fam, Val(:nb2_hetero), aux_from_hetero, length(y), Xμ, Xσ, labels, tree,
         nmμ, nmσ, grp, g_tol; θβ0 = _poisson_fixed_start(y, Xμ), θσ0 = θσ0,
@@ -1921,9 +1922,9 @@ function _laplace_v123_nuisance(::Val{:nb2_hetero}, aux, i, η)
     d2 = (y + r) * r * μ / den^2
     d3 = (y + r) * r * μ * (r - μ) / den^3
     dldr = -(digamma(y + r) - digamma(r)) - log(r) - 1 + log(den) + (y + r) / den
-    nv = r * dldr
-    nd1 = r * μ * (μ - y) / den^2
-    nd2 = r * μ * ((y + 2r) / den^2 - 2r * (y + r) / den^3)
+    nv = -2 * r * dldr            # ψ = log σ, size = exp(−2ψ): chain ∂(log r)/∂ψ = −2
+    nd1 = -2 * r * μ * (μ - y) / den^2
+    nd2 = -2 * r * μ * ((y + 2r) / den^2 - 2r * (y + r) / den^3)
     return v, d1, d2, d3, nv, nd1, nd2
 end
 
@@ -2249,9 +2250,9 @@ function _laplace_v123_nuisance(::Val{:nb2_fixed}, aux, i, η)
     d2 = (y + r) * r * μ / den^2
     d3 = (y + r) * r * μ * (r - μ) / den^3
     dldr = -(digamma(y + r) - digamma(r)) - log(r) - 1 + log(den) + (y + r) / den
-    nv = r * dldr
-    nd1 = r * μ * (μ - y) / den^2
-    nd2 = r * μ * ((y + 2r) / den^2 - 2r * (y + r) / den^3)
+    nv = -2 * r * dldr            # ψ = log σ, size = exp(−2ψ): chain ∂(log r)/∂ψ = −2
+    nd1 = -2 * r * μ * (μ - y) / den^2
+    nd2 = -2 * r * μ * ((y + 2r) / den^2 - 2r * (y + r) / den^3)
     return v, d1, d2, d3, nv, nd1, nd2
 end
 
@@ -2733,8 +2734,8 @@ function _fit_nb2_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol;
     length(comps) == 2 || error("_fit_nb2_crossed_laplace requires two random-intercept components")
     size(Xσ, 2) == 1 || error("_fit_nb2_crossed_laplace currently supports a constant sigma formula")
     yint = round.(Int, y)
-    function aux_from(logsize)
-        r = exp(clamp(logsize, -8.0, 8.0))
+    function aux_from(logσ)
+        r = exp(clamp(-2 * logσ, -8.0, 8.0))      # ψ = log σ; size r = 1/σ² = exp(−2ψ) (drmTMB)
         lconst = [loggamma(yint[i] + r) - loggamma(r) - _logfactorial(yint[i]) for i in eachindex(yint)]
         return (y = Float64.(yint), size = r, lconst = lconst)
     end

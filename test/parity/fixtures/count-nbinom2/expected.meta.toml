@@ -2,4 +2,4 @@ drmtmb_version = "0.1.3"
 generated_on = "2026-06-03"
 r_call = "drmTMB(drm_formula(y ~ x, sigma ~ 1), family = nbinom2(), data = dat)"
 seed = 20260608
-note = "Generated outputs only; no drmTMB source vendored. NB2 sigma is transformed from drmTMB log(sigma) to DRM.jl log(theta)."
+note = "Generated outputs only; no drmTMB source vendored. NB2 sigma is on the log(sigma) scale in both drmTMB and DRM.jl (size = exp(-2*sigma)); no reparameterisation transform is applied."

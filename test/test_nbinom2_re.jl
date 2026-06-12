@@ -19,7 +19,7 @@ import Distributions
     fit = drm(bf(@formula(y ~ x + (1 | g)), @formula(sigma ~ 1)), NegBinomial2(); data = data)
 
     @test coef(fit, :mu)[2] ≈ β[2] atol = 0.10       # log-mean slope
-    @test exp(coef(fit, :sigma)[1]) ≈ θ atol = 1.2   # dispersion θ
+    @test exp(-2 * coef(fit, :sigma)[1]) ≈ θ atol = 1.2   # dispersion θ
     @test re_sd(fit)[:g] ≈ σb atol = 0.20            # group random-intercept SD
     @test isfinite(loglik(fit))
     @test all(fitted(fit) .> 0)

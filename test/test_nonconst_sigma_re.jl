@@ -66,13 +66,13 @@ end
         fit = drm(bf(@formula(y ~ x + (1 | p | g)), @formula(sigma ~ x + (1 | p | g))),
                   NegBinomial2(); data = data, se = true)
         @test coef(fit, :mu)[2] ≈ βμ[2] atol = 0.10
-        @test coef(fit, :sigma)[2] ≈ βψ[2] atol = 0.15     # ← non-constant dispersion slope
+        @test coef(fit, :sigma)[2] ≈ -0.5 * βψ[2] atol = 0.15     # ← non-constant dispersion slope (log σ = -0.5 log size)
         # The random effect on the σ axis is real and non-degenerate (Λ[2,2] > 0),
         # so the dispersion carries BOTH a covariate and a random effect.
         Λ̂ = DRM.vc(fit)[:g]
         @test size(Λ̂) == (2, 2)
         @test isposdef(Symmetric(Λ̂))
-        @test Λ̂[2, 2] > 0.02                               # σ-axis RE variance recovered, > 0
+        @test Λ̂[2, 2] > 0.005                              # σ-axis RE variance recovered, > 0 (¼× log-size scale)
         @test isfinite(loglik(fit))
         # NB: `fit.converged` (Optim's flag) is NOT asserted — near the singular
         # variance boundary ‖g‖ plateaus and relative-objective stopping leaves the
@@ -88,8 +88,8 @@ end
         Xμ = hcat(ones(n), x); Xψ = hcat(ones(n), x)
         gidx, Gd = DRM._group_index(g); Q = sparse(1.0 * I, Gd, Gd)
         fr = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, gidx, Gd, Q; se = false)
-        @test fr.beta_psi[2] ≈ βψ[2] atol = 0.15           # dispersion slope (engine-native)
-        @test fr.Lambda[2, 2] > 0.02
+        @test fr.beta_psi[2] ≈ -0.5 * βψ[2] atol = 0.15           # dispersion slope (engine-native; -0.5 log size)
+        @test fr.Lambda[2, 2] > 0.005
         gmax = maximum(abs, DRM._ls_marginal_grad(Val(:nb2), y, Xμ, Xψ, gidx, Gd, Q, fr.θ))
         @test gmax < 1e-3                                   # stationarity
 

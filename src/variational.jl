@@ -400,7 +400,7 @@ function _fit_nb2_ranef_va(fam::NegBinomial2, y, Xμ, Xσ, gidx, G, nmμ, nmσ, 
             yidx = @view yint[idx]
             # NB2 size for this group's observations. With `sigma ~ 1` (the only
             # case routed here) ησ is constant across i, so take the group's value.
-            rsize = exp(ησ[idx[1]])
+            rsize = exp(-2 * ησ[idx[1]])      # ψ = log σ; NB2 size = 1/σ² = exp(−2ψ) (drmTMB)
             m, sg = _nb2_va_inner(η0idx, yidx, rsize, τ, z, lwπ)
             elbo += _nb2_va_group_elbo(m, log(sg), η0idx, yidx, rsize, τ, z, lwπ)
         end
@@ -410,7 +410,7 @@ function _fit_nb2_ranef_va(fam::NegBinomial2, y, Xμ, Xσ, gidx, G, nmμ, nmσ, 
     m̄ = sum(y) / n; v̄ = sum(abs2, y .- m̄) / max(n - 1, 1)
     θ0 = zeros(pμ + pσ + 1)
     θ0[1] = log(m̄ + eps())
-    θ0[pμ+1] = log(max(m̄^2 / max(v̄ - m̄, 0.1 * m̄ + eps()), 0.5))   # MoM dispersion init
+    θ0[pμ+1] = -0.5 * log(max(m̄^2 / max(v̄ - m̄, 0.1 * m̄ + eps()), 0.5))   # MoM init (log σ)
     θ0[pμ+pσ+1] = log(0.5)
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))

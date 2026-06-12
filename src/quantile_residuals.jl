@@ -58,14 +58,14 @@ function _conditional_dist(fam::Poisson, i; μ, scales, obs)
     return Distributions.Poisson(max(μ[i], 0.0))
 end
 function _conditional_dist(fam::NegBinomial2, i; μ, scales, obs)
-    φ = scales[:sigma][i]                       # size θ, stored directly (not σ⁻²)
+    φ = 1 / (scales[:sigma][i]^2)               # scales[:sigma] = σ now; NB2 size = 1/σ²
     return Distributions.NegativeBinomial(φ, φ / (φ + μ[i]))
 end
 # TruncatedNegBinomial2 returns the *base* (untruncated) NB2; the zero-truncation
 # F(k) = (NB.cdf(k) − NB.cdf(0)) / (1 − NB.cdf(0)) for k ≥ 1 is applied in the
 # discrete driver (avoids the `truncated` discrete-lower-bound convention).
 function _conditional_dist(fam::TruncatedNegBinomial2, i; μ, scales, obs)
-    φ = scales[:sigma][i]
+    φ = 1 / (scales[:sigma][i]^2)               # scales[:sigma] = σ now; NB2 size = 1/σ²
     return Distributions.NegativeBinomial(φ, φ / (φ + μ[i]))
 end
 function _conditional_dist(fam::Binomial, i; μ, scales, obs)

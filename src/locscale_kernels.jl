@@ -13,7 +13,7 @@
 # Per family the two axes map to the family parameters as follows (the link/
 # dispersion conventions match the standalone fits in each family file, so the
 # coupled-RE `coef(:sigma)` is on the SAME scale as the fixed-only fit):
-#   NB2          : μ = exp η (log link),     size  r = exp ψ
+#   NB2          : μ = exp η (log link),     ψ = log σ, size r = exp(−2ψ) = 1/σ²
 #   Gamma        : μ = exp η (log link),     shape α = exp ψ
 #   Beta         : μ = logistic η (logit),   precision φ = exp(-2ψ)   [σ = e^ψ]
 #   BetaBinomial : μ = logistic η (logit),   precision φ = exp(-2ψ)   [σ = e^ψ]
@@ -47,12 +47,15 @@ const LS_CLAMP = 30.0
 const LS_PSI_CLAMP = 15.0          # φ = exp(-2ψ) ⇒ clamp ψ to keep φ finite & > 0
 
 # ---------------------------------------------------------------------------
-# Negative binomial (NB2): mean μ = exp η, size r = exp ψ, var = μ + μ²/r.
+# Negative binomial (NB2): mean μ = exp η; ψ = log σ (drmTMB parameterisation),
+# size r = 1/σ² = exp(−2ψ); var = μ + μ²/r. (Aligned to drmTMB; previously ψ = log r.)
+# Since ψ_old = log r = −2ψ, the ψ-derivatives pick up constant chain factors:
+# gψ ×(−2), hηψ ×(−2), hψψ ×(−2)² = ×4. The r-derivatives (s, dsdr) are unchanged.
 # ---------------------------------------------------------------------------
 
 function _ls_nll(::Val{:nb2}, y, η, ψ)
     μ = exp(clamp(η, -LS_CLAMP, LS_CLAMP))
-    r = exp(clamp(ψ, -LS_CLAMP, LS_CLAMP))
+    r = exp(clamp(-2 * ψ, -LS_CLAMP, LS_CLAMP))
     den = r + μ
     logp = loggamma(y + r) - loggamma(r) - loggamma(y + 1) +
            r * log(r) + y * log(μ) - (y + r) * log(den)
@@ -62,26 +65,25 @@ end
 # Returns (∂nll/∂η, ∂nll/∂ψ).
 function _ls_grad(::Val{:nb2}, y, η, ψ)
     μ = exp(clamp(η, -LS_CLAMP, LS_CLAMP))
-    r = exp(clamp(ψ, -LS_CLAMP, LS_CLAMP))
+    r = exp(clamp(-2 * ψ, -LS_CLAMP, LS_CLAMP))
     den = r + μ
     gη = (y + r) * μ / den - y
-    # s = ∂logp/∂r;  ∂nll/∂ψ = -r·s
+    # s = ∂logp/∂r;  ∂nll/∂ψ = -s·∂r/∂ψ = -s·(−2r) = 2r·s
     s = digamma(y + r) - digamma(r) + log(r) + 1 - log(den) - (y + r) / den
-    gψ = -r * s
+    gψ = 2 * r * s
     return gη, gψ
 end
 
 # Returns (∂²nll/∂η², ∂²nll/∂η∂ψ, ∂²nll/∂ψ²).
 function _ls_hess(::Val{:nb2}, y, η, ψ)
     μ = exp(clamp(η, -LS_CLAMP, LS_CLAMP))
-    r = exp(clamp(ψ, -LS_CLAMP, LS_CLAMP))
+    r = exp(clamp(-2 * ψ, -LS_CLAMP, LS_CLAMP))
     den = r + μ
     hηη = (y + r) * r * μ / den^2
-    hηψ = r * μ * (μ - y) / den^2
-    # ∂²nll/∂ψ² = -(r·s + r²·ds/dr)
+    hηψ = -2 * r * μ * (μ - y) / den^2            # ×(−2) chain factor
     s = digamma(y + r) - digamma(r) + log(r) + 1 - log(den) - (y + r) / den
     dsdr = trigamma(y + r) - trigamma(r) + 1 / r - 1 / den - (μ - y) / den^2
-    hψψ = -(r * s + r^2 * dsdr)
+    hψψ = 4 * (-(r * s + r^2 * dsdr))             # ×4 chain factor
     return hηη, hηψ, hψψ
 end
 

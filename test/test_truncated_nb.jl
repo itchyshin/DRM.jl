@@ -20,6 +20,6 @@ rtnb(r, p) = (while true; k = rand(Distributions.NegativeBinomial(r, p)); k > 0 
 
     @test coef(fit, :mu)[1] ≈ βμ[1] atol = 0.15          # log-mean of the untruncated NB
     @test coef(fit, :mu)[2] ≈ βμ[2] atol = 0.10
-    @test exp(coef(fit, :sigma)[1]) ≈ θ atol = 1.5        # dispersion — weakly identified under truncation
+    @test exp(-2 * coef(fit, :sigma)[1]) ≈ θ atol = 1.5        # dispersion — weakly identified under truncation
     @test isfinite(loglik(fit))
 end

@@ -52,7 +52,7 @@ const DBNB = DRM   # internal kernels live under DRM.*
         # Independent fixed-effect NB2 nll at the same (β, logθ): no RE term at all.
         yint = round.(Int, y)
         function nb2_nll(βμ, lθ)
-            ηβ = Xμ * βμ; r = exp(lθ)
+            ηβ = Xμ * βμ; r = exp(-2 * lθ)   # ψ = log σ; NB2 size = 1/σ² = exp(−2ψ) (matches the VA fitter)
             v = 0.0
             for i in 1:n
                 μi = exp(ηβ[i]); p = r / (r + μi)
@@ -94,7 +94,7 @@ const DBNB = DRM   # internal kernels live under DRM.*
         # θ = [β0, β1, logθ_size, logσ_b] in both fits (same block layout).
         θla = coef(fit_la); θva = coef(fit_va)
         β_la = θla[1:2];        β_va = θva[1:2]
-        θsz_la = exp(θla[3]);   θsz_va = exp(θva[3])
+        θsz_la = exp(-2 * θla[3]);   θsz_va = exp(-2 * θva[3])   # coef is log σ now; size = exp(−2·coef)
         σ_la = exp(θla[4]);     σ_va = exp(θva[4])
 
         # Fixed effects: VA should match GHQ closely (mean is the well-behaved axis).
@@ -119,7 +119,7 @@ const DBNB = DRM   # internal kernels live under DRM.*
         end
         yint = round.(Int, y)
         function marg_ll_adaptive(θ, K)              # near-exact marginal log-lik
-            βμ = θ[1:2]; rsz = exp(θ[3]); σb = exp(θ[4]); η0 = Xμ * βμ
+            βμ = θ[1:2]; rsz = exp(-2 * θ[3]); σb = exp(θ[4]); η0 = Xμ * βμ   # size = exp(−2·log σ)
             z, w = DBNB._gauss_hermite(K); ll = 0.0
             for idx in members
                 isempty(idx) && continue

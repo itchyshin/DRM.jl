@@ -90,13 +90,17 @@ end
     μ = exp.(0.20 .+ 0.35 .* s.x .+ s.u[s.species])
     yint = [rand(Distributions.NegativeBinomial(sizep, sizep / (sizep + μi))) for μi in μ]
     y = Float64.(yint)
-    function aux_from(logsize)
-        r = exp(clamp(logsize, -8.0, 8.0))
+    function aux_from(logsigma)
+        # ψ = log σ; size r = 1/σ² = exp(−2ψ) (drmTMB NB2 parameterization, matches
+        # the production _nb2_laplace_setup). The engine's analytic gradient carries
+        # the −2 chain factor, so the FD reference must read the slot as log σ too.
+        r = exp(clamp(-2 * logsigma, -8.0, 8.0))
         lconst = [loggamma(yint[i] + r) - loggamma(r) - DRM._logfactorial(yint[i]) for i in eachindex(yint)]
         return (y = y, size = r, lconst = lconst)
     end
-    # θ = [βμ(2); logsize; logσphylo], OFF the optimum.
-    θ = [0.10, 0.45, log(3.0), log(0.55)]
+    # θ = [βμ(2); logσ; logσphylo], OFF the optimum. θσ stored as −0.5 log(size);
+    # pick size ≈ 3.0 ⇒ logσ = −0.5 log 3.
+    θ = [0.10, 0.45, -0.5 * log(3.0), log(0.55)]
     val0, g_an, b_base, ok = DRM._phylo_mean_laplace_nuisance_fg(
         Val(:nb2_fixed), aux_from, s.n, s.Xμ, s.leaf_node, s.Q, s.logdetQ, θ;
         grad = true, b0 = zeros(s.q), newton_tol = NTOL, newton_maxiter = NMAX,

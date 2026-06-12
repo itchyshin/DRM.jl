@@ -90,7 +90,7 @@ end
     @test gmax < 1e-3                               # stationarity of the exact gradient (convergence evidence)
     @test fit.beta_mu[1] ≈ 0.5 atol = 0.2
     @test fit.beta_mu[2] ≈ 0.4 atol = 0.1
-    @test fit.beta_psi[1] ≈ 0.3 atol = 0.25
+    @test fit.beta_psi[1] ≈ -0.15 atol = 0.25       # -0.5 * 0.3 (log σ = -0.5 log size)
     @test sqrt(fit.Lambda[1, 1]) ≈ 0.5 rtol = 0.3   # mean-axis RE SD
-    @test sqrt(fit.Lambda[2, 2]) ≈ 0.4 rtol = 0.45  # scale-axis RE SD (harder)
+    @test sqrt(fit.Lambda[2, 2]) ≈ 0.2 rtol = 0.45  # scale-axis RE SD (harder); 0.5 * 0.4
 end

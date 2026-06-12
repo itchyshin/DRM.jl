@@ -39,14 +39,14 @@ end
     # The mean-axis derivatives must agree with the verified fixed-nuisance
     # kernels in sparse_laplace_glmm.jl at the corresponding dispersion value.
     for (η, ψ, y) in [(0.3, 0.5, 4.0), (-0.4, 1.2, 1.0), (0.9, -0.3, 11.0)]
-        # NB2: size r = exp ψ.
-        r = exp(ψ)
+        # NB2: size r = exp(-2ψ).
+        r = exp(-2ψ)
         aux_nb = (y = [y], size = r, lconst = [0.0])
         gη, _ = DRM._ls_grad(Val(:nb2), y, η, ψ)
         hηη, hηψ, _ = DRM._ls_hess(Val(:nb2), y, η, ψ)
         @test gη ≈ DRM._laplace_d1(Val(:nb2_fixed), aux_nb, 1, η) rtol = 1e-10
         @test hηη ≈ DRM._laplace_d2(Val(:nb2_fixed), aux_nb, 1, η) rtol = 1e-10
-        @test hηψ ≈ DRM._laplace_nuisance_d1(Val(:nb2_fixed), aux_nb, 1, η) rtol = 1e-10
+        @test hηψ ≈ -2 * DRM._laplace_nuisance_d1(Val(:nb2_fixed), aux_nb, 1, η) rtol = 1e-10
 
         # Gamma: shape α = exp ψ.
         α = exp(ψ)

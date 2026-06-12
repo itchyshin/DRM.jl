@@ -18,7 +18,7 @@ import Distributions          # qualified — DRM has its own family type
 
     @test coef(fit, :mu)[1] ≈ β[1] atol = 0.08    # log-mean intercept
     @test coef(fit, :mu)[2] ≈ β[2] atol = 0.08    # log-mean slope
-    @test exp(coef(fit, :sigma)[1]) ≈ θ atol = 0.8  # dispersion (size) — weakly identified
+    @test exp(-2 * coef(fit, :sigma)[1]) ≈ θ atol = 0.8  # dispersion (size) — weakly identified
     @test isfinite(loglik(fit))
     @test all(fitted(fit) .> 0)
 end
