@@ -208,4 +208,62 @@ end
         @test fit.v1 ≈ trigamma(1 / fit.σ1^2)                # Gamma link variance trigamma(α)
         @test fit.rho_latent > 0.0
     end
+
+    # ---- Robustness: non-finite GHQ line-search evaluations must NOT abort the fit.
+    #
+    # Mechanism: the Gaussian-axis loading enters as λ1 = exp(θ[iλ1]) and is NOT
+    # clamped, so a line-search step that pushes θ[iλ1] large makes η1 = Xβ1 + λ1·u
+    # overflow at the outer GHQ nodes (u = √2·z_K ≈ 10 for K=32). The Gaussian node
+    # -0.5·((y-η)/σ)^2 then overflows to -Inf and the log-sum-exp returns NaN, so the
+    # objective `total` is non-finite. On Julia ≥1.12 `LineSearches.HagerZhang`
+    # asserts `isfinite(phi_c)` on such a probe and ABORTS the optimisation
+    # (`AssertionError`); 1.10/1.11 tolerate the probe and backtrack. The guard maps
+    # a non-finite total to a large FINITE penalty so the line search backtracks on
+    # every version. (Same fix pattern as the structured-Gaussian objectives,
+    # commit 8ab635b — see docs/dev-log/codex-handoff-2026-06-07.md.)
+    #
+    # Two layers: (1) a deterministic, version-independent demonstration that the
+    # SAME production family kernel the objective uses (`_mf_obs_ll`) overflows at an
+    # extreme latent value and that the guard transform maps the resulting non-finite
+    # total to a large finite value — documenting the exact NaN→penalty mapping the
+    # source applies (this reconstructs the guard expression, so it pins the mapping
+    # but not the source line); (2) a fit-level SMOKE test on a deliberately
+    # aggressive Gaussian×Poisson DGP (mean count ≈ 134, loadings ≈ 1.5/1.0) — the
+    # class of input that drives the un-clamped Gaussian loading toward the overflow
+    # regime and trips the 1.12 HagerZhang assertion. It must return without throwing
+    # and with finite output. NOTE: on the local Julia 1.10/1.11, HagerZhang tolerates
+    # a non-finite probe, so this fit converges with OR without the guard; the guard's
+    # effect is only observable on the ≥1.12 CI runner, where the un-guarded fit
+    # aborts. We assert the post-fix invariant (returns, finite) on every version.
+    @testset "non-finite GHQ line search → finite penalty (no AssertionError)" begin
+        # (1) contract: production kernel overflows → guard transform stays finite.
+        node = DRM._mf_obs_ll(Gaussian(), 1e160, 1.0, 1.0, 0.5)   # (y-η)^2 overflows
+        @test !isfinite(node)                                     # node is -Inf, as in nll
+        acc = [node + 0.0]                                        # 1-node log-sum-exp body
+        total = -(maximum(acc) + log(sum(exp.(acc .- maximum(acc)))) - 0.5 * log(π))
+        @test !isfinite(total)                                   # ⇒ objective total is NaN
+        guarded = isfinite(DRM.ForwardDiff.value(total)) ? total : oftype(total, 1e10)
+        @test isfinite(guarded) && guarded == 1e10               # guard ⇒ large finite penalty
+
+        # (2) smoke: aggressive Gaussian×Poisson DGP fits without aborting.
+        rng = MersenneTwister(20260610)
+        n = 400
+        x = randn(rng, n)
+        X1 = hcat(ones(n), x); X2 = hcat(ones(n), x)
+        β1 = [0.5, 0.8]; β2 = [3.0, 1.5]      # high count intercept → large exp(η2)
+        λ1 = 2.5; λ2 = 2.0; σ1 = 0.3          # large loadings, tight Gaussian residual
+        u = randn(rng, n)
+        y1 = X1 * β1 .+ λ1 .* u .+ σ1 .* randn(rng, n)
+        η2 = X2 * β2 .+ λ2 .* u
+        y2 = Float64[_rpois(rng, exp(clamp(η2[i], -20.0, 20.0))) for i in 1:n]
+
+        local fit
+        @test_nowarn fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gaussian(),
+                                                y2 = y2, X2 = X2, fam2 = Poisson(),
+                                                confint = false)
+        @test fit isa NamedTuple                                 # returned, no AssertionError
+        @test isfinite(fit.loglik)                               # final objective finite
+        @test all(isfinite, fit.β1) && all(isfinite, fit.β2)
+        @test isfinite(fit.λ1) && isfinite(fit.λ2)
+    end
 end
