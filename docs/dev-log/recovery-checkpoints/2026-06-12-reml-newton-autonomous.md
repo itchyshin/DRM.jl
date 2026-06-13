@@ -3,6 +3,20 @@
 **Worktree:** `DRM-integrate` → branch `shannon/land-sigma-phylo`. **Nothing pushed.**
 **Goal in effect:** "finish the plan, work autonomously till ~5am, hold questions."
 
+## ⚠ LATEST (read first — supersedes the Newton framing below)
+
+The adversarial verification (the gate noted as "pending" below) **completed and found 12
+confirmed bugs** in the observed-info Newton — a BLOCKING boundary crash + a HIGH β-coupling
+correctness bug my benign tests missed. **All fixed + committed (`ff7df6c`):** the production
+`drm(:REML)` path is now the **jointly-correct, boundary-robust clean-gradient LBFGS**; the
+observed-info **Newton is demoted to EXPERIMENTAL**. Added: penalty-finite + guarded line
+search (crash 0/40), Wald-V PD-guard, coupled-route :REML error guard, a boundary regression
+test, doc honesty. Verified: boundary 12/12, end-to-end 12/12, p=120 match confirmed earlier.
+A **focused re-verification** (completeness + regression of the fix) is running (`wa5syxb25`)
+— reconcile it on resume. Commits: a5bcb3f, f2ee141, 10286dc, 2a95229, **ff7df6c**.
+Everything below describes the Newton as production — that was BEFORE the verification; the
+clean-LBFGS is now production.
+
 ## State: what is DONE + VERIFIED (local commits)
 
 - `a5bcb3f` — fast **observed-information Newton REML** for the σ-phylo location-scale model.
