@@ -554,6 +554,8 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
                 end
                 # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
                 # (huge finite values), not an error — so report NaN SEs (use profile_ci there).
+                # NB these Wald SEs are the ML observed information at θ̂_reml (the restricted
+                # penalty curvature is omitted, as in drmTMB); prefer profile_ci near σ→0.
                 chH = cholesky(Symmetric(H); check = false)
                 issuccess(chH) ? Matrix(inv(chH)) : fill(NaN, size(H))
             catch
@@ -637,6 +639,8 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
                 end
                 # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
                 # (huge finite values), not an error — so report NaN SEs (use profile_ci there).
+                # NB these Wald SEs are the ML observed information at θ̂_reml (the restricted
+                # penalty curvature is omitted, as in drmTMB); prefer profile_ci near σ→0.
                 chH = cholesky(Symmetric(H); check = false)
                 issuccess(chH) ? Matrix(inv(chH)) : fill(NaN, size(H))
             catch
@@ -723,6 +727,8 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
                 end
                 # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
                 # (huge finite values), not an error — so report NaN SEs (use profile_ci there).
+                # NB these Wald SEs are the ML observed information at θ̂_reml (the restricted
+                # penalty curvature is omitted, as in drmTMB); prefer profile_ci near σ→0.
                 chH = cholesky(Symmetric(H); check = false)
                 issuccess(chH) ? Matrix(inv(chH)) : fill(NaN, size(H))
             catch
