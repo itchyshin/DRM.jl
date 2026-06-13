@@ -225,6 +225,12 @@ variances `v1`/`v2`, the `loglik`, `converged`, and `iterations`.
   Gaussian × Gaussian residual-correlation model that this generalises.
 - [`DRM.link_residual`](@ref) — the per-family link-scale variance `v_k`.
 
+## API
+
+```@docs
+DRM.link_residual
+```
+
 ## References
 
 - Nakagawa, S. & Schielzeth, H. (2010). Repeatability for Gaussian and

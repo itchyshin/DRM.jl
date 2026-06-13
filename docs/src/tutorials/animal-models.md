@@ -67,7 +67,7 @@ re_sd(fit)[:id]           # additive-genetic SD σ_A (≈ 0.8)
 
 ## Reading the fit
 
-`re_sd`, `ranef`, and `coef`/`sigma` give the three pieces of an animal model.
+`re_sd`, `coef`/`sigma`, and `ranef` read off the pieces of an animal model.
 The additive-genetic and residual SDs:
 
 ```@example animal
@@ -78,17 +78,12 @@ re_sd(fit)[:id]               # additive-genetic SD σ_A
 exp(coef(fit, :sigma)[1])     # residual SD σ (≈ 0.4)
 ```
 
-`ranef` returns the per-individual conditional breeding values (BLUPs) — the
-posterior means of `a` at the fitted variance components, keyed by grouping
-factor:
-
-```@example animal
-length(ranef(fit)[:id])       # one breeding value per individual (= G)
-```
-
-```@example animal
-ranef(fit)[:id][1:5]          # first five BLUPs
-```
+!!! note "Per-individual breeding values"
+    `ranef` surfaces conditional breeding values (BLUPs) for the crossed /
+    correlated Gaussian random-effect paths. For a single structured
+    `animal()` / `relmat()` component they are estimated internally but not yet
+    returned — `ranef(fit)` is empty here — so read the genetic signal off
+    `re_sd` and the heritability below.
 
 The **narrow-sense heritability** `h² = σ_A² / (σ_A² + σ²)` follows directly from
 the two SDs:
