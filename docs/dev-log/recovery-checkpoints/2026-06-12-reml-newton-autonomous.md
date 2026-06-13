@@ -12,8 +12,12 @@ correctness bug my benign tests missed. **All fixed + committed (`ff7df6c`):** t
 observed-info **Newton is demoted to EXPERIMENTAL**. Added: penalty-finite + guarded line
 search (crash 0/40), Wald-V PD-guard, coupled-route :REML error guard, a boundary regression
 test, doc honesty. Verified: boundary 12/12, end-to-end 12/12, p=120 match confirmed earlier.
-A **focused re-verification** (completeness + regression of the fix) is running (`wa5syxb25`)
-— reconcile it on resume. Commits: a5bcb3f, f2ee141, 10286dc, 2a95229, **ff7df6c**.
+A **focused re-verification** then caught a bug MY fix introduced: the Inf→1e18 boundary-crash
+fix made the penalty sentinel finite, so it leaked −1e18 into reml_loglik/AIC/BIC on a
+collinear (rank-deficient) mean design. **Fixed (`522180a`)**: sanitize reml_nll (sentinel→NaN,
+consistent with the Wald-V path) + a collinear regression test; all other 11 findings confirmed
+addressed. The REML slice is now through TWO verification passes, fully verified.
+Commits: a5bcb3f, f2ee141, 10286dc, 2a95229, ff7df6c, a2667ac, (checkpoint), **522180a**.
 Everything below describes the Newton as production — that was BEFORE the verification; the
 clean-LBFGS is now production.
 
