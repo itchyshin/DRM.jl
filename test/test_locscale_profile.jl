@@ -42,6 +42,13 @@ function _ls_profile_endpoint_bisect(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; idx, d
     return (a + b) / 2
 end
 
+# Heavy reference cross-check: a 30-bisection endpoint search + the variance-
+# boundary VM profile run several minutes of constrained Laplace re-solves, so it
+# is opt-in to keep routine local `Pkg.test()` from stalling here (#202 perf
+# follow-up). Routine profile-CI coverage comes from the σ-phylo boundary testset
+# (test_gaussian_locscale_phylo_boundary.jl) and the public confint(:profile)
+# testset below. Set DRM_SLOW_TESTS=1 to run this cross-check.
+if get(ENV, "DRM_SLOW_TESTS", "0") == "1"
 @testset "location–scale profile-likelihood CI" begin
     Random.seed!(2718)
     G = 20; m = 20; n = G * m
@@ -85,6 +92,9 @@ end
     civ = DRM._ls_profile_ci(Val(:nb2), y, Xμ, Xψ, species, G, Q, fit.θ; idx = 4, nll_min = nllmin)
     @test isfinite(civ.lower) && isfinite(civ.upper)
     @test civ.lower < fit.θ[4] < civ.upper
+end
+else
+    @info "locscale profile reference cross-check skipped (~minutes); set DRM_SLOW_TESTS=1 to run"
 end
 
 # Public-API surface: confint(:profile) on a drm()-fitted location–scale model

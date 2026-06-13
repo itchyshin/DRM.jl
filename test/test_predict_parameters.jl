@@ -121,6 +121,6 @@ import Distributions          # qualified — DRM exports its own `Poisson` fami
         # exp / tanh of the working scale recovers the response-scale fits.
         @test exp.(ppl[:sigma1]) ≈ fit.scales[:sigma1] rtol = 1e-8
         @test exp.(ppl[:sigma2]) ≈ fit.scales[:sigma2] rtol = 1e-8
-        @test tanh.(ppl[:rho12]) ≈ fit.scales[:rho12]  rtol = 1e-8
+        @test DRM.RHO_GUARD .* tanh.(ppl[:rho12]) ≈ fit.scales[:rho12]  rtol = 1e-8
     end
 end
