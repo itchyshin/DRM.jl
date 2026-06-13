@@ -58,9 +58,24 @@ Bench: `bench/bench_reml_newton.jl` (the catch), `bench/check_newton_robust.jl`,
    glmmTMB here is TMB-version-mismatched (1.9.17 vs 1.9.21). Speed story is the O(p) Julia
    engine + few-step Newton (measured internally). ASReml comparison genuinely pending.
 
+## ★ Ayumi R↔Julia bridge — MISSING VALUES (standing user requirement, 2026-06-12)
+
+User: "the R-Julia bridge for Ayumi needs to include missing values (responses — if not hard;
+predictors — we need to build all of them at some point)." So the Ayumi delivery is now:
+**σ-phylo Gaussian REML (now production-correct on this branch) + missing values, reachable
+from R via `engine="julia"`.** Priority: **missing RESPONSES first** (largely built already on
+branch `codex/missing-response-bridge` — Gaussian + non-Gaussian response-missing + the
+`drm_bridge` primitive), **missing PREDICTORS later** (FIML / latent integration per
+`report/fiml-missing-data-design.md` + `~/.claude/memory/design-missing-data-drmtmb-gllvmtmb.md`
+— build "all of them at some point"). Key integration fact: the σ-phylo REML lives on
+`shannon/land-sigma-phylo`; the missing-response bridge on `codex/missing-response-bridge` — the
+two must combine, and the drmTMB `reml_supported` gate (julia-bridge.R ~98) must be relaxed for
+the σ-phylo cell. A scout workflow (`w89utibd1`) is mapping the exact gap + a parallel build plan.
+
 ## Held — USER-GATED (do NOT do autonomously)
 
 `git push`; the Ayumi reply; the GLLVM cross-pollination brief. All wait for explicit go-ahead.
+(Building the bridge + missing-value support LOCALLY is not gated — only the push / Ayumi post.)
 
 ## Honesty notes
 

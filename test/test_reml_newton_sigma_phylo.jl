@@ -174,3 +174,22 @@ end
     @test !(isfinite(rll) && abs(rll) > 1e16)            # NOT a 1e18-poisoned value
     @test isnan(rll)                                     # degenerate fit ⇒ NaN, reported honestly
 end
+
+# REGRESSION (teammate report 2026-06-12): the ASYMMETRIC route (mean covariate, σ-phylo only)
+# on WEAK σ-signal data threw an uncaught HagerZhang line-search AssertionError. With the
+# finite penalty + guarded line search it must DEGRADE gracefully — return a fit (is_converged
+# may be false), not throw. Distinct path from the both-phylo boundary test above (seed 1005).
+@testset "REML σ-phylo: asymmetric route, weak σ-signal — returns a fit, does not throw" begin
+    Random.seed!(1005)
+    p = 64; m = 4; n = p * m
+    phy = random_balanced_tree(p; branch_length = 0.30)
+    C = sigma_phy_dense(phy; σ²_phy = 1.0); LC = cholesky(Symmetric(C)).L
+    u_sig = 0.05 .* (LC * randn(p))                       # very weak σ-phylo signal → near boundary
+    species = repeat(1:p, inner = m); x = randn(n)
+    y = [0.4 + 0.2 * x[i] + exp(0.1 + u_sig[species[i]]) * randn() for i in 1:n]
+    data = (; y, x, species)
+    form = bf(@formula(y ~ x), @formula(sigma ~ phylo(1 | species)))   # asymmetric: mean fixed, σ-phylo
+    local fit
+    @test (fit = drm(form, Gaussian(); data = data, tree = phy, method = :REML)) isa DRM.DrmFit
+    @test isfinite(exp(coef(fit, :resd_sigma)[1]))       # a finite σ-phylo SD (near 0) — no NaN/throw
+end

@@ -122,8 +122,18 @@ function _glsp_reml_refit(obj, grad_fn, θ̂_ml, pμ::Int; ml_converged::Bool = 
     # LBFGS with a finite-difference gradient, warm-started from the ML estimate (the REML
     # optimum is nearby) — a handful of steps, far cheaper than the hundreds NelderMead
     # burns near a flat variance-component optimum.
-    res = Optim.optimize(reml_obj, θ̂_ml, Optim.LBFGS(),
-                         Optim.Options(g_tol = 1e-3, iterations = 100))
+    # Guard the line search (same fragility as _glsp_reml_refit_clean): on weak/boundary data a
+    # probe can hit the non-PD-penalty cliff and HagerZhang asserts; on failure fall back to the
+    # ML estimate with converged=false instead of throwing out of drm().
+    res = try
+        Optim.optimize(reml_obj, θ̂_ml, Optim.LBFGS(),
+                       Optim.Options(g_tol = 1e-3, iterations = 100))
+    catch err
+        err isa InterruptException && rethrow(err)
+        nothing
+    end
+    res === nothing &&
+        return copy(θ̂_ml), false, obj(θ̂_ml), (let r = reml_obj(θ̂_ml); isfinite(r) && r < 1e16 ? r : NaN end)
     θ̂ = Optim.minimizer(res)
     reml_nll = reml_obj(θ̂)
     isfinite(reml_nll) && reml_nll ≥ 1e16 && (reml_nll = NaN)   # 1e18 penalty sentinel ⇒ NaN
