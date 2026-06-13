@@ -40,11 +40,13 @@ function _ls_fd_grad(obj, θ; h = 1e-4)
     return g
 end
 
-# h-sweep trough: the MIN max-abs discrepancy over a few step sizes recovers the
-# TRUE analytic accuracy instead of a single fixed-h FD reading the inner-solve
-# noise (≈ inner_residual / h ≈ 1e-9 / 1e-4 ≈ 1e-5, which flaked on Linux CI at
-# 1.06e-5). The #164/#165 discipline; mirrors test_gaussian_locscale_phylo.jl's
-# `_fd_gate_min_glsp`.
+# h-sweep trough over a few step sizes (the #164/#165 discipline). For this Gamma/NB2
+# non-const-σ OFF-OPTIMUM probe the FD *reference* floor is ~1e-5 — limited by the
+# inner-mode-solve residual (~1e-9) at the optimal h≈1e-4 (truncation ≈ inner_noise ≈ 1e-5,
+# so smaller AND larger h are both worse) — and it is platform-dependent at that boundary
+# (macOS ~0.9e-5, Linux ~1.06e-5; the 1e-5 gate flaked on Linux CI). The analytic gradient
+# is EXACT (verified by recovery + the #164 exact-gradient work); the FD simply can't resolve
+# finer without a tighter inner solve, so the gate is 2e-5 (catches real errors, robust to platform).
 _ls_fd_gate(g_an, obj, θ; hs = (1e-2, 3e-3, 1e-3, 3e-4, 1e-4)) =
     minimum(maximum(abs, g_an .- _ls_fd_grad(obj, θ; h = h)) for h in hs)
 
@@ -104,7 +106,7 @@ _ls_fd_gate(g_an, obj, θ; hs = (1e-2, 3e-3, 1e-3, 3e-4, 1e-4)) =
         obj = DRM.LocScaleObjective(Val(:nb2), y, Xμ, Xψ, gidx, Gd, Q)
         θoff = copy(fr.θ); θoff[2] += 0.05; θoff[end] -= 0.05   # off the optimum
         g_an = DRM._ls_marginal_grad(Val(:nb2), y, Xμ, Xψ, gidx, Gd, Q, θoff)
-        @test _ls_fd_gate(g_an, obj, θoff) ≤ 1e-5         # exact == FD (h-sweep trough, #165)
+        @test _ls_fd_gate(g_an, obj, θoff) ≤ 2e-5         # exact ≈ FD (floor ~1e-5 here; #165)
     end
 
     # ---- Gamma: dispersion (shape) slope + coupled random effect -----------
@@ -145,7 +147,7 @@ _ls_fd_gate(g_an, obj, θ; hs = (1e-2, 3e-3, 1e-3, 3e-4, 1e-4)) =
         obj = DRM.LocScaleObjective(Val(:gamma), y, Xμ, Xψ, gidx, Gd, Q)
         θoff = copy(fr.θ); θoff[2] += 0.05; θoff[end] -= 0.05
         g_an = DRM._ls_marginal_grad(Val(:gamma), y, Xμ, Xψ, gidx, Gd, Q, θoff)
-        @test _ls_fd_gate(g_an, obj, θoff) ≤ 1e-5         # exact == FD (h-sweep trough, #165)
+        @test _ls_fd_gate(g_an, obj, θoff) ≤ 2e-5         # exact ≈ FD (floor ~1e-5 here; #165)
     end
 
     # ---- #164 LANDED: covariate sigma with a MEAN-ONLY phylo RE now FITS ------
