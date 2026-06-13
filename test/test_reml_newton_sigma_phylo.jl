@@ -222,3 +222,32 @@ end
     @test res["nobs"] == n - 20                          # the bridge sees the observed-rows fit
     @test isfinite(res["loglik"])
 end
+
+# AYUMI (#2) boundary inference: the σ-phylo SD profile CI must be reachable via BOTH
+# confint(:profile) AND drm_bridge_inference. The route attaches no re-optimisable objective,
+# so the boundary-aware CI (precomputed into scales when profile_ci=true, SD scale, honest
+# [0,x] at the variance boundary) is surfaced. Before the fix both threw "requires the fitted
+# objective". (σ-phylo locscale + REML + boundary inference = the community's most-used trio.)
+@testset "REML σ-phylo: boundary inference exposed (confint + bridge), Ayumi #2" begin
+    Random.seed!(42)
+    p = 24; m = 6; n = p * m
+    phy = random_balanced_tree(p; branch_length = 0.3)
+    C = sigma_phy_dense(phy; σ²_phy = 1.0); LC = cholesky(Symmetric(C)).L
+    u_sig = 0.5 .* (LC * randn(p)); species = repeat(1:p, inner = m); x = randn(n)
+    y = [1.0 + 0.5 * x[i] + exp(log(0.5) + u_sig[species[i]]) * randn() for i in 1:n]
+    data = (; y, x, species)
+    form = bf(@formula(y ~ x), @formula(sigma ~ phylo(1 | species)))
+
+    fit = drm(form, Gaussian(); data = data, tree = phy, method = :REML, profile_ci = true)
+    ci = confint(fit; method = :profile)
+    row = only(filter(r -> r.param === :resd_sigma, ci))
+    @test 0 <= row.lower < row.upper                                  # SD scale, ordered, ≥0
+    @test row.lower < exp(coef(fit, :resd_sigma)[1]) < row.upper      # SD point inside the CI
+
+    res = DRM.drm_bridge_inference(; formula = "y ~ x; sigma ~ phylo(1 | species)", family = "gaussian",
+            data = Dict("y" => y, "x" => x, "species" => species), tree = phy,
+            options = Dict("method" => "REML"), method = "profile")
+    @test res["param"] == "resd_sigma"
+    @test res["status"] == "profile"
+    @test 0 <= res["lower"] < res["estimate"] < res["upper"]          # SD-scale boundary CI from R
+end

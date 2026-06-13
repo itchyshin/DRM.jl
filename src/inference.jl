@@ -105,6 +105,24 @@ function confint(
     throw(ArgumentError("confint: method must be :wald or :profile (got :$method)"))
 end
 
+# Build CI rows from the σ-phylo location-scale route's PRECOMPUTED boundary-aware profile CIs
+# (fit.scales[:profile_ci_sd_mu] / [:profile_ci_sd_sigma], reported on the SD scale — an honest
+# [0, x] at the variance boundary). Empty unless the fit was built with profile_ci=true. That
+# route attaches no re-optimisable objective, so the generic profiler cannot recompute them; we
+# surface the stored CIs instead. (Ayumi #2: σ-phylo SD boundary CI reachable from R.)
+function _glsp_stored_profile_rows(fit::DrmFit)
+    rows = _CIRow[]
+    namemap = Dict(p => nms for (p, nms) in fit.coefnames)
+    for (sdkey, param) in ((:profile_ci_sd_mu, :resd_mu), (:profile_ci_sd_sigma, :resd_sigma))
+        (haskey(fit.scales, sdkey) && haskey(namemap, param)) || continue
+        lo, hi = fit.scales[sdkey]
+        est = exp(coef(fit, param)[1])                 # SD-scale point estimate
+        push!(rows, (param=param, coef=namemap[param][1], estimate=Float64(est),
+                     lower=Float64(lo), upper=Float64(hi)))
+    end
+    return rows
+end
+
 """
     profile_result(fit; level = 0.95, threads = false, parm = nothing)
 
@@ -129,9 +147,21 @@ function profile_result(fit::DrmFit; level::Real=0.95, threads::Bool=false, parm
             return _loconly_profile_result(fit; level=level, threads=threads, jobs=jobs)
         end
     end
+    # σ-phylo location-scale: surface the PRECOMPUTED boundary-aware SD-scale profile CIs
+    # (the route has no re-optimisable objective). Present only when profile_ci=true was set.
+    let stored = _glsp_stored_profile_rows(fit)
+        if !isempty(stored)
+            sel = filter(r -> _ci_param_selected(r.param, parm), stored)
+            return (ci=sel, stats=_ProfileStatsRow[], attempted=length(sel), used=length(sel),
+                    failed=0, threaded=false, worker_threads=1, julia_threads=Threads.nthreads(),
+                    blas_threads=BLAS.get_num_threads(), blas_oversubscribed=false,
+                    elapsed=0.0, autodiff=:stored, level=float(level))
+        end
+    end
     fit.nll === nothing && throw(
         ArgumentError(
-            "profile intervals require the fitted objective; this model was not built with one",
+            "profile intervals require the fitted objective; this model was not built with one " *
+            "(σ-phylo location-scale: fit with profile_ci=true to get boundary-aware SD CIs)",
         ),
     )
     nll = fit.nll

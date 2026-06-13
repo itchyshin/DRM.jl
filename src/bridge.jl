@@ -52,14 +52,17 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     bundle = _bridge_formula(formula, family)
     fam = _bridge_family(family)
     opts = _bridge_options(options)
+    bridge_method = lowercase(strip(String(method)))
+    # The σ-phylo location-scale route precomputes its boundary-aware profile CIs into the fit
+    # (it has no re-optimisable objective), so request them at fit time for the profile method.
+    bridge_method == "profile" && (opts[:profile_ci] = true)
     tree_obj = tree === nothing ? nothing : _bridge_tree(tree)
     fit = _bridge_fit(bundle, fam, dat; tree = tree_obj, K = nothing,
                       A = nothing, coords = nothing, options = opts)
 
-    bridge_method = lowercase(strip(String(method)))
     if bridge_method == "profile"
-        result = profile_result(fit; level = level, threads = threads, parm = :resd)
-        row = _bridge_first_param_row(result.ci, :resd)
+        result = profile_result(fit; level = level, threads = threads)
+        row = _bridge_pick_sd_row(result.ci)
         return _bridge_inference_flatten(
             row;
             method = "profile",
@@ -84,7 +87,7 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
             algorithm = Symbol(get(opts, :algorithm, :auto)),
             g_tol = Float64(get(opts, :g_tol, 1e-8)),
         )
-        row = _bridge_first_param_row(result.summary, :resd)
+        row = _bridge_pick_sd_row(result.summary)
         return _bridge_inference_flatten(
             row;
             method = "bootstrap",
@@ -121,7 +124,24 @@ function _bridge_fit(bundle, fam, data; tree, K, A, coords, options)
     if haskey(options, :se)
         kwargs[:se] = Bool(options[:se])
     end
+    if haskey(options, :profile_ci)
+        kwargs[:profile_ci] = Bool(options[:profile_ci])
+    end
     return drm(bundle, fam; data = data, kwargs...)
+end
+
+# Pick the variance-component SD row from a profile/bootstrap result for the bridge: prefer the
+# σ-phylo location-scale σ-axis SD (:resd_sigma), then the legacy phylo SD block (:resd), then
+# the μ-axis SD (:resd_mu); fall back to the first row. (Routes the bridge inference to the SD
+# that matters for the σ-phylo cell Ayumi needs.)
+function _bridge_pick_sd_row(rows)
+    for want in (:resd_sigma, :resd, :resd_mu)
+        for row in rows
+            row.param === want && return row
+        end
+    end
+    isempty(rows) && throw(ArgumentError("drm_bridge_inference: no SD row in the result"))
+    return first(rows)
 end
 
 function _bridge_tree(tree)
