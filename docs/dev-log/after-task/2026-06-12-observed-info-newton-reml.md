@@ -53,11 +53,32 @@ and shipped in `locscale_grad.jl`; only the curvature object was wrong.
 - `test/test_reml_newton_sigma_phylo.jl` (12 assertions across 3 testsets) + the previously
   orphan `test/test_reml_sigma_phylo.jl` are now wired into `runtests.jl`.
 
+### Robustness (benchmark-driven — the safeguarded step)
+
+A scaling benchmark (`bench/bench_reml_newton.jl`) exposed that the FIRST cut of the Newton
+was **not robust**: the unguarded step **diverged at p≥120** (σ-SD ran away to ≈7, conv=false)
+and the step count was **fixture-dependent** (3 at p=60 but 11 at p=24) — so the headline
+"3 steps" was fixture-luck, not a property. Two fixes:
+
+1. **Backtracking line search** — accept the Newton step only if the restricted objective
+   `nll_ML + ½logdet S` *decreases*; otherwise halve. Monotone descent ⇒ the iterate cannot
+   diverge even when the FD curvature is unreliable at large p.
+2. **Scale-free convergence** — judge convergence on the **step size in the log-SD chart**
+   (O(1)), not the raw score (which scales with n, making the absolute tol unreachable at
+   large p). This mirrors the engine's "mean-objective, scale-invariant across p" discipline.
+
+After the fix (`bench/check_newton_robust.jl`): p = 60 / 120 / 250 all converge (1–4 steps)
+to sane estimates (μ-SD ≈0.6, σ-SD ≈0.37–0.45, no runaway); small-p still matches FD-REML to
+~5 dp. The `drm()` fallback to the clean-gradient LBFGS remains for any residual
+non-convergence (so production is correct regardless).
+
 ## Honest accounting (Rose)
 
 - The "average-information / AI-REML" framing is **dropped** — it was mathematically invalid
-  here. The verified method is observed-information Newton; it still delivers the speed goal
-  (≈3 steps, O(Kp)/step). Functions/tests/docstrings renamed for honesty.
+  here. The verified method is observed-information Newton; it delivers the speed goal
+  (**≈1–4 steps** depending on p, O(Kp)/step) — but only after the safeguarded-step fix; the
+  first cut diverged at scale (see Robustness above). Functions/tests/docstrings renamed for
+  honesty.
 - The expected-info trace `½ tr(H⁻¹∂P_k H⁻¹∂P_l)` *is* a valid metric (panel-verified, 14
   steps) but needs off-pattern `H⁻¹` via factored solves and is slower; not pursued.
 - **Speed-vs-ASReml is not yet measured** — the open-baseline (glmmTMB/lme4) benchmark is the

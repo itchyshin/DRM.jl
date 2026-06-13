@@ -242,7 +242,7 @@ end
 # `_glsp_reml_newton_asym`). Block-coordinate, ASReml-like: conditional fixed-effect re-fit,
 # then a K×K Newton step on θ[vidx]. Returns (θ̂, converged, ml_nll, reml_nll, n_newton).
 function _glsp_reml_newton(obj, grad, θ̂_ml, pμ::Int, vidx::AbstractVector{Int};
-                           ml_converged::Bool = true, tol::Real = 1e-4, maxit::Int = 12)
+                           ml_converged::Bool = true, tol::Real = 1e-4, maxit::Int = 20)
     K  = length(vidx)
     nθ = length(θ̂_ml)
     βidx = setdiff(1:nθ, vidx)
@@ -285,17 +285,32 @@ function _glsp_reml_newton(obj, grad, θ̂_ml, pμ::Int, vidx::AbstractVector{In
     n_newton = 0; converged = false
     for it in 1:maxit
         n_newton = it
-        refit_β!(θ)                                   # (a) GLS-like fixed-effect update
-        s = score_v(θ)                                # (b) observed-info Newton on θ[vidx]
-        if norm(s) < tol
-            converged = true
-            break
-        end
+        refit_β!(θ)                                   # (a) conditional fixed-effect update
+        s = score_v(θ)
         A = info_v(θ)
         all(isfinite, A) || break
-        step = pd_solve(A, s)
-        @inbounds for c in 1:K
-            θ[vidx[c]] -= clamp(step[c], -3.0, 3.0)    # clamp = pure safety net
+        dir = clamp.(pd_solve(A, s), -4.0, 4.0)        # Newton direction (per-component cap)
+        f0  = obj(θ) + pen(θ)
+        # (b) SAFEGUARDED observed-info Newton step: backtrack until the restricted objective
+        # DECREASES (monotone descent ⇒ the iterate cannot diverge even when the FD curvature is
+        # unreliable at large p — the unguarded step overshot to σ-SD ≈ 7; benchmark 2026-06-12).
+        # Convergence is judged on the STEP SIZE in the log-SD chart (scale-free), NOT on the raw
+        # score (which scales with n and made the absolute tol unreachable at large p).
+        α = 1.0; accepted = false; δθ = 0.0
+        for _ in 1:24
+            θt = copy(θ)
+            @inbounds for c in 1:K
+                θt[vidx[c]] -= α * dir[c]
+            end
+            refit_β!(θt)                              # β at its conditional optimum for the trial
+            if obj(θt) + pen(θt) < f0
+                δθ = α * norm(dir); copyto!(θ, θt); accepted = true; break
+            end
+            α *= 0.5
+        end
+        if !accepted || δθ < tol                      # no further descent / negligible step ⇒ converged
+            converged = true
+            break
         end
     end
     refit_β!(θ)
