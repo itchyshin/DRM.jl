@@ -260,8 +260,58 @@ function _bridge_formula_parts(formula)
     throw(ArgumentError("drm_bridge: `formula` must be a string, vector of strings, dictionary, or named tuple"))
 end
 
+# R model formulas write interactions with `:`, but Julia parses `:` as the
+# RANGE operator, which has LOWER precedence than `+`. So `a + b + a:b` parses in
+# Julia as `(a + b + a) : b` — mis-associating the `+` chain and, worse, pulling
+# a trailing `phylo(1|g)` term inside a `FunctionTerm{Colon}` the engine can't
+# read (Ayumi LS#2: `MethodError: |(::Int64, ::String)`). Julia's `&` has
+# interaction-matching precedence (tighter than `+`), so rewrite `:` → `&` at the
+# STRING level, before `Meta.parse`. A model-formula string never contains `::`.
+function _bridge_translate_r_ops(part::AbstractString)
+    occursin("::", part) && return part        # defensive: leave qualified names alone
+    return replace(part, ':' => '&')
+end
+
+# R formula constructs `@formula` cannot evaluate as the R user intends: these
+# bind to the wrong Julia object (`I` → `LinearAlgebra.I`) or are undefined
+# (`poly`/`scale`/`factor`), so they crash with a raw Julia error; `^` (R
+# crossing) would silently mis-model. Reject them with a clear message instead.
+const _BRIDGE_REJECT_CALLS = Dict{Symbol,String}(
+    :^ => "R crossing `(...)^k` is unsupported via engine=\"julia\"; expand it explicitly (e.g. `a + b + a:b`).",
+    :I => "R `I(...)` is unsupported via engine=\"julia\"; precompute the column (e.g. add `x2 = x^2` to the data) and use it as a covariate.",
+    :poly => "R `poly()` is unsupported via engine=\"julia\"; precompute the polynomial columns and pass them as covariates.",
+    :scale => "R `scale()` is unsupported via engine=\"julia\"; precompute the standardized column and pass it as a covariate.",
+    :factor => "R `factor()`/`as.factor()` is unsupported via engine=\"julia\"; make the column a factor before fitting so its contrasts match R.",
+)
+
+# Translate / validate the parsed formula tree before `@formula`. `:` is already
+# `&` (handled at the string level); here we translate R's `- 1`/`- 0` intercept
+# control and reject the crash/silent-mismodel constructs above. Markers
+# (phylo/relmat/animal/spatial/meta_V/cbind) and StatsModels transforms
+# (log/exp/…) pass through unchanged.
+_bridge_xlate(x) = x
+function _bridge_xlate(e::Expr)
+    e.head === :call || return e
+    f = e.args[1]
+    if f === :~ || f === :+ || f === :&
+        return Expr(:call, f, (_bridge_xlate(a) for a in e.args[2:end])...)
+    elseif f === :-
+        if length(e.args) == 3 && e.args[3] === 1
+            return Expr(:call, :+, 0, _bridge_xlate(e.args[2]))   # `… - 1` → drop intercept
+        elseif length(e.args) == 3 && e.args[3] === 0
+            return _bridge_xlate(e.args[2])                        # `… - 0` → keep intercept
+        end
+        throw(ArgumentError("drmTMB(engine=\"julia\"): R term removal with `-` is unsupported; list the terms you want explicitly."))
+    elseif !(f isa Symbol)
+        throw(ArgumentError("drmTMB(engine=\"julia\"): unsupported formula function `$(f)`; precompute it as a covariate column."))
+    elseif haskey(_BRIDGE_REJECT_CALLS, f)
+        throw(ArgumentError("drmTMB(engine=\"julia\"): " * _BRIDGE_REJECT_CALLS[f]))
+    end
+    return e
+end
+
 function _bridge_parse_formula_part(part::AbstractString)
-    expr = Meta.parse(part)
+    expr = Meta.parse(_bridge_translate_r_ops(part))
     if expr isa Expr && expr.head === :(=)
         length(expr.args) == 2 || return nothing
         key = expr.args[1]
@@ -277,6 +327,7 @@ end
 
 function _bridge_formula_from_expr(expr)
     (expr isa Expr && expr.head === :call && expr.args[1] === :~) || return nothing
+    expr = _bridge_xlate(expr)
     return eval(Expr(:macrocall, Symbol("@formula"), LineNumberNode(0), expr))
 end
 
