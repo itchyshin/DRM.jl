@@ -1043,14 +1043,14 @@ end
 # Bivariate Gaussian (gaussian_bivariate.jl `drm(::BivariateDrmFormula, …)`):
 #   :mu1, :mu2     → `_mean_response(fam, η)` (identity for Gaussian)
 #   :sigma1, :sigma2 → exp.(η)
-#   :rho12         → tanh.(η)         (plain tanh / atanh link; no clamp/scale)
+#   :rho12         → RHO_GUARD .* tanh.(η)  (guarded atanh link; matches fit.scales[:rho12])
 function _param_response(fam, p::Symbol, η)
     if p === :mu || p === :mu1 || p === :mu2
         return _mean_response(fam, η)
     elseif p === :sigma || p === :sigma1 || p === :sigma2
         return exp.(η)
     elseif p === :rho12
-        return tanh.(η)
+        return RHO_GUARD .* tanh.(η)   # guarded link, matches the fit's stored ρ12
     elseif p === :nu
         return fam isa Tweedie ? _logit12.(η) : exp.(η)
     elseif p === :zi || p === :hu || p === :zoi || p === :coi
@@ -1082,7 +1082,7 @@ function _link_deriv(fam, p::Symbol, η)
         return exp.(η)                                        # log link
     elseif p === :rho12
         ρ = tanh.(η)                                          # atanh link
-        return 1 .- ρ .^ 2
+        return RHO_GUARD .* (1 .- ρ .^ 2)                     # guarded: dρ/dη = RHO_GUARD·sech²(η)
     elseif p === :nu
         if fam isa Tweedie
             s = _logistic.(η)                                 # _logit12 = 1 + σ(η)
