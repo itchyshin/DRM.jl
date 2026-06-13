@@ -128,3 +128,27 @@ end
     @test isapprox(sd_mu_nw,  sd_mu_fd;  rtol = 0.06)
     @test isapprox(sd_sig_nw, sd_sig_fd; rtol = 0.06)
 end
+
+# REGRESSION (verification 2026-06-12, BLOCKING): drm(method=:REML) crashed near the variance
+# boundary (homoscedastic data ⇒ σ-phylo SD → 0) with an opaque LineSearches AssertionError
+# (penalty Inf / non-finite gradient → line-search assert). The production REML (robust
+# clean-gradient LBFGS: finite penalty + guarded line search) must NOT crash and must return a
+# sane, near-boundary σ-phylo SD. Seeds 7 and 39 crashed before the fix.
+@testset "REML σ-phylo: no crash at the variance boundary (homoscedastic data)" begin
+    for seed in (7, 39, 13, 21)
+        Random.seed!(seed)
+        p = 20; m = 4; n = p * m
+        phy = random_balanced_tree(p; branch_length = 0.3)
+        C = sigma_phy_dense(phy; σ²_phy = 1.0); LC = cholesky(Symmetric(C)).L
+        u_mu = 0.5 .* (LC * randn(p))
+        species = repeat(1:p, inner = m)
+        y = [1.0 + u_mu[species[i]] + 0.5 * randn() for i in 1:n]   # constant σ: no σ-phylo signal
+        data = (; y, species)
+        form = bf(@formula(y ~ phylo(1 | species)), @formula(sigma ~ phylo(1 | species)))
+        local fit
+        @test (fit = drm(form, Gaussian(); data = data, tree = phy, method = :REML)) isa DRM.DrmFit
+        sd_sig = exp(coef(fit, :resd_sigma)[1])
+        @test isfinite(sd_sig)
+        @test sd_sig < 0.6                                          # near the boundary (true σ-phylo SD = 0)
+    end
+end

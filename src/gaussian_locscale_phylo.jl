@@ -98,7 +98,10 @@ function _glsp_reml_penalty(grad_fn, θ, pμ::Int; h::Real = 1e-3)
     end
     S .= 0.5 .* (S .+ S')                        # symmetrise FD asymmetry
     ch = cholesky(Symmetric(S); check = false)
-    issuccess(ch) || return Inf                 # β_μ information not PD ⇒ degenerate fit
+    # β_μ information not PD (a degenerate / near-boundary point) ⇒ a LARGE FINITE penalty, not
+    # Inf: Inf makes the composite gradient non-finite and trips Optim's line-search assertion
+    # (a real crash near σ→0). A large finite value lets the line search backtrack away instead.
+    issuccess(ch) || return 1e18
     return sum(log, diag(ch.U))                 # = 0.5·logdet(S)
 end
 
@@ -112,7 +115,8 @@ end
 # polish of the ALREADY-converged ML estimate, so judge convergence on substance, not on
 # that noisy flag: the ML fit converged, the restricted objective is finite (β_μ-info PD
 # ⇒ non-degenerate), and θ̂ stayed in a neighbourhood of θ̂_ml (no runaway to a boundary).
-# The exact analytic REML gradient (the AI-REML milestone) will restore a clean flag.
+# A clean flag is restored by `_glsp_reml_refit_clean` (single clean penalty FD); this older
+# variant is kept only as the FD-REML correctness anchor for the tests.
 function _glsp_reml_refit(obj, grad_fn, θ̂_ml, pμ::Int; ml_converged::Bool = true)
     reml_obj(θ) = obj(θ) + _glsp_reml_penalty(grad_fn, θ, pμ)
     # LBFGS with a finite-difference gradient, warm-started from the ML estimate (the REML
@@ -126,12 +130,15 @@ function _glsp_reml_refit(obj, grad_fn, θ̂_ml, pμ::Int; ml_converged::Bool = 
     return θ̂, converged, obj(θ̂), reml_nll
 end
 
-# Clean-gradient REML refit. Fixes the root cause of the misfiring convergence flag and
-# matches the FD-REML optimum. Superseded for SPEED by `_glsp_reml_newton_asym` (the
-# observed-information Newton — 3 steps vs 6 here), but kept as a robust LBFGS fallback.
-# (Earlier called "AI-REML stage 1"; renamed for honesty — it is clean-gradient LBFGS, not
-# an average-information method. The literal AI data-quadratic was proven invalid here, see
-# `_glsp_reml_newton_asym`.)
+# Clean-gradient REML refit — the PRODUCTION REML for the σ-phylo location-scale routes.
+# Jointly optimises the restricted objective `nll_ML + 0.5·logdet S` over ALL of θ (so it is
+# jointly stationary, unlike the block-coordinate Newton) with a CLEAN gradient (exact ML
+# gradient + a single FD of the accurate penalty), and is boundary-robust (finite penalty +
+# guarded line search). The observed-information Newton (`_glsp_reml_newton`) is faster on
+# benign data but the adversarial verification (2026-06-12) found a β-coupling bias at larger
+# pμ/pψ and boundary issues, so it is EXPERIMENTAL — this is the wired path.
+# (Earlier mis-called "AI-REML stage 1"; the literal average-information data-quadratic was
+# proven invalid for this augmented-Laplace model — see `_glsp_reml_newton`.)
 #
 # `_glsp_reml_refit` lets LBFGS finite-difference the whole composite `nll_ML + 0.5·logdet
 # S`. Because S is itself an FD of the β_μ-gradient block, that is a SECOND-order finite
@@ -155,17 +162,34 @@ function _glsp_reml_refit_clean(obj, grad_fn, θ̂_ml, pμ::Int; ml_converged::B
         end
         return g
     end
-    res = Optim.optimize(reml_obj, reml_grad!, copy(θ̂_ml), Optim.LBFGS(),
-                         Optim.Options(g_tol = 1e-3, iterations = 50))
+    # Guard the line search: near the variance boundary a probe can still hit a non-finite
+    # value; on failure fall back to the ML estimate (the n→n−pμ REML correction is negligible
+    # at the σ→0 boundary). Without this guard, drm(method=:REML) crashed on ~5–8% of
+    # near-boundary datasets with an opaque LineSearches AssertionError (verification 2026-06-12).
+    res = try
+        Optim.optimize(reml_obj, reml_grad!, copy(θ̂_ml), Optim.LBFGS(),
+                       Optim.Options(g_tol = 1e-3, iterations = 100))
+    catch err
+        err isa InterruptException && rethrow(err)
+        nothing
+    end
+    res === nothing && return copy(θ̂_ml), false, obj(θ̂_ml), reml_obj(θ̂_ml), 0
     θ̂ = Optim.minimizer(res)
     reml_nll = reml_obj(θ̂)
     n_steps = Optim.iterations(res)
-    converged = ml_converged && Optim.converged(res) && isfinite(reml_nll)
+    # SUBSTANCE-based flag: the FD-penalty gradient's noise floor and the n-scaling ML gradient
+    # make Optim's absolute g_tol unreliable (it reported converged=false on correct fits at
+    # larger n — verification finding). Judge on substance: ML converged, restricted objective
+    # finite, θ̂ near θ̂_ml (no runaway). A boundary solution (θ̂ at the σ→0 edge) is a valid
+    # optimum; its SE is handled by the Wald-V guard / profile CI downstream.
+    converged = ml_converged && isfinite(reml_nll) && norm(θ̂ .- θ̂_ml) < 5.0
     return θ̂, converged, obj(θ̂), reml_nll, n_steps
 end
 
-# REML Newton — STAGE 2 (asymmetric σ-phylo route): observed-information Newton on the
-# variance component — the fast O(p) replacement for the stage-1 LBFGS-on-FD-penalty crawl.
+# EXPERIMENTAL (asymmetric σ-phylo route) — NOT the production REML (that is the jointly-correct
+# `_glsp_reml_refit_clean`). This is the older NON-backtracking observed-information Newton;
+# prefer the general `_glsp_reml_newton` (safeguarded step). Same β-coupling / boundary caveats
+# as the general one (verification 2026-06-12). Kept only for the asymmetric characterisation test.
 #
 # HONEST FINDING (adversarial derivation panel, 2026-06-12): the textbook average-information
 # DATA QUADRATIC — AI = ½ (∂P_k â)ᵀ H⁻¹ (∂P_l â) — is INVALID as the Newton metric for this
@@ -225,7 +249,7 @@ function _glsp_reml_newton_asym(kind, y, Xμ, Xψ, gidx, G, Q, Zη, Zψ, θ̂_ml
         H = curv_σ(θ)
         isfinite(H) || break
         Hpd = abs(H) < 1e-6 ? 1e-6 : abs(H)       # project to PD (descent) + guard a flat curvature
-        θ[iσ] -= clamp(s / Hpd, -3.0, 3.0)        # clamp = pure safety net (should not bind)
+        θ[iσ] -= clamp(s / Hpd, -3.0, 3.0)        # clamp IS the trust bound when curvature is poor
     end
     refit_β!(θ)                                   # final conditional fixed-effect polish
     ml_nll = obj(θ); reml_nll = ml_nll + pen(θ)
@@ -233,14 +257,25 @@ function _glsp_reml_newton_asym(kind, y, Xμ, Xψ, gidx, G, Q, Zη, Zψ, θ̂_ml
     return θ, converged, ml_nll, reml_nll, n_newton
 end
 
+# EXPERIMENTAL — NOT the production REML path (the wired path is `_glsp_reml_refit_clean`).
+# The adversarial verification (2026-06-12) confirmed two defects in this block-coordinate
+# Newton: (1) `refit_β!` minimises ONLY the ML objective over β, omitting the penalty's
+# β-dependence, so the fixed point is NOT jointly stationary — a σ-SD bias that is negligible
+# for intercept-ish models (pμ≈pψ≈1, Δsd≈5e-6) but grows with pμ/pψ (≈3% at pμ=6, pψ=2); and
+# (2) the variance-block convergence test can mis-fire at the τ→0 boundary. Kept for research /
+# the speed exploration. On the verified benign fixtures it matches FD-REML in a handful of
+# Newton steps (≤5 asym / ≤6 K=2, measured on seeds 808/909 — not a guaranteed bound). Per-step
+# cost is O(K²·pμ) exact O(p) score/penalty evals for the curvature PLUS one conditional
+# fixed-effect LBFGS refit: O(p) in the number of groups, constant growing in K and pμ.
+#
 # General observed-information Newton REML over K variance components (`vidx` = their indices
 # in θ). Route-AGNOSTIC: it needs only the route's marginal NLL `obj` and exact gradient `grad`
 # (closures over the full θ), so the same code serves the asymmetric (K=1), separate (K=2), and
 # coupled (K=3) blocks. The metric is the OBSERVED information — a central FD of the clean
 # REML score (exact ML grad + a single FD of the accurate penalty) — projected to PD; the
-# average-information data-quadratic is invalid here (â is the shrunk BLUP, see
-# `_glsp_reml_newton_asym`). Block-coordinate, ASReml-like: conditional fixed-effect re-fit,
-# then a K×K Newton step on θ[vidx]. Returns (θ̂, converged, ml_nll, reml_nll, n_newton).
+# average-information data-quadratic is invalid here (â is the shrunk BLUP). Block-coordinate:
+# conditional fixed-effect re-fit, then a K×K Newton step on θ[vidx]. Returns
+# (θ̂, converged, ml_nll, reml_nll, n_newton).
 function _glsp_reml_newton(obj, grad, θ̂_ml, pμ::Int, vidx::AbstractVector{Int};
                            ml_converged::Bool = true, tol::Real = 1e-4, maxit::Int = 20)
     K  = length(vidx)
@@ -497,14 +532,11 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
         ml_nll = asym_obj(θ̂); reml_nll = NaN
         if reml
             asym_grad_fn(θ) = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
-            # Fast observed-information Newton (≈3 steps, clean flag); robust clean-gradient
-            # LBFGS fallback if Newton does not converge on this data.
-            θ̂_n, conv_n, ml_n, reml_n, _ = _glsp_reml_newton(asym_obj, asym_grad_fn, θ̂, pμ, [pμ+pψ+1]; ml_converged = conv)
-            if conv_n
-                θ̂, conv, ml_nll, reml_nll = θ̂_n, conv_n, ml_n, reml_n
-            else
-                θ̂, conv, ml_nll, reml_nll, _ = _glsp_reml_refit_clean(asym_obj, asym_grad_fn, θ̂, pμ; ml_converged = conv)
-            end
+            # Jointly-correct, boundary-robust clean-gradient LBFGS REML. (The observed-info
+            # Newton `_glsp_reml_newton` is faster on benign data, but the adversarial
+            # verification found a β-coupling bias at larger pμ/pψ and boundary issues, so it is
+            # EXPERIMENTAL, not the production path — see its docstring.)
+            θ̂, conv, ml_nll, reml_nll, _ = _glsp_reml_refit_clean(asym_obj, asym_grad_fn, θ̂, pμ; ml_converged = conv)
         end
         nll_val = reml ? reml_nll : ml_nll
         βμ̂ = θ̂[1:pμ]; βψ̂ = θ̂[pμ+1:pμ+pψ]; logL22 = θ̂[pμ+pψ+1]
@@ -520,7 +552,10 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
                     gm = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, tm, Zη, Zψ)
                     H[:, j] .= (gp .- gm) ./ (2h)
                 end
-                Matrix(inv(Symmetric(H)))
+                # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
+                # (huge finite values), not an error — so report NaN SEs (use profile_ci there).
+                chH = cholesky(Symmetric(H); check = false)
+                issuccess(chH) ? Matrix(inv(chH)) : fill(NaN, size(H))
             catch
                 fill(NaN, length(θ̂), length(θ̂))
             end
@@ -577,14 +612,11 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
         ml_nll = sep_obj(θ̂); reml_nll = NaN
         if reml
             sep_grad_fn(θ) = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
-            # Fast observed-information Newton (≈3 steps, clean flag); robust clean-gradient
-            # LBFGS fallback if Newton does not converge on this data.
-            θ̂_n, conv_n, ml_n, reml_n, _ = _glsp_reml_newton(sep_obj, sep_grad_fn, θ̂, pμ, [pμ+pψ+1, pμ+pψ+2]; ml_converged = conv)
-            if conv_n
-                θ̂, conv, ml_nll, reml_nll = θ̂_n, conv_n, ml_n, reml_n
-            else
-                θ̂, conv, ml_nll, reml_nll, _ = _glsp_reml_refit_clean(sep_obj, sep_grad_fn, θ̂, pμ; ml_converged = conv)
-            end
+            # Jointly-correct, boundary-robust clean-gradient LBFGS REML. (The observed-info
+            # Newton `_glsp_reml_newton` is faster on benign data, but the adversarial
+            # verification found a β-coupling bias at larger pμ/pψ and boundary issues, so it is
+            # EXPERIMENTAL, not the production path — see its docstring.)
+            θ̂, conv, ml_nll, reml_nll, _ = _glsp_reml_refit_clean(sep_obj, sep_grad_fn, θ̂, pμ; ml_converged = conv)
         end
         nll_val = reml ? reml_nll : ml_nll
         βμ̂ = θ̂[1:pμ]; βψ̂ = θ̂[pμ+1:pμ+pψ]
@@ -603,7 +635,10 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
                     gm = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, tm, Zη, Zψ)
                     H[:, j] .= (gp .- gm) ./ (2h)
                 end
-                Matrix(inv(Symmetric(H)))
+                # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
+                # (huge finite values), not an error — so report NaN SEs (use profile_ci there).
+                chH = cholesky(Symmetric(H); check = false)
+                issuccess(chH) ? Matrix(inv(chH)) : fill(NaN, size(H))
             catch
                 fill(NaN, length(θ̂), length(θ̂))
             end
@@ -645,6 +680,11 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
 
     else
         # COUPLED block: 3 free variance params [logL11, L21, logL22]
+        # REML is not wired for the coupled mean↔σ block — make the drop LOUD rather than
+        # silently returning an ML fit tagged :ML. (The public drm() frontend never dispatches
+        # coupled=true, so this guards internal/direct callers.)
+        reml && error("REML is not implemented for the coupled mean↔σ location-scale block; " *
+                      "use the separate block (the default) or method = :ML.")
         # No shared warm (see the separate-block note) — cold inner solves.
         function coup_obj(θ)
             pμ_ = size(Xμ, 2); pψ_ = size(Xψ, 2)
@@ -681,7 +721,10 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
                     gm = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, tm, Zη, Zψ)
                     H[:, j] .= (gp .- gm) ./ (2h)
                 end
-                Matrix(inv(Symmetric(H)))
+                # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
+                # (huge finite values), not an error — so report NaN SEs (use profile_ci there).
+                chH = cholesky(Symmetric(H); check = false)
+                issuccess(chH) ? Matrix(inv(chH)) : fill(NaN, size(H))
             catch
                 fill(NaN, length(θ̂), length(θ̂))
             end

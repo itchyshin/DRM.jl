@@ -2,6 +2,28 @@
 
 **Branch:** `shannon/land-sigma-phylo` (worktree `DRM-integrate`). **Local only — not pushed.**
 
+## ⚠ CORRECTION (post adversarial verification, 2026-06-12)
+
+An adversarial verification workflow (26 agents) found **12 confirmed bugs** in the
+observed-information Newton slice below — including a **BLOCKING crash** and a **HIGH
+correctness bug** my own benign-fixture tests missed:
+
+- **Crash:** `drm(method=:REML)` crashed near the variance boundary (homoscedastic data,
+  σ-phylo SD→0) with an unguarded LineSearches `AssertionError` (~5–8% of seeds; reproduced
+  on seeds 7, 39).
+- **β-coupling bias:** the Newton's block-coordinate `refit_β!` minimised only the ML
+  objective over β, omitting the penalty's β-dependence → a non-stationary, biased σ-SD
+  flagged converged (negligible for intercept models, ~3% at pμ=6/pψ=2).
+- Plus boundary garbage-SE, a convergence-flag regression, and several doc overclaims.
+
+**Resolution:** the production `drm(method=:REML)` path is now the **jointly-correct,
+boundary-robust clean-gradient LBFGS** (`_glsp_reml_refit_clean`: finite penalty + guarded
+line search + substance-based flag). The observed-information **Newton is demoted to
+EXPERIMENTAL** (kept + characterised, not wired). Added the Wald-V PD guard, the coupled-route
+REML error guard, and a boundary regression test (4 seeds, was-crashing 7/39). The
+crash-free + correctness fixes are verified; the speed comparison below was the Newton's and
+is now an experimental note, **not** the production claim.
+
 ## Scope
 
 Replace the slow, substance-judged FD-REML refit on the Gaussian σ-phylo location-scale
