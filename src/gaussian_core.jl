@@ -317,6 +317,26 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         labels_sigma = getproperty(data, sigma_grp)
         Q_sigma, gidx_sigma, G_sigma = _locscale_phylo_setup(phy, labels_sigma)
 
+        # Missing-response handling for the σ-phylo route (Ayumi #2): drop missing/NaN-response
+        # rows (observed-rows fit, like glmmTMB's na.action default) while KEEPING the full tree
+        # (Q_sigma/G_sigma) so the σ-phylo latent structure is retained — a species whose every
+        # row is missing simply stays in the prior with no likelihood term. This is the cell Ayumi
+        # needs: σ-phylo (REML or ML) with missing responses. (Missing PREDICTORS remain a
+        # listwise / future-FIML concern — `drm_listwise` drops them; modelling them is later.)
+        if has_missing_response
+            n_obs = count(response_observed)
+            n_obs > size(Xμ, 2) ||
+                error("drm (Gaussian σ-phylo): only $(n_obs) observed responses — too few to fit. " *
+                      "Use `drm_listwise` or supply more complete responses.")
+            @warn "drm: $(length(response_observed) - n_obs) of $(length(response_observed)) rows have a " *
+                  "missing/NaN response and were dropped (σ-phylo observed-rows fit; the tree is kept in " *
+                  "full). Use `drm_listwise` to preprocess explicitly to silence this."
+            y          = y[response_observed]
+            Xμ         = Xμ[response_observed, :]
+            Xσ         = Xσ[response_observed, :]
+            gidx_sigma = gidx_sigma[response_observed]
+        end
+
         # method = :REML integrates β_μ out of the Laplace marginal (Patterson–Thompson
         # restricted likelihood). This branch returns BEFORE the generic :REML validator
         # below, so capture it here and thread it to the engine. (REML across the phylo

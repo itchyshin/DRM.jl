@@ -193,3 +193,32 @@ end
     @test (fit = drm(form, Gaussian(); data = data, tree = phy, method = :REML)) isa DRM.DrmFit
     @test isfinite(exp(coef(fit, :resd_sigma)[1]))       # a finite σ-phylo SD (near 0) — no NaN/throw
 end
+
+# AYUMI (#2): σ-phylo REML + MISSING RESPONSES must compose — drop missing-y rows (observed-rows
+# fit), KEEP the full tree, converge, and recover the σ-phylo SD. Both via drm() and the R-facing
+# drm_bridge. This is the exact cell Ayumi needs (missing responses, σ-phylo, REML, from R).
+# Before the fix the missing rows were NOT dropped for this route (nobs=144, σ stuck at init,
+# loglik NaN). Missing PREDICTORS are a separate future track (drm_listwise / FIML).
+@testset "REML σ-phylo: missing responses compose (drm + bridge), Ayumi #2" begin
+    Random.seed!(42)
+    p = 24; m = 6; n = p * m
+    phy = random_balanced_tree(p; branch_length = 0.3)
+    C = sigma_phy_dense(phy; σ²_phy = 1.0); LC = cholesky(Symmetric(C)).L
+    u_sig = 0.5 .* (LC * randn(p)); species = repeat(1:p, inner = m); x = randn(n)
+    y = [1.0 + 0.5 * x[i] + exp(log(0.5) + u_sig[species[i]]) * randn() for i in 1:n]
+    ym = Vector{Union{Missing,Float64}}(y); ym[1:20] .= missing   # 20 missing responses
+    data = (; y = ym, x, species)
+    form = bf(@formula(y ~ x), @formula(sigma ~ phylo(1 | species)))
+
+    fit = drm(form, Gaussian(); data = data, tree = phy, method = :REML)
+    @test is_converged(fit)
+    @test nobs(fit) == n - 20                            # the 20 missing rows dropped (observed-rows fit)
+    @test 0.2 < exp(coef(fit, :resd_sigma)[1]) < 1.2     # σ-phylo SD recovered (true 0.5)
+
+    res = DRM.drm_bridge(; formula = "y ~ x; sigma ~ phylo(1 | species)", family = "gaussian",
+                         data = Dict("y" => ym, "x" => x, "species" => species), tree = phy,
+                         options = Dict("method" => "REML"))
+    @test res["converged"]
+    @test res["nobs"] == n - 20                          # the bridge sees the observed-rows fit
+    @test isfinite(res["loglik"])
+end
