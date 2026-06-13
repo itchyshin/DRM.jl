@@ -126,6 +126,184 @@ function _glsp_reml_refit(obj, grad_fn, θ̂_ml, pμ::Int; ml_converged::Bool = 
     return θ̂, converged, obj(θ̂), reml_nll
 end
 
+# Clean-gradient REML refit. Fixes the root cause of the misfiring convergence flag and
+# matches the FD-REML optimum. Superseded for SPEED by `_glsp_reml_newton_asym` (the
+# observed-information Newton — 3 steps vs 6 here), but kept as a robust LBFGS fallback.
+# (Earlier called "AI-REML stage 1"; renamed for honesty — it is clean-gradient LBFGS, not
+# an average-information method. The literal AI data-quadratic was proven invalid here, see
+# `_glsp_reml_newton_asym`.)
+#
+# `_glsp_reml_refit` lets LBFGS finite-difference the whole composite `nll_ML + 0.5·logdet
+# S`. Because S is itself an FD of the β_μ-gradient block, that is a SECOND-order finite
+# difference — too noisy for the gradient-convergence flag, so the FD refit judged
+# convergence on substance. Here the optimiser gets a CLEAN gradient: the EXACT analytic ML
+# gradient (`grad_fn`) plus a SINGLE central FD of the penalty VALUE (logdet S is smooth and
+# accurate to ~1e-8, so its single FD is clean). Same restricted objective ⇒ same optimum as
+# the FD refit, but the flag fires honestly and the search is a handful of steps.
+#
+# Returns (θ̂, converged, ml_nll, reml_nll, n_steps).
+function _glsp_reml_refit_clean(obj, grad_fn, θ̂_ml, pμ::Int; ml_converged::Bool = true)
+    penalty(θ)  = _glsp_reml_penalty(grad_fn, θ, pμ)
+    reml_obj(θ) = obj(θ) + penalty(θ)
+    function reml_grad!(g, θ)
+        h = 1e-4
+        g .= grad_fn(θ)                                  # exact analytic ML gradient
+        @inbounds for j in eachindex(θ)
+            θp = copy(θ); θp[j] += h
+            θm = copy(θ); θm[j] -= h
+            g[j] += (penalty(θp) - penalty(θm)) / (2h)   # clean single-FD of the penalty
+        end
+        return g
+    end
+    res = Optim.optimize(reml_obj, reml_grad!, copy(θ̂_ml), Optim.LBFGS(),
+                         Optim.Options(g_tol = 1e-3, iterations = 50))
+    θ̂ = Optim.minimizer(res)
+    reml_nll = reml_obj(θ̂)
+    n_steps = Optim.iterations(res)
+    converged = ml_converged && Optim.converged(res) && isfinite(reml_nll)
+    return θ̂, converged, obj(θ̂), reml_nll, n_steps
+end
+
+# REML Newton — STAGE 2 (asymmetric σ-phylo route): observed-information Newton on the
+# variance component — the fast O(p) replacement for the stage-1 LBFGS-on-FD-penalty crawl.
+#
+# HONEST FINDING (adversarial derivation panel, 2026-06-12): the textbook average-information
+# DATA QUADRATIC — AI = ½ (∂P_k â)ᵀ H⁻¹ (∂P_l â) — is INVALID as the Newton metric for this
+# augmented-Laplace model. The GTC identity E[(∂P â)ᵀH⁻¹(∂P â)] = tr(H⁻¹∂P H⁻¹∂P) holds only
+# in EXPECTATION over â ~ N(0, H⁻¹); the realised inner mode â is the SHRUNK BLUP (covariance
+# ≠ H⁻¹), so the realised quadratic lands at ~0.2× of the trace (measured: 10.0 vs the
+# observed Hessian 22.2 vs the expected-info trace 51.8). With that ~5×-too-small curvature
+# the AI-Newton diverges (20 steps, 18% off). The correct, FASTEST O(p) metric is the
+# OBSERVED information: a central FD of the EXACT O(p) marginal + penalty REML score (each
+# score eval is O(p) — analytic gradient + Takahashi + one clean penalty FD). For K variance
+# components this is O(Kp) and converges in ~3 Newton steps. (The expected-info trace
+# ½ tr(H⁻¹∂P_k H⁻¹∂P_l) is also valid but needs off-pattern H⁻¹ via factored solves and is
+# slower — 14 steps; the observed-info FD is simpler and faster.)
+#
+# Block-coordinate, ASReml-like: conditional fixed-effect re-fit, then an observed-info Newton
+# step on logL22. Returns (θ̂, converged, ml_nll, reml_nll, n_newton).
+function _glsp_reml_newton_asym(kind, y, Xμ, Xψ, gidx, G, Q, Zη, Zψ, θ̂_ml, pμ::Int;
+                                ml_converged::Bool = true, tol::Real = 1e-4, maxit::Int = 12)
+    pψ = size(Xψ, 2)
+    iσ = length(θ̂_ml)          # logL22 is the last entry
+    iβ = 1:(pμ + pψ)
+    θ = copy(θ̂_ml)
+    obj(t)  = _glsp_asym_nll(kind, y, Xμ, Xψ, gidx, G, Q, t, Zη, Zψ)
+    grd(t)  = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, t, Zη, Zψ)
+    pen(t)  = _glsp_reml_penalty(grd, t, pμ)
+    # clean REML score for logL22: exact ML grad + single central FD of the accurate penalty.
+    function score_σ(t; h = 1e-4)
+        tp = copy(t); tp[iσ] += h
+        tm = copy(t); tm[iσ] -= h
+        return grd(t)[iσ] + (pen(tp) - pen(tm)) / (2h)
+    end
+    # OBSERVED information = central FD of the clean score w.r.t. logL22 (β at its conditional
+    # optimum). The PD curvature for a Newton step; O(p) per score eval (the panel's 3-step winner).
+    function curv_σ(t; h = 1e-3)
+        tp = copy(t); tp[iσ] += h
+        tm = copy(t); tm[iσ] -= h
+        return (score_σ(tp) - score_σ(tm)) / (2h)
+    end
+    # conditional re-fit of the fixed effects (βμ, βψ) holding logL22 fixed.
+    function refit_β!(t)
+        ls = t[iσ]
+        ob(b) = obj(vcat(b, ls))
+        gb!(g, b) = (g .= grd(vcat(b, ls))[iβ]; g)
+        r = Optim.optimize(ob, gb!, t[iβ], Optim.LBFGS(), Optim.Options(g_tol = 1e-7, iterations = 100))
+        t[iβ] .= Optim.minimizer(r)
+        return t
+    end
+    n_newton = 0; converged = false
+    for it in 1:maxit
+        n_newton = it
+        refit_β!(θ)                               # (a) GLS-like fixed-effect update
+        s = score_σ(θ)
+        if abs(s) < tol                           # (b) observed-info Newton on logL22
+            converged = true
+            break
+        end
+        H = curv_σ(θ)
+        isfinite(H) || break
+        Hpd = abs(H) < 1e-6 ? 1e-6 : abs(H)       # project to PD (descent) + guard a flat curvature
+        θ[iσ] -= clamp(s / Hpd, -3.0, 3.0)        # clamp = pure safety net (should not bind)
+    end
+    refit_β!(θ)                                   # final conditional fixed-effect polish
+    ml_nll = obj(θ); reml_nll = ml_nll + pen(θ)
+    converged = converged && ml_converged && isfinite(reml_nll)
+    return θ, converged, ml_nll, reml_nll, n_newton
+end
+
+# General observed-information Newton REML over K variance components (`vidx` = their indices
+# in θ). Route-AGNOSTIC: it needs only the route's marginal NLL `obj` and exact gradient `grad`
+# (closures over the full θ), so the same code serves the asymmetric (K=1), separate (K=2), and
+# coupled (K=3) blocks. The metric is the OBSERVED information — a central FD of the clean
+# REML score (exact ML grad + a single FD of the accurate penalty) — projected to PD; the
+# average-information data-quadratic is invalid here (â is the shrunk BLUP, see
+# `_glsp_reml_newton_asym`). Block-coordinate, ASReml-like: conditional fixed-effect re-fit,
+# then a K×K Newton step on θ[vidx]. Returns (θ̂, converged, ml_nll, reml_nll, n_newton).
+function _glsp_reml_newton(obj, grad, θ̂_ml, pμ::Int, vidx::AbstractVector{Int};
+                           ml_converged::Bool = true, tol::Real = 1e-4, maxit::Int = 12)
+    K  = length(vidx)
+    nθ = length(θ̂_ml)
+    βidx = setdiff(1:nθ, vidx)
+    θ  = copy(θ̂_ml)
+    pen(t) = _glsp_reml_penalty(grad, t, pμ)
+    # clean REML score on the variance components: exact ML grad + single FD of the penalty.
+    function score_v(t; h = 1e-4)
+        gv = grad(t)[vidx]
+        @inbounds for (c, j) in enumerate(vidx)
+            tp = copy(t); tp[j] += h
+            tm = copy(t); tm[j] -= h
+            gv[c] += (pen(tp) - pen(tm)) / (2h)
+        end
+        return gv
+    end
+    # observed information (K×K) = central FD of the variance-component score.
+    function info_v(t; h = 1e-3)
+        A = zeros(K, K)
+        @inbounds for (c, j) in enumerate(vidx)
+            tp = copy(t); tp[j] += h
+            tm = copy(t); tm[j] -= h
+            A[:, c] .= (score_v(tp) .- score_v(tm)) ./ (2h)
+        end
+        return 0.5 .* (A .+ A')                # symmetrise FD asymmetry
+    end
+    # PD-projected solve: floor eigenvalues so the Newton step is a descent step.
+    function pd_solve(A, b)
+        E = eigen(Symmetric(A))
+        d = max.(E.values, 1e-6)
+        return E.vectors * ((E.vectors' * b) ./ d)
+    end
+    # conditional re-fit of the fixed effects holding the variance components fixed.
+    function refit_β!(t)
+        ob(b)     = (tw = copy(t); tw[βidx] .= b; obj(tw))
+        gb!(g, b) = (tw = copy(t); tw[βidx] .= b; g .= grad(tw)[βidx]; g)
+        r = Optim.optimize(ob, gb!, t[βidx], Optim.LBFGS(), Optim.Options(g_tol = 1e-7, iterations = 100))
+        t[βidx] .= Optim.minimizer(r)
+        return t
+    end
+    n_newton = 0; converged = false
+    for it in 1:maxit
+        n_newton = it
+        refit_β!(θ)                                   # (a) GLS-like fixed-effect update
+        s = score_v(θ)                                # (b) observed-info Newton on θ[vidx]
+        if norm(s) < tol
+            converged = true
+            break
+        end
+        A = info_v(θ)
+        all(isfinite, A) || break
+        step = pd_solve(A, s)
+        @inbounds for c in 1:K
+            θ[vidx[c]] -= clamp(step[c], -3.0, 3.0)    # clamp = pure safety net
+        end
+    end
+    refit_β!(θ)
+    ml_nll = obj(θ); reml_nll = ml_nll + pen(θ)
+    converged = converged && ml_converged && isfinite(reml_nll)
+    return θ, converged, ml_nll, reml_nll, n_newton
+end
+
 # B2 — boundary-aware PROFILE-LIKELIHOOD CI for one variance (log-SD) parameter.
 # `nll(θ)::Real` and `grad(θ)::Vector` are the route's own marginal NLL and analytic
 # gradient; `idx` is the profiled log-SD position. Profiles θ[idx]: re-optimises the
@@ -304,7 +482,14 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
         ml_nll = asym_obj(θ̂); reml_nll = NaN
         if reml
             asym_grad_fn(θ) = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
-            θ̂, conv, ml_nll, reml_nll = _glsp_reml_refit(asym_obj, asym_grad_fn, θ̂, pμ; ml_converged = conv)
+            # Fast observed-information Newton (≈3 steps, clean flag); robust clean-gradient
+            # LBFGS fallback if Newton does not converge on this data.
+            θ̂_n, conv_n, ml_n, reml_n, _ = _glsp_reml_newton(asym_obj, asym_grad_fn, θ̂, pμ, [pμ+pψ+1]; ml_converged = conv)
+            if conv_n
+                θ̂, conv, ml_nll, reml_nll = θ̂_n, conv_n, ml_n, reml_n
+            else
+                θ̂, conv, ml_nll, reml_nll, _ = _glsp_reml_refit_clean(asym_obj, asym_grad_fn, θ̂, pμ; ml_converged = conv)
+            end
         end
         nll_val = reml ? reml_nll : ml_nll
         βμ̂ = θ̂[1:pμ]; βψ̂ = θ̂[pμ+1:pμ+pψ]; logL22 = θ̂[pμ+pψ+1]
@@ -377,7 +562,14 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
         ml_nll = sep_obj(θ̂); reml_nll = NaN
         if reml
             sep_grad_fn(θ) = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
-            θ̂, conv, ml_nll, reml_nll = _glsp_reml_refit(sep_obj, sep_grad_fn, θ̂, pμ; ml_converged = conv)
+            # Fast observed-information Newton (≈3 steps, clean flag); robust clean-gradient
+            # LBFGS fallback if Newton does not converge on this data.
+            θ̂_n, conv_n, ml_n, reml_n, _ = _glsp_reml_newton(sep_obj, sep_grad_fn, θ̂, pμ, [pμ+pψ+1, pμ+pψ+2]; ml_converged = conv)
+            if conv_n
+                θ̂, conv, ml_nll, reml_nll = θ̂_n, conv_n, ml_n, reml_n
+            else
+                θ̂, conv, ml_nll, reml_nll, _ = _glsp_reml_refit_clean(sep_obj, sep_grad_fn, θ̂, pμ; ml_converged = conv)
+            end
         end
         nll_val = reml ? reml_nll : ml_nll
         βμ̂ = θ̂[1:pμ]; βψ̂ = θ̂[pμ+1:pμ+pψ]

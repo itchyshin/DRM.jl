@@ -206,6 +206,11 @@ include("test_phylo_locscale.jl")
 # σ-phylo location-scale (Ayumi #2): separate/coupled/asymmetric blocks + boundary CIs.
 include("test_gaussian_locscale_phylo.jl")
 include("test_gaussian_locscale_phylo_boundary.jl")
+# REML for the σ-phylo location-scale route (Patterson–Thompson) + the fast observed-
+# information Newton (the average-information data-quadratic was proven invalid here — â is
+# the shrunk BLUP; see the second file's note). Both were orphan files; wired in here.
+include("test_reml_sigma_phylo.jl")
+include("test_reml_newton_sigma_phylo.jl")
 # Covariate dispersion (`sigma ~ x`) with a mean-only phylo RE for NB2 (#164):
 # the per-observation log-dispersion (vector-nuisance) generalisation of the
 # scalar phylo Laplace spine, with its own FD-vs-exact gate ≤ 1e-6.
