@@ -72,6 +72,13 @@ to sane estimates (μ-SD ≈0.6, σ-SD ≈0.37–0.45, no runaway); small-p stil
 ~5 dp. The `drm()` fallback to the clean-gradient LBFGS remains for any residual
 non-convergence (so production is correct regardless).
 
+**Large-p correctness, measured** (`bench/check_p120_match.jl`): at p=120 the safeguarded
+Newton matches FD-REML to **<1%** (σ-SD 0.3684 vs 0.3671, μ-SD 0.5677 vs 0.5731), conv=true in
+1 step, **16.5× faster (14.7s vs 242s)**. The internal speedup vs the old FD-REML refit *grows
+with p* (4.5× at p=24 → 16.5× at p=120) — the FD-REML LBFGS crawl scales badly while the Newton
+stays at 1–4 steps. (This is vs DRM.jl's own FD-REML; the cross-engine ASReml/glmmTMB number is
+still pending — no native R baseline for σ-phylo location-scale.)
+
 ## Honest accounting (Rose)
 
 - The "average-information / AI-REML" framing is **dropped** — it was mathematically invalid
