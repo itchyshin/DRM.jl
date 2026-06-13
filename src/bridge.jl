@@ -293,9 +293,7 @@ _bridge_xlate(x) = x
 function _bridge_xlate(e::Expr)
     e.head === :call || return e
     f = e.args[1]
-    if f === :~ || f === :+ || f === :&
-        return Expr(:call, f, (_bridge_xlate(a) for a in e.args[2:end])...)
-    elseif f === :-
+    if f === :-
         if length(e.args) == 3 && e.args[3] === 1
             return Expr(:call, :+, 0, _bridge_xlate(e.args[2]))   # `… - 1` → drop intercept
         elseif length(e.args) == 3 && e.args[3] === 0
@@ -307,7 +305,11 @@ function _bridge_xlate(e::Expr)
     elseif haskey(_BRIDGE_REJECT_CALLS, f)
         throw(ArgumentError("drmTMB(engine=\"julia\"): " * _BRIDGE_REJECT_CALLS[f]))
     end
-    return e
+    # Recurse into EVERY remaining call's arguments (`~`, `+`, `&`, `*`, `log`,
+    # `phylo`, …) so a rejected construct nested at ANY depth — e.g. `I()` under
+    # `*` (`x1 * I(x1^2)`) or under `log()` — is still caught, not only when it
+    # sits directly under `~`/`+`/`&`.
+    return Expr(:call, f, (_bridge_xlate(a) for a in e.args[2:end])...)
 end
 
 function _bridge_parse_formula_part(part::AbstractString)
