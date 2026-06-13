@@ -40,8 +40,10 @@
 #       "/Users/z3437171/Dropbox/Github Local/drm-julia-poc/julia/drm_q4/reml_q4.jl"
 
 using LinearAlgebra, SparseArrays, ForwardDiff, Statistics, Printf, Optim, Random
-using CSV, DataFrames
-include(joinpath(@__DIR__, "fit_q4_sparse_tmb.jl"))   # pulls the whole engine chain
+# Additive include into the DRM module: the q=4 engine symbols (AugProblem,
+# lc_to_Λ, Λ_to_lc, prior_precision, estep_mode, laplace_ll, leaf_etas,
+# leaf_hess, leaf_nll, RHO_GUARD, fit_q4_sparse_tmb, pack_theta) are already in
+# module scope via fit_q4_sparse_tmb.jl's include chain — no self-include here.
 
 # ---------------------------------------------------------------------------
 # phi layout: (beta_s1[ks1], beta_s2[ks2], beta_rho[kr], lc[10])
@@ -282,21 +284,34 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
                      phi0=nothing, beta0=nothing, Lambda0=nothing,
                      g_tol::Float64=1e-3, iterations::Int=200,
                      n_newton::Int=40, h_fd::Float64=1e-5,
+                     # `lc_zero`: same block-diagonal Σ_a constraint as the ML path —
+                     # log-Cholesky indices (1..10) pinned to 0. Here they map into
+                     # the phi vector (β_μ profiled out), at offset (ks1+ks2+kr).
+                     lc_zero::AbstractVector{<:Integer} = Int[],
                      verbose::Bool=false)
+    ks1, ks2, kr = phi_widths(prob)
+    o_lc = ks1 + ks2 + kr                # lc block starts here in phi
+    lc_zero_idx = sort(unique(Int.(lc_zero)))
+    all(1 .<= lc_zero_idx .<= 10) ||
+        error("lc_zero indices must be in 1:10 (got $lc_zero_idx)")
+    phi_zero = o_lc .+ lc_zero_idx       # absolute phi positions pinned to 0
     if phi0 === nothing
         beta0   === nothing && error("supply phi0 or (beta0, Lambda0)")
         Lambda0 === nothing && (Lambda0 = Matrix(0.3I(4)))
         # Warm-start from the ML optimum: at phi_ML the Schur complement S is
         # PD (the joint mode is well-defined), which stabilises the FD gradient.
+        # The ML warm start honours the SAME lc_zero so the warm Λ is already
+        # block-diagonal — phi0 lands on the constrained subspace.
         r_ml_ws = fit_q4_sparse_tmb(prob, Q_cond;
                                      β0=beta0, Λ0=Matrix(Lambda0),
                                      g_tol=max(g_tol*5, 1e-2),
                                      iterations=min(iterations, 100),
-                                     n_newton=n_newton)
+                                     n_newton=n_newton, lc_zero=lc_zero_idx)
         phi0 = pack_phi(prob,
                         (s1=r_ml_ws.β.s1, s2=r_ml_ws.β.s2, rho=r_ml_ws.β.rho),
                         r_ml_ws.Λ)
     end
+    phi0 = copy(Vector{Float64}(phi0)); phi0[phi_zero] .= 0.0
 
     u_cache  = Ref{Union{Nothing,Vector{Float64}}}(nothing)
     bmu_cache = Ref{Union{Nothing,NamedTuple}}(nothing)
@@ -361,6 +376,9 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
                     G[k] = 0.0
                 end
             end
+            # Pin the constrained lc directions (block-diagonal Σ_a): zero their
+            # gradient so LBFGS never steps off the constrained subspace.
+            isempty(phi_zero) || (G[phi_zero] .= 0.0)
         end
         return f
     end
@@ -384,6 +402,14 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
 
     rhat, uhat, ch_H, bhat, P_hat = reml_ll_and_mode(
         prob, Q_cond, phi_hat; u0=u_cache[], bmu0=bmu_cache[], n_newton=n_newton)
+    # The warm-cached u0/bmu0 are the last line-search state, which need not sit at
+    # the JOINT (u, β_μ) mode for phi_hat. If that lands on the non-PD Schur barrier
+    # (S not PD ⇒ rhat = -Inf), re-evaluate COLD so the alternating E-step / β_μ
+    # Newton re-converges the joint mode at phi_hat (mirrors the Gate-B cold check).
+    if !isfinite(rhat)
+        rhat, uhat, ch_H, bhat, P_hat = reml_ll_and_mode(
+            prob, Q_cond, phi_hat; n_newton=n_newton)
+    end
     mlhat = laplace_ll(prob, P_hat, bhat, uhat, ch_H)
 
     g_resid_val = try; Optim.g_residual(res); catch; NaN; end
@@ -398,162 +424,4 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
             g_residual = g_resid_val,
             f_calls    = eval_cnt[],
             u_hat      = uhat)
-end
-
-# ---------------------------------------------------------------------------
-# GATE VERIFICATION (runs when executed directly)
-# ---------------------------------------------------------------------------
-if abspath(PROGRAM_FILE) == @__FILE__
-
-    println("\n" * "="^72)
-    println("REML gate verification -- reml_q4.jl")
-    println("="^72)
-
-    # ---- Gate A/B: small synthetic p=6, intercept-only, nrep=15 -----------
-    # Small p and many reps makes the REML bias correction (order k/p) large
-    # enough to see clearly. Intercept-only (k1=k2=1) keeps things simple.
-    # The REML correction for the mean-axis variance (Lambda[1,1]) should be
-    # of order n_beta_mu / (n_species - n_beta_mu) ~ 2/(6-2) = 50%.
-    println("\n--- Gate A/B: synthetic p=6, intercept-only, nrep=15 ---")
-    Random.seed!(3)
-    p_sm = 6; nrep_sm = 15
-    phy_sm = random_balanced_tree(p_sm; branch_length=1.0)   # long branches for large Lambda
-    Sig_sm = sigma_phy_dense(phy_sm; σ²_phy=1.0)
-
-    # Large mean-axis variance to make REML correction visible
-    Ltrue = Matrix(Symmetric([1.5 0.0 0.0 0.0;
-                               0.0 0.001 0.0 0.0;
-                               0.0 0.0 0.001 0.0;
-                               0.0 0.0 0.0 0.001]))
-    bt = (mu1=[2.0], mu2=[0.5], s1=[-1.5], s2=[-1.5], rho=[0.0])
-
-    U_sm = cholesky(Ltrue).L * randn(4, p_sm) * cholesky(Symmetric(Sig_sm)).U
-    # Intercept-only designs (k1=k2=1)
-    X1_sm = reshape(ones(p_sm), p_sm, 1); X2_sm = X1_sm
-    Xs1_sm = X1_sm; Xs2_sm = X1_sm; Xr_sm = X1_sm
-
-    nobs_sm = p_sm * nrep_sm
-    sp_sm   = repeat(1:p_sm, nrep_sm)
-    y1_sm = zeros(nobs_sm); y2_sm = zeros(nobs_sm)
-    for rep in 1:nrep_sm, sp in 1:p_sm
-        i   = (rep-1)*p_sm + sp
-        m1  = (X1_sm[sp,:]' * bt.mu1)  + U_sm[1, sp]
-        m2  = (X2_sm[sp,:]' * bt.mu2)  + U_sm[2, sp]
-        sv1 = exp((Xs1_sm[sp,:]' * bt.s1) + U_sm[3, sp])
-        sv2 = exp((Xs2_sm[sp,:]' * bt.s2) + U_sm[4, sp])
-        rho = RHO_GUARD * tanh(Xr_sm[sp,:]' * bt.rho)
-        e   = cholesky([sv1^2 rho*sv1*sv2; rho*sv1*sv2 sv2^2]).L * randn(2)
-        y1_sm[i] = m1 + e[1]; y2_sm[i] = m2 + e[2]
-    end
-    X1f  = X1_sm[sp_sm,:]; X2f  = X2_sm[sp_sm,:]
-    Xs1f = Xs1_sm[sp_sm,:]; Xs2f = Xs2_sm[sp_sm,:]; Xrf = Xr_sm[sp_sm,:]
-    prob_sm, Qc_sm = make_problem(phy_sm, y1_sm, y2_sm, X1f, X2f, Xs1f, Xs2f, Xrf;
-                                  species=sp_sm)
-    using Statistics
-    b0_sm = (mu1=[mean(y1_sm)], mu2=[mean(y2_sm)],
-             s1=[log(std(y1_sm .- mean(y1_sm)))],
-             s2=[log(std(y2_sm .- mean(y2_sm)))],
-             rho=[0.0])
-    L0_sm = Matrix(Symmetric([1.0 0.01 0.01 0.01; 0.01 0.10 0.01 0.01;
-                               0.01 0.01 0.10 0.01; 0.01 0.01 0.01 0.10]))
-
-    println("  True Lambda[1,1] = $(Ltrue[1,1]) (mean-axis variance, large)")
-    println("  Running ML fit ...")
-    t_ml = @elapsed r_ml = fit_q4_sparse_tmb(prob_sm, Qc_sm;
-                                              β0=b0_sm, Λ0=L0_sm,
-                                              g_tol=1e-3, iterations=300, n_newton=40)
-    @printf "  ML:   logLik=%.4f  converged=%s  iters=%d  wall=%.2fs\n" r_ml.loglik r_ml.converged r_ml.iterations t_ml
-    println("  ML:   diag(Lambda) = ", round.(diag(r_ml.Λ); digits=4))
-
-    println("  Running REML fit ...")
-    t_reml = @elapsed r_reml = fit_q4_reml(prob_sm, Qc_sm;
-                                            beta0=b0_sm, Lambda0=L0_sm,
-                                            g_tol=1e-3, iterations=300, n_newton=40)
-    @printf "  REML: reml_logLik=%.4f  ml_at_phi_REML=%.4f  converged=%s  iters=%d  wall=%.2fs  g=%.2e\n" r_reml.reml_loglik r_reml.ml_loglik r_reml.converged r_reml.iterations t_reml r_reml.g_residual
-    println("  REML: diag(Lambda) = ", round.(diag(r_reml.Lambda); digits=4))
-    println("        Lambda_ML    = ", round.(diag(r_ml.Λ); digits=4))
-
-    # Gate A: the REML property for the MEAN-AXIS variance (dim 1).
-    # For non-Gaussian location-scale models, the REML correction mainly
-    # affects the mean-axis variances (dims 1,2) since those compete with
-    # the profiled-out beta_mu. Scale-axis variances (dims 3,4) may or may
-    # not be larger at the REML optimum.
-    println("\n  GATE A: REML mean-axis variance (dim 1) >= ML mean-axis variance?")
-    reml_geq_ml_d1 = r_reml.Lambda[1,1] >= r_ml.Λ[1,1] * 0.99
-    @printf "    dim 1 (mu1): L_ML=%.4f  L_REML=%.4f  ratio=%.3f  -> %s\n" r_ml.Λ[1,1] r_reml.Lambda[1,1] (r_reml.Lambda[1,1]/r_ml.Λ[1,1]) (reml_geq_ml_d1 ? "PASS" : "FAIL")
-    gate_a = reml_geq_ml_d1
-    println("  GATE A: ", gate_a ? "PASS (REML[1,1] >= ML[1,1])" : "FAIL (REML[1,1] < ML[1,1])")
-
-    println("\n  GATE B: gradient ~0 at REML optimum?")
-    h_chk = 1e-4; nph_sm = phi_len(prob_sm)
-    gchk  = zeros(nph_sm)
-    for k in 1:nph_sm
-        pp = copy(r_reml.phi); pp[k] += h_chk
-        pm = copy(r_reml.phi); pm[k] -= h_chk
-        rp, _, _, _, _ = reml_ll_and_mode(prob_sm, Qc_sm, pp; u0=r_reml.u_hat)
-        rm, _, _, _, _ = reml_ll_and_mode(prob_sm, Qc_sm, pm; u0=r_reml.u_hat)
-        gchk[k] = (rp - rm) / (2h_chk)
-    end
-    max_g = maximum(abs, gchk)
-    @printf "  max|dL_REML/dphi| at optimum = %.4e  (g_tol=%.4e)\n" max_g 0.5
-    gate_b = max_g < 0.5
-    println("  GATE B: ", gate_b ? "PASS (max_g < 0.5)" : "FAIL (max_g >= 0.5)")
-
-    println("\n" * "="^72)
-    println("Gates A+B: A=", (gate_a ? "PASS" : "FAIL"), "  B=", (gate_b ? "PASS" : "FAIL"))
-    println("="^72)
-
-    # ---- Gate C: real q4_p100 ----------------------------------------------
-    println("\n--- Gate C: real q4_p100 (p=100) ---")
-    FIX  = normpath(joinpath(@__DIR__, "..", "..", "fixtures"))
-    df100 = CSV.read(joinpath(FIX, "q4_p100.csv"), DataFrame)
-    p100  = nrow(df100)
-    phy100 = augmented_phy(read(joinpath(FIX, "q4_p100_tree.nwk"), String))
-    nm2r   = Dict(String(s)=>i for (i,s) in enumerate(df100.species))
-    perm100 = [nm2r[phy100.leaf_names[k]] for k in 1:p100]
-    y1_100 = Vector{Float64}(df100.y1)[perm100]
-    y2_100 = Vector{Float64}(df100.y2)[perm100]
-    x1_100 = Vector{Float64}(df100.x1)[perm100]
-    X1_100 = hcat(ones(p100), x1_100); X2_100 = X1_100
-    Xs1_100 = reshape(ones(p100), p100, 1)
-    Xs2_100 = reshape(ones(p100), p100, 1)
-    Xr_100  = reshape(ones(p100), p100, 1)
-    prob100, Qc100 = make_problem(phy100, y1_100, y2_100,
-                                   X1_100, X2_100, Xs1_100, Xs2_100, Xr_100)
-    b0_100 = (mu1=X1_100\y1_100, mu2=X2_100\y2_100,
-              s1=[log(std(y1_100 .- X1_100*(X1_100\y1_100)))],
-              s2=[log(std(y2_100 .- X2_100*(X2_100\y2_100)))],
-              rho=[0.0])
-    L0_100 = Matrix(Symmetric([0.30 0.05 0.03 0.03; 0.05 0.30 0.03 0.03;
-                                0.03 0.03 0.30 0.03; 0.03 0.03 0.03 0.30]))
-
-    println("  REML p=100 (warmup / JIT) ...")
-    fit_q4_reml(prob100, Qc100; beta0=b0_100, Lambda0=L0_100,
-                g_tol=1e-3, iterations=200, n_newton=40)
-    println("  REML p=100 (timed) ...")
-    t_c = @elapsed r_c = fit_q4_reml(prob100, Qc100; beta0=b0_100, Lambda0=L0_100,
-                                      g_tol=1e-3, iterations=200, n_newton=40)
-    @printf "  REML p=100: reml_logLik=%.4f  ml_logLik=%.4f  converged=%s  iters=%d  wall=%.2fs\n" r_c.reml_loglik r_c.ml_loglik r_c.converged r_c.iterations t_c
-    println("  REML p=100: diag(Lambda) = ", round.(diag(r_c.Lambda); digits=4))
-    gate_c = isfinite(r_c.reml_loglik) && r_c.reml_loglik < 0
-    println("  GATE C: ", gate_c ? "PASS" : "FAIL")
-
-    # ---- Baseline: ML must give logLik ~ -256.51 ---------------------------
-    println("\n--- Baseline ML check (logLik ~ -256.51) ---")
-    t_base = @elapsed r_base = fit_q4_sparse_tmb(prob100, Qc100;
-                                                  β0=b0_100, Λ0=L0_100,
-                                                  g_tol=1e-3, iterations=300, n_newton=40)
-    @printf "  ML baseline logLik=%.4f  |delta|=%.4f\n" r_base.loglik abs(r_base.loglik - (-256.51))
-    gate_base = abs(r_base.loglik - (-256.51)) < 0.5
-    println("  Baseline: ", gate_base ? "PASS" : "FAIL")
-
-    println("\n" * "="^72)
-    println("FINAL SUMMARY")
-    println("  Gate A (REML var >= ML var):   ", gate_a ? "PASS" : "FAIL")
-    println("  Gate B (gradient ~0 at opt):   ", gate_b ? "PASS" : "FAIL")
-    println("  Gate C (p=100, finite logLik): ", gate_c ? "PASS" : "FAIL")
-    println("  Baseline (ML ~ -256.51):       ", gate_base ? "PASS" : "FAIL")
-    all_pass = gate_a && gate_b && gate_c && gate_base
-    println("  ALL GATES: ", all_pass ? "PASS -- kept=true" : "FAIL -- kept=false")
-    println("="^72)
 end

@@ -293,6 +293,13 @@ function fit_q4_sparse_tmb(prob::AugProblem, Q_cond::SparseMatrixCSC;
                            θ0 = nothing, β0 = nothing, Λ0 = nothing,
                            g_tol::Float64 = 1e-3, iterations::Int = 200,
                            n_newton::Int = 40, show_trace::Bool = false,
+                           # `lc_zero`: log-Cholesky indices (1..10) pinned to 0 so
+                           # the optimiser never moves them — an OUTER constraint on
+                           # Σ_a, leaving marginal_and_exact_grad untouched. Zeroing
+                           # the cross-block entries {3,4,6,7} (L31,L41,L32,L42) makes
+                           # the Cholesky factor block-lower-triangular ⇒ an EXACTLY
+                           # block-diagonal Σ_a (spec D: mu↔sigma cov fixed at 0).
+                           lc_zero::AbstractVector{<:Integer} = Int[],
                            # MoreThuente (Wolfe) converges in ~94 iters / 1.36 s at
                            # p=100 vs BackTracking's 120 / 2.55 s — 1.82× over drmTMB.
                            # The Inf barrier in fg! keeps it robust to bad trial steps.
@@ -302,6 +309,16 @@ function fit_q4_sparse_tmb(prob::AugProblem, Q_cond::SparseMatrixCSC;
         Λ0 === nothing && (Λ0 = Matrix(0.3 * I(4)))
         θ0 = pack_theta(β0, Matrix(Λ0))
     end
+    # Map pinned lc indices to absolute θ positions and pin θ0 to 0 there. The
+    # cross-block off-diagonals are 0 in a block-diagonal Σ_a Cholesky, so this is
+    # the only point the constrained start must touch.
+    k1, k2, ks1, ks2, kr = beta_widths(prob)
+    o6 = k1 + k2 + ks1 + ks2 + kr
+    lc_zero_idx = sort(unique(Int.(lc_zero)))
+    all(1 .<= lc_zero_idx .<= 10) ||
+        error("lc_zero indices must be in 1:10 (got $lc_zero_idx)")
+    θ_zero = o6 .+ lc_zero_idx          # absolute θ positions pinned to 0
+    θ0 = copy(Vector{Float64}(θ0)); θ0[θ_zero] .= 0.0
 
     # Warm-start cache: reuse the previous mode across f/g evaluations. Cleared
     # to `nothing` if an evaluation throws (defensive — estep is PD-guarded).
@@ -321,6 +338,10 @@ function fit_q4_sparse_tmb(prob::AugProblem, Q_cond::SparseMatrixCSC;
             return Inf
         end
         any(!isfinite, g) && return Inf
+        # Pin the constrained lc directions: zero their gradient so LBFGS never
+        # steps along them. With θ0 already 0 there, those θ stay 0 throughout ⇒
+        # the fit runs on the active (block-diagonal) subspace only.
+        isempty(θ_zero) || (g[θ_zero] .= 0.0)
         u_cache[] = û
         # Optimise the MEAN (per-observation) objective, not the SUM: gradient &
         # Hessian scale ∝ p, so a sum-objective's step scale is p-dependent and

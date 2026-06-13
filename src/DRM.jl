@@ -32,6 +32,18 @@ module DRM
 # fit_q4_sparse_tmb.jl transitively pull the whole chain from this src/ dir.
 include("fit_q4_sparse_tmb.jl")
 
+# q=4 REML (Patterson–Thompson restricted likelihood; β_μ profiled out via a
+# bordered augmented state). Additive — reuses the engine symbols above; ML
+# remains the default and REML is opt-in (`method = :REML`). See #187.
+include("reml_q4.jl")
+
+# q=4 Fisher-z (D·R·D) OUTER reparameterization of the 4×4 among-axis covariance
+# Σ_a (separation strategy: D = diag SDs, R = spherical/LKJ correlation-Cholesky).
+# Additive — wraps the UNTOUCHED marginal_and_exact_grad; the engine still consumes
+# the native log-Cholesky lc. Its value is conditioning/robustness at the σ-collapse
+# boundary; it generalizes the verified q=2 atanh(ρ) bijection. See Ayumi #2.
+include("fisherz_q4.jl")
+
 # General-q multivariate-Brownian coevolution block (#188): reuses the q-agnostic
 # sparse precision (kron(Q_tree, Λ⁻¹)) with a q×q Λ and an EXACT conjugate-Gaussian
 # Laplace marginal. Independent of the q=4 location-scale leaf code above.
@@ -89,6 +101,8 @@ include("missing_data.jl")       # #49: documented listwise-deletion preprocessi
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
        fit_q4_sparse_tmb, marginal_and_exact_grad, marginal_nll,
+       fit_q4_sparse_fisherz, fz_DRD, fz_R, fz_correlations, fz_marginal_and_grad,
+       fz_phi_to_lc, fz_init_from_Sigma,
        estep_mode, prior_precision, build_Huu, joint_grad, joint_nll, aug_prior_grad!,
        pack_theta, unpack_theta, lc_to_Λ, Λ_to_lc,
        augmented_phy, random_balanced_tree, random_caterpillar_tree,

@@ -116,7 +116,9 @@ fit = drm(
 function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
              g_tol::Real = 1e-8, q4_g_tol::Real = 1e-3,
              q4_iterations::Int = 300, q4_n_newton::Int = 40,
-             q4_vcov::Bool = true)
+             q4_vcov::Bool = true, method::Symbol = :ML)
+    method in (:ML, :REML) ||
+        throw(ArgumentError("drm: `method` must be :ML (default) or :REML (got :$method)"))
     rhs = Dict(f.forms)
     fixed, q4_marker = _bivariate_q4_marker(rhs)
     if q4_marker !== nothing
@@ -126,8 +128,17 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
             q4_iterations = q4_iterations,
             q4_n_newton = q4_n_newton,
             q4_vcov = q4_vcov,
+            method = method,
         )
     end
+    # The residual-only bivariate route has no random effects / structured terms;
+    # REML (Patterson–Thompson) is implemented only for the q=4 phylogenetic path,
+    # so reject it here as the univariate core does (gaussian_core.jl:383-393).
+    method === :REML &&
+        throw(ArgumentError("drm: method = :REML is implemented only for the bivariate q=4 " *
+            "phylogenetic location–scale engine (shared `phylo(1 | g)` on mu1, mu2, sigma1, " *
+            "sigma2). The residual-only bivariate Gaussian model has no random effects; use " *
+            "method = :ML (the default)."))
     return _fit_bivariate_residual(f, fam, data, rhs, g_tol)
 end
 
@@ -230,13 +241,44 @@ function _bivariate_q4_marker(rhs)
     isempty(markers) && return fixed, nothing
     length(markers) == length(params) ||
         error("the verified q=4 engine requires the same `phylo(1 | group)` marker on mu1, mu2, sigma1, and sigma2")
-    marker_vals = [markers[p] for p in params]
+    marker_vals = [markers[p] for p in params]   # one (kind, group, tag) per axis
     all(m -> m[1] === :phylo, marker_vals) ||
-        error("the bivariate q=4 front end currently supports only `phylo(1 | group)` markers")
+        error("the bivariate q=4 front end currently supports only `phylo(...)` markers")
     groups = [m[2] for m in marker_vals]
     all(==(groups[1]), groups) ||
         error("the q=4 phylogenetic markers on mu1, mu2, sigma1, and sigma2 must use the same grouping variable")
-    return fixed, (:phylo, groups[1])
+    tags = [m[3] for m in marker_vals]           # axis order: mu1, mu2, sigma1, sigma2
+    lc_zero = _q4_block_lc_zero(tags)
+    return fixed, (:phylo, groups[1], lc_zero)
+end
+
+# Translate the per-axis correlation tags into the set of log-Cholesky indices to
+# pin at 0 so Σ_a is block-diagonal across distinct tags.
+#
+# Axis order = (mu1, mu2, sigma1, sigma2) = Σ_a rows/cols 1..4. The 10-vec lc is
+# the column-major lower triangle of the Cholesky factor C (lc_to_Λ): index→(i,j)
+#   1→(1,1) 2→(2,1) 3→(3,1) 4→(4,1) 5→(2,2) 6→(3,2) 7→(4,2) 8→(3,3) 9→(4,3) 10→(4,4)
+# Zeroing every off-diagonal C[i,j] (i>j) whose two axes carry DIFFERENT tags
+# makes C block-lower-triangular within each tag-group ⇒ C C' is exactly
+# block-diagonal (the cross-tag covariance is identically 0).
+#
+# All-`nothing` tags (every axis written `phylo(1 | group)`) ⇒ spec E, the full
+# correlated 4×4 Σ_a ⇒ `lc_zero = Int[]` (no constraint). A mix of tagged and
+# untagged axes is rejected (ambiguous block membership).
+function _q4_block_lc_zero(tags)
+    all(isnothing, tags) && return Int[]
+    any(isnothing, tags) &&
+        error("the q=4 block-diagonal form needs a correlation tag on EVERY axis: " *
+              "write `phylo(1 | tag | group)` on mu1, mu2, sigma1, sigma2 (got a mix " *
+              "of tagged and untagged markers)")
+    # column-major lower-tri (i, j) for each lc index 1..10
+    ij = [(1,1),(2,1),(3,1),(4,1),(2,2),(3,2),(4,2),(3,3),(4,3),(4,4)]
+    lc_zero = Int[]
+    for (k, (i, j)) in enumerate(ij)
+        i == j && continue                 # never pin a diagonal (block variances)
+        tags[i] == tags[j] || push!(lc_zero, k)
+    end
+    return lc_zero
 end
 
 function _split_bivariate_q4_rhs(rhs, param::Symbol)
@@ -251,7 +293,8 @@ function _split_bivariate_q4_rhs(rhs, param::Symbol)
         elseif t isa FunctionTerm && (t.f === relmat || t.f === animal || t.f === phylo || t.f === spatial)
             structured === nothing ||
                 error("`$param` contains multiple structured markers; the q=4 front end accepts exactly one `phylo(1 | group)` marker per predictor")
-            structured = (_structured_marker_kind(t), _q4_marker_group(t, param))
+            grp, tag = _q4_marker_group(t, param)
+            structured = (_structured_marker_kind(t), grp, tag)
         else
             push!(fixed, t)
         end
@@ -261,16 +304,33 @@ function _split_bivariate_q4_rhs(rhs, param::Symbol)
     return fixed_rhs, structured
 end
 
+# Parse the inner term of a structured q=4 marker. Returns `(group, tag)` where
+# `tag` is `nothing` for the 2-arg `phylo(1 | group)` (spec E, one shared 4×4 Σ_a)
+# or the correlation-group symbol for the 3-arg `phylo(1 | tag | group)` (spec D,
+# block-diagonal Σ_a — axes sharing a `tag` form one block). Julia parses
+# `1 | tag | group` left-associatively as `|(|(1, tag), group)`.
 function _q4_marker_group(t, param::Symbol)
     inner = t.args[1]
-    if !(inner isa FunctionTerm && inner.f === (|) && length(inner.args) == 2 &&
-          inner.args[2] isa Term)
-        error("`$param` structured marker must be written as `phylo(1 | group)`")
+    inner isa FunctionTerm && inner.f === (|) ||
+        error("`$param` structured marker must be written as `phylo(1 | group)` or `phylo(1 | tag | group)`")
+    if inner.args[1] isa FunctionTerm && inner.args[1].f === (|)
+        # 3-arg tagged form: |(|(1, tag), group)
+        coef = inner.args[1].args[1]
+        (coef isa ConstantTerm && coef.n == 1) ||
+            error("`$param` uses `$(_structured_marker_kind(t))`, but the bivariate q=4 front end supports only intercept markers (`phylo(1 | tag | group)`)")
+        inner.args[1].args[2] isa Term ||
+            error("`$param` correlation tag must be a bare symbol in `phylo(1 | tag | group)`")
+        inner.args[2] isa Term ||
+            error("`$param` group must be a bare grouping variable in `phylo(1 | tag | group)`")
+        return inner.args[2].sym, inner.args[1].args[2].sym
     end
+    # 2-arg form: |(1, group)
+    length(inner.args) == 2 && inner.args[2] isa Term ||
+        error("`$param` structured marker must be written as `phylo(1 | group)` or `phylo(1 | tag | group)`")
     lhs = inner.args[1]
     (lhs isa ConstantTerm && lhs.n == 1) ||
-        error("`$param` uses `$(_structured_marker_kind(t))`, but the bivariate q=4 front end supports only `phylo(1 | group)` markers")
-    return inner.args[2].sym
+        error("`$param` uses `$(_structured_marker_kind(t))`, but the bivariate q=4 front end supports only intercept markers (`phylo(1 | group)`)")
+    return inner.args[2].sym, nothing
 end
 
 function _structured_marker_kind(t)
@@ -283,9 +343,10 @@ end
 
 function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fixed, marker, tree;
                                  q4_g_tol::Real, q4_iterations::Int,
-                                 q4_n_newton::Int, q4_vcov::Bool)
+                                 q4_n_newton::Int, q4_vcov::Bool, method::Symbol = :ML)
     marker[1] === :phylo || error("internal error: expected phylo marker")
     grp = marker[2]
+    lc_zero = length(marker) >= 3 ? marker[3] : Int[]   # block-diagonal Σ_a pins
     tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
     phy = _as_augmented_phy(tree)
 
@@ -322,14 +383,48 @@ function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fi
         0.01 0.01 0.08 0.005
         0.01 0.01 0.005 0.080
     ]))
-    r = fit_q4_sparse_tmb(
-        prob, Q_cond;
-        β0 = β0,
-        Λ0 = Λ0,
-        g_tol = Float64(q4_g_tol),
-        iterations = q4_iterations,
-        n_newton = q4_n_newton,
-    )
+    if !isempty(lc_zero)
+        # Block-diagonal start so Λ_to_lc(Λ0) already has 0 in the pinned cross
+        # entries (an arbitrary cross block would make the constrained start
+        # inconsistent). Zero the mu↔sigma cross block; keep the within-block
+        # 2×2 covariances. For the general tag layout this is exact because the
+        # only pinned entries are mu↔sigma cross terms (axes 1,2 vs 3,4).
+        Λ0[1:2, 3:4] .= 0.0
+        Λ0[3:4, 1:2] .= 0.0
+    end
+    reml_ll = NaN
+    ml_ll = NaN
+    if method === :REML
+        # REML (Patterson–Thompson): β_μ profiled out via the bordered augmented
+        # state; fit_q4_reml warm-starts from an internal ML fit. We rebuild a
+        # unified `r` so the DrmFit construction below is identical to the ML path.
+        rr = fit_q4_reml(
+            prob, Q_cond;
+            beta0 = β0,
+            Lambda0 = Λ0,
+            g_tol = Float64(q4_g_tol),
+            iterations = q4_iterations,
+            n_newton = q4_n_newton,
+            lc_zero = lc_zero,
+        )
+        β_reml = (mu1 = rr.beta.mu1, mu2 = rr.beta.mu2,
+                  s1 = rr.beta.s1, s2 = rr.beta.s2, rho = rr.beta.rho)
+        θ_reml = pack_theta(β_reml, rr.Lambda)   # full 17-vec θ̂ (β + log-Cholesky Λ)
+        reml_ll = rr.reml_loglik
+        ml_ll = rr.ml_loglik
+        r = (θ = θ_reml, β = β_reml, Λ = Matrix(rr.Lambda),
+             loglik = rr.reml_loglik, converged = rr.converged)
+    else
+        r = fit_q4_sparse_tmb(
+            prob, Q_cond;
+            β0 = β0,
+            Λ0 = Λ0,
+            g_tol = Float64(q4_g_tol),
+            iterations = q4_iterations,
+            n_newton = q4_n_newton,
+            lc_zero = lc_zero,
+        )
+    end
 
     k1, k2, ks1, ks2, kr = beta_widths(prob)
     offs = cumsum([0, k1, k2, ks1, ks2, kr, 10])
@@ -357,6 +452,10 @@ function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fi
         copyto!(g, gg)
         return g
     end
+    # V is the ML observed-information vcov (FD of the marginal ML NLL) evaluated
+    # at θ̂. Under method = :REML this is θ̂_reml, so V is the ML curvature at the
+    # REML point; the restricted-penalty curvature (−0.5·∂²logdet S/∂θ²) is
+    # omitted, mirroring the q=2 σ-phylo REML route (gaussian_locscale_phylo.jl).
     V = q4_vcov ? _q4_fd_vcov(prob, Q_cond, θ̂; n_newton = q4_n_newton) :
         fill(NaN, length(θ̂), length(θ̂))
 
@@ -384,6 +483,7 @@ function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fi
         species = species,
     )
     fit = DrmFit(fam, blocks, names, θ̂, V, r.loglik, length(y1), r.converged, means, obs, scales)
+    fit = method === :REML ? _withreml(fit, reml_ll, ml_ll) : fit
     return _withranef(_withformula(_withnll(fit, nll, nllgrad!), f), re)
 end
 
