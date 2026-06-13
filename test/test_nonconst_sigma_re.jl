@@ -40,6 +40,14 @@ function _ls_fd_grad(obj, θ; h = 1e-4)
     return g
 end
 
+# h-sweep trough: the MIN max-abs discrepancy over a few step sizes recovers the
+# TRUE analytic accuracy instead of a single fixed-h FD reading the inner-solve
+# noise (≈ inner_residual / h ≈ 1e-9 / 1e-4 ≈ 1e-5, which flaked on Linux CI at
+# 1.06e-5). The #164/#165 discipline; mirrors test_gaussian_locscale_phylo.jl's
+# `_fd_gate_min_glsp`.
+_ls_fd_gate(g_an, obj, θ; hs = (1e-2, 3e-3, 1e-3, 3e-4, 1e-4)) =
+    minimum(maximum(abs, g_an .- _ls_fd_grad(obj, θ; h = h)) for h in hs)
+
 @testset "non-constant sigma (sigma ~ x) WITH a random effect — non-Gaussian (#164)" begin
 
     # ---- NB2: dispersion slope + coupled random effect ---------------------
@@ -96,8 +104,7 @@ end
         obj = DRM.LocScaleObjective(Val(:nb2), y, Xμ, Xψ, gidx, Gd, Q)
         θoff = copy(fr.θ); θoff[2] += 0.05; θoff[end] -= 0.05   # off the optimum
         g_an = DRM._ls_marginal_grad(Val(:nb2), y, Xμ, Xψ, gidx, Gd, Q, θoff)
-        g_fd = _ls_fd_grad(obj, θoff)
-        @test maximum(abs, g_an .- g_fd) ≤ 1e-5            # exact == finite-difference
+        @test _ls_fd_gate(g_an, obj, θoff) ≤ 1e-5         # exact == FD (h-sweep trough, #165)
     end
 
     # ---- Gamma: dispersion (shape) slope + coupled random effect -----------
@@ -138,8 +145,7 @@ end
         obj = DRM.LocScaleObjective(Val(:gamma), y, Xμ, Xψ, gidx, Gd, Q)
         θoff = copy(fr.θ); θoff[2] += 0.05; θoff[end] -= 0.05
         g_an = DRM._ls_marginal_grad(Val(:gamma), y, Xμ, Xψ, gidx, Gd, Q, θoff)
-        g_fd = _ls_fd_grad(obj, θoff)
-        @test maximum(abs, g_an .- g_fd) ≤ 1e-5
+        @test _ls_fd_gate(g_an, obj, θoff) ≤ 1e-5         # exact == FD (h-sweep trough, #165)
     end
 
     # ---- #164 LANDED: covariate sigma with a MEAN-ONLY phylo RE now FITS ------
