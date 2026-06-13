@@ -1,0 +1,95 @@
+{
+  "ts": "live",
+  "tree": "AYUMI TRIO DONE (Julia, 13 commits): σ-phylo REML (clean-LBFGS = the confirmed default) + missing RESPONSES (stress-verified, handles 'many') + BOUNDARY INFERENCE (σ-SD profile CI via confint + bridge). Speed-up exploration PAUSED (Newton not faster than clean-LBFGS; trial deferred). Preparing GLLVM + Ayumi notifications (HELD for go-ahead). R-gate agent finishing; missing PREDICTORS = future FIML.",
+  "banked": 21,
+  "blockersFound": 16,
+  "blockersFixed": 16,
+  "members": {
+    "Ada": "onit",
+    "Karpinski": "done",
+    "Noether": "done",
+    "Curie": "done",
+    "Grace": "onit",
+    "Fisher": "done",
+    "Rose": "onit",
+    "Hopper": "done",
+    "Lovelace": "done",
+    "Pat": "done",
+    "Boole": "done",
+    "Florence": "idle"
+  },
+  "activity": [
+    {
+      "ago": "now",
+      "who": "Curie",
+      "what": "MISSING-MANY stress test (agent) ALL PASS, no breakages: random 10–95% missing, fully-missing species (full tree dim G=78 kept, dropped species stay in the prior), NaN==Missing, order-invariant, drm==bridge in 100% of cells. Sub-0.2 σ-SDs only at genuine data-starvation boundaries. Ayumi's 'many missing' trait is robustly handled."
+    },
+    {
+      "ago": "2m",
+      "who": "Fisher",
+      "what": "AYUMI BOUNDARY INFERENCE exposed + tested (e179820): confint(:profile) + drm_bridge_inference now surface the σ-phylo SD boundary-aware CI (resd_sigma, [0.35,0.82], honest [0,x]). 5/5. The Ayumi trio (locscale+REML+boundary) is COMPLETE Julia-side."
+    },
+    {
+      "ago": "3m",
+      "who": "Noether",
+      "what": "AYUMI RESPONSES built (50bb0e5): σ-phylo route dispatched before the missing-response handling, so missing rows weren't dropped. Fixed with an observed-mask drop that KEEPS the full tree. drm + bridge: conv=true, nobs=124/144, σ-SD 0.55. 6/6 test. land-sigma-phylo already had BOTH REML + missing-response — no merge needed."
+    },
+    {
+      "ago": "4m",
+      "run": true,
+      "who": "Lovelace",
+      "what": "parallel: drmTMB R-side reml_supported gate relax for the σ-phylo cell (background agent on drmTMB-RELEASE). Scout (w89utibd1) mapping the FIML missing-PREDICTORS track (the 'build all at some point' future work)."
+    },
+    {
+      "ago": "5m",
+      "who": "Curie",
+      "what": "RE-verification (522180a): caught a leak MY fix introduced — Inf→1e18 made the penalty sentinel finite, leaking −1e18 into reml_loglik/AIC/BIC on a collinear mean design. Fixed (sentinel→NaN) + regression test. All 12 findings now addressed; REML fully verified."
+    },
+    {
+      "ago": "6m",
+      "who": "Rose",
+      "what": "FIXED all 12 first-pass findings (ff7df6c): BLOCKING boundary crash (0/40 now), HIGH β-coupling (production → clean-LBFGS, Newton experimental), boundary V PD-guard, coupled :REML error guard, doc honesty + boundary regression test."
+    },
+    {
+      "ago": "8m",
+      "who": "Curie",
+      "what": "adversarial verification found 12 REAL bugs my benign-fixture tests missed (1 BLOCKING crash + a β-coupling correctness bug). The gate earned its keep — this is exactly why we ran it."
+    },
+    {
+      "ago": "1m",
+      "who": "Curie",
+      "what": "p=120 LARGE-P MATCH confirmed: safeguarded Newton σSD 0.3684 vs FD-REML 0.3671 (<1%), conv=true in 1 step, 16.5× faster (14.7s vs 242s). Speedup grows with p. vs our own FD-REML — cross-engine still pending."
+    },
+    {
+      "ago": "2m",
+      "who": "Karpinski",
+      "what": "FIXED the divergence — backtracking line search (monotone descent ⇒ can't diverge) + scale-free convergence (step size in log-SD, not the n-scaling score). The benchmark earned its keep."
+    },
+    {
+      "ago": "4m",
+      "who": "Karpinski",
+      "what": "benchmark REVEALED the raw Newton diverged at p≥120 (σSD≈7) and step count was fixture-dependent — honest: the '3 steps' was fixture-luck"
+    },
+    {
+      "ago": "9m",
+      "who": "Grace",
+      "what": "committed a5bcb3f (REML Newton slice + dev-log finding). NOT pushed (gated)"
+    },
+    {
+      "ago": "14m",
+      "who": "Noether",
+      "what": "separate-block (both axes, K=2) Newton — recovers both phylo SDs vs FD-REML; general K-component _glsp_reml_newton"
+    },
+    {
+      "ago": "20m",
+      "who": "Noether",
+      "what": "panel PROVED the AI data-quadratic invalid (shrunk BLUP) — fix = observed information"
+    }
+  ],
+  "inflight": [
+    "Verifying: p=120 FD-REML-vs-Newton large-p MATCH (background, FD-REML is the slow ~4.5min part)",
+    "Adversarial verification workflow over the committed slice (correctness/robustness/integration/honesty) — running",
+    "Then: commit the safeguarded-Newton fix + bench artifacts; coupled K=3 route",
+    "Held / user-gated: push, Ayumi reply, GLLVM brief"
+  ]
+}

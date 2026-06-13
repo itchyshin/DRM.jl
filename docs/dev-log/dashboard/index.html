@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRM.jl + drmTMB — mission control</title>
+<style>
+  :root{
+    --bg:#faf9f7; --panel:#ffffff; --soft:#f3f1ec; --line:rgba(0,0,0,.10);
+    --tx:#1c1b19; --tx2:#6b6862; --tx3:#9c988f;
+    --go:#9a6b1e; --goBg:#fdf1d9; --ok:#3f7a45; --okBg:#e9f3e9;
+    --q:#8a867d; --qBg:#efece6; --info:#2a5fa8; --infoBg:#e4edf9;
+    --bar:#3f7a45; --barbg:#e3e0da;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#191817; --panel:#211f1d; --soft:#262320; --line:rgba(255,255,255,.10);
+      --tx:#f0ede7; --tx2:#a8a39a; --tx3:#7c776e;
+      --go:#e3b768; --goBg:#3a2f17; --ok:#8fce96; --okBg:#1e3120;
+      --q:#9a958c; --qBg:#2b2825; --info:#9cc0f0; --infoBg:#1a2740;
+      --bar:#8fce96; --barbg:#2f2c28; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:26px 22px 56px;line-height:1.5}
+  .wrap{max-width:1020px;margin:0 auto}
+  code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.86em;background:var(--soft);padding:1px 5px;border-radius:5px}
+  .top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  h1{font-size:25px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .sub{font-size:13.5px;color:var(--tx2);margin:4px 0 0;max-width:760px}
+  .pulse{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--tx2)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:b 1.6s infinite}
+  @keyframes b{0%,100%{opacity:1}50%{opacity:.3}}
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0 4px}
+  .mc{background:var(--soft);border-radius:12px;padding:14px 16px}
+  .mc .l{font-size:12px;color:var(--tx2)} .mc .v{font-size:27px;font-weight:600;line-height:1.1;margin-top:3px;letter-spacing:-.02em}
+  .mc .v small{font-size:14px;font-weight:600;color:var(--tx2)}
+  .prog{margin:18px 0 4px}
+  .prog .pl{display:flex;justify-content:space-between;font-size:13px;color:var(--tx2);margin-bottom:6px}
+  .track{height:10px;background:var(--barbg);border-radius:999px;overflow:hidden;display:flex}
+  .track .seg{height:100%}
+  .seg.d{background:var(--bar)} .seg.p{background:var(--go);opacity:.65}
+  .lk{font-size:12px;color:var(--tx3);margin-top:6px}
+  .lk b{font-weight:500;color:var(--ok)} .lk i{font-style:normal;color:var(--go)}
+  h2{font-size:15px;font-weight:600;margin:30px 0 12px}
+  .grid2{display:grid;grid-template-columns:1.05fr .95fr;gap:16px;margin-top:6px;align-items:start}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .ph{border:1px solid var(--line);border-radius:12px;margin-bottom:9px;overflow:hidden;background:var(--panel)}
+  .ph>.hd{display:flex;align-items:center;gap:12px;padding:12px 15px;cursor:pointer;user-select:none}
+  .ph>.hd:hover{background:var(--soft)}
+  .ph .tag{font-size:12px;color:var(--tx2);width:58px;flex:none}
+  .ph .nm{font-size:14px;flex:1;font-weight:500}
+  .ph .cnt{font-size:12px;color:var(--tx3);flex:none}
+  .ph .chev{flex:none;color:var(--tx3);transition:transform .15s;font-size:13px}
+  .ph.open .chev{transform:rotate(90deg)}
+  .pill{font-size:11px;font-weight:600;padding:2px 10px;border-radius:999px;flex:none}
+  .p-go{background:var(--goBg);color:var(--go)} .p-ok{background:var(--okBg);color:var(--ok)}
+  .p-q{background:var(--qBg);color:var(--q)} .p-info{background:var(--infoBg);color:var(--info)}
+  .sl{display:none;padding:2px 15px 12px 70px}
+  .ph.open .sl{display:block}
+  .sl .s{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:13px;border-top:1px solid var(--line)}
+  .sl .s:first-child{border-top:0}
+  .sd{width:8px;height:8px;border-radius:50%;flex:none}
+  .sd.ok{background:var(--ok)} .sd.go{background:var(--go)} .sd.q{background:var(--q)}
+  .sl .sn{flex:1;color:var(--tx)} .sl .st{font-size:11px;color:var(--tx3)}
+  .pan{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 17px;margin-bottom:14px}
+  .pan h3{font-size:14px;font-weight:600;margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline}
+  .pan h3 .hint{font-size:11px;font-weight:500;color:var(--tx3)}
+  /* activity feed */
+  .act{display:flex;gap:11px;font-size:12.5px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line);line-height:1.4}
+  .act:first-child{border-top:0}
+  .act .ago{flex:none;width:38px;color:var(--tx3);font-size:11px;font-variant-numeric:tabular-nums;padding-top:1px}
+  .act .ab{flex:1;min-width:0}
+  .act .who{font-weight:600;color:var(--tx)}
+  .act .tg{font-size:10px;color:var(--tx3);font-family:ui-monospace,Menlo,monospace}
+  .act.dn .who{color:var(--ok)} .act.run .who{color:var(--go)}
+  .li{display:flex;gap:9px;font-size:13px;align-items:flex-start;margin-bottom:9px;line-height:1.4}
+  .li .ic{flex:none;margin-top:2px;width:15px;height:15px}
+  .spin{animation:sp 1.1s linear infinite;transform-origin:50% 50%}@keyframes sp{to{transform:rotate(360deg)}}
+  /* team */
+  .team{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}
+  .mem{display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid var(--line);border-radius:11px;background:var(--panel);cursor:pointer}
+  .mem.off{opacity:.45} .mem.done{opacity:.62}
+  .av{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff}
+  .mem .who{flex:1;min-width:0}
+  .mem .nm2{font-size:13px;font-weight:500}
+  .mem .ln{font-size:11px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .work{font-size:10px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--okBg);color:var(--ok);flex:none}
+  .work.idle{background:var(--qBg);color:var(--q)} .work.done{background:var(--soft);color:var(--tx2)}
+  .sw{width:32px;height:19px;border-radius:999px;background:var(--barbg);position:relative;flex:none;transition:background .15s}
+  .sw.on{background:var(--ok)}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .sw.on::after{left:15px}
+  /* evidence */
+  .ev{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;padding:8px 0;border-top:1px solid var(--line);line-height:1.45}
+  .ev:first-child{border-top:0}
+  .ev .ic{flex:none;margin-top:1px;width:15px;height:15px}
+  .ev .num{font-weight:600;color:var(--ok);font-variant-numeric:tabular-nums}
+  .banner{margin-top:6px;background:var(--infoBg);border-radius:13px;padding:13px 17px;font-size:13px;color:var(--info)}
+  .foot{margin-top:16px;font-size:12px;color:var(--tx3)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><h1>Finishing the twin — DRM.jl + drmTMB</h1>
+      <p class="sub">A parallel agent team building a Julia ↔ R <b>distributional-regression</b> twin (one-way R→Julia engine bridge). Every slice is gate-verified — recovery · parity · FD-gradient ≤1e-6 — before it merges into one green tree. Upload is user-gated.</p></div>
+    <span class="pulse"><span class="dot"></span><span id="ts">connecting…</span></span>
+  </div>
+
+  <div class="mgrid">
+    <div class="mc"><div class="l">Banked + verified</div><div class="v" id="m-bank">–</div></div>
+    <div class="mc"><div class="l">Agents working</div><div class="v" id="m-work">–</div></div>
+    <div class="mc"><div class="l">Slices left</div><div class="v" id="m-left">–</div></div>
+    <div class="mc"><div class="l">Blockers fixed</div><div class="v" id="m-blk">– <small id="m-blk2"></small></div></div>
+  </div>
+
+  <div class="prog">
+    <div class="pl"><span>Road to done</span><span id="prog-lbl">–</span></div>
+    <div class="track"><div class="seg d" id="seg-d" style="width:0"></div><div class="seg p" id="seg-p" style="width:0"></div></div>
+    <div class="lk"><b id="lk-d">0 done</b> · <i id="lk-p">0 in progress</i> · <span id="lk-q">0 queued</span> across 7 phases + 1 speed track</div>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <h2>The roadmap — click a phase</h2>
+      <div id="phases"></div>
+    </div>
+    <div>
+      <h2>Activity — newest first</h2>
+      <div class="pan" style="margin-bottom:14px"><div id="activity"></div></div>
+      <div class="pan"><h3>In flight now</h3><div id="inflight"></div></div>
+    </div>
+  </div>
+
+  <h2>The team — <span id="team-n">12</span> members · tap to bench / activate</h2>
+  <div class="team" id="team"></div>
+
+  <h2>Verification evidence — every banked claim proven against a reference</h2>
+  <div class="pan"><div id="evidence"></div></div>
+
+  <div class="banner">★ &nbsp;Ayumi-first priority — σ-phylo location-scale + REML + boundary inference are the community's most-used capabilities, so Phase 2 front-runs them as <code>main</code> lands.</div>
+  <p class="foot">Live · refreshes every 8s · roadmap from the audited master plan · toggling a member is a visual board (real dispatch is driven by the workflows). Numbers in evidence are reproduced measurements, not estimates.</p>
+</div>
+
+<script>
+const ICONS={
+  spin:'<svg class="ic spin" viewBox="0 0 24 24" fill="none" stroke="#9a6b1e" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9" stroke-linecap="round"/></svg>',
+  clock:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#9a6b1e" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg>',
+  check:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#3f7a45" stroke-width="2.4"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>'};
+const D='ok',G='go',Q='q';
+const PHASES=[
+ {t:'Phase 0',n:'Land merge & unblock',k:G,s:[
+   ['Collapse 60+ branches — 36-PR merge → main',D],['Missing-response reconciliation (#241/#258)',D],
+   ['Silent σ-phylo drop fix (#244)',D],['σ-phylo locscale subsystem → main (verify)',G],
+   ['σ-RE grad! bug (a0→warm) + test',D],['both-phylo second-component guard',D]]},
+ {t:'Phase 1',n:'Robust REML + speed/boundary',k:Q,s:[
+   ['Inner-solve hardening (trust-region + PD)',G],['Exact REML gradient + AI-REML — beat ASReml',Q],
+   ['χ̄² / chibar mixture-LRT boundary inference',Q]]},
+ {t:'Phase 2',n:'Capability completion · Ayumi-first',k:G,s:[
+   ['σ-phylo Gaussian core: separate/coupled/asym',D],['② non-Gaussian σ-axis RE (cluster-2 fixed)',G],
+   ['① correlated non-Gaussian slopes → unified core',D],['drmTMB bridge: admit Gaussian σ~phylo',G],
+   ['REML threading through bridge (under review)',G],['④ structured non-Gaussian location-scale',Q],
+   ['③ structured non-Gaussian slopes (up to 2)',Q],['⑤b rich bivariate non-Gaussian q-block (MR-PMM)',Q]]},
+ {t:'Phase 3',n:'drmTMB R-side parity',k:Q,s:[
+   ['Route ①②③④⑤b via engine="julia"',G],['Native silent-drop guard + σ-phylo validators',Q],
+   ['q6/q8 coevolution + ρ_a accessor',Q],['re-anchor parity fixtures',Q]]},
+ {t:'Phase 4',n:'Cross-engine ≤1e-6 + testing sweep',k:Q,s:[
+   ['tmb-vs-julia ≤1e-6 parity — the twin claim',G],['extend committed fixtures (phylo + locscale)',Q],
+   ['CI job with Julia installed',Q],['FD gates for σ-axis + spatial/relmat routes',Q],['Aqua.jl standing test',D]]},
+ {t:'Phase 5',n:'Docs to drmTMB grade',k:G,s:[
+   ['capability article per cluster',G],['σ-phylo location-scale article',D],
+   ['twin-capabilities showcase doc',D],['boundary-story article + Ayumi reply',G],['bridge page with ≤1e-6 evidence',Q]]},
+ {t:'Phase 6',n:'Release-prep — stop, hand to user',k:Q,s:[
+   ['cross-OS CI (ubuntu/macOS/windows)',Q],['registry + CRAN dry-runs',Q],
+   ['Rose license + claim-vs-evidence audit',G],['man pages synced (document())',D],['coordinated version bump + NEWS',Q]]},
+ {t:'Track',n:'Speed: exact-REML-gradient + AI-REML',k:'info',s:[
+   ['info-geometry: nat-grad = Fisher = AI-REML',D],['exact analytic REML gradient (Takahashi)',Q],
+   ['benchmark vs ASReml-R — measured',Q]]}
+];
+const COL={Ada:'#5b7fb4',Noether:'#7a5ba8',Karpinski:'#3f7a85',Fisher:'#9a6b1e',Boole:'#8a7320',
+  Curie:'#b06a3a',Hopper:'#2f8a6a',Lovelace:'#b04a6a',Grace:'#4a6ab0',Florence:'#a04a8a',Pat:'#5a8a3a',Rose:'#a83a5a'};
+const TEAM=[
+ ['Ada','Orchestrator'],['Noether','Engine math'],['Karpinski','Perf / AD'],
+ ['Fisher','Inference / REML'],['Boole','Grammar'],['Curie','Sim / recovery'],
+ ['Hopper','R↔Julia parity'],['Lovelace','drmTMB R/TMB'],['Grace','CI / registry / CRAN'],
+ ['Florence','Figures'],['Pat','Docs / UX'],['Rose','Pre-publish gate']];
+// stable, reproduced verification numbers (report/comparison-grid.md + this session)
+const EVIDENCE=[
+ ['Single fit vs drmTMB (real q4_p100, same model): <span class="num">1.14 s vs 2.48 s — 2.18×</span>; logLik matches, converged.'],
+ ['O(p) scaling (per-dim-variance, nrep=4): <span class="num">p=10,000 in ~113 s, k≈1.08</span> (near-perfect linear).'],
+ ['Inference: Wald SEs valid for <span class="num">16/17</span> params where drmTMB\'s Hessian is all-NaN; parametric bootstrap <span class="num">60/60</span>.'],
+ ['R→Julia bridge: engine-vs-TMB parity, cross-family VCV <span class="num">|Δ|=0</span>; <span class="num">329</span> live bridge assertions, 0 fail/skip.'],
+ ['FD-vs-exact gradient gate <span class="num">≤1e-6</span> on the phylo + location-scale routes (Poisson/NB2/Gamma/Binomial; Beta reported honestly).'],
+ ['σ-phylo subsystem merge: spine no-regression <span class="num">6/6</span> green; loads clean (1346 insertions); profile-CI matched-test fix.'],
+ ['σ-RE grad! bug (<code>a0→warm</code>) found by the audit sweep <i>and</i> independently by the de-risk agent — fixed + regression test.']];
+const off=new Set();
+function initials(n){return n.slice(0,2)}
+function pill(k,o){const m={go:['p-go','in progress'],q:['p-q','queued'],ok:['p-ok','done'],info:['p-info','speed']};const[c,d]=m[k];return `<span class="pill ${c}">${o||d}</span>`}
+function counts(){let d=0,p=0,q=0;PHASES.forEach(ph=>ph.s.forEach(s=>{s[1]===D?d++:s[1]===G?p++:q++}));return{d,p,q,total:d+p+q}}
+function renderRoadmap(){
+  document.getElementById('phases').innerHTML=PHASES.map((ph,i)=>{
+    const done=ph.s.filter(s=>s[1]===D).length;
+    return `<div class="ph${i===0?' open':''}" data-i="${i}">
+      <div class="hd" onclick="this.parentNode.classList.toggle('open')">
+        <span class="tag">${ph.t}</span><span class="nm">${ph.n}</span>
+        <span class="cnt">${done}/${ph.s.length}</span>${pill(ph.k)}
+        <span class="chev">▶</span></div>
+      <div class="sl">${ph.s.map(s=>`<div class="s"><span class="sd ${s[1]}"></span><span class="sn">${s[0]}</span><span class="st">${s[1]===D?'done':s[1]===G?'active':'queued'}</span></div>`).join('')}</div>
+    </div>`}).join('');
+}
+function renderTeam(s){
+  const mem=(s&&s.members)||{};let onN=0;
+  document.getElementById('team').innerHTML=TEAM.map(m=>{
+    const benched=off.has(m[0]);
+    let st=benched?'idle':(mem[m[0]]||'idle');
+    const onit=st==='onit',done=st==='done';if(onit)onN++;
+    const cls=onit?'':(done?' done':' off');
+    const lbl=onit?'on it':(done?'done ✓':'idle');
+    return `<div class="mem${cls}" onclick="toggleMem('${m[0]}')">
+      <span class="av" style="background:${COL[m[0]]}">${initials(m[0])}</span>
+      <span class="who"><div class="nm2">${m[0]}</div><div class="ln">${m[1]}</div></span>
+      <span class="work ${onit?'':(done?'done':'idle')}">${lbl}</span>
+      <span class="sw ${onit?'on':''}"></span></div>`}).join('');
+  document.getElementById('team-n').textContent=TEAM.length;
+  document.getElementById('m-work').textContent=onN;
+}
+function renderEvidence(){
+  document.getElementById('evidence').innerHTML=EVIDENCE.map(e=>`<div class="ev">${ICONS.check}<span>${e[0]}</span></div>`).join('');
+}
+let lastS={};
+function toggleMem(name){off.has(name)?off.delete(name):off.add(name);renderTeam(lastS);}
+function renderLive(s){
+  lastS=s;
+  document.getElementById('ts').textContent='live · '+(s.updated||s.ts||'—');
+  const c=counts();
+  document.getElementById('m-left').textContent=c.p+c.q;
+  document.getElementById('m-bank').textContent=(s.banked!=null?s.banked:c.d);
+  if(s.blockersFixed!=null){document.getElementById('m-blk').firstChild.textContent=s.blockersFixed+' ';}
+  document.getElementById('m-blk2').textContent=(s.blockersFound!=null?'/ '+s.blockersFound+' found':'');
+  document.getElementById('prog-lbl').textContent=`${c.d} / ${c.total} slices`+(s.tree?` · ${s.tree}`:'');
+  document.getElementById('seg-d').style.width=(100*c.d/c.total)+'%';
+  document.getElementById('seg-p').style.width=(100*c.p/c.total)+'%';
+  document.getElementById('lk-d').textContent=c.d+' done';
+  document.getElementById('lk-p').textContent=c.p+' in progress';
+  document.getElementById('lk-q').textContent=c.q+' queued';
+  renderTeam(s);
+  // activity feed (newest first)
+  const act=s.activity||[];
+  document.getElementById('activity').innerHTML = act.length
+    ? act.map(a=>`<div class="act ${a.run?'run':'dn'}"><span class="ago">${a.ago||''}</span><span class="ab"><span class="who">${a.who||''}</span> ${a.what||''}${a.tag?` <span class="tg">${a.tag}</span>`:''}</span></div>`).join('')
+    : `<div class="act"><span class="ago">—</span><span class="ab">waiting for the next event…</span></div>`;
+  // in flight
+  const fl=s.inflight||[];
+  document.getElementById('inflight').innerHTML = fl.length
+    ? fl.map(x=>`<div class="li">${ICONS.spin}<span>${x}</span></div>`).join('')
+    : `<div class="li">${ICONS.check}<span>nothing running — idle</span></div>`;
+}
+renderRoadmap();renderEvidence();
+const BUILD='r11';
+async function tick(){
+  try{const v=(await (await fetch('version.txt?_='+Date.now())).text()).trim(); if(v&&v!==BUILD){location.reload();return;}}catch(e){}
+  let sweep={};
+  try{sweep=await (await fetch('sweep.json?_='+Date.now())).json();}catch(e){}
+  try{const r=await fetch('status.json?_='+Date.now());renderLive({...await r.json(),...sweep});}
+  catch(e){renderLive(sweep);}
+}
+tick();setInterval(tick,8000);
+</script>
+</body>
+</html>
