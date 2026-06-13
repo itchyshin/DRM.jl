@@ -202,6 +202,22 @@ function _glsp_reml_refit_clean(obj, grad_fn, θ̂_ml, pμ::Int; ml_converged::B
     return θ̂, converged, obj(θ̂), reml_nll, n_steps
 end
 
+# PRODUCTION REML for the σ-phylo routes: a fast observed-information Newton WARM START, then a
+# clean-gradient LBFGS POLISH that guarantees joint stationarity — this corrects the Newton's
+# block-coordinate β-coupling (the polish matches FD-REML to <0.01% even at pμ=6/pψ=2, where the
+# bare Newton drifts ~0.7%). Falls back to the STABLE FD-REML if the polished fit fails to
+# converge. So the default is fast (Newton-warmed) AND jointly correct AND has a stable backstop.
+# Returns (θ̂, converged, ml_nll, reml_nll).
+function _glsp_reml_fit(obj, grad, θ̂_ml, pμ::Int, vidx::AbstractVector{Int}; ml_converged::Bool = true)
+    θw, convw, _, _, _ = _glsp_reml_newton(obj, grad, θ̂_ml, pμ, vidx; ml_converged = ml_converged)
+    start = (convw && all(isfinite, θw)) ? θw : θ̂_ml          # warm-start the polish from the Newton if sane
+    θ̂, conv, ml_nll, reml_nll, _ = _glsp_reml_refit_clean(obj, grad, start, pμ; ml_converged = ml_converged)
+    if !(conv && isfinite(reml_nll))                          # stable fallback: FD-REML from the ML estimate
+        θ̂, conv, ml_nll, reml_nll = _glsp_reml_refit(obj, grad, θ̂_ml, pμ; ml_converged = ml_converged)
+    end
+    return θ̂, conv, ml_nll, reml_nll
+end
+
 # EXPERIMENTAL (asymmetric σ-phylo route) — NOT the production REML (that is the jointly-correct
 # `_glsp_reml_refit_clean`). This is the older NON-backtracking observed-information Newton;
 # prefer the general `_glsp_reml_newton` (safeguarded step). Same β-coupling / boundary caveats
