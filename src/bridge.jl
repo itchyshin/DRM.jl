@@ -61,7 +61,11 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
                       A = nothing, coords = nothing, options = opts)
 
     if bridge_method == "profile"
-        result = profile_result(fit; level = level, threads = threads)
+        # Profile ONLY the SD target the bridge returns (`_bridge_pick_sd_row`'s set),
+        # not the full parameter vector — the bridge reports a single SD row, so
+        # profiling the fixed effects too is wasted re-optimisation (#202 bridge perf).
+        result = profile_result(fit; level = level, threads = threads,
+                                parm = [:resd_sigma, :resd, :resd_mu])
         row = _bridge_pick_sd_row(result.ci)
         return _bridge_inference_flatten(
             row;
