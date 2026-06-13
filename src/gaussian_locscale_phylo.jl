@@ -126,6 +126,7 @@ function _glsp_reml_refit(obj, grad_fn, θ̂_ml, pμ::Int; ml_converged::Bool = 
                          Optim.Options(g_tol = 1e-3, iterations = 100))
     θ̂ = Optim.minimizer(res)
     reml_nll = reml_obj(θ̂)
+    isfinite(reml_nll) && reml_nll ≥ 1e16 && (reml_nll = NaN)   # 1e18 penalty sentinel ⇒ NaN
     converged = ml_converged && isfinite(reml_nll) && norm(θ̂ .- θ̂_ml) < 5.0
     return θ̂, converged, obj(θ̂), reml_nll
 end
@@ -173,9 +174,14 @@ function _glsp_reml_refit_clean(obj, grad_fn, θ̂_ml, pμ::Int; ml_converged::B
         err isa InterruptException && rethrow(err)
         nothing
     end
-    res === nothing && return copy(θ̂_ml), false, obj(θ̂_ml), reml_obj(θ̂_ml), 0
+    # `_glsp_reml_penalty` returns a 1e18 sentinel when the β_μ information is non-PD (a
+    # collinear / rank-deficient mean design); map a sentinel-poisoned objective to NaN so the
+    # isfinite guards below AND downstream loglik/AIC/BIC catch it instead of reporting a
+    # poisoned −1e18 (verification 2026-06-12). `_sane` ≡ finite and below the sentinel scale.
+    _sane(r) = (isfinite(r) && r < 1e16) ? r : NaN
+    res === nothing && return copy(θ̂_ml), false, obj(θ̂_ml), _sane(reml_obj(θ̂_ml)), 0
     θ̂ = Optim.minimizer(res)
-    reml_nll = reml_obj(θ̂)
+    reml_nll = _sane(reml_obj(θ̂))
     n_steps = Optim.iterations(res)
     # SUBSTANCE-based flag: the FD-penalty gradient's noise floor and the n-scaling ML gradient
     # make Optim's absolute g_tol unreliable (it reported converged=false on correct fits at
@@ -200,7 +206,8 @@ end
 # the AI-Newton diverges (20 steps, 18% off). The correct, FASTEST O(p) metric is the
 # OBSERVED information: a central FD of the EXACT O(p) marginal + penalty REML score (each
 # score eval is O(p) — analytic gradient + Takahashi + one clean penalty FD). For K variance
-# components this is O(Kp) and converges in ~3 Newton steps. (The expected-info trace
+# components this is O(Kp) and converges in a handful of Newton steps (measured, not a
+# guaranteed bound — and only on benign data; see the EXPERIMENTAL caveats above). (The expected-info trace
 # ½ tr(H⁻¹∂P_k H⁻¹∂P_l) is also valid but needs off-pattern H⁻¹ via factored solves and is
 # slower — 14 steps; the observed-info FD is simpler and faster.)
 #
@@ -253,6 +260,7 @@ function _glsp_reml_newton_asym(kind, y, Xμ, Xψ, gidx, G, Q, Zη, Zψ, θ̂_ml
     end
     refit_β!(θ)                                   # final conditional fixed-effect polish
     ml_nll = obj(θ); reml_nll = ml_nll + pen(θ)
+    isfinite(reml_nll) && reml_nll ≥ 1e16 && (reml_nll = NaN)   # 1e18 penalty sentinel ⇒ NaN (collinear mean)
     converged = converged && ml_converged && isfinite(reml_nll)
     return θ, converged, ml_nll, reml_nll, n_newton
 end
@@ -350,6 +358,7 @@ function _glsp_reml_newton(obj, grad, θ̂_ml, pμ::Int, vidx::AbstractVector{In
     end
     refit_β!(θ)
     ml_nll = obj(θ); reml_nll = ml_nll + pen(θ)
+    isfinite(reml_nll) && reml_nll ≥ 1e16 && (reml_nll = NaN)   # 1e18 penalty sentinel ⇒ NaN (collinear mean)
     converged = converged && ml_converged && isfinite(reml_nll)
     return θ, converged, ml_nll, reml_nll, n_newton
 end

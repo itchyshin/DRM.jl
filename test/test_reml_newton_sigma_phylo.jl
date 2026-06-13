@@ -152,3 +152,25 @@ end
         @test sd_sig < 0.6                                          # near the boundary (true σ-phylo SD = 0)
     end
 end
+
+# REGRESSION (re-verification 2026-06-12): the 1e18 penalty sentinel (the boundary-crash fix)
+# must NOT leak into the reported loglik/AIC/BIC. A rank-deficient (collinear) mean design makes
+# the β_μ information non-PD ⇒ penalty = 1e18; the reported REML loglik must be NaN (degenerate),
+# not a poisoned −1e18 that would silently corrupt model selection.
+@testset "REML σ-phylo: collinear mean design ⇒ NaN loglik, not a 1e18-poisoned value" begin
+    Random.seed!(2)
+    p = 20; m = 4; n = p * m
+    phy = random_balanced_tree(p; branch_length = 0.3)
+    C = sigma_phy_dense(phy; σ²_phy = 1.0); LC = cholesky(Symmetric(C)).L
+    u_mu = 0.5 .* (LC * randn(p)); u_sig = 0.4 .* (LC * randn(p))
+    species = repeat(1:p, inner = m)
+    x1 = randn(n); x2 = x1 .+ 1e-12 .* randn(n)          # collinear ⇒ rank-deficient mean design
+    y = [1.0 + 0.5 * x1[i] + 0.5 * x2[i] + u_mu[species[i]] +
+         exp(log(0.5) + u_sig[species[i]]) * randn() for i in 1:n]
+    data = (; y, species, x1, x2)
+    form = bf(@formula(y ~ x1 + x2 + phylo(1 | species)), @formula(sigma ~ phylo(1 | species)))
+    fit = drm(form, Gaussian(); data = data, tree = phy, method = :REML)
+    rll = reml_loglik(fit)
+    @test !(isfinite(rll) && abs(rll) > 1e16)            # NOT a 1e18-poisoned value
+    @test isnan(rll)                                     # degenerate fit ⇒ NaN, reported honestly
+end

@@ -67,8 +67,9 @@ and shipped in `locscale_grad.jl`; only the curvature object was wrong.
 
 ## Verification (anchor: FD-REML)
 
-- Asymmetric (K=1): **3 Newton steps**, σ-SD 0.5706 vs FD-REML 0.5704 (2e-4), clean flag.
-- Separate both-axes (K=2): **3 Newton steps**, μ-SD 0.5849 / σ-SD 0.3637 — both match
+- Asymmetric (K=1): **3 steps on seed 808** (fixture-specific — see Robustness; not a bound),
+  σ-SD 0.5706 vs FD-REML 0.5704 (2e-4), clean flag.
+- Separate both-axes (K=2): **3 steps on seed 909**, μ-SD 0.5849 / σ-SD 0.3637 — both match
   FD-REML to ~5 dp, clean flag.
 - End-to-end `drm(method=:REML)` (existing 12/12 anchor test): **still 12/12, and the
   end-to-end fit dropped 77s → 17s (~4.5×)** with identical estimates.
