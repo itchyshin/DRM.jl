@@ -1,5 +1,6 @@
 using DRM
 using Test, Random, Statistics, LinearAlgebra
+using StableRNGs   # version-stable RNG so recovery DGPs are identical across Julia versions
 using SpecialFunctions: trigamma   # for the Tier-2 link_residual value checks
 
 # Knuth Poisson sampler (keeps the test free of a Distributions dependency).
@@ -124,7 +125,7 @@ end
     # per-family sampler `_mf_rand` (same code path as the bootstrap).
 
     @testset "NB2 x Gaussian recovery (identified)" begin
-        rng = MersenneTwister(20260610)
+        rng = StableRNG(20260610)
         n = 2000
         x = randn(rng, n)
         X1 = hcat(ones(n), x); X2 = hcat(ones(n), x)
