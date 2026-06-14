@@ -25,14 +25,33 @@ const RHO_GUARD = 0.99999999
 # --- per-leaf bivariate-Gaussian data NLL as a function of the 4-vector u ----
 # η_* carry the fixed-effect part (Xβ); u shifts mean (axes 1,2) and log-σ
 # (axes 3,4). ρ has no random effect (rho12 ~ 1).
-function leaf_nll(u, y1, y2, η1, η2, ηs1, ηs2, ηr)
-    mu1 = η1 + u[1]; mu2 = η2 + u[2]
-    s1 = exp(ηs1 + u[3]); s2 = exp(ηs2 + u[4])
-    ρ = RHO_GUARD * tanh(ηr)
-    e1 = y1 - mu1; e2 = y2 - mu2
-    omr2 = 1 - ρ^2
-    quad = (e1^2 / s1^2 - 2ρ * e1 * e2 / (s1 * s2) + e2^2 / s2^2) / omr2
-    return 0.5 * (log(s1^2 * s2^2 * omr2) + quad) + log(2π)
+# Per-cell observed flags o1, o2 (Bool) support missing responses (issue #19): both
+# observed ⇒ the bivariate term; exactly one observed ⇒ that response's univariate
+# Gaussian marginal (the correct observed-data likelihood — drop the missing dim, ρ
+# and the other σ leave the term); neither ⇒ 0 (the tip still couples through the
+# tree prior, which is y-independent). The flags are CONSTANTS w.r.t. u, so leaf_grad
+# / leaf_hess (and the exact gradient's ForwardDiff of leaf_hess) auto-propagate the
+# mask. Defaulting o1=o2=true reproduces the original term BIT-FOR-BIT (all-observed
+# reduction). The missing response value is NEVER touched in its dropped branch, so a
+# NaN placeholder there is safe.
+function leaf_nll(u, y1, y2, η1, η2, ηs1, ηs2, ηr, o1::Bool = true, o2::Bool = true)
+    if o1 & o2
+        mu1 = η1 + u[1]; mu2 = η2 + u[2]
+        s1 = exp(ηs1 + u[3]); s2 = exp(ηs2 + u[4])
+        ρ = RHO_GUARD * tanh(ηr)
+        e1 = y1 - mu1; e2 = y2 - mu2
+        omr2 = 1 - ρ^2
+        quad = (e1^2 / s1^2 - 2ρ * e1 * e2 / (s1 * s2) + e2^2 / s2^2) / omr2
+        return 0.5 * (log(s1^2 * s2^2 * omr2) + quad) + log(2π)
+    elseif o1
+        ls1 = ηs1 + u[3]; e1 = y1 - (η1 + u[1])      # univariate N(mu1, σ1²) marginal
+        return 0.5 * (2 * ls1 + e1^2 / exp(2 * ls1)) + 0.5 * log(2π)
+    elseif o2
+        ls2 = ηs2 + u[4]; e2 = y2 - (η2 + u[2])      # univariate N(mu2, σ2²) marginal
+        return 0.5 * (2 * ls2 + e2^2 / exp(2 * ls2)) + 0.5 * log(2π)
+    else
+        return zero(eltype(u))                        # neither observed
+    end
 end
 leaf_grad(u, a...) = ForwardDiff.gradient(z -> leaf_nll(z, a...), u)
 leaf_hess(u, a...) = ForwardDiff.hessian(z -> leaf_nll(z, a...), u)
@@ -46,7 +65,15 @@ struct AugProblem
     y1::Vector{Float64}; y2::Vector{Float64}
     X1::Matrix{Float64}; X2::Matrix{Float64}     # mu1, mu2 design (n×k)
     Xs1::Matrix{Float64}; Xs2::Matrix{Float64}; Xr::Matrix{Float64}
+    obs1::Vector{Bool}; obs2::Vector{Bool}       # #19: per-row observed-response masks
 end
+
+# Backward-compatible constructor: no masks ⇒ all responses observed (the original
+# all-leaf bivariate behaviour, bit-for-bit). Keeps every existing make_problem /
+# AugProblem(...) caller working unchanged.
+AugProblem(phy, n_total, p, leaf_node, y1, y2, X1, X2, Xs1, Xs2, Xr) =
+    AugProblem(phy, n_total, p, leaf_node, y1, y2, X1, X2, Xs1, Xs2, Xr,
+               trues(length(y1)), trues(length(y2)))
 
 # Build the sparse prior precision P = kron(Q_topology, Λ⁻¹) (node-major).
 prior_precision(Q::SparseMatrixCSC, Λinv::AbstractMatrix) = kron(Q, sparse(Λinv))
@@ -63,7 +90,8 @@ function build_Huu(prob::AugProblem, P::SparseMatrixCSC, u::Vector{Float64}, β)
     @inbounds for i in eachindex(prob.leaf_node)   # over DATA ROWS (≥1 per leaf)
         t = prob.leaf_node[i]; base = 4(t - 1)
         ublk = (u[base+1], u[base+2], u[base+3], u[base+4])
-        Hb = leaf_hess([ublk...], prob.y1[i], prob.y2[i], η1[i], η2[i], ηs1[i], ηs2[i], ηr[i])
+        Hb = leaf_hess([ublk...], prob.y1[i], prob.y2[i], η1[i], η2[i], ηs1[i], ηs2[i], ηr[i],
+                       prob.obs1[i], prob.obs2[i])
         for a in 1:4, b in 1:4
             H[base+a, base+b] += Hb[a, b]
         end
@@ -89,7 +117,8 @@ function joint_grad(prob::AugProblem, P::SparseMatrixCSC, u::Vector{Float64}, β
     @inbounds for i in eachindex(prob.leaf_node)   # over DATA ROWS (≥1 per leaf)
         t = prob.leaf_node[i]; base = 4(t - 1)
         ublk = [u[base+1], u[base+2], u[base+3], u[base+4]]
-        gb = leaf_grad(ublk, prob.y1[i], prob.y2[i], η1[i], η2[i], ηs1[i], ηs2[i], ηr[i])
+        gb = leaf_grad(ublk, prob.y1[i], prob.y2[i], η1[i], η2[i], ηs1[i], ηs2[i], ηr[i],
+                       prob.obs1[i], prob.obs2[i])
         for a in 1:4
             g[base+a] += gb[a]
         end
@@ -104,7 +133,8 @@ function joint_nll(prob::AugProblem, P::SparseMatrixCSC, u::Vector{Float64}, β)
     @inbounds for i in eachindex(prob.leaf_node)   # over DATA ROWS (≥1 per leaf)
         t = prob.leaf_node[i]; base = 4(t - 1)
         val += leaf_nll((u[base+1], u[base+2], u[base+3], u[base+4]),
-                        prob.y1[i], prob.y2[i], η1[i], η2[i], ηs1[i], ηs2[i], ηr[i])
+                        prob.y1[i], prob.y2[i], η1[i], η2[i], ηs1[i], ηs2[i], ηr[i],
+                        prob.obs1[i], prob.obs2[i])
     end
     return val
 end

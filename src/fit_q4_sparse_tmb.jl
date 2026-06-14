@@ -85,8 +85,9 @@ end
 # ForwardDiff.jacobian of vec(leaf_hess) over the 4-vector u_block (cheap, 4D).
 # -----------------------------------------------------------------------------
 
-function leaf_hess_du(ublk::AbstractVector{Float64}, y1, y2, η1, η2, ηs1, ηs2, ηr)
-    J = ForwardDiff.jacobian(z -> vec(leaf_hess(z, y1, y2, η1, η2, ηs1, ηs2, ηr)), ublk)
+function leaf_hess_du(ublk::AbstractVector{Float64}, y1, y2, η1, η2, ηs1, ηs2, ηr,
+                      o1::Bool = true, o2::Bool = true)
+    J = ForwardDiff.jacobian(z -> vec(leaf_hess(z, y1, y2, η1, η2, ηs1, ηs2, ηr, o1, o2)), ublk)
     return reshape(J, 4, 4, 4)            # T[a,b,c]: column c = ∂vec(H)/∂u_c
 end
 
@@ -167,7 +168,8 @@ function marginal_and_exact_grad(prob::AugProblem, Q_cond::SparseMatrixCSC,
         # ∂vec(leaf_hess)/∂(η1,η2,ηs1,ηs2,ηr) at this leaf (16×5).
         Jη = ForwardDiff.jacobian(
             e -> vec(leaf_hess([u_hat[bt+1], u_hat[bt+2], u_hat[bt+3], u_hat[bt+4]],
-                               prob.y1[i], prob.y2[i], e[1], e[2], e[3], e[4], e[5])),
+                               prob.y1[i], prob.y2[i], e[1], e[2], e[3], e[4], e[5],
+                               prob.obs1[i], prob.obs2[i])),
             [η1[i], η2[i], ηs1[i], ηs2[i], ηr[i]])
         # contraction tr(Vblk · dHb/dη_m) for each η_m (m=1..5):
         #   s_m = Σ_{a,b} Vblk[a,b] · dHb[a,b]/dη_m  (Hb symmetric ⇒ Vblk too).
@@ -228,7 +230,8 @@ function marginal_and_exact_grad(prob::AugProblem, Q_cond::SparseMatrixCSC,
         t = prob.leaf_node[i]; bt = 4(t - 1)
         Vblk = @view Vsel[bt+1:bt+4, bt+1:bt+4]
         T = leaf_hess_du([u_hat[bt+1], u_hat[bt+2], u_hat[bt+3], u_hat[bt+4]],
-                         prob.y1[i], prob.y2[i], η1[i], η2[i], ηs1[i], ηs2[i], ηr[i])
+                         prob.y1[i], prob.y2[i], η1[i], η2[i], ηs1[i], ηs2[i], ηr[i],
+                         prob.obs1[i], prob.obs2[i])
         for c in 1:4
             acc = 0.0
             for b in 1:4, a in 1:4
@@ -266,7 +269,8 @@ function joint_nll_T(prob::AugProblem, P::SparseMatrixCSC, u::Vector{Float64}, �
     @inbounds for i in eachindex(prob.leaf_node)   # over DATA ROWS (≥1 per leaf)
         t = prob.leaf_node[i]; base = 4(t - 1)
         val += leaf_nll((u[base+1], u[base+2], u[base+3], u[base+4]),
-                        prob.y1[i], prob.y2[i], η1[i], η2[i], ηs1[i], ηs2[i], ηr[i])
+                        prob.y1[i], prob.y2[i], η1[i], η2[i], ηs1[i], ηs2[i], ηr[i],
+                        prob.obs1[i], prob.obs2[i])
     end
     return val
 end
@@ -277,7 +281,8 @@ function joint_grad_T(prob::AugProblem, P::SparseMatrixCSC, u::Vector{Float64}, 
     @inbounds for i in eachindex(prob.leaf_node)   # over DATA ROWS (≥1 per leaf)
         t = prob.leaf_node[i]; base = 4(t - 1)
         ublk = [u[base+1], u[base+2], u[base+3], u[base+4]]
-        gb = leaf_grad(ublk, prob.y1[i], prob.y2[i], η1[i], η2[i], ηs1[i], ηs2[i], ηr[i])
+        gb = leaf_grad(ublk, prob.y1[i], prob.y2[i], η1[i], η2[i], ηs1[i], ηs2[i], ηr[i],
+                       prob.obs1[i], prob.obs2[i])
         for a in 1:4
             g[base + a] += gb[a]
         end

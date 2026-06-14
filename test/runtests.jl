@@ -39,6 +39,7 @@ include("test_reml.jl")
 include("test_bf_grammar.jl")
 include("test_gaussian_bivariate.jl")
 include("test_gaussian_bivariate_phylo.jl")
+include("test_missing_response_bivariate.jl")   # #19: per-cell missing on the bivariate q=4 phylo engine
 include("test_missing_response.jl")
 include("test_missing_response_nongaussian.jl")
 include("test_sigma_phylo_missing_guard.jl")
