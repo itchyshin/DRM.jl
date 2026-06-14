@@ -325,9 +325,25 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         # listwise / future-FIML concern — `drm_listwise` drops them; modelling them is later.)
         if has_missing_response
             n_obs = count(response_observed)
-            n_obs > size(Xμ, 2) ||
-                error("drm (Gaussian σ-phylo): only $(n_obs) observed responses — too few to fit. " *
+            # Total estimated parameters for this route: mean fixed effects (pμ) +
+            # scale fixed effects incl. the residual log-σ (pσ) + phylo variance
+            # components (1 for the asymmetric σ-phylo route, 2 for the both-phylo
+            # separate route). The phylo prior regularises the latent field, so an
+            # under-determined fit does NOT crash — it silently returns a
+            # meaningless over-parameterised result (positive logLik, negative
+            # residual dof). Guard the FIXED-effect part on the full dof so that
+            # never happens silently. (Coupled q=3 is not reached in this dispatch.)
+            pμ = size(Xμ, 2); pσ = size(Xσ, 2)
+            nvar = structured === nothing ? 1 : 2
+            total_dof = pμ + pσ + nvar
+            n_obs >= total_dof ||
+                error("drm (Gaussian σ-phylo): only $(n_obs) observed responses for a model with " *
+                      "$(total_dof) parameters ($(pμ) mean + $(pσ) scale + $(nvar) phylo variance) — " *
+                      "too few to fit (residual dof would be $(n_obs - total_dof)). " *
                       "Use `drm_listwise` or supply more complete responses.")
+            n_obs > total_dof ||
+                @warn "drm (Gaussian σ-phylo): $(n_obs) observed responses equals the $(total_dof) model " *
+                      "parameters (residual dof 0); the fit is saturated and inference is unreliable."
             @warn "drm: $(length(response_observed) - n_obs) of $(length(response_observed)) rows have a " *
                   "missing/NaN response and were dropped (σ-phylo observed-rows fit; the tree is kept in " *
                   "full). Use `drm_listwise` to preprocess explicitly to silence this."
@@ -572,8 +588,10 @@ function _fit_fixed_gaussian_missing_response(fam::Gaussian, y, Xμ, Xσ, nmμ, 
     n_observed = count(observed)
     n_observed > 0 ||
         throw(ArgumentError("drm: at least one Gaussian response must be observed"))
-    n_observed >= size(Xμ, 2) ||
-        throw(ArgumentError("drm: observed Gaussian responses are fewer than the mean coefficients"))
+    n_observed >= size(Xμ, 2) + size(Xσ, 2) ||
+        throw(ArgumentError("drm: only $(n_observed) observed Gaussian responses for a model with " *
+            "$(size(Xμ, 2) + size(Xσ, 2)) fixed-effect parameters ($(size(Xμ, 2)) mean + " *
+            "$(size(Xσ, 2)) scale) — too few to fit. Use `drm_listwise` or supply more complete responses."))
 
     # Drop missing/NaN-response rows (observed-rows fit), matching glmmTMB's default
     # na.action — but WARN so it is never silent (the #258 contract; mirrors the
