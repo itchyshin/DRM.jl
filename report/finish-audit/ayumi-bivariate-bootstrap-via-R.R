@@ -68,6 +68,10 @@ julia_command('begin
   sd_est     = Float64[r.estimate for r in bsd.summary]
   sd_lo      = Float64[r.lower    for r in bsd.summary]
   sd_hi      = Float64[r.upper    for r in bsd.summary]
+  cor_names  = String[String(r.param) for r in bsd.cor_summary]
+  cor_est    = Float64[r.estimate for r in bsd.cor_summary]
+  cor_lo     = Float64[r.lower    for r in bsd.cor_summary]
+  cor_hi     = Float64[r.upper    for r in bsd.cor_summary]
   n_used     = bsd.used
 end')
 
@@ -79,9 +83,25 @@ ci <- data.frame(
   stringsAsFactors = FALSE
 )
 cat(sprintf("bootstrap used %d replicates\n", julia_eval("n_used")))
+cat("\nAmong-axis SDs (sqrt(diag(Sigma_a))):\n")
 print(ci, digits = 3)
+
+# the 6 among-axis coevolution correlations, with CIs
+cor_ci <- data.frame(
+  pair  = julia_eval("cor_names"),
+  cor   = julia_eval("cor_est"),
+  lower = julia_eval("cor_lo"),
+  upper = julia_eval("cor_hi"),
+  stringsAsFactors = FALSE
+)
+cat("\nAmong-axis correlations (coevolution_cor, with CIs):\n")
+print(cor_ci, digits = 3)
 
 # Reading it: sd_sigma2's interval sits near 0 (collapsed axis = no detectable
 # scale-phylo signal in trait 2's variance) while sd_mu1's interval is clearly
-# above 0. For the across-tree sweep, wrap the fit+bootstrap in a loop over your
-# 100 trees and report, per axis, the fraction of trees whose CI excludes 0.
+# above 0. In the correlation table, cor_mu1_mu2 (coevolution of the two trait
+# means) is identified, while every correlation involving the collapsed sigma2
+# axis comes back with a near-[-1, 1] interval — the honest "this coevolution
+# correlation is not estimable here" report (your D-vs-E sign-flip, quantified).
+# For the across-tree sweep, wrap the fit+bootstrap in a loop over your 100 trees
+# and report, per quantity, the fraction of trees whose CI excludes 0.

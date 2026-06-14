@@ -37,7 +37,13 @@ Hessian: a parametric bootstrap.
    taken verbatim from how the fit extracts its own BLUPs (gaussian_bivariate.jl:
    472-474) → guaranteed consistent with `re.Q_cond`. Jitter guard for a
    near-singular Σ_a. The existing residual-only `simulate(biv_fit)` is NOT reused
-   (it carries no phylo signal → Σ_a ≈ 0 every replicate).
+   (it carries no phylo signal → Σ_a ≈ 0 every replicate). The same refits also
+   return `cor_summary`: CIs for the 6 among-axis coevolution correlations
+   (`cor_mu1_mu2` … `cor_sigma1_sigma2`, the off-diagonals of `coevolution_cor`) —
+   the documented "uncertainty on the correlations" follow-up
+   (coevo_accessors.jl:19-22). A collapsed axis makes its correlations
+   unidentified: they come back at ~[−1, 1], quantifying Ayumi's "the σ-boundary
+   leaks into the location correlation" D-vs-E sign-flip.
 
 2. **`bootstrap_result(fit)` dispatch** (`src/inference.jl`). Both the
    `DrmFit{<:Gaussian}` and generic methods now route a bivariate q4 fit

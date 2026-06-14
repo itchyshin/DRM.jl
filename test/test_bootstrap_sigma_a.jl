@@ -59,6 +59,23 @@ import Statistics
     @test rows[:sd_sigma2].upper < rows[:sd_mu1].lower
     @test rows[:sd_sigma2].lower < 0.3      # collapsed axis: lower end near 0
 
+    # among-axis correlation CIs (coevolution_cor with uncertainty)
+    @test length(br.cor_summary) == 6
+    @test [r.param for r in br.cor_summary] == [:cor_mu1_mu2, :cor_mu1_sigma1,
+        :cor_mu1_sigma2, :cor_mu2_sigma1, :cor_mu2_sigma2, :cor_sigma1_sigma2]
+    crows = Dict(r.param => r for r in br.cor_summary)
+    # point estimate matches coevolution_cor
+    @test crows[:cor_mu1_mu2].estimate ≈ coevolution_cor(fit).cor[1, 2] atol = 1e-8
+    for r in br.cor_summary
+        @test -1.0 <= r.lower <= r.upper <= 1.0
+        @test -1.0 <= r.estimate <= 1.0
+    end
+    # identified vs unidentified: a σ2-axis (collapsed) correlation has a wider CI
+    # than the identified mu1–mu2 correlation (Ayumi's "the boundary leaks into the
+    # correlation" — a collapsed axis's correlations ride toward ±1, unestimable).
+    w(r) = r.upper - r.lower
+    @test w(crows[:cor_mu1_sigma2]) > w(crows[:cor_mu1_mu2])
+
     # public bootstrap_result dispatches to this route for a bivariate q4 fit
     br2 = bootstrap_result(fit; data = dat, B = 6, tree = phy, rng = MersenneTwister(2))
     @test length(br2.summary) == 4

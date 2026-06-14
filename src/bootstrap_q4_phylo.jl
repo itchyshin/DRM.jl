@@ -30,8 +30,14 @@ Returns a `NamedTuple` with
   for `param ∈ (:sd_mu1, :sd_mu2, :sd_sigma1, :sd_sigma2)`. `estimate` is the
   fitted SD; `lower`/`upper` are the `level` percentile interval over the
   successful replicates.
+- `cor_summary` — the same rows for the 6 among-axis **correlations**
+  `(:cor_mu1_mu2, :cor_mu1_sigma1, :cor_mu1_sigma2, :cor_mu2_sigma1,
+  :cor_mu2_sigma2, :cor_sigma1_sigma2)` — the coevolutionary correlations of
+  `coevolution_cor`, now with CIs. A correlation whose axis collapses is
+  unidentified and comes back with a wide interval (e.g. ρ_a(μ1,μ2) spanning the
+  sign when a σ-axis pins).
 - `attempted`, `used`, `failed`, `failures`, `level`, `draws` (the `used × 4`
-  matrix of replicate SDs), `axes`, `elapsed`.
+  matrix of replicate SDs), `cor_draws` (`used × 6`), `axes`, `cor_pairs`, `elapsed`.
 
 The interval is the honest report at a boundary: when a scale axis carries no
 phylogenetic signal its SD collapses and the percentile interval includes ~0,
@@ -84,8 +90,14 @@ function bootstrap_sigma_a(fit::DrmFit; data, B::Int = 300, level::Real = 0.95,
     cols0 = Tables.columntable(data)
 
     axes = (:sd_mu1, :sd_mu2, :sd_sigma1, :sd_sigma2)
+    # the 6 unique among-axis correlations (axis order mu1=1, mu2=2, σ1=3, σ2=4)
+    cor_pairs = ((1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4))
+    cor_names = (:cor_mu1_mu2, :cor_mu1_sigma1, :cor_mu1_sigma2,
+                 :cor_mu2_sigma1, :cor_mu2_sigma2, :cor_sigma1_sigma2)
     est = sqrt.(max.(diag(Σa), 0.0))
-    draws = Matrix{Float64}(undef, B, 4)
+    cor_est = _q4_cor_offdiag(Σa, cor_pairs)
+    sd_draws = Matrix{Float64}(undef, B, 4)
+    cor_draws = Matrix{Float64}(undef, B, 6)
     ok = falses(B)
     messages = Vector{Union{Nothing,String}}(nothing, B)
     seeds = rand(rng, UInt, B)
@@ -111,7 +123,9 @@ function bootstrap_sigma_a(fit::DrmFit; data, B::Int = 300, level::Real = 0.95,
                        q4_vcov = false)
             (!check_converged || is_converged(fitb)) ||
                 error("refit did not converge")
-            draws[b, :] = sqrt.(max.(diag(Matrix{Float64}(fitb.ranef.Sigma_a)), 0.0))
+            Σb = Matrix{Float64}(fitb.ranef.Sigma_a)
+            sd_draws[b, :] = sqrt.(max.(diag(Σb), 0.0))
+            cor_draws[b, :] = _q4_cor_offdiag(Σb, cor_pairs)
             ok[b] = true
         catch err
             messages[b] = sprint(showerror, err)
@@ -136,21 +150,43 @@ function bootstrap_sigma_a(fit::DrmFit; data, B::Int = 300, level::Real = 0.95,
     used = count(ok)
     used > 0 || throw(ErrorException("all $B bootstrap_sigma_a replicates failed"))
 
-    used_draws = draws[ok, :]
+    used_sd = sd_draws[ok, :]
+    used_cor = cor_draws[ok, :]
     α = (1 - level) / 2
-    summary = NamedTuple{(:param, :coef, :estimate, :std_error, :lower, :upper),
-                         Tuple{Symbol,String,Float64,Float64,Float64,Float64}}[]
+    RowT = NamedTuple{(:param, :coef, :estimate, :std_error, :lower, :upper),
+                      Tuple{Symbol,String,Float64,Float64,Float64,Float64}}
+    summary = RowT[]
     for a in 1:4
-        col = @view used_draws[:, a]
+        col = @view used_sd[:, a]
         push!(summary, (param = axes[a], coef = String(axes[a]), estimate = est[a],
                         std_error = Statistics.std(col),
                         lower = Statistics.quantile(col, α),
                         upper = Statistics.quantile(col, 1 - α)))
     end
+    cor_summary = RowT[]
+    for c in 1:6
+        col = @view used_cor[:, c]
+        push!(cor_summary, (param = cor_names[c], coef = String(cor_names[c]),
+                            estimate = cor_est[c], std_error = Statistics.std(col),
+                            lower = Statistics.quantile(col, α),
+                            upper = Statistics.quantile(col, 1 - α)))
+    end
 
-    return (summary = summary, failures = failure_rows, attempted = B, used = used,
-            failed = length(failure_rows), seeds = seeds, level = level,
-            draws = used_draws, axes = axes, elapsed = elapsed)
+    return (summary = summary, cor_summary = cor_summary, failures = failure_rows,
+            attempted = B, used = used, failed = length(failure_rows), seeds = seeds,
+            level = level, draws = used_sd, cor_draws = used_cor, axes = axes,
+            cor_pairs = cor_names, elapsed = elapsed)
+end
+
+# The 6 unique among-axis correlations from a 4×4 Σ_a, in `pairs` order. A
+# collapsed axis (SD ≈ 0) makes its correlations unidentified — they come back
+# wide under the bootstrap: the honest "this coevolution correlation isn't
+# estimable here" report (e.g. ρ_a(μ1,μ2) riding toward ±1 when a σ-axis pins).
+function _q4_cor_offdiag(Σ::AbstractMatrix, pairs)
+    sd = sqrt.(max.(diag(Σ), 0.0))
+    return Float64[(sd[i] > 0 && sd[j] > 0) ?
+                   clamp(Σ[i, j] / (sd[i] * sd[j]), -1.0, 1.0) : 0.0
+                   for (i, j) in pairs]
 end
 
 # Cholesky of the tip-RE prior precision kron(Q_cond, Σ_a⁻¹). Σ_a may be near
