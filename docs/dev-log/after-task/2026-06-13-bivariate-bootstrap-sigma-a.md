@@ -74,7 +74,18 @@ Hessian: a parametric bootstrap.
   SD rows (≥10/12 refits), `multi==true`; profile throws ArgumentError. **10/10.**
 - **Full `Pkg.test()` green** (exit 0, no regression in the bootstrap/bridge
   testsets I touched).
-- R round-trip verified via `Rscript` (JuliaCall → DRM.jl → 4-row CI data.frame).
+- R round-trip verified via `Rscript` (JuliaCall → DRM.jl → SD + correlation
+  tables back).
+- **Monte-Carlo coverage study** (`report/finish-audit/bootstrap_coverage_study.jl`,
+  findings in `bootstrap-coverage-findings.md`): generate M datasets from a known
+  Σ_a, fit + bootstrap each, check per-axis CI coverage of the true SD. **Mean-axis**
+  SD CIs reach nominal (0.90 at p=60); **scale-axis** CIs are anti-conservative
+  (~0.70 at nominal 0.90, persisting at p=60). This caught two overclaims in the
+  draft reply before sending: (a) an SD is a boundary parameter so its percentile CI
+  ~never includes 0 — the discriminator is magnitude, not "excludes 0" (reply guidance
+  corrected); (b) the σ-axis precise CI width is anti-conservative (caveat added; BCa
+  is a tracked follow-up). The correlation CIs are robust (a collapsed-axis correlation
+  is genuinely wide). The signal-vs-collapse call from magnitude is robust.
 
 ## Independent cross-check
 
