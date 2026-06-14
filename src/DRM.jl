@@ -19,12 +19,13 @@ Verified results (see report/comparison-grid.md):
 - Inference: Wald SEs valid for 16/17 params where drmTMB's Hessian is all-NaN;
   parametric bootstrap 60/60.
 
-NOTE (first cleanup task, see HANDOVER.md): the engine files were migrated as the
-poc's script-style includes (chain: fit_q4_sparse_tmb → fit_ml_q4 → sparse_em_fit
-→ sparse_aug_plsm → sparse_phy / takahashi_selinv). Inference (Wald + profile + parametric
-bootstrap) is wired in `src/inference.jl`; the remaining comparison-suite engines
-(REML, location-only, EM) live in `src/experimental/` and are NOT yet wired into
-this module — wiring them into a clean public API is the v0.1 task.
+NOTE (see HANDOVER.md): the engine files were migrated as the poc's script-style
+includes (chain: fit_q4_sparse_tmb → fit_ml_q4 → sparse_em_fit → sparse_aug_plsm
+→ sparse_phy / takahashi_selinv). Inference (Wald + profile + parametric bootstrap)
+is wired in `src/inference.jl`, and REML is wired (`src/reml_q4.jl`, public
+`drm(method = :REML)`; the restricted correction covers all four among-axis axes —
+see #11). The remaining comparison-suite engines (location-only, EM) live in
+`src/experimental/` and are not yet wired into this module.
 """
 module DRM
 
