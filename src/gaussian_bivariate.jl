@@ -481,6 +481,8 @@ function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fi
         phy = phy,
         group = grp,
         species = species,
+        prob = prob,                 # AugProblem — lets profile_sigma_a re-optimise the marginal
+        n_newton = q4_n_newton,      # the inner-mode iteration count this fit used
     )
     fit = DrmFit(fam, blocks, names, θ̂, V, r.loglik, length(y1), r.converged, means, obs, scales)
     fit = method === :REML ? _withreml(fit, reml_ll, ml_ll) : fit
