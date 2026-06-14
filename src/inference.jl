@@ -1024,6 +1024,16 @@ function bootstrap_result(
     algorithm::Symbol=:auto,
     g_tol::Real=1e-8,
 )
+    # Bivariate q=4 phylogenetic fit (also a DrmFit{<:Gaussian}): no scalar SD
+    # block to refit-and-recoef — the quantities of interest are the among-axis
+    # SDs sqrt.(diag(Σ_a)). Route to the dedicated parametric bootstrap, which
+    # gives boundary-honest percentile CIs. K/A/tree are carried by the fit.
+    if fit.formula isa BivariateDrmFormula && fit.ranef isa NamedTuple &&
+       haskey(fit.ranef, :Sigma_a)
+        return bootstrap_sigma_a(fit; data = data, B = B, level = level, rng = rng,
+                                 failures = (failures === :error ? :error : :warn),
+                                 check_converged = check_converged)
+    end
     _check_bootstrap_failure_mode(failures)
     formula = _bootstrap_fit_formula(fit)
     refit = datab -> drm(formula, fit.family; data=datab, K, A, tree, algorithm, g_tol)
@@ -1062,6 +1072,16 @@ function bootstrap_result(
     check_converged::Bool=false,
     kwargs...,
 )
+    # Bivariate q=4 phylogenetic fit: there is no scalar SD block to refit-and-
+    # recoef; the quantities of interest are the among-axis SDs sqrt.(diag(Σ_a)).
+    # Route to the dedicated parametric bootstrap (boundary-honest percentile CIs).
+    if fit.formula isa BivariateDrmFormula && fit.ranef isa NamedTuple &&
+       haskey(fit.ranef, :Sigma_a)
+        # K/A/tree are carried by the fit (fit.ranef.phy) — accept and ignore them.
+        return bootstrap_sigma_a(fit; data = data, B = B, level = level, rng = rng,
+                                 failures = (failures === :error ? :error : :warn),
+                                 check_converged = check_converged)
+    end
     for (_, value) in pairs(kwargs)
         value === nothing || throw(
             ArgumentError("bootstrap_result: K/A/tree are only valid for Gaussian fits")

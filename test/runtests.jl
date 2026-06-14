@@ -168,6 +168,9 @@ include("test_missing_listwise.jl")
 # constructor guard rails.
 include("test_coverage_engine.jl")
 include("test_bridge_formula_translation.jl")
+# Bridge inference for the bivariate q4 σ-phylo fit: among-axis SD CIs via bootstrap
+# (multi-row payload) + the profile→bootstrap redirect (Ayumi #2 uncertainty-via-R).
+include("test_bridge_bivariate_inference.jl")
 
 # NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
@@ -212,6 +215,10 @@ include("test_gaussian_locscale_phylo_boundary.jl")
 # no-Hessian complement to the bootstrap — collapsed axis → lower bound 0; panel-hardened
 # (straddle guard, warm-start convergence gate, consistent nll_hat).
 include("test_profile_sigma_a.jl")
+# Parametric bootstrap of the bivariate q=4 among-axis SDs (Ayumi #2): the
+# single-tree boundary-honest CI for sqrt.(diag(Σ_a)) — a collapsing axis reports
+# an interval that sits at ~0, where the q4 profile is singular.
+include("test_bootstrap_sigma_a.jl")
 # REML for the σ-phylo location-scale route (Patterson–Thompson) + the fast observed-
 # information Newton (the average-information data-quadratic was proven invalid here — â is
 # the shrunk BLUP; see the second file's note). Both were orphan files; wired in here.
