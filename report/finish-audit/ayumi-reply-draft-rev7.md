@@ -22,7 +22,7 @@ Hi Ayumi — this is a terrific round of work, and the across-tree runs (Comment
   ```r
   # in Julia (JuliaCall::julia_command, or a Julia REPL):
   import Pkg
-  Pkg.add(url = "https://github.com/itchyshin/DRM.jl", rev = "shannon/sigma-phylo-tools")   # [VERIFY ref]
+  Pkg.add(url = "https://github.com/itchyshin/DRM.jl", rev = "shannon/sigma-phylo-tools")
   ```
 - **drmTMB** — only needed for the *univariate* `engine = "julia"` path and the idiomatic `confint()`; the bridge branches you already found are the right family (`shannon/bridge-*`). For your **bivariate** σ-phylo pairs you don't need drmTMB at all — that route is reached from DRM.jl directly (next answer).
 
@@ -48,7 +48,7 @@ This is the full path, not just the model call. `df` is your data frame and `you
 ```r
 library(JuliaCall)
 julia_setup()                                              # your Julia 1.12.6 is fine
-julia_command('import Pkg; Pkg.add(url="https://github.com/itchyshin/DRM.jl", rev="shannon/sigma-phylo-tools")')  # [VERIFY ref] — once only
+julia_command('import Pkg; Pkg.add(url="https://github.com/itchyshin/DRM.jl", rev="shannon/sigma-phylo-tools")')  # once only
 julia_library("DRM"); julia_library("Random")
 
 # --- one pair, one tree --------------------------------------------------------
@@ -112,6 +112,6 @@ Native TMB REML is location-only by design (it requires `sigma ~ 1`), which is w
 
 ---
 
-So, concretely: install **DRM.jl `shannon/sigma-phylo-tools`** [VERIFY ref] and the boundary-honest σ-phylo SD + correlation intervals are a JuliaCall away (script attached, drops into your 50-tree loop); **keep your 50-tree summaries as final** (Pierre and I are confident 50 suffices); and your boundary reading is correct throughout — the collapsing pairs are the data speaking, now reportable with a CI that includes 0 rather than a `pdHess = FALSE` failure. The idiomatic `confint(engine="julia")` bivariate wrapper and the optimiser-control exposure (`drm_control()`, drmTMB #540) are the two pieces still in flight; I'll ping you the moment each lands. And do send one pair + formula whenever convenient — I'd like to benchmark your exact 10k-tip fit on the Julia route.
+So, concretely: install **DRM.jl `shannon/sigma-phylo-tools`** and the boundary-honest σ-phylo SD + correlation intervals are a JuliaCall away (script attached, drops into your 50-tree loop); **keep your 50-tree summaries as final** (Pierre and I are confident 50 suffices); and your boundary reading is correct throughout — the collapsing pairs are the data speaking, now reportable with a CI that includes 0 rather than a `pdHess = FALSE` failure. The idiomatic `confint(engine="julia")` bivariate wrapper and the optimiser-control exposure (`drm_control()`, drmTMB #540) are the two pieces still in flight; I'll ping you the moment each lands. And do send one pair + formula whenever convenient — I'd like to benchmark your exact 10k-tip fit on the Julia route.
 
 Thanks again — this is genuinely careful work, and the boundary map you've built is the cleanest I've seen.

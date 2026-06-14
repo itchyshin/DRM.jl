@@ -60,8 +60,8 @@ julia_command('begin
             rho12  = @formula(rho12 ~ 1))
   fit = drm(form, Gaussian(); data = dat, tree = phy)          # ML; method = :REML also available
 
-  # (1) PROFILE-likelihood CIs (calibrated, boundary-honest, no Hessian)
-  pr = profile_sigma_a(fit; level = 0.90)
+  # (1) PROFILE-likelihood CIs (boundary-honest, no Hessian)
+  pr = profile_sigma_a(fit; level = 0.95)
   global p_axis = String[String(r.param) for r in pr.summary]
   global p_est  = Float64[r.estimate for r in pr.summary]
   global p_lo   = Float64[r.lower for r in pr.summary]
