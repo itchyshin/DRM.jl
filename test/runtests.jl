@@ -168,6 +168,9 @@ include("test_missing_listwise.jl")
 # constructor guard rails.
 include("test_coverage_engine.jl")
 include("test_bridge_formula_translation.jl")
+# Bridge inference for the bivariate q4 σ-phylo fit: among-axis SD CIs via bootstrap
+# (multi-row payload) + the profile→bootstrap redirect (Ayumi #2 uncertainty-via-R).
+include("test_bridge_bivariate_inference.jl")
 
 # NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
 # (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
