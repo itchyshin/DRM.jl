@@ -24,8 +24,13 @@ function make_problem(phy, y1, y2, X1, X2, Xs1, Xs2, Xr; species = 1:phy.n_leave
     # = one row per leaf (backward-compatible). >1 row/leaf ⇒ replicate observations,
     # which IDENTIFY the per-leaf scale random effects (fixes the p≥500 degeneracy).
     leaf_node = [pos[phy.leaf_indices[species[i]]] for i in eachindex(species)]
+    # #19: per-row observed-response masks (NaN ⇒ missing). Zero the missing y so the
+    # value never leaks into a warm-start path; the masked leaf likelihood ignores it.
+    y1f = Vector{Float64}(y1); y2f = Vector{Float64}(y2)
+    obs1 = .!isnan.(y1f); obs2 = .!isnan.(y2f)
+    y1c = ifelse.(obs1, y1f, 0.0); y2c = ifelse.(obs2, y2f, 0.0)
     prob = AugProblem(phy, length(keep), phy.n_leaves, leaf_node,
-                      y1, y2, X1, X2, Xs1, Xs2, Xr)
+                      y1c, y2c, X1, X2, Xs1, Xs2, Xr, obs1, obs2)
     return prob, Q_cond
 end
 
@@ -70,7 +75,8 @@ function mstep_beta(prob::AugProblem, u::Vector{Float64}, β; n_newton=25, tol=1
         @inbounds for i in 1:p
             tot += leaf_nll(uL[i], prob.y1[i], prob.y2[i],
                             prob.X1[i,:]'bm1, prob.X2[i,:]'bm2,
-                            prob.Xs1[i,:]'bs1, prob.Xs2[i,:]'bs2, prob.Xr[i,:]'br)
+                            prob.Xs1[i,:]'bs1, prob.Xs2[i,:]'bs2, prob.Xr[i,:]'br,
+                            prob.obs1[i], prob.obs2[i])
         end
         return tot
     end

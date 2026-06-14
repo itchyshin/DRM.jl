@@ -355,21 +355,23 @@ function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fi
     _, Xs1, nms1 = _design(f.response1, fixed[:sigma1], data)
     _, Xs2, nms2 = _design(f.response1, fixed[:sigma2], data)
     _, Xr, nmr = _design(f.response1, fixed[:rho12], data)
-    if !all(_observed_response_mask(y1)) || !all(_observed_response_mask(y2))
-        throw(ArgumentError("drm: missing responses are not yet implemented for the " *
-            "bivariate q=4 phylogenetic location-scale engine. The residual " *
-            "bivariate Gaussian engine supports partial response rows; q=4 needs " *
-            "a sparse-kernel mask slice so the latent phylogenetic likelihood can " *
-            "condition on observed response cells only."))
-    end
+    # #19: missing responses are supported via a per-cell observed mask — observed
+    # cells enter the likelihood, the full tree is kept. make_problem records the mask
+    # (NaN ⇒ missing) and zeroes the missing values; here we only guard identifiability
+    # and seed the optimiser from the OBSERVED rows.
+    obs1 = _observed_response_mask(y1)
+    obs2 = _observed_response_mask(y2)
+    (count(obs1) >= size(X1, 2) && count(obs2) >= size(X2, 2)) ||
+        throw(ArgumentError("drm: too few observed `$(f.response1)`/`$(f.response2)` rows " *
+            "for the bivariate q=4 mean coefficients"))
 
     species = _phylo_species_index(phy, getproperty(data, grp))
     prob, Q_cond = make_problem(phy, y1, y2, X1, X2, Xs1, Xs2, Xr; species = species)
 
-    β1 = X1 \ y1
-    β2 = X2 \ y2
-    res1 = y1 .- X1 * β1
-    res2 = y2 .- X2 * β2
+    β1 = X1[obs1, :] \ y1[obs1]        # seed from observed rows (X1 \ y1 would be NaN)
+    β2 = X2[obs2, :] \ y2[obs2]
+    res1 = y1[obs1] .- X1[obs1, :] * β1
+    res2 = y2[obs2] .- X2[obs2, :] * β2
     β0 = (
         mu1 = β1,
         mu2 = β2,
