@@ -6,6 +6,17 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## Unreleased
 
+- **Bivariate q=4 coevolution bootstrap uncertainty** — `bootstrap_sigma_a` gives
+  parametric-bootstrap intervals for the q=4 phylogenetic among-axis SDs
+  (`sqrt(diag(Σ_a))`) and the six among-axis coevolution correlations, reachable
+  from R via JuliaCall; `bootstrap_result(fit)` and the R bridge route a bivariate
+  q4 fit here. Boundary-honest: a collapsing scale axis returns a small interval
+  near the floor and its correlations come back unidentified (`~[−1, 1]`). A
+  coverage study (`report/finish-audit/bootstrap-coverage-findings.md`) confirms
+  the mean-axis SD CIs are well-calibrated and the detection/correlation reads are
+  robust; the scale-axis *precise* CIs are anti-conservative (a known
+  boundary-bootstrap effect) — read them as detection/indication, with a calibrated
+  interval (BCa / bias-correction) tracked as a follow-up.
 - **Per-parameter prediction** — `predict_parameters` (fitted distributional
   parameters on new data), `marginal_parameters` (population-averaged), and
   `prediction_grid` (build a swept `newdata` grid from a reference table).

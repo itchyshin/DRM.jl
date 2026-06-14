@@ -53,12 +53,23 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     fam = _bridge_family(family)
     opts = _bridge_options(options)
     bridge_method = lowercase(strip(String(method)))
-    # The σ-phylo location-scale route precomputes its boundary-aware profile CIs into the fit
-    # (it has no re-optimisable objective), so request them at fit time for the profile method.
-    bridge_method == "profile" && (opts[:profile_ci] = true)
+    is_biv = bundle isa BivariateDrmFormula
+    # The univariate σ-phylo location-scale route precomputes its boundary-aware
+    # profile CIs into the fit (it has no re-optimisable objective), so request them
+    # at fit time for the profile method. The bivariate q=4 route has no such flag
+    # (its drm method rejects `profile_ci`) — skip it there.
+    (!is_biv && bridge_method == "profile") && (opts[:profile_ci] = true)
     tree_obj = tree === nothing ? nothing : _bridge_tree(tree)
     fit = _bridge_fit(bundle, fam, dat; tree = tree_obj, K = nothing,
                       A = nothing, coords = nothing, options = opts)
+
+    # Bivariate q=4 phylogenetic fit: the uncertainty target is the four among-axis
+    # SDs sqrt.(diag(Σ_a)), not a single SD row. The boundary makes the q4 profile
+    # singular, so the route is the parametric bootstrap; return all four rows.
+    if is_biv && fit.ranef isa NamedTuple && haskey(fit.ranef, :Sigma_a)
+        return _bridge_bivariate_inference(fit, dat, bridge_method;
+                                           B = B, level = level, seed = seed)
+    end
 
     if bridge_method == "profile"
         # Profile ONLY the SD target the bridge returns (`_bridge_pick_sd_row`'s set),
@@ -410,5 +421,98 @@ function _bridge_inference_flatten(row; method::AbstractString,
         "worker_threads" => Int(worker_threads),
         "julia_threads" => Int(julia_threads),
         "blas_threads" => Int(blas_threads),
+    )
+end
+
+# Bivariate q=4 inference for the bridge: confidence intervals for the among-axis SDs
+# (sd_mu1, sd_mu2, sd_sigma1, sd_sigma2) — these are boundary variance components, so the
+# right tools are profile (default) and bootstrap, NOT Wald:
+#   method = "profile"   -> profile_sigma_a  (hessian-free profile-likelihood CIs; a
+#                           collapsed axis returns lower = 0, the honest no-signal interval)
+#   method = "bootstrap" -> bootstrap_sigma_a (parametric percentile CIs + correlations)
+#   method = "wald"      -> unavailable (the among-axis boundary Hessian is singular)
+function _bridge_bivariate_inference(fit, dat, method::AbstractString;
+                                     B::Integer, level::Real, seed)
+    if method == "bootstrap"
+        rng = seed === nothing ? Random.default_rng() :
+              Random.MersenneTwister(Int(seed))
+        result = bootstrap_result(fit; data = dat, B = Int(B), level = level,
+                                  rng = rng, failures = :warn, check_converged = false)
+        return _bridge_inference_flatten_multi(
+            result.summary;
+            method = "bootstrap",
+            status = result.used >= 2 ? "bootstrap" : "bootstrap_unavailable",
+            attempted = result.attempted, used = result.used, failed = result.failed,
+            elapsed = result.elapsed,
+            message = "$(result.used)/$(result.attempted) successful refits")
+    elseif method == "profile"
+        # PROFILE-likelihood CIs for the among-axis SDs — hessian-free, so valid exactly
+        # where the boundary Hessian is singular (a collapsed axis returns lower = 0).
+        # `fit` already carries the profile-ready stash (re.prob / re.Sigma_a / re.Q_cond
+        # from gaussian_bivariate.jl), so no re-fit is needed.
+        elapsed = @elapsed result = profile_sigma_a(fit; level = level)
+        rows = result.summary
+        return _bridge_inference_flatten_multi_profile(
+            rows;
+            method = "profile",
+            status = "profile",
+            attempted = length(rows), used = length(rows), failed = 0,
+            elapsed = elapsed,
+            message = "profile_sigma_a (hessian-free profile-likelihood CIs)")
+    elseif method == "wald"
+        throw(ArgumentError("drm_bridge_inference: `wald` CIs are not available for the " *
+            "bivariate q=4 phylogenetic fit's among-axis SDs (boundary variance components — " *
+            "the Hessian is singular at a collapsed axis); use method = \"profile\" (default) " *
+            "or method = \"bootstrap\""))
+    end
+    throw(ArgumentError("drm_bridge_inference: unsupported method `$method`"))
+end
+
+# Multi-row payload for the bivariate route: param/coef/estimate/std_error/lower/
+# upper come back as equal-length vectors so the R side reads them as a data.frame.
+function _bridge_inference_flatten_multi(rows; method::AbstractString,
+        status::AbstractString, attempted::Integer, used::Integer,
+        failed::Integer, elapsed::Real, message::AbstractString)
+    return Dict{String,Any}(
+        "method" => String(method),
+        "multi" => true,
+        "param" => String[String(r.param) for r in rows],
+        "coef" => String[String(r.coef) for r in rows],
+        "estimate" => Float64[Float64(r.estimate) for r in rows],
+        "std_error" => Float64[Float64(r.std_error) for r in rows],
+        "lower" => Float64[Float64(r.lower) for r in rows],
+        "upper" => Float64[Float64(r.upper) for r in rows],
+        "status" => String(status),
+        "message" => String(message),
+        "attempted" => Int(attempted),
+        "used" => Int(used),
+        "failed" => Int(failed),
+        "elapsed" => Float64(elapsed),
+    )
+end
+
+# Profile rows carry (param, coef, estimate, lower, upper, deviance_floor, bounded) — NO
+# std_error (a likelihood-ratio interval, not a Wald one), and `upper` may be Inf on a
+# flat/collapsed axis. Emit std_error => NaN and carry the honest `bounded` flag so the R
+# data.frame keeps the same columns as the bootstrap path.
+function _bridge_inference_flatten_multi_profile(rows; method::AbstractString,
+        status::AbstractString, attempted::Integer, used::Integer,
+        failed::Integer, elapsed::Real, message::AbstractString)
+    return Dict{String,Any}(
+        "method" => String(method),
+        "multi" => true,
+        "param" => String[String(r.param) for r in rows],
+        "coef" => String[String(r.coef) for r in rows],
+        "estimate" => Float64[Float64(r.estimate) for r in rows],
+        "std_error" => Float64[NaN for _ in rows],
+        "lower" => Float64[Float64(r.lower) for r in rows],
+        "upper" => Float64[Float64(r.upper) for r in rows],
+        "bounded" => Bool[Bool(r.bounded) for r in rows],
+        "status" => String(status),
+        "message" => String(message),
+        "attempted" => Int(attempted),
+        "used" => Int(used),
+        "failed" => Int(failed),
+        "elapsed" => Float64(elapsed),
     )
 end

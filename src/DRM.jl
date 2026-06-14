@@ -90,6 +90,8 @@ include("inference.jl")
 include("bias_correct.jl")       # TMB-style epsilon-method bias correction (#227 B11)
 include("heritability.jl")       # comparative-biology derived ratios (h²/ICC) + CIs
 include("coevo_accessors.jl")    # #188: q=4 coevolution among-axis correlation + variance accessors
+include("profile_q4_phylo.jl")   # Ayumi #2: profile-likelihood CIs for the q=4 among-axis SDs (calibrated, no Hessian)
+include("bootstrap_q4_phylo.jl") # Ayumi #2: parametric bootstrap of the q=4 among-axis SDs (boundary-honest CIs)
 include("variational.jl")
 include("summary.jl")
 include("visualization.jl")
@@ -115,8 +117,9 @@ export AugProblem, make_problem,
 
 # Public API — the Gaussian distributional-regression front end.
 export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
-       coef, vcov, loglik, nobs, dof, aic, bic, fixef, re_sd, vc, ranef, sigma, corpairs, rho12, stderror, confint, coeftable, fitted, residuals, predict, predict_parameters, marginal_parameters, prediction_grid, simulate, bootstrap_ci, bootstrap_summary, bootstrap_result, check_drm, family,
+       coef, vcov, loglik, nobs, dof, aic, bic, fixef, re_sd, vc, ranef, sigma, corpairs, rho12, stderror, confint, coeftable, fitted, residuals, predict, predict_parameters, marginal_parameters, prediction_grid, simulate, bootstrap_ci, bootstrap_summary, bootstrap_result, bootstrap_sigma_a, check_drm, family,
        profile_result, profile_curve, parameter_surface, corpairs_data, gaussian_locscale_phylo_sds,
+       profile_sigma_a,
        is_converged, deviance, dof_residual,
        lrtest, anova, aicc, weights, update,
        chibar_pvalue, lrt_boundary,

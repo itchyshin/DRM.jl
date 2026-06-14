@@ -153,13 +153,17 @@ end
         q4_vcov = false,
     )
 
-    y1_missing = Vector{Union{Missing,Float64}}(fixture.data.y1)
-    y1_missing[1] = missing
-    missing_data = merge(fixture.data, (; y1 = y1_missing))
+    # #19: a few missing response cells now FIT (the masked per-cell likelihood;
+    # see test_missing_response_bivariate.jl for the FD gate + end-to-end recovery).
+    # The remaining validation is that too FEW observed rows for the mean
+    # coefficients is still rejected, not silently over-parameterised.
+    y1_underdet = Vector{Union{Missing,Float64}}(fixture.data.y1)
+    y1_underdet[2:end] .= missing            # only 1 observed y1 < pμ = 2
+    underdet_data = merge(fixture.data, (; y1 = y1_underdet))
     @test_throws ArgumentError drm(
         _q4_formula(),
         Gaussian();
-        data = missing_data,
+        data = underdet_data,
         tree = fixture.phy,
         q4_vcov = false,
     )
