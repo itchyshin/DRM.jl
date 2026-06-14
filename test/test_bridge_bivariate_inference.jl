@@ -45,7 +45,20 @@ using DRM, Test, Random, LinearAlgebra
     @test all(res["lower"] .>= 0)          # SD scale
     @test res["used"] >= 6                 # 12 attempted; loose floor for CI robustness
 
-    # profile is unavailable for the q4 (singular boundary) — directs to bootstrap
+    # PROFILE-likelihood CIs ARE available for the q4 among-axis SDs (hessian-free,
+    # boundary-correct) — the headline strength, NOT a bootstrap fallback.
+    res_p = DRM.drm_bridge_inference(; formula = fml, family = "biv_gaussian",
+        data = dat, tree = phy, method = "profile", level = 0.90)
+    @test res_p["method"] == "profile"          # real profile, not redirected
+    @test res_p["multi"] === true
+    @test res_p["param"] == ["sd_mu1", "sd_mu2", "sd_sigma1", "sd_sigma2"]
+    @test all(isfinite, res_p["estimate"])
+    @test all(res_p["lower"] .>= 0)             # boundary-respecting lower bounds
+    @test all(res_p["lower"] .<= res_p["estimate"] .+ 1e-8)
+    @test all(res_p["estimate"] .<= res_p["upper"] .+ 1e-8)   # upper may be Inf on a flat axis
+    @test all(isnan, res_p["std_error"])        # LR interval has no Wald SE
+
+    # Wald is correctly unavailable for these boundary variance components.
     @test_throws ArgumentError DRM.drm_bridge_inference(; formula = fml,
-        family = "biv_gaussian", data = dat, tree = phy, method = "profile")
+        family = "biv_gaussian", data = dat, tree = phy, method = "wald")
 end
