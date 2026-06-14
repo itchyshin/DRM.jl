@@ -208,6 +208,10 @@ include("test_phylo_locscale.jl")
 # σ-phylo location-scale (Ayumi #2): separate/coupled/asymmetric blocks + boundary CIs.
 include("test_gaussian_locscale_phylo.jl")
 include("test_gaussian_locscale_phylo_boundary.jl")
+# Parametric bootstrap of the bivariate q=4 among-axis SDs (Ayumi #2): the
+# single-tree boundary-honest CI for sqrt.(diag(Σ_a)) — a collapsing axis reports
+# an interval that sits at ~0, where the q4 profile is singular.
+include("test_bootstrap_sigma_a.jl")
 # REML for the σ-phylo location-scale route (Patterson–Thompson) + the fast observed-
 # information Newton (the average-information data-quadratic was proven invalid here — â is
 # the shrunk BLUP; see the second file's note). Both were orphan files; wired in here.
