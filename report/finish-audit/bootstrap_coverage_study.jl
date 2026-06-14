@@ -48,7 +48,7 @@ function run_coverage_study(; M = 40, B = 80, level = 0.90, p = 20, m = 5)
         try
             fit = drm(form, Gaussian(); data = dat, tree = phy)
             is_converged(fit) || continue
-            br = bootstrap_sigma_a(fit; data = dat, B = B,
+            br = bootstrap_sigma_a(fit; data = dat, B = B, level = level,
                                    rng = Random.MersenneTwister(d), failures = :warn)
         catch
             continue

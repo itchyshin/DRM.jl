@@ -78,14 +78,19 @@ Hessian: a parametric bootstrap.
   tables back).
 - **Monte-Carlo coverage study** (`report/finish-audit/bootstrap_coverage_study.jl`,
   findings in `bootstrap-coverage-findings.md`): generate M datasets from a known
-  Σ_a, fit + bootstrap each, check per-axis CI coverage of the true SD. **Mean-axis**
-  SD CIs reach nominal (0.90 at p=60); **scale-axis** CIs are anti-conservative
-  (~0.70 at nominal 0.90, persisting at p=60). This caught two overclaims in the
-  draft reply before sending: (a) an SD is a boundary parameter so its percentile CI
-  ~never includes 0 — the discriminator is magnitude, not "excludes 0" (reply guidance
-  corrected); (b) the σ-axis precise CI width is anti-conservative (caveat added; BCa
-  is a tracked follow-up). The correlation CIs are robust (a collapsed-axis correlation
-  is genuinely wide). The signal-vs-collapse call from magnitude is robust.
+  Σ_a, fit + bootstrap each, check per-axis CI coverage of the true SD (true 90% CIs,
+  M=60, p=40). **Mean-axis** SD CIs are well-calibrated (0.88 / 0.87); **scale-axis**
+  SD CIs **severely undercover** (0.53 / 0.52 at nominal 0.90) — bias-driven (ML
+  shrinks the weak log-σ variance component; the bootstrap inherits it). This caught
+  THREE issues before the reply shipped: (a) the study itself had a level-labelling
+  bug (95% CIs labelled 0.90 — fixed, `level` now passed); (b) an SD is a boundary
+  parameter so its percentile CI ~never includes 0 — the discriminator is magnitude,
+  not "excludes 0" (reply guidance corrected); (c) the σ-axis precise CI is NOT a
+  calibrated interval (~0.52 coverage) — reframed as a detection + rough-indicator
+  tool, with the across-tree point-SD distribution as the robust signal call; a
+  calibrated σ-CI (bias-corrected/BCa/REML) is a tracked follow-up. Robust regardless:
+  the mean-axis CIs, the magnitude collapse/signal read, and the correlation CIs
+  (a collapsed-axis correlation comes back genuinely wide ~[−1,1]).
 
 ## Independent cross-check
 
