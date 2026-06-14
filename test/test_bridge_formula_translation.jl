@@ -36,6 +36,19 @@ using Test
         @test fitok("y ~ x1 + x2 + x3 + x1:x2:x3; sigma ~ 1")   # 3-way
     end
 
+    @testset "R `*` crossing: valid fits, nested bans rejected" begin
+        # `*` (crossing = main effects + interaction) is a valid Julia formula op.
+        @test fitok("y ~ x1 * x2 + phylo(1 | species); sigma ~ 1")
+        # A banned construct nested under `*` or a transform must still be caught
+        # (it must NOT leak a raw Julia error). `temp*lat` is common in ecology.
+        for f in ("y ~ x1 * I(x1^2); sigma ~ 1",
+                  "y ~ x1 * scale(x2); sigma ~ 1",
+                  "y ~ log1p(I(x1^2)); sigma ~ 1")
+            @test_throws ArgumentError drm_bridge(; formula = f, family = "gaussian",
+                                                  data = dat, tree = phy)
+        end
+    end
+
     @testset "crash/silent constructs become clear rejections" begin
         for f in ("y ~ x1 + I(x1^2); sigma ~ 1",
                   "y ~ factor(species); sigma ~ 1",
