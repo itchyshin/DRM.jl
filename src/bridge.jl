@@ -142,7 +142,21 @@ function _bridge_fit(bundle, fam, data; tree, K, A, coords, options)
     if haskey(options, :profile_ci)
         kwargs[:profile_ci] = Bool(options[:profile_ci])
     end
+    if _bridge_is_bivariate_phylo_q4(bundle, fam, tree) && !haskey(options, :q4_vcov)
+        # The bridge's q4 uncertainty route is profile/bootstrap over among-axis
+        # SDs. Avoid the auxiliary finite-difference Wald covariance by default:
+        # it is expensive at large q4 phylogenetic fits and can fail after a
+        # usable fit has been found.
+        kwargs[:q4_vcov] = false
+    end
+    if haskey(options, :q4_vcov)
+        kwargs[:q4_vcov] = Bool(options[:q4_vcov])
+    end
     return drm(bundle, fam; data = data, kwargs...)
+end
+
+function _bridge_is_bivariate_phylo_q4(bundle, fam, tree)
+    return bundle isa BivariateDrmFormula && fam isa Gaussian && tree !== nothing
 end
 
 # Pick the variance-component SD row from a profile/bootstrap result for the bridge: prefer the

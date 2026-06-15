@@ -49,4 +49,12 @@
     @test sd_reml[4] >= sd_ml[4] - 1e-6
     # REML genuinely changes the fit (not a silent no-op).
     @test maximum(abs.(sd_reml .- sd_ml)) > 1e-4
+
+    boot = bootstrap_sigma_a(frl; data = dat, B = 2,
+                             rng = Random.MersenneTwister(20260615),
+                             failures = :error, check_converged = false)
+    @test boot.attempted == 2
+    @test boot.used == 2
+    @test boot.failed == 0
+    @test all(isfinite, [row.estimate for row in boot.summary])
 end

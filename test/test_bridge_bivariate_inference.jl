@@ -32,6 +32,13 @@ using DRM, Test, Random, LinearAlgebra
         :rho12 => "rho12 ~ 1",
     )
 
+    fit_reml = DRM.drm_bridge(; formula = fml, family = "biv_gaussian",
+        data = dat, tree = phy, options = Dict("method" => "REML"))
+    @test fit_reml["family"] == "biv_gaussian"
+    @test isfinite(fit_reml["loglik"])
+    @test all(isfinite, fit_reml["coefficients"])
+    @test all(isnan, vec(fit_reml["vcov"]))
+
     res = DRM.drm_bridge_inference(; formula = fml, family = "biv_gaussian",
         data = dat, tree = phy, method = "bootstrap", level = 0.90, B = 12,
         seed = 20260613)

@@ -11,7 +11,8 @@
 # N(0, Q_cond⁻¹ ⊗ Σ̂_a) on the SAME tree (the exact precision-Cholesky draw the
 # verified `simulate_coevolution` uses), adds them to the fitted fixed effects on
 # all four axes, regenerates (y1, y2) with the fitted residual ρ12, refits the
-# verified q=4 engine, and records sqrt.(diag(Σ̂_a)). Percentile CIs respect the
+# verified q=4 engine with the original estimator (ML or REML), and records
+# sqrt.(diag(Σ̂_a)). Percentile CIs respect the
 # SD ≥ 0 boundary automatically: a collapsing axis yields an interval whose lower
 # end sits at ~0 — the honest "no detectable phylogenetic signal in that axis".
 
@@ -120,7 +121,7 @@ function bootstrap_sigma_a(fit::DrmFit; data, B::Int = 300, level::Real = 0.95,
                           NamedTuple{(form.response1, form.response2)}((y1, y2)))
             fitb = drm(form, fam; data = datab, tree = phy,
                        q4_g_tol = q4_g_tol, q4_iterations = q4_iterations,
-                       q4_vcov = false)
+                       q4_vcov = false, method = fit.estim_method)
             (!check_converged || is_converged(fitb)) ||
                 error("refit did not converge")
             Σb = Matrix{Float64}(fitb.ranef.Sigma_a)
@@ -148,7 +149,13 @@ function bootstrap_sigma_a(fit::DrmFit; data, B::Int = 300, level::Real = 0.95,
             "$B replicates; first failure replicate $(f.replicate), seed $(f.seed): $(f.message)"))
     end
     used = count(ok)
-    used > 0 || throw(ErrorException("all $B bootstrap_sigma_a replicates failed"))
+    if used == 0
+        detail = isempty(failure_rows) ? "" : begin
+            f = first(failure_rows)
+            "; first failure replicate $(f.replicate), seed $(f.seed): $(f.message)"
+        end
+        throw(ErrorException("all $B bootstrap_sigma_a replicates failed$detail"))
+    end
 
     used_sd = sd_draws[ok, :]
     used_cor = cor_draws[ok, :]
