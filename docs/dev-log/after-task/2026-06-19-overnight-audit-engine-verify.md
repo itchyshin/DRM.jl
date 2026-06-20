@@ -40,6 +40,15 @@ Engine-health was re-verified on `f46035d` with the focused-test invocation
   (registry network), `Aqua.test_all(DRM)` passed all 10 quality checks in 8.7s
   (no method piracy, ambiguities, unbound type params, or stale deps). This
   advances the Julia General registry-readiness gate (S2 in the plan below).
+- The **full** `julia --project=. test/runtests.jl` then passed end-to-end:
+  228 testsets, 0 failures, 3 expected `@test_broken` (the `#136` VA marginal
+  scaffold). It exercises every family, the structured
+  phylo/spatial/animal/relmat routes, random slopes, REML, parametric bootstrap
+  and profile CIs, the variational-approximation marginals, cross-family latent
+  correlation, quantile residuals, and the FD-vs-exact gradient gates
+  (`≤ 1e-6`). This is the strongest direct-DRM.jl engine-health evidence to date
+  on this commit; it does NOT promote any R-to-Julia bridge or native-TMB claim
+  (separate lanes).
 
 ## Boundary-safe finish plan (for the maintainer / Grace)
 
