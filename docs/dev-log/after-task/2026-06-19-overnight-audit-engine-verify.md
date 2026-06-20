@@ -36,9 +36,10 @@ Engine-health was re-verified on `f46035d` with the focused-test invocation
   engine itself lives in `src/fit_q4_sparse_tmb.jl` and is covered by the
   tagged `v0.1.1` evidence; the `test_q4_laplace.jl` fixture gap is a
   harness note for the maintainer, not an engine failure.
-- `test_aqua.jl` could not run: `Aqua` is in `test/Project.toml` but not
-  instantiated in this worktree (`Pkg.instantiate()` for the test env, which
-  needs registry network access, is required first).
+- `test_aqua.jl` now passes 10/10: after `Pkg.instantiate()` on the test env
+  (registry network), `Aqua.test_all(DRM)` passed all 10 quality checks in 8.7s
+  (no method piracy, ambiguities, unbound type params, or stale deps). This
+  advances the Julia General registry-readiness gate (S2 in the plan below).
 
 ## Boundary-safe finish plan (for the maintainer / Grace)
 
