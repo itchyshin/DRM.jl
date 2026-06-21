@@ -540,8 +540,12 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     return _withformula(_fit_multi_ranef_gaussian(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol), f)
 end
 
-# univariate Gaussian location–scale, fixed effects only (closed form, ML)
-function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
+# univariate Gaussian location–scale, fixed effects only (closed form, ML).
+# `start` supplies an optimiser start (the fitted optimum for a warm-started
+# bootstrap refit); when `nothing` the OLS + log-sd cold start is used. The warm
+# start changes only where LBFGS begins — the objective is unchanged, so the
+# converged θ̂ is identical (verified by the warm/cold bootstrap parity gate).
+function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol; start = nothing)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     function nll(θ)
@@ -554,10 +558,16 @@ function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
         end
         return s + 0.5 * n * log(2π)
     end
-    βμ0 = Xμ \ y
-    θ0 = zeros(pμ + pσ)
-    θ0[1:pμ] .= βμ0
-    θ0[pμ+1] = log(std(y - Xμ * βμ0) + eps())
+    if start === nothing
+        βμ0 = Xμ \ y
+        θ0 = zeros(pμ + pσ)
+        θ0[1:pμ] .= βμ0
+        θ0[pμ+1] = log(std(y - Xμ * βμ0) + eps())
+    else
+        length(start) == pμ + pσ ||
+            throw(ArgumentError("_fit_fixed_gaussian: start length $(length(start)) ≠ $(pμ + pσ)"))
+        θ0 = collect(float.(start))
+    end
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
     V = inv(ForwardDiff.hessian(nll, θ̂))

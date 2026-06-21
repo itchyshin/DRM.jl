@@ -823,6 +823,7 @@ function bootstrap_ci(
     check_converged::Bool=false,
     algorithm::Symbol=:auto,
     g_tol::Real=1e-8,
+    warmstart::Bool=false,
 )
     rows = bootstrap_summary(
         fit;
@@ -838,6 +839,7 @@ function bootstrap_ci(
         check_converged,
         algorithm,
         g_tol,
+        warmstart,
     )
     return _bootstrap_ci_rows(rows)
 end
@@ -942,6 +944,7 @@ function bootstrap_summary(
     check_converged::Bool=false,
     algorithm::Symbol=:auto,
     g_tol::Real=1e-8,
+    warmstart::Bool=false,
 )
     result = bootstrap_result(
         fit;
@@ -957,6 +960,7 @@ function bootstrap_summary(
         check_converged,
         algorithm,
         g_tol,
+        warmstart,
     )
     return result.summary
 end
@@ -1023,6 +1027,7 @@ function bootstrap_result(
     check_converged::Bool=false,
     algorithm::Symbol=:auto,
     g_tol::Real=1e-8,
+    warmstart::Bool=false,
 )
     # Bivariate q=4 phylogenetic fit (also a DrmFit{<:Gaussian}): no scalar SD
     # block to refit-and-recoef — the quantities of interest are the among-axis
@@ -1030,16 +1035,58 @@ function bootstrap_result(
     # gives boundary-honest percentile CIs. K/A/tree are carried by the fit.
     if fit.formula isa BivariateDrmFormula && fit.ranef isa NamedTuple &&
        haskey(fit.ranef, :Sigma_a)
+        warmstart && throw(ArgumentError(
+            "bootstrap warmstart=true is not supported for the bivariate q=4 " *
+            "phylogenetic bootstrap; use warmstart=false (the default)"))
         return bootstrap_sigma_a(fit; data = data, B = B, level = level, rng = rng,
                                  failures = (failures === :error ? :error : :warn),
                                  check_converged = check_converged)
     end
     _check_bootstrap_failure_mode(failures)
     formula = _bootstrap_fit_formula(fit)
-    refit = datab -> drm(formula, fit.family; data=datab, K, A, tree, algorithm, g_tol)
+    refit = if warmstart
+        _gaussian_warm_refit(formula, fit, g_tol)
+    else
+        datab -> drm(formula, fit.family; data=datab, K, A, tree, algorithm, g_tol)
+    end
     return _bootstrap_result(
         fit, formula, data, B, level, rng, threads, refit; failures, check_converged
     )
+end
+
+# Warm-started bootstrap refit for the fixed-effect Gaussian location–scale model.
+# Reuses the fitted optimum θ̂ as the optimiser start for every replicate, so each
+# refit reaches the same MLE in fewer LBFGS iterations — the bootstrap is the
+# repeated-re-optimisation workload native TMB cannot make cheap (design 179
+# Stage B). Restricted to the fixed-effect cell (no random / structured / meta
+# terms): the location–scale objective is not PROVEN globally unimodal, but on an
+# interior-MLE fit the warm and cold solves reach the same optimum (the empirical
+# warm/cold parity gate, test_bootstrap_warmstart.jl). Richer fits keep the cold
+# path until their own fitters accept a start (the follow-on). The cold-start
+# fallback per replicate guards a non-finite / non-converged warm stall — it does
+# NOT detect a warm solve that converges to a different stationary point, so the
+# parity guarantee is "cost only, not result" under the gate, not unconditional.
+function _gaussian_warm_refit(formula::DrmFormula, fit::DrmFit{<:Gaussian}, g_tol::Real)
+    rhs = Dict(formula.forms)
+    fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])
+    fixed_sigma, sigma_re, _, structured_sigma = _split_ranef(rhs[:sigma])
+    (isempty(re) && isempty(sigma_re) && metav === nothing &&
+     structured === nothing && structured_sigma === nothing) ||
+        throw(ArgumentError(
+            "bootstrap warmstart=true is currently implemented only for the " *
+            "fixed-effect Gaussian location–scale model (no random-effect, " *
+            "structured, phylo, or meta terms). Use warmstart=false (the default) " *
+            "for those models."))
+    θ̂ = copy(fit.theta)
+    return function (datab)
+        y, Xμ, nmμ = _design(formula.response, fixed_mu, datab)
+        _, Xσ, nmσ = _design(formula.response, fixed_sigma, datab)
+        fitb = _fit_fixed_gaussian(fit.family, y, Xμ, Xσ, nmμ, nmσ, g_tol; start = θ̂)
+        if any(!isfinite, fitb.theta) || !fitb.converged
+            fitb = _fit_fixed_gaussian(fit.family, y, Xμ, Xσ, nmμ, nmσ, g_tol)  # cold fallback
+        end
+        return fitb
+    end
 end
 
 function bootstrap_result(
