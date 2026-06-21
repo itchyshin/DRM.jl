@@ -58,6 +58,182 @@ end
 "Build a Float64 θ from a β NamedTuple and a Λ matrix."
 pack_theta(β, Λ) = vcat(β.mu1, β.mu2, β.s1, β.s2, β.rho, Λ_to_lc(Λ))
 
+function _first_nonfinite_index(x)
+    vals = x isa SparseMatrixCSC ? nonzeros(x) : x
+    for (idx, val) in pairs(vals)
+        val isa Number || continue
+        isfinite(val) || return idx
+    end
+    return nothing
+end
+
+function _diag_scalar(x)
+    x isa Number || return nothing
+    return isfinite(x) ? Float64(x) : x
+end
+
+function _q4_diag_record!(rows, first_bad::Base.RefValue, stage::Symbol;
+                          value = nothing, finite = nothing, index = nothing,
+                          message::AbstractString = "")
+    idx = index
+    ok = if finite === nothing
+        if value === nothing
+            true
+        elseif value isa Number
+            isfinite(value)
+        else
+            idx = _first_nonfinite_index(value)
+            idx === nothing
+        end
+    else
+        Bool(finite)
+    end
+    !ok && idx === nothing && value !== nothing && (idx = _first_nonfinite_index(value))
+    row = (stage = stage, ok = ok, finite = ok, value = _diag_scalar(value),
+           index = idx, message = String(message))
+    push!(rows, row)
+    !ok && first_bad[] === nothing && (first_bad[] = row)
+    return ok
+end
+
+function _q4_diag_exception!(rows, first_bad::Base.RefValue, stage::Symbol, err)
+    row = (stage = stage, ok = false, finite = false, value = nothing,
+           index = nothing, message = sprint(showerror, err))
+    push!(rows, row)
+    first_bad[] === nothing && (first_bad[] = row)
+    return false
+end
+
+"""
+    q4_marginal_diagnostic(prob, Q_cond, theta; u0=nothing, n_newton=40,
+                           gradient=false)
+
+Developer diagnostic for the q=4 ML Laplace objective. It evaluates the same
+pieces used by [`marginal_nll`](@ref) in order and returns a NamedTuple with
+`ok`, `first_nonfinite`, `stages`, and (when finite) `nll`.
+
+This is intentionally diagnostic-only: the optimizer keeps its usual `Inf`
+barrier, while hard large-data failures can call this helper to see whether the
+first non-finite component is the parameter vector, among-axis covariance, sparse
+prior precision, inner mode, Laplace components, or exact-gradient assembly.
+"""
+function q4_marginal_diagnostic(prob::AugProblem, Q_cond::SparseMatrixCSC,
+                                theta::AbstractVector{<:Real};
+                                u0 = nothing, n_newton::Int = 40,
+                                gradient::Bool = false)
+    rows = []
+    first_bad = Ref{Any}(nothing)
+    theta_vec = Vector{Float64}(theta)
+
+    _q4_diag_record!(rows, first_bad, :theta; value = theta_vec)
+    if first_bad[] !== nothing
+        return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                nll = Inf, loglik = -Inf)
+    end
+
+    local beta, lc, Lambda, Lambda_inv, P, u_hat, chH
+    try
+        beta, lc = unpack_theta(prob, theta_vec)
+    catch err
+        _q4_diag_exception!(rows, first_bad, :unpack_theta, err)
+        return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                nll = Inf, loglik = -Inf)
+    end
+
+    try
+        Lambda = lc_to_Λ(lc)
+        _q4_diag_record!(rows, first_bad, :among_axis_covariance; value = Lambda)
+        if first_bad[] !== nothing
+            return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                    nll = Inf, loglik = -Inf)
+        end
+        ch = cholesky(Symmetric(Matrix(Lambda)); check = false)
+        _q4_diag_record!(rows, first_bad, :among_axis_cholesky;
+                         finite = issuccess(ch),
+                         message = issuccess(ch) ? "" : "among-axis covariance is not positive definite")
+        if first_bad[] !== nothing
+            return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                    nll = Inf, loglik = -Inf)
+        end
+    catch err
+        _q4_diag_exception!(rows, first_bad, :among_axis_covariance, err)
+        return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                nll = Inf, loglik = -Inf)
+    end
+
+    try
+        Lambda_inv = inv(Lambda)
+        _q4_diag_record!(rows, first_bad, :among_axis_inverse; value = Lambda_inv)
+        P = prior_precision(Q_cond, Lambda_inv)
+        _q4_diag_record!(rows, first_bad, :prior_precision; value = P)
+        if first_bad[] !== nothing
+            return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                    nll = Inf, loglik = -Inf)
+        end
+    catch err
+        _q4_diag_exception!(rows, first_bad, :prior_precision, err)
+        return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                nll = Inf, loglik = -Inf)
+    end
+
+    try
+        u_hat, chH, _ = estep_mode(prob, P, beta; u0 = u0, n_newton = n_newton)
+        u_hat = Vector{Float64}(u_hat)
+        _q4_diag_record!(rows, first_bad, :inner_mode; value = u_hat)
+        logdetH = logdet(chH)
+        _q4_diag_record!(rows, first_bad, :logdet_H; value = logdetH)
+        if first_bad[] !== nothing
+            return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                    nll = Inf, loglik = -Inf)
+        end
+    catch err
+        _q4_diag_exception!(rows, first_bad, :inner_mode, err)
+        return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                nll = Inf, loglik = -Inf)
+    end
+
+    local jn, logdetP, ll, nll
+    try
+        jn = joint_nll(prob, P, u_hat, beta)
+        _q4_diag_record!(rows, first_bad, :joint_nll_mode; value = jn)
+        chP = cholesky(Symmetric(P) + 1e-10I; check = false)
+        logdetP = logdet(chP)
+        _q4_diag_record!(rows, first_bad, :logdet_P; value = logdetP)
+        ll = -jn - 0.5 * logdet(chH) + 0.5 * logdetP
+        _q4_diag_record!(rows, first_bad, :laplace_loglik; value = ll)
+        nll = -ll
+        _q4_diag_record!(rows, first_bad, :marginal_nll; value = nll)
+        if first_bad[] !== nothing
+            return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                    nll = Inf, loglik = -Inf)
+        end
+    catch err
+        _q4_diag_exception!(rows, first_bad, :laplace_loglik, err)
+        return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                nll = Inf, loglik = -Inf)
+    end
+
+    if gradient
+        try
+            nll_g, grad, _, _ = marginal_and_exact_grad(
+                prob, Q_cond, theta_vec; u0 = u0, n_newton = n_newton)
+            _q4_diag_record!(rows, first_bad, :exact_gradient_nll; value = nll_g)
+            _q4_diag_record!(rows, first_bad, :exact_gradient; value = grad)
+            if first_bad[] !== nothing
+                return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                        nll = Inf, loglik = -Inf)
+            end
+        catch err
+            _q4_diag_exception!(rows, first_bad, :exact_gradient, err)
+            return (ok = false, first_nonfinite = first_bad[], stages = Tuple(rows),
+                    nll = Inf, loglik = -Inf)
+        end
+    end
+
+    return (ok = true, first_nonfinite = nothing, stages = Tuple(rows),
+            nll = nll, loglik = ll)
+end
+
 # -----------------------------------------------------------------------------
 # TRUE sparse Laplace marginal NLL at a Float64 θ (== −laplace_ll). Used by the
 # finite-difference verification and as the line-search objective.
