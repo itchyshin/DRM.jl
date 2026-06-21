@@ -237,6 +237,11 @@ include("test_reml_q4_allaxes.jl")
 include("test_164_mean_re_covariate_sigma.jl")
 # Same covariate-dispersion path extended to Gamma and Beta (#164).
 include("test_164_gamma_hetero.jl")
+# Crossed (1 | g) + (1 | h) mean with covariate dispersion sigma ~ x (#164):
+# the per-observation log-dispersion generalisation of the scalar crossed Laplace
+# spine, with FD-vs-exact gates, the 1-column-Xσ reduction invariant, and drm()
+# recovery for NB2/Gamma/Beta.
+include("test_164_crossed_hetero_sigma.jl")
 
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"

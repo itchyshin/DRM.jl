@@ -11,11 +11,15 @@
 #     dispersion slope. So the dispersion both (a) varies with a covariate and
 #     (b) carries a genuine group-level random effect on its own axis.
 #       → log θ_i = γ0 + γ1·x_i + b^σ_{g(i)},  (b^μ_g, b^σ_g) ~ N(0, Λ).
-#   * The DISTINCT, still-open #164 sub-case — a covariate `sigma ~ x` with a
-#     random effect on the MEAN ONLY (no random effect on the σ axis), routed
-#     through the `_fit_*_phylo_laplace` / `_fit_*_crossed_laplace` Laplace spine —
-#     remains guarded (those fitters require a constant `sigma` formula). The last
-#     testset pins that boundary so this file flips when #164 lands.
+#   * The DISTINCT #164 sub-case — a covariate `sigma ~ x` with a random effect on
+#     the MEAN ONLY (no random effect on the σ axis), routed through the
+#     `_fit_*_phylo_laplace` / `_fit_*_crossed_laplace` Laplace spine — has since
+#     LANDED: the phylo route via the per-observation hetero fg (see
+#     test_164_mean_re_covariate_sigma.jl / test_164_gamma_hetero.jl) and the
+#     crossed `(1 | g) + (1 | h)` route via `_crossed_mean_laplace_hetero_fg` (see
+#     test_164_crossed_hetero_sigma.jl). General PD-covariance (relmat/animal/
+#     spatial) dispersion remains guarded. The last testset confirms the mean-only
+#     phylo case now fits.
 #
 # What is asserted for the supported path (NB2 + Gamma):
 #   1. recovery of the genuine `sigma`-axis covariate SLOPE γ1 simultaneously with

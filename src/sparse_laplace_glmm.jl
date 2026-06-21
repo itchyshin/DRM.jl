@@ -751,7 +751,7 @@ Heteroscedastic generalisation of `_phylo_mean_laplace_nuisance_fg` (#164): the
 single scalar dispersion nuisance θσ is replaced by a per-observation
 log-dispersion linear predictor `ησ = Xσ·βσ`, so θ = `[βμ(pμ); βσ(pσ); logσ]`.
 `aux_from(ησ::Vector)` returns a per-observation aux whose dispersion is
-`exp.(ησ)` (a vector kind, e.g. `Val(:nb2_hetero)`).
+`exp.(-2·ησ)` (a vector kind, e.g. `Val(:nb2_hetero)`).
 
 The σ-axis kernel derivatives (`nval, nr, nw`) are taken w.r.t. each
 observation's `log r_i`, so the βσ gradient is the Xσ-chained version of the
@@ -2620,6 +2620,110 @@ function _crossed_mean_laplace_nuisance_fg(kind, aux_from, n::Int, Xμ, gidx, G,
     return val, vcat(gβ, [gnuis, gσ1, gσ2]), b, true
 end
 
+"""
+    _crossed_mean_laplace_hetero_fg(kind, aux_from, n, Xμ, Xσ, gidx, G, hidx, Hh, θ; …)
+
+Heteroscedastic generalisation of `_crossed_mean_laplace_nuisance_fg` (#164): the
+single scalar dispersion nuisance θσ is replaced by a per-observation
+log-dispersion linear predictor `ησ = Xσ·βσ`, so θ = `[βμ(pμ); βσ(pσ); logσg; logσh]`
+(the two trailing crossed random-effect log-SDs are unchanged). `aux_from(ησ::Vector)`
+returns a per-observation aux whose dispersion is `exp.(-2·ησ)` (a vector kind,
+e.g. `Val(:nb2_hetero)`).
+
+The σ-axis kernel derivatives (`nval, nr, nw`) are taken w.r.t. each observation's
+`ησ_i`, so the βσ gradient is the Xσ-chained version of the scalar nuisance
+gradient: where the scalar code accumulates one `gnuis`, this accumulates a
+`pσ`-vector `gν` weighted by `Xσ[i, k]`, and the implicit cross-term `crossν`
+becomes a `(G+Hh) × pσ` matrix gathered onto BOTH the g and h latent rows —
+structurally identical to how the mean axis already chains `r/w` through `Xμ`.
+A one-column constant `Xσ` reproduces `_crossed_mean_laplace_nuisance_fg` exactly.
+"""
+function _crossed_mean_laplace_hetero_fg(kind, aux_from, n::Int, Xμ, Xσ, gidx, G,
+                                         hidx, Hh, θ; grad::Bool = false,
+                                         b0 = nothing)
+    pσ = size(Xσ, 2)
+    pμ = length(θ) - pσ - 2
+    βμ = θ[1:pμ]
+    βσ = θ[pμ+1:pμ+pσ]
+    logσ = clamp.(θ[pμ+pσ+1:pμ+pσ+2], -8.0, 3.0)
+    ησ = clamp.(Xσ * βσ, -8.0, 8.0)
+    aux = aux_from(ησ)
+    η0 = Xμ * βμ
+    b, ch, _, ok = _crossed_mean_mode(kind, aux, η0, gidx, G, hidx, Hh, logσ; b0 = b0)
+    if !ok
+        return grad ? (1e18, zeros(length(θ)), b, false) : (1e18, b, false)
+    end
+
+    invg = exp(-2 * logσ[1])
+    invh = exp(-2 * logσ[2])
+    data = zero(eltype(θ))
+    prior = 0.5 * invg * sum(abs2, @view b[1:G]) +
+            0.5 * invh * sum(abs2, @view b[G+1:G+Hh])
+    gradβ_raw = zeros(eltype(θ), pμ)
+    gν = zeros(eltype(θ), pσ)
+    wstore = Vector{eltype(θ)}(undef, n)
+    tstore = Vector{eltype(θ)}(undef, n)
+    rνstore = Vector{eltype(θ)}(undef, n)
+    wνstore = Vector{eltype(θ)}(undef, n)
+    @inbounds for i in 1:n
+        η = η0[i] + b[gidx[i]] + b[G+hidx[i]]
+        v, r, w, t, nval, nr, nw = _laplace_v123_nuisance(kind, aux, i, η)
+        data += v
+        wstore[i] = w
+        tstore[i] = t
+        rνstore[i] = nr
+        wνstore[i] = nw
+        for k in 1:pμ
+            gradβ_raw[k] += Xμ[i, k] * r
+        end
+        for k in 1:pσ
+            gν[k] += Xσ[i, k] * nval
+        end
+    end
+    val = data + prior + G * logσ[1] + Hh * logσ[2] + 0.5 * logdet(ch)
+    grad || return val, b, true
+
+    hd, crossinv = _crossed_selected_inverse_entries(ch, gidx, G, hidx, Hh)
+    tlogdet = zeros(eltype(θ), G + Hh)
+    crossβ = zeros(eltype(θ), G + Hh, pμ)
+    crossν = zeros(eltype(θ), G + Hh, pσ)
+    gβ = gradβ_raw
+    @inbounds for i in 1:n
+        gi = gidx[i]
+        hi = G + hidx[i]
+        lever = hd[gi] + hd[hi] + 2 * crossinv[i]
+        tlever = tstore[i] * lever
+        tlogdet[gi] += tlever
+        tlogdet[hi] += tlever
+        adj = 0.5 * tlever
+        nadj = 0.5 * wνstore[i] * lever
+        for k in 1:pμ
+            xik = Xμ[i, k]
+            gβ[k] += xik * adj
+            crossβ[gi, k] += wstore[i] * xik
+            crossβ[hi, k] += wstore[i] * xik
+        end
+        for k in 1:pσ
+            zik = Xσ[i, k]
+            gν[k] += zik * nadj
+            crossν[gi, k] += zik * rνstore[i]
+            crossν[hi, k] += zik * rνstore[i]
+        end
+    end
+    implicit = ch \ tlogdet
+    @inbounds for k in 1:pμ
+        gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)
+    end
+    @inbounds for k in 1:pσ
+        gν[k] -= 0.5 * dot(@view(crossν[:, k]), implicit)
+    end
+    gσ1 = G - invg * (sum(abs2, @view b[1:G]) + sum(@view hd[1:G]))
+    gσ2 = Hh - invh * (sum(abs2, @view b[G+1:G+Hh]) + sum(@view hd[G+1:G+Hh]))
+    gσ1 += dot(@view(implicit[1:G]), invg .* @view(b[1:G]))
+    gσ2 += dot(@view(implicit[G+1:G+Hh]), invh .* @view(b[G+1:G+Hh]))
+    return val, vcat(gβ, gν, [gσ1, gσ2]), b, true
+end
+
 function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gidx, G,
                                             hidx, Hh, nmμ, nmσ, labels, g_tol;
                                             θβ0, θσ0::Real, sigma_scale,
@@ -2710,6 +2814,98 @@ function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gi
     return _withnll(fit, nll, grad!)
 end
 
+function _fit_crossed_mean_laplace_hetero(fam, kind, aux_from, n::Int, Xμ, Xσ, gidx, G,
+                                          hidx, Hh, nmμ, nmσ, labels, g_tol;
+                                          θβ0, θσ0::AbstractVector, sigma_scale,
+                                          se::Bool = false,
+                                          polish_iterations::Int = 0)
+    pμ = size(Xμ, 2)
+    pσ = size(Xσ, 2)
+    last_b = zeros(G + Hh)
+
+    function eval_laplace(θ; grad::Bool = false)
+        if grad
+            val, g, b, ok = _crossed_mean_laplace_hetero_fg(
+                kind, aux_from, n, Xμ, Xσ, gidx, G, hidx, Hh, θ; grad = true, b0 = last_b
+            )
+            if !ok
+                val, g, b, ok = _crossed_mean_laplace_hetero_fg(
+                    kind, aux_from, n, Xμ, Xσ, gidx, G, hidx, Hh, θ;
+                    grad = true, b0 = zeros(G + Hh)
+                )
+            end
+            ok || return 1e18, zeros(length(θ))
+            last_b .= b
+            return val, g
+        else
+            val, b, ok = _crossed_mean_laplace_hetero_fg(
+                kind, aux_from, n, Xμ, Xσ, gidx, G, hidx, Hh, θ; grad = false, b0 = last_b
+            )
+            if !ok
+                val, b, ok = _crossed_mean_laplace_hetero_fg(
+                    kind, aux_from, n, Xμ, Xσ, gidx, G, hidx, Hh, θ;
+                    grad = false, b0 = zeros(G + Hh)
+                )
+            end
+            ok || return 1e18
+            last_b .= b
+            return val
+        end
+    end
+
+    nll(θ) = eval_laplace(θ; grad = false)
+    function grad!(Gout, θ)
+        _, g = eval_laplace(θ; grad = true)
+        Gout .= g
+        return Gout
+    end
+
+    θ0 = zeros(pμ + pσ + 2)
+    θ0[1:pμ] .= θβ0
+    θ0[pμ+1:pμ+pσ] .= θσ0
+    θ0[pμ+pσ+1] = log(0.4)
+    θ0[pμ+pσ+2] = log(0.4)
+    od = Optim.OnceDifferentiable(nll, grad!, θ0)
+    method = Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking())
+    res_fast = Optim.optimize(od, θ0, method, Optim.Options(g_tol = g_tol, iterations = 250))
+    res = if polish_iterations > 0
+        try
+            θp = Optim.minimizer(res_fast)
+            odp = Optim.OnceDifferentiable(nll, grad!, θp)
+            Optim.optimize(odp, θp, Optim.LBFGS(),
+                           Optim.Options(g_tol = g_tol, iterations = polish_iterations))
+        catch
+            res_fast
+        end
+    else
+        res_fast
+    end
+    θ̂ = Optim.minimizer(res)
+    gfinal = zeros(length(θ̂))
+    grad!(gfinal, θ̂)
+    nllhat = nll(θ̂)
+    converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
+    V = if se
+        Hθ = _finite_hessian(nll, θ̂)
+        try
+            inv(Symmetric(Hθ))
+        catch
+            Matrix{Float64}(I, length(θ̂), length(θ̂))
+        end
+    else
+        fill(NaN, length(θ̂), length(θ̂))
+    end
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+2)]
+    names = [:mu => nmμ, :sigma => nmσ, :resd => labels]
+    ησ̂ = clamp.(Xσ * θ̂[pμ+1:pμ+pσ], -8.0, 8.0)
+    auxhat = aux_from(ησ̂)
+    means = Dict(:mu => [_laplace_mean(kind, dot(@view(Xμ[i, :]), θ̂[1:pμ])) for i in 1:n])
+    obs = Dict(:mu => [_laplace_obs(kind, auxhat, i) for i in 1:n])
+    scales = Dict(:sigma => [sigma_scale(ησ̂[i]) for i in 1:n])
+    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
+    return _withnll(fit, nll, grad!)
+end
+
 function _fit_binomial_crossed_laplace(fam, s, ntr, Xμ, comps, nmμ, g_tol; se::Bool = false,
                                        polish_iterations::Int = 0)
     length(comps) == 2 || error("_fit_binomial_crossed_laplace requires two random-intercept components")
@@ -2732,18 +2928,36 @@ end
 function _fit_nb2_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol;
                                   se::Bool = false, polish_iterations::Int = 0)
     length(comps) == 2 || error("_fit_nb2_crossed_laplace requires two random-intercept components")
-    size(Xσ, 2) == 1 || error("_fit_nb2_crossed_laplace currently supports a constant sigma formula")
     yint = round.(Int, y)
-    function aux_from(logσ)
-        r = exp(clamp(-2 * logσ, -8.0, 8.0))      # ψ = log σ; size r = 1/σ² = exp(−2ψ) (drmTMB)
-        lconst = [loggamma(yint[i] + r) - loggamma(r) - _logfactorial(yint[i]) for i in eachindex(yint)]
-        return (y = Float64.(yint), size = r, lconst = lconst)
-    end
     m = sum(y) / length(y)
     v = sum(abs2, y .- m) / max(length(y) - 1, 1)
-    θσ0 = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
-    return _fit_crossed_mean_laplace_nuisance(
-        fam, Val(:nb2_fixed), aux_from, length(y), Xμ, comps[1][2], comps[1][3],
+    if size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])
+        # constant-σ (sigma ~ 1): scalar dispersion nuisance (unchanged)
+        function aux_from(logσ)
+            r = exp(clamp(-2 * logσ, -8.0, 8.0))      # ψ = log σ; size r = 1/σ² = exp(−2ψ) (drmTMB)
+            lconst = [loggamma(yint[i] + r) - loggamma(r) - _logfactorial(yint[i]) for i in eachindex(yint)]
+            return (y = Float64.(yint), size = r, lconst = lconst)
+        end
+        θσ0 = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+        return _fit_crossed_mean_laplace_nuisance(
+            fam, Val(:nb2_fixed), aux_from, length(y), Xμ, comps[1][2], comps[1][3],
+            comps[2][2], comps[2][3], nmμ, nmσ, [comps[1][4], comps[2][4]], g_tol;
+            θβ0 = _poisson_fixed_start(y, Xμ), θσ0 = θσ0, sigma_scale = exp,
+            se = se, polish_iterations = polish_iterations
+        )
+    end
+    # Covariate dispersion (#164): per-observation log-size ησ = Xσ·βσ; the hetero
+    # aux turns ησ into the per-observation size vector r = exp(−2·ησ).
+    yf = Float64.(yint)
+    function aux_from_hetero(ησ)
+        r = exp.(clamp.(-2 .* ησ, -8.0, 8.0))
+        lconst = [loggamma(yf[i] + r[i]) - loggamma(r[i]) - _logfactorial(yint[i]) for i in eachindex(yint)]
+        return (y = yf, size = r, lconst = lconst)
+    end
+    θσ0 = zeros(size(Xσ, 2))
+    θσ0[1] = -0.5 * log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))   # intercept (log σ); slopes 0
+    return _fit_crossed_mean_laplace_hetero(
+        fam, Val(:nb2_hetero), aux_from_hetero, length(y), Xμ, Xσ, comps[1][2], comps[1][3],
         comps[2][2], comps[2][3], nmμ, nmσ, [comps[1][4], comps[2][4]], g_tol;
         θβ0 = _poisson_fixed_start(y, Xμ), θσ0 = θσ0, sigma_scale = exp,
         se = se, polish_iterations = polish_iterations
@@ -2753,22 +2967,38 @@ end
 function _fit_gamma_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol;
                                     se::Bool = false, polish_iterations::Int = 5)
     length(comps) == 2 || error("_fit_gamma_crossed_laplace requires two random-intercept components")
-    size(Xσ, 2) == 1 || error("_fit_gamma_crossed_laplace currently supports a constant sigma formula")
     yv = Float64.(y)
-    function aux_from(logsigma)
-        α = exp(clamp(-2 * logsigma, -8.0, 8.0))
-        lconst = [α * log(α) - loggamma(α) + (α - 1) * log(yv[i]) for i in eachindex(yv)]
-        return (y = yv, shape = α, lconst = lconst)
-    end
     ȳ = sum(yv) / length(yv)
     v = sum(abs2, yv .- ȳ) / max(length(yv) - 1, 1)
     α0 = max(ȳ^2 / max(v, eps()), 3.0)
     θβ0 = zeros(size(Xμ, 2))
     θβ0[1] = log(ȳ + eps())
-    return _fit_crossed_mean_laplace_nuisance(
-        fam, Val(:gamma_fixed), aux_from, length(yv), Xμ, comps[1][2], comps[1][3],
+    if size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])
+        # constant-σ (sigma ~ 1): scalar shape nuisance (unchanged)
+        function aux_from(logsigma)
+            α = exp(clamp(-2 * logsigma, -8.0, 8.0))
+            lconst = [α * log(α) - loggamma(α) + (α - 1) * log(yv[i]) for i in eachindex(yv)]
+            return (y = yv, shape = α, lconst = lconst)
+        end
+        return _fit_crossed_mean_laplace_nuisance(
+            fam, Val(:gamma_fixed), aux_from, length(yv), Xμ, comps[1][2], comps[1][3],
+            comps[2][2], comps[2][3], nmμ, nmσ, [comps[1][4], comps[2][4]], g_tol;
+            θβ0 = θβ0, θσ0 = -0.5 * log(α0), sigma_scale = exp,
+            se = se, polish_iterations = polish_iterations
+        )
+    end
+    # Covariate dispersion (#164): per-observation shape α = exp(−2·Xσ·βσ).
+    function aux_from_hetero(ησ)
+        α = exp.(clamp.(-2 .* ησ, -8.0, 8.0))
+        lconst = [α[i] * log(α[i]) - loggamma(α[i]) + (α[i] - 1) * log(yv[i]) for i in eachindex(yv)]
+        return (y = yv, shape = α, lconst = lconst)
+    end
+    θσ0 = zeros(size(Xσ, 2))
+    θσ0[1] = -0.5 * log(α0)                   # intercept (log σ); slopes 0
+    return _fit_crossed_mean_laplace_hetero(
+        fam, Val(:gamma_hetero), aux_from_hetero, length(yv), Xμ, Xσ, comps[1][2], comps[1][3],
         comps[2][2], comps[2][3], nmμ, nmσ, [comps[1][4], comps[2][4]], g_tol;
-        θβ0 = θβ0, θσ0 = -0.5 * log(α0), sigma_scale = exp,
+        θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
         se = se, polish_iterations = polish_iterations
     )
 end
@@ -2776,23 +3006,39 @@ end
 function _fit_beta_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol;
                                    se::Bool = false, polish_iterations::Int = 0)
     length(comps) == 2 || error("_fit_beta_crossed_laplace requires two random-intercept components")
-    size(Xσ, 2) == 1 || error("_fit_beta_crossed_laplace currently supports a constant sigma formula")
     yv = Float64.(y)
     ylogit = log.(yv) .- log1p.(-yv)
-    function aux_from(logsigma)
-        φ = exp(clamp(-2 * logsigma, -8.0, 8.0))
-        return (y = yv, precision = φ, ylogit = ylogit,
-                lgammaφ = loggamma(φ), digammaφ = digamma(φ))
-    end
     ȳ = clamp(sum(yv) / length(yv), 1e-4, 1 - 1e-4)
     v = sum(abs2, yv .- ȳ) / max(length(yv) - 1, 1)
     φ0 = max(ȳ * (1 - ȳ) / max(v, eps()) - 1, 0.5)
     θβ0 = zeros(size(Xμ, 2))
     θβ0[1] = log(ȳ / (1 - ȳ))
-    return _fit_crossed_mean_laplace_nuisance(
-        fam, Val(:beta_fixed), aux_from, length(yv), Xμ, comps[1][2], comps[1][3],
+    if size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])
+        # constant-σ (sigma ~ 1): scalar precision nuisance (unchanged)
+        function aux_from(logsigma)
+            φ = exp(clamp(-2 * logsigma, -8.0, 8.0))
+            return (y = yv, precision = φ, ylogit = ylogit,
+                    lgammaφ = loggamma(φ), digammaφ = digamma(φ))
+        end
+        return _fit_crossed_mean_laplace_nuisance(
+            fam, Val(:beta_fixed), aux_from, length(yv), Xμ, comps[1][2], comps[1][3],
+            comps[2][2], comps[2][3], nmμ, nmσ, [comps[1][4], comps[2][4]], g_tol;
+            θβ0 = θβ0, θσ0 = -0.5 * log(φ0), sigma_scale = exp,
+            se = se, polish_iterations = polish_iterations
+        )
+    end
+    # Covariate dispersion (#164): per-observation precision φ = exp(−2·Xσ·βσ).
+    function aux_from_hetero(ησ)
+        φ = exp.(clamp.(-2 .* ησ, -8.0, 8.0))
+        return (y = yv, precision = φ, ylogit = ylogit,
+                lgammaφ = loggamma.(φ), digammaφ = digamma.(φ))
+    end
+    θσ0 = zeros(size(Xσ, 2))
+    θσ0[1] = -0.5 * log(φ0)                   # intercept (log σ); slopes 0
+    return _fit_crossed_mean_laplace_hetero(
+        fam, Val(:beta_hetero), aux_from_hetero, length(yv), Xμ, Xσ, comps[1][2], comps[1][3],
         comps[2][2], comps[2][3], nmμ, nmσ, [comps[1][4], comps[2][4]], g_tol;
-        θβ0 = θβ0, θσ0 = -0.5 * log(φ0), sigma_scale = exp,
+        θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
         se = se, polish_iterations = polish_iterations
     )
 end

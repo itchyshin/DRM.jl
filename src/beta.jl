@@ -13,11 +13,12 @@ Beta response family for proportions in `(0,1)`: logit link on the mean `μ`, an
 the `sigma` slot carries `σ` with the precision mapping `φ = 1/σ²` (so
 `coef(fit, :sigma)` is `log σ`; recover precision as `exp(-2·log σ)`). Likelihood
 `Beta(μφ, (1-μ)φ)`. Mirrors `drmTMB`'s `beta_family`.
-Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
-sparse-Laplace engine when `sigma ~ 1`. A phylogenetic random intercept on the
-mean, `phylo(1 | species)`, also uses the sparse-Laplace engine, as do general
+Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, and a
+phylogenetic random intercept, `phylo(1 | species)`, use the sparse-Laplace engine
+and support a covariate dispersion formula `sigma ~ x` (#164). General
 user-supplied PD-covariance intercepts — `relmat(1 | id)` with `K = C`, the
-`animal(1 | id)` (`A = C`) and `spatial(1 | id)` (`K = C`) aliases.
+`animal(1 | id)` (`A = C`) and `spatial(1 | id)` (`K = C`) aliases — also use the
+sparse-Laplace engine but currently require `sigma ~ 1`.
 
 !!! note
     `DRM.Beta` shadows `Distributions.Beta`; qualify the latter if you need it.
@@ -90,7 +91,7 @@ function drm(f::DrmFormula, fam::Beta; data, tree = nothing, K = nothing,
                 grp = r[2]; gidx, G = _group_index(getproperty(data, grp))
                 (ones(length(y)), gidx, G, String(grp))
             end
-            return _withformula(_fit_beta_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol), f)
+            return _withformula(_fit_beta_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol; se = se), f)
         end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]
         gidx, G = _group_index(getproperty(data, grp))

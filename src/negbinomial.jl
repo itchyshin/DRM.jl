@@ -14,11 +14,11 @@ Negative-binomial (NB2) family for overdispersed counts: log link on the mean
 `μ`, and log link on the dispersion/size `θ` (the `sigma` formula slot, so
 `coef(fit, :sigma)` is `log θ`). Var = `μ + μ²/θ`; as `θ → ∞` it tends to
 [`Poisson`](@ref). Mirrors `drmTMB`'s `nbinom2` family.
-Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
-sparse-Laplace engine when `sigma ~ 1`. A phylogenetic random intercept on the
-mean, `phylo(1 | species)`, also uses the sparse-Laplace engine; here a covariate
-dispersion formula `sigma ~ x` is supported (a per-observation log-size; #164),
-while the crossed-intercept route still requires `sigma ~ 1`.
+Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, and a
+phylogenetic random intercept, `phylo(1 | species)`, both use the sparse-Laplace
+engine and support a covariate dispersion formula `sigma ~ x` (a per-observation
+log-size; #164). General PD-covariance intercepts (`relmat`/`animal`/`spatial`)
+still require `sigma ~ 1`.
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), NegBinomial2(); data = dat)

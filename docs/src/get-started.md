@@ -76,9 +76,10 @@ The latest tranche of work extends what you can ask of a fitted model:
 - **Post-fit accessors** — `summary`, `family`, `is_converged`, `deviance`,
   `dof_residual`, and `rho12` (bivariate residual correlation).
 - **Non-Gaussian phylogenetic random effects** — `phylo(1 | species, tree)` on
-  the mean for Poisson, NegBinomial2, Gamma, Beta, and Binomial families
-  (constant `σ`), via a sparse Laplace approximation, plus crossed intercepts
-  `(1 | g) + (1 | h)` for the same families.
+  the mean for Poisson, NegBinomial2, Gamma, Beta, and Binomial families, via a
+  sparse Laplace approximation, plus crossed intercepts `(1 | g) + (1 | h)` for the
+  same families. For NegBinomial2, Gamma, and Beta the dispersion may itself carry
+  covariates (`sigma ~ x`) on both the phylo and crossed routes (#164).
 
 ## Where to go next
 

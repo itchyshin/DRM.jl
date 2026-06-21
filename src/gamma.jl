@@ -14,9 +14,10 @@ Gamma response family for positive continuous data: log link on the mean `μ`, a
 the `sigma` slot carries `σ` = the coefficient of variation, mapped to the shape
 `α = 1/σ²` (`coef(fit, :sigma)` is `log σ`; recover the shape as `exp(-2·log σ)`).
 Likelihood `Gamma(α, μ/α)`; variance `μ²σ²`. Mirrors `drmTMB`'s `Gamma` family.
-Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
-sparse-Laplace engine when `sigma ~ 1`. A phylogenetic random intercept on the
-mean, `phylo(1 | species)`, also uses the sparse-Laplace engine.
+Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, and a
+phylogenetic random intercept, `phylo(1 | species)`, both use the sparse-Laplace
+engine and support a covariate dispersion formula `sigma ~ x` (#164). General
+PD-covariance intercepts (`relmat`/`animal`/`spatial`) still require `sigma ~ 1`.
 
 !!! note
     `DRM.Gamma` shadows `Distributions.Gamma`; qualify the latter if you need it.
@@ -94,7 +95,7 @@ function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, K = nothing,
                 grp = r[2]; gidx, G = _group_index(getproperty(data, grp))
                 (ones(length(y)), gidx, G, String(grp))
             end
-            return _withformula(_fit_gamma_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol), f)
+            return _withformula(_fit_gamma_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol; se = se), f)
         end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]
         gidx, G = _group_index(getproperty(data, grp))
