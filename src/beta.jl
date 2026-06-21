@@ -35,13 +35,16 @@ struct Beta end
 _logistic(η) = 1 / (1 + exp(-η))
 
 function drm(f::DrmFormula, fam::Beta; data, tree = nothing, K = nothing,
-             A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true)
+             A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true,
+             method::Symbol = :LA)
     missing_fit = _fit_observed_response_rows(f, data) do data_observed
         drm(f, fam; data = data_observed, tree = tree, K = K, A = A,
-            coords = coords, g_tol = g_tol, se = se)
+            coords = coords, g_tol = g_tol, se = se, method = method)
     end
     missing_fit !== nothing && return missing_fit
 
+    marg = _marginal_method(method)                       # :LA (default) or :VA (#136)
+    isva = marg isa Variational
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
@@ -57,6 +60,7 @@ function drm(f::DrmFormula, fam::Beta; data, tree = nothing, K = nothing,
     all(yi -> 0 < yi < 1, y) ||
         error("Beta() requires responses strictly in the open interval (0, 1)")
     if st !== nothing
+        isva && _va_reject(fam, "a phylogenetic/structured random effect")
         isempty(re) ||
             error("Beta() phylo structured effects cannot be combined with ordinary random effects yet")
         # `sigma ~ 1` keeps the scalar-dispersion spine; a covariate `sigma`
@@ -79,6 +83,7 @@ function drm(f::DrmFormula, fam::Beta; data, tree = nothing, K = nothing,
     end
     if !isempty(re)                    # random effect on the logit mean → GHQ/Laplace
         if length(re) > 1
+            isva && _va_reject(fam, "crossed/multiple random intercepts")
             all(_re_kind(r[1])[1] === :intercept for r in re) ||
                 error("Beta() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
             comps = map(re) do r
@@ -89,14 +94,21 @@ function drm(f::DrmFormula, fam::Beta; data, tree = nothing, K = nothing,
         end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]
         gidx, G = _group_index(getproperty(data, grp))
-        if rk === :intercept            # (1 | g) → 1-D Gauss–Hermite marginal
+        if rk === :intercept            # (1 | g) → 1-D Gauss–Hermite marginal (Laplace) or VA (#136)
+            if isva
+                (size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])) ||
+                    _va_reject(fam, "a non-intercept dispersion formula `sigma ~ …`")
+                return _withformula(_fit_beta_ranef_va(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), f)
+            end
             return _withformula(_fit_beta_ranef(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), f)
         elseif rk === :corr             # (1 + x | g) → 2-D Gauss–Hermite marginal
+            isva && _va_reject(fam, "a correlated random slope `(1 + x | g)`")
             return _withformula(_fit_beta_corr_ranef(fam, y, Xμ, Xσ, Float64.(getproperty(data, var)), gidx, G, nmμ, nmσ, grp, g_tol), f)
         else
             error("Beta() supports `(1 | g)` or `(1 + x | g)` on the mean, not `(0 + x | g)`")
         end
     end
+    isva && _va_reject(fam, "no random intercept (fixed-effects-only)")
     return _withformula(_fit_beta(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol), f)
 end
 

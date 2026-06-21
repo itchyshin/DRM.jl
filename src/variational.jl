@@ -45,6 +45,22 @@ function _fit_va(args...; kwargs...)
           "method = :LA (Laplace, the default).")
 end
 
+# Route-or-reject for the public `method = :VA` front end (#136). The VA kernels
+# above cover exactly ONE structure per family: a single Gaussian random intercept
+# `(1 | g)` on the mean (with intercept-only dispersion for NB2/Gamma/Beta). Any
+# other model under `:VA` — fixed-effects-only, correlated `(1 + x | g)`, crossed
+# `(1 | g) + (1 | h)`, phylo/spatial/coupled structure, `sigma ~ x`, or `zi`/`hu`
+# — has no VA kernel, so we reject it here with a clear, uniform message rather
+# than silently falling back to Laplace (that would mislabel the `loglik` field as
+# an ELBO). `fam` names the family; `what` describes the offending structure.
+function _va_reject(fam, what)
+    throw(ArgumentError(
+        "method = :VA (variational marginal, #136) is not available for $(nameof(typeof(fam)))() with $what. " *
+        "The VA marginal is implemented only for a single random intercept `(1 | g)` on the mean " *
+        "(with `sigma ~ 1` where the family has a dispersion parameter). " *
+        "Use method = :LA (Laplace, the default) for this model."))
+end
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Phase-2 proof kernel: closed-form mean-field Gaussian VA for the Poisson
 # random-intercept model (#136 §4.1–4.4 of the design note). Self-contained and

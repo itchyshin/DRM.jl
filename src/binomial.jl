@@ -38,12 +38,14 @@ fitted(fit)        # fitted success probabilities μ̂ = logistic(Xβ̂)
 struct Binomial end
 
 function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, g_tol::Real = 1e-8,
-             se::Bool = true)
+             se::Bool = true, method::Symbol = :LA)
     missing_fit = _fit_observed_response_rows(f, data) do data_observed
-        drm(f, fam; data = data_observed, tree = tree, g_tol = g_tol, se = se)
+        drm(f, fam; data = data_observed, tree = tree, g_tol = g_tol, se = se, method = method)
     end
     missing_fit !== nothing && return missing_fit
 
+    marg = _marginal_method(method)                       # :LA (default) or :VA (#136)
+    isva = marg isa Variational
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
@@ -68,6 +70,7 @@ function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, g_tol::Real = 1
     end
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)      # successes column is a dummy LHS
     if st !== nothing
+        isva && _va_reject(fam, "a phylogenetic/structured random effect")
         isempty(re) ||
             error("Binomial() phylo structured effects cannot be combined with ordinary random effects yet")
         kind, grp = st
@@ -79,6 +82,7 @@ function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, g_tol::Real = 1
     end
     if !isempty(re)                                       # random intercept (1|g) → GHQ/Laplace marginal
         if length(re) > 1
+            isva && _va_reject(fam, "crossed/multiple random intercepts")
             all(_re_kind(r[1])[1] === :intercept for r in re) ||
                 error("Binomial() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
             comps = map(re) do r
@@ -89,9 +93,12 @@ function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, g_tol::Real = 1
         end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
         rk === :intercept ||
-            error("Binomial() supports `(1 | g)` on the mean")
+            (isva ? _va_reject(fam, "a correlated random slope `(1 + x | g)`") :
+                    error("Binomial() supports `(1 | g)` on the mean"))
+        isva && return _withformula(_fit_binomial_ranef_va(fam, s, ntr, Xμ, gidx, G, nmμ, grp, g_tol), f)
         return _withformula(_fit_binomial_ranef(fam, s, ntr, Xμ, gidx, G, nmμ, grp, g_tol), f)
     end
+    isva && _va_reject(fam, "no random intercept (fixed-effects-only)")
     return _withformula(_fit_binomial(fam, s, ntr, Xμ, nmμ, g_tol), f)
 end
 

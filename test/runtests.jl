@@ -151,6 +151,8 @@ include("test_va_poisson_elbo.jl")
 include("test_variational_binomial.jl")
 include("test_variational_nb2.jl")
 include("test_variational_gamma.jl")
+# VA marginal reachable through the public drm(..., method = :VA) front end (#136).
+include("test_va_frontend.jl")
 include("test_family_accessor.jl")
 include("test_parity_accessors.jl")
 include("test_coverage_accessors.jl")  # anchors fixef + engine joint_nll/joint_grad/build_Huu/unpack_theta

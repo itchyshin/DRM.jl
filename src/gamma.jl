@@ -32,20 +32,25 @@ exp(-2 * coef(fit, :sigma)[1])     # estimated shape α
 struct Gamma end
 
 function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, K = nothing,
-             A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true)
+             A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true,
+             method::Symbol = :LA)
     missing_fit = _fit_observed_response_rows(f, data) do data_observed
         drm(f, fam; data = data_observed, tree = tree, K = K, A = A,
-            coords = coords, g_tol = g_tol, se = se)
+            coords = coords, g_tol = g_tol, se = se, method = method)
     end
     missing_fit !== nothing && return missing_fit
 
+    marg = _marginal_method(method)                       # :LA (default) or :VA (#136)
+    isva = marg isa Variational
     rhs = Dict(f.forms)
     # Location–scale: a coupled `(1 | tag | group)` shared by the mean and sigma
     # formulas → one 2×2 group-level covariance fit by the augmented-state engine.
     lc = _ls_coupled_re(rhs[:mu], get(rhs, :sigma, ConstantTerm(1)))
-    lc === nothing ||
+    if lc !== nothing
+        isva && _va_reject(fam, "a coupled location–scale random effect `(1 | tag | group)`")
         return _withformula(_fit_locscale_frontend(Val(:gamma), fam, f, rhs, lc, data;
                                                     g_tol = g_tol, se = se), f)
+    end
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
         error("Gamma() does not support meta_V markers")
@@ -59,6 +64,7 @@ function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, K = nothing,
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> yi > 0, y) || error("Gamma() requires strictly positive responses")
     if st !== nothing
+        isva && _va_reject(fam, "a phylogenetic/structured random effect")
         isempty(re) ||
             error("Gamma() phylo structured effects cannot be combined with ordinary random effects yet")
         # `sigma ~ 1` keeps the scalar-dispersion spine; a covariate `sigma`
@@ -81,6 +87,7 @@ function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, K = nothing,
     end
     if !isempty(re)                    # random effect on the log mean → GHQ/Laplace
         if length(re) > 1
+            isva && _va_reject(fam, "crossed/multiple random intercepts")
             all(_re_kind(r[1])[1] === :intercept for r in re) ||
                 error("Gamma() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
             comps = map(re) do r
@@ -91,14 +98,21 @@ function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, K = nothing,
         end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]
         gidx, G = _group_index(getproperty(data, grp))
-        if rk === :intercept           # (1 | g) → 1-D Gauss–Hermite
+        if rk === :intercept           # (1 | g) → 1-D Gauss–Hermite (Laplace) or VA (#136)
+            if isva
+                (size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])) ||
+                    _va_reject(fam, "a non-intercept dispersion formula `sigma ~ …`")
+                return _withformula(_fit_gamma_ranef_va(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), f)
+            end
             return _withformula(_fit_gamma_ranef(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), f)
         elseif rk === :corr            # (1 + x | g) → correlated 2-D Gauss–Hermite
+            isva && _va_reject(fam, "a correlated random slope `(1 + x | g)`")
             return _withformula(_fit_gamma_corr_ranef(fam, y, Xμ, Xσ, Float64.(getproperty(data, var)), gidx, G, nmμ, nmσ, grp, g_tol), f)
         else
             error("Gamma() supports `(1 | g)` or `(1 + x | g)` on the mean")
         end
     end
+    isva && _va_reject(fam, "no random intercept (fixed-effects-only)")
     return _withformula(_fit_gamma(fam, y, Xμ, Xσ, nmμ, nmσ, g_tol), f)
 end
 
