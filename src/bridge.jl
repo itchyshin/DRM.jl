@@ -102,6 +102,33 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
                 message = "profile_result completed (coefficient)",
             )
         end
+        # Stage A multi-coef (drmTMB#179): when the R side names the block but NO
+        # specific coef (profile_param set, profile_coef absent), profile the whole
+        # requested block ONCE and return every coefficient row. R routes this via
+        # result["multi"] and joins by coef name. profile_result rows carry no
+        # `bounded` field, so add one — a finite two-sided coefficient interval is
+        # "bounded", i.e. profile.boundary FALSE on the R side.
+        if want_param !== nothing && want_coef === nothing
+            pblock = Symbol(String(want_param))
+            result = profile_result(fit; level = level, threads = threads,
+                                    parm = pblock)
+            isempty(result.ci) && throw(ArgumentError(
+                "drm_bridge_inference: no profile rows for block $(pblock)"))
+            rows = [(param = r.param, coef = r.coef, estimate = r.estimate,
+                     lower = r.lower, upper = r.upper,
+                     bounded = isfinite(r.lower) && isfinite(r.upper))
+                    for r in result.ci]
+            return _bridge_inference_flatten_multi_profile(
+                rows;
+                method = "profile",
+                status = "profile",
+                attempted = result.attempted,
+                used = result.used,
+                failed = result.failed,
+                elapsed = result.elapsed,
+                message = "profile_result completed (coefficient block)",
+            )
+        end
         # Profile ONLY the SD target the bridge returns (`_bridge_pick_sd_row`'s set),
         # not the full parameter vector — the bridge reports a single SD row, so
         # profiling the fixed effects too is wasted re-optimisation (#202 bridge perf).
