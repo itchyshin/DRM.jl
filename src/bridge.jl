@@ -72,6 +72,36 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     end
 
     if bridge_method == "profile"
+        # Stage A (drmTMB#179): when the R side requests a specific direct target
+        # (a fixed-effect coefficient block + coef name via opts[:profile_param] /
+        # opts[:profile_coef]), profile that block and return the matching single
+        # row. The profiler is already in-process; this just widens the bridge past
+        # the SD block. Absent those options, keep the legacy single-SD-row behaviour.
+        want_param = get(opts, :profile_param, nothing)
+        want_coef = get(opts, :profile_coef, nothing)
+        if want_param !== nothing && want_coef !== nothing
+            pblock = Symbol(String(want_param))
+            ccoef = String(want_coef)
+            result = profile_result(fit; level = level, threads = threads,
+                                    parm = pblock)
+            idx = findfirst(r -> String(r.coef) == ccoef, result.ci)
+            idx === nothing && throw(ArgumentError(
+                "drm_bridge_inference: no profile row for $(pblock):$(ccoef)"))
+            return _bridge_inference_flatten(
+                result.ci[idx];
+                method = "profile",
+                status = "profile",
+                attempted = result.attempted,
+                used = result.used,
+                failed = result.failed,
+                elapsed = result.elapsed,
+                threaded = result.threaded,
+                worker_threads = result.worker_threads,
+                julia_threads = result.julia_threads,
+                blas_threads = result.blas_threads,
+                message = "profile_result completed (coefficient)",
+            )
+        end
         # Profile ONLY the SD target the bridge returns (`_bridge_pick_sd_row`'s set),
         # not the full parameter vector — the bridge reports a single SD row, so
         # profiling the fixed effects too is wasted re-optimisation (#202 bridge perf).
