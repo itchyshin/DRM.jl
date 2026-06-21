@@ -18,7 +18,7 @@ Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, and a
 phylogenetic random intercept, `phylo(1 | species)`, both use the sparse-Laplace
 engine and support a covariate dispersion formula `sigma ~ x` (a per-observation
 log-size; #164). General PD-covariance intercepts (`relmat`/`animal`/`spatial`)
-still require `sigma ~ 1`.
+also support `sigma ~ x` (the same per-observation log-dispersion; #164 follow-on).
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), NegBinomial2(); data = dat)

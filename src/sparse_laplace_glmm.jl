@@ -845,16 +845,23 @@ function _phylo_mean_laplace_hetero_fg(kind, aux_from, n::Int, Xμ, Xσ, leaf_no
     return val, vcat(gβ, gν, [gσ]), b, true
 end
 
-function _fit_phylo_mean_laplace_hetero(fam, kind, aux_from, n::Int, Xμ, Xσ,
-                                        labels, tree, nmμ, nmσ, grp, g_tol; θβ0,
-                                        θσ0, sigma_scale, se::Bool = false,
-                                        polish_iterations::Int = 0)
-    Q, leaf_node, _ = _poisson_phylo_setup(tree, labels)
+# Q-generic core for a HETEROSCEDASTIC nuisance family (NB2/Gamma/Beta) with a
+# covariate dispersion `ησ = Xσ·βσ` and a single structured random intercept of
+# arbitrary PD precision `Q` (#164). Driven by the tree route
+# (`_fit_phylo_mean_laplace_hetero`) and the general-covariance route
+# (`_fit_nb2_relmat_laplace` / `_fit_gamma_relmat_laplace` / `_fit_beta_relmat_laplace`);
+# the only difference is where `(Q, leaf_node)` come from. A one-column constant `Xσ`
+# reproduces `_fit_general_mean_laplace_nuisance` exactly (the reduction invariant).
+function _fit_general_mean_laplace_hetero(fam, kind, aux_from, n::Int, Xμ, Xσ,
+                                          Q, leaf_node, nmμ, nmσ, grp, g_tol; θβ0,
+                                          θσ0, sigma_scale, se::Bool = false,
+                                          polish_iterations::Int = 0,
+                                          prec_error::AbstractString = "structured(1 | $grp) precision is not positive definite")
     q = size(Q, 1)
     pμ = size(Xμ, 2)
     pσ = size(Xσ, 2)
     qchol = cholesky(Symmetric(Q); check = false)
-    issuccess(qchol) || error("phylo(1 | $grp) tree precision is not positive definite after root conditioning")
+    issuccess(qchol) || error(prec_error)
     logdetQ = logdet(qchol)
     last_b = zeros(q)
 
@@ -938,6 +945,22 @@ function _fit_phylo_mean_laplace_hetero(fam, kind, aux_from, n::Int, Xμ, Xσ,
     scales = Dict(:sigma => [sigma_scale(ησ̂[i]) for i in 1:n])
     fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
     return _withnll(fit, nll, grad!)
+end
+
+# Tree route into the heteroscedastic core: build the phylo precision Q from the
+# tree, then delegate to `_fit_general_mean_laplace_hetero` (mirrors the nuisance
+# pair `_fit_phylo_mean_laplace_nuisance` -> `_fit_general_mean_laplace_nuisance`).
+function _fit_phylo_mean_laplace_hetero(fam, kind, aux_from, n::Int, Xμ, Xσ,
+                                        labels, tree, nmμ, nmσ, grp, g_tol; θβ0,
+                                        θσ0, sigma_scale, se::Bool = false,
+                                        polish_iterations::Int = 0)
+    Q, leaf_node, _ = _poisson_phylo_setup(tree, labels)
+    return _fit_general_mean_laplace_hetero(
+        fam, kind, aux_from, n, Xμ, Xσ, Q, leaf_node, nmμ, nmσ, grp, g_tol;
+        θβ0 = θβ0, θσ0 = θσ0, sigma_scale = sigma_scale, se = se,
+        polish_iterations = polish_iterations,
+        prec_error = "phylo(1 | $grp) tree precision is not positive definite after root conditioning"
+    )
 end
 
 function _phylo_mean_laplace_fg(kind, aux, n::Int, Xμ, leaf_node, Q, logdetQ, θ;
@@ -1155,14 +1178,33 @@ O(p) gradient and Takahashi log-det derivatives carry over unchanged (#167).
 function _fit_nb2_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp,
                                  g_tol; se::Bool = true,
                                  polish_iterations::Int = 0)
-    size(Xσ, 2) == 1 || error("_fit_nb2_relmat_laplace currently supports a constant sigma formula")
-    all(x -> x == 1.0, @view Xσ[:, 1]) ||
-        error("_fit_nb2_relmat_laplace currently supports a constant sigma formula")
     Q, leaf_node = _general_cov_setup(C, labels)
-    aux_from, θβ0, θσ0 = _nb2_laplace_setup(y, Xμ)
-    return _fit_general_mean_laplace_nuisance(
-        fam, Val(:nb2_fixed), aux_from, length(y), Xμ, Q, leaf_node, nmμ, nmσ,
-        grp, g_tol; θβ0 = θβ0, θσ0 = θσ0,
+    if size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])
+        # constant-σ (sigma ~ 1): shared nuisance setup with the phylo route (#271).
+        aux_from, θβ0, θσ0 = _nb2_laplace_setup(y, Xμ)
+        return _fit_general_mean_laplace_nuisance(
+            fam, Val(:nb2_fixed), aux_from, length(y), Xμ, Q, leaf_node, nmμ, nmσ,
+            grp, g_tol; θβ0 = θβ0, θσ0 = θσ0,
+            sigma_scale = exp, se = se, polish_iterations = polish_iterations
+        )
+    end
+    # Covariate dispersion (#164 follow-on): ησ = Xσ·βσ over the general-covariance
+    # random intercept. Same per-observation hetero aux as the phylo route (the σ-axis
+    # is Q-independent); only the prior precision Q differs.
+    yint = round.(Int, y)
+    yf = Float64.(yint)
+    m = sum(y) / length(y)
+    v = sum(abs2, y .- m) / max(length(y) - 1, 1)
+    function aux_from_hetero(ησ)
+        r = exp.(clamp.(-2 .* ησ, -8.0, 8.0))
+        lconst = [loggamma(yf[i] + r[i]) - loggamma(r[i]) - _logfactorial(yint[i]) for i in eachindex(yint)]
+        return (y = yf, size = r, lconst = lconst)
+    end
+    θσ0 = zeros(size(Xσ, 2))
+    θσ0[1] = -0.5 * log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    return _fit_general_mean_laplace_hetero(
+        fam, Val(:nb2_hetero), aux_from_hetero, length(y), Xμ, Xσ, Q, leaf_node,
+        nmμ, nmσ, grp, g_tol; θβ0 = _poisson_fixed_start(y, Xμ), θσ0 = θσ0,
         sigma_scale = exp, se = se, polish_iterations = polish_iterations
     )
 end
@@ -1251,14 +1293,35 @@ differs (`C⁻¹` vs the tree topology). Exact O(p) gradient carries over (#167)
 function _fit_gamma_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp,
                                    g_tol; se::Bool = true,
                                    polish_iterations::Int = 5)
-    size(Xσ, 2) == 1 || error("_fit_gamma_relmat_laplace currently supports a constant sigma formula")
-    all(x -> x == 1.0, @view Xσ[:, 1]) ||
-        error("_fit_gamma_relmat_laplace currently supports a constant sigma formula")
     Q, leaf_node = _general_cov_setup(C, labels)
-    aux_from, θβ0, θσ0 = _gamma_laplace_setup(y, Xμ)
-    return _fit_general_mean_laplace_nuisance(
-        fam, Val(:gamma_fixed), aux_from, length(y), Xμ, Q, leaf_node, nmμ, nmσ,
-        grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
+    if size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])
+        # constant-σ (sigma ~ 1): shared nuisance setup with the phylo route (#271).
+        aux_from, θβ0, θσ0 = _gamma_laplace_setup(y, Xμ)
+        return _fit_general_mean_laplace_nuisance(
+            fam, Val(:gamma_fixed), aux_from, length(y), Xμ, Q, leaf_node, nmμ, nmσ,
+            grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
+            se = se, polish_iterations = polish_iterations
+        )
+    end
+    # Covariate dispersion (#164 follow-on): ησ = Xσ·βσ over the general-covariance
+    # random intercept; the hetero aux turns ησ into the per-observation shape vector
+    # α = exp(-2·ησ). Same σ-axis as the phylo route; only the prior precision Q differs.
+    yv = Float64.(y)
+    ȳ = sum(yv) / length(yv)
+    v = sum(abs2, yv .- ȳ) / max(length(yv) - 1, 1)
+    α0 = max(ȳ^2 / max(v, eps()), 3.0)
+    θβ0 = zeros(size(Xμ, 2))
+    θβ0[1] = log(ȳ + eps())
+    function aux_from_hetero(ησ)
+        α = exp.(clamp.(-2 .* ησ, -8.0, 8.0))
+        lconst = [α[i] * log(α[i]) - loggamma(α[i]) + (α[i] - 1) * log(yv[i]) for i in eachindex(yv)]
+        return (y = yv, shape = α, lconst = lconst)
+    end
+    θσ0 = zeros(size(Xσ, 2))
+    θσ0[1] = -0.5 * log(α0)
+    return _fit_general_mean_laplace_hetero(
+        fam, Val(:gamma_hetero), aux_from_hetero, length(yv), Xμ, Xσ, Q, leaf_node,
+        nmμ, nmσ, grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
         se = se, polish_iterations = polish_iterations
     )
 end
@@ -1332,14 +1395,36 @@ differs (`C⁻¹` vs the tree topology). Exact O(p) gradient carries over (#167)
 function _fit_beta_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp,
                                   g_tol; se::Bool = true,
                                   polish_iterations::Int = 0)
-    size(Xσ, 2) == 1 || error("_fit_beta_relmat_laplace currently supports a constant sigma formula")
-    all(x -> x == 1.0, @view Xσ[:, 1]) ||
-        error("_fit_beta_relmat_laplace currently supports a constant sigma formula")
     Q, leaf_node = _general_cov_setup(C, labels)
-    aux_from, θβ0, θσ0 = _beta_laplace_setup(y, Xμ)
-    return _fit_general_mean_laplace_nuisance(
-        fam, Val(:beta_fixed), aux_from, length(y), Xμ, Q, leaf_node, nmμ, nmσ,
-        grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
+    if size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])
+        # constant-σ (sigma ~ 1): shared nuisance setup with the phylo route (#271).
+        aux_from, θβ0, θσ0 = _beta_laplace_setup(y, Xμ)
+        return _fit_general_mean_laplace_nuisance(
+            fam, Val(:beta_fixed), aux_from, length(y), Xμ, Q, leaf_node, nmμ, nmσ,
+            grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
+            se = se, polish_iterations = polish_iterations
+        )
+    end
+    # Covariate dispersion (#164 follow-on): ησ = Xσ·βσ over the general-covariance
+    # random intercept; the hetero aux turns ησ into the per-observation precision
+    # φ = exp(-2·ησ). Same σ-axis as the phylo route; only the prior precision Q differs.
+    yv = Float64.(y)
+    ylogit = log.(yv) .- log1p.(-yv)
+    ȳ = clamp(sum(yv) / length(yv), 1e-4, 1 - 1e-4)
+    v = sum(abs2, yv .- ȳ) / max(length(yv) - 1, 1)
+    φ0 = max(ȳ * (1 - ȳ) / max(v, eps()) - 1, 0.5)
+    θβ0 = zeros(size(Xμ, 2))
+    θβ0[1] = log(ȳ / (1 - ȳ))
+    function aux_from_hetero(ησ)
+        φ = exp.(clamp.(-2 .* ησ, -8.0, 8.0))
+        return (y = yv, precision = φ, ylogit = ylogit,
+                lgammaφ = loggamma.(φ), digammaφ = digamma.(φ))
+    end
+    θσ0 = zeros(size(Xσ, 2))
+    θσ0[1] = -0.5 * log(φ0)
+    return _fit_general_mean_laplace_hetero(
+        fam, Val(:beta_hetero), aux_from_hetero, length(yv), Xμ, Xσ, Q, leaf_node,
+        nmμ, nmσ, grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
         se = se, polish_iterations = polish_iterations
     )
 end

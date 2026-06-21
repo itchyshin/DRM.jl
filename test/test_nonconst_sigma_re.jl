@@ -18,8 +18,10 @@
 #     test_164_mean_re_covariate_sigma.jl / test_164_gamma_hetero.jl) and the
 #     crossed `(1 | g) + (1 | h)` route via `_crossed_mean_laplace_hetero_fg` (see
 #     test_164_crossed_hetero_sigma.jl). General PD-covariance (relmat/animal/
-#     spatial) dispersion remains guarded. The last testset confirms the mean-only
-#     phylo case now fits.
+#     spatial) dispersion has ALSO landed via the Q-generic hetero core
+#     `_fit_general_mean_laplace_hetero` — see the `sigma ~ x` recovery testsets in
+#     test_relmat_counts_nb2.jl (NB2/Gamma) and test_relmat_counts_beta.jl (Beta).
+#     The last testset confirms the mean-only phylo case now fits.
 #
 # What is asserted for the supported path (NB2 + Gamma):
 #   1. recovery of the genuine `sigma`-axis covariate SLOPE γ1 simultaneously with

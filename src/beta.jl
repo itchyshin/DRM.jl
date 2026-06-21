@@ -18,7 +18,7 @@ phylogenetic random intercept, `phylo(1 | species)`, use the sparse-Laplace engi
 and support a covariate dispersion formula `sigma ~ x` (#164). General
 user-supplied PD-covariance intercepts — `relmat(1 | id)` with `K = C`, the
 `animal(1 | id)` (`A = C`) and `spatial(1 | id)` (`K = C`) aliases — also use the
-sparse-Laplace engine but currently require `sigma ~ 1`.
+sparse-Laplace engine and support `sigma ~ x` (#164 follow-on).
 
 !!! note
     `DRM.Beta` shadows `Distributions.Beta`; qualify the latter if you need it.

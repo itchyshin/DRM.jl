@@ -17,7 +17,8 @@ Likelihood `Gamma(α, μ/α)`; variance `μ²σ²`. Mirrors `drmTMB`'s `Gamma` f
 Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, and a
 phylogenetic random intercept, `phylo(1 | species)`, both use the sparse-Laplace
 engine and support a covariate dispersion formula `sigma ~ x` (#164). General
-PD-covariance intercepts (`relmat`/`animal`/`spatial`) still require `sigma ~ 1`.
+PD-covariance intercepts (`relmat`/`animal`/`spatial`) also support `sigma ~ x`
+(#164 follow-on).
 
 !!! note
     `DRM.Gamma` shadows `Distributions.Gamma`; qualify the latter if you need it.

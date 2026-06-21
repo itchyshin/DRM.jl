@@ -224,7 +224,144 @@ end
     # coords-only spatial → error (coordinate-based range is Gaussian-only for now)
     @test_throws ErrorException drm(bf(@formula(y ~ x + spatial(1 | id)), @formula(sigma ~ 1)),
                                     NegBinomial2(); data = (; y = yc, x, id), coords = rand(G, 2), se = false)
-    # non-constant sigma with a structured RE → clear error (constant-sigma only)
-    @test_throws ErrorException drm(bf(@formula(y ~ x + relmat(1 | id)), @formula(sigma ~ 0 + x)),
-                                    NegBinomial2(); data = (; y = yc, x, id), K = Cm, se = false)
+    # non-constant sigma with a structured RE now FITS (covariate dispersion, #164
+    # follow-on): relmat/animal/spatial route a `sigma ~ x` formula through the
+    # general-covariance hetero Laplace core. Dedicated recovery is below.
+    fit_hetero = drm(bf(@formula(y ~ x + relmat(1 | id)), @formula(sigma ~ x)),
+                     NegBinomial2(); data = (; y = yc, x, id), K = Cm, se = false)
+    @test fit_hetero.converged
+    @test length(coef(fit_hetero, :sigma)) == 2     # intercept + slope on log-σ
+end
+
+# ---- NB2 relmat covariate dispersion `sigma ~ x` (#164 follow-on) -----------
+@testset "NB2 relmat(1|id) covariate dispersion sigma~x — recovery (#164 follow-on)" begin
+    rng = MersenneTwister(20260621)
+    G = 80; m = 10
+    C = _random_corr_nb(rng, G; range = 0.8)
+    id = repeat(1:G, inner = m)
+    n = length(id)
+    x = randn(rng, n)
+    βμ = [0.20, 0.35]
+    βσ = [1.3, 0.6]                                  # log-size = 1.3 + 0.6 x
+    σb = 0.45
+    u = σb .* (cholesky(C).L * randn(rng, G))
+    sz = exp.(βσ[1] .+ βσ[2] .* x)
+    μ = exp.(βμ[1] .+ βμ[2] .* x .+ u[id])
+    y = Float64.([rand(rng, Distributions.NegativeBinomial(sz[i], sz[i] / (sz[i] + μ[i]))) for i in 1:n])
+
+    fit = drm(bf(@formula(y ~ x + relmat(1 | id)), @formula(sigma ~ x)),
+              NegBinomial2(); data = (; y, x, id), K = Matrix(C), se = false)
+
+    @test fit.converged
+    @test length(coef(fit, :sigma)) == 2
+    @test coef(fit, :mu)[2] ≈ βμ[2] atol = 0.20
+    # σ-slope band EXCLUDES 0 (recovered ≈ -0.28): identifies the σ-axis, so a fit
+    # that ignored the σ-covariate (constant σ) would FAIL, not pass.
+    @test coef(fit, :sigma)[2] ≈ -0.5 * βσ[2] atol = 0.15   # log σ slope = -0.5 · log-size slope
+    @test re_sd(fit)[:id] ≈ σb atol = 0.20
+    @test isfinite(loglik(fit))
+    @test all(fitted(fit) .> 0)
+end
+
+# ---- Gamma relmat covariate dispersion `sigma ~ x` (#164 follow-on) ---------
+@testset "Gamma relmat(1|id) covariate dispersion sigma~x — recovery (#164 follow-on)" begin
+    rng = MersenneTwister(20260622)
+    G = 80; m = 10
+    C = _random_corr_nb(rng, G; range = 0.8)
+    id = repeat(1:G, inner = m)
+    n = length(id)
+    x = randn(rng, n)
+    βμ = [0.30, 0.40]
+    βσ = [0.8, 0.5]                                  # log-shape α = 0.8 + 0.5 x
+    σb = 0.40
+    u = σb .* (cholesky(C).L * randn(rng, G))
+    α = exp.(βσ[1] .+ βσ[2] .* x)
+    μ = exp.(βμ[1] .+ βμ[2] .* x .+ u[id])
+    y = Float64.([rand(rng, Distributions.Gamma(α[i], μ[i] / α[i])) for i in 1:n])
+
+    fit = drm(bf(@formula(y ~ x + relmat(1 | id)), @formula(sigma ~ x)),
+              Gamma(); data = (; y, x, id), K = Matrix(C), se = false)
+
+    @test fit.converged
+    @test length(coef(fit, :sigma)) == 2
+    @test coef(fit, :mu)[2] ≈ βμ[2] atol = 0.25
+    # σ-slope band EXCLUDES 0 (recovered ≈ -0.19): identifies the σ-axis.
+    @test coef(fit, :sigma)[2] ≈ -0.5 * βσ[2] atol = 0.15   # log σ slope = -0.5 · log-shape slope
+    @test re_sd(fit)[:id] ≈ σb atol = 0.20
+    @test isfinite(loglik(fit))
+    @test all(fitted(fit) .> 0)
+end
+
+# ---- relmat hetero σ: FD gate ≤1e-6 + reduction invariant (general-cov Q) ---
+# The hetero fg is Q-generic; this drives it with a relmat-derived precision (NOT a
+# tree) to confirm the general-covariance route exercises the same exact-gradient and
+# `sigma ~ 1` reduction the phylo #164 gate proved.
+@testset "relmat hetero σ — FD gate ≤1e-6 + reduction on 1-col Xσ (general-cov Q, #164 follow-on)" begin
+    rng = MersenneTwister(20260623)
+    G = 12; m = 5
+    C = _random_corr_nb(rng, G; range = 1.2)
+    id = repeat(1:G, inner = m)
+    n = length(id)
+    x = randn(rng, n)
+    Q, leaf_node = DRM._general_cov_setup(Matrix(C), id)
+    q = size(Q, 1)
+    logdetQ = logdet(cholesky(Symmetric(Q); check = false))
+    u = 0.45 .* (cholesky(C).L * randn(rng, G))
+    sz = exp.(1.3 .+ 0.6 .* x)
+    μ = exp.(0.2 .+ 0.35 .* x .+ u[id])
+    yint = [rand(rng, Distributions.NegativeBinomial(sz[i], sz[i] / (sz[i] + μ[i]))) for i in 1:n]
+    yf = Float64.(yint)
+    aux_hetero = ησ -> begin
+        r = exp.(clamp.(-2 .* ησ, -8.0, 8.0))
+        lconst = [loggamma(yf[i] + r[i]) - loggamma(r[i]) - DRM._logfactorial(yint[i]) for i in eachindex(yint)]
+        (y = yf, size = r, lconst = lconst)
+    end
+    Xμ = hcat(ones(n), x)
+    Xσ = hcat(ones(n), x)
+
+    NTOL = 1e-10; NMAX = 400; FDH = 1e-4
+    θ = [0.10, 0.45, 1.2, 0.6, log(0.55)]           # off-optimum: [βμ(2); βσ(2); logσ_b]
+    val0, g_an, b_base, ok = DRM._phylo_mean_laplace_hetero_fg(
+        Val(:nb2_hetero), aux_hetero, n, Xμ, Xσ, leaf_node, Q, logdetQ, θ;
+        grad = true, b0 = zeros(q), newton_tol = NTOL, newton_maxiter = NMAX)
+    @test ok && isfinite(val0) && val0 < 1e17
+    g_fd = zeros(length(θ))
+    for k in eachindex(θ)
+        tp = copy(θ); tp[k] += FDH
+        tm = copy(θ); tm[k] -= FDH
+        fp = DRM._phylo_mean_laplace_hetero_fg(Val(:nb2_hetero), aux_hetero, n, Xμ, Xσ,
+            leaf_node, Q, logdetQ, tp; grad = false, b0 = copy(b_base),
+            newton_tol = NTOL, newton_maxiter = NMAX)[1]
+        fm = DRM._phylo_mean_laplace_hetero_fg(Val(:nb2_hetero), aux_hetero, n, Xμ, Xσ,
+            leaf_node, Q, logdetQ, tm; grad = false, b0 = copy(b_base),
+            newton_tol = NTOL, newton_maxiter = NMAX)[1]
+        g_fd[k] = (fp - fm) / (2FDH)
+    end
+    max_abs_diff = maximum(abs, g_an .- g_fd)
+    @info "relmat hetero-σ NB2 gradient gate (#164 follow-on)" max_abs_diff
+    @test max_abs_diff ≤ 1e-6
+
+    # Reduction: a one-column constant Xσ reproduces the scalar nuisance fg bit-for-bit.
+    sizep = 4.0
+    yint2 = [rand(rng, Distributions.NegativeBinomial(sizep, sizep / (sizep + μi))) for μi in μ]
+    yf2 = Float64.(yint2)
+    aux_scalar = ls -> (y = yf2, size = exp(clamp(-2 * ls, -8, 8)),
+        lconst = [loggamma(yf2[i] + exp(clamp(-2 * ls, -8, 8))) - loggamma(exp(clamp(-2 * ls, -8, 8))) -
+                  DRM._logfactorial(yint2[i]) for i in eachindex(yint2)])
+    aux_hetero2 = ησ -> begin
+        r = exp.(clamp.(-2 .* ησ, -8.0, 8.0))
+        lconst = [loggamma(yf2[i] + r[i]) - loggamma(r[i]) - DRM._logfactorial(yint2[i]) for i in eachindex(yint2)]
+        (y = yf2, size = r, lconst = lconst)
+    end
+    Xσ1 = ones(n, 1)
+    θr = [0.1, 0.4, log(3.0), log(0.55)]            # pσ = 1
+    vs, gs, _, oks = DRM._phylo_mean_laplace_nuisance_fg(
+        Val(:nb2_fixed), aux_scalar, n, Xμ, leaf_node, Q, logdetQ, θr;
+        grad = true, b0 = zeros(q), newton_tol = NTOL, newton_maxiter = NMAX)
+    vh, gh, _, okh = DRM._phylo_mean_laplace_hetero_fg(
+        Val(:nb2_hetero), aux_hetero2, n, Xμ, Xσ1, leaf_node, Q, logdetQ, θr;
+        grad = true, b0 = zeros(q), newton_tol = NTOL, newton_maxiter = NMAX)
+    @test oks && okh
+    @test vs ≈ vh atol = 1e-12
+    @test gs ≈ gh atol = 1e-10
 end

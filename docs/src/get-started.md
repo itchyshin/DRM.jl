@@ -79,7 +79,8 @@ The latest tranche of work extends what you can ask of a fitted model:
   the mean for Poisson, NegBinomial2, Gamma, Beta, and Binomial families, via a
   sparse Laplace approximation, plus crossed intercepts `(1 | g) + (1 | h)` for the
   same families. For NegBinomial2, Gamma, and Beta the dispersion may itself carry
-  covariates (`sigma ~ x`) on both the phylo and crossed routes (#164).
+  covariates (`sigma ~ x`) on the phylo, crossed `(1 | g) + (1 | h)`, and
+  general-covariance (`relmat`/`animal`/`spatial`) routes (#164).
 
 ## Where to go next
 

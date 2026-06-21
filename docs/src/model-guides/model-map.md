@@ -107,9 +107,11 @@ via a sparse augmented-state Laplace approximation. The non-Gaussian families
 (Poisson, NB2, Binomial, Gamma, Beta, and the deeper Student-t / LogNormal /
 Beta-binomial GLMMs) carry random intercepts and correlated slopes via
 Gauss–Hermite marginals, and **phylogenetic** (`phylo`) effects via a sparse
-Laplace path — currently with a **constant `sigma`**. So put predictors on
-`sigma` for Gaussian freely; for the count/proportion families, vary the mean and
-keep dispersion constant when adding a structured or phylogenetic effect.
+Laplace path. For NB2, Gamma, and Beta the dispersion may itself carry covariates
+(`sigma ~ x`) alongside a phylo, crossed `(1 | g) + (1 | h)`, or general-covariance
+(`relmat`/`animal`/`spatial`) random intercept (#164); the other non-Gaussian
+families keep a constant `sigma` on these structured routes. Put predictors on
+`sigma` for Gaussian freely.
 
 For the verified engine behind the phylogenetic models — the q=4 phylogenetic
 bivariate location–scale model that fits 2.18× faster than drmTMB with valid

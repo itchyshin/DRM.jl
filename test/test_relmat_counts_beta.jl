@@ -167,7 +167,40 @@ end
     # coords-only spatial → error (coordinate-based range is Gaussian-only for now)
     @test_throws ErrorException drm(bf(@formula(y ~ x + spatial(1 | id)), @formula(sigma ~ 1)),
                                     Beta(); data = (; y, x, id), coords = rand(G, 2), se = false)
-    # non-constant sigma with a structured RE → clear error (constant-sigma only)
-    @test_throws ErrorException drm(bf(@formula(y ~ x + relmat(1 | id)), @formula(sigma ~ 0 + x)),
-                                    Beta(); data = (; y, x, id), K = Cm, se = false)
+    # non-constant sigma with a structured RE now FITS (covariate dispersion, #164
+    # follow-on): relmat/animal/spatial route a `sigma ~ x` precision sub-model through
+    # the general-covariance hetero Laplace core. Dedicated recovery is below.
+    fit_hetero = drm(bf(@formula(y ~ x + relmat(1 | id)), @formula(sigma ~ x)),
+                     Beta(); data = (; y, x, id), K = Cm, se = false)
+    @test fit_hetero.converged
+    @test length(coef(fit_hetero, :sigma)) == 2     # intercept + slope on log-σ
+end
+
+# ---- Beta relmat covariate dispersion `sigma ~ x` (#164 follow-on) ----------
+@testset "Beta relmat(1|id) covariate dispersion sigma~x — recovery (#164 follow-on)" begin
+    rng = MersenneTwister(20260624)
+    G = 80; m = 10
+    C = _random_corr_beta(rng, G; range = 0.8)
+    id = repeat(1:G, inner = m)
+    n = length(id)
+    x = randn(rng, n)
+    βμ = [0.30, 0.40]
+    βσ = [2.4, 0.6]                                  # log-precision φ = 2.4 + 0.6 x
+    σb = 0.40
+    u = σb .* (cholesky(C).L * randn(rng, G))
+    φ = exp.(βσ[1] .+ βσ[2] .* x)
+    μ = _logistic_b.(βμ[1] .+ βμ[2] .* x .+ u[id])
+    y = Float64.([rand(rng, Distributions.Beta(μ[i] * φ[i], (1 - μ[i]) * φ[i])) for i in 1:n])
+
+    fit = drm(bf(@formula(y ~ x + relmat(1 | id)), @formula(sigma ~ x)),
+              Beta(); data = (; y, x, id), K = Matrix(C), se = false)
+
+    @test fit.converged
+    @test length(coef(fit, :sigma)) == 2
+    @test coef(fit, :mu)[2] ≈ βμ[2] atol = 0.25
+    # σ-slope band EXCLUDES 0 (recovered ≈ -0.30): identifies the σ-axis.
+    @test coef(fit, :sigma)[2] ≈ -0.5 * βσ[2] atol = 0.15   # log σ slope = -0.5 · log-precision slope
+    @test re_sd(fit)[:id] ≈ σb atol = 0.20
+    @test isfinite(loglik(fit))
+    @test all(0 .< fitted(fit) .< 1)
 end
