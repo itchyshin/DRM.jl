@@ -132,7 +132,23 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
             algorithm = Symbol(get(opts, :algorithm, :auto)),
             g_tol = Float64(get(opts, :g_tol, 1e-8)),
         )
-        row = _bridge_pick_sd_row(result.summary)
+        # Stage B (drmTMB#179): when the R side requests a specific coefficient
+        # (opts[:profile_param]/[:profile_coef]), return that coefficient's bootstrap
+        # row; otherwise the legacy single-SD row. Cold parametric bootstrap (existing
+        # machinery); warm-start is a separate optimisation.
+        want_param = get(opts, :profile_param, nothing)
+        want_coef = get(opts, :profile_coef, nothing)
+        row = if want_param !== nothing && want_coef !== nothing
+            pblock = String(want_param)
+            ccoef = String(want_coef)
+            idx = findfirst(r -> String(r.param) == pblock && String(r.coef) == ccoef,
+                            result.summary)
+            idx === nothing && throw(ArgumentError(
+                "drm_bridge_inference: no bootstrap row for $(pblock):$(ccoef)"))
+            result.summary[idx]
+        else
+            _bridge_pick_sd_row(result.summary)
+        end
         return _bridge_inference_flatten(
             row;
             method = "bootstrap",
