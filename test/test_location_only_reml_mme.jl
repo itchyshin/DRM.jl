@@ -533,6 +533,48 @@ end
     @test Set(r.cell for r in weak_grid.rows) ==
         Set((:low_phylo_signal, :near_zero_phylo_signal))
     @test all(r -> r.diagnostic.coverage_status === :not_evaluated, weak_grid.rows)
+
+    boundary_grid = DRM._loconly_reml_boundary_grid_status(
+        ; reps = 1, iterations = 20,
+    )
+    boundary_grid_schema = DRM._loconly_reml_boundary_grid_status_schema()
+    @test boundary_grid_schema == (
+        :row_id, :target, :design, :condition, :n_reps, :n_accepted,
+        :convergence_rate, :boundary_rate, :near_zero_variance,
+        :nonfinite_objective, :singular_fixed_effect_information,
+        :expected_behavior, :claim_status, :coverage_status, :ai_reml_ready,
+        :next_gate,
+    )
+    @test boundary_grid.target === :gaussian_loconly_phylo_reml
+    @test boundary_grid.design === :near_zero_variance_boundary_grid
+    @test boundary_grid.n_rows == 2
+    @test boundary_grid.expected_behavior === :boundary_states_allowed
+    @test boundary_grid.claim_status === :simulation_diagnostic
+    @test boundary_grid.coverage_status === :not_evaluated
+    @test !boundary_grid.ai_reml_ready
+    boundary_grid_validation =
+        DRM._loconly_reml_validate_boundary_grid_status(boundary_grid)
+    @test boundary_grid_validation.ok
+    @test boundary_grid_validation.required_fields == boundary_grid_schema
+    @test Set(r.row_id for r in boundary_grid.rows) ==
+        Set((:low_phylo_signal, :near_zero_phylo_signal))
+    @test all(r -> r.n_reps == 1, boundary_grid.rows)
+    @test all(r -> 0 <= r.boundary_rate <= 1, boundary_grid.rows)
+    @test all(r -> r.expected_behavior === :boundary_states_allowed,
+              boundary_grid.rows)
+    @test all(r -> r.claim_status === :simulation_diagnostic,
+              boundary_grid.rows)
+    @test all(r -> r.coverage_status === :not_evaluated,
+              boundary_grid.rows)
+    @test all(r -> !r.ai_reml_ready, boundary_grid.rows)
+    bad_boundary_row = merge(first(boundary_grid.rows), (boundary_rate = 1.5,))
+    bad_boundary_status =
+        merge(boundary_grid, (rows = (bad_boundary_row,), n_rows = 1))
+    bad_boundary_validation =
+        DRM._loconly_reml_validate_boundary_grid_status(bad_boundary_status)
+    @test !bad_boundary_validation.ok
+    @test any(err -> occursin("invalid boundary_rate", err),
+              bad_boundary_validation.errors)
 end
 
 @testset "Location-only Gaussian phylo: status schema and scaling smoke" begin
@@ -578,6 +620,351 @@ end
     @test comparator_status.fixture_validation.ok
     @test comparator_status.fixture_validation.required_fields ==
         comparator_status.fixture_schema
+    @test comparator_status.version_probe_status === :defined_not_run
+    @test comparator_status.version_probe_schema == (
+        :comparator_id, :target, :candidate_package, :candidate_version,
+        :fixture_id, :fixture_version, :same_estimand_status,
+        :dependency_status, :artifact_status, :decision, :blocked_by,
+        :required_evidence, :next_gate,
+    )
+    @test comparator_status.version_probe_validation.ok
+    @test comparator_status.version_probe_validation.required_fields ==
+        comparator_status.version_probe_schema
+    @test comparator_status.version_probe_validation.dependency_status === :not_added
+    @test comparator_status.version_probe_validation.n_rows ==
+        length(comparator_status.version_probe_rows)
+    @test length(comparator_status.version_probe_rows) == 1
+    version_probe = only(comparator_status.version_probe_rows)
+    @test version_probe.comparator_id === :phylolm_or_equivalent_reml
+    @test version_probe.target === :gaussian_loconly_phylo_reml
+    @test version_probe.candidate_package === :unselected_phylolm_style_reml
+    @test version_probe.candidate_version === :unprobed
+    @test version_probe.fixture_id === comparator_status.fixture.fixture_id
+    @test version_probe.fixture_version == comparator_status.fixture.version
+    @test version_probe.same_estimand_status === :requires_fixture_reproduction
+    @test version_probe.dependency_status === :not_added
+    @test version_probe.artifact_status === :probe_plan_defined
+    @test version_probe.blocked_by === :external_package_version_not_probed
+    @test :same_restricted_likelihood_target in version_probe.required_evidence
+    @test :same_covariance_target in version_probe.required_evidence
+    @test version_probe.next_gate === :optional_developer_comparator_script
+    bad_version_probe = merge(version_probe, (dependency_status = :added,))
+    bad_version_probe_validation =
+        DRM._loconly_reml_validate_external_comparator_version_probe(
+            (bad_version_probe,), comparator_status.fixture)
+    @test !bad_version_probe_validation.ok
+    @test any(err -> occursin("must not add a dependency", err),
+              bad_version_probe_validation.errors)
+    probe_status = DRM._loconly_reml_external_comparator_probe_status(
+        ; candidate_package = "phylolm",
+        candidate_version = "unavailable",
+        package_available = false,
+        rscript_status = :package_not_installed,
+        evidence = "test/test_location_only_reml_mme.jl",
+    )
+    probe_schema = DRM._loconly_reml_external_comparator_probe_result_schema()
+    @test probe_schema == (
+        :probe_id, :target, :fixture_id, :fixture_version, :comparator_id,
+        :candidate_package, :candidate_version, :package_available,
+        :rscript_status, :fit_status, :same_estimand_status,
+        :dependency_status, :artifact_status, :claim_status,
+        :coverage_status, :ai_reml_ready, :next_gate, :evidence,
+    )
+    @test probe_status.target === :gaussian_loconly_phylo_reml
+    @test probe_status.fixture_id === comparator_status.fixture.fixture_id
+    @test probe_status.fixture_version == comparator_status.fixture.version
+    @test probe_status.n_rows == 1
+    @test probe_status.claim_status === :internal_diagnostic
+    @test probe_status.coverage_status === :not_evaluated
+    @test !probe_status.ai_reml_ready
+    probe_validation =
+        DRM._loconly_reml_validate_external_comparator_probe_status(probe_status)
+    @test probe_validation.ok
+    @test probe_validation.required_fields == probe_schema
+    @test probe_validation.coverage_status === :not_evaluated
+    @test !probe_validation.ai_reml_ready
+    probe_row = only(probe_status.rows)
+    @test probe_row.comparator_id === :phylolm_or_equivalent_reml
+    @test probe_row.candidate_package == "phylolm"
+    @test probe_row.candidate_version == "unavailable"
+    @test probe_row.package_available === false
+    @test probe_row.rscript_status === :package_not_installed
+    @test probe_row.fit_status === :not_run
+    @test probe_row.dependency_status === :not_added
+    @test probe_row.artifact_status === :optional_developer_probe_written
+    @test probe_row.next_gate === :external_fixture_fit_comparison
+    bad_probe_row = merge(probe_row, (fit_status = :fit_run,))
+    bad_probe_status = merge(probe_status, (rows = (bad_probe_row,),))
+    bad_probe_validation =
+        DRM._loconly_reml_validate_external_comparator_probe_status(
+            bad_probe_status)
+    @test !bad_probe_validation.ok
+    @test any(err -> occursin("must not mark a fit as run", err),
+              bad_probe_validation.errors)
+    mktempdir() do dir
+        path = joinpath(dir, "external-comparator-probe.tsv")
+        write_result = DRM._loconly_reml_write_external_comparator_probe_tsv(
+            path;
+            candidate_package = "phylolm",
+            candidate_version = "unavailable",
+            package_available = false,
+            rscript_status = :package_not_installed,
+            evidence = "test/test_location_only_reml_mme.jl",
+        )
+        @test write_result.path == path
+        @test write_result.n_rows == 1
+        @test write_result.schema == probe_schema
+        @test write_result.validation.ok
+        lines = readlines(path)
+        @test String.(split(lines[1], '\t')) == collect(string.(probe_schema))
+        @test length(lines) == 2
+        @test first(split(lines[2], '\t')) == "phylolm_style_version_probe"
+    end
+    fit_feasibility =
+        DRM._loconly_reml_external_comparator_fit_feasibility_status(
+            ; candidate_package = "phylolm",
+            candidate_version = "2.6.5",
+        )
+    fit_feasibility_schema =
+        DRM._loconly_reml_external_comparator_fit_feasibility_schema()
+    @test fit_feasibility_schema == (
+        :check_id, :target, :fixture_id, :fixture_version, :comparator_id,
+        :candidate_package, :candidate_version, :n_obs, :n_species,
+        :n_per_species, :within_species_x_varies, :fit_status,
+        :same_estimand_status, :dependency_status, :blocked_by, :reason,
+        :claim_status, :coverage_status, :ai_reml_ready, :next_gate,
+    )
+    @test fit_feasibility.target === :gaussian_loconly_phylo_reml
+    @test fit_feasibility.n_rows == 1
+    @test fit_feasibility.claim_status === :internal_diagnostic
+    @test fit_feasibility.coverage_status === :not_evaluated
+    @test !fit_feasibility.ai_reml_ready
+    fit_feasibility_validation =
+        DRM._loconly_reml_validate_external_comparator_fit_feasibility(
+            fit_feasibility)
+    @test fit_feasibility_validation.ok
+    @test fit_feasibility_validation.required_fields == fit_feasibility_schema
+    fit_feasibility_row = only(fit_feasibility.rows)
+    @test fit_feasibility_row.check_id === :phylolm_fixture_fit_feasibility
+    @test fit_feasibility_row.candidate_package == "phylolm"
+    @test fit_feasibility_row.candidate_version == "2.6.5"
+    @test fit_feasibility_row.n_obs == comparator_status.fixture.n_obs
+    @test fit_feasibility_row.n_species == comparator_status.fixture.n_species
+    @test fit_feasibility_row.n_per_species ==
+        comparator_status.fixture.n_per_species
+    @test fit_feasibility_row.n_obs > fit_feasibility_row.n_species
+    @test fit_feasibility_row.within_species_x_varies
+    @test fit_feasibility_row.fit_status === :not_run
+    @test fit_feasibility_row.same_estimand_status ===
+        :not_same_estimand_current_fixture
+    @test fit_feasibility_row.dependency_status === :not_added
+    @test fit_feasibility_row.blocked_by ===
+        :repeated_observation_fixture_not_tip_level
+    @test occursin("replicated species rows", fit_feasibility_row.reason)
+    @test fit_feasibility_row.next_gate ===
+        :choose_replicate_capable_comparator_or_tip_level_fixture
+    bad_feasibility_row = merge(fit_feasibility_row, (fit_status = :fit_run,))
+    bad_feasibility_status =
+        merge(fit_feasibility, (rows = (bad_feasibility_row,),))
+    bad_feasibility_validation =
+        DRM._loconly_reml_validate_external_comparator_fit_feasibility(
+            bad_feasibility_status)
+    @test !bad_feasibility_validation.ok
+    @test any(err -> occursin("must not mark a fit as run", err),
+              bad_feasibility_validation.errors)
+    derivative_fd = DRM._loconly_reml_derivative_fd_status()
+    derivative_schema = DRM._loconly_reml_derivative_fd_status_schema()
+    @test derivative_schema == (
+        :check_id, :target, :fixture_id, :fixture_version,
+        :parameterization, :matrix_mode, :h, :score_max_absdiff_fd,
+        :dense_sparse_max_absdiff, :finite, :claim_status,
+        :coverage_status, :ai_reml_ready, :next_gate,
+    )
+    @test derivative_fd.target === :gaussian_loconly_phylo_reml
+    @test derivative_fd.fixture_id === comparator_status.fixture.fixture_id
+    @test derivative_fd.fixture_version == comparator_status.fixture.version
+    @test derivative_fd.n_rows == 2
+    @test derivative_fd.claim_status === :internal_diagnostic
+    @test derivative_fd.coverage_status === :not_evaluated
+    @test !derivative_fd.ai_reml_ready
+    derivative_validation =
+        DRM._loconly_reml_validate_derivative_fd_status(derivative_fd)
+    @test derivative_validation.ok
+    @test derivative_validation.required_fields == derivative_schema
+    @test derivative_validation.coverage_status === :not_evaluated
+    @test !derivative_validation.ai_reml_ready
+    @test Tuple(r.check_id for r in derivative_fd.rows) ==
+        (:dense_score_fd_fixture, :sparse_score_fd_fixture)
+    @test all(r -> r.target === :gaussian_loconly_phylo_reml,
+              derivative_fd.rows)
+    @test all(r -> r.parameterization === :log_sd, derivative_fd.rows)
+    @test all(r -> r.finite, derivative_fd.rows)
+    @test all(r -> r.claim_status === :internal_diagnostic,
+              derivative_fd.rows)
+    @test all(r -> r.coverage_status === :not_evaluated,
+              derivative_fd.rows)
+    @test all(r -> !r.ai_reml_ready, derivative_fd.rows)
+    @test all(r -> r.score_max_absdiff_fd < 1e-5, derivative_fd.rows)
+    @test last(derivative_fd.rows).dense_sparse_max_absdiff < 1e-7
+    bad_derivative_row =
+        merge(first(derivative_fd.rows), (score_max_absdiff_fd = 1.0,))
+    bad_derivative_status =
+        merge(derivative_fd, (rows = (bad_derivative_row,), n_rows = 1))
+    bad_derivative_validation =
+        DRM._loconly_reml_validate_derivative_fd_status(
+            bad_derivative_status)
+    @test !bad_derivative_validation.ok
+    @test any(err -> occursin("exceeds FD tolerance", err),
+              bad_derivative_validation.errors)
+    line_search = DRM._loconly_reml_line_search_status()
+    line_search_schema = DRM._loconly_reml_line_search_status_schema()
+    @test line_search_schema == (
+        :check_id, :target, :fixture_id, :fixture_version, :estimator,
+        :optimizer, :n_starts, :n_records, :n_accepted_records,
+        :accepted, :best_score_norm, :boundary_status, :trace_status,
+        :claim_status, :coverage_status, :ai_reml_ready,
+        :reason_not_ai_reml, :next_gate,
+    )
+    @test line_search.target === :gaussian_loconly_phylo_reml
+    @test line_search.fixture_id === comparator_status.fixture.fixture_id
+    @test line_search.fixture_version == comparator_status.fixture.version
+    @test line_search.n_rows == 1
+    @test line_search.claim_status === :optimizer_experiment
+    @test line_search.coverage_status === :not_evaluated
+    @test !line_search.ai_reml_ready
+    line_search_validation =
+        DRM._loconly_reml_validate_line_search_status(line_search)
+    @test line_search_validation.ok
+    @test line_search_validation.required_fields == line_search_schema
+    line_search_row = only(line_search.rows)
+    @test line_search_row.check_id === :guarded_ai_update_line_search_fixture
+    @test line_search_row.estimator ===
+        :guarded_ai_update_reml_optimizer_experiment
+    @test line_search_row.optimizer ===
+        :guarded_sparse_average_information_update
+    @test line_search_row.n_records == line_search_row.n_starts
+    @test line_search_row.n_accepted_records >= 1
+    @test line_search_row.accepted
+    @test line_search_row.best_score_norm < 1e-3
+    @test line_search_row.boundary_status === :interior
+    @test line_search_row.trace_status === :accepted_guarded_line_search
+    @test line_search_row.claim_status === :optimizer_experiment
+    @test line_search_row.coverage_status === :not_evaluated
+    @test !line_search_row.ai_reml_ready
+    @test occursin("no simulation, bridge, or coverage gate",
+                   line_search_row.reason_not_ai_reml)
+    bad_line_search_row = merge(
+        line_search_row, NamedTuple{(:ai_reml_ready,)}((true,)),
+    )
+    bad_line_search_status =
+        merge(line_search, (rows = (bad_line_search_row,),))
+    bad_line_search_validation =
+        DRM._loconly_reml_validate_line_search_status(
+            bad_line_search_status)
+    @test !bad_line_search_validation.ok
+    @test any(err -> occursin("must not mark ai_reml_ready", err),
+              bad_line_search_validation.errors)
+    profile_status = DRM._loconly_reml_profile_status()
+    profile_schema = DRM._loconly_reml_profile_status_schema()
+    @test profile_schema == (
+        :row_id, :target, :fixture_id, :fixture_version, :parameterization,
+        :axis, :step, :finite, :center_is_axis_min, :center_nll, :left_nll,
+        :right_nll, :claim_status, :coverage_status, :ai_reml_ready,
+        :next_gate,
+    )
+    @test profile_status.target === :gaussian_loconly_phylo_reml
+    @test profile_status.fixture_id === comparator_status.fixture.fixture_id
+    @test profile_status.fixture_version == comparator_status.fixture.version
+    @test profile_status.n_rows == 2
+    @test profile_status.claim_status === :internal_diagnostic
+    @test profile_status.coverage_status === :not_evaluated
+    @test !profile_status.ai_reml_ready
+    profile_validation =
+        DRM._loconly_reml_validate_profile_status(profile_status)
+    @test profile_validation.ok
+    @test profile_validation.required_fields == profile_schema
+    @test Tuple(r.row_id for r in profile_status.rows) ==
+        (:residual_logsd_profile_axis, :phylogenetic_logsd_profile_axis)
+    @test Set(r.axis for r in profile_status.rows) ==
+        Set((:log_sigma, :log_sigma_phy))
+    @test all(r -> r.target === :gaussian_loconly_phylo_reml,
+              profile_status.rows)
+    @test all(r -> r.parameterization === :log_sd, profile_status.rows)
+    @test all(r -> r.finite, profile_status.rows)
+    @test all(r -> r.center_is_axis_min, profile_status.rows)
+    @test all(r -> r.center_nll <= min(r.left_nll, r.right_nll) + 1e-8,
+              profile_status.rows)
+    @test all(r -> r.claim_status === :internal_diagnostic,
+              profile_status.rows)
+    @test all(r -> r.coverage_status === :not_evaluated,
+              profile_status.rows)
+    @test all(r -> !r.ai_reml_ready, profile_status.rows)
+    bad_profile_row =
+        merge(first(profile_status.rows), (center_is_axis_min = false,))
+    bad_profile_status =
+        merge(profile_status, (rows = (bad_profile_row,), n_rows = 1))
+    bad_profile_validation =
+        DRM._loconly_reml_validate_profile_status(bad_profile_status)
+    @test !bad_profile_validation.ok
+    @test any(err -> occursin("center is not axis minimum", err),
+              bad_profile_validation.errors)
+    variance_status = DRM._loconly_reml_variance_component_status()
+    variance_schema = DRM._loconly_reml_variance_component_status_schema()
+    @test variance_schema == (
+        :row_id, :target, :fixture_id, :fixture_version, :estimator,
+        :optimizer, :component, :logsd_parameter, :logsd_estimate,
+        :sd_estimate, :variance_estimate, :point_status, :interval_status,
+        :boundary_status, :claim_status, :coverage_status, :ai_reml_ready,
+        :next_gate,
+    )
+    @test variance_status.target === :gaussian_loconly_phylo_reml
+    @test variance_status.fixture_id === comparator_status.fixture.fixture_id
+    @test variance_status.fixture_version == comparator_status.fixture.version
+    @test variance_status.n_rows == 2
+    @test variance_status.point_status === :finite_optimizer_diagnostic
+    @test variance_status.interval_status === :not_evaluated
+    @test variance_status.claim_status === :internal_diagnostic
+    @test variance_status.coverage_status === :not_evaluated
+    @test !variance_status.ai_reml_ready
+    variance_validation =
+        DRM._loconly_reml_validate_variance_component_status(variance_status)
+    @test variance_validation.ok
+    @test variance_validation.required_fields == variance_schema
+    @test Tuple(r.row_id for r in variance_status.rows) ==
+        (:residual_variance_component, :phylogenetic_variance_component)
+    @test Set(r.component for r in variance_status.rows) ==
+        Set((:residual, :phylogenetic))
+    @test Set(r.logsd_parameter for r in variance_status.rows) ==
+        Set((:log_sigma, :log_sigma_phy))
+    @test all(r -> r.estimator ===
+              :guarded_ai_update_reml_optimizer_experiment,
+              variance_status.rows)
+    @test all(r -> r.optimizer ===
+              :guarded_sparse_average_information_update,
+              variance_status.rows)
+    @test all(r -> r.point_status === :finite_optimizer_diagnostic,
+              variance_status.rows)
+    @test all(r -> r.interval_status === :not_evaluated,
+              variance_status.rows)
+    @test all(r -> r.boundary_status === :interior, variance_status.rows)
+    @test all(r -> isfinite(r.logsd_estimate), variance_status.rows)
+    @test all(r -> r.sd_estimate > 0, variance_status.rows)
+    @test all(r -> r.variance_estimate > 0, variance_status.rows)
+    @test all(r -> r.variance_estimate ≈ abs2(r.sd_estimate),
+              variance_status.rows)
+    @test all(r -> r.coverage_status === :not_evaluated,
+              variance_status.rows)
+    @test all(r -> !r.ai_reml_ready, variance_status.rows)
+    bad_variance_row =
+        merge(first(variance_status.rows), (interval_status = :profile_interval,))
+    bad_variance_status =
+        merge(variance_status, (rows = (bad_variance_row,), n_rows = 1))
+    bad_variance_validation =
+        DRM._loconly_reml_validate_variance_component_status(
+            bad_variance_status)
+    @test !bad_variance_validation.ok
+    @test any(err -> occursin("evaluated intervals", err),
+              bad_variance_validation.errors)
     @test all(r -> r.target === :gaussian_loconly_phylo_reml,
               comparator_status.rows)
     @test any(r -> r.comparator_id === :internal_dense_gls_oracle &&

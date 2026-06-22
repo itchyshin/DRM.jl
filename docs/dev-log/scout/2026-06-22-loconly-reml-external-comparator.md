@@ -51,9 +51,29 @@ small deterministic balanced-tree data set, dense covariance target, and dense
 GLS REML reference values. No optional developer script or dependency was added
 because no external candidate has yet cleared that fixture gate.
 
+The follow-up version-probe row is now explicit in the same status helper. It
+records the unselected phylolm-style candidate, fixture id and fixture version,
+required same-estimand evidence, and the blocker
+`external_package_version_not_probed`. This banks the package/version probe
+contract without selecting a package, adding a dependency, wiring the R bridge,
+or changing the AI-REML readiness flag.
+
+`tools/loconly-reml-external-comparator-probe.jl` now writes the optional
+developer probe artifact. In the local developer environment it recorded
+`phylolm` version 2.6.5, but the row remains `fit_status = not_run`,
+`same_estimand_status = requires_fixture_reproduction`, `dependency_status =
+not_added`, `coverage_status = not_evaluated`, and `ai_reml_ready = false`.
+
+The current `loconly-gaussian-phylo-reml-v1` fixture is not a same-estimand
+input for `phylolm`: it has replicated species rows and observation-level
+covariate variation, while `phylolm` is a tip-level phylogenetic linear model.
+The fit-feasibility row therefore stays `fit_status = not_run` and blocks on
+`repeated_observation_fixture_not_tip_level`.
+
 ## Next Gate
 
-Open a bounded issue or draft PR when a concrete comparator is chosen. The
+Choose a replicate-capable comparator or define a separate tip-level fixture
+whose likelihood target is genuinely the same as a `phylolm` fit. The
 acceptance check should record the comparator package/version, fixture seed,
 target equality, point estimates, boundary labels, and whether the comparator
 can report the restricted likelihood directly.

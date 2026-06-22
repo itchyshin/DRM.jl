@@ -32,6 +32,7 @@ exact O(p) gradient. The files form a single migrated chain (top calls down):
 | `gaussian_ranef.jl` | Ordinary Gaussian random intercepts / slopes on the mean (and the scale-RE GHQ marginal). |
 | `gaussian_meta.jl` | Gaussian meta-analysis with known sampling (co)variances (`meta_V`). |
 | `gaussian_structured.jl` | Structured random effects (`relmat` / `animal` / `phylo` / `spatial`) on the Gaussian mean. |
+| `location_only.jl` | Exact-Gaussian location-only phylogenetic mean REML diagnostics and internal row contracts. |
 
 ## Non-Gaussian families
 
@@ -62,9 +63,9 @@ All non-Gaussian families share one reusable Laplace spine:
 
 ## Not yet wired — `src/experimental/`
 
-These migrated comparison-suite engines (REML, location-only, EM / natural-gradient
-variants) are present but **not** `include`d in the module; promoting them into a
-clean public API is tracked in the
+Some migrated comparison-suite engines and natural-gradient variants remain
+outside the current public API even when related diagnostic helpers are loaded.
+Promoting them into a clean public API is tracked in the
 [issue ledger](https://github.com/itchyshin/DRM.jl/issues) (Phase 1.0). Examples:
-`reml_q4.jl`, `location_only.jl`, `fit_em_natgrad.jl`, `fit_em_closed.jl`,
-`em_squarem_fit.jl`, and several `estep_*` mode-finder variants.
+`fit_em_natgrad.jl`, `fit_em_closed.jl`, `em_squarem_fit.jl`, and several
+`estep_*` mode-finder variants.

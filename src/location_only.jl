@@ -1877,12 +1877,101 @@ const _LOCONLY_REML_EXTERNAL_COMPARATOR_FIXTURE_FIELDS = (
     :ai_reml_ready,
 )
 
+const _LOCONLY_REML_EXTERNAL_COMPARATOR_VERSION_PROBE_FIELDS = (
+    :comparator_id, :target, :candidate_package, :candidate_version,
+    :fixture_id, :fixture_version, :same_estimand_status, :dependency_status,
+    :artifact_status, :decision, :blocked_by, :required_evidence, :next_gate,
+)
+
+const _LOCONLY_REML_EXTERNAL_COMPARATOR_PROBE_RESULT_FIELDS = (
+    :probe_id, :target, :fixture_id, :fixture_version, :comparator_id,
+    :candidate_package, :candidate_version, :package_available,
+    :rscript_status, :fit_status, :same_estimand_status, :dependency_status,
+    :artifact_status, :claim_status, :coverage_status, :ai_reml_ready,
+    :next_gate, :evidence,
+)
+
+const _LOCONLY_REML_EXTERNAL_COMPARATOR_FIT_FEASIBILITY_FIELDS = (
+    :check_id, :target, :fixture_id, :fixture_version, :comparator_id,
+    :candidate_package, :candidate_version, :n_obs, :n_species,
+    :n_per_species, :within_species_x_varies, :fit_status,
+    :same_estimand_status, :dependency_status, :blocked_by, :reason,
+    :claim_status, :coverage_status, :ai_reml_ready, :next_gate,
+)
+
+const _LOCONLY_REML_DERIVATIVE_FD_STATUS_FIELDS = (
+    :check_id, :target, :fixture_id, :fixture_version, :parameterization,
+    :matrix_mode, :h, :score_max_absdiff_fd, :dense_sparse_max_absdiff,
+    :finite, :claim_status, :coverage_status, :ai_reml_ready, :next_gate,
+)
+
+const _LOCONLY_REML_LINE_SEARCH_STATUS_FIELDS = (
+    :check_id, :target, :fixture_id, :fixture_version, :estimator,
+    :optimizer, :n_starts, :n_records, :n_accepted_records,
+    :accepted, :best_score_norm, :boundary_status, :trace_status,
+    :claim_status, :coverage_status, :ai_reml_ready, :reason_not_ai_reml,
+    :next_gate,
+)
+
+const _LOCONLY_REML_BOUNDARY_GRID_STATUS_FIELDS = (
+    :row_id, :target, :design, :condition, :n_reps, :n_accepted,
+    :convergence_rate, :boundary_rate, :near_zero_variance,
+    :nonfinite_objective, :singular_fixed_effect_information,
+    :expected_behavior, :claim_status, :coverage_status, :ai_reml_ready,
+    :next_gate,
+)
+
+const _LOCONLY_REML_PROFILE_STATUS_FIELDS = (
+    :row_id, :target, :fixture_id, :fixture_version, :parameterization,
+    :axis, :step, :finite, :center_is_axis_min, :center_nll, :left_nll,
+    :right_nll, :claim_status, :coverage_status, :ai_reml_ready, :next_gate,
+)
+
+const _LOCONLY_REML_VARIANCE_COMPONENT_STATUS_FIELDS = (
+    :row_id, :target, :fixture_id, :fixture_version, :estimator, :optimizer,
+    :component, :logsd_parameter, :logsd_estimate, :sd_estimate,
+    :variance_estimate, :point_status, :interval_status, :boundary_status,
+    :claim_status, :coverage_status, :ai_reml_ready, :next_gate,
+)
+
 function _loconly_reml_external_comparator_schema()
     return _LOCONLY_REML_EXTERNAL_COMPARATOR_FIELDS
 end
 
 function _loconly_reml_external_comparator_fixture_schema()
     return _LOCONLY_REML_EXTERNAL_COMPARATOR_FIXTURE_FIELDS
+end
+
+function _loconly_reml_external_comparator_version_probe_schema()
+    return _LOCONLY_REML_EXTERNAL_COMPARATOR_VERSION_PROBE_FIELDS
+end
+
+function _loconly_reml_external_comparator_probe_result_schema()
+    return _LOCONLY_REML_EXTERNAL_COMPARATOR_PROBE_RESULT_FIELDS
+end
+
+function _loconly_reml_external_comparator_fit_feasibility_schema()
+    return _LOCONLY_REML_EXTERNAL_COMPARATOR_FIT_FEASIBILITY_FIELDS
+end
+
+function _loconly_reml_derivative_fd_status_schema()
+    return _LOCONLY_REML_DERIVATIVE_FD_STATUS_FIELDS
+end
+
+function _loconly_reml_line_search_status_schema()
+    return _LOCONLY_REML_LINE_SEARCH_STATUS_FIELDS
+end
+
+function _loconly_reml_boundary_grid_status_schema()
+    return _LOCONLY_REML_BOUNDARY_GRID_STATUS_FIELDS
+end
+
+function _loconly_reml_profile_status_schema()
+    return _LOCONLY_REML_PROFILE_STATUS_FIELDS
+end
+
+function _loconly_reml_variance_component_status_schema()
+    return _LOCONLY_REML_VARIANCE_COMPONENT_STATUS_FIELDS
 end
 
 function _loconly_reml_external_comparator_fixture()
@@ -1987,6 +2076,834 @@ function _loconly_reml_validate_external_comparator_fixture(fixture)
     )
 end
 
+function _loconly_reml_external_comparator_version_probe_rows(fixture)
+    return (
+        (
+            comparator_id = :phylolm_or_equivalent_reml,
+            target = :gaussian_loconly_phylo_reml,
+            candidate_package = :unselected_phylolm_style_reml,
+            candidate_version = :unprobed,
+            fixture_id = fixture.fixture_id,
+            fixture_version = fixture.version,
+            same_estimand_status = :requires_fixture_reproduction,
+            dependency_status = :not_added,
+            artifact_status = :probe_plan_defined,
+            decision = :run_optional_developer_probe_before_dependency,
+            blocked_by = :external_package_version_not_probed,
+            required_evidence = (
+                :package_name_and_version,
+                :same_restricted_likelihood_target,
+                :same_covariance_target,
+                :variance_component_point_estimates,
+                :restricted_loglikelihood_or_reconstructable_value,
+                :boundary_status,
+            ),
+            next_gate = :optional_developer_comparator_script,
+        ),
+    )
+end
+
+function _loconly_reml_validate_external_comparator_version_probe(rows, fixture)
+    schema = _loconly_reml_external_comparator_version_probe_schema()
+    errors = String[]
+    for row in rows
+        names = propertynames(row)
+        for field in schema
+            field in names ||
+                push!(errors, "version probe $(row.comparator_id) missing field $(field)")
+        end
+        row.target === :gaussian_loconly_phylo_reml ||
+            push!(errors, "version probe $(row.comparator_id) has wrong target")
+        row.fixture_id === fixture.fixture_id ||
+            push!(errors, "version probe $(row.comparator_id) has wrong fixture_id")
+        row.fixture_version == fixture.version ||
+            push!(errors, "version probe $(row.comparator_id) has wrong fixture_version")
+        row.candidate_version === :unprobed ||
+            push!(errors, "version probe $(row.comparator_id) must remain unprobed")
+        row.dependency_status === :not_added ||
+            push!(errors, "version probe $(row.comparator_id) must not add a dependency")
+        row.artifact_status === :probe_plan_defined ||
+            push!(errors, "version probe $(row.comparator_id) has invalid artifact_status")
+        :same_restricted_likelihood_target in row.required_evidence ||
+            push!(errors, "version probe $(row.comparator_id) lacks restricted likelihood evidence gate")
+        :same_covariance_target in row.required_evidence ||
+            push!(errors, "version probe $(row.comparator_id) lacks covariance target evidence gate")
+    end
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        required_fields = schema,
+        n_rows = length(rows),
+        fixture_id = fixture.fixture_id,
+        fixture_version = fixture.version,
+        dependency_status = :not_added,
+    )
+end
+
+function _loconly_reml_external_comparator_probe_status(;
+        candidate_package::AbstractString = "phylolm",
+        candidate_version::AbstractString = "unprobed",
+        package_available::Bool = false,
+        rscript_status::Symbol = :not_checked,
+        evidence::AbstractString =
+            "tools/loconly-reml-external-comparator-probe.jl",
+)
+    comparator_status = _loconly_reml_external_comparator_status()
+    fixture = comparator_status.fixture
+    version_probe = only(comparator_status.version_probe_rows)
+    row = (
+        probe_id = :phylolm_style_version_probe,
+        target = :gaussian_loconly_phylo_reml,
+        fixture_id = fixture.fixture_id,
+        fixture_version = fixture.version,
+        comparator_id = version_probe.comparator_id,
+        candidate_package = String(candidate_package),
+        candidate_version = String(candidate_version),
+        package_available = package_available,
+        rscript_status = rscript_status,
+        fit_status = :not_run,
+        same_estimand_status = :requires_fixture_reproduction,
+        dependency_status = :not_added,
+        artifact_status = :optional_developer_probe_written,
+        claim_status = :internal_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+        next_gate = :external_fixture_fit_comparison,
+        evidence = String(evidence),
+    )
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        fixture_id = fixture.fixture_id,
+        fixture_version = fixture.version,
+        rows = (row,),
+        n_rows = 1,
+        schema = _loconly_reml_external_comparator_probe_result_schema(),
+        claim_status = :internal_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+    )
+end
+
+function _loconly_reml_validate_external_comparator_probe_status(status)
+    required = _loconly_reml_external_comparator_probe_result_schema()
+    errors = String[]
+    status.target === :gaussian_loconly_phylo_reml ||
+        push!(errors, "probe status has wrong target")
+    status.claim_status === :internal_diagnostic ||
+        push!(errors, "probe status has wrong claim_status")
+    status.coverage_status === :not_evaluated ||
+        push!(errors, "probe status has evaluated coverage")
+    !status.ai_reml_ready ||
+        push!(errors, "probe status must not mark ai_reml_ready")
+    status.n_rows == length(status.rows) ||
+        push!(errors, "probe status n_rows does not match rows")
+    for row in status.rows
+        names = propertynames(row)
+        for field in required
+            field in names || push!(errors, "probe row $(row.probe_id) missing field $(field)")
+        end
+        row.target === :gaussian_loconly_phylo_reml ||
+            push!(errors, "probe row $(row.probe_id) has wrong target")
+        row.fixture_id === status.fixture_id ||
+            push!(errors, "probe row $(row.probe_id) has wrong fixture_id")
+        row.fixture_version == status.fixture_version ||
+            push!(errors, "probe row $(row.probe_id) has wrong fixture_version")
+        row.fit_status === :not_run ||
+            push!(errors, "probe row $(row.probe_id) must not mark a fit as run")
+        row.same_estimand_status === :requires_fixture_reproduction ||
+            push!(errors, "probe row $(row.probe_id) has invalid same_estimand_status")
+        row.dependency_status === :not_added ||
+            push!(errors, "probe row $(row.probe_id) must not add a dependency")
+        row.claim_status === :internal_diagnostic ||
+            push!(errors, "probe row $(row.probe_id) has wrong claim_status")
+        row.coverage_status === :not_evaluated ||
+            push!(errors, "probe row $(row.probe_id) has evaluated coverage")
+        !row.ai_reml_ready ||
+            push!(errors, "probe row $(row.probe_id) must not mark ai_reml_ready")
+        isempty(row.candidate_package) &&
+            push!(errors, "probe row $(row.probe_id) has empty candidate_package")
+        isempty(row.candidate_version) &&
+            push!(errors, "probe row $(row.probe_id) has empty candidate_version")
+        isempty(row.evidence) &&
+            push!(errors, "probe row $(row.probe_id) has empty evidence")
+    end
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        required_fields = required,
+        n_rows = length(status.rows),
+        claim_status = status.claim_status,
+        coverage_status = status.coverage_status,
+        ai_reml_ready = status.ai_reml_ready,
+    )
+end
+
+function _loconly_reml_write_external_comparator_probe_tsv(path; kwargs...)
+    status = _loconly_reml_external_comparator_probe_status(; kwargs...)
+    validation = _loconly_reml_validate_external_comparator_probe_status(status)
+    if !validation.ok
+        error("external-comparator probe validation failed: $(join(validation.errors, "; "))")
+    end
+    schema = _loconly_reml_external_comparator_probe_result_schema()
+    dir = dirname(String(path))
+    !isempty(dir) && mkpath(dir)
+    open(path, "w") do io
+        println(io, join(string.(schema), "\t"))
+        for row in status.rows
+            println(io, join((_loconly_reml_tsv_value(getproperty(row, field))
+                              for field in schema), "\t"))
+        end
+    end
+    return (
+        path = String(path),
+        n_rows = length(status.rows),
+        schema = schema,
+        validation = validation,
+        claim_status = status.claim_status,
+        coverage_status = status.coverage_status,
+        ai_reml_ready = status.ai_reml_ready,
+    )
+end
+
+function _loconly_reml_fixture_within_species_x_varies(fixture)
+    for sp in unique(fixture.species)
+        x_sp = [fixture.x[i] for i in eachindex(fixture.x)
+                if fixture.species[i] == sp]
+        length(unique(x_sp)) > 1 && return true
+    end
+    return false
+end
+
+function _loconly_reml_external_comparator_fit_feasibility_status(;
+        candidate_package::AbstractString = "phylolm",
+        candidate_version::AbstractString = "unprobed",
+)
+    comparator_status = _loconly_reml_external_comparator_status()
+    fixture = comparator_status.fixture
+    repeated_observations = fixture.n_obs != fixture.n_species
+    within_species_x_varies =
+        _loconly_reml_fixture_within_species_x_varies(fixture)
+    status = repeated_observations || within_species_x_varies ?
+        :not_same_estimand_current_fixture : :same_estimand_candidate
+    row = (
+        check_id = :phylolm_fixture_fit_feasibility,
+        target = :gaussian_loconly_phylo_reml,
+        fixture_id = fixture.fixture_id,
+        fixture_version = fixture.version,
+        comparator_id = :phylolm_or_equivalent_reml,
+        candidate_package = String(candidate_package),
+        candidate_version = String(candidate_version),
+        n_obs = fixture.n_obs,
+        n_species = fixture.n_species,
+        n_per_species = fixture.n_per_species,
+        within_species_x_varies = within_species_x_varies,
+        fit_status = :not_run,
+        same_estimand_status = status,
+        dependency_status = :not_added,
+        blocked_by = status === :not_same_estimand_current_fixture ?
+            :repeated_observation_fixture_not_tip_level : :none,
+        reason = status === :not_same_estimand_current_fixture ?
+            "The current fixture has replicated species rows and observation-level covariate variation; a tip-level phylolm fit would not reproduce the same REML target." :
+            "The fixture is tip-level and can advance to an external fit comparison.",
+        claim_status = :internal_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+        next_gate = status === :not_same_estimand_current_fixture ?
+            :choose_replicate_capable_comparator_or_tip_level_fixture :
+            :run_external_fixture_fit_comparison,
+    )
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        rows = (row,),
+        n_rows = 1,
+        schema = _loconly_reml_external_comparator_fit_feasibility_schema(),
+        claim_status = :internal_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+    )
+end
+
+function _loconly_reml_validate_external_comparator_fit_feasibility(status)
+    required = _loconly_reml_external_comparator_fit_feasibility_schema()
+    errors = String[]
+    status.target === :gaussian_loconly_phylo_reml ||
+        push!(errors, "fit feasibility status has wrong target")
+    status.claim_status === :internal_diagnostic ||
+        push!(errors, "fit feasibility status has wrong claim_status")
+    status.coverage_status === :not_evaluated ||
+        push!(errors, "fit feasibility status has evaluated coverage")
+    !status.ai_reml_ready ||
+        push!(errors, "fit feasibility status must not mark ai_reml_ready")
+    status.n_rows == length(status.rows) ||
+        push!(errors, "fit feasibility status n_rows does not match rows")
+    for row in status.rows
+        names = propertynames(row)
+        for field in required
+            field in names ||
+                push!(errors, "fit feasibility row $(row.check_id) missing field $(field)")
+        end
+        row.target === :gaussian_loconly_phylo_reml ||
+            push!(errors, "fit feasibility row $(row.check_id) has wrong target")
+        row.fit_status === :not_run ||
+            push!(errors, "fit feasibility row $(row.check_id) must not mark a fit as run")
+        row.same_estimand_status in
+            (:not_same_estimand_current_fixture, :same_estimand_candidate) ||
+            push!(errors, "fit feasibility row $(row.check_id) has invalid same_estimand_status")
+        row.dependency_status === :not_added ||
+            push!(errors, "fit feasibility row $(row.check_id) must not add a dependency")
+        row.coverage_status === :not_evaluated ||
+            push!(errors, "fit feasibility row $(row.check_id) has evaluated coverage")
+        !row.ai_reml_ready ||
+            push!(errors, "fit feasibility row $(row.check_id) must not mark ai_reml_ready")
+        if row.same_estimand_status === :not_same_estimand_current_fixture
+            row.blocked_by === :repeated_observation_fixture_not_tip_level ||
+                push!(errors, "fit feasibility row $(row.check_id) has wrong blocker")
+        end
+    end
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        required_fields = required,
+        n_rows = length(status.rows),
+        claim_status = status.claim_status,
+        coverage_status = status.coverage_status,
+        ai_reml_ready = status.ai_reml_ready,
+    )
+end
+
+function _loconly_reml_problem_from_external_fixture(fixture)
+    phy = random_balanced_tree(fixture.n_species;
+                               branch_length = fixture.branch_length)
+    return make_loc_problem(
+        phy, collect(fixture.y), fixture.X; species = collect(fixture.species),
+    )
+end
+
+function _loconly_reml_derivative_fd_status(; h::Real = 1e-5)
+    fixture = _loconly_reml_external_comparator_fixture()
+    prob = _loconly_reml_problem_from_external_fixture(fixture)
+    lσ = log(fixture.known_sigma)
+    lσ_phy = log(fixture.known_sigma_phy)
+    dense = _loconly_reml_dense_score_diagnostic(prob, lσ, lσ_phy; h = h)
+    sparse = _loconly_reml_sparse_score_diagnostic(prob, lσ, lσ_phy; h = h)
+    rows = (
+        (
+            check_id = :dense_score_fd_fixture,
+            target = :gaussian_loconly_phylo_reml,
+            fixture_id = fixture.fixture_id,
+            fixture_version = fixture.version,
+            parameterization = :log_sd,
+            matrix_mode = dense.matrix_mode,
+            h = dense.h,
+            score_max_absdiff_fd = dense.max_absdiff,
+            dense_sparse_max_absdiff = 0.0,
+            finite = dense.finite,
+            claim_status = :internal_diagnostic,
+            coverage_status = :not_evaluated,
+            ai_reml_ready = false,
+            next_gate = :derivative_grid_status,
+        ),
+        (
+            check_id = :sparse_score_fd_fixture,
+            target = :gaussian_loconly_phylo_reml,
+            fixture_id = fixture.fixture_id,
+            fixture_version = fixture.version,
+            parameterization = :log_sd,
+            matrix_mode = sparse.matrix_mode,
+            h = sparse.h,
+            score_max_absdiff_fd = sparse.max_absdiff_fd,
+            dense_sparse_max_absdiff = sparse.max_absdiff_dense,
+            finite = sparse.finite,
+            claim_status = :internal_diagnostic,
+            coverage_status = :not_evaluated,
+            ai_reml_ready = false,
+            next_gate = :derivative_grid_status,
+        ),
+    )
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        fixture_id = fixture.fixture_id,
+        fixture_version = fixture.version,
+        rows = rows,
+        n_rows = length(rows),
+        schema = _loconly_reml_derivative_fd_status_schema(),
+        claim_status = :internal_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+    )
+end
+
+function _loconly_reml_validate_derivative_fd_status(status;
+        max_fd_absdiff::Real = 1e-5,
+        max_dense_sparse_absdiff::Real = 1e-7)
+    required = _loconly_reml_derivative_fd_status_schema()
+    errors = String[]
+    status.target === :gaussian_loconly_phylo_reml ||
+        push!(errors, "derivative FD status has wrong target")
+    status.claim_status === :internal_diagnostic ||
+        push!(errors, "derivative FD status has wrong claim_status")
+    status.coverage_status === :not_evaluated ||
+        push!(errors, "derivative FD status has evaluated coverage")
+    !status.ai_reml_ready ||
+        push!(errors, "derivative FD status must not mark ai_reml_ready")
+    status.n_rows == length(status.rows) ||
+        push!(errors, "derivative FD status n_rows does not match rows")
+    for row in status.rows
+        names = propertynames(row)
+        for field in required
+            field in names ||
+                push!(errors, "derivative FD row $(row.check_id) missing field $(field)")
+        end
+        row.target === :gaussian_loconly_phylo_reml ||
+            push!(errors, "derivative FD row $(row.check_id) has wrong target")
+        row.parameterization === :log_sd ||
+            push!(errors, "derivative FD row $(row.check_id) has wrong parameterization")
+        row.finite ||
+            push!(errors, "derivative FD row $(row.check_id) is not finite")
+        row.score_max_absdiff_fd <= max_fd_absdiff ||
+            push!(errors, "derivative FD row $(row.check_id) exceeds FD tolerance")
+        row.dense_sparse_max_absdiff <= max_dense_sparse_absdiff ||
+            push!(errors, "derivative FD row $(row.check_id) exceeds dense-sparse tolerance")
+        row.claim_status === :internal_diagnostic ||
+            push!(errors, "derivative FD row $(row.check_id) has wrong claim_status")
+        row.coverage_status === :not_evaluated ||
+            push!(errors, "derivative FD row $(row.check_id) has evaluated coverage")
+        !row.ai_reml_ready ||
+            push!(errors, "derivative FD row $(row.check_id) must not mark ai_reml_ready")
+    end
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        required_fields = required,
+        n_rows = length(status.rows),
+        claim_status = status.claim_status,
+        coverage_status = status.coverage_status,
+        ai_reml_ready = status.ai_reml_ready,
+    )
+end
+
+function _loconly_reml_line_search_status(; iterations::Integer = 30)
+    fixture = _loconly_reml_external_comparator_fixture()
+    prob = _loconly_reml_problem_from_external_fixture(fixture)
+    lσ = log(fixture.known_sigma)
+    lσ_phy = log(fixture.known_sigma_phy)
+    starts = (
+        [lσ, lσ_phy],
+        [log(fixture.known_sigma * 1.2), log(fixture.known_sigma_phy * 0.8)],
+    )
+    fit = _loconly_reml_ai_update_optimizer_diagnostic(
+        prob; starts = starts, iterations = iterations,
+    )
+    trace_status = fit.accepted ? :accepted_guarded_line_search :
+        :not_accepted_guarded_line_search
+    row = (
+        check_id = :guarded_ai_update_line_search_fixture,
+        target = :gaussian_loconly_phylo_reml,
+        fixture_id = fixture.fixture_id,
+        fixture_version = fixture.version,
+        estimator = fit.estimator,
+        optimizer = fit.optimizer,
+        n_starts = fit.n_starts,
+        n_records = length(fit.records),
+        n_accepted_records = fit.n_accepted_records,
+        accepted = fit.accepted,
+        best_score_norm = fit.best_score_norm,
+        boundary_status = fit.boundary_status,
+        trace_status = trace_status,
+        claim_status = :optimizer_experiment,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+        reason_not_ai_reml = fit.reason_not_ai_reml,
+        next_gate = :line_search_grid_status,
+    )
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        fixture_id = fixture.fixture_id,
+        fixture_version = fixture.version,
+        rows = (row,),
+        n_rows = 1,
+        schema = _loconly_reml_line_search_status_schema(),
+        claim_status = :optimizer_experiment,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+    )
+end
+
+function _loconly_reml_validate_line_search_status(status;
+        max_score_norm::Real = 1e-3)
+    required = _loconly_reml_line_search_status_schema()
+    errors = String[]
+    status.target === :gaussian_loconly_phylo_reml ||
+        push!(errors, "line-search status has wrong target")
+    status.claim_status === :optimizer_experiment ||
+        push!(errors, "line-search status has wrong claim_status")
+    status.coverage_status === :not_evaluated ||
+        push!(errors, "line-search status has evaluated coverage")
+    !status.ai_reml_ready ||
+        push!(errors, "line-search status must not mark ai_reml_ready")
+    status.n_rows == length(status.rows) ||
+        push!(errors, "line-search status n_rows does not match rows")
+    for row in status.rows
+        names = propertynames(row)
+        for field in required
+            field in names ||
+                push!(errors, "line-search row $(row.check_id) missing field $(field)")
+        end
+        row.target === :gaussian_loconly_phylo_reml ||
+            push!(errors, "line-search row $(row.check_id) has wrong target")
+        row.estimator === :guarded_ai_update_reml_optimizer_experiment ||
+            push!(errors, "line-search row $(row.check_id) has wrong estimator")
+        row.optimizer === :guarded_sparse_average_information_update ||
+            push!(errors, "line-search row $(row.check_id) has wrong optimizer")
+        row.accepted ||
+            push!(errors, "line-search row $(row.check_id) was not accepted")
+        row.n_records == row.n_starts ||
+            push!(errors, "line-search row $(row.check_id) n_records does not match n_starts")
+        row.n_accepted_records >= 1 ||
+            push!(errors, "line-search row $(row.check_id) has no accepted records")
+        row.best_score_norm <= max_score_norm ||
+            push!(errors, "line-search row $(row.check_id) exceeds score tolerance")
+        row.claim_status === :optimizer_experiment ||
+            push!(errors, "line-search row $(row.check_id) has wrong claim_status")
+        row.coverage_status === :not_evaluated ||
+            push!(errors, "line-search row $(row.check_id) has evaluated coverage")
+        !row.ai_reml_ready ||
+            push!(errors, "line-search row $(row.check_id) must not mark ai_reml_ready")
+        occursin("no simulation, bridge, or coverage gate", row.reason_not_ai_reml) ||
+            push!(errors, "line-search row $(row.check_id) has wrong readiness reason")
+    end
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        required_fields = required,
+        n_rows = length(status.rows),
+        claim_status = status.claim_status,
+        coverage_status = status.coverage_status,
+        ai_reml_ready = status.ai_reml_ready,
+    )
+end
+
+function _loconly_reml_boundary_grid_status(; reps::Integer = 1,
+                                            iterations::Integer = 20)
+    grid = _loconly_reml_weak_signal_condition_grid_diagnostic(
+        ; reps = reps, iterations = iterations,
+    )
+    rows = Tuple((
+        row_id = row.cell,
+        target = grid.target,
+        design = grid.design,
+        condition = row.diagnostic.conditions,
+        n_reps = row.diagnostic.n_reps,
+        n_accepted = row.diagnostic.n_accepted,
+        convergence_rate = row.convergence_rate,
+        boundary_rate = row.boundary_rate,
+        near_zero_variance = row.diagnostic.boundary_counts.near_zero_variance,
+        nonfinite_objective = row.diagnostic.boundary_counts.nonfinite_objective,
+        singular_fixed_effect_information =
+            row.diagnostic.boundary_counts.singular_fixed_effect_information,
+        expected_behavior = grid.expected_behavior,
+        claim_status = grid.claim_status,
+        coverage_status = grid.coverage_status,
+        ai_reml_ready = false,
+        next_gate = :boundary_grid_expansion,
+    ) for row in grid.rows)
+    return (
+        target = grid.target,
+        estimator = grid.estimator,
+        design = :near_zero_variance_boundary_grid,
+        rows = rows,
+        n_rows = length(rows),
+        schema = _loconly_reml_boundary_grid_status_schema(),
+        expected_behavior = grid.expected_behavior,
+        claim_status = grid.claim_status,
+        coverage_status = grid.coverage_status,
+        ai_reml_ready = false,
+        reason_not_ai_reml = grid.reason_not_ai_reml,
+    )
+end
+
+function _loconly_reml_validate_boundary_grid_status(status)
+    required = _loconly_reml_boundary_grid_status_schema()
+    errors = String[]
+    status.target === :gaussian_loconly_phylo_reml ||
+        push!(errors, "boundary grid status has wrong target")
+    status.claim_status === :simulation_diagnostic ||
+        push!(errors, "boundary grid status has wrong claim_status")
+    status.coverage_status === :not_evaluated ||
+        push!(errors, "boundary grid status has evaluated coverage")
+    !status.ai_reml_ready ||
+        push!(errors, "boundary grid status must not mark ai_reml_ready")
+    status.expected_behavior === :boundary_states_allowed ||
+        push!(errors, "boundary grid status has wrong expected_behavior")
+    status.n_rows == length(status.rows) ||
+        push!(errors, "boundary grid status n_rows does not match rows")
+    for row in status.rows
+        names = propertynames(row)
+        for field in required
+            field in names ||
+                push!(errors, "boundary grid row $(row.row_id) missing field $(field)")
+        end
+        row.target === :gaussian_loconly_phylo_reml ||
+            push!(errors, "boundary grid row $(row.row_id) has wrong target")
+        0 <= row.n_accepted <= row.n_reps ||
+            push!(errors, "boundary grid row $(row.row_id) has invalid accepted count")
+        0 <= row.boundary_rate <= 1 ||
+            push!(errors, "boundary grid row $(row.row_id) has invalid boundary_rate")
+        row.near_zero_variance + row.nonfinite_objective +
+            row.singular_fixed_effect_information <= row.n_reps ||
+            push!(errors, "boundary grid row $(row.row_id) has invalid boundary counts")
+        row.expected_behavior === :boundary_states_allowed ||
+            push!(errors, "boundary grid row $(row.row_id) has wrong expected_behavior")
+        row.claim_status === :simulation_diagnostic ||
+            push!(errors, "boundary grid row $(row.row_id) has wrong claim_status")
+        row.coverage_status === :not_evaluated ||
+            push!(errors, "boundary grid row $(row.row_id) has evaluated coverage")
+        !row.ai_reml_ready ||
+            push!(errors, "boundary grid row $(row.row_id) must not mark ai_reml_ready")
+    end
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        required_fields = required,
+        n_rows = length(status.rows),
+        claim_status = status.claim_status,
+        coverage_status = status.coverage_status,
+        ai_reml_ready = status.ai_reml_ready,
+    )
+end
+
+function _loconly_reml_profile_status(; iterations::Integer = 30,
+                                      step::Real = 0.05)
+    fixture = _loconly_reml_external_comparator_fixture()
+    prob = _loconly_reml_problem_from_external_fixture(fixture)
+    lσ = log(fixture.known_sigma)
+    lσ_phy = log(fixture.known_sigma_phy)
+    starts = (
+        [lσ, lσ_phy],
+        [log(fixture.known_sigma * 1.2), log(fixture.known_sigma_phy * 0.8)],
+    )
+    fit = _loconly_reml_ai_update_optimizer_diagnostic(
+        prob; starts = starts, iterations = iterations,
+    )
+    prof = fit.finite ?
+        _loconly_reml_local_profile_diagnostic(
+            prob, fit.best_minimizer[1], fit.best_minimizer[2]; step = step,
+        ) :
+        (center = NaN, step = Float64(step), residual_axis = fill(NaN, 3),
+         phylo_axis = fill(NaN, 3), finite = false, center_is_axis_min = false)
+    function row(row_id::Symbol, axis::Symbol, values)
+        return (
+            row_id = row_id,
+            target = :gaussian_loconly_phylo_reml,
+            fixture_id = fixture.fixture_id,
+            fixture_version = fixture.version,
+            parameterization = :log_sd,
+            axis = axis,
+            step = prof.step,
+            finite = prof.finite,
+            center_is_axis_min = prof.center_is_axis_min,
+            center_nll = prof.center,
+            left_nll = values[1],
+            right_nll = values[3],
+            claim_status = :internal_diagnostic,
+            coverage_status = :not_evaluated,
+            ai_reml_ready = false,
+            next_gate = :profile_grid_status,
+        )
+    end
+    rows = (
+        row(:residual_logsd_profile_axis, :log_sigma, prof.residual_axis),
+        row(:phylogenetic_logsd_profile_axis, :log_sigma_phy, prof.phylo_axis),
+    )
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        fixture_id = fixture.fixture_id,
+        fixture_version = fixture.version,
+        rows = rows,
+        n_rows = length(rows),
+        schema = _loconly_reml_profile_status_schema(),
+        claim_status = :internal_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+    )
+end
+
+function _loconly_reml_validate_profile_status(status)
+    required = _loconly_reml_profile_status_schema()
+    errors = String[]
+    status.target === :gaussian_loconly_phylo_reml ||
+        push!(errors, "profile status has wrong target")
+    status.claim_status === :internal_diagnostic ||
+        push!(errors, "profile status has wrong claim_status")
+    status.coverage_status === :not_evaluated ||
+        push!(errors, "profile status has evaluated coverage")
+    !status.ai_reml_ready ||
+        push!(errors, "profile status must not mark ai_reml_ready")
+    status.n_rows == length(status.rows) ||
+        push!(errors, "profile status n_rows does not match rows")
+    for row in status.rows
+        names = propertynames(row)
+        for field in required
+            field in names ||
+                push!(errors, "profile row $(row.row_id) missing field $(field)")
+        end
+        row.target === :gaussian_loconly_phylo_reml ||
+            push!(errors, "profile row $(row.row_id) has wrong target")
+        row.parameterization === :log_sd ||
+            push!(errors, "profile row $(row.row_id) has wrong parameterization")
+        row.finite ||
+            push!(errors, "profile row $(row.row_id) is not finite")
+        row.center_is_axis_min ||
+            push!(errors, "profile row $(row.row_id) center is not axis minimum")
+        row.center_nll <= min(row.left_nll, row.right_nll) + 1e-8 ||
+            push!(errors, "profile row $(row.row_id) center exceeds neighboring axis points")
+        row.claim_status === :internal_diagnostic ||
+            push!(errors, "profile row $(row.row_id) has wrong claim_status")
+        row.coverage_status === :not_evaluated ||
+            push!(errors, "profile row $(row.row_id) has evaluated coverage")
+        !row.ai_reml_ready ||
+            push!(errors, "profile row $(row.row_id) must not mark ai_reml_ready")
+    end
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        required_fields = required,
+        n_rows = length(status.rows),
+        claim_status = status.claim_status,
+        coverage_status = status.coverage_status,
+        ai_reml_ready = status.ai_reml_ready,
+    )
+end
+
+function _loconly_reml_variance_component_status(; iterations::Integer = 30)
+    fixture = _loconly_reml_external_comparator_fixture()
+    prob = _loconly_reml_problem_from_external_fixture(fixture)
+    lσ = log(fixture.known_sigma)
+    lσ_phy = log(fixture.known_sigma_phy)
+    starts = (
+        [lσ, lσ_phy],
+        [log(fixture.known_sigma * 1.2), log(fixture.known_sigma_phy * 0.8)],
+    )
+    fit = _loconly_reml_ai_update_optimizer_diagnostic(
+        prob; starts = starts, iterations = iterations,
+    )
+    finite_fit = fit.finite && fit.accepted && all(isfinite, fit.best_minimizer)
+    function row(row_id::Symbol, component::Symbol, logsd_parameter::Symbol,
+                 logsd_estimate::Real)
+        finite = finite_fit && isfinite(logsd_estimate)
+        sd_estimate = finite ? exp(Float64(logsd_estimate)) : NaN
+        variance_estimate = finite ? abs2(sd_estimate) : NaN
+        return (
+            row_id = row_id,
+            target = :gaussian_loconly_phylo_reml,
+            fixture_id = fixture.fixture_id,
+            fixture_version = fixture.version,
+            estimator = fit.estimator,
+            optimizer = fit.optimizer,
+            component = component,
+            logsd_parameter = logsd_parameter,
+            logsd_estimate = finite ? Float64(logsd_estimate) : NaN,
+            sd_estimate = sd_estimate,
+            variance_estimate = variance_estimate,
+            point_status = finite ? :finite_optimizer_diagnostic : :not_available,
+            interval_status = :not_evaluated,
+            boundary_status = fit.boundary_status,
+            claim_status = :internal_diagnostic,
+            coverage_status = :not_evaluated,
+            ai_reml_ready = false,
+            next_gate = :variance_component_parity_status,
+        )
+    end
+    rows = (
+        row(:residual_variance_component, :residual, :log_sigma,
+            fit.best_minimizer[1]),
+        row(:phylogenetic_variance_component, :phylogenetic, :log_sigma_phy,
+            fit.best_minimizer[2]),
+    )
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        fixture_id = fixture.fixture_id,
+        fixture_version = fixture.version,
+        rows = rows,
+        n_rows = length(rows),
+        schema = _loconly_reml_variance_component_status_schema(),
+        point_status = all(r -> r.point_status === :finite_optimizer_diagnostic,
+                           rows) ? :finite_optimizer_diagnostic : :partial,
+        interval_status = :not_evaluated,
+        claim_status = :internal_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+    )
+end
+
+function _loconly_reml_validate_variance_component_status(status)
+    required = _loconly_reml_variance_component_status_schema()
+    errors = String[]
+    status.target === :gaussian_loconly_phylo_reml ||
+        push!(errors, "variance component status has wrong target")
+    status.point_status === :finite_optimizer_diagnostic ||
+        push!(errors, "variance component status has wrong point_status")
+    status.interval_status === :not_evaluated ||
+        push!(errors, "variance component status has evaluated intervals")
+    status.claim_status === :internal_diagnostic ||
+        push!(errors, "variance component status has wrong claim_status")
+    status.coverage_status === :not_evaluated ||
+        push!(errors, "variance component status has evaluated coverage")
+    !status.ai_reml_ready ||
+        push!(errors, "variance component status must not mark ai_reml_ready")
+    status.n_rows == length(status.rows) ||
+        push!(errors, "variance component status n_rows does not match rows")
+    for row in status.rows
+        names = propertynames(row)
+        for field in required
+            field in names ||
+                push!(errors, "variance component row $(row.row_id) missing field $(field)")
+        end
+        row.target === :gaussian_loconly_phylo_reml ||
+            push!(errors, "variance component row $(row.row_id) has wrong target")
+        row.estimator === :guarded_ai_update_reml_optimizer_experiment ||
+            push!(errors, "variance component row $(row.row_id) has wrong estimator")
+        row.optimizer === :guarded_sparse_average_information_update ||
+            push!(errors, "variance component row $(row.row_id) has wrong optimizer")
+        row.component in (:residual, :phylogenetic) ||
+            push!(errors, "variance component row $(row.row_id) has wrong component")
+        row.logsd_parameter in (:log_sigma, :log_sigma_phy) ||
+            push!(errors, "variance component row $(row.row_id) has wrong logsd_parameter")
+        row.point_status === :finite_optimizer_diagnostic ||
+            push!(errors, "variance component row $(row.row_id) has wrong point_status")
+        isfinite(row.logsd_estimate) ||
+            push!(errors, "variance component row $(row.row_id) has nonfinite logsd_estimate")
+        isfinite(row.sd_estimate) && row.sd_estimate > 0 ||
+            push!(errors, "variance component row $(row.row_id) has invalid sd_estimate")
+        isfinite(row.variance_estimate) && row.variance_estimate > 0 ||
+            push!(errors, "variance component row $(row.row_id) has invalid variance_estimate")
+        isapprox(row.variance_estimate, abs2(row.sd_estimate);
+                 rtol = 1e-10, atol = 1e-12) ||
+            push!(errors, "variance component row $(row.row_id) has inconsistent variance_estimate")
+        row.boundary_status === :interior ||
+            push!(errors, "variance component row $(row.row_id) is not interior")
+        row.interval_status === :not_evaluated ||
+            push!(errors, "variance component row $(row.row_id) has evaluated intervals")
+        row.claim_status === :internal_diagnostic ||
+            push!(errors, "variance component row $(row.row_id) has wrong claim_status")
+        row.coverage_status === :not_evaluated ||
+            push!(errors, "variance component row $(row.row_id) has evaluated coverage")
+        !row.ai_reml_ready ||
+            push!(errors, "variance component row $(row.row_id) must not mark ai_reml_ready")
+    end
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        required_fields = required,
+        n_rows = length(status.rows),
+        point_status = status.point_status,
+        interval_status = status.interval_status,
+        claim_status = status.claim_status,
+        coverage_status = status.coverage_status,
+        ai_reml_ready = status.ai_reml_ready,
+    )
+end
+
 function _loconly_reml_external_comparator_candidates()
     return (
         (
@@ -2054,6 +2971,11 @@ function _loconly_reml_external_comparator_status()
     validation = _loconly_reml_validate_external_comparator_rows(rows)
     fixture = _loconly_reml_external_comparator_fixture()
     fixture_validation = _loconly_reml_validate_external_comparator_fixture(fixture)
+    version_probe_rows =
+        _loconly_reml_external_comparator_version_probe_rows(fixture)
+    version_probe_validation =
+        _loconly_reml_validate_external_comparator_version_probe(
+            version_probe_rows, fixture)
     return (
         target = :gaussian_loconly_phylo_reml,
         external_comparator_status = :planned,
@@ -2063,6 +2985,11 @@ function _loconly_reml_external_comparator_status()
         fixture_schema = _loconly_reml_external_comparator_fixture_schema(),
         fixture = fixture,
         fixture_validation = fixture_validation,
+        version_probe_status = :defined_not_run,
+        version_probe_schema =
+            _loconly_reml_external_comparator_version_probe_schema(),
+        version_probe_rows = version_probe_rows,
+        version_probe_validation = version_probe_validation,
         rows = rows,
         validation = validation,
         claim_status = :internal_diagnostic,
