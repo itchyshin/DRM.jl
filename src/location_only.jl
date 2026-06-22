@@ -32,7 +32,7 @@
 # Depends on `AugmentedPhy` / `sparse_phy.jl` and `takahashi_selinv` (already
 # loaded by the verified core engine include chain in DRM.jl — do NOT re-include).
 
-using LinearAlgebra, SparseArrays, Statistics
+using LinearAlgebra, SparseArrays, Statistics, Random
 
 const _LOCONLY_PENALTY = 1e18
 
@@ -190,6 +190,1596 @@ function _loconly_profile_beta(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
     end
 end
 
+function _loconly_reml_components(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
+    β, ml_nll, chM = _loconly_profile_beta(prob, lσ, lσ_phy)
+    if β === nothing || !isfinite(ml_nll)
+        return (nll = _LOCONLY_PENALTY, ml_nll = ml_nll, penalty = NaN,
+                beta = nothing, info = nothing, converged = false)
+    end
+    σ² = exp(2 * Float64(lσ))
+    VX = Vinv_mul(prob, chM, σ², prob.X)
+    info = Matrix(0.5 .* (prob.X' * VX .+ VX' * prob.X))
+    ch = cholesky(Symmetric(info); check = false)
+    if !issuccess(ch)
+        return (nll = _LOCONLY_PENALTY, ml_nll = ml_nll, penalty = _LOCONLY_PENALTY,
+                beta = β, info = info, converged = false)
+    end
+    penalty = sum(log, diag(ch.U))            # 0.5 * logdet(X'V^{-1}X)
+    nll = ml_nll + penalty
+    ok = isfinite(nll) && nll < _LOCONLY_PENALTY
+    return (nll = ok ? nll : _LOCONLY_PENALTY, ml_nll = ml_nll, penalty = penalty,
+            beta = β, info = info, converged = ok)
+end
+
+_loconly_reml_nll(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real) =
+    _loconly_reml_components(prob, lσ, lσ_phy).nll
+
+function _loconly_dense_reml_components(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+        return (nll = _LOCONLY_PENALTY, ml_nll = _LOCONLY_PENALTY,
+                penalty = NaN, beta = nothing, info = nothing,
+                converged = false, matrix_mode = :dense_developer)
+    σ² = exp(2 * Float64(lσ))
+    σ²_phy = exp(2 * Float64(lσ_phy))
+    try
+        S = Matrix(prob.S)
+        Qinv = Matrix(inv(Symmetric(Matrix(prob.Q_cond))))
+        V = σ² .* Matrix{Float64}(I, prob.n, prob.n) .+ σ²_phy .* (S * Qinv * S')
+        chV = cholesky(Symmetric(V); check = false)
+        if !issuccess(chV)
+            return (nll = _LOCONLY_PENALTY, ml_nll = _LOCONLY_PENALTY,
+                    penalty = _LOCONLY_PENALTY, beta = nothing, info = nothing,
+                    converged = false, matrix_mode = :dense_developer)
+        end
+        VinvX = chV \ prob.X
+        Vinvy = chV \ prob.y
+        info = Matrix(0.5 .* (prob.X' * VinvX .+ VinvX' * prob.X))
+        chX = cholesky(Symmetric(info); check = false)
+        if !issuccess(chX)
+            return (nll = _LOCONLY_PENALTY, ml_nll = _LOCONLY_PENALTY,
+                    penalty = _LOCONLY_PENALTY, beta = nothing, info = info,
+                    converged = false, matrix_mode = :dense_developer)
+        end
+        β = info \ (prob.X' * Vinvy)
+        r = prob.y .- prob.X * β
+        ml_nll = 0.5 * (prob.n * log(2π) + logdet(chV) + dot(r, chV \ r))
+        penalty = sum(log, diag(chX.U))
+        nll = ml_nll + penalty
+        ok = isfinite(nll) && nll < _LOCONLY_PENALTY
+        return (nll = ok ? nll : _LOCONLY_PENALTY, ml_nll = ml_nll,
+                penalty = penalty, beta = β, info = info, converged = ok,
+                matrix_mode = :dense_developer)
+    catch err
+        err isa InterruptException && rethrow(err)
+        return (nll = _LOCONLY_PENALTY, ml_nll = _LOCONLY_PENALTY,
+                penalty = NaN, beta = nothing, info = nothing,
+                converged = false, matrix_mode = :dense_developer)
+    end
+end
+
+_loconly_dense_reml_nll(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real) =
+    _loconly_dense_reml_components(prob, lσ, lσ_phy).nll
+
+function _loconly_dense_comparator_diagnostic(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
+    sparse = _loconly_reml_components(prob, lσ, lσ_phy)
+    dense = _loconly_dense_reml_components(prob, lσ, lσ_phy)
+    nll_absdiff = abs(sparse.nll - dense.nll)
+    beta_absdiff = (sparse.beta === nothing || dense.beta === nothing) ? NaN :
+        maximum(abs.(sparse.beta .- dense.beta))
+    info_absdiff = (sparse.info === nothing || dense.info === nothing) ? NaN :
+        maximum(abs.(sparse.info .- dense.info))
+    finite = sparse.converged && dense.converged &&
+        isfinite(nll_absdiff) && isfinite(beta_absdiff) && isfinite(info_absdiff)
+    return (
+        target = :gaussian_loconly_reml,
+        comparator = :dense_same_estimand_oracle,
+        sparse_nll = sparse.nll,
+        dense_nll = dense.nll,
+        nll_absdiff = nll_absdiff,
+        beta_absdiff = beta_absdiff,
+        info_absdiff = info_absdiff,
+        finite = finite,
+        matrix_mode = :dense_developer,
+    )
+end
+
+function _loconly_reml_dense_score_diagnostic(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real;
+                                             h::Real = 1e-5)
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+        return (target = :gaussian_loconly_reml, parameterization = :log_sd,
+                score = fill(NaN, 2), fd_score = fill(NaN, 2),
+                max_absdiff = NaN, finite = false, h = Float64(h),
+                matrix_mode = :dense_developer)
+    θ = [Float64(lσ), Float64(lσ_phy)]
+    try
+        σ² = exp(2 * θ[1])
+        σ²_phy = exp(2 * θ[2])
+        S = Matrix(prob.S)
+        Qinv = Matrix(inv(Symmetric(Matrix(prob.Q_cond))))
+        Cobs = S * Qinv * S'
+        In = Matrix{Float64}(I, prob.n, prob.n)
+        V = σ² .* In .+ σ²_phy .* Cobs
+        chV = cholesky(Symmetric(V); check = false)
+        if !issuccess(chV)
+            return (target = :gaussian_loconly_reml, parameterization = :log_sd,
+                    score = fill(NaN, 2), fd_score = fill(NaN, 2),
+                    max_absdiff = NaN, finite = false, h = Float64(h),
+                    matrix_mode = :dense_developer)
+        end
+        Vinv = chV \ In
+        XtVX = prob.X' * Vinv * prob.X
+        chX = cholesky(Symmetric(XtVX); check = false)
+        if !issuccess(chX)
+            return (target = :gaussian_loconly_reml, parameterization = :log_sd,
+                    score = fill(NaN, 2), fd_score = fill(NaN, 2),
+                    max_absdiff = NaN, finite = false, h = Float64(h),
+                    matrix_mode = :dense_developer)
+        end
+        Pinv = chX \ Matrix{Float64}(I, size(XtVX, 1), size(XtVX, 2))
+        P = Vinv .- Vinv * prob.X * Pinv * prob.X' * Vinv
+        py = P * prob.y
+        dV = (2 * σ² .* In, 2 * σ²_phy .* Cobs)
+        score = [0.5 * (tr(P * dV[i]) - dot(py, dV[i] * py)) for i in 1:2]
+        fd_score = _loconly_fd_gradient2(v -> _loconly_reml_nll(prob, v[1], v[2]), θ; h = h)
+        max_absdiff = maximum(abs.(score .- fd_score))
+        finite = all(isfinite, score) && all(isfinite, fd_score) && isfinite(max_absdiff)
+        return (target = :gaussian_loconly_reml, parameterization = :log_sd,
+                score = score, fd_score = fd_score, max_absdiff = max_absdiff,
+                finite = finite, h = Float64(h), matrix_mode = :dense_developer)
+    catch err
+        err isa InterruptException && rethrow(err)
+        return (target = :gaussian_loconly_reml, parameterization = :log_sd,
+                score = fill(NaN, 2), fd_score = fill(NaN, 2),
+                max_absdiff = NaN, finite = false, h = Float64(h),
+                matrix_mode = :dense_developer)
+    end
+end
+
+function _loconly_reml_sparse_score_diagnostic(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real;
+                                               h::Real = 1e-5)
+    fail = (target = :gaussian_loconly_reml, parameterization = :log_sd,
+            score = fill(NaN, 2), dense_score = fill(NaN, 2), fd_score = fill(NaN, 2),
+            trace_terms = fill(NaN, 2), quadratic_terms = fill(NaN, 2),
+            correction_terms = fill(NaN, 2), max_absdiff_dense = NaN,
+            max_absdiff_fd = NaN, finite = false, h = Float64(h),
+            matrix_mode = :sparse_woodbury_developer)
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+        return fail
+    θ = [Float64(lσ), Float64(lσ_phy)]
+    try
+        σ² = exp(2 * θ[1])
+        σ²_phy = exp(2 * θ[2])
+        _, _, chM, _ = build_M(prob, σ²_phy, σ²)
+        chQ = cholesky(Symmetric(prob.Q_cond); check = false)
+        issuccess(chQ) || return fail
+        VX = Vinv_mul(prob, chM, σ², prob.X)
+        Vy = Vinv_mul(prob, chM, σ², prob.y)
+        info = Matrix(0.5 .* (prob.X' * VX .+ VX' * prob.X))
+        chX = cholesky(Symmetric(info); check = false)
+        issuccess(chX) || return fail
+        Pinv = chX \ Matrix{Float64}(I, size(info, 1), size(info, 2))
+
+        py = Vy .- VX * (Pinv * (prob.X' * Vy))
+
+        _, tr_SMS = exact_traces(prob, chM)
+        trVinv = prob.n / σ² - tr_SMS / (σ²^2)
+        residual_correction = 2 * σ² * tr(Pinv * (VX' * VX))
+        residual_trace = 2 * σ² * trVinv - residual_correction
+        residual_quad = 2 * σ² * dot(py, py)
+
+        S_dense = Matrix(prob.S)
+        VinvS = Vinv_mul(prob, chM, σ², S_dense)
+        STVinvS = Matrix(prob.S' * VinvS)
+        Q_STVinvS = chQ \ STVinvS
+        STVX = Matrix(prob.S' * VX)
+        Q_STVX = chQ \ STVX
+        phylo_correction = 2 * σ²_phy * tr(Pinv * (STVX' * Q_STVX))
+        phylo_trace = 2 * σ²_phy * tr(Q_STVinvS) - phylo_correction
+        STpy = prob.S' * py
+        phylo_quad = 2 * σ²_phy * dot(STpy, chQ \ STpy)
+
+        trace_terms = [residual_trace, phylo_trace]
+        quadratic_terms = [residual_quad, phylo_quad]
+        correction_terms = [residual_correction, phylo_correction]
+        score = 0.5 .* (trace_terms .- quadratic_terms)
+        dense = _loconly_reml_dense_score_diagnostic(prob, lσ, lσ_phy; h = h)
+        fd_score = _loconly_fd_gradient2(v -> _loconly_reml_nll(prob, v[1], v[2]), θ; h = h)
+        max_absdiff_dense = maximum(abs.(score .- dense.score))
+        max_absdiff_fd = maximum(abs.(score .- fd_score))
+        finite = dense.finite && all(isfinite, score) && all(isfinite, fd_score) &&
+            all(isfinite, trace_terms) && all(isfinite, quadratic_terms) &&
+            isfinite(max_absdiff_dense) && isfinite(max_absdiff_fd)
+        return (target = :gaussian_loconly_reml, parameterization = :log_sd,
+                score = score, dense_score = dense.score, fd_score = fd_score,
+                trace_terms = trace_terms, quadratic_terms = quadratic_terms,
+                correction_terms = correction_terms,
+                max_absdiff_dense = max_absdiff_dense,
+                max_absdiff_fd = max_absdiff_fd, finite = finite, h = Float64(h),
+                matrix_mode = :sparse_woodbury_developer)
+    catch err
+        err isa InterruptException && rethrow(err)
+        return fail
+    end
+end
+
+function _loconly_reml_fd_stability_diagnostic(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real;
+                                               steps = (1e-3, 1e-4, 1e-5))
+    θ = [Float64(lσ), Float64(lσ_phy)]
+    obj(v) = _loconly_reml_nll(prob, v[1], v[2])
+    gradients = [_loconly_fd_gradient2(obj, θ; h = h) for h in steps]
+    hessians = [_loconly_fd_hessian2(obj, θ; h = h) for h in steps]
+    gradient_max_absdiff = length(gradients) <= 1 ? 0.0 :
+        maximum(maximum(abs.(gradients[i] .- gradients[j]))
+                for i in eachindex(gradients), j in eachindex(gradients) if i < j)
+    hessian_max_absdiff = length(hessians) <= 1 ? 0.0 :
+        maximum(maximum(abs.(hessians[i] .- hessians[j]))
+                for i in eachindex(hessians), j in eachindex(hessians) if i < j)
+    finite = all(g -> all(isfinite, g), gradients) && all(H -> all(isfinite, H), hessians)
+    return (
+        target = :gaussian_loconly_reml,
+        parameterization = :log_sd,
+        steps = Tuple(Float64.(steps)),
+        gradients = gradients,
+        hessians = hessians,
+        gradient_max_absdiff = gradient_max_absdiff,
+        hessian_max_absdiff = hessian_max_absdiff,
+        finite = finite,
+        matrix_mode = :dense_developer,
+    )
+end
+
+function _loconly_reml_boundary_status(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real;
+                                       zero_tol::Real = 1e-7)
+    if !(isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50)
+        return (boundary_status = :nonfinite_objective, finite = false,
+                converged = false, sigma = NaN, sigma_phy = NaN)
+    end
+    σ = exp(Float64(lσ))
+    σ_phy = exp(Float64(lσ_phy))
+    rank(prob.X) < prob.k && return (
+        boundary_status = :singular_fixed_effect_information,
+        finite = false,
+        converged = false,
+        sigma = σ,
+        sigma_phy = σ_phy,
+    )
+    comp = _loconly_reml_components(prob, lσ, lσ_phy)
+    if !comp.converged
+        status = comp.info === nothing || !all(isfinite, comp.info) ?
+            :nonfinite_objective : :singular_fixed_effect_information
+        return (boundary_status = status, finite = false, converged = false,
+                sigma = σ, sigma_phy = σ_phy)
+    end
+    status = (σ <= zero_tol || σ_phy <= zero_tol) ? :near_zero_variance : :interior
+    return (boundary_status = status, finite = true, converged = true,
+            sigma = σ, sigma_phy = σ_phy)
+end
+
+function _loconly_reml_local_profile_diagnostic(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real;
+                                                step::Real = 0.05)
+    θ = [Float64(lσ), Float64(lσ_phy)]
+    h = Float64(step)
+    obj(v) = _loconly_reml_nll(prob, v[1], v[2])
+    center = obj(θ)
+    residual_axis = [obj([θ[1] - h, θ[2]]), center, obj([θ[1] + h, θ[2]])]
+    phylo_axis = [obj([θ[1], θ[2] - h]), center, obj([θ[1], θ[2] + h])]
+    finite = isfinite(center) && all(isfinite, residual_axis) && all(isfinite, phylo_axis)
+    axis_min = finite &&
+        center <= minimum((residual_axis[1], residual_axis[3])) + 1e-8 &&
+        center <= minimum((phylo_axis[1], phylo_axis[3])) + 1e-8
+    return (
+        target = :gaussian_loconly_reml,
+        parameterization = :log_sd,
+        center = center,
+        step = h,
+        residual_axis = residual_axis,
+        phylo_axis = phylo_axis,
+        finite = finite,
+        center_is_axis_min = axis_min,
+    )
+end
+
+function _loconly_fd_hessian2(f, θ::AbstractVector{<:Real}; h::Real = 1e-4)
+    H = zeros(2, 2)
+    x = Float64.(θ)
+    for i in 1:2, j in 1:2
+        ei = zeros(2); ej = zeros(2)
+        si = h * max(abs(x[i]), 1.0)
+        sj = h * max(abs(x[j]), 1.0)
+        ei[i] = si; ej[j] = sj
+        H[i, j] = (f(x .+ ei .+ ej) - f(x .+ ei .- ej) -
+                   f(x .- ei .+ ej) + f(x .- ei .- ej)) / (4 * si * sj)
+    end
+    return 0.5 .* (H .+ H')
+end
+
+function _loconly_fd_gradient2(f, θ::AbstractVector{<:Real}; h::Real = 1e-5)
+    g = zeros(2)
+    x = Float64.(θ)
+    for i in 1:2
+        ei = zeros(2)
+        si = h * max(abs(x[i]), 1.0)
+        ei[i] = si
+        g[i] = (f(x .+ ei) - f(x .- ei)) / (2 * si)
+    end
+    return g
+end
+
+function _loconly_ai_information_diagnostic(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real;
+                                            h::Real = 1e-4)
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+        return (target = :gaussian_loconly_reml, parameterization = :log_sd,
+                ai = fill(NaN, 2, 2), observed = fill(NaN, 2, 2),
+                relative_error = NaN, finite = false, h = Float64(h),
+                matrix_mode = :dense_developer)
+    θ = [Float64(lσ), Float64(lσ_phy)]
+    try
+        σ² = exp(2 * θ[1])
+        σ²_phy = exp(2 * θ[2])
+        n = prob.n
+        S = Matrix(prob.S)
+        Qinv = Matrix(inv(Symmetric(Matrix(prob.Q_cond))))
+        Cobs = S * Qinv * S'
+        In = Matrix{Float64}(I, n, n)
+        V = σ² .* In .+ σ²_phy .* Cobs
+        chV = cholesky(Symmetric(V); check = false)
+        if !issuccess(chV)
+            return (target = :gaussian_loconly_reml, parameterization = :log_sd,
+                    ai = fill(NaN, 2, 2), observed = fill(NaN, 2, 2),
+                    relative_error = NaN, finite = false, h = Float64(h),
+                    matrix_mode = :dense_developer)
+        end
+        Vinv = chV \ In
+        XtVX = prob.X' * Vinv * prob.X
+        chX = cholesky(Symmetric(XtVX); check = false)
+        if !issuccess(chX)
+            return (target = :gaussian_loconly_reml, parameterization = :log_sd,
+                    ai = fill(NaN, 2, 2), observed = fill(NaN, 2, 2),
+                    relative_error = NaN, finite = false, h = Float64(h),
+                    matrix_mode = :dense_developer)
+        end
+        Pinv = chX \ Matrix{Float64}(I, size(XtVX, 1), size(XtVX, 2))
+        P = Vinv .- Vinv * prob.X * Pinv * prob.X' * Vinv
+        py = P * prob.y
+        dV = (2 * σ² .* In, 2 * σ²_phy .* Cobs)
+        ai = zeros(2, 2)
+        for i in 1:2, j in 1:2
+            ai[i, j] = 0.5 * dot(py, dV[i] * (P * (dV[j] * py)))
+        end
+        ai .= 0.5 .* (ai .+ ai')
+        observed = _loconly_fd_hessian2(v -> _loconly_reml_nll(prob, v[1], v[2]), θ; h = h)
+        rel = norm(ai .- observed) / max(norm(observed), eps(Float64))
+        finite = all(isfinite, ai) && all(isfinite, observed) && isfinite(rel)
+        return (target = :gaussian_loconly_reml, parameterization = :log_sd,
+                ai = ai, observed = observed, relative_error = rel, finite = finite,
+                h = Float64(h), matrix_mode = :dense_developer)
+    catch err
+        err isa InterruptException && rethrow(err)
+        return (target = :gaussian_loconly_reml, parameterization = :log_sd,
+                ai = fill(NaN, 2, 2), observed = fill(NaN, 2, 2),
+                relative_error = NaN, finite = false, h = Float64(h),
+                matrix_mode = :dense_developer)
+    end
+end
+
+function _loconly_reml_sparse_ai_information_diagnostic(prob::LocOnlyProblem,
+                                                        lσ::Real, lσ_phy::Real;
+                                                        h::Real = 1e-4,
+                                                        verify_dense::Bool = true)
+    fail = (target = :gaussian_loconly_reml, parameterization = :log_sd,
+            ai = fill(NaN, 2, 2), dense_ai = fill(NaN, 2, 2),
+            observed = fill(NaN, 2, 2), max_absdiff_dense = NaN,
+            relative_error_observed = NaN, finite = false, h = Float64(h),
+            matrix_mode = :sparse_woodbury_developer)
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+        return fail
+    θ = [Float64(lσ), Float64(lσ_phy)]
+    try
+        σ² = exp(2 * θ[1])
+        σ²_phy = exp(2 * θ[2])
+        _, _, chM, _ = build_M(prob, σ²_phy, σ²)
+        chQ = cholesky(Symmetric(prob.Q_cond); check = false)
+        issuccess(chQ) || return fail
+        VX = Vinv_mul(prob, chM, σ², prob.X)
+        info = Matrix(0.5 .* (prob.X' * VX .+ VX' * prob.X))
+        chX = cholesky(Symmetric(info); check = false)
+        issuccess(chX) || return fail
+        Pinv = chX \ Matrix{Float64}(I, size(info, 1), size(info, 2))
+
+        function P_mul(z)
+            Vz = Vinv_mul(prob, chM, σ², z)
+            return Vz .- VX * (Pinv * (prob.X' * Vz))
+        end
+        function dV_mul(axis::Int, z)
+            if axis == 1
+                return 2 * σ² .* z
+            end
+            return 2 * σ²_phy .* (prob.S * (chQ \ (prob.S' * z)))
+        end
+
+        py = P_mul(prob.y)
+        ai = zeros(2, 2)
+        for i in 1:2, j in 1:2
+            ai[i, j] = 0.5 * dot(py, dV_mul(i, P_mul(dV_mul(j, py))))
+        end
+        ai .= 0.5 .* (ai .+ ai')
+
+        dense = verify_dense ?
+            _loconly_ai_information_diagnostic(prob, lσ, lσ_phy; h = h) :
+            nothing
+        dense_ai = dense === nothing ? fill(NaN, 2, 2) : dense.ai
+        observed = dense === nothing ? fill(NaN, 2, 2) : dense.observed
+        max_absdiff_dense = dense === nothing ? NaN : maximum(abs.(ai .- dense.ai))
+        rel_obs = dense === nothing ? NaN :
+            norm(ai .- observed) / max(norm(observed), eps(Float64))
+        finite = all(isfinite, ai) && (dense === nothing ||
+            (dense.finite && all(isfinite, observed) &&
+             isfinite(max_absdiff_dense) && isfinite(rel_obs)))
+        return (target = :gaussian_loconly_reml, parameterization = :log_sd,
+                ai = ai, dense_ai = dense_ai, observed = observed,
+                max_absdiff_dense = max_absdiff_dense,
+                relative_error_observed = rel_obs, finite = finite,
+                h = Float64(h), matrix_mode = :sparse_woodbury_developer)
+    catch err
+        err isa InterruptException && rethrow(err)
+        return fail
+    end
+end
+
+function _loconly_reml_optimizer_diagnostic(prob::LocOnlyProblem; starts = nothing,
+                                            g_tol::Real = 1e-6,
+                                            iterations::Integer = 80)
+    β0 = prob.X \ prob.y
+    s0 = std(prob.y .- prob.X * β0) + eps()
+    start_list = starts === nothing ? [
+        [log(s0 + eps()), log(s0 / 2 + eps())],
+        [log(s0 / sqrt(2) + eps()), log(s0 / sqrt(2) + eps())],
+        [log(s0 / 2 + eps()), log(s0 + eps())],
+    ] : [Float64.(s) for s in starts]
+
+    obj(v) = _loconly_reml_nll(prob, v[1], v[2])
+    function fg!(F, G, v)
+        val = obj(v)
+        G !== nothing && copyto!(G, _loconly_fd_gradient2(obj, v))
+        return F === nothing ? nothing : val
+    end
+
+    od = Optim.NLSolversBase.only_fg!(fg!)
+    ls = Optim.LBFGS(; linesearch = Optim.LineSearches.BackTracking(; order = 3))
+    opts = Optim.Options(; g_tol = Float64(g_tol), iterations = iterations, f_reltol = 1e-8)
+    records = Any[]
+    best = nothing
+    best_nll = Inf
+    for (i, start) in enumerate(start_list)
+        start_nll = obj(start)
+        try
+            res = Optim.optimize(od, copy(start), ls, opts)
+            v = Float64.(Optim.minimizer(res))
+            nll = Optim.minimum(res)
+            grad = _loconly_fd_gradient2(obj, v)
+            record = (
+                start_index = i,
+                start = copy(start),
+                start_nll = start_nll,
+                minimizer = v,
+                nll = nll,
+                converged = Optim.converged(res),
+                iterations = Optim.iterations(res),
+                g_norm = maximum(abs, grad),
+                status = isfinite(nll) ? :finite : :nonfinite,
+            )
+            push!(records, record)
+            if isfinite(nll) && nll < best_nll
+                best = record
+                best_nll = nll
+            end
+        catch err
+            err isa InterruptException && rethrow(err)
+            push!(records, (
+                start_index = i,
+                start = copy(start),
+                start_nll = start_nll,
+                minimizer = fill(NaN, 2),
+                nll = NaN,
+                converged = false,
+                iterations = 0,
+                g_norm = NaN,
+                status = :optimizer_error,
+            ))
+        end
+    end
+
+    finite = best !== nothing && isfinite(best.nll)
+    g_norm = finite ? best.g_norm : NaN
+    accepted = finite && (best.converged || (isfinite(g_norm) && g_norm <= max(1e-3, 10 * g_tol)))
+    observed = finite ?
+        _loconly_fd_hessian2(v -> _loconly_reml_nll(prob, v[1], v[2]), best.minimizer) :
+        fill(NaN, 2, 2)
+    observed_eig = try
+        eigvals(Symmetric(observed))
+    catch err
+        err isa InterruptException && rethrow(err)
+        fill(NaN, 2)
+    end
+    observed_pd = all(isfinite, observed_eig) && minimum(observed_eig) > 0
+    dense_cmp = finite ?
+        _loconly_dense_comparator_diagnostic(prob, best.minimizer[1], best.minimizer[2]) :
+        nothing
+    boundary = finite ?
+        _loconly_reml_boundary_status(prob, best.minimizer[1], best.minimizer[2]) :
+        (boundary_status = :nonfinite_objective, finite = false,
+         converged = false, sigma = NaN, sigma_phy = NaN)
+    local_profile = finite ?
+        _loconly_reml_local_profile_diagnostic(prob, best.minimizer[1], best.minimizer[2]) :
+        nothing
+    fd_stability = finite ?
+        _loconly_reml_fd_stability_diagnostic(prob, best.minimizer[1], best.minimizer[2]) :
+        nothing
+    dense_score = finite ?
+        _loconly_reml_dense_score_diagnostic(prob, best.minimizer[1], best.minimizer[2]) :
+        nothing
+    finite_records = filter(r -> r.status === :finite && isfinite(r.nll), records)
+    n_finite_records = length(finite_records)
+    n_accepted_records = count(r -> r.status === :finite && isfinite(r.g_norm) &&
+                                  r.g_norm <= max(1e-3, 10 * g_tol), records)
+    start_nll_best = isempty(records) ? NaN : minimum(r -> r.start_nll, records)
+    best_improvement = finite && isfinite(start_nll_best) ? start_nll_best - best.nll : NaN
+    return (
+        target = :gaussian_loconly_reml,
+        estimator = :fd_reml_optimizer_experiment,
+        parameterization = :log_sd,
+        optimizer = :lbfgs_fd_gradient,
+        finite = finite,
+        accepted = accepted,
+        best_start_index = finite ? best.start_index : 0,
+        best_minimizer = finite ? best.minimizer : fill(NaN, 2),
+        best_nll = finite ? best.nll : NaN,
+        best_g_norm = g_norm,
+        observed_hessian = observed,
+        observed_hessian_eig = observed_eig,
+        observed_hessian_pd = observed_pd,
+        dense_comparator = dense_cmp,
+        boundary_status = boundary.boundary_status,
+        local_profile = local_profile,
+        fd_stability = fd_stability,
+        dense_score = dense_score,
+        best_score_norm = dense_score === nothing ? NaN : maximum(abs, dense_score.score),
+        n_starts = length(start_list),
+        n_finite_records = n_finite_records,
+        n_accepted_records = n_accepted_records,
+        best_improvement = best_improvement,
+        records = records,
+        claim_status = :optimizer_experiment,
+        ai_reml_ready = false,
+        reason_not_ai_reml = "finite-difference gradient experiment; no average-information update is implemented",
+    )
+end
+
+function _loconly_reml_dense_score_optimizer_diagnostic(prob::LocOnlyProblem; starts = nothing,
+                                                        g_tol::Real = 1e-6,
+                                                        iterations::Integer = 80)
+    β0 = prob.X \ prob.y
+    s0 = std(prob.y .- prob.X * β0) + eps()
+    start_list = starts === nothing ? [
+        [log(s0 + eps()), log(s0 / 2 + eps())],
+        [log(s0 / sqrt(2) + eps()), log(s0 / sqrt(2) + eps())],
+        [log(s0 / 2 + eps()), log(s0 + eps())],
+    ] : [Float64.(s) for s in starts]
+
+    obj(v) = _loconly_reml_nll(prob, v[1], v[2])
+    function fg!(F, G, v)
+        val = obj(v)
+        if G !== nothing
+            score = _loconly_reml_dense_score_diagnostic(prob, v[1], v[2]).score
+            copyto!(G, all(isfinite, score) ? score : zeros(2))
+        end
+        return F === nothing ? nothing : val
+    end
+
+    od = Optim.NLSolversBase.only_fg!(fg!)
+    ls = Optim.LBFGS(; linesearch = Optim.LineSearches.BackTracking(; order = 3))
+    opts = Optim.Options(; g_tol = Float64(g_tol), iterations = iterations, f_reltol = 1e-8)
+    records = Any[]
+    best = nothing
+    best_nll = Inf
+    for (i, start) in enumerate(start_list)
+        start_nll = obj(start)
+        try
+            res = Optim.optimize(od, copy(start), ls, opts)
+            v = Float64.(Optim.minimizer(res))
+            nll = Optim.minimum(res)
+            score = _loconly_reml_dense_score_diagnostic(prob, v[1], v[2]).score
+            record = (
+                start_index = i,
+                start = copy(start),
+                start_nll = start_nll,
+                minimizer = v,
+                nll = nll,
+                converged = Optim.converged(res),
+                iterations = Optim.iterations(res),
+                score_norm = maximum(abs, score),
+                status = isfinite(nll) && all(isfinite, score) ? :finite : :nonfinite,
+            )
+            push!(records, record)
+            if record.status === :finite && nll < best_nll
+                best = record
+                best_nll = nll
+            end
+        catch err
+            err isa InterruptException && rethrow(err)
+            push!(records, (
+                start_index = i,
+                start = copy(start),
+                start_nll = start_nll,
+                minimizer = fill(NaN, 2),
+                nll = NaN,
+                converged = false,
+                iterations = 0,
+                score_norm = NaN,
+                status = :optimizer_error,
+            ))
+        end
+    end
+
+    finite = best !== nothing && isfinite(best.nll)
+    dense_cmp = finite ?
+        _loconly_dense_comparator_diagnostic(prob, best.minimizer[1], best.minimizer[2]) :
+        nothing
+    boundary = finite ?
+        _loconly_reml_boundary_status(prob, best.minimizer[1], best.minimizer[2]) :
+        (boundary_status = :nonfinite_objective, finite = false,
+         converged = false, sigma = NaN, sigma_phy = NaN)
+    return (
+        target = :gaussian_loconly_reml,
+        estimator = :dense_score_reml_optimizer_experiment,
+        parameterization = :log_sd,
+        optimizer = :lbfgs_dense_reml_score,
+        finite = finite,
+        accepted = finite && (best.converged || best.score_norm <= max(1e-3, 10 * g_tol)),
+        best_start_index = finite ? best.start_index : 0,
+        best_minimizer = finite ? best.minimizer : fill(NaN, 2),
+        best_nll = finite ? best.nll : NaN,
+        best_score_norm = finite ? best.score_norm : NaN,
+        dense_comparator = dense_cmp,
+        boundary_status = boundary.boundary_status,
+        n_starts = length(start_list),
+        n_finite_records = count(r -> r.status === :finite, records),
+        records = records,
+        claim_status = :optimizer_experiment,
+        ai_reml_ready = false,
+        reason_not_ai_reml = "dense analytic score optimizer experiment; no average-information update is implemented",
+    )
+end
+
+function _loconly_reml_sparse_score_optimizer_diagnostic(prob::LocOnlyProblem; starts = nothing,
+                                                         g_tol::Real = 1e-6,
+                                                         iterations::Integer = 80)
+    β0 = prob.X \ prob.y
+    s0 = std(prob.y .- prob.X * β0) + eps()
+    start_list = starts === nothing ? [
+        [log(s0 + eps()), log(s0 / 2 + eps())],
+        [log(s0 / sqrt(2) + eps()), log(s0 / sqrt(2) + eps())],
+        [log(s0 / 2 + eps()), log(s0 + eps())],
+    ] : [Float64.(s) for s in starts]
+
+    obj(v) = _loconly_reml_nll(prob, v[1], v[2])
+    function fg!(F, G, v)
+        val = obj(v)
+        if G !== nothing
+            score = _loconly_reml_sparse_score_diagnostic(prob, v[1], v[2]).score
+            copyto!(G, all(isfinite, score) ? score : zeros(2))
+        end
+        return F === nothing ? nothing : val
+    end
+
+    od = Optim.NLSolversBase.only_fg!(fg!)
+    ls = Optim.LBFGS(; linesearch = Optim.LineSearches.BackTracking(; order = 3))
+    opts = Optim.Options(; g_tol = Float64(g_tol), iterations = iterations, f_reltol = 1e-8)
+    records = Any[]
+    best = nothing
+    best_nll = Inf
+    for (i, start) in enumerate(start_list)
+        start_nll = obj(start)
+        try
+            res = Optim.optimize(od, copy(start), ls, opts)
+            v = Float64.(Optim.minimizer(res))
+            nll = Optim.minimum(res)
+            sparse_score = _loconly_reml_sparse_score_diagnostic(prob, v[1], v[2])
+            record = (
+                start_index = i,
+                start = copy(start),
+                start_nll = start_nll,
+                minimizer = v,
+                nll = nll,
+                converged = Optim.converged(res),
+                iterations = Optim.iterations(res),
+                score_norm = maximum(abs, sparse_score.score),
+                max_absdiff_dense = sparse_score.max_absdiff_dense,
+                status = isfinite(nll) && sparse_score.finite ? :finite : :nonfinite,
+            )
+            push!(records, record)
+            if record.status === :finite && nll < best_nll
+                best = record
+                best_nll = nll
+            end
+        catch err
+            err isa InterruptException && rethrow(err)
+            push!(records, (
+                start_index = i,
+                start = copy(start),
+                start_nll = start_nll,
+                minimizer = fill(NaN, 2),
+                nll = NaN,
+                converged = false,
+                iterations = 0,
+                score_norm = NaN,
+                max_absdiff_dense = NaN,
+                status = :optimizer_error,
+            ))
+        end
+    end
+
+    finite = best !== nothing && isfinite(best.nll)
+    dense_cmp = finite ?
+        _loconly_dense_comparator_diagnostic(prob, best.minimizer[1], best.minimizer[2]) :
+        nothing
+    boundary = finite ?
+        _loconly_reml_boundary_status(prob, best.minimizer[1], best.minimizer[2]) :
+        (boundary_status = :nonfinite_objective, finite = false,
+         converged = false, sigma = NaN, sigma_phy = NaN)
+    sparse_score = finite ?
+        _loconly_reml_sparse_score_diagnostic(prob, best.minimizer[1], best.minimizer[2]) :
+        nothing
+    return (
+        target = :gaussian_loconly_reml,
+        estimator = :sparse_score_reml_optimizer_experiment,
+        parameterization = :log_sd,
+        optimizer = :lbfgs_sparse_woodbury_reml_score,
+        finite = finite,
+        accepted = finite && (best.converged || best.score_norm <= max(1e-3, 10 * g_tol)),
+        best_start_index = finite ? best.start_index : 0,
+        best_minimizer = finite ? best.minimizer : fill(NaN, 2),
+        best_nll = finite ? best.nll : NaN,
+        best_score_norm = finite ? best.score_norm : NaN,
+        best_max_absdiff_dense = finite ? best.max_absdiff_dense : NaN,
+        dense_comparator = dense_cmp,
+        boundary_status = boundary.boundary_status,
+        sparse_score = sparse_score,
+        n_starts = length(start_list),
+        n_finite_records = count(r -> r.status === :finite, records),
+        records = records,
+        claim_status = :optimizer_experiment,
+        ai_reml_ready = false,
+        reason_not_ai_reml = "sparse Woodbury score optimizer experiment; no average-information update is implemented",
+    )
+end
+
+function _loconly_reml_ai_update_optimizer_diagnostic(prob::LocOnlyProblem; starts = nothing,
+                                                      g_tol::Real = 1e-6,
+                                                      iterations::Integer = 30,
+                                                      max_halvings::Integer = 12,
+                                                      ridge::Real = 1e-8,
+                                                      condition_limit::Real = 1e10)
+    β0 = prob.X \ prob.y
+    s0 = std(prob.y .- prob.X * β0) + eps()
+    start_list = starts === nothing ? [
+        [log(s0 + eps()), log(s0 / 2 + eps())],
+        [log(s0 / sqrt(2) + eps()), log(s0 / sqrt(2) + eps())],
+        [log(s0 / 2 + eps()), log(s0 + eps())],
+    ] : [Float64.(s) for s in starts]
+
+    obj(v) = _loconly_reml_nll(prob, v[1], v[2])
+    records = Any[]
+    best = nothing
+    best_nll = Inf
+    for (i, start) in enumerate(start_list)
+        θ = copy(start)
+        start_nll = obj(θ)
+        iter_records = Any[]
+        status = :max_iterations
+        if !isfinite(start_nll)
+            record = (
+                start_index = i,
+                start = copy(start),
+                start_nll = start_nll,
+                minimizer = fill(NaN, 2),
+                nll = NaN,
+                converged = false,
+                iterations = 0,
+                score_norm = NaN,
+                status = :nonfinite_start,
+                trace = iter_records,
+            )
+            push!(records, record)
+            continue
+        end
+        for iter in 1:iterations
+            nll_before = obj(θ)
+            if !isfinite(nll_before)
+                status = :nonfinite_objective
+                break
+            end
+            score_diag = _loconly_reml_sparse_score_diagnostic(prob, θ[1], θ[2])
+            if !score_diag.finite || !all(isfinite, score_diag.score)
+                status = :nonfinite_score
+                break
+            end
+            score = score_diag.score
+            score_norm = maximum(abs, score)
+            if score_norm <= g_tol
+                status = :converged
+                push!(iter_records, (
+                    iteration = iter,
+                    nll_before = nll_before,
+                    nll_after = nll_before,
+                    score_norm = score_norm,
+                    step_norm = 0.0,
+                    step_factor = 0.0,
+                    halvings = 0,
+                    ai_min_eig = NaN,
+                    ai_condition = NaN,
+                    ridge_added = 0.0,
+                    status = :converged,
+                ))
+                break
+            end
+            info_diag = _loconly_reml_sparse_ai_information_diagnostic(
+                prob, θ[1], θ[2]; verify_dense = false,
+            )
+            if !info_diag.finite || !all(isfinite, info_diag.ai)
+                status = :nonfinite_information
+                break
+            end
+            ai = Matrix(0.5 .* (info_diag.ai .+ info_diag.ai'))
+            eig = try
+                eigvals(Symmetric(ai))
+            catch err
+                err isa InterruptException && rethrow(err)
+                fill(NaN, 2)
+            end
+            if !all(isfinite, eig)
+                status = :singular_information
+                break
+            end
+            max_eig = maximum(abs, eig)
+            min_eig = minimum(eig)
+            cond = max_eig / max(abs(min_eig), eps(Float64))
+            if !isfinite(cond) || cond > condition_limit
+                status = :ill_conditioned_information
+                break
+            end
+            ridge_added = min_eig > ridge ? 0.0 : Float64(ridge) - min_eig + Float64(ridge)
+            if ridge_added > 0
+                ai .+= ridge_added .* Matrix{Float64}(I, 2, 2)
+            end
+            step = try
+                ai \ score
+            catch err
+                err isa InterruptException && rethrow(err)
+                fill(NaN, 2)
+            end
+            if !all(isfinite, step)
+                status = :singular_information
+                break
+            end
+            step_factor = 1.0
+            halvings = 0
+            candidate = θ .- step_factor .* step
+            candidate_nll = obj(candidate)
+            while (!(all(isfinite, candidate) && maximum(abs, candidate) < 50 &&
+                     isfinite(candidate_nll) && candidate_nll < nll_before) &&
+                   halvings < max_halvings)
+                step_factor /= 2
+                halvings += 1
+                candidate = θ .- step_factor .* step
+                candidate_nll = obj(candidate)
+            end
+            accepted_step = all(isfinite, candidate) && maximum(abs, candidate) < 50 &&
+                isfinite(candidate_nll) && candidate_nll < nll_before
+            push!(iter_records, (
+                iteration = iter,
+                nll_before = nll_before,
+                nll_after = accepted_step ? candidate_nll : nll_before,
+                score_norm = score_norm,
+                step_norm = norm(step_factor .* step),
+                step_factor = step_factor,
+                halvings = halvings,
+                ai_min_eig = min_eig,
+                ai_condition = cond,
+                ridge_added = ridge_added,
+                status = accepted_step ? :accepted_step : :no_descent,
+            ))
+            if !accepted_step
+                status = :no_descent
+                break
+            end
+            θ .= candidate
+        end
+
+        final_nll = obj(θ)
+        final_score = _loconly_reml_sparse_score_diagnostic(prob, θ[1], θ[2])
+        final_score_norm = final_score.finite ? maximum(abs, final_score.score) : NaN
+        if status === :max_iterations && isfinite(final_score_norm) && final_score_norm <= max(1e-3, 10 * g_tol)
+            status = :accepted_by_score_tolerance
+        end
+        converged = status === :converged || status === :accepted_by_score_tolerance
+        record = (
+            start_index = i,
+            start = copy(start),
+            start_nll = start_nll,
+            minimizer = copy(θ),
+            nll = final_nll,
+            converged = converged,
+            iterations = length(iter_records),
+            score_norm = final_score_norm,
+            status = final_score.finite && isfinite(final_nll) ? status : :nonfinite_final,
+            trace = iter_records,
+        )
+        push!(records, record)
+        if final_score.finite && isfinite(final_nll) && final_nll < best_nll
+            best = record
+            best_nll = final_nll
+        end
+    end
+
+    finite = best !== nothing && isfinite(best.nll)
+    accepted = finite && (best.converged ||
+        (isfinite(best.score_norm) && best.score_norm <= max(1e-3, 10 * g_tol)))
+    dense_cmp = finite ?
+        _loconly_dense_comparator_diagnostic(prob, best.minimizer[1], best.minimizer[2]) :
+        nothing
+    boundary = finite ?
+        _loconly_reml_boundary_status(prob, best.minimizer[1], best.minimizer[2]) :
+        (boundary_status = :nonfinite_objective, finite = false,
+         converged = false, sigma = NaN, sigma_phy = NaN)
+    sparse_score = finite ?
+        _loconly_reml_sparse_score_diagnostic(prob, best.minimizer[1], best.minimizer[2]) :
+        nothing
+    sparse_information = finite ?
+        _loconly_reml_sparse_ai_information_diagnostic(prob, best.minimizer[1], best.minimizer[2]) :
+        nothing
+    return (
+        target = :gaussian_loconly_reml,
+        estimator = :guarded_ai_update_reml_optimizer_experiment,
+        parameterization = :log_sd,
+        optimizer = :guarded_sparse_average_information_update,
+        finite = finite,
+        accepted = accepted,
+        best_start_index = finite ? best.start_index : 0,
+        best_minimizer = finite ? best.minimizer : fill(NaN, 2),
+        best_nll = finite ? best.nll : NaN,
+        best_score_norm = finite ? best.score_norm : NaN,
+        dense_comparator = dense_cmp,
+        boundary_status = boundary.boundary_status,
+        sparse_score = sparse_score,
+        sparse_information = sparse_information,
+        n_starts = length(start_list),
+        n_finite_records = count(r -> isfinite(r.nll), records),
+        n_accepted_records = count(r -> r.converged || (isfinite(r.score_norm) &&
+                                  r.score_norm <= max(1e-3, 10 * g_tol)), records),
+        records = records,
+        claim_status = :optimizer_experiment,
+        ai_reml_ready = false,
+        reason_not_ai_reml = "guarded average-information update experiment; no simulation, bridge, or coverage gate is implemented",
+    )
+end
+
+function _loconly_reml_recovery_grid_diagnostic(; reps::Integer = 8,
+                                                G::Integer = 8,
+                                                n_per_species::Integer = 2,
+                                                sigma::Real = 0.45,
+                                                sigma_phy::Real = 0.7,
+                                                beta = (0.25, -0.4),
+                                                branch_length::Real = 0.25,
+                                                seed::Integer = 20260624,
+                                                iterations::Integer = 30)
+    rng = MersenneTwister(seed)
+    phy = random_balanced_tree(G; branch_length = branch_length)
+    species = repeat(1:G, inner = n_per_species)
+    n = length(species)
+    x = range(-1.0, 1.0; length = n)
+    X = hcat(ones(n), collect(x))
+    β = Float64.(collect(beta))
+    C = sigma_phy_dense(phy; σ²_phy = 1.0)
+    L = cholesky(Symmetric(C)).L
+    σ = Float64(sigma)
+    σ_phy = Float64(sigma_phy)
+    records = Any[]
+
+    for rep in 1:reps
+        u = σ_phy .* (L * randn(rng, G))
+        y = X * β .+ u[species] .+ σ .* randn(rng, n)
+        prob = make_loc_problem(phy, y, X; species = species)
+        fit = _loconly_reml_ai_update_optimizer_diagnostic(prob; iterations = iterations)
+        finite = fit.finite && all(isfinite, fit.best_minimizer)
+        sigma_hat = finite ? exp(fit.best_minimizer[1]) : NaN
+        sigma_phy_hat = finite ? exp(fit.best_minimizer[2]) : NaN
+        push!(records, (
+            rep = rep,
+            accepted = fit.accepted,
+            finite = finite,
+            sigma_hat = sigma_hat,
+            sigma_phy_hat = sigma_phy_hat,
+            log_sigma_hat = finite ? fit.best_minimizer[1] : NaN,
+            log_sigma_phy_hat = finite ? fit.best_minimizer[2] : NaN,
+            sigma_error = sigma_hat - σ,
+            sigma_phy_error = sigma_phy_hat - σ_phy,
+            log_sigma_error = finite ? fit.best_minimizer[1] - log(σ) : NaN,
+            log_sigma_phy_error = finite ? fit.best_minimizer[2] - log(σ_phy) : NaN,
+            score_norm = fit.best_score_norm,
+            nll = fit.best_nll,
+            boundary_status = fit.boundary_status,
+            optimizer_status = fit.accepted ? :accepted : :not_accepted,
+            iterations = finite ? fit.records[fit.best_start_index].iterations : 0,
+        ))
+    end
+
+    accepted = [r.accepted && r.finite for r in records]
+    idx = findall(identity, accepted)
+    n_accepted = length(idx)
+    function metric(vals, f)
+        n_accepted == 0 && return NaN
+        return f([vals[i] for i in idx])
+    end
+    sigma_errors = [r.sigma_error for r in records]
+    sigma_phy_errors = [r.sigma_phy_error for r in records]
+    log_sigma_errors = [r.log_sigma_error for r in records]
+    log_sigma_phy_errors = [r.log_sigma_phy_error for r in records]
+    mcse(vals) = n_accepted <= 1 ? NaN : std([vals[i] for i in idx]) / sqrt(n_accepted)
+    rmse(vals) = metric(vals, v -> sqrt(mean(abs2, v)))
+    boundary_levels = (:interior, :near_zero_variance,
+        :singular_fixed_effect_information, :nonfinite_objective)
+    boundary_counts = NamedTuple{boundary_levels}(
+        Tuple(count(r -> r.boundary_status === level, records) for level in boundary_levels),
+    )
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        estimator = :guarded_ai_update_reml_optimizer_experiment,
+        design = :tiny_deterministic_recovery_grid,
+        ademp = (
+            aim = "diagnose point-estimate recovery for the exact-Gaussian location-only phylogenetic mean cell",
+            data_generating_mechanism = "y = X beta + u_species + epsilon, u ~ N(0, sigma_phy^2 Sigma_phy), epsilon ~ N(0, sigma^2 I)",
+            estimands = ("sigma", "sigma_phy", "log_sigma", "log_sigma_phy"),
+            methods = ("guarded_sparse_average_information_update",),
+            performance = ("bias", "rmse", "mcse_bias", "convergence_rate", "boundary_counts"),
+        ),
+        conditions = (
+            reps = reps,
+            G = G,
+            n_per_species = n_per_species,
+            n = n,
+            sigma = σ,
+            sigma_phy = σ_phy,
+            beta = Tuple(β),
+            branch_length = Float64(branch_length),
+            seed = seed,
+        ),
+        n_reps = reps,
+        n_accepted = n_accepted,
+        convergence_rate = reps == 0 ? NaN : n_accepted / reps,
+        mean_sigma_hat = metric([r.sigma_hat for r in records], mean),
+        mean_sigma_phy_hat = metric([r.sigma_phy_hat for r in records], mean),
+        bias_sigma = metric(sigma_errors, mean),
+        bias_sigma_phy = metric(sigma_phy_errors, mean),
+        bias_log_sigma = metric(log_sigma_errors, mean),
+        bias_log_sigma_phy = metric(log_sigma_phy_errors, mean),
+        rmse_sigma = rmse(sigma_errors),
+        rmse_sigma_phy = rmse(sigma_phy_errors),
+        mcse_bias_sigma = mcse(sigma_errors),
+        mcse_bias_sigma_phy = mcse(sigma_phy_errors),
+        boundary_counts = boundary_counts,
+        records = records,
+        claim_status = :simulation_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+        reason_not_ai_reml = "tiny recovery grid only; no coverage, bridge, large-tree, or q4 validation gate is implemented",
+    )
+end
+
+function _loconly_reml_recovery_condition_grid_diagnostic(; reps::Integer = 2,
+                                                          iterations::Integer = 30,
+                                                          cells = nothing)
+    default_cells = (
+        (name = :baseline_interior, G = 10, n_per_species = 3,
+         sigma = 0.45, sigma_phy = 0.7, branch_length = 0.25, seed = 20260624),
+        (name = :higher_phylo_interior, G = 10, n_per_species = 3,
+         sigma = 0.45, sigma_phy = 1.0, branch_length = 0.25, seed = 20260724),
+    )
+    cell_list = cells === nothing ? default_cells : cells
+    rows = Any[]
+    for (i, cell) in enumerate(cell_list)
+        name = hasproperty(cell, :name) ? cell.name : Symbol("cell_", i)
+        diag = _loconly_reml_recovery_grid_diagnostic(
+            ; reps = hasproperty(cell, :reps) ? cell.reps : reps,
+            G = hasproperty(cell, :G) ? cell.G : 10,
+            n_per_species = hasproperty(cell, :n_per_species) ? cell.n_per_species : 3,
+            sigma = hasproperty(cell, :sigma) ? cell.sigma : 0.45,
+            sigma_phy = hasproperty(cell, :sigma_phy) ? cell.sigma_phy : 0.7,
+            beta = hasproperty(cell, :beta) ? cell.beta : (0.25, -0.4),
+            branch_length = hasproperty(cell, :branch_length) ? cell.branch_length : 0.25,
+            seed = hasproperty(cell, :seed) ? cell.seed : 20260624 + i,
+            iterations = hasproperty(cell, :iterations) ? cell.iterations : iterations,
+        )
+        push!(rows, (
+            cell = name,
+            n_reps = diag.n_reps,
+            n_accepted = diag.n_accepted,
+            convergence_rate = diag.convergence_rate,
+            bias_sigma = diag.bias_sigma,
+            bias_sigma_phy = diag.bias_sigma_phy,
+            rmse_sigma = diag.rmse_sigma,
+            rmse_sigma_phy = diag.rmse_sigma_phy,
+            mcse_bias_sigma = diag.mcse_bias_sigma,
+            mcse_bias_sigma_phy = diag.mcse_bias_sigma_phy,
+            boundary_counts = diag.boundary_counts,
+            diagnostic = diag,
+        ))
+    end
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        estimator = :guarded_ai_update_reml_optimizer_experiment,
+        design = :tiny_condition_recovery_grid,
+        n_cells = length(rows),
+        rows = Tuple(rows),
+        min_convergence_rate = isempty(rows) ? NaN : minimum(r -> r.convergence_rate, rows),
+        all_cells_accepted = all(r -> r.n_accepted == r.n_reps, rows),
+        claim_status = :simulation_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+        reason_not_ai_reml = "condition grid is diagnostic only; no coverage, bridge, large-tree, or q4 validation gate is implemented",
+    )
+end
+
+function _loconly_reml_weak_signal_recovery_probe(; reps::Integer = 2,
+                                                  G::Integer = 8,
+                                                  n_per_species::Integer = 2,
+                                                  sigma::Real = 0.45,
+                                                  sigma_phy::Real = 0.2,
+                                                  branch_length::Real = 0.25,
+                                                  seed::Integer = 20260630,
+                                                  iterations::Integer = 25)
+    diag = _loconly_reml_recovery_grid_diagnostic(
+        ; reps = reps,
+        G = G,
+        n_per_species = n_per_species,
+        sigma = sigma,
+        sigma_phy = sigma_phy,
+        branch_length = branch_length,
+        seed = seed,
+        iterations = iterations,
+    )
+    boundary_reps = diag.boundary_counts.near_zero_variance +
+        diag.boundary_counts.nonfinite_objective +
+        diag.boundary_counts.singular_fixed_effect_information
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        estimator = :guarded_ai_update_reml_optimizer_experiment,
+        design = :weak_signal_boundary_probe,
+        diagnostic = diag,
+        boundary_reps = boundary_reps,
+        boundary_rate = diag.n_reps == 0 ? NaN : boundary_reps / diag.n_reps,
+        convergence_rate = diag.convergence_rate,
+        expected_behavior = :boundary_states_allowed,
+        claim_status = :simulation_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+        reason_not_ai_reml = "weak-signal boundary probe only; low convergence or boundary states are diagnostic outcomes",
+    )
+end
+
+function _loconly_reml_weak_signal_condition_grid_diagnostic(; reps::Integer = 1,
+                                                             iterations::Integer = 20,
+                                                             cells = nothing)
+    default_cells = (
+        (name = :low_phylo_signal, sigma_phy = 0.2, seed = 20260630),
+        (name = :near_zero_phylo_signal, sigma_phy = 0.05, seed = 20260631),
+    )
+    selected = cells === nothing ? default_cells : cells
+    rows = Any[]
+    for cell in selected
+        diag = _loconly_reml_weak_signal_recovery_probe(
+            ; reps = reps,
+            sigma_phy = cell.sigma_phy,
+            seed = cell.seed,
+            iterations = iterations,
+        )
+        push!(rows, merge((cell = cell.name,), diag))
+    end
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        estimator = :guarded_ai_update_reml_optimizer_experiment,
+        design = :weak_signal_condition_grid,
+        n_cells = length(rows),
+        rows = Tuple(rows),
+        expected_behavior = :boundary_states_allowed,
+        claim_status = :simulation_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+        reason_not_ai_reml = "weak-signal condition grid is diagnostic only; boundary states are expected outcomes",
+    )
+end
+
+function _loconly_reml_broader_recovery_grid_diagnostic(; reps::Integer = 1,
+                                                        iterations::Integer = 25,
+                                                        cells = nothing)
+    default_cells = (
+        (name = :baseline_interior, G = 10, n_per_species = 3,
+         sigma = 0.45, sigma_phy = 0.7, branch_length = 0.25, seed = 20260624),
+        (name = :higher_phylo_interior, G = 10, n_per_species = 3,
+         sigma = 0.45, sigma_phy = 1.0, branch_length = 0.25, seed = 20260724),
+        (name = :medium_interior_stress, G = 20, n_per_species = 3,
+         sigma = 0.45, sigma_phy = 0.7, branch_length = 0.25, seed = 20260825),
+    )
+    selected = cells === nothing ? default_cells : cells
+    rows = Any[]
+    for cell in selected
+        diag = _loconly_reml_recovery_grid_diagnostic(
+            ; reps = reps,
+            G = cell.G,
+            n_per_species = cell.n_per_species,
+            sigma = cell.sigma,
+            sigma_phy = cell.sigma_phy,
+            branch_length = cell.branch_length,
+            seed = cell.seed,
+            iterations = iterations,
+        )
+        push!(rows, merge((cell = cell.name,), diag))
+    end
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        estimator = :guarded_ai_update_reml_optimizer_experiment,
+        design = :broader_recovery_grid,
+        n_cells = length(rows),
+        rows = Tuple(rows),
+        min_convergence_rate = isempty(rows) ? NaN : minimum(r -> r.convergence_rate, rows),
+        all_cells_accepted = all(r -> r.n_accepted == r.n_reps, rows),
+        expected_behavior = :stable_or_stress_recovery,
+        claim_status = :simulation_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+        reason_not_ai_reml = "broader recovery grid is diagnostic only; no coverage, bridge, large-tree, or q4 validation gate is implemented",
+    )
+end
+
+const _LOCONLY_REML_SIMULATION_STATUS_FIELDS = (
+    :row_id, :target, :estimator, :design, :claim_status, :coverage_status,
+    :expected_behavior, :n_reps, :n_accepted, :convergence_rate,
+    :boundary_rate, :failure_reason_counts, :bias_sigma, :bias_sigma_phy,
+    :rmse_sigma, :rmse_sigma_phy, :mcse_bias_sigma, :mcse_bias_sigma_phy,
+    :mcse_status, :runtime_seconds, :runtime_budget_seconds, :seed,
+    :seed_registry, :next_gate, :evidence,
+)
+
+function _loconly_reml_simulation_status_schema()
+    return _LOCONLY_REML_SIMULATION_STATUS_FIELDS
+end
+
+function _loconly_reml_failure_reason_counts(counts)
+    return (
+        near_zero_variance = counts.near_zero_variance,
+        nonfinite_objective = counts.nonfinite_objective,
+        singular_fixed_effect_information = counts.singular_fixed_effect_information,
+    )
+end
+
+function _loconly_reml_expected_behavior(row_id::Symbol)
+    row_id === :weak_signal_boundary_probe && return :boundary_states_allowed
+    row_id === :condition_grid && return :row_separated_stable_recovery
+    row_id in (:larger_interior_stress, :medium_interior_stress) && return :stress_smoke
+    return :stable_interior_recovery
+end
+
+function _loconly_reml_runtime_budget_seconds(row_id::Symbol)
+    row_id === :medium_interior_stress && return 15.0
+    row_id === :larger_interior_stress && return 10.0
+    return 5.0
+end
+
+function _loconly_reml_simulation_status(; include_medium_stress::Bool = false,
+                                         medium_stress_reps::Integer = 1)
+    evidence = "test/test_location_only_reml_mme.jl"
+    function boundary_rate(counts, n_reps)
+        boundary_reps = counts.near_zero_variance + counts.nonfinite_objective +
+            counts.singular_fixed_effect_information
+        return n_reps == 0 ? NaN : boundary_reps / n_reps
+    end
+    function recovery_row(row_id::Symbol, design::Symbol, diag, runtime_seconds::Real,
+                          next_gate::Symbol)
+        return (
+            row_id = row_id,
+            target = diag.target,
+            estimator = diag.estimator,
+            design = design,
+            claim_status = diag.claim_status,
+            coverage_status = diag.coverage_status,
+            n_reps = diag.n_reps,
+            n_accepted = diag.n_accepted,
+            convergence_rate = diag.convergence_rate,
+            boundary_rate = boundary_rate(diag.boundary_counts, diag.n_reps),
+            failure_reason_counts = _loconly_reml_failure_reason_counts(diag.boundary_counts),
+            bias_sigma = diag.bias_sigma,
+            bias_sigma_phy = diag.bias_sigma_phy,
+            rmse_sigma = diag.rmse_sigma,
+            rmse_sigma_phy = diag.rmse_sigma_phy,
+            mcse_bias_sigma = diag.mcse_bias_sigma,
+            mcse_bias_sigma_phy = diag.mcse_bias_sigma_phy,
+            mcse_status = :diagnostic_only,
+            runtime_seconds = Float64(runtime_seconds),
+            runtime_budget_seconds = _loconly_reml_runtime_budget_seconds(row_id),
+            seed = diag.conditions.seed,
+            seed_registry = (primary = diag.conditions.seed, deterministic = true),
+            evidence = evidence,
+            next_gate = next_gate,
+            expected_behavior = _loconly_reml_expected_behavior(row_id),
+        )
+    end
+
+    baseline = nothing
+    baseline_time = @elapsed baseline = _loconly_reml_recovery_grid_diagnostic(
+        ; reps = 3, G = 10, n_per_species = 3, sigma = 0.45, sigma_phy = 0.7,
+        seed = 20260624, iterations = 30,
+    )
+
+    condition = nothing
+    condition_time = @elapsed condition = _loconly_reml_recovery_condition_grid_diagnostic(
+        ; reps = 2, iterations = 30,
+    )
+    condition_reps = sum(r -> r.n_reps, condition.rows)
+    condition_accepted = sum(r -> r.n_accepted, condition.rows)
+    condition_boundary_reps = sum(
+        r -> r.boundary_counts.near_zero_variance +
+             r.boundary_counts.nonfinite_objective +
+             r.boundary_counts.singular_fixed_effect_information,
+        condition.rows,
+    )
+    condition_row = (
+        row_id = :condition_grid,
+        target = condition.target,
+        estimator = condition.estimator,
+        design = condition.design,
+        claim_status = condition.claim_status,
+        coverage_status = condition.coverage_status,
+        n_reps = condition_reps,
+        n_accepted = condition_accepted,
+        convergence_rate = condition_reps == 0 ? NaN : condition_accepted / condition_reps,
+        boundary_rate = condition_reps == 0 ? NaN : condition_boundary_reps / condition_reps,
+        failure_reason_counts = (
+            near_zero_variance = sum(r -> r.boundary_counts.near_zero_variance, condition.rows),
+            nonfinite_objective = sum(r -> r.boundary_counts.nonfinite_objective, condition.rows),
+            singular_fixed_effect_information = sum(r -> r.boundary_counts.singular_fixed_effect_information, condition.rows),
+        ),
+        bias_sigma = mean([r.bias_sigma for r in condition.rows]),
+        bias_sigma_phy = mean([r.bias_sigma_phy for r in condition.rows]),
+        rmse_sigma = mean([r.rmse_sigma for r in condition.rows]),
+        rmse_sigma_phy = mean([r.rmse_sigma_phy for r in condition.rows]),
+        mcse_bias_sigma = mean([r.mcse_bias_sigma for r in condition.rows]),
+        mcse_bias_sigma_phy = mean([r.mcse_bias_sigma_phy for r in condition.rows]),
+        mcse_status = :diagnostic_only,
+        runtime_seconds = Float64(condition_time),
+        runtime_budget_seconds = _loconly_reml_runtime_budget_seconds(:condition_grid),
+        seed = Tuple(r.diagnostic.conditions.seed for r in condition.rows),
+        seed_registry = (primary = Tuple(r.diagnostic.conditions.seed for r in condition.rows),
+                         deterministic = true),
+        evidence = evidence,
+        next_gate = :broader_condition_grid,
+        expected_behavior = _loconly_reml_expected_behavior(:condition_grid),
+    )
+
+    weak = nothing
+    weak_time = @elapsed weak = _loconly_reml_weak_signal_recovery_probe(
+        ; reps = 2, seed = 20260630, iterations = 25,
+    )
+    weak_diag = weak.diagnostic
+    weak_row = (
+        row_id = :weak_signal_boundary_probe,
+        target = weak.target,
+        estimator = weak.estimator,
+        design = weak.design,
+        claim_status = weak.claim_status,
+        coverage_status = weak.coverage_status,
+        n_reps = weak_diag.n_reps,
+        n_accepted = weak_diag.n_accepted,
+        convergence_rate = weak.convergence_rate,
+        boundary_rate = weak.boundary_rate,
+        failure_reason_counts = _loconly_reml_failure_reason_counts(weak_diag.boundary_counts),
+        bias_sigma = weak_diag.bias_sigma,
+        bias_sigma_phy = weak_diag.bias_sigma_phy,
+        rmse_sigma = weak_diag.rmse_sigma,
+        rmse_sigma_phy = weak_diag.rmse_sigma_phy,
+        mcse_bias_sigma = weak_diag.mcse_bias_sigma,
+        mcse_bias_sigma_phy = weak_diag.mcse_bias_sigma_phy,
+        mcse_status = :diagnostic_only,
+        runtime_seconds = Float64(weak_time),
+        runtime_budget_seconds = _loconly_reml_runtime_budget_seconds(:weak_signal_boundary_probe),
+        seed = weak_diag.conditions.seed,
+        seed_registry = (primary = weak_diag.conditions.seed, deterministic = true),
+        evidence = evidence,
+        next_gate = :boundary_diagnostics,
+        expected_behavior = _loconly_reml_expected_behavior(:weak_signal_boundary_probe),
+    )
+
+    stress = nothing
+    stress_time = @elapsed stress = _loconly_reml_recovery_grid_diagnostic(
+        ; reps = 2, G = 16, n_per_species = 3, sigma = 0.45, sigma_phy = 0.7,
+        seed = 20260824, iterations = 30,
+    )
+    rows = Any[
+        recovery_row(:stable_recovery, baseline.design, baseline, baseline_time,
+                     :broader_recovery_grid),
+        condition_row,
+        weak_row,
+        recovery_row(:larger_interior_stress, :larger_interior_stress_grid,
+                     stress, stress_time, :optional_runtime_stress),
+    ]
+    if include_medium_stress
+        medium = nothing
+        medium_time = @elapsed medium = _loconly_reml_recovery_grid_diagnostic(
+            ; reps = medium_stress_reps, G = 20, n_per_species = 3,
+            sigma = 0.45, sigma_phy = 0.7, seed = 20260825,
+            iterations = 25,
+        )
+        push!(rows, recovery_row(:medium_interior_stress, :medium_interior_stress_grid,
+                                 medium, medium_time, :optional_runtime_stress))
+    end
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        estimator = :guarded_ai_update_reml_optimizer_experiment,
+        rows = Tuple(rows),
+        n_rows = length(rows),
+        claim_status = :simulation_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+        evidence = evidence,
+        reason_not_ai_reml = "simulation-status rows are diagnostic only; no coverage, bridge, large-tree, or q4 validation gate is implemented",
+    )
+end
+
+function _loconly_reml_validate_simulation_status(status)
+    required = _loconly_reml_simulation_status_schema()
+    errors = String[]
+    expected_order = (:stable_recovery, :condition_grid,
+        :weak_signal_boundary_probe, :larger_interior_stress)
+    row_ids = Tuple(r.row_id for r in status.rows)
+    if row_ids[1:min(length(row_ids), length(expected_order))] !=
+            expected_order[1:min(length(row_ids), length(expected_order))]
+        push!(errors, "default row order changed")
+    end
+    for row in status.rows
+        names = propertynames(row)
+        for field in required
+            field in names || push!(errors, "row $(row.row_id) missing field $(field)")
+        end
+        row.target === :gaussian_loconly_phylo_reml ||
+            push!(errors, "row $(row.row_id) has wrong target")
+        row.estimator === :guarded_ai_update_reml_optimizer_experiment ||
+            push!(errors, "row $(row.row_id) has wrong estimator")
+        row.claim_status === :simulation_diagnostic ||
+            push!(errors, "row $(row.row_id) has wrong claim_status")
+        row.coverage_status === :not_evaluated ||
+            push!(errors, "row $(row.row_id) has evaluated coverage")
+        row.expected_behavior in (:stable_interior_recovery,
+            :row_separated_stable_recovery, :boundary_states_allowed,
+            :stress_smoke) ||
+            push!(errors, "row $(row.row_id) has unexpected behavior label")
+        row.n_reps >= 0 || push!(errors, "row $(row.row_id) has negative n_reps")
+        0 <= row.n_accepted <= row.n_reps ||
+            push!(errors, "row $(row.row_id) has invalid accepted count")
+        (isnan(row.boundary_rate) || 0 <= row.boundary_rate <= 1) ||
+            push!(errors, "row $(row.row_id) has invalid boundary_rate")
+        row.mcse_status === :diagnostic_only ||
+            push!(errors, "row $(row.row_id) has non-diagnostic MCSE status")
+        row.runtime_seconds >= 0 ||
+            push!(errors, "row $(row.row_id) has negative runtime")
+        row.runtime_budget_seconds > 0 ||
+            push!(errors, "row $(row.row_id) has no runtime budget")
+        isempty(string(row.seed)) &&
+            push!(errors, "row $(row.row_id) has empty seed")
+        isempty(row.evidence) &&
+            push!(errors, "row $(row.row_id) has empty evidence")
+    end
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        required_fields = required,
+        row_order = row_ids,
+        claim_status = status.claim_status,
+        coverage_status = status.coverage_status,
+        ai_reml_ready = status.ai_reml_ready,
+    )
+end
+
+function _loconly_reml_tsv_value(x)
+    return replace(string(x), "\t" => " ", "\n" => " ")
+end
+
+function _loconly_reml_write_simulation_status_tsv(path;
+                                                   status = nothing,
+                                                   include_medium_stress::Bool = false,
+                                                   medium_stress_reps::Integer = 1)
+    if status === nothing
+        status = _loconly_reml_simulation_status(
+            ; include_medium_stress = include_medium_stress,
+            medium_stress_reps = medium_stress_reps,
+        )
+    end
+    validation = _loconly_reml_validate_simulation_status(status)
+    schema = _loconly_reml_simulation_status_schema()
+    dir = dirname(String(path))
+    !isempty(dir) && mkpath(dir)
+    open(path, "w") do io
+        println(io, join(string.(schema), "\t"))
+        for row in status.rows
+            println(io, join((_loconly_reml_tsv_value(getproperty(row, field))
+                              for field in schema), "\t"))
+        end
+    end
+    return (
+        path = String(path),
+        n_rows = length(status.rows),
+        schema = schema,
+        validation = validation,
+        claim_status = status.claim_status,
+        coverage_status = status.coverage_status,
+        ai_reml_ready = status.ai_reml_ready,
+    )
+end
+
+function _loconly_reml_validation_status()
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        estimator = :supplied_variance_reml,
+        source_status = :partial,
+        tests_status = :partial,
+        comparator_status = :dense_same_estimand_oracle,
+        optimizer_status = :experiment_only,
+        r_bridge_status = :planned,
+        claim_status = :internal_diagnostic,
+        q4_status = :excluded,
+        evidence = "test/test_location_only_reml_mme.jl",
+    )
+end
+
+function _loconly_reml_bridge_payload_schema()
+    return (
+        target = "gaussian_loconly_phylo_reml",
+        estimator = "supplied_variance_reml",
+        effective_REML = true,
+        variance_components_source = "supplied_or_experimental_fd_optimized",
+        trace_mode = "takahashi_selinv",
+        score_mode = "dense_or_sparse_woodbury_diagnostic",
+        information_mode = "ai_vs_observed_diagnostic",
+        boundary_status_levels = (
+            "interior",
+            "near_zero_variance",
+            "singular_fixed_effect_information",
+            "nonfinite_objective",
+        ),
+        claim_status = "internal_diagnostic",
+        r_bridge_status = "planned",
+    )
+end
+
+function _loconly_reml_diagnostic_payload(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        estimator = :supplied_variance_reml,
+        parameterization = :log_sd,
+        boundary = _loconly_reml_boundary_status(prob, lσ, lσ_phy),
+        dense_comparator = _loconly_dense_comparator_diagnostic(prob, lσ, lσ_phy),
+        score = _loconly_reml_dense_score_diagnostic(prob, lσ, lσ_phy),
+        sparse_score = _loconly_reml_sparse_score_diagnostic(prob, lσ, lσ_phy),
+        trace = _loconly_takahashi_trace_diagnostic(prob, lσ, lσ_phy),
+        pev = _loconly_takahashi_pev_diagnostic(prob, lσ, lσ_phy),
+        information = _loconly_ai_information_diagnostic(prob, lσ, lσ_phy),
+        sparse_information = _loconly_reml_sparse_ai_information_diagnostic(prob, lσ, lσ_phy),
+        fd_stability = _loconly_reml_fd_stability_diagnostic(prob, lσ, lσ_phy),
+        local_profile = _loconly_reml_local_profile_diagnostic(prob, lσ, lσ_phy),
+        validation_status = _loconly_reml_validation_status(),
+        bridge_schema = _loconly_reml_bridge_payload_schema(),
+        claim_status = :internal_diagnostic,
+    )
+end
+
 function _loconly_profile_fg(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
     β, nll, chM = _loconly_profile_beta(prob, lσ, lσ_phy)
     if β === nothing
@@ -272,6 +1862,53 @@ function exact_traces(prob::LocOnlyProblem, chM)
     end
 
     return tr_QM, tr_SMS
+end
+
+function _loconly_takahashi_trace_diagnostic(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+        return (trace_mode = :takahashi_selinv, tr_QM = NaN, tr_SMS = NaN,
+                finite = false, n = prob.n, n_keep = prob.n_keep)
+    σ²_phy = exp(2 * Float64(lσ_phy))
+    σ² = exp(2 * Float64(lσ))
+    try
+        _, _, chM, _ = build_M(prob, σ²_phy, σ²)
+        tr_QM, tr_SMS = exact_traces(prob, chM)
+        finite = isfinite(tr_QM) && isfinite(tr_SMS)
+        return (trace_mode = :takahashi_selinv, tr_QM = tr_QM, tr_SMS = tr_SMS,
+                finite = finite, n = prob.n, n_keep = prob.n_keep)
+    catch err
+        err isa InterruptException && rethrow(err)
+        return (trace_mode = :takahashi_selinv, tr_QM = NaN, tr_SMS = NaN,
+                finite = false, n = prob.n, n_keep = prob.n_keep)
+    end
+end
+
+function _loconly_takahashi_pev_diagnostic(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+        return (trace_mode = :takahashi_selinv, posterior_variance = Float64[],
+                leaf_posterior_variance = Float64[], finite = false, n_keep = prob.n_keep,
+                n_leaves = prob.p)
+    σ²_phy = exp(2 * Float64(lσ_phy))
+    σ² = exp(2 * Float64(lσ))
+    try
+        _, _, chM, _ = build_M(prob, σ²_phy, σ²)
+        V_sel = takahashi_selinv(chM)
+        diag_all = [V_sel[j, j] for j in 1:(prob.n_keep)]
+        leaf_diag = diag_all[prob.leaf_pos]
+        finite = all(isfinite, diag_all)
+        return (trace_mode = :takahashi_selinv, posterior_variance = diag_all,
+                leaf_posterior_variance = leaf_diag, finite = finite,
+                posterior_variance_min = minimum(diag_all),
+                posterior_variance_max = maximum(diag_all),
+                leaf_posterior_variance_mean = mean(leaf_diag),
+                weighted_leaf_posterior_trace = sum(prob.STS_diag .* diag_all),
+                n_keep = prob.n_keep, n_leaves = prob.p)
+    catch err
+        err isa InterruptException && rethrow(err)
+        return (trace_mode = :takahashi_selinv, posterior_variance = Float64[],
+                leaf_posterior_variance = Float64[], finite = false,
+                n_keep = prob.n_keep, n_leaves = prob.p)
+    end
 end
 
 # ─────────────────────────────────────────────────────────────────────────────
