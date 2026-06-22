@@ -29,25 +29,27 @@ target is agreement evidence only, not a same-estimand REML comparator.
 
 ## Recommendation
 
-Do not add a package dependency in this slice. Keep the dense GLS oracle as the
-gating comparator and add an external comparator only after choosing a stable,
-same-estimand route with a small fixture. The first comparator PR should remain
-developer-only and should not change the public bridge, q4, non-Gaussian,
-coverage, or AI-REML readiness claims.
+Do not add a package dependency in this lane yet. Keep the dense GLS oracle as
+the gating comparator and use the versioned same-estimand fixture
+`loconly-gaussian-phylo-reml-v1` before selecting an external package. The first
+comparator PR should remain developer-only and should not change the public
+bridge, q4, non-Gaussian, coverage, or AI-REML readiness claims.
 
 ## Candidate Decision Table
 
 | Candidate | Same-estimand status | Dependency decision | Artifact status | Next gate |
 | --- | --- | --- | --- | --- |
 | DRM.jl dense GLS oracle | same-estimand internal | retain as current gate | covered by focused test | keep as dense oracle |
-| phylolm-style Gaussian phylogenetic REML | needs fixture confirmation | do not add yet | planned | design a versioned same-estimand fixture |
+| phylolm-style Gaussian phylogenetic REML | needs fixture confirmation | do not add yet | fixture defined | probe package/version against fixture |
 | generic LMM package | not yet same-estimand | do not add without supplied covariance/precision target match | not applicable | reject or specialize |
 
 The row-shaped status helper `_loconly_reml_external_comparator_status()`
 mirrors this table for tests and future artifacts. Its status is deliberately
 `external_comparator_status = :planned` and `dependency_status = :not_added`.
-No optional developer script was added because no external candidate has yet
-cleared the same-estimand fixture gate.
+The fixture helper `_loconly_reml_external_comparator_fixture()` now records a
+small deterministic balanced-tree data set, dense covariance target, and dense
+GLS REML reference values. No optional developer script or dependency was added
+because no external candidate has yet cleared that fixture gate.
 
 ## Next Gate
 

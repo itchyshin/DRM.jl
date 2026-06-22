@@ -1866,8 +1866,125 @@ const _LOCONLY_REML_EXTERNAL_COMPARATOR_FIELDS = (
     :dependency_status, :artifact_status, :decision, :reason, :next_gate,
 )
 
+const _LOCONLY_REML_EXTERNAL_COMPARATOR_FIXTURE_VERSION =
+    "loconly-gaussian-phylo-reml-v1"
+
+const _LOCONLY_REML_EXTERNAL_COMPARATOR_FIXTURE_FIELDS = (
+    :fixture_id, :version, :target, :estimator, :parameterization,
+    :tree_shape, :branch_length, :n_species, :n_obs, :n_per_species,
+    :species, :x, :X, :y, :Sigma_phy, :known_sigma, :known_sigma_phy,
+    :reference, :seed_registry, :claim_status, :coverage_status,
+    :ai_reml_ready,
+)
+
 function _loconly_reml_external_comparator_schema()
     return _LOCONLY_REML_EXTERNAL_COMPARATOR_FIELDS
+end
+
+function _loconly_reml_external_comparator_fixture_schema()
+    return _LOCONLY_REML_EXTERNAL_COMPARATOR_FIXTURE_FIELDS
+end
+
+function _loconly_reml_external_comparator_fixture()
+    G = 6
+    n_per_species = 2
+    branch_length = 0.25
+    phy = random_balanced_tree(G; branch_length = branch_length)
+    species = repeat(1:G, inner = n_per_species)
+    n = length(species)
+    x = collect(range(-0.75, 0.75; length = n))
+    X = hcat(ones(n), x)
+    beta = [0.2, -0.35]
+    known_sigma = 0.4
+    known_sigma_phy = 0.55
+    species_effect = known_sigma_phy .* collect(range(-0.4, 0.4; length = G))
+    residual_pattern = known_sigma .* 0.15 .* sin.(collect(1:n))
+    y = X * beta .+ species_effect[species] .+ residual_pattern
+    prob = make_loc_problem(phy, y, X; species = species)
+    lσ = log(known_sigma)
+    lσ_phy = log(known_sigma_phy)
+    dense = _loconly_dense_reml_components(prob, lσ, lσ_phy)
+    boundary = _loconly_reml_boundary_status(prob, lσ, lσ_phy)
+    return (
+        fixture_id = :loconly_gaussian_phylo_reml_v1,
+        version = _LOCONLY_REML_EXTERNAL_COMPARATOR_FIXTURE_VERSION,
+        target = :gaussian_loconly_phylo_reml,
+        estimator = :supplied_variance_reml,
+        parameterization = :log_sd,
+        tree_shape = :balanced,
+        branch_length = branch_length,
+        n_species = G,
+        n_obs = n,
+        n_per_species = n_per_species,
+        species = Tuple(species),
+        x = Tuple(x),
+        X = Matrix(X),
+        y = Tuple(y),
+        Sigma_phy = Matrix(sigma_phy_dense(phy; σ²_phy = 1.0)),
+        known_sigma = known_sigma,
+        known_sigma_phy = known_sigma_phy,
+        reference = (
+            comparator = :internal_dense_gls_oracle,
+            beta_hat = Tuple(dense.beta),
+            reml_nll = dense.nll,
+            ml_nll = dense.ml_nll,
+            restricted_penalty = dense.penalty,
+            fixed_effect_information = Matrix(dense.info),
+            boundary_status = boundary.boundary_status,
+            can_report_restricted_likelihood_directly = true,
+            covariance_target = :sigma_phy_squared_times_Sigma_phy_plus_sigma_squared_I,
+        ),
+        seed_registry = (primary = 20260622, deterministic = true, rng_used = false),
+        claim_status = :internal_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+    )
+end
+
+function _loconly_reml_validate_external_comparator_fixture(fixture)
+    schema = _loconly_reml_external_comparator_fixture_schema()
+    errors = String[]
+    names = propertynames(fixture)
+    for field in schema
+        field in names || push!(errors, "fixture missing field $(field)")
+    end
+    fixture.target === :gaussian_loconly_phylo_reml ||
+        push!(errors, "fixture has wrong target")
+    fixture.version == _LOCONLY_REML_EXTERNAL_COMPARATOR_FIXTURE_VERSION ||
+        push!(errors, "fixture has wrong version")
+    fixture.estimator === :supplied_variance_reml ||
+        push!(errors, "fixture has wrong estimator")
+    fixture.parameterization === :log_sd ||
+        push!(errors, "fixture has wrong parameterization")
+    fixture.n_obs == length(fixture.y) == length(fixture.species) == size(fixture.X, 1) ||
+        push!(errors, "fixture has inconsistent observation dimensions")
+    fixture.n_species == size(fixture.Sigma_phy, 1) == size(fixture.Sigma_phy, 2) ||
+        push!(errors, "fixture has inconsistent covariance dimensions")
+    size(fixture.X, 2) == length(fixture.reference.beta_hat) ||
+        push!(errors, "fixture beta reference does not match X")
+    all(1 <= sp <= fixture.n_species for sp in fixture.species) ||
+        push!(errors, "fixture species index outside covariance target")
+    isfinite(fixture.reference.reml_nll) ||
+        push!(errors, "fixture reference REML nll is not finite")
+    isfinite(fixture.reference.ml_nll) ||
+        push!(errors, "fixture reference ML nll is not finite")
+    fixture.reference.boundary_status === :interior ||
+        push!(errors, "fixture reference is not interior")
+    fixture.claim_status === :internal_diagnostic ||
+        push!(errors, "fixture has wrong claim_status")
+    fixture.coverage_status === :not_evaluated ||
+        push!(errors, "fixture has wrong coverage_status")
+    !fixture.ai_reml_ready ||
+        push!(errors, "fixture must not mark ai_reml_ready")
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        required_fields = schema,
+        version = fixture.version,
+        target = fixture.target,
+        coverage_status = fixture.coverage_status,
+        ai_reml_ready = fixture.ai_reml_ready,
+    )
 end
 
 function _loconly_reml_external_comparator_candidates()
@@ -1889,10 +2006,10 @@ function _loconly_reml_external_comparator_candidates()
             comparator = "phylolm-style Gaussian phylogenetic REML",
             same_estimand_status = :needs_fixture_confirmation,
             dependency_status = :not_added,
-            artifact_status = :planned,
+            artifact_status = :fixture_defined,
             decision = :scout_before_dependency,
-            reason = "Candidate must expose the same restricted objective, covariance target, boundary behavior, and versioned fixture.",
-            next_gate = :same_estimand_fixture_design,
+            reason = "Candidate must match the versioned same-estimand fixture before any dependency is added.",
+            next_gate = :external_package_version_probe,
         ),
         (
             comparator_id = :mixedmodels_or_generic_lmm,
@@ -1921,7 +2038,7 @@ function _loconly_reml_validate_external_comparator_rows(rows)
         row.dependency_status in (:internal, :not_added, :optional_developer_only) ||
             push!(errors, "comparator $(row.comparator_id) has invalid dependency_status")
         row.artifact_status in (:covered_by_focused_test, :planned, :not_applicable,
-            :optional_developer_only) ||
+            :optional_developer_only, :fixture_defined) ||
             push!(errors, "comparator $(row.comparator_id) has invalid artifact_status")
     end
     return (
@@ -1935,11 +2052,17 @@ end
 function _loconly_reml_external_comparator_status()
     rows = _loconly_reml_external_comparator_candidates()
     validation = _loconly_reml_validate_external_comparator_rows(rows)
+    fixture = _loconly_reml_external_comparator_fixture()
+    fixture_validation = _loconly_reml_validate_external_comparator_fixture(fixture)
     return (
         target = :gaussian_loconly_phylo_reml,
         external_comparator_status = :planned,
         dependency_status = :not_added,
         artifact_schema = _loconly_reml_external_comparator_schema(),
+        fixture_status = :versioned_fixture_defined,
+        fixture_schema = _loconly_reml_external_comparator_fixture_schema(),
+        fixture = fixture,
+        fixture_validation = fixture_validation,
         rows = rows,
         validation = validation,
         claim_status = :internal_diagnostic,

@@ -571,13 +571,21 @@ end
     @test comparator_status.claim_status === :internal_diagnostic
     @test comparator_status.coverage_status === :not_evaluated
     @test !comparator_status.ai_reml_ready
+    @test comparator_status.fixture_status === :versioned_fixture_defined
     @test comparator_status.validation.ok
     @test comparator_status.validation.required_fields == comparator_schema
     @test comparator_status.validation.n_rows == length(comparator_status.rows)
+    @test comparator_status.fixture_validation.ok
+    @test comparator_status.fixture_validation.required_fields ==
+        comparator_status.fixture_schema
     @test all(r -> r.target === :gaussian_loconly_phylo_reml,
               comparator_status.rows)
     @test any(r -> r.comparator_id === :internal_dense_gls_oracle &&
                    r.same_estimand_status === :same_estimand_internal,
+              comparator_status.rows)
+    @test any(r -> r.comparator_id === :phylolm_or_equivalent_reml &&
+                   r.artifact_status === :fixture_defined &&
+                   r.next_gate === :external_package_version_probe,
               comparator_status.rows)
     @test any(r -> r.dependency_status === :not_added,
               comparator_status.rows)
@@ -587,6 +595,44 @@ end
     @test !bad_comparator_validation.ok
     @test any(err -> occursin("wrong target", err),
               bad_comparator_validation.errors)
+
+    fixture = comparator_status.fixture
+    @test fixture.target === :gaussian_loconly_phylo_reml
+    @test fixture.estimator === :supplied_variance_reml
+    @test fixture.parameterization === :log_sd
+    @test fixture.n_obs == length(fixture.y) == length(fixture.species) == size(fixture.X, 1)
+    @test fixture.n_species == size(fixture.Sigma_phy, 1) == size(fixture.Sigma_phy, 2)
+    @test fixture.seed_registry.deterministic
+    @test !fixture.seed_registry.rng_used
+    @test fixture.coverage_status === :not_evaluated
+    @test !fixture.ai_reml_ready
+    sp = collect(fixture.species)
+    X_fixture = fixture.X
+    y_fixture = collect(fixture.y)
+    V_fixture = fixture.known_sigma^2 .* I(fixture.n_obs) .+
+        fixture.known_sigma_phy^2 .* fixture.Sigma_phy[sp, sp]
+    ch_fixture = cholesky(Symmetric(Matrix(V_fixture)))
+    info_fixture = X_fixture' * (ch_fixture \ X_fixture)
+    beta_fixture = info_fixture \ (X_fixture' * (ch_fixture \ y_fixture))
+    resid_fixture = y_fixture .- X_fixture * beta_fixture
+    ml_fixture = 0.5 * (
+        fixture.n_obs * log(2π) +
+        logdet(ch_fixture) +
+        dot(resid_fixture, ch_fixture \ resid_fixture)
+    )
+    reml_fixture = ml_fixture +
+        sum(log, LinearAlgebra.diag(cholesky(Symmetric(info_fixture)).U))
+    @test beta_fixture ≈ collect(fixture.reference.beta_hat) rtol = 1e-8 atol = 1e-8
+    @test info_fixture ≈ fixture.reference.fixed_effect_information rtol = 1e-8 atol = 1e-8
+    @test ml_fixture ≈ fixture.reference.ml_nll rtol = 1e-8 atol = 1e-8
+    @test reml_fixture ≈ fixture.reference.reml_nll rtol = 1e-8 atol = 1e-8
+    @test fixture.reference.boundary_status === :interior
+    bad_fixture = merge(fixture, (target = :q4_phylo,))
+    bad_fixture_validation =
+        DRM._loconly_reml_validate_external_comparator_fixture(bad_fixture)
+    @test !bad_fixture_validation.ok
+    @test any(err -> occursin("wrong target", err),
+              bad_fixture_validation.errors)
 
     Random.seed!(20260623)
     elapsed = Float64[]
