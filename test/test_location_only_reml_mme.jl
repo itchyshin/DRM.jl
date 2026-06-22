@@ -375,6 +375,15 @@ end
         :larger_interior_stress,
     )
     schema = DRM._loconly_reml_simulation_status_schema()
+    expected_schema = (
+        :row_id, :target, :estimator, :design, :claim_status, :coverage_status,
+        :expected_behavior, :n_reps, :n_accepted, :convergence_rate,
+        :boundary_rate, :failure_reason_counts, :bias_sigma, :bias_sigma_phy,
+        :rmse_sigma, :rmse_sigma_phy, :mcse_bias_sigma, :mcse_bias_sigma_phy,
+        :mcse_status, :runtime_seconds, :runtime_budget_seconds, :seed,
+        :seed_registry, :next_gate, :evidence,
+    )
+    @test schema == expected_schema
     @test :expected_behavior in schema
     @test :failure_reason_counts in schema
     @test :runtime_budget_seconds in schema
@@ -422,6 +431,12 @@ end
     @test validation.coverage_status === :not_evaluated
     @test !validation.ai_reml_ready
 
+    bad_row = merge(first(sim_status.rows), (coverage_status = :covered,))
+    bad_status = merge(sim_status, (rows = (bad_row,), n_rows = 1))
+    bad_validation = DRM._loconly_reml_validate_simulation_status(bad_status)
+    @test !bad_validation.ok
+    @test any(err -> occursin("evaluated coverage", err), bad_validation.errors)
+
     mktempdir() do dir
         path = joinpath(dir, "loconly-status.tsv")
         write_result = DRM._loconly_reml_write_simulation_status_tsv(path; status = sim_status)
@@ -433,6 +448,12 @@ end
         @test String.(split(lines[1], '\t')) == collect(string.(schema))
         @test length(lines) == sim_status.n_rows + 1
         @test first(split(lines[2], '\t')) == "stable_recovery"
+
+        bad_path = joinpath(dir, "bad-status.tsv")
+        @test_throws ErrorException DRM._loconly_reml_write_simulation_status_tsv(
+            bad_path; status = bad_status,
+        )
+        @test !isfile(bad_path)
     end
 
     medium_status = DRM._loconly_reml_simulation_status(
@@ -448,6 +469,31 @@ end
     @test medium_row.n_reps == 1
     @test medium_row.runtime_budget_seconds == 15.0
     @test DRM._loconly_reml_validate_simulation_status(medium_status).ok
+
+    large_status = DRM._loconly_reml_simulation_status(; include_large_stress = true)
+    @test large_status.n_rows == 5
+    large_row = only(filter(r -> r.row_id === :large_interior_stress_skipped,
+                            large_status.rows))
+    @test large_row.expected_behavior === :skipped_runtime_guard
+    @test large_row.n_reps == 0
+    @test large_row.n_accepted == 0
+    @test large_row.runtime_seconds == 0.0
+    @test large_row.runtime_budget_seconds == 0.0
+    @test large_row.next_gate === :runtime_budget_review
+    @test DRM._loconly_reml_validate_simulation_status(large_status).ok
+
+    provenance = DRM._loconly_reml_simulation_status_provenance(sim_status)
+    @test provenance.target === sim_status.target
+    @test provenance.estimator === sim_status.estimator
+    @test provenance.n_rows == sim_status.n_rows
+    @test !provenance.ai_reml_ready
+    @test provenance.coverage_status === :not_evaluated
+    @test Tuple(r.row_id for r in provenance.rows) ==
+        Tuple(r.row_id for r in sim_status.rows)
+    @test all(r -> !isempty(r.helper), provenance.rows)
+    @test all(r -> r.test == sim_status.evidence, provenance.rows)
+    @test all(r -> occursin("ai_reml_ready=false", r.claim_boundary),
+              provenance.rows)
 
     broader = DRM._loconly_reml_broader_recovery_grid_diagnostic(
         ; reps = 1,

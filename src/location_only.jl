@@ -1465,18 +1465,63 @@ end
 function _loconly_reml_expected_behavior(row_id::Symbol)
     row_id === :weak_signal_boundary_probe && return :boundary_states_allowed
     row_id === :condition_grid && return :row_separated_stable_recovery
-    row_id in (:larger_interior_stress, :medium_interior_stress) && return :stress_smoke
+    row_id in (:larger_interior_stress, :medium_interior_stress,
+        :large_interior_stress) && return :stress_smoke
+    row_id === :large_interior_stress_skipped && return :skipped_runtime_guard
     return :stable_interior_recovery
 end
 
 function _loconly_reml_runtime_budget_seconds(row_id::Symbol)
+    row_id === :large_interior_stress && return 30.0
     row_id === :medium_interior_stress && return 15.0
     row_id === :larger_interior_stress && return 10.0
     return 5.0
 end
 
+_loconly_reml_large_stress_min_budget_seconds() = 20.0
+
+function _loconly_reml_skipped_runtime_stress_row(row_id::Symbol,
+                                                 runtime_budget_seconds::Real,
+                                                 seed::Integer,
+                                                 evidence::AbstractString)
+    return (
+        row_id = row_id,
+        target = :gaussian_loconly_phylo_reml,
+        estimator = :guarded_ai_update_reml_optimizer_experiment,
+        design = :large_interior_stress_grid,
+        claim_status = :simulation_diagnostic,
+        coverage_status = :not_evaluated,
+        n_reps = 0,
+        n_accepted = 0,
+        convergence_rate = NaN,
+        boundary_rate = NaN,
+        failure_reason_counts = (
+            near_zero_variance = 0,
+            nonfinite_objective = 0,
+            singular_fixed_effect_information = 0,
+        ),
+        bias_sigma = NaN,
+        bias_sigma_phy = NaN,
+        rmse_sigma = NaN,
+        rmse_sigma_phy = NaN,
+        mcse_bias_sigma = NaN,
+        mcse_bias_sigma_phy = NaN,
+        mcse_status = :diagnostic_only,
+        runtime_seconds = 0.0,
+        runtime_budget_seconds = Float64(runtime_budget_seconds),
+        seed = seed,
+        seed_registry = (primary = seed, deterministic = true),
+        evidence = evidence,
+        next_gate = :runtime_budget_review,
+        expected_behavior = :skipped_runtime_guard,
+    )
+end
+
 function _loconly_reml_simulation_status(; include_medium_stress::Bool = false,
-                                         medium_stress_reps::Integer = 1)
+                                         medium_stress_reps::Integer = 1,
+                                         include_large_stress::Bool = false,
+                                         large_stress_reps::Integer = 1,
+                                         large_stress_budget_seconds::Real = 0.0)
     evidence = "test/test_location_only_reml_mme.jl"
     function boundary_rate(counts, n_reps)
         boundary_reps = counts.near_zero_variance + counts.nonfinite_objective +
@@ -1484,7 +1529,9 @@ function _loconly_reml_simulation_status(; include_medium_stress::Bool = false,
         return n_reps == 0 ? NaN : boundary_reps / n_reps
     end
     function recovery_row(row_id::Symbol, design::Symbol, diag, runtime_seconds::Real,
-                          next_gate::Symbol)
+                          next_gate::Symbol;
+                          runtime_budget_seconds::Real =
+                              _loconly_reml_runtime_budget_seconds(row_id))
         return (
             row_id = row_id,
             target = diag.target,
@@ -1505,7 +1552,7 @@ function _loconly_reml_simulation_status(; include_medium_stress::Bool = false,
             mcse_bias_sigma_phy = diag.mcse_bias_sigma_phy,
             mcse_status = :diagnostic_only,
             runtime_seconds = Float64(runtime_seconds),
-            runtime_budget_seconds = _loconly_reml_runtime_budget_seconds(row_id),
+            runtime_budget_seconds = Float64(runtime_budget_seconds),
             seed = diag.conditions.seed,
             seed_registry = (primary = diag.conditions.seed, deterministic = true),
             evidence = evidence,
@@ -1621,6 +1668,28 @@ function _loconly_reml_simulation_status(; include_medium_stress::Bool = false,
         push!(rows, recovery_row(:medium_interior_stress, :medium_interior_stress_grid,
                                  medium, medium_time, :optional_runtime_stress))
     end
+    if include_large_stress
+        if large_stress_budget_seconds < _loconly_reml_large_stress_min_budget_seconds()
+            push!(rows, _loconly_reml_skipped_runtime_stress_row(
+                :large_interior_stress_skipped,
+                large_stress_budget_seconds,
+                20260826,
+                evidence,
+            ))
+        else
+            large = nothing
+            large_time = @elapsed large = _loconly_reml_recovery_grid_diagnostic(
+                ; reps = large_stress_reps, G = 32, n_per_species = 3,
+                sigma = 0.45, sigma_phy = 0.7, seed = 20260826,
+                iterations = 25,
+            )
+            push!(rows, recovery_row(:large_interior_stress,
+                                     :large_interior_stress_grid,
+                                     large, large_time, :optional_runtime_stress;
+                                     runtime_budget_seconds =
+                                         large_stress_budget_seconds))
+        end
+    end
     return (
         target = :gaussian_loconly_phylo_reml,
         estimator = :guarded_ai_update_reml_optimizer_experiment,
@@ -1644,6 +1713,10 @@ function _loconly_reml_validate_simulation_status(status)
             expected_order[1:min(length(row_ids), length(expected_order))]
         push!(errors, "default row order changed")
     end
+    status.coverage_status === :not_evaluated ||
+        push!(errors, "status has evaluated coverage")
+    status.ai_reml_ready === false ||
+        push!(errors, "status is marked AI-REML ready")
     for row in status.rows
         names = propertynames(row)
         for field in required
@@ -1659,7 +1732,7 @@ function _loconly_reml_validate_simulation_status(status)
             push!(errors, "row $(row.row_id) has evaluated coverage")
         row.expected_behavior in (:stable_interior_recovery,
             :row_separated_stable_recovery, :boundary_states_allowed,
-            :stress_smoke) ||
+            :stress_smoke, :skipped_runtime_guard) ||
             push!(errors, "row $(row.row_id) has unexpected behavior label")
         row.n_reps >= 0 || push!(errors, "row $(row.row_id) has negative n_reps")
         0 <= row.n_accepted <= row.n_reps ||
@@ -1670,8 +1743,13 @@ function _loconly_reml_validate_simulation_status(status)
             push!(errors, "row $(row.row_id) has non-diagnostic MCSE status")
         row.runtime_seconds >= 0 ||
             push!(errors, "row $(row.row_id) has negative runtime")
-        row.runtime_budget_seconds > 0 ||
-            push!(errors, "row $(row.row_id) has no runtime budget")
+        if row.expected_behavior === :skipped_runtime_guard
+            row.runtime_budget_seconds >= 0 ||
+                push!(errors, "row $(row.row_id) has negative runtime budget")
+        else
+            row.runtime_budget_seconds > 0 ||
+                push!(errors, "row $(row.row_id) has no runtime budget")
+        end
         isempty(string(row.seed)) &&
             push!(errors, "row $(row.row_id) has empty seed")
         isempty(row.evidence) &&
@@ -1692,17 +1770,60 @@ function _loconly_reml_tsv_value(x)
     return replace(string(x), "\t" => " ", "\n" => " ")
 end
 
+function _loconly_reml_simulation_status_provenance(status =
+        _loconly_reml_simulation_status())
+    function helper(row_id)
+        row_id === :stable_recovery &&
+            return "_loconly_reml_recovery_grid_diagnostic"
+        row_id === :condition_grid &&
+            return "_loconly_reml_recovery_condition_grid_diagnostic"
+        row_id === :weak_signal_boundary_probe &&
+            return "_loconly_reml_weak_signal_recovery_probe"
+        row_id === :larger_interior_stress &&
+            return "_loconly_reml_recovery_grid_diagnostic"
+        row_id === :medium_interior_stress &&
+            return "_loconly_reml_recovery_grid_diagnostic"
+        row_id in (:large_interior_stress, :large_interior_stress_skipped) &&
+            return "_loconly_reml_recovery_grid_diagnostic"
+        return "_loconly_reml_simulation_status"
+    end
+    rows = Tuple((
+        row_id = row.row_id,
+        helper = helper(row.row_id),
+        test = status.evidence,
+        artifact = "docs/dev-log/validation-status/2026-06-21-loconly-reml-simulation-status.tsv",
+        claim_boundary = "exact-Gaussian diagnostic only; coverage not evaluated; ai_reml_ready=false",
+    ) for row in status.rows)
+    return (
+        target = status.target,
+        estimator = status.estimator,
+        rows = rows,
+        n_rows = length(rows),
+        coverage_status = status.coverage_status,
+        ai_reml_ready = status.ai_reml_ready,
+    )
+end
+
 function _loconly_reml_write_simulation_status_tsv(path;
                                                    status = nothing,
                                                    include_medium_stress::Bool = false,
-                                                   medium_stress_reps::Integer = 1)
+                                                   medium_stress_reps::Integer = 1,
+                                                   include_large_stress::Bool = false,
+                                                   large_stress_reps::Integer = 1,
+                                                   large_stress_budget_seconds::Real = 0.0)
     if status === nothing
         status = _loconly_reml_simulation_status(
             ; include_medium_stress = include_medium_stress,
             medium_stress_reps = medium_stress_reps,
+            include_large_stress = include_large_stress,
+            large_stress_reps = large_stress_reps,
+            large_stress_budget_seconds = large_stress_budget_seconds,
         )
     end
     validation = _loconly_reml_validate_simulation_status(status)
+    if !validation.ok
+        error("simulation-status validation failed: $(join(validation.errors, "; "))")
+    end
     schema = _loconly_reml_simulation_status_schema()
     dir = dirname(String(path))
     !isempty(dir) && mkpath(dir)

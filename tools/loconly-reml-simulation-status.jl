@@ -10,6 +10,11 @@ function _arg_value(args, flag, default)
 end
 
 include_medium = "--with-medium-stress" in ARGS
+include_large = "--with-large-stress" in ARGS
+large_budget = parse(
+    Float64,
+    _arg_value(ARGS, "--large-stress-budget-seconds", "0.0"),
+)
 out = _arg_value(
     ARGS,
     "--output",
@@ -20,6 +25,8 @@ out = _arg_value(
 result = DRM._loconly_reml_write_simulation_status_tsv(
     out;
     include_medium_stress = include_medium,
+    include_large_stress = include_large,
+    large_stress_budget_seconds = large_budget,
 )
 
 if !result.validation.ok
