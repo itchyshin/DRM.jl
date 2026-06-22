@@ -536,6 +536,7 @@ end
     @test status.source_status === :partial
     @test status.tests_status === :partial
     @test status.comparator_status === :dense_same_estimand_oracle
+    @test status.external_comparator_status === :planned
     @test status.optimizer_status === :experiment_only
     @test status.r_bridge_status === :planned
     @test status.claim_status === :internal_diagnostic
@@ -551,6 +552,35 @@ end
     @test schema.claim_status == "internal_diagnostic"
     @test schema.r_bridge_status == "planned"
     @test "near_zero_variance" in schema.boundary_status_levels
+
+    comparator_status = DRM._loconly_reml_external_comparator_status()
+    comparator_schema = DRM._loconly_reml_external_comparator_schema()
+    @test comparator_schema == (
+        :comparator_id, :target, :comparator, :same_estimand_status,
+        :dependency_status, :artifact_status, :decision, :reason, :next_gate,
+    )
+    @test comparator_status.target === :gaussian_loconly_phylo_reml
+    @test comparator_status.external_comparator_status === :planned
+    @test comparator_status.dependency_status === :not_added
+    @test comparator_status.claim_status === :internal_diagnostic
+    @test comparator_status.coverage_status === :not_evaluated
+    @test !comparator_status.ai_reml_ready
+    @test comparator_status.validation.ok
+    @test comparator_status.validation.required_fields == comparator_schema
+    @test comparator_status.validation.n_rows == length(comparator_status.rows)
+    @test all(r -> r.target === :gaussian_loconly_phylo_reml,
+              comparator_status.rows)
+    @test any(r -> r.comparator_id === :internal_dense_gls_oracle &&
+                   r.same_estimand_status === :same_estimand_internal,
+              comparator_status.rows)
+    @test any(r -> r.dependency_status === :not_added,
+              comparator_status.rows)
+    bad_comparator = merge(first(comparator_status.rows), (target = :q4_phylo,))
+    bad_comparator_validation =
+        DRM._loconly_reml_validate_external_comparator_rows((bad_comparator,))
+    @test !bad_comparator_validation.ok
+    @test any(err -> occursin("wrong target", err),
+              bad_comparator_validation.errors)
 
     Random.seed!(20260623)
     elapsed = Float64[]

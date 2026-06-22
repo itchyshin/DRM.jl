@@ -35,6 +35,20 @@ same-estimand route with a small fixture. The first comparator PR should remain
 developer-only and should not change the public bridge, q4, non-Gaussian,
 coverage, or AI-REML readiness claims.
 
+## Candidate Decision Table
+
+| Candidate | Same-estimand status | Dependency decision | Artifact status | Next gate |
+| --- | --- | --- | --- | --- |
+| DRM.jl dense GLS oracle | same-estimand internal | retain as current gate | covered by focused test | keep as dense oracle |
+| phylolm-style Gaussian phylogenetic REML | needs fixture confirmation | do not add yet | planned | design a versioned same-estimand fixture |
+| generic LMM package | not yet same-estimand | do not add without supplied covariance/precision target match | not applicable | reject or specialize |
+
+The row-shaped status helper `_loconly_reml_external_comparator_status()`
+mirrors this table for tests and future artifacts. Its status is deliberately
+`external_comparator_status = :planned` and `dependency_status = :not_added`.
+No optional developer script was added because no external candidate has yet
+cleared the same-estimand fixture gate.
+
 ## Next Gate
 
 Open a bounded issue or draft PR when a concrete comparator is chosen. The

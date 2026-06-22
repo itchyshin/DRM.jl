@@ -1852,11 +1852,100 @@ function _loconly_reml_validation_status()
         source_status = :partial,
         tests_status = :partial,
         comparator_status = :dense_same_estimand_oracle,
+        external_comparator_status = :planned,
         optimizer_status = :experiment_only,
         r_bridge_status = :planned,
         claim_status = :internal_diagnostic,
         q4_status = :excluded,
         evidence = "test/test_location_only_reml_mme.jl",
+    )
+end
+
+const _LOCONLY_REML_EXTERNAL_COMPARATOR_FIELDS = (
+    :comparator_id, :target, :comparator, :same_estimand_status,
+    :dependency_status, :artifact_status, :decision, :reason, :next_gate,
+)
+
+function _loconly_reml_external_comparator_schema()
+    return _LOCONLY_REML_EXTERNAL_COMPARATOR_FIELDS
+end
+
+function _loconly_reml_external_comparator_candidates()
+    return (
+        (
+            comparator_id = :internal_dense_gls_oracle,
+            target = :gaussian_loconly_phylo_reml,
+            comparator = "DRM.jl dense GLS oracle",
+            same_estimand_status = :same_estimand_internal,
+            dependency_status = :internal,
+            artifact_status = :covered_by_focused_test,
+            decision = :retain_as_gate,
+            reason = "Matches the exact Gaussian restricted objective and requires no new dependency.",
+            next_gate = :external_package_selection,
+        ),
+        (
+            comparator_id = :phylolm_or_equivalent_reml,
+            target = :gaussian_loconly_phylo_reml,
+            comparator = "phylolm-style Gaussian phylogenetic REML",
+            same_estimand_status = :needs_fixture_confirmation,
+            dependency_status = :not_added,
+            artifact_status = :planned,
+            decision = :scout_before_dependency,
+            reason = "Candidate must expose the same restricted objective, covariance target, boundary behavior, and versioned fixture.",
+            next_gate = :same_estimand_fixture_design,
+        ),
+        (
+            comparator_id = :mixedmodels_or_generic_lmm,
+            target = :gaussian_loconly_phylo_reml,
+            comparator = "generic LMM package",
+            same_estimand_status = :not_yet_same_estimand,
+            dependency_status = :not_added,
+            artifact_status = :not_applicable,
+            decision = :do_not_use_without_covariance_target_match,
+            reason = "A generic random-intercept LMM is not enough unless the supplied phylogenetic covariance or precision matches the target.",
+            next_gate = :reject_or_specialize,
+        ),
+    )
+end
+
+function _loconly_reml_validate_external_comparator_rows(rows)
+    schema = _loconly_reml_external_comparator_schema()
+    errors = String[]
+    for row in rows
+        names = propertynames(row)
+        for field in schema
+            field in names || push!(errors, "comparator $(row.comparator_id) missing field $(field)")
+        end
+        row.target === :gaussian_loconly_phylo_reml ||
+            push!(errors, "comparator $(row.comparator_id) has wrong target")
+        row.dependency_status in (:internal, :not_added, :optional_developer_only) ||
+            push!(errors, "comparator $(row.comparator_id) has invalid dependency_status")
+        row.artifact_status in (:covered_by_focused_test, :planned, :not_applicable,
+            :optional_developer_only) ||
+            push!(errors, "comparator $(row.comparator_id) has invalid artifact_status")
+    end
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        required_fields = schema,
+        n_rows = length(rows),
+    )
+end
+
+function _loconly_reml_external_comparator_status()
+    rows = _loconly_reml_external_comparator_candidates()
+    validation = _loconly_reml_validate_external_comparator_rows(rows)
+    return (
+        target = :gaussian_loconly_phylo_reml,
+        external_comparator_status = :planned,
+        dependency_status = :not_added,
+        artifact_schema = _loconly_reml_external_comparator_schema(),
+        rows = rows,
+        validation = validation,
+        claim_status = :internal_diagnostic,
+        coverage_status = :not_evaluated,
+        ai_reml_ready = false,
+        reason_not_added = "No external dependency is added until a same-estimand fixture and package/version are chosen.",
     )
 end
 
