@@ -190,6 +190,8 @@ function _loconly_profile_beta(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
     end
 end
 
+_loconly_reml_constant_offset(prob::LocOnlyProblem) = 0.5 * prob.k * log(2π)
+
 function _loconly_reml_components(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
     β, ml_nll, chM = _loconly_profile_beta(prob, lσ, lσ_phy)
     if β === nothing || !isfinite(ml_nll)
@@ -205,7 +207,7 @@ function _loconly_reml_components(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real
                 beta = β, info = info, converged = false)
     end
     penalty = sum(log, diag(ch.U))            # 0.5 * logdet(X'V^{-1}X)
-    nll = ml_nll + penalty
+    nll = ml_nll + penalty - _loconly_reml_constant_offset(prob)
     ok = isfinite(nll) && nll < _LOCONLY_PENALTY
     return (nll = ok ? nll : _LOCONLY_PENALTY, ml_nll = ml_nll, penalty = penalty,
             beta = β, info = info, converged = ok)
@@ -244,7 +246,7 @@ function _loconly_dense_reml_components(prob::LocOnlyProblem, lσ::Real, lσ_phy
         r = prob.y .- prob.X * β
         ml_nll = 0.5 * (prob.n * log(2π) + logdet(chV) + dot(r, chV \ r))
         penalty = sum(log, diag(chX.U))
-        nll = ml_nll + penalty
+        nll = ml_nll + penalty - _loconly_reml_constant_offset(prob)
         ok = isfinite(nll) && nll < _LOCONLY_PENALTY
         return (nll = ok ? nll : _LOCONLY_PENALTY, ml_nll = ml_nll,
                 penalty = penalty, beta = β, info = info, converged = ok,

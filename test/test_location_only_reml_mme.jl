@@ -38,10 +38,14 @@ using Test, Random, LinearAlgebra, Statistics
     beta_dense = info_dense \ (X' * Vinvy)
     r = y .- X * beta_dense
     ml_nll_dense = 0.5 * (n * log(2π) + logdet(chV) + dot(r, chV \ r))
-    reml_nll_dense = ml_nll_dense + sum(log, LinearAlgebra.diag(cholesky(Symmetric(info_dense)).U))
+    restricted_penalty_dense =
+        sum(log, LinearAlgebra.diag(cholesky(Symmetric(info_dense)).U))
+    reml_constant_offset = 0.5 * size(X, 2) * log(2π)
+    reml_nll_dense = ml_nll_dense + restricted_penalty_dense - reml_constant_offset
 
     @test comp.beta ≈ beta_dense rtol = 1e-8 atol = 1e-8
     @test comp.ml_nll ≈ ml_nll_dense rtol = 1e-8 atol = 1e-8
+    @test comp.penalty ≈ restricted_penalty_dense rtol = 1e-8 atol = 1e-8
     @test comp.info ≈ info_dense rtol = 1e-8 atol = 1e-8
     @test comp.nll ≈ reml_nll_dense rtol = 1e-8 atol = 1e-8
     @test DRM._loconly_reml_nll(prob, lσ, lσ_phy) ≈ reml_nll_dense rtol = 1e-8 atol = 1e-8
@@ -1007,12 +1011,16 @@ end
         logdet(ch_fixture) +
         dot(resid_fixture, ch_fixture \ resid_fixture)
     )
-    reml_fixture = ml_fixture +
+    restricted_penalty_fixture =
         sum(log, LinearAlgebra.diag(cholesky(Symmetric(info_fixture)).U))
+    reml_constant_offset_fixture = 0.5 * size(X_fixture, 2) * log(2π)
+    reml_fixture = ml_fixture +
+        restricted_penalty_fixture - reml_constant_offset_fixture
     @test beta_fixture ≈ collect(fixture.reference.beta_hat) rtol = 1e-8 atol = 1e-8
     @test info_fixture ≈ fixture.reference.fixed_effect_information rtol = 1e-8 atol = 1e-8
     @test ml_fixture ≈ fixture.reference.ml_nll rtol = 1e-8 atol = 1e-8
     @test reml_fixture ≈ fixture.reference.reml_nll rtol = 1e-8 atol = 1e-8
+    @test restricted_penalty_fixture ≈ fixture.reference.restricted_penalty rtol = 1e-8 atol = 1e-8
     @test fixture.reference.boundary_status === :interior
     bad_fixture = merge(fixture, (target = :q4_phylo,))
     bad_fixture_validation =
