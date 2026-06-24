@@ -114,21 +114,32 @@ fit = drm(
 ```
 """
 function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
+             K = nothing, A = nothing, coords = nothing,
              g_tol::Real = 1e-8, q4_g_tol::Real = 1e-3,
              q4_iterations::Int = 300, q4_n_newton::Int = 40,
              q4_vcov::Bool = true, method::Symbol = :ML)
     method in (:ML, :REML) ||
         throw(ArgumentError("drm: `method` must be :ML (default) or :REML (got :$method)"))
     rhs = Dict(f.forms)
-    fixed, q4_marker = _bivariate_q4_marker(rhs)
-    if q4_marker !== nothing
+    fixed, structured_marker = _bivariate_q4_marker(rhs)
+    if structured_marker !== nothing && structured_marker[1] === :phylo_q4
         return _fit_bivariate_q4_phylo(
-            f, fam, data, fixed, q4_marker, tree;
+            f, fam, data, fixed, structured_marker, tree;
             q4_g_tol = q4_g_tol,
             q4_iterations = q4_iterations,
             q4_n_newton = q4_n_newton,
             q4_vcov = q4_vcov,
             method = method,
+        )
+    elseif structured_marker !== nothing && structured_marker[1] === :structured_q2
+        method === :REML &&
+            throw(ArgumentError("drm: method = :REML is not implemented for the bivariate " *
+                "q=2 structured residual-correlation route; use method = :ML."))
+        coords === nothing ||
+            throw(ArgumentError("drm: bivariate q=2 spatial(coords) is not implemented; use a known covariance relmat route or method = :ML native TMB."))
+        return _fit_bivariate_q2_structured(
+            f, fam, data, fixed, structured_marker, tree, K, A;
+            g_tol = Float64(g_tol),
         )
     end
     # The residual-only bivariate route has no random effects / structured terms;
@@ -239,8 +250,24 @@ function _bivariate_q4_marker(rhs)
     fixed[:rho12] = fixed_rho
 
     isempty(markers) && return fixed, nothing
+    marker_keys = Set(keys(markers))
+    if marker_keys == Set((:mu1, :mu2))
+        marker_vals = [markers[p] for p in (:mu1, :mu2)]
+        kind = marker_vals[1][1]
+        kind in (:phylo, :relmat, :animal) ||
+            error("the bivariate q=2 front end currently supports only `phylo(...)`, `relmat(...)`, or `animal(...)` markers")
+        all(m -> m[1] === kind, marker_vals) ||
+            error("the q=2 structured markers on mu1 and mu2 must use the same structured type")
+        groups = [m[2] for m in marker_vals]
+        all(==(groups[1]), groups) ||
+            error("the q=2 structured markers on mu1 and mu2 must use the same grouping variable")
+        tags = [m[3] for m in marker_vals]
+        (all(isnothing, tags) || (tags[1] == tags[2])) ||
+            error("the q=2 structured markers on mu1 and mu2 must share the same correlation tag")
+        return fixed, (:structured_q2, kind, groups[1])
+    end
     length(markers) == length(params) ||
-        error("the verified q=4 engine requires the same `phylo(1 | group)` marker on mu1, mu2, sigma1, and sigma2")
+        error("bivariate phylogenetic Julia fits require either q=2 phylo on mu1 and mu2 only, or q=4 phylo on mu1, mu2, sigma1, and sigma2")
     marker_vals = [markers[p] for p in params]   # one (kind, group, tag) per axis
     all(m -> m[1] === :phylo, marker_vals) ||
         error("the bivariate q=4 front end currently supports only `phylo(...)` markers")
@@ -249,7 +276,7 @@ function _bivariate_q4_marker(rhs)
         error("the q=4 phylogenetic markers on mu1, mu2, sigma1, and sigma2 must use the same grouping variable")
     tags = [m[3] for m in marker_vals]           # axis order: mu1, mu2, sigma1, sigma2
     lc_zero = _q4_block_lc_zero(tags)
-    return fixed, (:phylo, groups[1], lc_zero)
+    return fixed, (:phylo_q4, groups[1], lc_zero)
 end
 
 # Translate the per-axis correlation tags into the set of log-Cholesky indices to
@@ -341,10 +368,144 @@ function _structured_marker_kind(t)
     error("unsupported structured marker")
 end
 
+function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, data,
+                                      fixed, marker, tree, K, A;
+                                      g_tol::Float64)
+    marker[1] === :structured_q2 || error("internal error: expected q2 structured marker")
+    kind = marker[2]
+    grp = marker[3]
+    y1, X1, nm1 = _design(f.response1, fixed[:mu1], data)
+    y2, X2, nm2 = _design(f.response2, fixed[:mu2], data)
+    _, Xs1, nms1 = _design(f.response1, fixed[:sigma1], data)
+    _, Xs2, nms2 = _design(f.response1, fixed[:sigma2], data)
+    _, Xr, nmr = _design(f.response1, fixed[:rho12], data)
+    all(isfinite, y1) && all(isfinite, y2) ||
+        throw(ArgumentError("drm: bivariate q=2 phylogenetic Julia route currently requires complete responses"))
+    size(Xs1, 2) == 1 && size(Xs2, 2) == 1 && size(Xr, 2) == 1 ||
+        throw(ArgumentError("drm: bivariate q=2 phylogenetic Julia route currently supports intercept-only sigma1, sigma2, and rho12 formulas"))
+
+    Y = hcat(Vector{Float64}(y1), Vector{Float64}(y2))
+    size(X2, 2) == size(X1, 2) && X2 ≈ X1 ||
+        throw(ArgumentError("drm: bivariate q=2 structured Julia route currently requires mu1 and mu2 to use the same fixed-effect design"))
+
+    group_values = getproperty(data, grp)
+    gidx, G = _group_index(group_values)
+    phy = nothing
+    species = Int[]
+    prob, Q_cond = if kind === :phylo
+        tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
+        phy_obj = _as_augmented_phy(tree)
+        sp = _phylo_species_index(phy_obj, group_values)
+        phy = phy_obj
+        species = sp
+        make_coevo_problem(phy_obj, Y, Matrix{Float64}(X1); species = sp)
+    elseif kind === :relmat
+        K === nothing && error("relmat(1 | $grp) needs `K = …`")
+        C = Matrix{Float64}(K)
+        size(C) == (G, G) || error("relmat structured matrix must be $(G)×$(G) (the number of `$grp` levels)")
+        make_coevo_problem_from_covariance(C, Y, Matrix{Float64}(X1); group = gidx)
+    elseif kind === :animal
+        A === nothing && error("animal(1 | $grp) needs `A = …`")
+        C = Matrix{Float64}(A)
+        size(C) == (G, G) || error("animal relatedness matrix must be $(G)×$(G) (the number of `$grp` levels)")
+        make_coevo_problem_from_covariance(C, Y, Matrix{Float64}(X1); group = gidx)
+    else
+        error("internal error: unsupported q2 structured marker `$kind`")
+    end
+
+    β0 = hcat(X1 \ y1, X2 \ y2)
+    r1 = y1 .- X1 * β0[:, 1]
+    r2 = y2 .- X2 * β0[:, 2]
+    ρ0 = if std(r1) > 0 && std(r2) > 0
+        clamp(cor(r1, r2), -0.5, 0.5)
+    else
+        0.0
+    end
+    fit_q2 = fit_coevolution_q2_residual(
+        prob,
+        Q_cond;
+        β0 = β0,
+        Λ0 = Matrix(Symmetric([0.25 0.02; 0.02 0.25])),
+        σ0 = [std(r1) + eps(), std(r2) + eps()],
+        rho0 = ρ0,
+        g_tol = g_tol,
+        iterations = 300,
+    )
+
+    k = size(X1, 2)
+    blocks = [
+        :mu1 => 1:k,
+        :mu2 => (k + 1):(2k),
+        :sigma1 => (2k + 1):(2k + 1),
+        :sigma2 => (2k + 2):(2k + 2),
+        :rho12 => (2k + 3):(2k + 3),
+        :phylocov => (2k + 4):(2k + 6),
+    ]
+    names = [
+        :mu1 => nm1,
+        :mu2 => nm2,
+        :sigma1 => nms1,
+        :sigma2 => nms2,
+        :rho12 => nmr,
+        :phylocov => _q2_phylocov_names(),
+    ]
+    θ̂ = vcat(
+        fit_q2.β[:, 1],
+        fit_q2.β[:, 2],
+        log(fit_q2.σ_res[1]),
+        log(fit_q2.σ_res[2]),
+        atanh(fit_q2.rho12 / RHO_GUARD),
+        cov_to_lc(fit_q2.Λ),
+    )
+    V = fill(NaN, length(θ̂), length(θ̂))
+    means = Dict(:mu1 => X1 * fit_q2.β[:, 1], :mu2 => X2 * fit_q2.β[:, 2])
+    obs = Dict(:mu1 => Vector{Float64}(y1), :mu2 => Vector{Float64}(y2))
+    scales = Dict(
+        :sigma1 => fill(fit_q2.σ_res[1], length(y1)),
+        :sigma2 => fill(fit_q2.σ_res[2], length(y1)),
+        :rho12 => fill(fit_q2.rho12, length(y1)),
+    )
+
+    all_blups = reshape(Vector{Float64}(fit_q2.u_hat), 2, prob.N)
+    blups = if kind === :phylo
+        keep = setdiff(1:phy.n_total, [phy.root_index])
+        node_pos = Dict(node => i for (i, node) in enumerate(keep))
+        leaf_pos = [node_pos[phy.leaf_indices[k]] for k in 1:phy.n_leaves]
+        all_blups[:, leaf_pos]
+    else
+        all_blups
+    end
+    re = (;
+        effects = Dict(Symbol(grp) => blups),
+        Sigma_a = Matrix{Float64}(fit_q2.Λ),
+        axes = (:mu1, :mu2),
+        structured_type = kind,
+        Q_cond = Q_cond,
+        phy = phy,
+        group = grp,
+        group_index = gidx,
+        species = species,
+        prob = prob,
+    )
+    nll = function (θ)
+        β = hcat(θ[blocks[1].second], θ[blocks[2].second])
+        Λ = lc_to_cov(θ[blocks[6].second], 2)
+        σ1 = exp(θ[blocks[3].second][1])
+        σ2 = exp(θ[blocks[4].second][1])
+        ρ = RHO_GUARD * tanh(θ[blocks[5].second][1])
+        D = Matrix(Symmetric([σ1^2 ρ * σ1 * σ2; ρ * σ1 * σ2 σ2^2]))
+        ℓ, = coevo_marginal_cov(prob, Q_cond, β, Λ, D)
+        return -ℓ
+    end
+    fit = DrmFit(fam, blocks, names, θ̂, V, fit_q2.loglik, length(y1),
+                 fit_q2.converged, means, obs, scales)
+    return _withranef(_withformula(_withnll(fit, nll), f), re)
+end
+
 function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fixed, marker, tree;
                                  q4_g_tol::Real, q4_iterations::Int,
                                  q4_n_newton::Int, q4_vcov::Bool, method::Symbol = :ML)
-    marker[1] === :phylo || error("internal error: expected phylo marker")
+    marker[1] === :phylo_q4 || error("internal error: expected q4 phylo marker")
     grp = marker[2]
     lc_zero = length(marker) >= 3 ? marker[3] : Int[]   # block-diagonal Σ_a pins
     tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
@@ -520,9 +681,11 @@ function _initial_scale_beta(X, residual)
 end
 
 function _q4_phylocov_names()
-    ["Sigma_a:L11", "Sigma_a:L21", "Sigma_a:L22", "Sigma_a:L31", "Sigma_a:L32",
-     "Sigma_a:L33", "Sigma_a:L41", "Sigma_a:L42", "Sigma_a:L43", "Sigma_a:L44"]
+    ["Sigma_a:L11", "Sigma_a:L21", "Sigma_a:L31", "Sigma_a:L41", "Sigma_a:L22",
+     "Sigma_a:L32", "Sigma_a:L42", "Sigma_a:L33", "Sigma_a:L43", "Sigma_a:L44"]
 end
+
+_q2_phylocov_names() = ["Sigma_a:L11", "Sigma_a:L21", "Sigma_a:L22"]
 
 function _q4_fd_vcov(prob::AugProblem, Q_cond::SparseMatrixCSC, θ::Vector{Float64};
                      h::Real = 1e-4, n_newton::Int = 40)

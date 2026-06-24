@@ -117,6 +117,50 @@ using Test, Random, LinearAlgebra
     @test pbridged["fitted"] ≈ fitted(pnative)
     @test pbridged["sigma"] ≈ sigma(pnative)
 
+    Gls = 10
+    mls = 3
+    phyls = random_balanced_tree(Gls; branch_length = 0.25)
+    Cls = sigma_phy_dense(phyls; σ²_phy = 1.0)
+    Kls = Cls ./ (sqrt.(diag(Cls)) * sqrt.(diag(Cls))')
+    species_ls = repeat(1:Gls, inner = mls)
+    xls = randn(Gls * mls)
+    uls = 0.35 .* (cholesky(Symmetric(Kls)).L * randn(Gls))
+    wls = 0.25 .* (cholesky(Symmetric(Kls)).L * randn(Gls))
+    yls = 0.1 .+ 0.5 .* xls .+ uls[species_ls] .+
+          exp.(-0.4 .+ wls[species_ls]) .* randn(Gls * mls)
+    lsdata = (; y = yls, x = xls, species = species_ls)
+    lsformula = Dict(
+        :mu => "y ~ x + phylo(1 | species)",
+        :sigma => "sigma ~ phylo(1 | species)",
+    )
+    lsnative = drm(
+        bf(@formula(y ~ x + phylo(1 | species)),
+           @formula(sigma ~ phylo(1 | species))),
+        Gaussian();
+        data = lsdata,
+        tree = phyls,
+        phylo_coupled = true,
+        g_tol = 1e-5,
+    )
+    lsbridged = drm_bridge(;
+        formula = lsformula,
+        family = "gaussian",
+        data = lsdata,
+        tree = phyls,
+        options = Dict(:phylo_coupled => true, :g_tol => 1e-5),
+    )
+    @test any(startswith("recov_"), lsbridged["coef_names"])
+    @test lsbridged["converged"] == true
+    @test lsbridged["coefficients"] ≈ coef(lsnative)
+    @test lsbridged["loglik"] ≈ loglik(lsnative)
+    @test_throws ErrorException drm_bridge(;
+        formula = lsformula,
+        family = "gaussian",
+        data = lsdata,
+        tree = phyls,
+        options = Dict(:phylo_coupled => true, :method => "REML"),
+    )
+
     pprofile = drm_bridge_inference(;
         formula = Dict(:mu => "y ~ x + phylo(1 | species)", :sigma => "sigma ~ 1"),
         family = "gaussian",

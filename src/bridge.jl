@@ -34,6 +34,41 @@ function drm_bridge(; formula, family::AbstractString, data, tree = nothing,
 end
 
 """
+    drm_bridge_q2_phylo(; Y, X, species, tree, options = Dict())
+
+Private diagnostic boundary for the restricted q2 phylogenetic coevolution
+point export. This intentionally bypasses the public formula bridge because the
+general-q coevolution model is diagonal-residual Gaussian evidence, not the full
+bivariate `rho12` q2 route. The return payload is the same primitive dictionary
+shape consumed by the row-contract tests.
+"""
+function drm_bridge_q2_phylo(; Y, X, species, tree, options = Dict{String,Any}())
+    y = Matrix{Float64}(Y)
+    x = Matrix{Float64}(X)
+    sp = Int.(vec(species))
+    size(y, 2) == 2 ||
+        throw(ArgumentError("drm_bridge_q2_phylo: `Y` must have exactly two columns"))
+    size(x, 1) == size(y, 1) ||
+        throw(ArgumentError("drm_bridge_q2_phylo: `X` and `Y` must have the same number of rows"))
+    length(sp) == size(y, 1) ||
+        throw(ArgumentError("drm_bridge_q2_phylo: `species` length must match the number of rows in `Y`"))
+    phy = _bridge_tree(tree)
+    all(1 .<= sp .<= phy.n_leaves) ||
+        throw(ArgumentError("drm_bridge_q2_phylo: `species` must contain 1-based tip indices"))
+    opts = _bridge_options(options)
+    prob, Q_cond = make_coevo_problem(phy, y, x; species = sp)
+    fit = fit_coevolution(
+        prob,
+        Q_cond;
+        iterations = Int(get(opts, :iterations, 180)),
+        g_tol = Float64(get(opts, :g_tol, 1e-4)),
+        fd_h = Float64(get(opts, :fd_h, 1e-6)),
+    )
+    return _bridge_q2_point_export(fit; family = "biv_gaussian",
+                                   structured_type = "phylo")
+end
+
+"""
     drm_bridge_inference(; formula, family, data, tree = nothing,
                          options = Dict(), method = "profile",
                          level = 0.95, B = 199, seed = nothing,
@@ -142,12 +177,24 @@ function _bridge_fit(bundle, fam, data; tree, K, A, coords, options)
     if haskey(options, :profile_ci)
         kwargs[:profile_ci] = Bool(options[:profile_ci])
     end
+    if haskey(options, :phylo_coupled)
+        kwargs[:phylo_coupled] = Bool(options[:phylo_coupled])
+    end
     if _bridge_is_bivariate_phylo_q4(bundle, fam, tree) && !haskey(options, :q4_vcov)
         # The bridge's q4 uncertainty route is profile/bootstrap over among-axis
         # SDs. Avoid the auxiliary finite-difference Wald covariance by default:
         # it is expensive at large q4 phylogenetic fits and can fail after a
         # usable fit has been found.
         kwargs[:q4_vcov] = false
+    end
+    if haskey(options, :q4_g_tol)
+        kwargs[:q4_g_tol] = Float64(options[:q4_g_tol])
+    end
+    if haskey(options, :q4_iterations)
+        kwargs[:q4_iterations] = Int(options[:q4_iterations])
+    end
+    if haskey(options, :q4_n_newton)
+        kwargs[:q4_n_newton] = Int(options[:q4_n_newton])
     end
     if haskey(options, :q4_vcov)
         kwargs[:q4_vcov] = Bool(options[:q4_vcov])
@@ -361,7 +408,7 @@ end
 function _bridge_flatten(fit; family::AbstractString)
     cnames, cvals = _bridge_coef_vector(fit)
     V = Matrix{Float64}(vcov(fit))
-    return Dict{String,Any}(
+    out = Dict{String,Any}(
         "family" => String(family),
         "coef_names" => cnames,
         "coefficients" => cvals,
@@ -379,6 +426,15 @@ function _bridge_flatten(fit; family::AbstractString)
         "sigma" => _bridge_plain(sigma(fit)),
         "corpairs" => _bridge_plain(corpairs(fit)),
     )
+    q4_point_export = _bridge_q4_point_export(fit; family = family)
+    if !isempty(q4_point_export)
+        out["q4_point_export"] = q4_point_export
+    end
+    q2_point_export = _bridge_q2_point_export(fit; family = family)
+    if !isempty(q2_point_export)
+        out["q2_point_export"] = q2_point_export
+    end
+    return out
 end
 
 function _bridge_coef_vector(fit)
@@ -399,12 +455,338 @@ function _bridge_coef_vector(fit)
     return names, vals
 end
 
+function _bridge_q4_point_export(fit; family::AbstractString)
+    if !(fit.ranef isa NamedTuple) || !haskey(fit.ranef, :Sigma_a)
+        return Dict{String,Any}()
+    end
+    Σ = Matrix{Float64}(fit.ranef.Sigma_a)
+    size(Σ) == (4, 4) || return Dict{String,Any}()
+    axes = haskey(fit.ranef, :axes) ? Tuple(fit.ranef.axes) :
+        (:mu1, :mu2, :sigma1, :sigma2)
+    length(axes) == 4 || return Dict{String,Any}()
+    d = sqrt.(max.(diag(Σ), 0.0))
+    R = Σ ./ (d * d')
+    return Dict{String,Any}(
+        "target" => "gaussian_q4_phylo",
+        "dimension" => "q4",
+        "family" => String(family),
+        "estimator" => String(fit.estim_method),
+        "axes" => String[String(axis) for axis in axes],
+        "sigma_a_source" => "fit.ranef.Sigma_a",
+        "sigma_a" => Σ,
+        "sd" => Dict{String,Float64}(
+            String(axes[i]) => Float64(d[i]) for i in eachindex(axes)
+        ),
+        "correlation" => R,
+        "claim_boundary" => "Direct q4 point export only; no R-via-Julia q4 bridge parity, q4 REML, AI-REML, interval reliability, or interval coverage is promoted.",
+    )
+end
+
+function _bridge_q2_point_export(fit; family::AbstractString = "biv_gaussian",
+                                 structured_type::AbstractString = "phylo")
+    export_type = fit isa DrmFit &&
+                  fit.ranef isa NamedTuple &&
+                  haskey(fit.ranef, :structured_type) ?
+                  String(fit.ranef.structured_type) : String(structured_type)
+    if fit isa DrmFit &&
+       fit.ranef isa NamedTuple &&
+       haskey(fit.ranef, :Sigma_a) &&
+       size(fit.ranef.Sigma_a) == (2, 2)
+        Σ = Matrix{Float64}(fit.ranef.Sigma_a)
+        d = sqrt.(max.(diag(Σ), 0.0))
+        R = Σ ./ (d * d')
+        axes = haskey(fit.ranef, :axes) ? Tuple(fit.ranef.axes) : (:mu1, :mu2)
+        residual_sd = Dict{String,Float64}(
+            "mu1" => Float64(first(fit.scales[:sigma1])),
+            "mu2" => Float64(first(fit.scales[:sigma2])),
+        )
+        boundary = "Direct q2 $(export_type) residual-correlation point export only for complete-response exact-Gaussian ML fixtures; R-via-Julia support is limited to route-specific q2 fixtures; no broad q2 bridge support, q2 REML, q4, AI-REML, interval reliability, or interval coverage is promoted."
+        return Dict{String,Any}(
+            "target" => "gaussian_q2_mu1_mu2_$(export_type)_residual_correlation",
+            "dimension" => "q2",
+            "family" => String(family),
+            "structured_type" => export_type,
+            "estimator" => String(fit.estim_method),
+            "axes" => String[String(axis) for axis in axes],
+            "sigma_a_source" => "fit.ranef.Sigma_a",
+            "sigma_a" => Σ,
+            "sd" => Dict{String,Float64}(
+                String(axes[i]) => Float64(d[i]) for i in eachindex(axes)
+            ),
+            "correlation" => R,
+            "residual_sd" => residual_sd,
+            "residual_correlation" => Float64(first(fit.scales[:rho12])),
+            "loglik" => Float64(loglik(fit)),
+            "converged" => Bool(is_converged(fit)),
+            "claim_boundary" => boundary,
+        )
+    end
+    if !(fit isa NamedTuple) || !haskey(fit, :Λ)
+        return Dict{String,Any}()
+    end
+    Σ = Matrix{Float64}(fit.Λ)
+    size(Σ) == (2, 2) || return Dict{String,Any}()
+    d = sqrt.(max.(diag(Σ), 0.0))
+    R = Σ ./ (d * d')
+    has_residual_correlation = haskey(fit, :residual_cov) && haskey(fit, :rho12)
+    target_suffix = has_residual_correlation ?
+        "residual_correlation" : "restricted_diagonal_residual"
+    source = has_residual_correlation ?
+        "fit_coevolution_q2_residual.Λ" : "fit_coevolution.Λ"
+    boundary = has_residual_correlation ?
+        "Direct q2 $(export_type) residual-correlation point export only for known-matrix complete-response exact-Gaussian ML fixtures; R-via-Julia support is limited to route-specific q2 fixtures; no broad q2 bridge support, q2 REML, q4, AI-REML, interval reliability, or interval coverage is promoted." :
+        "Direct q2 $(export_type) restricted point export only for a diagonal-residual coevolution fixture; no R-via-Julia q2 bridge support, full q2 residual-correlation route, q2 REML, q4, interval reliability, or interval coverage is promoted."
+    out = Dict{String,Any}(
+        "target" => "gaussian_q2_mu1_mu2_$(export_type)_$(target_suffix)",
+        "dimension" => "q2",
+        "family" => String(family),
+        "structured_type" => export_type,
+        "estimator" => "ML",
+        "axes" => ["mu1", "mu2"],
+        "sigma_a_source" => source,
+        "sigma_a" => Σ,
+        "sd" => Dict{String,Float64}(
+            "mu1" => Float64(d[1]),
+            "mu2" => Float64(d[2]),
+        ),
+        "correlation" => R,
+        "converged" => haskey(fit, :converged) ? Bool(fit.converged) : false,
+        "claim_boundary" => boundary,
+    )
+    if haskey(fit, :σ_res)
+        out["residual_sd"] = Dict{String,Float64}(
+            "mu1" => Float64(fit.σ_res[1]),
+            "mu2" => Float64(fit.σ_res[2]),
+        )
+    end
+    if has_residual_correlation
+        out["residual_correlation"] = Float64(fit.rho12)
+    end
+    if haskey(fit, :loglik)
+        out["loglik"] = Float64(fit.loglik)
+    end
+    return out
+end
+
 _bridge_plain(x::AbstractVector) = collect(x)
 _bridge_plain(x::AbstractMatrix) = Matrix(x)
 function _bridge_plain(x::AbstractDict)
     return Dict(String(k) => _bridge_plain(v) for (k, v) in pairs(x))
 end
 _bridge_plain(x) = x
+
+const _BRIDGE_Q2_DIRECT_STRUCTURED_TYPES = ("phylo", "spatial", "animal", "relmat")
+const _BRIDGE_Q2_DIRECT_COEFFICIENT_ORDER = (
+    "mu1:(Intercept)",
+    "mu1:x",
+    "mu2:(Intercept)",
+    "mu2:x",
+    "sd_mu1:structured(group)",
+    "sd_mu2:structured(group)",
+    "cor_mu1_mu2:structured(group)",
+)
+
+function _bridge_q2_direct_export_schema()
+    return (
+        :target,
+        :structured_type,
+        :dimension,
+        :route,
+        :estimator,
+        :coefficient_order,
+        :direct_status,
+        :bridge_status,
+        :unavailable_reason,
+        :claim_boundary,
+        :next_gate,
+    )
+end
+
+function _bridge_q2_direct_export_status()
+    coefficient_order = join(_BRIDGE_Q2_DIRECT_COEFFICIENT_ORDER, ";")
+    return Tuple(
+        begin
+            direct_status = structured_type == "phylo" ?
+                "available_residual_correlation_point_export" :
+                structured_type in ("animal", "relmat") ?
+                    "available_known_covariance_residual_correlation_point_export" :
+                    "available_fixed_covariance_residual_correlation_fixture"
+            bridge_status = "experimental"
+            unavailable_reason = if structured_type == "phylo"
+                "Same-target q2 phylo residual-correlation direct export and narrow R-via-Julia bridge parity fixture exist for complete-response exact-Gaussian ML."
+            elseif structured_type == "spatial"
+                "Direct q2 spatial evidence and the R-via-Julia bridge are limited to a fixed-covariance fixture; the range-estimating spatial route remains unsupported."
+            else
+                "Direct q2 $(structured_type) residual-correlation export and narrow R-via-Julia bridge parity fixture exist for known-covariance exact-Gaussian ML."
+            end
+            claim_boundary = if structured_type == "phylo"
+                "Direct q2 phylo residual-correlation point export is fixture evidence only; R-via-Julia bridge support is narrow fixture support; no broad q2 bridge support, q2 REML, q4, AI-REML, interval reliability, or interval coverage is promoted."
+            elseif structured_type == "spatial"
+                "Direct q2 spatial fixed-covariance fixture evidence is not a range-estimating spatial route; R-via-Julia bridge support is narrow fixture support; no broad q2 bridge support, q2 REML, q4, AI-REML, interval reliability, or interval coverage is promoted."
+            else
+                "Direct q2 $(structured_type) known-covariance residual-correlation point export is fixture evidence only; R-via-Julia bridge support is narrow fixture support; no broad q2 bridge support, q2 REML, q4, AI-REML, interval reliability, or interval coverage is promoted."
+            end
+            next_gate = structured_type == "spatial" ?
+                "Keep aggregate q2 acceptance scoped to fixed-covariance spatial fixtures; range-estimating spatial remains outside this bridge." :
+                "Keep aggregate q2 acceptance scoped to complete-response exact-Gaussian ML fixtures before widening to q2 REML, q4, or interval claims."
+            (
+            target = "gaussian_q2_mu1_mu2_$structured_type",
+            structured_type = structured_type,
+            dimension = "q2",
+            route = "direct_drmjl",
+            estimator = "ML",
+            coefficient_order = coefficient_order,
+            direct_status = direct_status,
+            bridge_status = bridge_status,
+            unavailable_reason = unavailable_reason,
+            claim_boundary = claim_boundary,
+            next_gate = next_gate,
+            )
+        end
+        for structured_type in _BRIDGE_Q2_DIRECT_STRUCTURED_TYPES
+    )
+end
+
+function _bridge_q2_validate_direct_export_status(rows)
+    schema = _bridge_q2_direct_export_schema()
+    expected_targets = Set(
+        "gaussian_q2_mu1_mu2_$structured_type"
+        for structured_type in _BRIDGE_Q2_DIRECT_STRUCTURED_TYPES
+    )
+    expected_order = join(_BRIDGE_Q2_DIRECT_COEFFICIENT_ORDER, ";")
+    errors = String[]
+    seen = Set{String}()
+    for (i, row) in enumerate(rows)
+        propertynames(row) == schema ||
+            push!(errors, "row $i schema does not match q2 direct export schema")
+        target = String(getproperty(row, :target))
+        push!(seen, target)
+        target in expected_targets ||
+            push!(errors, "row $i target is not registered: $target")
+        getproperty(row, :dimension) == "q2" ||
+            push!(errors, "row $i dimension must be q2")
+        getproperty(row, :route) == "direct_drmjl" ||
+            push!(errors, "row $i route must be direct_drmjl")
+        getproperty(row, :estimator) == "ML" ||
+            push!(errors, "row $i estimator must be ML")
+        getproperty(row, :coefficient_order) == expected_order ||
+            push!(errors, "row $i coefficient order does not match the q2 contract")
+        if getproperty(row, :structured_type) == "phylo"
+            getproperty(row, :direct_status) == "available_residual_correlation_point_export" ||
+                push!(errors, "row $i phylo direct_status must record the residual-correlation point export")
+        elseif getproperty(row, :structured_type) == "spatial"
+            getproperty(row, :direct_status) == "available_fixed_covariance_residual_correlation_fixture" ||
+                push!(errors, "row $i spatial direct_status must record the fixed-covariance fixture boundary")
+            occursin("not a range-estimating spatial route", getproperty(row, :claim_boundary)) ||
+                push!(errors, "row $i spatial claim boundary must reject range-estimating route support")
+        else
+            getproperty(row, :direct_status) == "available_known_covariance_residual_correlation_point_export" ||
+                push!(errors, "row $i direct_status must record known-covariance residual-correlation point export")
+            occursin("known-covariance", getproperty(row, :claim_boundary)) ||
+                push!(errors, "row $i claim boundary must name known-covariance fixture evidence")
+        end
+        getproperty(row, :bridge_status) == "experimental" ||
+            push!(errors, "row $i bridge_status must remain experimental")
+        occursin("no broad q2 bridge support", getproperty(row, :claim_boundary)) ||
+            push!(errors, "row $i claim boundary must reject broad q2 bridge support")
+    end
+    missing = setdiff(expected_targets, seen)
+    isempty(missing) ||
+        push!(errors, "missing q2 direct targets: $(join(sort(collect(missing)), ","))")
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        n_rows = length(rows),
+        schema = schema,
+    )
+end
+
+const _BRIDGE_Q4_DIRECT_AXES = ("mu1", "mu2", "sigma1", "sigma2")
+
+function _bridge_q4_direct_export_schema()
+    return (
+        :target,
+        :axis,
+        :dimension,
+        :route,
+        :estimator,
+        :direct_sd_target,
+        :sigma_a_source,
+        :direct_status,
+        :bridge_status,
+        :inference_status,
+        :claim_boundary,
+        :next_gate,
+    )
+end
+
+function _bridge_q4_direct_export_status()
+    return Tuple(
+        (
+            target = "gaussian_q4_phylo_sd_$axis",
+            axis = axis,
+            dimension = "q4",
+            route = "direct_drmjl",
+            estimator = "ML",
+            direct_sd_target = "sd_$axis",
+            sigma_a_source = "fit.ranef.Sigma_a",
+            direct_status = "available_point_target",
+            bridge_status = "experimental",
+            inference_status = "point_target_only",
+            claim_boundary = "Direct q4 export is a status contract for point SD targets only; no R-via-Julia q4 bridge parity, q4 REML, AI-REML, interval reliability, or interval coverage is promoted.",
+            next_gate = "Compare same-target native R/TMB, direct DRM.jl, and R-via-Julia q4 point outputs before bridge parity.",
+        )
+        for axis in _BRIDGE_Q4_DIRECT_AXES
+    )
+end
+
+function _bridge_q4_validate_direct_export_status(rows)
+    schema = _bridge_q4_direct_export_schema()
+    expected_targets = Set("gaussian_q4_phylo_sd_$axis" for axis in _BRIDGE_Q4_DIRECT_AXES)
+    expected_sd_targets = Dict(axis => "sd_$axis" for axis in _BRIDGE_Q4_DIRECT_AXES)
+    errors = String[]
+    seen = Set{String}()
+    for (i, row) in enumerate(rows)
+        propertynames(row) == schema ||
+            push!(errors, "row $i schema does not match q4 direct export schema")
+        target = String(getproperty(row, :target))
+        axis = String(getproperty(row, :axis))
+        push!(seen, target)
+        target in expected_targets ||
+            push!(errors, "row $i target is not registered: $target")
+        haskey(expected_sd_targets, axis) ||
+            push!(errors, "row $i axis is not registered: $axis")
+        getproperty(row, :dimension) == "q4" ||
+            push!(errors, "row $i dimension must be q4")
+        getproperty(row, :route) == "direct_drmjl" ||
+            push!(errors, "row $i route must be direct_drmjl")
+        getproperty(row, :estimator) == "ML" ||
+            push!(errors, "row $i estimator must be ML")
+        getproperty(row, :direct_sd_target) == get(expected_sd_targets, axis, "") ||
+            push!(errors, "row $i direct_sd_target does not match axis")
+        getproperty(row, :sigma_a_source) == "fit.ranef.Sigma_a" ||
+            push!(errors, "row $i sigma_a_source must be fit.ranef.Sigma_a")
+        getproperty(row, :direct_status) == "available_point_target" ||
+            push!(errors, "row $i direct_status must be available_point_target")
+        getproperty(row, :bridge_status) == "experimental" ||
+            push!(errors, "row $i bridge_status must remain experimental")
+        getproperty(row, :inference_status) == "point_target_only" ||
+            push!(errors, "row $i inference_status must remain point_target_only")
+        occursin("no R-via-Julia q4 bridge parity", getproperty(row, :claim_boundary)) ||
+            push!(errors, "row $i claim boundary must reject bridge parity")
+        occursin("interval coverage", getproperty(row, :claim_boundary)) ||
+            push!(errors, "row $i claim boundary must reject interval coverage")
+    end
+    missing = setdiff(expected_targets, seen)
+    isempty(missing) ||
+        push!(errors, "missing q4 direct targets: $(join(sort(collect(missing)), ","))")
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        n_rows = length(rows),
+        schema = schema,
+    )
+end
 
 function _bridge_first_param_row(rows, param::Symbol)
     for row in rows
