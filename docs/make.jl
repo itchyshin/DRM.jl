@@ -54,6 +54,7 @@ makedocs(
             "diagnostics-and-validation/prediction-and-postfit.md",
             "diagnostics-and-validation/profile-likelihood.md",
             "diagnostics-and-validation/implementation-map.md",
+            "diagnostics-and-validation/exact-gaussian-diagnostics.md",
             "diagnostics-and-validation/testing-likelihoods.md",
             "diagnostics-and-validation/simulation-plot-grammar.md",
         ],
