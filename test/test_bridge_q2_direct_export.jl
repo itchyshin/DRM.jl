@@ -167,11 +167,28 @@ end
     )
     relmat_fit = drm(relmat_form, Gaussian(); data = dat, K = K, g_tol = 2e-4)
     relmat_export = DRM._bridge_q2_point_export(relmat_fit; family = "biv_gaussian")
+    relmat_bridged = drm_bridge(;
+        formula = Dict(
+            :mu1 => "y1 ~ x + relmat(1 | group_id)",
+            :mu2 => "y2 ~ x + relmat(1 | group_id)",
+            :sigma1 => "sigma1 ~ 1",
+            :sigma2 => "sigma2 ~ 1",
+            :rho12 => "rho12 ~ 1",
+        ),
+        family = "biv_gaussian",
+        data = dat,
+        K = K,
+        options = Dict(:g_tol => 2e-4),
+    )
 
     @test relmat_fit.ranef.structured_type == :relmat
     @test relmat_export["target"] == "gaussian_q2_mu1_mu2_relmat_residual_correlation"
     @test relmat_export["structured_type"] == "relmat"
     @test occursin("relmat", relmat_export["claim_boundary"])
+    @test relmat_bridged["q2_point_export"]["target"] ==
+          "gaussian_q2_mu1_mu2_relmat_residual_correlation"
+    @test relmat_bridged["q2_point_export"]["residual_correlation"] ≈ first(rho12(relmat_fit))
+    @test relmat_bridged["loglik"] ≈ loglik(relmat_fit)
 
     animal_form = bf(
         mu1 = @formula(y1 ~ x + animal(1 | group_id)),
@@ -182,11 +199,28 @@ end
     )
     animal_fit = drm(animal_form, Gaussian(); data = dat, A = K, g_tol = 2e-4)
     animal_export = DRM._bridge_q2_point_export(animal_fit; family = "biv_gaussian")
+    animal_bridged = drm_bridge(;
+        formula = Dict(
+            :mu1 => "y1 ~ x + animal(1 | group_id)",
+            :mu2 => "y2 ~ x + animal(1 | group_id)",
+            :sigma1 => "sigma1 ~ 1",
+            :sigma2 => "sigma2 ~ 1",
+            :rho12 => "rho12 ~ 1",
+        ),
+        family = "biv_gaussian",
+        data = dat,
+        A = K,
+        options = Dict(:g_tol => 2e-4),
+    )
 
     @test animal_fit.ranef.structured_type == :animal
     @test animal_export["target"] == "gaussian_q2_mu1_mu2_animal_residual_correlation"
     @test animal_export["structured_type"] == "animal"
     @test occursin("animal", animal_export["claim_boundary"])
+    @test animal_bridged["q2_point_export"]["target"] ==
+          "gaussian_q2_mu1_mu2_animal_residual_correlation"
+    @test animal_bridged["q2_point_export"]["residual_correlation"] ≈ first(rho12(animal_fit))
+    @test animal_bridged["loglik"] ≈ loglik(animal_fit)
     @test_throws ErrorException drm(
         bf(
             mu1 = @formula(y1 ~ x + spatial(1 | group_id)),
@@ -264,6 +298,23 @@ end
     @test size(front.ranef.Sigma_a) == (2, 2)
     @test front_export["target"] == "gaussian_q2_mu1_mu2_phylo_residual_correlation"
     @test front_export["residual_correlation"] ≈ first(rho12(front))
+    bridged = drm_bridge(;
+        formula = Dict(
+            :mu1 => "y1 ~ x + phylo(1 | species_name)",
+            :mu2 => "y2 ~ x + phylo(1 | species_name)",
+            :sigma1 => "sigma1 ~ 1",
+            :sigma2 => "sigma2 ~ 1",
+            :rho12 => "rho12 ~ 1",
+        ),
+        family = "biv_gaussian",
+        data = dat,
+        tree = phy,
+        options = Dict(:g_tol => 1e-4),
+    )
+    @test bridged["q2_point_export"]["target"] ==
+          "gaussian_q2_mu1_mu2_phylo_residual_correlation"
+    @test bridged["q2_point_export"]["residual_correlation"] ≈ first(rho12(front))
+    @test bridged["loglik"] ≈ loglik(front)
     @test_throws ArgumentError drm(
         bf(
             mu1 = @formula(y1 ~ x + phylo(1 | species_name)),

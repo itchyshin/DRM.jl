@@ -66,7 +66,9 @@ git diff --check
 ```
 
 The q4 direct export test passed 36/36 assertions. The q2 direct export test
-passed 116/116 assertions. The bridge boundary test passed 51/51 assertions.
+passed 125/125 assertions, including `drm_bridge()` q2 formula-marshalling
+fixtures for phylo, relmat, and animal. The bridge boundary test passed 51/51
+assertions.
 The q4 REML all-axes regression passed 9/9 assertions after reverting an
 unrelated attempted tightening of q4 default tolerances. `git diff --check` was
 clean.
@@ -76,8 +78,9 @@ clean.
 The q2 and q4 status validators include malformed-row checks so schema and
 target drift fail explicitly. The q2 tests also exercise rejected malformed
 data, rejected unsupported spatial formula routing, relmat and animal formula
-routes, the phylo residual-correlation formula route, and the older restricted
-diagonal-residual coevolution fixture.
+routes through both native `drm()` and the primitive `drm_bridge()` boundary,
+the same bridge-level check for the phylo residual-correlation formula route,
+and the older restricted diagonal-residual coevolution fixture.
 
 ## Consistency Audit
 
