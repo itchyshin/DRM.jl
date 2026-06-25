@@ -84,14 +84,22 @@ end
 
 """
     drm(formula::BivariateDrmFormula, Gaussian(); data, tree = nothing,
-        g_tol = 1e-8, q4_g_tol = 1e-3, q4_iterations = 300,
-        q4_n_newton = 40, q4_vcov = true) -> DrmFit
+        K = nothing, A = nothing, coords = nothing, g_tol = 1e-8,
+        q4_g_tol = 1e-3, q4_iterations = 300, q4_n_newton = 40,
+        q4_vcov = true, method = :ML) -> DrmFit
 
 Fit a bivariate Gaussian distributional regression model.
 
 With no structured-effect marker, this is the residual-correlation model:
 `mu1`, `mu2`, `sigma1`, `sigma2`, and residual `rho12` each have their own fixed
 effect formula.
+
+With matching structured markers on `mu1` and `mu2` only, this routes to the
+q=2 exact-Gaussian ML point-fit cell. The q=2 route currently accepts
+`phylo(1 | group)` with `tree`, `relmat(1 | group)` with `K`, or
+`animal(1 | group)` with `A`; it requires complete responses, identical mean
+fixed-effect designs, and intercept-only `sigma1`, `sigma2`, and `rho12`.
+`spatial(1 | group)` remains outside the formula route here.
 
 With the same `phylo(1 | group)` marker on all four location/scale predictors
 (`mu1`, `mu2`, `sigma1`, and `sigma2`) and a supplied `tree`, this routes to the
@@ -380,9 +388,9 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
     _, Xs2, nms2 = _design(f.response1, fixed[:sigma2], data)
     _, Xr, nmr = _design(f.response1, fixed[:rho12], data)
     all(isfinite, y1) && all(isfinite, y2) ||
-        throw(ArgumentError("drm: bivariate q=2 phylogenetic Julia route currently requires complete responses"))
+        throw(ArgumentError("drm: bivariate q=2 structured Julia route currently requires complete responses"))
     size(Xs1, 2) == 1 && size(Xs2, 2) == 1 && size(Xr, 2) == 1 ||
-        throw(ArgumentError("drm: bivariate q=2 phylogenetic Julia route currently supports intercept-only sigma1, sigma2, and rho12 formulas"))
+        throw(ArgumentError("drm: bivariate q=2 structured Julia route currently supports intercept-only sigma1, sigma2, and rho12 formulas"))
 
     Y = hcat(Vector{Float64}(y1), Vector{Float64}(y2))
     size(X2, 2) == size(X1, 2) && X2 ≈ X1 ||

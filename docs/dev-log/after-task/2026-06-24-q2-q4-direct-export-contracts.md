@@ -51,6 +51,8 @@ location-scale fit, not new q4 inference.
 - `test/test_bridge_q4_direct_export.jl`
 - `test/test_bridge.jl`
 - `test/runtests.jl`
+- `docs/src/capabilities.md`
+- `docs/src/r-julia-bridge.md`
 - `docs/src/developer-notes/formula-grammar.md`
 - `docs/dev-log/check-log.d/2026-06-24-q2-q4-direct-export-contracts.md`
 - `docs/dev-log/after-task/2026-06-24-q2-q4-direct-export-contracts.md`
@@ -62,6 +64,7 @@ julia --project=. test/test_bridge_q4_direct_export.jl
 julia --project=. test/test_bridge_q2_direct_export.jl
 julia --project=. test/test_bridge.jl
 julia --project=. -e 'using Test, Random, LinearAlgebra, StatsModels, DRM; include("test/test_reml_q4_allaxes.jl")'
+julia --project=docs docs/make.jl
 git diff --check
 ```
 
@@ -71,7 +74,8 @@ fixtures for phylo, relmat, and animal. The bridge boundary test passed 51/51
 assertions.
 The q4 REML all-axes regression passed 9/9 assertions after reverting an
 unrelated attempted tightening of q4 default tolerances. `git diff --check` was
-clean.
+clean. The local Documenter build exited 0 after the docs review fix, with
+existing local-link, unlisted-docstring, and Vitepress warnings.
 
 ## Tests Of The Tests
 
@@ -84,10 +88,10 @@ and the older restricted diagonal-residual coevolution fixture.
 
 ## Consistency Audit
 
-The formula grammar page now names the exact q2 and q4 structured bivariate
-cells and their exclusions. The claim-boundary strings in the export payloads
-and status rows explicitly reject broad bridge support, q2/q4 REML, AI-REML,
-interval reliability, and coverage.
+The formula grammar, capability, and R-Julia bridge pages now name the exact q2
+and q4 structured bivariate cells and their exclusions. The claim-boundary
+strings in the export payloads and status rows explicitly reject broad bridge
+support, q2/q4 REML, AI-REML, interval reliability, and coverage.
 
 ## GitHub Issue Maintenance
 

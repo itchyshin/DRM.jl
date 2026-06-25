@@ -1,7 +1,7 @@
 # R ↔ Julia bridge
 
 !!! note "Status — Experimental first slice (Phase 1.5)"
-    DRM.jl now exposes `drm_bridge()`, a marshalling-friendly entry point for the R-side `drmTMB(formula, ..., engine = "julia")` glue. The companion R glue lives in the **drmTMB R repository** via [JuliaCall](https://github.com/JuliaInterop/JuliaCall). The first tested bridge slice covers Gaussian one-response and two-response fits; broader families wait for coefficient-scale parity tests. For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
+    DRM.jl now exposes `drm_bridge()`, a marshalling-friendly entry point for the R-side `drmTMB(formula, ..., engine = "julia")` glue. The companion R glue lives in the **drmTMB R repository** via [JuliaCall](https://github.com/JuliaInterop/JuliaCall). The first tested bridge slice covers Gaussian one-response and two-response fits, plus narrow complete-response q=2 structured Gaussian fixture cells; broader families wait for coefficient-scale parity tests. For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
 
 ## The idea
 
@@ -12,8 +12,9 @@ Two ways to use DRM.jl from R, in increasing integration:
 2. **`engine = "julia"`** — keep writing ordinary `drmTMB(...)` R code; drmTMB
    marshals the formula and data across JuliaCall, calls DRM.jl to fit, and
    returns a result object shaped like a native drmTMB fit. Experimental for
-   Gaussian one-response and two-response models, plus the first Gaussian
-   `phylo(1 | species)` mean bridge with constant `sigma`.
+   Gaussian one-response and two-response models, the first Gaussian
+   `phylo(1 | species)` mean bridge with constant `sigma`, and narrow
+   complete-response q=2 structured Gaussian fixtures.
 
 ## The DRM.jl-side contract
 
@@ -26,8 +27,10 @@ For the bridge to work, DRM.jl exposes a stable, marshalling-friendly surface:
   `DataFrame`) keyed by the same column names;
 - **Result** — `drm_bridge()` returns a flat dictionary with coefficient names
   and values, covariance matrix, likelihood summaries, convergence state,
-  fitted values, residuals, fitted scale, and residual-correlation payloads
-  when present.
+  fitted values, residuals, fitted scale, residual-correlation payloads when
+  present, and direct q=2/q=4 point-export payloads when the exact fitted cell
+  supplies them. The direct exports carry their own claim-boundary strings and
+  remain point/export evidence, not interval or coverage evidence.
 
 For the Gaussian phylogenetic mean cell, the current `algorithm = :auto` route
 uses the all-node sparse L-BFGS fitter in `src/location_only.jl`. That route
@@ -42,9 +45,10 @@ remains the next inference slice.
 Tracked in the issue ledger:
 
 - **Broader phylo / pedigree / relatedness marshalling** — the first Newick
-  tree slice works for one Gaussian `phylo(1 | species)` mean term; `Ainv`, `K`,
-  multiple structured terms, slopes, and non-Gaussian phylogenetic models still
-  need separate parity tests (issue #19).
+  tree slice works for one Gaussian `phylo(1 | species)` mean term, and the q=2
+  direct-export branch adds fixture-level `K` / `A` evidence. Broad pedigree or
+  relatedness marshalling, `Ainv`, multiple structured terms, slopes, and
+  non-Gaussian phylogenetic models still need separate parity tests (issue #19).
 - **Result-shape parity** — exact field-by-field equivalence between a native
   drmTMB fit and the Julia-engine fit (issue #5), guarded by the R-parity suite
   (Workflow G, issue #17).
@@ -52,6 +56,7 @@ Tracked in the issue ledger:
   describe the same model; the parity tests enforce this once R is available in CI.
 
 Until broader parity ships, use the bridge for Gaussian one-response,
-two-response, and the admitted Gaussian phylogenetic smoke runs, and use
-hand-translation via the Rosetta phrasebook or native `drmTMB` for the
-remaining families and unsupported formula features.
+two-response, the admitted Gaussian phylogenetic smoke runs, and the narrow q=2
+structured exact-Gaussian fixture cells. Use hand-translation via the Rosetta
+phrasebook or native `drmTMB` for the remaining families and unsupported formula
+features.
