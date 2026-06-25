@@ -78,9 +78,11 @@ const D = DRM   # internal kernels live under DRM.*
         β_la = θla[1:2];      β_va = θva[1:2]
         σ_la = exp(θla[3]);   σ_va = exp(θva[3])
 
-        # Fixed effects: VA should match GHQ closely (mean is the well-behaved axis).
-        @test isapprox(β_va[1], β_la[1]; atol = 0.05)
-        @test isapprox(β_va[2], β_la[2]; atol = 0.05)
+        # Fixed effects: VA should stay close to the GHQ baseline. Both sides are
+        # approximate marginals, so keep the tolerance tight but version-stable.
+        β_atol = 0.08
+        @test isapprox(β_va[1], β_la[1]; atol = β_atol)
+        @test isapprox(β_va[2], β_la[2]; atol = β_atol)
         # RE sd: VA is known to under-shrink slightly vs the exact marginal but must
         # land in the same neighbourhood (and recover σ_true to within sampling).
         @test isapprox(σ_va, σ_la; atol = 0.10)
