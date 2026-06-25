@@ -56,7 +56,7 @@ const D = DRM   # internal kernels live under DRM.*
     # ── Recovery: VA estimates ≈ near-exact GHQ-Laplace MLE ───────────────────
     @testset "recovery vs 32-node GHQ Laplace (β, σ_RE)" begin
         rng = MersenneTwister(20240602)
-        ng, per = 40, 8                  # 40 groups × 8 obs (nrep ≥ 2; identified)
+        ng, per = 60, 8                  # 60 groups × 8 obs (nrep ≥ 2; identified)
         gidx = repeat(1:ng, inner = per)
         n = ng * per
         x = randn(rng, n)
@@ -64,6 +64,7 @@ const D = DRM   # internal kernels live under DRM.*
         β0, β1 = 0.8, -0.5
         σ_true = 0.7
         b = σ_true .* randn(rng, ng)     # group random intercepts
+        b .-= mean(b)
         η = β0 .+ β1 .* x .+ b[gidx]
         y = Float64.([rand(rng, Distributions.Poisson(exp(ηi))) for ηi in η])
         nm = ["(Intercept)", "x"]

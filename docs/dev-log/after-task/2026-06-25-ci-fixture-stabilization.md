@@ -1,0 +1,55 @@
+# After Task: CI Fixture Stabilization For DRM.jl#298
+
+## Goal
+
+Stabilize unrelated stochastic recovery fixtures that blocked the manual CI rerun
+for the stacked q2/q4 direct-export PR.
+
+## Implemented
+
+`test/test_relmat_counts_nb2.jl` now makes the NB2 relmat recovery fixture better
+identified for CI by using 15 observations per group, NB2 size `3.0`, and a
+centered latent group-effect draw. The route under test is unchanged:
+`relmat(1 | id)` with a supplied covariance matrix and sparse-Laplace NB2
+estimation.
+
+`test/test_va_poisson_elbo.jl` now centers the simulated random-intercept draw
+and uses 60 groups in the VA-vs-GHQ recovery fixture. This keeps the existing
+comparison and tolerances, but reduces version-sensitive drift in the finite
+simulated dataset.
+
+No package source code changed.
+
+## Evidence
+
+Manual CI run `28201857575` on head `f37503b` showed the Poisson recovery fix
+worked, but exposed two unrelated stochastic fixture failures:
+
+- Julia 1.10 failed in `test/test_relmat_counts_nb2.jl`, where the NB2 relmat
+  fit moved to a weak-dispersion boundary and did not satisfy the recovery
+  assertions.
+- Julia 1.x passed the NB2 relmat file but later failed
+  `test/test_va_poisson_elbo.jl`, where the VA/GHQ intercept gap was about
+  `0.065` against the old `0.05` tolerance.
+
+Local focused validation after the fixture changes:
+
+```sh
+julia --project=. test/test_relmat_counts_nb2.jl
+julia --project=. test/test_va_poisson_elbo.jl
+julia --project=. test/test_poisson_re.jl
+julia --project=. test/test_bridge_q2_direct_export.jl
+julia --project=. test/test_bridge_q4_direct_export.jl
+git diff --check
+```
+
+The relmat NB2/Gamma file passed all testsets, including both finite-difference
+gradient gates. The VA Poisson file passed 9/9 assertions. The prior Poisson
+recovery fix passed 5/5 assertions. The q2 direct-export test passed 125/125
+assertions, and the q4 direct-export test passed 36/36 assertions.
+
+## Claim Boundary
+
+This is a test-stability fix only. It does not change q2/q4 direct-export
+implementation, the bridge surface, REML status, AI-REML status, interval
+reliability, coverage status, or any public support claim.
