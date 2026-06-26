@@ -52,6 +52,8 @@ primitive is the smallest honest target for the R bridge preflight.
 julia --project=. test/test_bridge_q2_direct_export.jl
 julia --project=. test/test_bridge.jl
 julia --project=. test/test_bridge_q4_direct_export.jl
+Rscript --no-environ --no-init-file -e "source('/Users/z3437171/shinichi-brain/tools/check-after-task.R'); main_check_after_task('docs/dev-log/after-task/2026-06-26-q2-known-precision-bridge.md')"
+julia tools/build_check_log.jl >/tmp/drmjl-check-log-q2-known-precision-recheck.txt
 git diff --check
 ```
 
@@ -60,7 +62,15 @@ known-precision test contributes 16 assertions, including equality to a direct
 `make_coevo_problem_from_precision()` fit and the `input_scale` /
 `precision_source` payload fields. The bridge boundary test passed 51/51
 assertions. The q4 direct-export regression passed 36/36 assertions.
-`git diff --check` was clean.
+The after-task structure check passed. `tools/build_check_log.jl` exited
+successfully while still reporting older malformed check-log.d entries already
+present on the stacked base. `git diff --check` was clean.
+
+The first manual Julia 1.10 CI run exposed a transient `SingularException` in
+`fit_coevolution_q2_residual()` during finite-difference line search for this
+fixture. The objective already used an `Inf` barrier for invalid unpacked
+parameters; the CI hardening extends that barrier to invalid marginal
+evaluations from `coevo_marginal_cov()`.
 
 ## 6. Tests of the Tests
 
@@ -86,6 +96,11 @@ and coverage.
 Running JuliaFormatter on the touched files reformatted a large amount of
 pre-existing bridge code. I restored the original file shape and kept only the
 intended q2 precision insertion so the stacked PR remains reviewable.
+
+The first manual Julia 1.10 CI run also found a line-search robustness hole: a
+finite-difference probe could reach a singular residual covariance and throw
+instead of returning `Inf`. This was fixed in the q2 residual objective rather
+than by loosening the fixture.
 
 ## 10. Known Residuals
 
