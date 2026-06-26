@@ -69,20 +69,28 @@ function drm_bridge_q2_phylo(; Y, X, species, tree, options = Dict{String,Any}()
 end
 
 """
-    drm_bridge_q2_known_precision(; Y, X, group, Q, options = Dict())
+    drm_bridge_q2_known_precision(; Y, X, group, Q,
+                                  structured_type = "relmat",
+                                  precision_source = nothing,
+                                  options = Dict())
 
-Private diagnostic boundary for a restricted q2 known-precision relmat payload.
+Private diagnostic boundary for a restricted q2 known-precision provider payload.
 This consumes `Q` as a precision matrix directly through
 `make_coevo_problem_from_precision`; it does not invert or relabel `Q` as a
 covariance matrix, and it does not imply formula, slope, REML, or interval
-support.
+support. Provider identity is deliberately narrow: `structured_type = "relmat"`
+records `precision_source = "Q"`, while `structured_type = "animal"` records
+`precision_source = "Ainv"`.
 """
 function drm_bridge_q2_known_precision(; Y, X, group, Q,
+        structured_type = "relmat", precision_source = nothing,
         options = Dict{String,Any}())
     y = Matrix{Float64}(Y)
     x = Matrix{Float64}(X)
     g = Int.(vec(group))
     qmat = Matrix{Float64}(Q)
+    st, source = _bridge_q2_known_precision_provider(structured_type,
+                                                     precision_source)
     size(y, 2) == 2 ||
         throw(ArgumentError("drm_bridge_q2_known_precision: `Y` must have exactly two columns"))
     size(x, 1) == size(y, 1) ||
@@ -101,13 +109,19 @@ function drm_bridge_q2_known_precision(; Y, X, group, Q,
     out = _bridge_q2_point_export(
         fit;
         family = "biv_gaussian",
-        structured_type = "relmat",
+        structured_type = st,
     )
     out["input_scale"] = "precision"
-    out["precision_source"] = "Q"
+    out["precision_source"] = source
     out["precision_matrix"] = qmat
-    out["claim_boundary"] =
-        "Direct q2 relmat known-precision point export only for complete-response exact-Gaussian ML fixtures; `Q` is consumed as a precision matrix without implicit Q-to-K conversion. No R-via-Julia formula support, structured slope support, broad q2 bridge support, q2 REML, q4, AI-REML, interval reliability, or interval coverage is promoted."
+    out["claim_boundary"] = join((
+        "Direct q2 $st known-precision point export only for complete-response",
+        "exact-Gaussian ML fixtures; `$source` is consumed as a precision",
+        "matrix without implicit precision-to-covariance conversion. No",
+        "R-via-Julia formula support, structured slope support, broad q2",
+        "bridge support, q2 REML, q4, AI-REML, interval reliability, or",
+        "interval coverage is promoted.",
+    ), " ")
     return out
 end
 
@@ -619,6 +633,10 @@ end
 _bridge_plain(x) = x
 
 const _BRIDGE_Q2_DIRECT_STRUCTURED_TYPES = ("phylo", "spatial", "animal", "relmat")
+const _BRIDGE_Q2_KNOWN_PRECISION_PROVIDERS = (
+    (structured_type = "animal", precision_source = "Ainv"),
+    (structured_type = "relmat", precision_source = "Q"),
+)
 const _BRIDGE_Q2_DIRECT_COEFFICIENT_ORDER = (
     "mu1:(Intercept)",
     "mu1:x",
@@ -628,6 +646,25 @@ const _BRIDGE_Q2_DIRECT_COEFFICIENT_ORDER = (
     "sd_mu2:structured(group)",
     "cor_mu1_mu2:structured(group)",
 )
+
+function _bridge_q2_known_precision_provider(structured_type, precision_source)
+    st = lowercase(strip(String(structured_type)))
+    expected_sources = Dict(
+        "animal" => "Ainv",
+        "relmat" => "Q",
+    )
+    haskey(expected_sources, st) ||
+        throw(ArgumentError(
+            "drm_bridge_q2_known_precision: `structured_type` must be `animal` or `relmat`",
+        ))
+    source = precision_source === nothing ? expected_sources[st] :
+             String(precision_source)
+    source == expected_sources[st] ||
+        throw(ArgumentError(
+            "drm_bridge_q2_known_precision: `precision_source` for `$st` must be `$(expected_sources[st])`",
+        ))
+    return st, source
+end
 
 function _bridge_q2_direct_export_schema()
     return (
@@ -640,6 +677,22 @@ function _bridge_q2_direct_export_schema()
         :direct_status,
         :bridge_status,
         :unavailable_reason,
+        :claim_boundary,
+        :next_gate,
+    )
+end
+
+function _bridge_q2_known_precision_schema()
+    return (
+        :target,
+        :structured_type,
+        :dimension,
+        :route,
+        :estimator,
+        :input_scale,
+        :precision_source,
+        :direct_status,
+        :bridge_status,
         :claim_boundary,
         :next_gate,
     )
@@ -690,6 +743,43 @@ function _bridge_q2_direct_export_status()
     )
 end
 
+function _bridge_q2_known_precision_status()
+    return Tuple(
+        begin
+            st = spec.structured_type
+            source = spec.precision_source
+            claim_boundary = join((
+                "Direct q2 $st known-precision point export is private",
+                "complete-response exact-Gaussian ML fixture evidence only;",
+                "`$source` is consumed as a precision matrix without implicit",
+                "precision-to-covariance conversion. No R-via-Julia formula",
+                "support, structured slope support, broad q2 bridge support,",
+                "q2 REML, q4, AI-REML, interval reliability, or interval",
+                "coverage is promoted.",
+            ), " ")
+            next_gate = join((
+                "Use only as a Julia-side precision payload target until",
+                "formula routing, structured slope support, and row-specific",
+                "R-via-Julia parity evidence exist.",
+            ), " ")
+            (
+            target = "gaussian_q2_mu1_mu2_$(st)_known_precision",
+            structured_type = st,
+            dimension = "q2",
+            route = "direct_drmjl_private",
+            estimator = "ML",
+            input_scale = "precision",
+            precision_source = source,
+            direct_status = "available_known_precision_residual_correlation_point_export",
+            bridge_status = "private_diagnostic",
+            claim_boundary = claim_boundary,
+            next_gate = next_gate,
+            )
+        end
+        for spec in _BRIDGE_Q2_KNOWN_PRECISION_PROVIDERS
+    )
+end
+
 function _bridge_q2_validate_direct_export_status(rows)
     schema = _bridge_q2_direct_export_schema()
     expected_targets = Set(
@@ -736,6 +826,62 @@ function _bridge_q2_validate_direct_export_status(rows)
     missing = setdiff(expected_targets, seen)
     isempty(missing) ||
         push!(errors, "missing q2 direct targets: $(join(sort(collect(missing)), ","))")
+    return (
+        ok = isempty(errors),
+        errors = Tuple(errors),
+        n_rows = length(rows),
+        schema = schema,
+    )
+end
+
+function _bridge_q2_validate_known_precision_status(rows)
+    schema = _bridge_q2_known_precision_schema()
+    expected = Dict(
+        spec.structured_type => spec.precision_source
+        for spec in _BRIDGE_Q2_KNOWN_PRECISION_PROVIDERS
+    )
+    expected_targets = Set(
+        "gaussian_q2_mu1_mu2_$(st)_known_precision"
+        for st in keys(expected)
+    )
+    errors = String[]
+    seen = Set{String}()
+    for (i, row) in enumerate(rows)
+        propertynames(row) == schema ||
+            push!(errors, "row $i schema does not match q2 known-precision schema")
+        target = String(getproperty(row, :target))
+        push!(seen, target)
+        target in expected_targets ||
+            push!(errors, "row $i target is not registered: $target")
+        st = String(getproperty(row, :structured_type))
+        haskey(expected, st) ||
+            push!(errors, "row $i structured_type is not a known-precision provider")
+        getproperty(row, :dimension) == "q2" ||
+            push!(errors, "row $i dimension must be q2")
+        getproperty(row, :route) == "direct_drmjl_private" ||
+            push!(errors, "row $i route must be direct_drmjl_private")
+        getproperty(row, :estimator) == "ML" ||
+            push!(errors, "row $i estimator must be ML")
+        getproperty(row, :input_scale) == "precision" ||
+            push!(errors, "row $i input_scale must be precision")
+        if haskey(expected, st)
+            getproperty(row, :precision_source) == expected[st] ||
+                push!(errors, "row $i precision_source does not match $st")
+        end
+        getproperty(row, :direct_status) == "available_known_precision_residual_correlation_point_export" ||
+            push!(errors, "row $i direct_status must record known-precision residual-correlation point export")
+        getproperty(row, :bridge_status) == "private_diagnostic" ||
+            push!(errors, "row $i bridge_status must remain private_diagnostic")
+        occursin("No R-via-Julia formula support", getproperty(row, :claim_boundary)) ||
+            push!(errors, "row $i claim boundary must reject formula support")
+        occursin("structured slope support", getproperty(row, :claim_boundary)) ||
+            push!(errors, "row $i claim boundary must reject structured slope support")
+        occursin("broad q2 bridge support", getproperty(row, :claim_boundary)) ||
+            push!(errors, "row $i claim boundary must reject broad q2 bridge support")
+    end
+    missing = setdiff(expected_targets, seen)
+    isempty(missing) ||
+        push!(errors, "missing q2 known-precision targets: $(join(sort(collect(missing)), ","))")
     return (
         ok = isempty(errors),
         errors = Tuple(errors),

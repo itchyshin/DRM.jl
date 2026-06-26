@@ -75,6 +75,49 @@ end
     @test any(err -> occursin("coefficient order", err), bad_validation.errors)
 end
 
+@testset "q2 known-precision provider status contract" begin
+    rows = DRM._bridge_q2_known_precision_status()
+    schema = DRM._bridge_q2_known_precision_schema()
+
+    @test length(rows) == 2
+    @test all(row -> propertynames(row) == schema, rows)
+    @test Set(row.structured_type for row in rows) == Set(["animal", "relmat"])
+    @test all(row -> row.dimension == "q2", rows)
+    @test all(row -> row.route == "direct_drmjl_private", rows)
+    @test all(row -> row.estimator == "ML", rows)
+    @test all(row -> row.input_scale == "precision", rows)
+    by_type = Dict(row.structured_type => row for row in rows)
+    @test by_type["animal"].precision_source == "Ainv"
+    @test by_type["relmat"].precision_source == "Q"
+    @test all(row -> row.bridge_status == "private_diagnostic", rows)
+    @test all(
+        row -> row.direct_status ==
+               "available_known_precision_residual_correlation_point_export",
+        rows,
+    )
+    @test all(
+        row -> occursin("No R-via-Julia formula support", row.claim_boundary),
+        rows,
+    )
+    @test all(
+        row -> occursin("structured slope support", row.claim_boundary),
+        rows,
+    )
+    @test all(row -> occursin("broad q2 bridge support", row.claim_boundary), rows)
+
+    validation = DRM._bridge_q2_validate_known_precision_status(rows)
+    @test validation.ok
+    @test isempty(validation.errors)
+    @test validation.n_rows == 2
+    @test validation.schema == schema
+
+    bad_rows = collect(rows)
+    bad_rows[1] = merge(bad_rows[1], (precision_source = "Q",))
+    bad_validation = DRM._bridge_q2_validate_known_precision_status(Tuple(bad_rows))
+    @test !bad_validation.ok
+    @test any(err -> occursin("precision_source", err), bad_validation.errors)
+end
+
 @testset "q2 known covariance fixtures export residual-correlation targets" begin
     rng = MersenneTwister(20260626)
     G = 14
@@ -369,7 +412,7 @@ end
     @test isempty(DRM._bridge_q2_point_export(non_q2))
 end
 
-@testset "private q2 known-precision bridge consumes Q directly" begin
+@testset "private q2 known-precision bridge consumes provider precision directly" begin
     rng = MersenneTwister(20260628)
     G = 10
     idx = collect(1:G)
@@ -392,28 +435,46 @@ end
         iterations = 120,
         g_tol = 2e-4,
     )
-    out = DRM.drm_bridge_q2_known_precision(;
+    relmat_out = DRM.drm_bridge_q2_known_precision(;
         Y = sim.Y,
         X = sim.X,
         group = sim.group,
         Q = Q,
         options = Dict("iterations" => 120, "g_tol" => 2e-4),
     )
+    animal_out = DRM.drm_bridge_q2_known_precision(;
+        Y = sim.Y,
+        X = sim.X,
+        group = sim.group,
+        Q = Q,
+        structured_type = "animal",
+        precision_source = "Ainv",
+        options = Dict("iterations" => 120, "g_tol" => 2e-4),
+    )
 
-    @test out["target"] == "gaussian_q2_mu1_mu2_relmat_residual_correlation"
-    @test out["structured_type"] == "relmat"
-    @test out["input_scale"] == "precision"
-    @test out["precision_source"] == "Q"
-    @test out["precision_matrix"] ≈ Q
-    @test out["sigma_a_source"] == "fit_coevolution_q2_residual.Λ"
-    @test out["sigma_a"] ≈ direct.Λ
-    @test out["residual_sd"]["mu1"] ≈ direct.σ_res[1]
-    @test out["residual_sd"]["mu2"] ≈ direct.σ_res[2]
-    @test out["residual_correlation"] ≈ direct.rho12
-    @test out["loglik"] ≈ direct.loglik
-    @test occursin("without implicit Q-to-K conversion", out["claim_boundary"])
-    @test occursin("No R-via-Julia formula support", out["claim_boundary"])
-    @test occursin("structured slope support", out["claim_boundary"])
+    for (out, structured_type, source) in (
+        (relmat_out, "relmat", "Q"),
+        (animal_out, "animal", "Ainv"),
+    )
+        @test out["target"] ==
+              "gaussian_q2_mu1_mu2_$(structured_type)_residual_correlation"
+        @test out["structured_type"] == structured_type
+        @test out["input_scale"] == "precision"
+        @test out["precision_source"] == source
+        @test out["precision_matrix"] ≈ Q
+        @test out["sigma_a_source"] == "fit_coevolution_q2_residual.Λ"
+        @test out["sigma_a"] ≈ direct.Λ
+        @test out["residual_sd"]["mu1"] ≈ direct.σ_res[1]
+        @test out["residual_sd"]["mu2"] ≈ direct.σ_res[2]
+        @test out["residual_correlation"] ≈ direct.rho12
+        @test out["loglik"] ≈ direct.loglik
+        @test occursin(
+            "without implicit precision-to-covariance conversion",
+            out["claim_boundary"],
+        )
+        @test occursin("No R-via-Julia formula support", out["claim_boundary"])
+        @test occursin("structured slope support", out["claim_boundary"])
+    end
 
     @test_throws ArgumentError DRM.drm_bridge_q2_known_precision(;
         Y = sim.Y[:, 1:1],
@@ -426,6 +487,21 @@ end
         X = sim.X,
         group = sim.group,
         Q = [1.0 2.0; 2.0 1.0],
+    )
+    @test_throws ArgumentError DRM.drm_bridge_q2_known_precision(;
+        Y = sim.Y,
+        X = sim.X,
+        group = sim.group,
+        Q = Q,
+        structured_type = "spatial",
+    )
+    @test_throws ArgumentError DRM.drm_bridge_q2_known_precision(;
+        Y = sim.Y,
+        X = sim.X,
+        group = sim.group,
+        Q = Q,
+        structured_type = "animal",
+        precision_source = "Q",
     )
 end
 
