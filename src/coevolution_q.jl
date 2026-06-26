@@ -120,6 +120,51 @@ function make_coevo_problem(phy, Y::AbstractMatrix, X::AbstractMatrix;
     return prob, Q_cond
 end
 
+"""
+    make_coevo_problem_from_precision(Q, Y, X; group) -> (prob, Q)
+
+Build a [`CoevoProblem`](@ref) from a known structured precision matrix over
+observed levels rather than from an augmented phylogeny. `group[i]` maps row `i`
+to a 1-based level in `Q`. This is the direct exact-Gaussian q2/q route for
+known relatedness/covariance fixtures such as relmat and animal matrices.
+"""
+function make_coevo_problem_from_precision(Q_cond::AbstractMatrix,
+                                           Y::AbstractMatrix,
+                                           X::AbstractMatrix;
+                                           group = 1:size(Q_cond, 1))
+    G = LinearAlgebra.checksquare(Q_cond)
+    n, q = size(Y)
+    size(X, 1) == n || error("X has $(size(X,1)) rows but Y has $n")
+    length(group) == n || error("group has $(length(group)) entries but Y has $n rows")
+    leaf_node = Int.(collect(group))
+    all(1 .<= leaf_node .<= G) ||
+        error("group indices must be 1-based integers in 1:$G")
+    Q = Matrix{Float64}(Q_cond)
+    isposdef(Symmetric(Q)) || error("known structured precision must be positive definite")
+    prob = CoevoProblem(q, G, G, size(X, 2), leaf_node,
+                        Matrix{Float64}(Y), Matrix{Float64}(X))
+    return prob, sparse(Q)
+end
+
+"""
+    make_coevo_problem_from_covariance(K, Y, X; group) -> (prob, Q)
+
+Build a [`CoevoProblem`](@ref) from a known structured covariance/relatedness
+matrix over observed levels. The returned precision is `K^-1`, kept sparse for
+the shared exact-Gaussian coevolution fitter.
+"""
+function make_coevo_problem_from_covariance(K::AbstractMatrix,
+                                            Y::AbstractMatrix,
+                                            X::AbstractMatrix;
+                                            group = 1:size(K, 1))
+    G = LinearAlgebra.checksquare(K)
+    C = Matrix{Float64}(K)
+    isposdef(Symmetric(C)) || error("known structured covariance must be positive definite")
+    Q = Matrix(inv(cholesky(Symmetric(C))))
+    size(Q) == (G, G) || error("internal covariance inversion returned the wrong size")
+    return make_coevo_problem_from_precision(Q, Y, X; group = group)
+end
+
 # ---------------------------------------------------------------------------
 # Conjugate Gaussian Laplace marginal (EXACT — the leaf model is Gaussian).
 #
@@ -176,12 +221,13 @@ plus the inner mode `û`, the CHOLMOD factor of `H_uu`, and the sparse prior `P`
 `β` is `k × q` (trait-major columns), `Λ` is q×q SPD, `σ_res` a length-q vector
 of residual SDs.
 """
-function coevo_marginal(prob::CoevoProblem, Q_cond::SparseMatrixCSC,
-                        β::AbstractMatrix, Λ::AbstractMatrix, σ_res::AbstractVector)
+function coevo_marginal_cov(prob::CoevoProblem, Q_cond::SparseMatrixCSC,
+                            β::AbstractMatrix, Λ::AbstractMatrix, D::AbstractMatrix)
     q = prob.q
     n = length(prob.leaf_node)
-    D = Diagonal(σ_res .^ 2)
-    Dinv = inv(D)
+    size(D) == (q, q) || error("residual covariance has size $(size(D)); expected ($q, $q)")
+    isposdef(Symmetric(D)) || error("residual covariance must be positive definite")
+    Dinv = inv(Symmetric(D))
     P = prior_precision(Q_cond, inv(Λ))
     H = coevo_Huu(prob, P, Dinv)
     chH = cholesky(Symmetric(H))                 # PD: P + PSD data term, root-conditioned
@@ -202,7 +248,7 @@ function coevo_marginal(prob::CoevoProblem, Q_cond::SparseMatrixCSC,
         end
     end
     quad_prior = 0.5 * dot(û, P * û)
-    logdetD = sum(log.(σ_res .^ 2))
+    logdetD = logdet(Symmetric(D))
     jn = quad_prior + quad_data + 0.5 * n * (q * log(2π) + logdetD)
 
     logdetH = logdet(chH)
@@ -210,6 +256,12 @@ function coevo_marginal(prob::CoevoProblem, Q_cond::SparseMatrixCSC,
     logdetP = logdet(chP)
     ℓ = -jn - 0.5 * logdetH + 0.5 * logdetP
     return ℓ, û, chH, P
+end
+
+function coevo_marginal(prob::CoevoProblem, Q_cond::SparseMatrixCSC,
+                        β::AbstractMatrix, Λ::AbstractMatrix, σ_res::AbstractVector)
+    D = Diagonal(σ_res .^ 2)
+    return coevo_marginal_cov(prob, Q_cond, β, Λ, D)
 end
 
 # ---------------------------------------------------------------------------
@@ -293,6 +345,100 @@ function fit_coevolution(prob::CoevoProblem, Q_cond::SparseMatrixCSC;
             converged = Optim.converged(res),
             iterations = Optim.iterations(res),
             θ = θ̂)
+end
+
+coevo_q2_residual_theta_len(prob::CoevoProblem) =
+    prob.k * 2 + lc_len(2) + 3
+
+function coevo_q2_residual_unpack(prob::CoevoProblem, θ::AbstractVector{T}) where {T}
+    prob.q == 2 || error("q2 residual-correlation route requires q = 2")
+    k = prob.k
+    nβ = 2k
+    β = reshape(θ[1:nβ], k, 2)
+    lc = θ[(nβ + 1):(nβ + lc_len(2))]
+    logσ1 = θ[nβ + lc_len(2) + 1]
+    logσ2 = θ[nβ + lc_len(2) + 2]
+    ηρ = θ[nβ + lc_len(2) + 3]
+    σ1 = exp(logσ1)
+    σ2 = exp(logσ2)
+    ρ = RHO_GUARD * tanh(ηρ)
+    D = Matrix(Symmetric([
+        σ1^2      ρ * σ1 * σ2
+        ρ * σ1 * σ2  σ2^2
+    ]))
+    return β, lc_to_cov(lc, 2), D, [σ1, σ2], ρ
+end
+
+function coevo_q2_residual_pack(β::AbstractMatrix, Λ::AbstractMatrix,
+                                σ_res::AbstractVector, rho12::Real)
+    length(σ_res) == 2 || error("q2 residual pack requires two residual SDs")
+    ρ = clamp(Float64(rho12), -0.95, 0.95)
+    ηρ = atanh(ρ / RHO_GUARD)
+    return vcat(vec(Float64.(β)), cov_to_lc(Λ), log.(Float64.(σ_res)), ηρ)
+end
+
+"""
+    fit_coevolution_q2_residual(prob, Q_cond; ...) -> NamedTuple
+
+Fit the q=2 phylogenetic coevolution model with a bivariate residual covariance.
+This is the same target as drmTMB's bivariate Gaussian q2 location route:
+two phylogenetic random-effect axes (`mu1`, `mu2`) plus residual `rho12`.
+It is ML-only and complete-response only at the caller level.
+"""
+function fit_coevolution_q2_residual(prob::CoevoProblem, Q_cond::SparseMatrixCSC;
+                                     β0 = nothing, Λ0 = nothing,
+                                     σ0 = nothing, rho0 = 0.0,
+                                     g_tol::Float64 = 1e-6,
+                                     iterations::Int = 1000,
+                                     fd_h::Float64 = 1e-6)
+    prob.q == 2 || throw(ArgumentError("fit_coevolution_q2_residual requires q = 2"))
+    if β0 === nothing
+        β0 = prob.X \ prob.Y
+    end
+    if Λ0 === nothing
+        Λ0 = Matrix(0.2 * I(2))
+    end
+    if σ0 === nothing
+        resid = prob.Y .- prob.X * β0
+        σ0 = [std(resid[:, 1]) + eps(), std(resid[:, 2]) + eps()]
+    end
+    θ0 = coevo_q2_residual_pack(β0, Matrix(Λ0), σ0, rho0)
+    n = length(prob.leaf_node)
+
+    function negℓ(θ)
+        local β, Λ, D
+        try
+            β, Λ, D, _, _ = coevo_q2_residual_unpack(prob, Vector{Float64}(θ))
+        catch
+            return Inf
+        end
+        ℓ, = coevo_marginal_cov(prob, Q_cond, β, Λ, D)
+        return isfinite(ℓ) ? -ℓ / n : Inf
+    end
+
+    function g!(G, θ)
+        @inbounds for k in eachindex(θ)
+            tp = copy(θ); tp[k] += fd_h
+            tm = copy(θ); tm[k] -= fd_h
+            fp = negℓ(tp); fm = negℓ(tm)
+            G[k] = (isfinite(fp) && isfinite(fm)) ? (fp - fm) / (2fd_h) : 0.0
+        end
+        return G
+    end
+
+    res = Optim.optimize(negℓ, g!, θ0,
+                         Optim.LBFGS(linesearch = Optim.LineSearches.MoreThuente()),
+                         Optim.Options(g_tol = g_tol, iterations = iterations,
+                                       f_reltol = 1e-10, successive_f_tol = 2))
+    θ̂ = Optim.minimizer(res)
+    β̂, Λ̂, D̂, σ̂, ρ̂ = coevo_q2_residual_unpack(prob, θ̂)
+    ℓ, û, _, _ = coevo_marginal_cov(prob, Q_cond, β̂, Λ̂, D̂)
+    return (; β = β̂, Λ = Λ̂, residual_cov = D̂, σ_res = σ̂, rho12 = ρ̂,
+            loglik = ℓ,
+            converged = Optim.converged(res),
+            iterations = Optim.iterations(res),
+            θ = θ̂,
+            u_hat = û)
 end
 
 # ---------------------------------------------------------------------------

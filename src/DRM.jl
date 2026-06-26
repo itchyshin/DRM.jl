@@ -112,7 +112,9 @@ export AugProblem, make_problem,
        augmented_tree_precision, sigma_phy_dense, takahashi_selinv,
        fit_phylo_interaction, phylo_interaction_nll, phylo_correlation,
        # general-q coevolution block (#188)
-       CoevoProblem, make_coevo_problem, coevo_marginal, fit_coevolution,
+       CoevoProblem, make_coevo_problem, make_coevo_problem_from_precision,
+       make_coevo_problem_from_covariance, coevo_marginal, coevo_marginal_cov,
+       fit_coevolution, fit_coevolution_q2_residual,
        simulate_coevolution, coevo_pack, coevo_unpack, coevo_theta_len,
        lc_to_cov, cov_to_lc, lc_len
 

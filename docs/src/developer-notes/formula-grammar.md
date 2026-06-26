@@ -108,6 +108,43 @@ parameter's own name (`sigma1 ~ …`, `rho12 ~ …`); only the right-hand side i
 used. Group-level correlations (phylo / spatial / study) are *named covariance
 summaries*, not this residual `rho12`.
 
+### Structured bivariate Gaussian cells
+
+Two structured bivariate Gaussian routes are recognised by the current Julia
+front end.
+
+The q=2 route puts matching structured random intercepts on `mu1` and `mu2`:
+
+```julia
+bf(mu1 = @formula(y1 ~ x + phylo(1 | species)),
+   mu2 = @formula(y2 ~ x + phylo(1 | species)),
+   sigma1 = @formula(sigma1 ~ 1),
+   sigma2 = @formula(sigma2 ~ 1),
+   rho12 = @formula(rho12 ~ 1))
+```
+
+This q=2 cell is exact-Gaussian ML only. The two mean formulas must use the
+same fixed-effect design and the same grouping variable. `sigma1`, `sigma2`,
+and `rho12` are intercept-only in this route. Complete responses are required.
+The formula route currently accepts matching `phylo`, `relmat`, or `animal`
+markers. The spatial q=2 evidence is a fixed-covariance direct fixture; it is
+not a range-estimating spatial formula route.
+
+The q=4 route is the phylogenetic location-scale cell with matching
+`phylo(1 | group)` markers on all four axes:
+
+```julia
+bf(mu1 = @formula(y1 ~ x + phylo(1 | species)),
+   mu2 = @formula(y2 ~ x + phylo(1 | species)),
+   sigma1 = @formula(sigma1 ~ phylo(1 | species)),
+   sigma2 = @formula(sigma2 ~ phylo(1 | species)),
+   rho12 = @formula(rho12 ~ 1))
+```
+
+Direct q2/q4 export payloads are point-fit evidence only. They do not promote
+broad R-via-Julia bridge support, q2/q4 REML, AI-REML, interval reliability, or
+coverage.
+
 ## Reserved-syntax rejections
 
 To catch the mistakes drmTMB catches, `bf` rejects the following with clear,

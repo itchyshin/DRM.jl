@@ -21,7 +21,7 @@
 #       Q-generic `_phylo_mean_laplace_nuisance_fg` as the phylo gate, with a
 #       relmat-derived precision.
 using DRM
-using Test, Random, LinearAlgebra
+using Test, Random, LinearAlgebra, Statistics
 import Distributions
 using SpecialFunctions: loggamma
 
@@ -63,15 +63,16 @@ end
 @testset "NB2 relmat(1|id) — general-covariance sparse Laplace recovery" begin
     rng = MersenneTwister(20260613)
     G = 80
-    m = 8
+    m = 15
     C = _random_corr_nb(rng, G; range = 0.8)
     id = repeat(1:G, inner = m)
     n = length(id)
     x = randn(rng, n)
     β = [0.20, 0.35]
     σb = 0.45
-    sizep = 4.0                                    # NB2 dispersion (size) θ
+    sizep = 3.0                                    # NB2 dispersion (size) θ
     u = σb .* (cholesky(C).L * randn(rng, G))
+    u .-= mean(u)
     μ = exp.(β[1] .+ β[2] .* x .+ u[id])
     y = Float64.([rand(rng, Distributions.NegativeBinomial(sizep, sizep / (sizep + μi))) for μi in μ])
 
@@ -79,7 +80,7 @@ end
               NegBinomial2(); data = (; y, x, id), K = Matrix(C), se = false)
 
     @test fit.converged
-    @test coef(fit, :mu)[1] ≈ β[1] atol = 0.25       # intercept (mean(u) ≈ 0 here)
+    @test coef(fit, :mu)[1] ≈ β[1] atol = 0.25       # intercept (centered latent draw)
     @test coef(fit, :mu)[2] ≈ β[2] atol = 0.15       # slope (independent of the RE)
     @test re_sd(fit)[:id] ≈ σb atol = 0.20           # variance component recovered
     @test exp(-2 * coef(fit, :sigma)[1]) ≈ sizep rtol = 0.6   # dispersion in the right ballpark

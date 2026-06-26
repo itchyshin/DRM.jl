@@ -287,7 +287,7 @@ marker they fit the residual `rho12` model, and with shared `phylo(1 | group)`
 markers on `mu1`, `mu2`, `sigma1`, and `sigma2` they route to the verified q=4
 phylogenetic engine.
 """
-function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false)
+function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false, phylo_coupled::Bool = false)
     algorithm in (:auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs) ||
         throw(ArgumentError("drm: `algorithm` must be one of :auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs (got :$algorithm)"))
     method in (:ML, :REML) ||
@@ -368,6 +368,8 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             mu_grp === sigma_grp ||
                 error("drm (Gaussian): σ-phylo and μ-phylo must share the same grouping factor " *
                       "(got :$(mu_grp) vs :$(sigma_grp)); cross-grouping σ-phylo is planned for a later slice")
+            reml && phylo_coupled &&
+                error("drm (Gaussian): phylo_coupled=true is ML-only; coupled mean-sigma phylo REML is not implemented")
             # `structured` only captures the FIRST structured mean marker; guard against a
             # SECOND being silently dropped (e.g. mu ~ phylo(1|g) + animal(1|g) with σ-phylo).
             length(all_structured) == 1 ||
@@ -379,13 +381,15 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                       "random effects beyond the phylo structured intercept on each axis")
             fit = _fit_gaussian_locscale_phylo(fam, y, Xμ, Xσ, gidx_sigma, G_sigma, Q_sigma,
                                                nmμ, nmσ, String(sigma_grp);
-                                               coupled = false, asymmetric = false,
+                                               coupled = phylo_coupled, asymmetric = false,
                                                se = true, profile_ci = profile_ci,
                                                reml = reml, g_tol = g_tol)
             return _withformula(fit, f)
         end
 
         # Asymmetric path: σ-phylo only, mean is fixed-effects.
+        phylo_coupled &&
+            error("drm (Gaussian): phylo_coupled=true requires matching phylo(1 | g) terms on mu and sigma")
         (isempty(re) && isempty(sigma_re) && metav === nothing) ||
             error("drm (Gaussian): the asymmetric σ-phylo route requires no additional " *
                   "random effects on the mean axis")
@@ -396,6 +400,8 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                                            reml = reml, g_tol = g_tol)
         return _withformula(fit, f)
     end
+    phylo_coupled &&
+        throw(ArgumentError("drm: `phylo_coupled` is an internal bridge option for Gaussian mu+sigma phylo ML fits"))
     if method === :REML
         # REML (opt-in, experimental) is implemented only for the fixed-effect
         # univariate Gaussian location–scale cell in this slice (the standard

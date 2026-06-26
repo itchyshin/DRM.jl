@@ -141,6 +141,21 @@ residual correlation ρ12. This is the verified core engine (`src/sparse_phy.jl`
 | Default `q4_vcov=true` path → finite vcov, Wald SEs for the fixed effects | `src/gaussian_bivariate.jl` | **Tested** — `test/test_gaussian_bivariate_phylo.jl` (B2 testset) |
 | **Labelled coevolution-correlation accessor with CIs** (ρ_a between axes, with intervals) | — | **Absent** — `Σ_a` is stored and surfaced, but there is no dedicated derived-correlation-with-CI accessor for the q=4 group-level covariance |
 
+## Structured q=2 bivariate Gaussian (mu1/mu2 only)
+
+This is a complete-response exact-Gaussian ML point-fit cell for matching
+structured random intercepts on `mu1` and `mu2`. It requires the same fixed-effect
+design on both mean formulas and intercept-only `sigma1`, `sigma2`, and `rho12`
+formulas. The payloads are point/export evidence only; they do not promote q2
+REML, interval reliability, interval coverage, non-Gaussian q2, or broad R bridge
+support.
+
+| Capability | Source | Status |
+|---|---|---|
+| `phylo(1\|species)` on `mu1` and `mu2`, with residual `rho12` | `src/gaussian_bivariate.jl`, `src/coevolution_q.jl` | **Tested** — `test/test_bridge_q2_direct_export.jl` (native `drm`, direct export, and bridge marshalling fixture) |
+| `relmat(1\|id)` and `animal(1\|id)` on `mu1` and `mu2`, using known `K` / `A` | `src/gaussian_bivariate.jl`, `src/coevolution_q.jl` | **Tested** — `test/test_bridge_q2_direct_export.jl` |
+| Fixed-covariance spatial q2 fixture | `src/coevolution_q.jl`, `src/bridge.jl` | **Tested as direct fixture evidence only** — `test/test_bridge_q2_direct_export.jl`; the range-estimating `spatial(...)` formula route is rejected |
+
 ## Bivariate Gaussian (residual correlation, no phylo)
 
 | Capability | Source | Status |
@@ -209,7 +224,8 @@ A marshalling-friendly boundary for `drmTMB(..., engine = "julia")`
 
 | Capability | Source | Status |
 |---|---|---|
-| `drm_bridge` (string/dict/named-tuple formula → fit → flattened `Dict`); univariate, bivariate, and phylo-mean | `src/bridge.jl:25` | **Tested** — `test/test_bridge.jl` (asserts bridge output equals native `drm` output) |
+| `drm_bridge` (string/dict/named-tuple formula → fit → flattened `Dict`); univariate, bivariate, phylo-mean, and narrow q2 structured Gaussian fixtures | `src/bridge.jl:25` | **Tested** — `test/test_bridge.jl` and `test/test_bridge_q2_direct_export.jl` (assert bridge output equals native `drm` output for the admitted fixture cells) |
+| q2/q4 direct point-export payloads (`q2_point_export`, `q4_point_export`) | `src/bridge.jl` | **Tested** — `test/test_bridge_q2_direct_export.jl`, `test/test_bridge_q4_direct_export.jl`; point/export evidence only, not broad bridge or interval coverage evidence |
 | `drm_bridge_inference` (profile + bootstrap), **limited to the Gaussian phylo SD block** (`param=:resd`) | `src/bridge.jl:47` | **Tested** — `test/test_bridge.jl` |
 | Newick tree string parsing + small LRU cache | `src/bridge.jl:127` | **Tested** — `test/test_bridge.jl` |
 | Full R-side glue / `engine="julia"` round-trip in drmTMB | (R repo) | **Absent here** — the Julia primitive is tested; the R package glue lives in the drmTMB repo and is out of scope for this audit |

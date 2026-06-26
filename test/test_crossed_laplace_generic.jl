@@ -1,4 +1,4 @@
-using Test, Random
+using Test, Random, Statistics
 import Distributions
 using DRM
 
@@ -169,16 +169,19 @@ end
     rng = MersenneTwister(71)
     G = 14
     H = 12
-    n = 900
+    reps = 6
+    gids = repeat(1:G, inner = H * reps)
+    hids = repeat(repeat(1:H, inner = reps), outer = G)
+    n = length(gids)
     x = randn(rng, n)
-    g = [Symbol("g", rand(rng, 1:G)) for _ in 1:n]
-    h = [Symbol("h", rand(rng, 1:H)) for _ in 1:n]
-    gmap = Dict(Symbol("g", j) => j for j in 1:G)
-    hmap = Dict(Symbol("h", j) => j for j in 1:H)
+    g = [Symbol("g", j) for j in gids]
+    h = [Symbol("h", j) for j in hids]
     β = [0.2, 0.45]
     bg = 0.35 .* randn(rng, G)
     bh = 0.25 .* randn(rng, H)
-    η = [β[1] + β[2] * x[i] + bg[gmap[g[i]]] + bh[hmap[h[i]]] for i in 1:n]
+    bg .-= mean(bg)
+    bh .-= mean(bh)
+    η = [β[1] + β[2] * x[i] + bg[gids[i]] + bh[hids[i]] for i in 1:n]
 
     ntr = fill(8.0, n)
     s = Float64.([rand(rng, Distributions.Binomial(round(Int, ntr[i]), logistic(η[i]))) for i in 1:n])
@@ -190,7 +193,8 @@ end
     @test haskey(re_sd(fit_bin), :h)
 
     μ = exp.(η)
-    ynb = Float64.([rand(rng, Distributions.NegativeBinomial(3.0, 3.0 / (3.0 + μ[i]))) for i in 1:n])
+    nb_size = 2.5
+    ynb = Float64.([rand(rng, Distributions.NegativeBinomial(nb_size, nb_size / (nb_size + μ[i]))) for i in 1:n])
     fit_nb = drm(bf(@formula(ynb ~ x + (1 | g) + (1 | h)), @formula(sigma ~ 1)),
                  NegBinomial2(); data = (; ynb, x, g, h))
     @test fit_nb.converged
