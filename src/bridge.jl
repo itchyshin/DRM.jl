@@ -69,6 +69,49 @@ function drm_bridge_q2_phylo(; Y, X, species, tree, options = Dict{String,Any}()
 end
 
 """
+    drm_bridge_q2_known_precision(; Y, X, group, Q, options = Dict())
+
+Private diagnostic boundary for a restricted q2 known-precision relmat payload.
+This consumes `Q` as a precision matrix directly through
+`make_coevo_problem_from_precision`; it does not invert or relabel `Q` as a
+covariance matrix, and it does not imply formula, slope, REML, or interval
+support.
+"""
+function drm_bridge_q2_known_precision(; Y, X, group, Q,
+        options = Dict{String,Any}())
+    y = Matrix{Float64}(Y)
+    x = Matrix{Float64}(X)
+    g = Int.(vec(group))
+    qmat = Matrix{Float64}(Q)
+    size(y, 2) == 2 ||
+        throw(ArgumentError("drm_bridge_q2_known_precision: `Y` must have exactly two columns"))
+    size(x, 1) == size(y, 1) ||
+        throw(ArgumentError("drm_bridge_q2_known_precision: `X` and `Y` must have the same number of rows"))
+    length(g) == size(y, 1) ||
+        throw(ArgumentError("drm_bridge_q2_known_precision: `group` length must match the number of rows in `Y`"))
+    opts = _bridge_options(options)
+    prob, Q_cond = make_coevo_problem_from_precision(qmat, y, x; group = g)
+    fit = fit_coevolution_q2_residual(
+        prob,
+        Q_cond;
+        iterations = Int(get(opts, :iterations, 180)),
+        g_tol = Float64(get(opts, :g_tol, 1e-4)),
+        fd_h = Float64(get(opts, :fd_h, 1e-6)),
+    )
+    out = _bridge_q2_point_export(
+        fit;
+        family = "biv_gaussian",
+        structured_type = "relmat",
+    )
+    out["input_scale"] = "precision"
+    out["precision_source"] = "Q"
+    out["precision_matrix"] = qmat
+    out["claim_boundary"] =
+        "Direct q2 relmat known-precision point export only for complete-response exact-Gaussian ML fixtures; `Q` is consumed as a precision matrix without implicit Q-to-K conversion. No R-via-Julia formula support, structured slope support, broad q2 bridge support, q2 REML, q4, AI-REML, interval reliability, or interval coverage is promoted."
+    return out
+end
+
+"""
     drm_bridge_inference(; formula, family, data, tree = nothing,
                          options = Dict(), method = "profile",
                          level = 0.95, B = 199, seed = nothing,

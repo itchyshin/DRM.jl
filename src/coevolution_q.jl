@@ -406,13 +406,13 @@ function fit_coevolution_q2_residual(prob::CoevoProblem, Q_cond::SparseMatrixCSC
     n = length(prob.leaf_node)
 
     function negℓ(θ)
-        local β, Λ, D
+        local β, Λ, D, ℓ
         try
             β, Λ, D, _, _ = coevo_q2_residual_unpack(prob, Vector{Float64}(θ))
+            ℓ, = coevo_marginal_cov(prob, Q_cond, β, Λ, D)
         catch
             return Inf
         end
-        ℓ, = coevo_marginal_cov(prob, Q_cond, β, Λ, D)
         return isfinite(ℓ) ? -ℓ / n : Inf
     end
 
