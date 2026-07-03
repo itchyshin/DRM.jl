@@ -369,6 +369,66 @@ end
     @test isempty(DRM._bridge_q2_point_export(non_q2))
 end
 
+@testset "private q2 known-precision bridge consumes Q directly" begin
+    rng = MersenneTwister(20260628)
+    G = 10
+    idx = collect(1:G)
+    K = [0.50 ^ abs(i - j) for i in idx, j in idx] + 1e-6I
+    Q = Matrix(inv(cholesky(Symmetric(K))))
+    β = [0.18 -0.11; 0.16 0.09]
+    Λ = Matrix(Symmetric([0.18 0.04; 0.04 0.14]))
+    residual_cov = Matrix(Symmetric([0.09 0.020; 0.020 0.12]))
+    sim = _q2_known_cov_fixture(K, β, Λ, residual_cov; nrep = 2, rng = rng)
+
+    prob, Q_cond = DRM.make_coevo_problem_from_precision(
+        Q,
+        sim.Y,
+        sim.X;
+        group = sim.group,
+    )
+    direct = DRM.fit_coevolution_q2_residual(
+        prob,
+        Q_cond;
+        iterations = 120,
+        g_tol = 2e-4,
+    )
+    out = DRM.drm_bridge_q2_known_precision(;
+        Y = sim.Y,
+        X = sim.X,
+        group = sim.group,
+        Q = Q,
+        options = Dict("iterations" => 120, "g_tol" => 2e-4),
+    )
+
+    @test out["target"] == "gaussian_q2_mu1_mu2_relmat_residual_correlation"
+    @test out["structured_type"] == "relmat"
+    @test out["input_scale"] == "precision"
+    @test out["precision_source"] == "Q"
+    @test out["precision_matrix"] ≈ Q
+    @test out["sigma_a_source"] == "fit_coevolution_q2_residual.Λ"
+    @test out["sigma_a"] ≈ direct.Λ
+    @test out["residual_sd"]["mu1"] ≈ direct.σ_res[1]
+    @test out["residual_sd"]["mu2"] ≈ direct.σ_res[2]
+    @test out["residual_correlation"] ≈ direct.rho12
+    @test out["loglik"] ≈ direct.loglik
+    @test occursin("without implicit Q-to-K conversion", out["claim_boundary"])
+    @test occursin("No R-via-Julia formula support", out["claim_boundary"])
+    @test occursin("structured slope support", out["claim_boundary"])
+
+    @test_throws ArgumentError DRM.drm_bridge_q2_known_precision(;
+        Y = sim.Y[:, 1:1],
+        X = sim.X,
+        group = sim.group,
+        Q = Q,
+    )
+    @test_throws ErrorException DRM.drm_bridge_q2_known_precision(;
+        Y = sim.Y,
+        X = sim.X,
+        group = sim.group,
+        Q = [1.0 2.0; 2.0 1.0],
+    )
+end
+
 @testset "private q2 phylo bridge primitive returns restricted point export" begin
     rng = MersenneTwister(20260624)
     phy = DRM.random_balanced_tree(16; branch_length = 0.2)
