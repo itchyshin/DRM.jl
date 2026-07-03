@@ -168,6 +168,7 @@ include("test_missing_listwise.jl")
 # contract + cross-consistency) and the bivariate bf() meta_V/relmat/animal
 # constructor guard rails.
 include("test_coverage_engine.jl")
+include("test_q4_objective_diagnostic.jl")
 include("test_bridge_formula_translation.jl")
 # Bridge inference for the bivariate q4 σ-phylo fit: among-axis SD CIs via bootstrap
 # (multi-row payload) + the profile→bootstrap redirect (Ayumi #2 uncertainty-via-R).
