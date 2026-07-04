@@ -1,10 +1,12 @@
 # eta-clamp twin-parity guard (#324). drmTMB does NOT clamp the mean predictor
-# and soft-clamps only the log-scale (identity in [-12,12], tanh to [-15,15]).
-# DRM.jl previously HARD-clamped the mean and scale predictors in the NB2, Gamma
-# and Beta density paths, so the two twins' likelihood surfaces (loglik AND
-# gradient) diverged at extreme eta: beyond the hard bound the gradient was a flat
-# zero, which drmTMB never produces. The fix ports drmTMB's `drm_softclamp_log_sigma`
-# as `DRM._softclamp`: EXACTLY the identity inside the band, C1-smooth beyond.
+# and soft-clamps only the log-scale (identity, then a smooth tanh tail). DRM.jl
+# previously HARD-clamped the mean and scale predictors in the NB2, Gamma and Beta
+# density paths, so the two twins' likelihood surfaces (loglik AND gradient)
+# diverged at extreme eta: beyond the hard bound the gradient was a flat zero,
+# which drmTMB never produces. The fix replaces those hard clamps with
+# `DRM._softclamp`, identity across each family's original hard band (so no
+# legitimate fit is distorted — including a near-Poisson NB2 whose dispersion
+# eta_sigma sits near the old boundary) and C1-smooth beyond.
 using DRM
 using Test, Random, ForwardDiff
 import Distributions
@@ -48,7 +50,7 @@ _logistic_test(η) = 1 / (1 + exp(-η))
         r = exp(-2 * 0.0); y = 5
         nb_none(b) = -Distributions.logpdf(Distributions.NegativeBinomial(r, r / (r + exp(b))), y)
         nb_hard(b) = -Distributions.logpdf(Distributions.NegativeBinomial(r, r / (r + exp(clamp(b, -20.0, 20.0)))), y)
-        nb_soft(b) = -Distributions.logpdf(Distributions.NegativeBinomial(r, r / (r + exp(sc(b, -17.0, 17.0, 3.0)))), y)
+        nb_soft(b) = -Distributions.logpdf(Distributions.NegativeBinomial(r, r / (r + exp(sc(b, -20.0, 20.0, 3.0)))), y)
         b = 25.0
         gnone = ForwardDiff.derivative(nb_none, b)
         ghard = ForwardDiff.derivative(nb_hard, b)
@@ -91,5 +93,30 @@ _logistic_test(η) = 1 / (1 + exp(-η))
         @test coef(fb, :mu)[1] ≈ 0.1 atol = 0.15
         @test coef(fb, :mu)[2] ≈ 0.6 atol = 0.15
         @test isfinite(loglik(fb))
+    end
+
+    @testset "near-Poisson NB2 with boundary dispersion fits (regression, #324 CI)" begin
+        # Exact dataset from test_bootstrap_nongaussian.jl:47 (same threaded rng
+        # sequence). Its ML dispersion runs to eta_sigma ≈ -14.6 (near-Poisson). A
+        # scale band tighter than the original hard [-20,20] (e.g. drmTMB's Gaussian
+        # [-12,12]) would saturate that direction, flatten the sigma-axis curvature,
+        # and make the Hessian inversion throw SingularException on the Linux/x86
+        # BLAS path (green on macOS/arm64). Keeping the identity band at the original
+        # [-20,20] leaves this fit undistorted and invertible on both paths.
+        rng = MersenneTwister(20260804)
+        n = 180
+        x = randn(rng, n)
+        ntr = fill(8, n)
+        p = @. 1 / (1 + exp(-(0.2 + 0.7x)))
+        # advance the rng exactly as the source testset does before the NB2 draw
+        _ = Float64[rand(rng, Distributions.Binomial(ntr[i], p[i])) for i in 1:n]
+        _ = Float64[rand(rng, Distributions.BetaBinomial(ntr[i], p[i] * 12.0, (1 - p[i]) * 12.0)) for i in 1:n]
+        μ = exp.(0.3 .+ 0.4 .* x)
+        ynb = Float64[rand(rng, Distributions.NegativeBinomial(4.0, 4.0 / (4.0 + μ[i]))) for i in 1:n]
+        local fit_nb
+        @test (fit_nb = drm(bf(@formula(ynb ~ x), @formula(sigma ~ 1)), NegBinomial2();
+                            data = (; ynb, x)); true)   # must not throw (was SingularException)
+        @test all(isfinite, fit_nb.vcov)
+        @test all(isfinite, coef(fit_nb, :mu))
     end
 end
