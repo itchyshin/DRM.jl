@@ -56,10 +56,11 @@ function _poisson_laplace_mode(y, η0, Z, compid, logσ; b0 = nothing,
         η = clamp.(η0 .+ Z * b, -30.0, 30.0)
         μ = exp.(η)
         grad = Vector(Z' * (μ .- y)) .+ Pdiag .* b
-        H = Matrix(Z' * (spdiagm(0 => μ) * Z))
-        @inbounds for j in 1:q
-            H[j, j] += Pdiag[j]
-        end
+        # Keep H sparse so the factor is a CHOLMOD.Factor and the K-component
+        # gradient can use the O(nnz) Takahashi selected inverse (#326) instead of
+        # a dense q×q inverse. H = Z'diag(μ)Z + diag(Pdiag) is sparse for crossed
+        # random intercepts (each row of Z has one nonzero per component).
+        H = Z' * (spdiagm(0 => μ) * Z) + spdiagm(0 => Pdiag)
         ch = cholesky(Symmetric(H); check = false)
         issuccess(ch) || return b, ch, iters, false
         step = ch \ grad
@@ -1707,6 +1708,19 @@ function _fit_poisson_crossed_laplace(fam::Poisson, y, Xμ, comps, nmμ, g_tol; 
     labels = [c[4] for c in comps]
     lf = [_logfactorial(round(Int, yi)) for yi in y]
 
+    # Per-observation loaded RE columns: obscol[i,k] = column of Z that
+    # observation i loads for component k (offs[k] + gidx_k[i]). Used to read the
+    # selected-inverse entries zᵢ' H⁻¹ zᵢ = Σ_{k,l} S[obscol[i,k], obscol[i,l]]
+    # from the O(nnz) Takahashi selected inverse (#326) instead of a dense Hinv.
+    offs = cumsum([0; Gks])
+    obscol = Matrix{Int}(undef, n, K)
+    @inbounds for k in 1:K
+        gidx_k = comps[k][2]
+        for i in 1:n
+            obscol[i, k] = offs[k] + gidx_k[i]
+        end
+    end
+
     last_b = zeros(size(Z, 2))
     last_iters = Ref(0)
     function eval_laplace(θ; grad::Bool = false)
@@ -1743,10 +1757,29 @@ function _fit_poisson_crossed_laplace(fam::Poisson, y, Xμ, comps, nmμ, g_tol; 
         # explicit part (b̂ held fixed) plus an implicit part through db̂/dθ:
         #   dL/dθ = ∂L/∂θ + (∂[½ logdet H]/∂b)·db̂/dθ,
         #   db̂/dθ = −H⁻¹ (∂²f/∂b∂θ).
-        Hinv = ch \ Matrix{Float64}(I, size(Z, 2), size(Z, 2))
-        ZH = Z * Hinv
-        lever = vec(sum(ZH .* Z, dims = 2))              # zᵢ' H⁻¹ zᵢ  (exact)
-        hd = diag(Hinv)
+        # O(nnz) selected-inverse spine (#326): read hd = diag(H⁻¹) and the
+        # per-observation lever zᵢ' H⁻¹ zᵢ from the Takahashi selected inverse
+        # rather than materialising a dense q×q H⁻¹. Every co-occurring column
+        # pair S[obscol[i,k], obscol[i,l]] is inside the selected-inverse pattern
+        # (those columns interact in H), so the lever is EXACT. Falls back to the
+        # dense inverse only if the factor is not a sparse CHOLMOD factor.
+        if ch isa SparseArrays.CHOLMOD.Factor
+            S = takahashi_selinv(ch)
+            hd = diag(S)
+            lever = Vector{Float64}(undef, n)
+            @inbounds for i in 1:n
+                acc = 0.0
+                for k in 1:K, l in 1:K
+                    acc += S[obscol[i, k], obscol[i, l]]
+                end
+                lever[i] = acc
+            end
+        else
+            Hinv = ch \ Matrix{Float64}(I, size(Z, 2), size(Z, 2))
+            ZH = Z * Hinv
+            lever = vec(sum(ZH .* Z, dims = 2))          # zᵢ' H⁻¹ zᵢ  (exact)
+            hd = diag(Hinv)
+        end
 
         # Explicit part (b̂ frozen): data score + ½ tr(H⁻¹ ∂H/∂θ).
         gβ = Vector(Xμ' * (μ .- y .+ 0.5 .* μ .* lever))
@@ -1763,7 +1796,7 @@ function _fit_poisson_crossed_laplace(fam::Poisson, y, Xμ, comps, nmμ, g_tol; 
         # implicit = H⁻¹ tlogdet, contracted against the mixed second
         # derivatives ∂²f/∂b∂β = Z'diag(μ)X and ∂²f/∂b∂logσ_k = −2 invvar b.
         tlogdet = Vector(Z' * (μ .* lever))
-        implicit = Hinv * tlogdet
+        implicit = ch \ tlogdet                          # H⁻¹ tlogdet via the factor (O(nnz))
         crossβ = Matrix(Z' * (μ .* Xμ))                  # q × pμ
         @inbounds for k in 1:pμ
             gβ[k] -= 0.5 * dot(@view(crossβ[:, k]), implicit)

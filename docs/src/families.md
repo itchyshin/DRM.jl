@@ -140,8 +140,11 @@ Random.seed!(7)
 μnb = exp.(0.4 .+ 0.5 .* x)
 ynb = Float64.([rand(Distributions.NegativeBinomial(θnb, θnb / (θnb + μi))) for μi in μnb])
 fitnb = drm(bf(@formula(y ~ x), @formula(sigma ~ 1)), NegBinomial2(); data = (; y = ynb, x))
-exp(coef(fitnb, :sigma)[1])      # estimated dispersion θ ≈ 2.5
+exp(-2 * coef(fitnb, :sigma)[1])      # estimated dispersion θ = 1/σ² ≈ 2.5
 ```
+
+The `sigma` coefficient is on the log-`σ` scale, and the NB2 dispersion is
+`θ = 1/σ² = exp(-2·coef(:sigma))` (not `exp(coef(:sigma))`).
 
 `TruncatedNegBinomial2()` is the same family conditioned on `y ≥ 1`, for counts
 that are positive by construction (litter sizes, group sizes given presence).

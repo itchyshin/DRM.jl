@@ -14,10 +14,16 @@
 #   • R is built from a lower-triangular spherical/LKJ correlation-Cholesky C:
 #     row i is a UNIT vector in ℝ^i parameterized by (i-1) angles in (0,π) via
 #     tanh → angle, so R = C Cᵀ is ALWAYS PD with an EXACT unit diagonal over
-#     ALL of ℝ⁶. (For 2×2 this reduces to z = atanh ρ, the verified q2 case.)
+#     ALL of ℝ⁶. NOTE: this is an LKJ/spherical angle map, NOT the Fisher-z link.
+#     For the 2×2 case the single angle is α = π·(tanh θ + 1)/2 and C[2,1]=cos α,
+#     so ρ = R[2,1] = cos(π·(tanh θ + 1)/2) — distinct from the q2 Fisher-z
+#     bijection ρ = tanh(θ). Only the PD/interior property carries over from the
+#     verified q2 path; the specific link (and hence the θ→ρ back-transform)
+#     differs, so a fitted θ_R must be inverted with ρ = cos(π·(tanh θ_R + 1)/2).
 #
-# This is the 4×4 generalization of the q2 Fisher-z bijection (verified in ML and
-# REML, /tmp/drm-validation/fisherz_*). Its value is CONDITIONING / ROBUSTNESS at
+# This is the 4×4 spherical/LKJ analogue of the q2 correlation reparameterisation
+# (verified in ML and REML, /tmp/drm-validation/fisherz_*). Its value is
+# CONDITIONING / ROBUSTNESS at
 # the σ-collapse boundary (one axis SD → 0), NOT manufacturing signal: the native
 # log-Cholesky lets a correlation pin at ±1 with an NA/ill-conditioned Hessian as
 # an axis variance collapses; the separation form keeps R interior and PD.

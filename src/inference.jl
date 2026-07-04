@@ -55,8 +55,9 @@ const _ProfileStatsRow = NamedTuple{
         :root_iterations,
         :lower_unbounded,
         :upper_unbounded,
+        :nonmonotone,
     ),
-    Tuple{Symbol,String,Int,Int,Int,Int,Bool,Bool},
+    Tuple{Symbol,String,Int,Int,Int,Int,Bool,Bool,Bool},
 }
 
 function _worker_threads(active::Bool, ntasks::Int)
@@ -86,7 +87,11 @@ Confidence intervals for every coefficient, as a vector of
   from the previous point's optimum) and a guarded-Newton root-find driven by the
   envelope-theorem slope `∂nll/∂θ_k`, falling back to bisection — bracket-
   guaranteed correctness, far fewer inner re-optimisations than cold-started
-  bisection.
+  bisection. Endpoint validity assumes an accurate inner nuisance solve: the
+  `:finite` autodiff path can leave the profiled NLL slightly non-monotone. When
+  that is detected the bracket is reset to `[0, t]` and pure bisection is used so
+  the FIRST (conservative) LR crossing is returned, and a `nonmonotone` flag is
+  set on the profile stats row so callers can see the assumption was violated.
   Pass `threads = true` to profile coefficients in parallel when the fitted
   objective is thread-safe; if only one coefficient is profiled, its lower and
   upper endpoint searches are run in parallel instead. (Threading is not yet used
@@ -303,6 +308,7 @@ function _ls_profile_result(fit::DrmFit; level::Real=0.95, parm=nothing)
                 root_iterations=0,
                 lower_unbounded=!isfinite(ci.lower),
                 upper_unbounded=!isfinite(ci.upper),
+                nonmonotone=false,
             )
         end
     end
@@ -396,6 +402,7 @@ function _loconly_profile_row_result(
         root_iterations=lstats.root_iterations + rstats.root_iterations,
         lower_unbounded=lstats.unbounded,
         upper_unbounded=rstats.unbounded,
+        nonmonotone=lstats.nonmonotone || rstats.nonmonotone,
     )
     return row, stats
 end
@@ -419,11 +426,15 @@ function _loconly_profile_endpoint_result(
     tlo = 0.0
     thi = 0.1
     hhi, _ = heval(thi)
+    hprev = hhi
+    nonmonotone = false
     iters = 0
     while isfinite(hhi) && hhi < 0 && iters < 60
         tlo = thi
         thi *= 1.6
         hhi, _ = heval(thi)
+        isfinite(hhi) && hhi < hprev - 1e-12 && (nonmonotone = true)
+        hprev = hhi
         iters += 1
     end
     if isfinite(hhi) && hhi < 0
@@ -434,9 +445,11 @@ function _loconly_profile_endpoint_result(
             bracket_expansions=iters,
             root_iterations=0,
             unbounded=true,
+            nonmonotone=nonmonotone,
         )
         return value, stats
     end
+    nonmonotone && (tlo = 0.0)   # conservative bracket to the first crossing (see _profile_endpoint_result)
 
     t = (tlo + thi) / 2
     root_iterations = 0
@@ -445,7 +458,7 @@ function _loconly_profile_endpoint_result(
         ht, hp = heval(t)
         abs(ht) < 1e-9 && break
         ht < 0 ? (tlo = t) : (thi = t)
-        tn = (isfinite(hp) && hp > 0) ? t - ht / hp : (tlo + thi) / 2
+        tn = (!nonmonotone && isfinite(hp) && hp > 0) ? t - ht / hp : (tlo + thi) / 2
         t = (tlo < tn < thi) ? tn : (tlo + thi) / 2
         thi - tlo < 1e-8 && break
     end
@@ -456,6 +469,7 @@ function _loconly_profile_endpoint_result(
         bracket_expansions=iters,
         root_iterations=root_iterations,
         unbounded=false,
+        nonmonotone=nonmonotone,
     )
     return value, stats
 end
@@ -632,15 +646,26 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
         end
         return (f - target, hp)
     end
-    # Bracket: expand until h > 0.
+    # Bracket: expand until h > 0. h(t) is assumed increasing (LR profile), but an
+    # inexactly-solved inner nuisance optimisation can make it slightly non-monotone
+    # (dip below `target` then rise). If that happens, `tlo` may have advanced past
+    # the TRUE first crossing, so the guarded root-find below would converge to a
+    # LATER crossing and report an anticonservative (too-tight) endpoint. We track
+    # non-monotonicity and, when detected, reset `tlo = 0` so the root-find brackets
+    # the full [0, thi] span (h(0) = −half < 0, h(thi) > 0) and returns the FIRST
+    # crossing — the conservative endpoint. `nonmonotone` is surfaced in the stats.
     tlo = 0.0
     thi = s
     (hhi, _) = heval(thi)
+    hprev = hhi
+    nonmonotone = false
     iters = 0
     while hhi < 0 && iters < 40
         tlo = thi
         thi *= 1.6
         (hhi, _) = heval(thi)
+        hhi < hprev - 1e-12 && (nonmonotone = true)
+        hprev = hhi
         iters += 1
     end
     if hhi < 0
@@ -651,10 +676,13 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
             bracket_expansions=iters,
             root_iterations=0,
             unbounded=true,
+            nonmonotone=nonmonotone,
         )
         return value, stats
     end
-    # Guarded Newton on [tlo, thi].
+    nonmonotone && (tlo = 0.0)   # conservative: bracket the full span to the first crossing
+    # Guarded Newton on [tlo, thi]; if the profile is non-monotone fall back to pure
+    # bisection (Newton can jump past the first crossing on a noisy slope).
     t = (tlo + thi) / 2
     root_iterations = 0
     for _ in 1:60
@@ -662,7 +690,7 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
         (ht, hp) = heval(t)
         abs(ht) < 1e-9 && break
         ht < 0 ? (tlo = t) : (thi = t)
-        tn = (isfinite(hp) && hp > 0) ? t - ht / hp : (tlo + thi) / 2   # Newton, else bisect
+        tn = (!nonmonotone && isfinite(hp) && hp > 0) ? t - ht / hp : (tlo + thi) / 2   # Newton, else bisect
         t = (tlo < tn < thi) ? tn : (tlo + thi) / 2                     # guard into bracket
         thi - tlo < 1e-8 && break
     end
@@ -673,6 +701,7 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
         bracket_expansions=iters,
         root_iterations=root_iterations,
         unbounded=false,
+        nonmonotone=nonmonotone,
     )
     return value, stats
 end
@@ -716,6 +745,7 @@ function _profile_row_result(
         root_iterations=lstats.root_iterations + rstats.root_iterations,
         lower_unbounded=lstats.unbounded,
         upper_unbounded=rstats.unbounded,
+        nonmonotone=lstats.nonmonotone || rstats.nonmonotone,
     )
     return row, stats
 end

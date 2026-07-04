@@ -42,6 +42,7 @@ include("test_gaussian_bivariate_phylo.jl")
 include("test_missing_response_bivariate.jl")   # #19: per-cell missing on the bivariate q=4 phylo engine
 include("test_missing_response.jl")
 include("test_missing_response_nongaussian.jl")
+include("test_lowbatch_j7.jl")                  # #322–#326 low-severity twin-review fixes
 include("test_sigma_phylo_missing_guard.jl")
 include("test_coevo_accessors.jl")
 # General-q coevolution block (#188): the among-trait covariance Λ generalised

@@ -435,6 +435,12 @@ end
 # block layout of the GHQ baseline so accessors line up.
 function _fit_nb2_ranef_va(fam::NegBinomial2, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
     n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    # Enforce the intercept-only-dispersion assumption the group scoring relies on:
+    # the per-group dispersion is read from the FIRST member's predictor, which is
+    # only correct when ησ is constant across a group (σ ~ 1). A non-intercept Xσ
+    # would silently score every other member under the wrong dispersion (#325).
+    pσ == 1 || error("_fit_nb2_ranef_va supports only sigma ~ 1 " *
+                     "(intercept-only dispersion); got pσ=$(pσ)")
     yint = round.(Int, y)
     members = [Int[] for _ in 1:G]
     for i in 1:n
@@ -581,6 +587,10 @@ end
 # matching the block layout of the GHQ baseline so accessors line up.
 function _fit_gamma_ranef_va(fam::Gamma, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
     n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    # Intercept-only-dispersion guard: the per-group shape is read from the first
+    # member's predictor, valid only when ησ is constant across a group (#325).
+    pσ == 1 || error("_fit_gamma_ranef_va supports only sigma ~ 1 " *
+                     "(intercept-only dispersion); got pσ=$(pσ)")
     ly = log.(y)                                       # b-/θ-free log responses
     members = [Int[] for _ in 1:G]
     for i in 1:n
@@ -723,6 +733,10 @@ end
 # matching the block layout of the GHQ baseline so accessors line up.
 function _fit_beta_ranef_va(fam::Beta, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
     n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    # Intercept-only-precision guard: the per-group precision is read from the first
+    # member's predictor, valid only when ησ is constant across a group (#325).
+    pσ == 1 || error("_fit_beta_ranef_va supports only sigma ~ 1 " *
+                     "(intercept-only dispersion); got pσ=$(pσ)")
     ly = log.(y); l1my = log.(1 .- y)                  # b-/θ-free log responses
     members = [Int[] for _ in 1:G]
     for i in 1:n

@@ -598,6 +598,14 @@ function _fit_fixed_gaussian_missing_response(fam::Gaussian, y, Xμ, Xσ, nmμ, 
         throw(ArgumentError("drm: only $(n_observed) observed Gaussian responses for a model with " *
             "$(size(Xμ, 2) + size(Xσ, 2)) fixed-effect parameters ($(size(Xμ, 2)) mean + " *
             "$(size(Xσ, 2)) scale) — too few to fit. Use `drm_listwise` or supply more complete responses."))
+    # Residual-dof-0 (saturated) guard, mirroring the σ-phylo path: when the
+    # observed count exactly equals the fixed-effect parameter count the mean
+    # interpolates the data, residuals collapse to ~0 and log σ is driven to −∞,
+    # so the returned logLik/SEs are meaningless — warn rather than fit silently.
+    n_observed > size(Xμ, 2) + size(Xσ, 2) ||
+        @warn "drm: $(n_observed) observed Gaussian responses equals the " *
+              "$(size(Xμ, 2) + size(Xσ, 2)) fixed-effect parameters (residual dof 0); the fit is " *
+              "saturated (the mean interpolates the data, log σ → −∞) and inference is unreliable."
 
     # Drop missing/NaN-response rows (observed-rows fit), matching glmmTMB's default
     # na.action — but WARN so it is never silent (the #258 contract; mirrors the
@@ -1603,7 +1611,11 @@ end
     re_sd(fit) -> Dict{Symbol,Float64}
 
 Estimated random-effect (random-intercept) standard deviations, keyed by
-grouping factor.
+grouping factor. A mean-axis random intercept (`y ~ x + (1|g)`) is keyed by the
+bare group name and is on the response scale. A scale-axis random intercept
+(`sigma ~ 1 + (1|g)`) is keyed `<group>_logsigma` because that SD lives on the
+log-σ scale — the two are NOT directly comparable, and the suffix keeps them
+distinct so a side-by-side read is not silently mixing scales.
 """
 function re_sd(fit::DrmFit)
     d = Dict{Symbol,Float64}()

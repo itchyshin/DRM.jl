@@ -405,7 +405,17 @@ function _fit_multi_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, comps, nmμ, nmσ
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+K)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [c[4] for c in comps]]
     means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))
-    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
+    # Report σ from the SAME clamped predictor the likelihood used (the objective
+    # evaluates `clamp.(Xσ*βσ, -30, 30)`), so `sigma(fit)` matches the fitted σ
+    # rather than an unclamped value the model never scored. Warn when any fitted
+    # ησ hits the clamp boundary: there the objective is gradient-flat and the
+    # ForwardDiff Hessian collapses the σ block, so Wald SEs are not trustworthy.
+    ησ̂ = Xσ * θ̂[(pμ+1):(pμ+pσ)]
+    any(abs.(ησ̂) .>= 30.0) &&
+        @warn "multi-RE Gaussian: a fitted σ predictor hit the ±30 log-σ clamp; the " *
+              "objective is flat there, so the reported σ is the clamped value and the " *
+              "scale-coefficient Wald SEs are unreliable."
+    scales = Dict(:sigma => exp.(clamp.(ησ̂, -30.0, 30.0)))
     # Conditional RE estimates (BLUPs) per component. The whitened solve C\ZtDir is
     # in σ-scaled units; the BLUP is b̂ = σ_col ⊙ (C \ ZtDir), split back per factor.
     blup = let
@@ -481,7 +491,11 @@ function _fit_sigma_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, nmμ, nm
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
-    names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
+    # Tag the RE-SD name with `_logsigma`: this random intercept lives on the
+    # log-σ (scale) axis, so `re_sd`/`vc` surface a value that is NOT comparable to
+    # a mean-axis (response-scale) random-intercept SD reported under the bare group
+    # name. The suffix makes the axis explicit at the accessor level (#322).
+    names = [:mu => nmμ, :sigma => nmσ, :resd => ["$(grp)_logsigma"]]
     means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))   # population (b=0) σ
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)

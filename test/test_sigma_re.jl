@@ -22,6 +22,9 @@ using Test, Random
     @test coef(fit, :mu)[2] ≈ β[2] atol = 0.06
     # σ intercept on log scale absorbs the realized mean of b (finite G)
     @test exp(coef(fit, :sigma)[1]) ≈ exp(γ0 + sum(bg) / G) atol = 0.08
-    @test re_sd(fit)[:g] ≈ σb atol = 0.15          # scale-RE SD
+    # Scale-axis RE SD is keyed `<grp>_logsigma` to flag it lives on log σ, not the
+    # response scale (distinct from a mean-axis (1|g) random-intercept SD).
+    @test re_sd(fit)[:g_logsigma] ≈ σb atol = 0.15
+    @test !haskey(re_sd(fit), :g)
     @test isfinite(loglik(fit))
 end

@@ -87,7 +87,9 @@ function _sigma_re_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ;
 end
 
 # Build a DrmFit from the σ-axis fit, emitting a `:resd` block with
-# (log τ, i.e. logL11), so `re_sd(fit)[:g]` = exp(logL11) = τ.
+# (log τ, i.e. logL11). The RE-SD name is tagged `<grp>_logsigma`: this random
+# intercept lives on the log-σ (scale) axis, so `re_sd(fit)[Symbol(grp*"_logsigma")]`
+# = exp(logL11) = τ, kept distinct from a mean-axis (response-scale) SD (#322).
 function _sigma_re_build_drmfit(kind, fam, θ̂, V, nll_val, n, converged,
                                  y, Xμ, Xψ, nmμ, nmσ, grp::String;
                                  obs_prop = nothing, trials = nothing)
@@ -100,7 +102,7 @@ function _sigma_re_build_drmfit(kind, fam, θ̂, V, nll_val, n, converged,
         push!(names,  :sigma => nmσ)
     end
     push!(blocks, :resd => (pμ+pψ+1):(pμ+pψ+1))
-    push!(names,  :resd => [grp])
+    push!(names,  :resd => ["$(grp)_logsigma"])
     logit_link = kind isa Val{:beta} || kind isa Val{:betabinomial}
     means  = Dict(:mu => logit_link ? _logistic.(Xμ * βμ) : exp.(Xμ * βμ))
     obs    = Dict(:mu => obs_prop === nothing ? Float64.(y) : Float64.(obs_prop))
@@ -118,7 +120,8 @@ Fit a standalone σ-axis random intercept `sigma ~ 1 + (1|g)` via the q=2
 location–scale Laplace core. Mean is fixed-effects only (no mean RE). The latent
 is placed on the scale axis: `Zη = 0`, `Zψ[:,1] = 1`. Only `logL11` (= log τ)
 is optimized; the unused latent axis-2 is pinned to a fixed tiny variance ε = 1e-6.
-Returns a `DrmFit` with a `:resd` block (log τ), so `re_sd(fit)[:g]` = τ.
+Returns a `DrmFit` with a `:resd` block (log τ), so `re_sd(fit)[:g_logsigma]` = τ
+(the `_logsigma` suffix marks this SD as living on the log-σ scale axis).
 """
 function _fit_sigma_axis_re(fam, kind, y, Xμ, Xψ, gidx, G, nmμ, nmσ, grp::String;
                              link::Symbol, se::Bool = true, g_tol::Real = 1e-6,
@@ -184,7 +187,17 @@ function _fit_sigma_axis_re(fam, kind, y, Xμ, Xψ, gidx, G, nmμ, nmσ, grp::St
                 gm = _sigma_re_grad(kind, y, Xμ, Xψ, gidx, G, Q, tm, Zη, Zψ)
                 H[:, j] .= (gp .- gm) ./ (2h)
             end
-            Matrix(inv(Symmetric(H)))
+            # Symmetrize the one-sided-column FD Hessian by AVERAGING the two
+            # triangles ((H+H')/2), matching `_ls_obs_information`. Near a variance
+            # boundary the raw H is asymmetric/indefinite; `Symmetric(H)` alone
+            # would silently discard the lower triangle. Guard PD: any non-positive
+            # diagonal in the resulting covariance becomes NaN (not a fabricated SE).
+            Hs = Symmetric((H .+ H') ./ 2)
+            V = inv(Hs)
+            @inbounds for i in 1:np
+                V[i, i] > 0 || (V[i, i] = NaN)
+            end
+            Matrix(V)
         catch
             fill(NaN, length(θ̂), length(θ̂))
         end
