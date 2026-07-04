@@ -1,0 +1,80 @@
+> jb <- "/Users/z3437171/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/bin"
+> res <- callr::r(function(pkg, jl_path, jb) {
++   Sys.setenv(JULIA_HOME=jb); Sys.setenv(PATH=paste(jb,Sys.getenv("PATH"),sep=":")); Sys.setenv(OPENBLAS_NUM_THREADS="2")
++   options(drmTMB.DRM.jl.path=jl_path); Sys.setenv(DRM_JL_PATH=jl_path)
++   suppressMessages(pkgload::load_all(pkg, quiet=TRUE)); suppressMessages(library(ape))
++   set.seed(20260614); p<-12L; m<-5L
++   tree<-ape::rcoal(p); sp<-rep(seq_len(p),each=m); n<-length(sp); x<-rnorm(n)
++   b1<-ape::rTraitCont(tree,"BM",sigma=0.8); b2<-ape::rTraitCont(tree,"BM",sigma=0.6); bs1<-ape::rTraitCont(tree,"BM",sigma=0.5)
++   y1<-0.5+0.3*x+b1[sp]+exp(-0.6+bs1[sp])*rnorm(n); y2<--0.2+0.4*x+b2[sp]+exp(-0.6)*rnorm(n)
++   form<-drmTMB::bf(mu1=y1~x+phylo(1|p|species,tree=tree), mu2=y2~x+phylo(1|p|species,tree=tree),
++     sigma1=~1+phylo(1|p|species,tree=tree), sigma2=~1+phylo(1|p|species,tree=tree), rho12=~1)
++   # ---- CASE 1: complete data ----
++   out1 <- tryCatch({
++     dat<-data.frame(species=tree$tip.label[sp], x=x, y1=y1, y2=y2)
++     fit<-drmTMB::drmTMB(form, family=drmTMB::biv_gaussian(), data=dat, engine="julia")
++     ci<-confint(fit, method="profile"); list(ok=TRUE, ci=as.data.frame(ci))
++   }, error=function(e) list(ok=FALSE, msg=conditionMessage(e)))
++   # ---- CASE 2: missing y1 for ~25% of rows ----
++   out2 <- tryCatch({
++     y1m<-y1; y1m[sample(n, round(0.25*n))]<-NA
++     datm<-data.frame(species=tree$tip.label[sp], x=x, y1=y1m, y2=y2)
++     fitm<-drmTMB::drmTMB(form, family=drmTMB::biv_gaussian(), data=datm, engine="julia",
++                          missing=drmTMB::miss_control(response="include"))
++     cim<-confint(fitm, method="profile")
++     list(ok=TRUE, nobs=stats::nobs(fitm), ci=as.data.frame(cim))
++   }, error=function(e) list(ok=FALSE, msg=conditionMessage(e)))
++   list(complete=out1, missing=out2)
++ }, args=list(pkg="/tmp/drmTMB-biv-confint", jl_path="/Users/z3437171/Dropbox/Github Local/DRM.jl", jb=jb), error="error", show=FALSE)
+> cat("===== CASE 1: COMPLETE DATA — confint(method='profile') =====\n")
+===== CASE 1: COMPLETE DATA — confint(method='profile') =====
+> if (res$complete$ok) print(res$complete$ci) else cat("FAILED:", res$complete$msg, "\n")
+                        parm level     lower     upper    scale transformation
+1    sd:mu1:phylo(1 | group)  0.95 0.5123532 2.2835746 response            exp
+2    sd:mu2:phylo(1 | group)  0.95 0.2630059 0.8852823 response            exp
+3 sd:sigma1:phylo(1 | group)  0.95 0.7022483 1.3014815 response            exp
+4 sd:sigma2:phylo(1 | group)  0.95 0.0000000 0.3158473 response            exp
+  tmb_parameter index  method       profile.engine conf.status profile.boundary
+1      resd_mu1     1 profile julia_profile_result     profile            FALSE
+2      resd_mu2     2 profile julia_profile_result     profile            FALSE
+3   resd_sigma1     3 profile julia_profile_result     profile            FALSE
+4   resd_sigma2     4 profile julia_profile_result     profile            FALSE
+                                        profile.message julia.threaded
+1 profile_sigma_a (hessian-free profile-likelihood CIs)          FALSE
+2 profile_sigma_a (hessian-free profile-likelihood CIs)          FALSE
+3 profile_sigma_a (hessian-free profile-likelihood CIs)          FALSE
+4 profile_sigma_a (hessian-free profile-likelihood CIs)          FALSE
+  julia.workers julia.threads julia.blas_threads julia.elapsed
+1            NA            NA                 NA      82.91697
+2            NA            NA                 NA      82.91697
+3            NA            NA                 NA      82.91697
+4            NA            NA                 NA      82.91697
+> cat("\n===== CASE 2: MISSING y1 (~25%) — confint(method='profile') =====\n")
+
+===== CASE 2: MISSING y1 (~25%) — confint(method='profile') =====
+> if (res$missing$ok) { cat("nobs:", res$missing$nobs, "\n"); print(res$missing$ci) } else cat("FAILED:", res$missing$msg, "\n")
+nobs: 60 
+                        parm level     lower     upper    scale transformation
+1    sd:mu1:phylo(1 | group)  0.95 0.7280479 2.3105966 response            exp
+2    sd:mu2:phylo(1 | group)  0.95 0.2476646 1.0327155 response            exp
+3 sd:sigma1:phylo(1 | group)  0.95 0.3634518 1.3364129 response            exp
+4 sd:sigma2:phylo(1 | group)  0.95 0.0000000 0.5007136 response            exp
+  tmb_parameter index  method       profile.engine conf.status profile.boundary
+1      resd_mu1     1 profile julia_profile_result     profile            FALSE
+2      resd_mu2     2 profile julia_profile_result     profile            FALSE
+3   resd_sigma1     3 profile julia_profile_result     profile            FALSE
+4   resd_sigma2     4 profile julia_profile_result     profile            FALSE
+                                        profile.message julia.threaded
+1 profile_sigma_a (hessian-free profile-likelihood CIs)          FALSE
+2 profile_sigma_a (hessian-free profile-likelihood CIs)          FALSE
+3 profile_sigma_a (hessian-free profile-likelihood CIs)          FALSE
+4 profile_sigma_a (hessian-free profile-likelihood CIs)          FALSE
+  julia.workers julia.threads julia.blas_threads julia.elapsed
+1            NA            NA                 NA      72.71264
+2            NA            NA                 NA      72.71264
+3            NA            NA                 NA      72.71264
+4            NA            NA                 NA      72.71264
+> cat("\n>>> ROUND-TRIP FULL COMPLETE\n")
+
+>>> ROUND-TRIP FULL COMPLETE
+> 

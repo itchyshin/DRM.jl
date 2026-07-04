@@ -87,9 +87,9 @@ data.frame(pair=julia_eval("c_pair"), cor=julia_eval("c_est"),
 
 ```
 axis        profile 95% CI      reading
-sd_mu1     [0.885, 1.510]       identified
-sd_sigma1  [0.193, 0.547]       identified
-sd_sigma2  [0.000, 0.234]       COLLAPSED — lower bound exactly 0 = "no scale-phylo signal"
+sd_mu1     [0.845, 1.600]       identified
+sd_sigma1  [0.173, 0.598]       identified
+sd_sigma2  [0.000, 0.273]       COLLAPSED — lower bound exactly 0 = "no scale-phylo signal"
 ```
 and every coevolution correlation touching the collapsed σ2 axis comes back spanning nearly all of [−1, 1] (e.g. `cor_sigma1_sigma2 = −0.64 [−0.98, 0.96]`), while `cor_mu1_mu2` (your sign-flipping mean–mean one) is identified (0.69 [0.35, 0.92]) — i.e. the model telling you, quantitatively, *which* couplings are estimable and which aren't.
 
