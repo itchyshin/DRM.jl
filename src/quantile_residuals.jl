@@ -27,6 +27,9 @@
 #   • LogNormal    LogNormal(meanlog, sdlog), meanlog = log(μ̂) (μ̂ stored = exp(η_μ),
 #                  the response-scale median), sdlog = σ = scales[:sigma]
 #   • Gamma        Gamma(α, μ/α),                 α = σ⁻²  (shape; scales[:sigma]⁻²)
+#                  BUT for a coupled location–scale Gamma fit the sigma slot holds
+#                  the SHAPE α directly (α = exp ψ), not σ — see the note below the
+#                  Gamma method and `_gamma_sigma_is_shape`.
 #   • Beta         Beta(μφ, (1−μ)φ),              φ = σ⁻²  (precision)
 #   • Poisson      Poisson(μ)
 #   • NegBinomial2 NegativeBinomial(φ, φ/(φ+μ)),  φ = scales[:sigma] **directly**
@@ -36,47 +39,65 @@
 #   • BetaBinomial BetaBinomial(n, μφ, (1−μ)φ),  φ = σ⁻², n = scales[:trials]
 # ZeroOneBeta and CumulativeLogit are mixtures / need cut intervals and are handled
 # by the atomic / ordinal drivers below rather than returning a single Distribution.
-function _conditional_dist(fam::Gaussian, i; μ, scales, obs)
+function _conditional_dist(fam::Gaussian, i; μ, scales, obs, kwargs...)
     return Distributions.Normal(μ[i], scales[:sigma][i])
 end
-function _conditional_dist(fam::Student, i; μ, scales, obs)
+function _conditional_dist(fam::Student, i; μ, scales, obs, kwargs...)
     return μ[i] + scales[:sigma][i] * Distributions.TDist(scales[:nu][i])
 end
-function _conditional_dist(fam::LogNormal, i; μ, scales, obs)
+function _conditional_dist(fam::LogNormal, i; μ, scales, obs, kwargs...)
     return Distributions.LogNormal(log(max(μ[i], eps())), scales[:sigma][i])
 end
-function _conditional_dist(fam::Gamma, i; μ, scales, obs)
-    α = 1 / (scales[:sigma][i]^2)
+# Gamma sigma-slot convention differs by fit route (see `_gamma_sigma_is_shape`):
+# the plain / ranef fits store scales[:sigma] = σ (shape α = σ⁻²); the coupled
+# location–scale fit stores scales[:sigma] = α (the shape itself, α = exp ψ). The
+# caller passes `gamma_sigma_is_shape` so the same Gamma(α, μ/α) is rebuilt either
+# way. Getting this wrong makes the PIT use α = σ⁻² = 1/α², inverting the shape.
+function _conditional_dist(fam::Gamma, i; μ, scales, obs, gamma_sigma_is_shape::Bool = false, kwargs...)
+    α = gamma_sigma_is_shape ? scales[:sigma][i] : 1 / (scales[:sigma][i]^2)
     return Distributions.Gamma(α, μ[i] / α)
 end
-function _conditional_dist(fam::Beta, i; μ, scales, obs)
+function _conditional_dist(fam::Beta, i; μ, scales, obs, kwargs...)
     φ = 1 / (scales[:sigma][i]^2)
     m = clamp(μ[i], eps(), 1 - eps())
     return Distributions.Beta(m * φ, (1 - m) * φ)
 end
-function _conditional_dist(fam::Poisson, i; μ, scales, obs)
+function _conditional_dist(fam::Poisson, i; μ, scales, obs, kwargs...)
     return Distributions.Poisson(max(μ[i], 0.0))
 end
-function _conditional_dist(fam::NegBinomial2, i; μ, scales, obs)
+function _conditional_dist(fam::NegBinomial2, i; μ, scales, obs, kwargs...)
     φ = 1 / (scales[:sigma][i]^2)               # scales[:sigma] = σ now; NB2 size = 1/σ²
     return Distributions.NegativeBinomial(φ, φ / (φ + μ[i]))
 end
 # TruncatedNegBinomial2 returns the *base* (untruncated) NB2; the zero-truncation
 # F(k) = (NB.cdf(k) − NB.cdf(0)) / (1 − NB.cdf(0)) for k ≥ 1 is applied in the
 # discrete driver (avoids the `truncated` discrete-lower-bound convention).
-function _conditional_dist(fam::TruncatedNegBinomial2, i; μ, scales, obs)
+function _conditional_dist(fam::TruncatedNegBinomial2, i; μ, scales, obs, kwargs...)
     φ = 1 / (scales[:sigma][i]^2)               # scales[:sigma] = σ now; NB2 size = 1/σ²
     return Distributions.NegativeBinomial(φ, φ / (φ + μ[i]))
 end
-function _conditional_dist(fam::Binomial, i; μ, scales, obs)
+function _conditional_dist(fam::Binomial, i; μ, scales, obs, kwargs...)
     n = round(Int, scales[:trials][i])
     return Distributions.Binomial(n, clamp(μ[i], eps(), 1 - eps()))
 end
-function _conditional_dist(fam::BetaBinomial, i; μ, scales, obs)
+function _conditional_dist(fam::BetaBinomial, i; μ, scales, obs, kwargs...)
     φ = 1 / (scales[:sigma][i]^2)
     m = clamp(μ[i], eps(), 1 - eps())
     n = round(Int, scales[:trials][i])
     return Distributions.BetaBinomial(n, m * φ, (1 - m) * φ)
+end
+
+# Does this fit store the Gamma SHAPE (α) in the sigma slot instead of σ? True only
+# for the coupled location–scale Gamma route, whose kernel sets α = exp ψ and whose
+# frontend stores scales[:sigma] = exp(Xψ β) = α (`locscale_frontend.jl`), unlike
+# the plain / ranef Gamma fits that store scales[:sigma] = σ with α = σ⁻²
+# (`gamma.jl`). Keyed off the `LocScaleObjective{Val{:gamma}}` the location–scale
+# frontend attaches to the fit — the one structural marker that distinguishes the
+# two routes. Any non-Gamma or non-location–scale fit returns `false`.
+function _gamma_sigma_is_shape(fit::DrmFit)
+    fit.family isa Gamma || return false
+    obj = fit.nll
+    return obj isa LocScaleObjective && obj.kind isa Val{:gamma}
 end
 
 # Families whose conditional distribution is continuous (PIT = F(y), no RNG) vs
@@ -129,10 +150,14 @@ function _quantile_residuals(fit::DrmFit, rng)
     applicable(_is_continuous_family, fam) ||
         throw(ArgumentError("residuals(type=:quantile): $(nameof(typeof(fam))) has no " *
             "verified per-family CDF mapping yet"))
+    # The Gamma sigma slot is σ (plain/ranef) or the shape α (location–scale); the
+    # flag routes `_conditional_dist(::Gamma)` accordingly (non-Gamma ignores it).
+    gsis = _gamma_sigma_is_shape(fit)
     u = Vector{Float64}(undef, n)
     if _is_continuous_family(fam)
         @inbounds for i in 1:n
-            d = _conditional_dist(fam, i; μ = μ, scales = fit.scales, obs = fit.obs)
+            d = _conditional_dist(fam, i; μ = μ, scales = fit.scales, obs = fit.obs,
+                                  gamma_sigma_is_shape = gsis)
             u[i] = clamp(Distributions.cdf(d, y[i]), lo, hi)
         end
     elseif fam isa TruncatedNegBinomial2
