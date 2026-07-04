@@ -176,6 +176,42 @@ end
     )
 end
 
+# #309: the block-diagonal Σ_a START must be consistent with the SAME lc_zero
+# index set the fit pins — for ANY tag layout, not just the default {mu,sigma}
+# split. The pre-#309 code hard-coded the mu↔sigma cross block (axes 1,2 vs 3,4);
+# for a `{mu1,sigma1}` vs `{mu2,sigma2}` layout (tags [:a,:b,:a,:b], blocks {1,3}
+# and {2,4}) that zeroed the wrong (within-block) covariances and left the truly
+# pinned cross-tag entries nonzero. Here we replicate the corrected start
+# construction and assert it zeros exactly the pinned lc positions.
+@testset "q=4 block-diagonal start is lc-consistent for general tags (#309)" begin
+    tags = [:a, :b, :a, :b]                 # axis order mu1, mu2, sigma1, sigma2
+    lc_zero = DRM._q4_block_lc_zero(tags)
+    @test lc_zero == [2, 4, 6, 9]           # Cholesky (2,1),(4,1),(3,2),(4,3)
+
+    Λ0 = Matrix(Symmetric([
+        0.30 0.02 0.01 0.010
+        0.02 0.30 0.01 0.010
+        0.01 0.01 0.08 0.005
+        0.01 0.01 0.005 0.080
+    ]))
+
+    # OLD hard-coded mu↔sigma cross-block mask leaves pinned lc entries NONZERO.
+    Λ_old = copy(Λ0); Λ_old[1:2, 3:4] .= 0.0; Λ_old[3:4, 1:2] .= 0.0
+    @test any(abs.(DRM.Λ_to_lc(Λ_old)[lc_zero]) .> 1e-6)   # inconsistent (the bug)
+
+    # NEW lc-consistent zeroing: pin exactly the fit's lc_zero positions.
+    lc0 = DRM.Λ_to_lc(Λ0); lc0[lc_zero] .= 0.0
+    Λ_new = DRM.lc_to_Λ(lc0)
+    @test all(abs.(DRM.Λ_to_lc(Λ_new)[lc_zero]) .< 1e-10)  # exactly consistent
+    # Σ_a is block-diagonal across tags a,b: cross-tag entries are 0 …
+    for (i, j) in ((1, 2), (1, 4), (3, 2), (3, 4))
+        @test isapprox(Λ_new[i, j], 0.0; atol = 1e-10)
+    end
+    # … while the WITHIN-block covariances (1,3) and (2,4) are kept nonzero.
+    @test Λ_new[1, 3] > 1e-4
+    @test Λ_new[2, 4] > 1e-4
+end
+
 # Review-blocker follow-ups (#187/#190/#192). Wrapped in one parent testset so a
 # B1 failure no longer hides the B2/S1/S2 results in a single CI run.
 @testset "q=4 phylo front-end review-blocker follow-ups" begin

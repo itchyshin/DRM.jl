@@ -2741,7 +2741,11 @@ function _fit_nb2_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol;
     end
     m = sum(y) / length(y)
     v = sum(abs2, y .- m) / max(length(y) - 1, 1)
-    θσ0 = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    # `aux_from` above sets size = exp(−2·logσ), so the Method-of-Moments size
+    # s_MoM = m²/(v−m) maps to logσ = −0.5·log(s_MoM) (matching `_nb2_laplace_setup`
+    # line 1109 and the gamma/beta crossed fitters at 2771/2795). The previous
+    # `+log(s_MoM)` dropped the −0.5 and flipped the sign → start size = 1/s_MoM².
+    θσ0 = -0.5 * log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
     return _fit_crossed_mean_laplace_nuisance(
         fam, Val(:nb2_fixed), aux_from, length(y), Xμ, comps[1][2], comps[1][3],
         comps[2][2], comps[2][3], nmμ, nmσ, [comps[1][4], comps[2][4]], g_tol;

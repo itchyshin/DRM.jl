@@ -138,10 +138,13 @@ end
     _check_equiv("Beta", fit_ghq, fit_lap)
 end
 
-# ── 5a. Independent slope rk=:slope (Gamma, smoke test) ─────────────────────
+# ── 5a. Independent slope rk=:slope (Gamma, recovery + identifiability) ──────
 # Direct call to _fit_corr_locscale with rk=:slope verifies the (0+x|g)
-# independent-slope path returns a sensible fit with a finite logLik and
-# recovers the slope SD from the 2×2 covariance matrix diagonal.
+# independent-slope path recovers the true slope-RE variance AND leaves the
+# model identified. The SLOPE loads axis-1 (Zη = [xᵢ 0]); axis-2 is unused, so
+# its variance must be PINNED at ε (not left free). #301 fixed the start that
+# previously pinned the identified slope axis tiny and let the unused axis-2
+# wander as an unidentified free parameter.
 @testset "Corr-locscale: independent slope (0+x|g) via rk=:slope" begin
     Random.seed!(20260611_99)
     g_s = repeat(1:G_EQ, inner = M_EQ)
@@ -162,7 +165,14 @@ end
     @test isfinite(loglik(fit_slope))
     @test coef(fit_slope, :mu)[2] ≈ β[2] atol = 0.15   # log-mean slope recovery
     V = vc(fit_slope)[:g]
-    @test sqrt(V[2, 2]) ≈ SD1_EQ atol = 0.20            # slope-RE SD recovery
+    # The IDENTIFIED slope axis is axis-1 (Λ[1,1]); recover the true slope-RE SD.
+    @test sqrt(V[1, 1]) ≈ SD1_EQ atol = 0.20
+    # The UNUSED axis-2 must be pinned near ε (identifiability), not free.
+    @test sqrt(V[2, 2]) < 1e-3
+    # The identified variance must not be pinned tiny (the pre-#301 failure mode).
+    @test V[1, 1] > 0.01
+    # No cross-covariance between the identified and pinned axes.
+    @test isapprox(V[1, 2], 0.0; atol = 1e-6)
 end
 
 # ── 5. LogNormal ──────────────────────────────────────────────────────────────

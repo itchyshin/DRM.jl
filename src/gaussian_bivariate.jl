@@ -161,6 +161,18 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
     return _fit_bivariate_residual(f, fam, data, rhs, g_tol)
 end
 
+# Finite, data-scaled log-σ seed for a residual-σ intercept. `resid` is the OLS
+# residual vector and `yobs` the observed response. The seed variance is floored
+# at max(1e-6·var(yobs), 1e-8) so a saturated (zero-residual) fit does not seed
+# log(eps()) ≈ −36; for a (near-)constant response (var ≈ 0) the 1e-8 backstop
+# keeps the seed finite. Returns log(sqrt(seed_var)).
+function _seed_ls(resid::AbstractVector, yobs::AbstractVector)
+    v_resid = length(resid) == 0 ? 0.0 : mean(resid .^ 2)
+    v_y = length(yobs) > 1 ? Statistics.var(yobs) : 0.0
+    v_floor = max(1e-6 * v_y, 1e-8)
+    return 0.5 * log(max(v_resid, v_floor))
+end
+
 function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rhs, g_tol::Real)
     y1, X1, nm1 = _design(f.response1, rhs[:mu1], data)
     y2, X2, nm2 = _design(f.response2, rhs[:mu2], data)
@@ -219,8 +231,14 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
     β2 = X2_obs \ y2_obs
     θ0[rng(1)] .= β1
     θ0[rng(2)] .= β2
-    θ0[offs[3]+1] = log(sqrt(mean((y1_obs - X1_obs * β1) .^ 2)) + eps())
-    θ0[offs[4]+1] = log(sqrt(mean((y2_obs - X2_obs * β2) .^ 2)) + eps())     # ρ intercept starts at 0
+    # Residual-σ seeds. When the mean design is saturated (observed rows == mu
+    # coefficients) the residuals are exactly 0, so `log(sqrt(mean(r²)) + eps())`
+    # collapses to log(eps()) ≈ −36 — an extreme start where exp(−ls) overflows on
+    # the first nll evaluation. Floor the seed variance at a small fraction of the
+    # response variance so the start stays finite and on the data scale. `_seed_ls`
+    # falls back to a scale-1 floor when the response is (near-)constant.
+    θ0[offs[3]+1] = _seed_ls(y1_obs - X1_obs * β1, y1_obs)
+    θ0[offs[4]+1] = _seed_ls(y2_obs - X2_obs * β2, y2_obs)     # ρ intercept starts at 0
 
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
@@ -555,13 +573,14 @@ function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fi
         0.01 0.01 0.005 0.080
     ]))
     if !isempty(lc_zero)
-        # Block-diagonal start so Λ_to_lc(Λ0) already has 0 in the pinned cross
-        # entries (an arbitrary cross block would make the constrained start
-        # inconsistent). Zero the mu↔sigma cross block; keep the within-block
-        # 2×2 covariances. For the general tag layout this is exact because the
-        # only pinned entries are mu↔sigma cross terms (axes 1,2 vs 3,4).
-        Λ0[1:2, 3:4] .= 0.0
-        Λ0[3:4, 1:2] .= 0.0
+        # Make the start factor block-consistent with the EXACT pinned pattern the
+        # fit enforces (`fit_q4_sparse_tmb`/`fit_q4_reml` force-zero `lc[lc_zero]`).
+        # Zeroing the same log-Cholesky indices — rather than a hard-coded mu↔sigma
+        # cross block (axes 1,2 vs 3,4) — keeps the start correct for ANY tag layout
+        # (e.g. `{mu1,sigma1}` vs `{mu2,sigma2}` blocks), not just the default split.
+        lc0 = Λ_to_lc(Λ0)
+        lc0[lc_zero] .= 0.0
+        Λ0 = lc_to_Λ(lc0)
     end
     reml_ll = NaN
     ml_ll = NaN
