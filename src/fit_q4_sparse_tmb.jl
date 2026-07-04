@@ -513,9 +513,15 @@ function fit_q4_sparse_tmb(prob::AugProblem, Q_cond::SparseMatrixCSC;
         catch e
             # Implicit-constraint barrier: a trial step that breaks PD-ness or the
             # ρ guard makes the marginal undefined. Return Inf (no gradient) so the
-            # BackTracking line search rejects it and shrinks the step.
+            # line search rejects it and shrinks the step. `ArgumentError` covers the
+            # LAPACK "matrix contains Infs or NaNs" thrown when an extreme trial θ
+            # overflows the log-Cholesky map so `Λ = lc_to_Λ(lc)` / `inv(Λ)`
+            # (marginal_and_exact_grad line ~296) is non-finite — the same
+            # undefined-marginal case, which must reject the step rather than crash
+            # the whole fit (surfaced by the #317 fast-path retuning perturbing the
+            # line-search trajectory into that region).
             (e isa DomainError || e isa LinearAlgebra.PosDefException ||
-             e isa LinearAlgebra.SingularException) || rethrow(e)
+             e isa LinearAlgebra.SingularException || e isa ArgumentError) || rethrow(e)
             return Inf
         end
         any(!isfinite, g) && return Inf

@@ -164,4 +164,40 @@ import Distributions
         @test DRM.laplace_ll(prob, Pbad, β, u, chH) == -Inf   # signalled, no throw
         @test isfinite(DRM.laplace_ll(prob, Pgood, β, u, chH)) # clean case unaffected
     end
+
+    # ---------------------------------------------------------------------------
+    # #317 follow-up (the ACTUAL CI crash): at an extreme trial θ the q4 driver's
+    # `Λ = lc_to_Λ(lc)` overflows and `inv(Λ)` (marginal_and_exact_grad) throws
+    # `ArgumentError("matrix contains Infs or NaNs")`. The #317 fast-path retuning
+    # perturbed the line-search trajectory into that region; the fit objective's
+    # try/catch previously omitted ArgumentError, so it escaped and crashed
+    # `test_gaussian_bivariate_phylo` on CI. The objective must now REJECT such a
+    # step (return Inf) rather than throw.
+    @testset "#317 extreme θ (non-finite Λ) is rejected, not crashed" begin
+        Random.seed!(1); p = 8
+        phy = random_balanced_tree(p; branch_length = 0.2)
+        n = p; x = randn(n); X1 = hcat(ones(n), x); X2 = hcat(ones(n), x)
+        Xs1 = reshape(ones(n), n, 1); Xs2 = reshape(ones(n), n, 1); Xr = reshape(ones(n), n, 1)
+        y1 = randn(n); y2 = randn(n)
+        prob, Q = make_problem(phy, y1, y2, X1, X2, Xs1, Xs2, Xr)
+        β = (mu1 = [0.0, 0.0], mu2 = [0.0, 0.0], s1 = [0.0], s2 = [0.0], rho = [0.0])
+        θ = DRM.pack_theta(β, DRM.lc_to_Λ(fill(0.1, 10)))
+        k1, k2, ks1, ks2, kr = DRM.beta_widths(prob)
+        nβ = k1 + k2 + ks1 + ks2 + kr
+        θbad = copy(θ); θbad[nβ+1:nβ+10] .= 400.0        # exp(400) overflows Λ
+
+        # The trigger: lc_to_Λ overflows and marginal_and_exact_grad throws.
+        @test !all(isfinite, DRM.lc_to_Λ(fill(400.0, 10)))
+        @test_throws ArgumentError DRM.marginal_and_exact_grad(prob, Q, θbad; n_newton = 30)
+
+        # The barrier: a normal fit from a FINITE start must COMPLETE (no uncaught
+        # ArgumentError), even though the line search may probe extreme θ where the
+        # marginal is non-finite — those steps are now rejected (return Inf) rather
+        # than crashing the fit. (The bivariate-phylo front end exercises the exact
+        # CI-failing config; here we just confirm the driver runs to completion.)
+        r = DRM.fit_q4_sparse_tmb(prob, Q;
+                                  β0 = β, Λ0 = Matrix(Symmetric(0.3I(4))),
+                                  iterations = 60, n_newton = 30)
+        @test isfinite(r.loglik)                          # completed without throwing
+    end
 end
