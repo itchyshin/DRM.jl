@@ -36,6 +36,18 @@ fits *better* — a sign the models are not actually nested, or one did not
 converge) is still returned as-is, but the p-value clamps the statistic at zero
 (so `pvalue` stays in `[0, 1]`); inspect `statistic` directly in that case.
 
+!!! warning "Variance components are a boundary null"
+    The `χ²(dof)` reference is only valid when the extra parameters in `full` are
+    interior (regular). When `full` adds a **variance component** that `reduced`
+    lacks (a random-effect SD, `:resd`/`:resid`; a Cholesky covariance entry,
+    `:recov`; a group-level covariance, `:phylocov`), the tested null (variance =
+    0) sits on the **boundary** of the parameter space and the statistic follows a
+    chi-bar-square mixture, not `χ²(dof)` (Self & Liang 1987; Stram & Lee 1994).
+    The naive `χ²` p-value is then **conservative** (too large — the test loses
+    power). `lrtest` detects this case and emits a one-time warning; use
+    [`lrt_boundary`](@ref) (or a parametric bootstrap) for a boundary-correct
+    p-value.
+
 # Example
 ```julia
 x = randn(400)
@@ -58,9 +70,45 @@ function lrtest(reduced::DrmFit, full::DrmFit)
         "lrtest: `full` must have more parameters than `reduced` " *
         "(dof(full) = $(dof(full)), dof(reduced) = $(dof(reduced)); " *
         "did you pass the arguments as (reduced, full)?)"))
+    _boundary_vc_warn(reduced, full, "lrtest")
     statistic = 2 * (loglik(full) - loglik(reduced))
     pvalue = ccdf(Chisq(Δdof), max(statistic, 0))
     return (; statistic, dof = Δdof, pvalue)
+end
+
+# Block symbols that carry a VARIANCE COMPONENT (random-effect SDs, Cholesky
+# covariance entries, group-level covariances). Dropping one of these between
+# `reduced` and `full` puts the tested null value (variance = 0) on the BOUNDARY of
+# the parameter space, where the LR statistic is NOT χ²(Δdof) — the correct
+# reference is a chi-bar-square mixture (see `lrt_boundary`/`chibar_pvalue`).
+const _VARIANCE_COMPONENT_BLOCKS =
+    (:resd, :resid, :recov, :phylocov, :resd_mu, :resd_sigma)
+
+# Variance-component block symbols present in `fit` (with a non-empty range).
+function _variance_component_blocks(fit::DrmFit)
+    return Symbol[p for (p, r) in fit.blocks
+                 if p in _VARIANCE_COMPONENT_BLOCKS && length(r) > 0]
+end
+
+# Boundary caveat (issue #304): when `full` carries a variance-component block that
+# `reduced` does not, the naive χ²(Δdof) LR reference is INVALID — the tested
+# variance sits on the boundary of its space, so the statistic follows a
+# chi-bar-square mixture and the χ² p-value is CONSERVATIVE (too large; the test
+# loses power). We do NOT silently swap the reference (the mixture order and
+# independence assumptions need the caller's knowledge of the design), but we WARN
+# and point to the boundary-corrected test. Silent otherwise.
+function _boundary_vc_warn(reduced::DrmFit, full::DrmFit, verb::AbstractString)
+    dropped = setdiff(_variance_component_blocks(full),
+                      _variance_component_blocks(reduced))
+    isempty(dropped) && return nothing
+    @warn(
+        "$verb: `full` adds variance-component block(s) $(dropped) that `reduced` " *
+        "lacks, so this compares a variance component against 0 — a BOUNDARY null. " *
+        "The reported χ²($(dof(full) - dof(reduced))) p-value is INVALID there " *
+        "(conservative: too large, so the test loses power); the correct reference " *
+        "is a chi-bar-square mixture. Use `lrt_boundary(full, reduced; q = <#components>)` " *
+        "(or a parametric bootstrap) for a boundary-correct p-value.")
+    return nothing
 end
 
 # Mean-structure fingerprint for the REML guard: the :mu block's coefficient

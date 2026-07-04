@@ -105,6 +105,65 @@ function _glsp_reml_penalty(grad_fn, θ, pμ::Int; h::Real = 1e-3)
     return sum(log, diag(ch.U))                 # = 0.5·logdet(S)
 end
 
+# REML observed-information covariance (issue #310). The reported Wald vcov under
+# method = :REML must be the inverse Hessian of the RESTRICTED objective
+# `nll_ML + 0.5·logdet S`, evaluated at θ̂_reml — NOT the ML observed information
+# (which omits the restricted-penalty curvature).
+#
+#     H_R = H_ML + ∂²(0.5·logdet S)/∂θ².
+#
+# H_ML is the CLEAN FD Jacobian of the ANALYTIC ML gradient (same as the ML path).
+# The penalty Hessian is a second central difference of the smooth penalty VALUE
+# `0.5·logdet S(θ)` (accurate to ~1e-8, so a value-based second difference is far
+# cleaner than differencing an FD-of-penalty gradient, which would be a noisy
+# third-order stencil — see `_glsp_reml_refit`'s note). A larger step `hp` tames the
+# O(hp²) second-derivative noise. We add the penalty curvature only to the VARIANCE
+# block (indices > pμ+pψ is unknown here, so we symmetrise over all θ and rely on the
+# ML block dominating the mean/scale part). Same PD-guard as the ML path: at a
+# variance boundary H_R is singular and we return NaN SEs (use profile_ci there).
+function _glsp_reml_vcov(grad_fn, θ̂, pμ::Int; h::Real = 1e-4, hp::Real = 1e-2)
+    np = length(θ̂)
+    # --- H_ML: clean FD of the analytic ML gradient (as the ML path). ---
+    Hml = zeros(np, np)
+    for j in 1:np
+        tp = copy(θ̂); tp[j] += h; tm = copy(θ̂); tm[j] -= h
+        Hml[:, j] .= (grad_fn(tp) .- grad_fn(tm)) ./ (2h)
+    end
+    Hml .= 0.5 .* (Hml .+ Hml')                       # symmetrise FD asymmetry
+    # --- Penalty Hessian: second central differences of the penalty VALUE. ---
+    penalty(θ) = _glsp_reml_penalty(grad_fn, θ, pμ)
+    _finite(v) = isfinite(v) && v < 1e16              # skip the non-PD-S sentinel
+    Hpen = zeros(np, np)
+    if pμ > 0
+        p0 = penalty(θ̂)
+        if _finite(p0)
+            # Diagonal: (p(θ+e) − 2p(θ) + p(θ−e)) / hp².
+            pplus = zeros(np); pminus = zeros(np)
+            for i in 1:np
+                θp = copy(θ̂); θp[i] += hp; θm = copy(θ̂); θm[i] -= hp
+                pplus[i] = penalty(θp); pminus[i] = penalty(θm)
+                (_finite(pplus[i]) && _finite(pminus[i])) &&
+                    (Hpen[i, i] = (pplus[i] - 2p0 + pminus[i]) / hp^2)
+            end
+            # Off-diagonals: the mixed second difference (i≠j), symmetrised.
+            for i in 1:np, j in (i+1):np
+                θpp = copy(θ̂); θpp[i] += hp; θpp[j] += hp
+                θmm = copy(θ̂); θmm[i] -= hp; θmm[j] -= hp
+                vpp = penalty(θpp); vmm = penalty(θmm)
+                if _finite(vpp) && _finite(vmm) && _finite(pplus[i]) &&
+                   _finite(pplus[j]) && _finite(pminus[i]) && _finite(pminus[j])
+                    hij = (vpp - pplus[i] - pplus[j] + 2p0 - pminus[i] - pminus[j] + vmm) /
+                          (2 * hp^2)
+                    Hpen[i, j] = hij; Hpen[j, i] = hij
+                end
+            end
+        end
+    end
+    H = Hml .+ Hpen
+    chH = cholesky(Symmetric(H); check = false)
+    return issuccess(chH) ? Matrix(inv(chH)) : fill(NaN, np, np)
+end
+
 # REML re-fit: starting from the ML estimate θ̂_ml, minimise nll_REML = nll_ML + the
 # Patterson–Thompson penalty over θ. Returns (θ̂, converged, ml_nll, reml_nll).
 #
@@ -575,24 +634,28 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
         end
         nll_val = reml ? reml_nll : ml_nll
         βμ̂ = θ̂[1:pμ]; βψ̂ = θ̂[pμ+1:pμ+pψ]; logL22 = θ̂[pμ+pψ+1]
-        # Wald covariance via FD of the gradient
+        # Wald covariance via FD of the gradient. Under REML the reported vcov is the
+        # inverse Hessian of the RESTRICTED objective (ML info + restricted-penalty
+        # curvature, issue #310); under ML it is the ML observed information.
         V = if se
             try
-                h = 1e-4; np = length(θ̂)
-                H = zeros(np, np)
-                for j in 1:np
-                    tp = copy(θ̂); tp[j] += h
-                    tm = copy(θ̂); tm[j] -= h
-                    gp = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, tp, Zη, Zψ)
-                    gm = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, tm, Zη, Zψ)
-                    H[:, j] .= (gp .- gm) ./ (2h)
+                if reml
+                    _glsp_reml_vcov(θ -> _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ), θ̂, pμ)
+                else
+                    h = 1e-4; np = length(θ̂)
+                    H = zeros(np, np)
+                    for j in 1:np
+                        tp = copy(θ̂); tp[j] += h
+                        tm = copy(θ̂); tm[j] -= h
+                        gp = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, tp, Zη, Zψ)
+                        gm = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, tm, Zη, Zψ)
+                        H[:, j] .= (gp .- gm) ./ (2h)
+                    end
+                    # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
+                    # (huge finite values), not an error — so report NaN SEs (use profile_ci there).
+                    chH = cholesky(Symmetric(H); check = false)
+                    issuccess(chH) ? Matrix(inv(chH)) : fill(NaN, size(H))
                 end
-                # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
-                # (huge finite values), not an error — so report NaN SEs (use profile_ci there).
-                # NB these Wald SEs are the ML observed information at θ̂_reml (the restricted
-                # penalty curvature is omitted, as in drmTMB); prefer profile_ci near σ→0.
-                chH = cholesky(Symmetric(H); check = false)
-                issuccess(chH) ? Matrix(inv(chH)) : fill(NaN, size(H))
             catch
                 fill(NaN, length(θ̂), length(θ̂))
             end
@@ -660,24 +723,28 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
         logL11 = θ̂[pμ+pψ+1]; logL22 = θ̂[pμ+pψ+2]
         # Λ for reporting
         Λ̂ = _glsp_sep_Λ([logL11, logL22])
-        # Wald covariance via FD of the gradient
+        # Wald covariance via FD of the gradient. Under REML the reported vcov is the
+        # inverse Hessian of the RESTRICTED objective (ML info + restricted-penalty
+        # curvature, issue #310); under ML it is the ML observed information.
         V = if se
             try
-                h = 1e-4; np = length(θ̂)
-                H = zeros(np, np)
-                for j in 1:np
-                    tp = copy(θ̂); tp[j] += h
-                    tm = copy(θ̂); tm[j] -= h
-                    gp = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, tp, Zη, Zψ)
-                    gm = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, tm, Zη, Zψ)
-                    H[:, j] .= (gp .- gm) ./ (2h)
+                if reml
+                    _glsp_reml_vcov(θ -> _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ), θ̂, pμ)
+                else
+                    h = 1e-4; np = length(θ̂)
+                    H = zeros(np, np)
+                    for j in 1:np
+                        tp = copy(θ̂); tp[j] += h
+                        tm = copy(θ̂); tm[j] -= h
+                        gp = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, tp, Zη, Zψ)
+                        gm = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, tm, Zη, Zψ)
+                        H[:, j] .= (gp .- gm) ./ (2h)
+                    end
+                    # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
+                    # (huge finite values), not an error — so report NaN SEs (use profile_ci there).
+                    chH = cholesky(Symmetric(H); check = false)
+                    issuccess(chH) ? Matrix(inv(chH)) : fill(NaN, size(H))
                 end
-                # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
-                # (huge finite values), not an error — so report NaN SEs (use profile_ci there).
-                # NB these Wald SEs are the ML observed information at θ̂_reml (the restricted
-                # penalty curvature is omitted, as in drmTMB); prefer profile_ci near σ→0.
-                chH = cholesky(Symmetric(H); check = false)
-                issuccess(chH) ? Matrix(inv(chH)) : fill(NaN, size(H))
             catch
                 fill(NaN, length(θ̂), length(θ̂))
             end
@@ -762,8 +829,8 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
                 end
                 # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
                 # (huge finite values), not an error — so report NaN SEs (use profile_ci there).
-                # NB these Wald SEs are the ML observed information at θ̂_reml (the restricted
-                # penalty curvature is omitted, as in drmTMB); prefer profile_ci near σ→0.
+                # This route is ML-only (REML errors above for the coupled block), so the ML
+                # observed information is the correct Wald curvature here.
                 chH = cholesky(Symmetric(H); check = false)
                 issuccess(chH) ? Matrix(inv(chH)) : fill(NaN, size(H))
             catch
