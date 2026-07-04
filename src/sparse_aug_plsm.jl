@@ -143,6 +143,20 @@ end
 # PD at the mode, but indefinite far from it — the log-σ axes have negative
 # curvature when residuals are small, and Q_topology is rank-deficient.)
 function sparse_pd_chol(H::SparseMatrixCSC)
+    # Non-finite guard. `cholesky(...; check=false)` suppresses the *not-PD*
+    # exception but STILL throws `ArgumentError("matrix contains Infs or NaNs")`
+    # on non-finite input. During optimisation a trial θ (e.g. the line search
+    # probing the σ→0 collapse region) can hand `estep_mode` a Hessian with
+    # Inf/NaN entries; without this guard that ArgumentError escapes `estep_mode`
+    # BEFORE the caller's `any(!isfinite, g)` objective guard runs, crashing the
+    # fit instead of the step being rejected. Substitute a finite PD surrogate so
+    # the downstream marginal/gradient goes non-finite and the objective rejects
+    # the step cleanly. (Tightening the fast-path acceptance gate in #317 routes
+    # more warm E-steps through here, so this path must not throw.)
+    if !all(isfinite, nonzeros(H))
+        nu = size(H, 1)
+        return cholesky(sparse(1.0I, nu, nu)), Inf   # finite surrogate; Inf flags failure
+    end
     Hs = Symmetric(H)
     ch = cholesky(Hs; check = false)
     issuccess(ch) && return ch, 0.0
@@ -299,6 +313,13 @@ end
 function laplace_ll(prob::AugProblem, P::SparseMatrixCSC, β, u, ch_H)
     nu = 4 * prob.n_total
     jn = joint_nll(prob, P, u, β)
+    # Non-finite guard: at an extreme trial θ (huge/near-singular Λ ⇒ non-finite
+    # prior precision, or an overflowing mode) `jn` is non-finite and the
+    # `cholesky(Symmetric(P) + 1e-10I; check=false)` below would THROW
+    # `ArgumentError("matrix contains Infs or NaNs")` (check=false suppresses only
+    # the not-PD path). Return -Inf so the caller's `nll = -laplace_ll` is +Inf and
+    # the optimiser rejects the step, instead of crashing the fit.
+    (isfinite(jn) && all(isfinite, nonzeros(P))) || return -Inf
     logdetH = logdet(ch_H)
     # logdet of prior precision (PSD; ridge to make the additive constant finite)
     chP = cholesky(Symmetric(P) + 1e-10I; check=false)

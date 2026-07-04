@@ -8,7 +8,11 @@
 #   #317  sparse_aug_plsm.jl  — `estep_mode`'s fast path must not freeze a loosely
 #         converged mode into the Laplace marginal: the accepted mode's joint
 #         gradient norm must be tight (≤ the tightened stall gate ~1e-6), matching
-#         a robustly re-converged mode.
+#         a robustly re-converged mode. Follow-up: the tightened gate routes more
+#         warm E-steps through the robust path, so `sparse_pd_chol`/`laplace_ll`
+#         must not THROW on a non-finite Hessian/prior at an extreme trial θ
+#         (`cholesky(...; check=false)` still throws on Inf/NaN) — they must
+#         signal failure so the optimiser rejects the step (CI regression fix).
 #   #325.4 locscale_profile.jl — `_ls_profile_ci`/`_ls_profile_nll` now carry the
 #         Zη/Zψ loadings (defaulting to canonical) so the profiler reconstructs the
 #         EXACT model that was fit. Passing canonical loadings explicitly must give
@@ -120,5 +124,44 @@ import Distributions
         @test ng_warm < 1e-5
         # And it must agree with the cold-solved mode (no loose off-mode drift).
         @test maximum(abs, u_warm .- u_cold) < 1e-4
+    end
+
+    # ---------------------------------------------------------------------------
+    # #317 follow-up: the sparse-Laplace choleskys must NOT throw on non-finite
+    # input. `cholesky(...; check=false)` suppresses the not-PD exception but STILL
+    # throws `ArgumentError("matrix contains Infs or NaNs")` on Inf/NaN entries.
+    # Tightening the fast-path acceptance gate routed more warm E-steps through the
+    # robust path, which at an extreme trial θ can hand a non-finite Hessian/prior
+    # to `sparse_pd_chol`/`laplace_ll`; that ArgumentError escaped the q4 fit's
+    # objective guard and crashed `test_gaussian_bivariate_phylo` on CI.
+    @testset "#317 non-finite Hessian/prior does not crash the sparse-Laplace path" begin
+        n = 8
+        # A Hessian with NaN/Inf entries must yield a FINITE factor + a failure flag,
+        # not an uncaught ArgumentError.
+        Hbad = sparse(1.0I, n, n); Hbad[1, 1] = NaN; Hbad[2, 2] = Inf
+        chb, flag = DRM.sparse_pd_chol(Hbad)
+        @test flag == Inf                          # failure signalled
+        @test isfinite(logdet(chb))                # factor is finite/usable
+        # A clean PD Hessian still factorizes normally (guard is inert in range).
+        Hgood = sparse(2.0I, n, n)
+        chg, fg = DRM.sparse_pd_chol(Hgood)
+        @test fg == 0.0
+        @test logdet(chg) ≈ n * log(2.0)
+
+        # laplace_ll must return -Inf (⇒ nll = +Inf, step rejected) when the prior
+        # precision is non-finite, instead of throwing on its internal cholesky.
+        Random.seed!(3); p = 6
+        phy = random_balanced_tree(p; branch_length = 0.2)
+        x1 = randn(p); X1 = hcat(ones(p), x1); X2 = hcat(ones(p), x1)
+        Xs1 = reshape(ones(p), p, 1); Xs2 = reshape(ones(p), p, 1); Xr = reshape(ones(p), p, 1)
+        y1 = randn(p); y2 = randn(p)
+        prob, Q = make_problem(phy, y1, y2, X1, X2, Xs1, Xs2, Xr)
+        Λ = Matrix(Symmetric(0.3I(4)))
+        Pgood = prior_precision(Q, inv(Λ))
+        β = (mu1 = [0.0, 0.0], mu2 = [0.0, 0.0], s1 = [-0.4], s2 = [-0.5], rho = [0.3])
+        u, chH, _ = estep_mode(prob, Pgood, β)
+        Pbad = copy(Pgood); Pbad.nzval[1] = NaN     # inject a non-finite prior entry
+        @test DRM.laplace_ll(prob, Pbad, β, u, chH) == -Inf   # signalled, no throw
+        @test isfinite(DRM.laplace_ll(prob, Pgood, β, u, chH)) # clean case unaffected
     end
 end
