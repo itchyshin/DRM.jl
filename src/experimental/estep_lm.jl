@@ -58,7 +58,7 @@
 #   • LEVENBERG–MARQUARDT adaptive ridge λ on top: solve (H_E+λI)s = ∇J;
 #     accept→λ*=0.5, reject→λ*=4. λ init 1e-2·mean|diag H_E|.
 #
-#   • TRUST REGION (cap step ∞-norm to Δ) + backtracking line search. This is
+#   • TRUST REGION (cap step L2-norm to Δ) + backtracking line search. This is
 #     the key addition over estep_mode: it makes the iterate sequence MONOTONE
 #     and PREVENTS the overfit→collapse cascade from taking a single catastrophic
 #     step into the σ→0 region. Convergence is tested ONLY on ‖∇J‖<tol (never on
@@ -131,7 +131,7 @@ end
 # Hybrid Hessian: EXPECTED-info (PD everywhere, anti-runaway) while far from the
 # mode (‖∇J‖ ≥ gswitch); OBSERVED build_Huu once close (‖∇J‖ < gswitch) for
 # QUADRATIC convergence — this is what lets the well-posed cases reach ‖∇J‖~1e-9
-# (Fisher scoring alone only converges linearly). `trust` caps the step ∞-norm
+# (Fisher scoring alone only converges linearly). `trust` caps the step L2-norm
 # (anti-cascade guard against the σ→0 collapse). Convergence on ‖∇J‖<tol only.
 # -----------------------------------------------------------------------------
 function estep_lm(prob::AugProblem, P::SparseMatrixCSC, β;
@@ -161,9 +161,15 @@ function estep_lm(prob::AugProblem, P::SparseMatrixCSC, β;
         end
         step = ch_try \ g
 
-        # Trust region: cap step ∞-norm to `trust`, then backtrack for monotone
-        # descent. Both together prevent a single catastrophic step into σ→0.
-        sc = min(1.0, trust / max(maximum(abs, step), eps()))
+        # Trust region: cap the step L2-norm to `trust`, then backtrack for
+        # monotone descent. Both together prevent a single catastrophic step into
+        # σ→0. An ∞-norm cap (the old `maximum(abs, step)`) does NOT bound how far
+        # the whole 4·n_total log-σ field moves collectively along the soft
+        # constant-shift tree direction, so a coordinated near-uniform downshift
+        # (each entry < trust) passed uncapped at large p and let the scale field
+        # collapse in one accepted iteration (#324.2). The L2 cap bounds the total
+        # step length, matching estep_trustregion.jl's `norm(s) > Δ` guard.
+        sc = min(1.0, trust / max(norm(step), eps()))
         α = sc
         unew = u .- α .* step
         fnew = joint_nll(prob, P, unew, β)

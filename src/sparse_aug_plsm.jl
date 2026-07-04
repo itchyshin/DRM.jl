@@ -196,15 +196,18 @@ end
 #
 # Acceptance (ok=true): the observed-Newton step direction hits a curvature floor
 # near the mode and the line search can no longer strictly decrease joint_nll
-# while ‖∇J‖ is still ~1e-4–1e-6 (MEASURED: 90% of warm stalls have ‖∇J‖<1e-3,
-# median 1e-5). A mode that accurate is exact enough for the FROZEN-mode Laplace
-# marginal (the outer optimiser only needs g_tol=1e-3 on θ), so we ACCEPT a clean
-# convergence (‖∇J‖<ftol) OR a line-search stall once ‖∇J‖<stall_tol. We FALL
-# BACK only on a genuine failure: non-finite f, a non-finite step, a |u| blow-up,
-# or a stall while still far from the mode (‖∇J‖≥stall_tol) — the hard surface the
-# robust LM exists for.
+# while ‖∇J‖ is at the mode. The FROZEN-mode Laplace marginal assumes ∇_u J = 0
+# EXACTLY: a residual gradient ~ε leaves an O(ε) error in the mode that biases
+# ½ logdet H and the joint term (H is evaluated off the mode). The phylo/crossed
+# FG paths drive the inner mode to ~1e-8 for exactly this reason, so accepting a
+# loose 1e-3 stall here would feed an off-mode b̂ into the marginal (#317).
+# We therefore ACCEPT only a genuinely converged step: a clean convergence
+# (‖∇J‖<ftol) OR a line-search stall once ‖∇J‖<stall_tol with stall_tol=1e-6.
+# We FALL BACK (to the robust LM, which handles the indefinite log-σ curvature)
+# on any of: non-finite f, a non-finite step, a |u| blow-up, or a stall while
+# ‖∇J‖≥stall_tol — the hard surface the robust LM exists for.
 function _estep_fast(prob::AugProblem, P::SparseMatrixCSC, β, u0::Vector{Float64};
-                     n_newton=40, ftol=1e-6, stall_tol=1e-3, ucap=1e3)
+                     n_newton=40, ftol=1e-6, stall_tol=1e-6, ucap=1e3)
     u = copy(u0)
     f = joint_nll(prob, P, u, β)
     isfinite(f) || return u, false
