@@ -65,6 +65,34 @@ end
 # keeps the objective a smooth function of θ for the outer AD.
 # ──────────────────────────────────────────────────────────────────────────────
 
+# Levenberg-damped 2×2 Newton step for the strictly-concave inner ELBO problem
+# (H ≺ 0, so a well-formed det = Hmm·Hrr − Hmr² is POSITIVE). Grow a damping λ,
+# subtracted from the diagonal (H − λI is "more negative-definite"), until det is
+# safely positive; this replaces the old sign-flipping guard (det = ±eps(T)),
+# which could keep a spuriously negative det and turn the ascent step into a
+# descent, and it caps the eps(T)-division blow-up. Returns the ascent step
+# (Δm, Δr) that solves (H − λI)·Δ = −g. Smooth in the entries for outer AD when
+# no damping is needed (λ = 0, the generic case away from the singular boundary).
+function _va_damped_step(Hmm::T, Hmr::T, Hrr::T, gm::T, gr::T) where {T}
+    tol = eps(T) * (one(T) + abs(Hmm) + abs(Hrr) + abs(Hmr))
+    a = Hmm; d = Hrr
+    det = a * d - Hmr * Hmr
+    λ = zero(T)
+    # For H ≺ 0 the concave det is > 0; damp until it is comfortably positive.
+    if !(det > tol)
+        λ = max(tol, abs(Hmm) + abs(Hrr) + abs(Hmr))
+        for _ in 1:60
+            a = Hmm - λ; d = Hrr - λ
+            det = a * d - Hmr * Hmr
+            det > tol && break
+            λ *= T(2)
+        end
+    end
+    Δm = -(d * gm - Hmr * gr) / det
+    Δr = -(-Hmr * gm + a * gr) / det
+    return Δm, Δr
+end
+
 # Inner per-group solve. Given the group totals A = Σ y_i and S = Σ e^{η0_i}, and
 # the prior precision τ = 1/σ², return the ELBO-stationary (m, s). Differentiable
 # in (A, S, τ): the iterates are carried in the working eltype, so ForwardDiff
@@ -75,6 +103,13 @@ function _poisson_va_inner(A::T, S::T, τ::T; iters::Int = 25) where {T}
     # Warm start: prior-shrunk MAP-ish mean, modest variance.
     m = log((A + one(T)) / (S + one(T)))            # ≈ log of the per-member rate
     r = log(one(T) / (τ + S + one(T)))              # r = log s; s ≈ 1/(τ + curvature)
+    # (m,r)-dependent part of the group ELBO, for the ascent (Armijo) check. The
+    # KL log is floored (issue #324.7) so a collapsing s never returns -Inf here.
+    F = (mm, rr) -> begin
+        s = exp(rr)
+        A * mm - exp(mm + s / 2) * S -
+            T(0.5) * (s * τ + mm^2 * τ - one(T) - log(max(s * τ, floatmin(T))))
+    end
     for _ in 1:iters
         s = exp(r)
         E = exp(m + s / 2) * S                      # = e^{m+s/2}·S ≥ 0
@@ -86,17 +121,34 @@ function _poisson_va_inner(A::T, S::T, τ::T; iters::Int = 25) where {T}
         Hmr = -(E / 2) * s
         # ∂gr/∂r = s·[ (-1/s² - E/2)·s ] + gr   (product rule through r); assemble directly:
         Hrr = (-(one(T) / s) - (E / 2) * s) * (s / 2) + gr  # d/dr of gr
-        # Newton step (2×2 solve); damp if the Hessian is near-singular.
-        det = Hmm * Hrr - Hmr * Hmr
-        det = abs(det) < eps(T) ? (det ≥ 0 ? eps(T) : -eps(T)) : det
-        Δm = -(Hrr * gm - Hmr * gr) / det
-        Δr = -(-Hmr * gm + Hmm * gr) / det
-        # Step-limit r to keep s in a sane range (anti-overflow on e^{m+s/2}).
-        Δr = clamp(Δr, -2.0, 2.0)
-        m += Δm
-        r += Δr
+        # Levenberg-damped ascent step (fixes the sign-flipped ±eps(T) det guard).
+        Δm, Δr = _va_damped_step(Hmm, Hmr, Hrr, gm, gr)
+        # Step-limit BOTH increments (m was previously unbounded → blow-up).
+        Δm = clamp(Δm, T(-4.0), T(4.0))
+        Δr = clamp(Δr, T(-2.0), T(2.0))
+        # Backtracking with a sufficient-decrease tolerance. Near the optimum the
+        # full Newton step changes the ELBO by ~roundoff, so a strict `≥ F0` test
+        # would spuriously backtrack to α≈0 and stall; the tolerance accepts such
+        # steps (α=1) while still rejecting the genuine overshoot the guard targets.
+        m, r = _va_backtrack(F, m, r, Δm, Δr)
     end
     return m, exp(r)
+end
+
+# Shared backtracking line search for the inner ELBO ascent. Accepts the full
+# step when it does not decrease the group ELBO beyond a tolerance scaled to |F0|
+# (so roundoff near the optimum does not trigger a stall), halving α otherwise.
+# If even the smallest trial still decreases F, take α=0 (do not move) rather than
+# accept a tiny wrong step — keeps the unrolled map monotone for the outer AD.
+function _va_backtrack(F, m::T, r::T, Δm::T, Δr::T) where {T}
+    F0 = F(m, r)
+    tol = eps(T) * (one(T) + abs(F0)) * T(16)
+    α = one(T)
+    for _ in 1:20
+        (F(m + α * Δm, r + α * Δr) >= F0 - tol) && return (m + α * Δm, r + α * Δr)
+        α *= T(0.5)
+    end
+    return (m, r)                                   # no acceptable step: stay put
 end
 
 # Closed-form Poisson random-intercept VA fit. Same call shape as
@@ -127,8 +179,10 @@ function _fit_poisson_ranef_va(fam::Poisson, y, Xμ, gidx, G, nmμ, grp, g_tol)
             # E_q[Σ log p] = Σ y_i·η0_i + A_g·m − e^{m+s/2}·S − (Σ log y_i! handled globally)
             yη0 = sum(y[i] * η0[i] for i in idx)
             Eqlp = yη0 + Ag * m - exp(m + s / 2) * S
-            # KL(N(m,s)‖N(0,σ²)) = ½[ s·τ + m²·τ − 1 − log(s·τ) ]
-            kl = 0.5 * (s * τ + m^2 * τ - one(eltype(θ)) - log(s * τ))
+            # KL(N(m,s)‖N(0,σ²)) = ½[ s·τ + m²·τ − 1 − log(s·τ) ]. Floor s·τ so a
+            # collapsing inner variance (s → 0) never sends log(s·τ) → −Inf and
+            # KL → +Inf, which would poison the ELBO and the outer AD (#324.7).
+            kl = 0.5 * (s * τ + m^2 * τ - one(eltype(θ)) - log(max(s * τ, floatmin(eltype(θ)))))
             elbo += Eqlp - kl
         end
         return -(elbo - lfsum)
@@ -202,7 +256,9 @@ function _binom_va_group_elbo(m, r, η0idx, sidx, nidx, τ, z, lwπ)
     @inbounds for k in eachindex(z)
         Eqℓ += exp(lwπ[k]) * _binom_group_kernel(m + sd * z[k], η0idx, sidx, nidx)
     end
-    kl = 0.5 * (s * τ + m * m * τ - one(m) - log(s * τ))
+    # Floor s·τ so a collapsing inner variance (s → 0) cannot send the KL log to
+    # −Inf and the group ELBO to −Inf, corrupting the outer AD (#324.7).
+    kl = 0.5 * (s * τ + m * m * τ - one(m) - log(max(s * τ, floatmin(typeof(s * τ)))))
     return Eqℓ - kl
 end
 
@@ -221,13 +277,13 @@ function _binom_va_inner(η0idx, sidx, nidx, τ::T, z, lwπ; iters::Int = 30) wh
         u = [m, r]
         g = ForwardDiff.gradient(obj, u)
         H = ForwardDiff.hessian(obj, u)               # ∇²F (concave ⇒ H ≺ 0)
-        det = H[1, 1] * H[2, 2] - H[1, 2] * H[2, 1]
-        det = abs(det) < eps(T) ? (det ≥ 0 ? eps(T) : -eps(T)) : det
-        Δm = -(H[2, 2] * g[1] - H[1, 2] * g[2]) / det
-        Δr = -(-H[2, 1] * g[1] + H[1, 1] * g[2]) / det
+        # Levenberg-damped ascent step (replaces the sign-flipped ±eps(T) guard).
+        Δm, Δr = _va_damped_step(H[1, 1], H[1, 2], H[2, 2], g[1], g[2])
+        Δm = clamp(Δm, T(-4.0), T(4.0))               # bound the mean step too
         Δr = clamp(Δr, T(-2.0), T(2.0))               # keep s in a sane range
-        m += Δm
-        r += Δr
+        # Backtracking with a sufficient-decrease tolerance (accepts the tiny
+        # near-optimum step, rejects the genuine overshoot the guard targets).
+        m, r = _va_backtrack((mm, rr) -> obj([mm, rr]), m, r, Δm, Δr)
     end
     return m, exp(r)
 end
@@ -341,7 +397,9 @@ function _nb2_va_group_elbo(m, r, η0idx, yidx, rsize, τ, z, lwπ)
     @inbounds for k in eachindex(z)
         Eqℓ += exp(lwπ[k]) * _nb2_group_kernel(m + sd * z[k], η0idx, yidx, rsize)
     end
-    kl = 0.5 * (s * τ + m * m * τ - one(m) - log(s * τ))
+    # Floor s·τ so a collapsing inner variance (s → 0) cannot send the KL log to
+    # −Inf and the group ELBO to −Inf, corrupting the outer AD (#324.7).
+    kl = 0.5 * (s * τ + m * m * τ - one(m) - log(max(s * τ, floatmin(typeof(s * τ)))))
     return Eqℓ - kl
 end
 
@@ -360,13 +418,13 @@ function _nb2_va_inner(η0idx, yidx, rsize::T, τ::T, z, lwπ; iters::Int = 30) 
         u = [m, r]
         g = ForwardDiff.gradient(obj, u)
         H = ForwardDiff.hessian(obj, u)               # ∇²F (concave ⇒ H ≺ 0)
-        det = H[1, 1] * H[2, 2] - H[1, 2] * H[2, 1]
-        det = abs(det) < eps(T) ? (det ≥ 0 ? eps(T) : -eps(T)) : det
-        Δm = -(H[2, 2] * g[1] - H[1, 2] * g[2]) / det
-        Δr = -(-H[2, 1] * g[1] + H[1, 1] * g[2]) / det
+        # Levenberg-damped ascent step (replaces the sign-flipped ±eps(T) guard).
+        Δm, Δr = _va_damped_step(H[1, 1], H[1, 2], H[2, 2], g[1], g[2])
+        Δm = clamp(Δm, T(-4.0), T(4.0))               # bound the mean step too
         Δr = clamp(Δr, T(-2.0), T(2.0))               # keep s in a sane range
-        m += Δm
-        r += Δr
+        # Backtracking with a sufficient-decrease tolerance (accepts the tiny
+        # near-optimum step, rejects the genuine overshoot the guard targets).
+        m, r = _va_backtrack((mm, rr) -> obj([mm, rr]), m, r, Δm, Δr)
     end
     return m, exp(r)
 end
@@ -485,7 +543,9 @@ function _gamma_va_group_elbo(m, r, η0idx, yidx, lyidx, α, τ, z, lwπ)
     @inbounds for k in eachindex(z)
         Eqℓ += exp(lwπ[k]) * _gamma_group_kernel(m + sd * z[k], η0idx, yidx, lyidx, α)
     end
-    kl = 0.5 * (s * τ + m * m * τ - one(m) - log(s * τ))
+    # Floor s·τ so a collapsing inner variance (s → 0) cannot send the KL log to
+    # −Inf and the group ELBO to −Inf, corrupting the outer AD (#324.7).
+    kl = 0.5 * (s * τ + m * m * τ - one(m) - log(max(s * τ, floatmin(typeof(s * τ)))))
     return Eqℓ - kl
 end
 
@@ -504,13 +564,13 @@ function _gamma_va_inner(η0idx, yidx, lyidx, α::T, τ::T, z, lwπ; iters::Int 
         u = [m, r]
         g = ForwardDiff.gradient(obj, u)
         H = ForwardDiff.hessian(obj, u)               # ∇²F (concave ⇒ H ≺ 0)
-        det = H[1, 1] * H[2, 2] - H[1, 2] * H[2, 1]
-        det = abs(det) < eps(T) ? (det ≥ 0 ? eps(T) : -eps(T)) : det
-        Δm = -(H[2, 2] * g[1] - H[1, 2] * g[2]) / det
-        Δr = -(-H[2, 1] * g[1] + H[1, 1] * g[2]) / det
+        # Levenberg-damped ascent step (replaces the sign-flipped ±eps(T) guard).
+        Δm, Δr = _va_damped_step(H[1, 1], H[1, 2], H[2, 2], g[1], g[2])
+        Δm = clamp(Δm, T(-4.0), T(4.0))               # bound the mean step too
         Δr = clamp(Δr, T(-2.0), T(2.0))               # keep s in a sane range
-        m += Δm
-        r += Δr
+        # Backtracking with a sufficient-decrease tolerance (accepts the tiny
+        # near-optimum step, rejects the genuine overshoot the guard targets).
+        m, r = _va_backtrack((mm, rr) -> obj([mm, rr]), m, r, Δm, Δr)
     end
     return m, exp(r)
 end
@@ -625,7 +685,9 @@ function _beta_va_group_elbo(m, r, η0idx, lyidx, l1myidx, φ, τ, z, lwπ)
     @inbounds for k in eachindex(z)
         Eqℓ += exp(lwπ[k]) * _beta_group_kernel(m + sd * z[k], η0idx, lyidx, l1myidx, φ)
     end
-    kl = 0.5 * (s * τ + m * m * τ - one(m) - log(s * τ))
+    # Floor s·τ so a collapsing inner variance (s → 0) cannot send the KL log to
+    # −Inf and the group ELBO to −Inf, corrupting the outer AD (#324.7).
+    kl = 0.5 * (s * τ + m * m * τ - one(m) - log(max(s * τ, floatmin(typeof(s * τ)))))
     return Eqℓ - kl
 end
 
@@ -644,13 +706,13 @@ function _beta_va_inner(η0idx, lyidx, l1myidx, φ::T, τ::T, ȳ, z, lwπ; iters
         u = [m, r]
         g = ForwardDiff.gradient(obj, u)
         H = ForwardDiff.hessian(obj, u)               # ∇²F (concave ⇒ H ≺ 0)
-        det = H[1, 1] * H[2, 2] - H[1, 2] * H[2, 1]
-        det = abs(det) < eps(T) ? (det ≥ 0 ? eps(T) : -eps(T)) : det
-        Δm = -(H[2, 2] * g[1] - H[1, 2] * g[2]) / det
-        Δr = -(-H[2, 1] * g[1] + H[1, 1] * g[2]) / det
+        # Levenberg-damped ascent step (replaces the sign-flipped ±eps(T) guard).
+        Δm, Δr = _va_damped_step(H[1, 1], H[1, 2], H[2, 2], g[1], g[2])
+        Δm = clamp(Δm, T(-4.0), T(4.0))               # bound the mean step too
         Δr = clamp(Δr, T(-2.0), T(2.0))               # keep s in a sane range
-        m += Δm
-        r += Δr
+        # Backtracking with a sufficient-decrease tolerance (accepts the tiny
+        # near-optimum step, rejects the genuine overshoot the guard targets).
+        m, r = _va_backtrack((mm, rr) -> obj([mm, rr]), m, r, Δm, Δr)
     end
     return m, exp(r)
 end

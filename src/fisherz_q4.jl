@@ -113,10 +113,26 @@ end
 # by inverting the spherical construction on the correlation Cholesky of R.
 "Initial φ_a = [d; θ_R] reproducing a starting Σ_a (used to seed the optimiser)."
 function fz_init_from_Sigma(Σ0::AbstractMatrix)
-    s = sqrt.(diag(Σ0))
+    # Floor the axis SDs so a collapsed variance (diag(Σ0) ≈ 0) does not give
+    # d = log(0) = -Inf or 0/0 = NaN correlation entries. 1e-8 on the variance
+    # keeps d finite while staying negligible relative to any estimable axis.
+    s = sqrt.(max.(diag(Σ0), 1e-8))
     d = log.(s)
     R = Symmetric((Σ0 ./ s) ./ s')           # correlation matrix
-    C = cholesky(R).L                         # lower-tri Cholesky (unit rows ⇒ corr-chol)
+    # A near-singular but PD correlation matrix can still throw PosDefException;
+    # mirror _q4_re_prior_chol's ascending ridge so the corr-Cholesky is robust.
+    local C
+    C = nothing
+    for ridge in (0.0, 1e-10, 1e-8, 1e-6)
+        Rr = ridge == 0.0 ? R : Symmetric(Matrix(R) + ridge * I)
+        F = cholesky(Rr; check = false)
+        if issuccess(F)
+            C = F.L                           # lower-tri Cholesky (unit rows ⇒ corr-chol)
+            break
+        end
+    end
+    C === nothing && error("fz_init_from_Sigma: could not factor the correlation " *
+                           "matrix of Σ0 (an axis is fully collapsed); try fewer axes")
     θR = zeros(6)
     angidx = Dict((2, 1) => 1, (3, 1) => 2, (4, 1) => 3,
                   (3, 2) => 4, (4, 2) => 5, (4, 3) => 6)

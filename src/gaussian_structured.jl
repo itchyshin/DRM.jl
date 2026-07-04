@@ -219,7 +219,14 @@ end
 function _fit_spatial_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, coords, nmμ, nmσ, grp, g_tol)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    # The spatial range is only identified with ≥2 distinct sites; a single level
+    # (G=1) divides by G^2-G = 0, and coincident coordinates make every pairwise
+    # distance 0 so meandist=0 seeds log(0) = -Inf, a non-finite optimiser start.
+    G >= 2 || error("spatial(1 | $(grp)) needs at least 2 distinct sites; got G=$(G).")
     Ddist = [sqrt(sum(abs2, coords[k, :] .- coords[l, :])) for k in 1:G, l in 1:G]
+    any(Ddist .> 0) ||
+        error("spatial(1 | $(grp)): all site coordinates coincide; the spatial " *
+              "range is not identified. Check for dropped coordinate variation.")
     meandist = sum(Ddist) / (G^2 - G)
 
     function nll(θ)
@@ -249,7 +256,7 @@ function _fit_spatial_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, coords, nmμ
     θ0[1:pμ] .= βμ0
     θ0[pμ+1] = log(std(res0) + eps())
     θ0[pμ+pσ+1] = log(std(res0) / 2 + eps())
-    θ0[pμ+pσ+2] = log(meandist)
+    θ0[pμ+pσ+2] = log(max(meandist, eps()))   # meandist>0 by the G/coincidence guards
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
     V = inv(ForwardDiff.hessian(nll, θ̂))

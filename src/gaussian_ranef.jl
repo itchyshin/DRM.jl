@@ -384,7 +384,24 @@ function _fit_multi_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, comps, nmμ, nmσ
     end
     od = Optim.OnceDifferentiable(nll, grad!, θ0)
     res = Optim.optimize(od, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol))
-    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    θ̂ = Optim.minimizer(res)
+    # vcov from the AD Hessian of `nll`. `nll` returns a flat 1e18 penalty when
+    # `cholesky(M + I)` fails, so ForwardDiff's directional probes near a
+    # near-singular capacitance (extreme σ ratios) can straddle that branch and
+    # pollute the Hessian. Detect the leak (θ̂ on the penalty, or a non-finite /
+    # non-PD Hessian) and report NaN rather than a silently corrupted vcov,
+    # matching the phylo/sparse paths.
+    V = let
+        pen = oftype(sum(θ̂), 1e18)
+        Hθ = ForwardDiff.hessian(nll, θ̂)
+        if nll(θ̂) >= pen || !all(isfinite, Hθ) || !isposdef(Symmetric(Hθ))
+            @warn "multi-RE Gaussian vcov: Hessian is not usable (near-singular " *
+                  "capacitance or penalty leak); returning NaN standard errors."
+            fill(NaN, length(θ̂), length(θ̂))
+        else
+            Matrix(inv(Symmetric(Hθ)))
+        end
+    end
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+K)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [c[4] for c in comps]]
     means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))

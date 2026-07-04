@@ -6,7 +6,7 @@
 # Laplace marginal is
 #   data_nll(b̂) + 0.5 b̂'Pb̂ + Σ_k G_k log σ_k + 0.5 logdet(Z'WZ + P).
 
-using LinearAlgebra: Symmetric, cholesky, logdet, I, diag, norm
+using LinearAlgebra: Symmetric, cholesky, logdet, I, diag, norm, isposdef
 using SparseArrays: sparse, spdiagm, rowvals, nonzeros, nzrange
 using SpecialFunctions: digamma, loggamma, polygamma, trigamma
 
@@ -82,19 +82,45 @@ function _poisson_laplace_mode(y, η0, Z, compid, logσ; b0 = nothing,
     return b, ch, iters, ch !== nothing
 end
 
-function _finite_hessian(f, x; h::Real = 1e-3)
+function _finite_hessian(f, x; h::Real = 1e-4)
     n = length(x)
     H = zeros(n, n)
     fx = f(x)
+    # A single absolute step is scale-blind: θ mixes link-scale β with
+    # log-dispersion / RE-logσ, so a step fine for one axis is coarse for another
+    # and can straddle a clamp boundary. Scale the step to each coordinate's
+    # magnitude so the stencil resolves the local curvature on every axis.
+    hs = [max(h, h * (1 + abs(x[i]))) for i in 1:n]
     for i in 1:n
-        ei = zeros(n); ei[i] = h
-        H[i, i] = (f(x .+ ei) - 2fx + f(x .- ei)) / h^2
+        ei = zeros(n); ei[i] = hs[i]
+        H[i, i] = (f(x .+ ei) - 2fx + f(x .- ei)) / hs[i]^2
         for j in (i+1):n
-            ej = zeros(n); ej[j] = h
+            ej = zeros(n); ej[j] = hs[j]
             H[i, j] = (f(x .+ ei .+ ej) - f(x .+ ei .- ej) -
-                       f(x .- ei .+ ej) + f(x .- ei .- ej)) / (4h^2)
+                       f(x .- ei .+ ej) + f(x .- ei .- ej)) / (4 * hs[i] * hs[j])
             H[j, i] = H[i, j]
         end
+    end
+    # Flag a non-usable Hessian so a fabricated covariance does not pass silently.
+    # The callers wrap `inv(Symmetric(H))` in a `try/catch` that substitutes the
+    # identity (unit-variance SEs) when the inverse throws. A non-finite H is the
+    # only input that makes `inv` throw, so replace non-finite entries with a
+    # large finite curvature (SE→0, visibly degenerate rather than exactly 1.0)
+    # and warn; also warn when H is finite but not positive definite so the
+    # user knows the reported SEs are not trustworthy.
+    if !all(isfinite, H)
+        @warn "sparse-Laplace vcov: finite-difference Hessian is non-finite " *
+              "(a step likely straddled a clamp); reported SEs are unreliable."
+        @inbounds for k in eachindex(H)
+            isfinite(H[k]) || (H[k] = 0.0)
+        end
+        # Add a large diagonal so inv gives near-zero (degenerate) SEs, not 1.0.
+        @inbounds for i in 1:n
+            H[i, i] += 1e12
+        end
+    elseif !isposdef(Symmetric(H))
+        @warn "sparse-Laplace vcov: finite-difference Hessian is not positive " *
+              "definite at the optimum; reported SEs are not trustworthy."
     end
     return H
 end
