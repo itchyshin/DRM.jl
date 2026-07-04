@@ -189,9 +189,9 @@ correlation). For `:sigma`/`:sigma1`/`:sigma2`/`:resd`/`:resid`/`:recov`/
 `log σ = 0` means `σ = 1`, not the `σ = 0` variance boundary — so those rows show
 `z` and `Pr(>|z|)` as `NaN` rather than a misleading test of an arbitrary scale
 reference (issue #320). To test a variance component against 0 use a
-boundary-corrected likelihood-ratio test ([`lrt_boundary`](@ref)); the estimate
-and SE for those blocks are still reported. A boundary / singular direction (Inf
-SE) also reports `NaN` z / p rather than a spurious `z = 0, p = 1` (issue #323.2).
+boundary-corrected likelihood-ratio test (`lrt_boundary`); the estimate and SE for
+those blocks are still reported. A boundary / singular direction (Inf SE) also
+reports `NaN` z / p rather than a spurious `z = 0, p = 1` (issue #323.2).
 """
 function coeftable(fit::DrmFit; level::Real = 0.95)
     se = stderror(fit)

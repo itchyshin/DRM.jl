@@ -45,8 +45,7 @@ converge) is still returned as-is, but the p-value clamps the statistic at zero
     chi-bar-square mixture, not `χ²(dof)` (Self & Liang 1987; Stram & Lee 1994).
     The naive `χ²` p-value is then **conservative** (too large — the test loses
     power). `lrtest` detects this case and emits a one-time warning; use
-    [`lrt_boundary`](@ref) (or a parametric bootstrap) for a boundary-correct
-    p-value.
+    `lrt_boundary` (or a parametric bootstrap) for a boundary-correct p-value.
 
 # Example
 ```julia
