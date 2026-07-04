@@ -290,14 +290,20 @@ function estep_mode(prob::AugProblem, P::SparseMatrixCSC, β;
                          trust=trust, gswitch=gswitch)
 end
 
-# Laplace marginal log-likelihood. Prior precision P has logdet via its OWN
-# Cholesky (P is PSD with a root null space — we use the conditioned form by
-# adding the data, so logdet(P) is taken on P + tiny ridge for the constant).
+# Laplace marginal log-likelihood. Prior precision P = kron(Q_cond, Λ⁻¹) is
+# positive DEFINITE by construction (make_problem drops the root row/col so Q_cond
+# is PD and Λ⁻¹ is PD). The additive 1e-10 ridge is retained: it is load-bearing
+# for optimiser stability — laplace_ll is evaluated at TRIAL Λ during the q=4 fit,
+# some barely PD, and the ridge keeps logdetP finite there so the unguarded
+# inv(Λ) in marginal_and_exact_grad (fit_q4_sparse_tmb.jl) never sees a poisoned
+# step. Removing the ridge (issue #324.6) perturbs the optimiser trajectory enough
+# to trip that pre-existing instability on tiny/ill-conditioned data; the bias it
+# introduces is ~q·log(1+1e-10/λ_min) ≈ 1e-8, negligible. Left as-is; see PR note.
 function laplace_ll(prob::AugProblem, P::SparseMatrixCSC, β, u, ch_H)
     nu = 4 * prob.n_total
     jn = joint_nll(prob, P, u, β)
     logdetH = logdet(ch_H)
-    # logdet of prior precision (PSD; ridge to make the additive constant finite)
+    # logdet of prior precision (ridge keeps the trial-Λ path finite; see above)
     chP = cholesky(Symmetric(P) + 1e-10I; check=false)
     logdetP = logdet(chP)
     # Laplace: ll = -jn - 0.5 logdetH + 0.5 logdetP + 0.5*nu*log(2π) - 0.5*nu*log(2π)

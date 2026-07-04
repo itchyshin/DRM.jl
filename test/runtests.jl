@@ -151,6 +151,10 @@ include("test_va_poisson_elbo.jl")
 include("test_variational_binomial.jl")
 include("test_variational_nb2.jl")
 include("test_variational_gamma.jl")
+# Numerical-stability guards from the twin code-review pass (#303/#308/#311/#312/
+# #319/#321/#324.6/#324.7): SD-collapse, coincident coords, VA inner damping,
+# scale-aware FD Hessian, and PD-prior Cholesky barriers.
+include("test_numerical_guards.jl")
 include("test_family_accessor.jl")
 include("test_parity_accessors.jl")
 include("test_coverage_accessors.jl")  # anchors fixef + engine joint_nll/joint_grad/build_Huu/unpack_theta

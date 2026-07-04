@@ -253,6 +253,10 @@ function coevo_marginal_cov(prob::CoevoProblem, Q_cond::SparseMatrixCSC,
 
     logdetH = logdet(chH)
     chP = cholesky(Symmetric(P) + 1e-10I; check = false)
+    # A failed factorisation leaves an incomplete factor whose `logdet` returns a
+    # finite-but-wrong value; that poisons ℓ and `fit_coevolution`'s isfinite
+    # guard lets it through. Treat non-PD as an explicit barrier instead.
+    issuccess(chP) || return (-Inf, û, chH, P)
     logdetP = logdet(chP)
     ℓ = -jn - 0.5 * logdetH + 0.5 * logdetP
     return ℓ, û, chH, P
