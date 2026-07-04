@@ -46,8 +46,8 @@ distributional parameter (`sigma` defaults to `~ 1`).
 | `gaussian()` | `Gaussian()` | `sigma` |
 | `student()` | `Student()` | `sigma`, `nu` |
 | `poisson()` | `Poisson()` | — (mean only; `zi`, `hu`) |
-| `nbinom2()` | `NegBinomial2()` | `sigma` (dispersion θ); `zi`, `hu` |
-| `truncated_nbinom2()` | `TruncatedNegBinomial2()` | `sigma` |
+| `nbinom2()` | `NegBinomial2()` | `sigma` (dispersion `θ = 1/σ²`); `zi`, `hu` |
+| `truncated_nbinom2()` | `TruncatedNegBinomial2()` | `sigma` (dispersion `θ = 1/σ²`) |
 | `beta()` | `Beta()` | `sigma` (precision `φ = 1/σ²`) |
 | `beta_binomial()` | `BetaBinomial()` | `sigma` (`φ = 1/σ²`) |
 | `binomial()` | `Binomial()` | — (mean only) |

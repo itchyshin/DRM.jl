@@ -265,8 +265,10 @@ end
 
 # Pick the variance-component SD row from a profile/bootstrap result for the bridge: prefer the
 # σ-phylo location-scale σ-axis SD (:resd_sigma), then the legacy phylo SD block (:resd), then
-# the μ-axis SD (:resd_mu); fall back to the first row. (Routes the bridge inference to the SD
-# that matters for the σ-phylo cell Ayumi needs.)
+# the μ-axis SD (:resd_mu). (Routes the bridge inference to the SD that matters for the σ-phylo
+# cell Ayumi needs.) There is NO silent fall-back to the first row: if none of the expected SD
+# params is present the row would be a fixed-effect coefficient mislabelled as the SD CI on the R
+# side, so throw an explicit error naming the params that WERE returned.
 function _bridge_pick_sd_row(rows)
     for want in (:resd_sigma, :resd, :resd_mu)
         for row in rows
@@ -274,7 +276,10 @@ function _bridge_pick_sd_row(rows)
         end
     end
     isempty(rows) && throw(ArgumentError("drm_bridge_inference: no SD row in the result"))
-    return first(rows)
+    got = join(unique(String(r.param) for r in rows), ", ")
+    throw(ArgumentError("drm_bridge_inference: no variance-component SD row " *
+        "(:resd_sigma, :resd, or :resd_mu) in the result; got params [$(got)]. " *
+        "Refusing to mislabel a fixed-effect row as the SD confidence interval."))
 end
 
 function _bridge_tree(tree)

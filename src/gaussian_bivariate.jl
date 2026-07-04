@@ -237,8 +237,10 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
     # the first nll evaluation. Floor the seed variance at a small fraction of the
     # response variance so the start stays finite and on the data scale. `_seed_ls`
     # falls back to a scale-1 floor when the response is (near-)constant.
-    θ0[offs[3]+1] = _seed_ls(y1_obs - X1_obs * β1, y1_obs)
-    θ0[offs[4]+1] = _seed_ls(y2_obs - X2_obs * β2, y2_obs)     # ρ intercept starts at 0
+    θ0[offs[3]+1] = _seed_ls(y1_obs - X1_obs * β1, y1_obs)     # σ1 intercept (log scale)
+    θ0[offs[4]+1] = _seed_ls(y2_obs - X2_obs * β2, y2_obs)     # σ2 intercept (log scale)
+    # rho12 block (rng(5)) intentionally left at 0 (atanh scale ⇒ ρ = 0).
+    θ0[rng(5)] .= 0.0
 
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)

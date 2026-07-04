@@ -49,9 +49,10 @@ extrema(fitted(fit))        # fitted means λ̂ = exp(Xβ̂)
 
 ## Overdispersion: the negative-binomial (NB2) family
 
-`NegBinomial2()` adds a dispersion (size) parameter `θ` in the `sigma` slot. The
-variance is `μ + μ²/θ`, so smaller `θ` means heavier overdispersion and `θ → ∞`
-returns to Poisson.
+`NegBinomial2()` adds a dispersion (size) parameter `θ` carried on the log-`σ`
+scale in the `sigma` slot: `θ = 1/σ² = exp(-2·coef(:sigma))`. The variance is
+`μ + μ²/θ`, so smaller `θ` means heavier overdispersion and `θ → ∞` returns to
+Poisson.
 
 ```@example count
 Random.seed!(20260616)
@@ -61,7 +62,7 @@ ynb = Float64.([rand(Distributions.NegativeBinomial(θ, θ / (θ + μi))) for μ
 datnb = (; y = ynb, x)
 
 fitnb = drm(bf(@formula(y ~ x), @formula(sigma ~ 1)), NegBinomial2(); data = datnb)
-exp(coef(fitnb, :sigma)[1])     # estimated dispersion θ (≈ 2.5 ⇒ real overdispersion)
+exp(-2 * coef(fitnb, :sigma)[1])     # estimated dispersion θ = 1/σ² (≈ 2.5 ⇒ real overdispersion)
 ```
 
 A finite, smallish `θ` is the signal that the counts are overdispersed and a
@@ -125,7 +126,7 @@ rtnb(r, p) = (while true; k = rand(Distributions.NegativeBinomial(r, p)); k > 0 
 yt = Float64.([rtnb(θt, θt / (θt + μi)) for μi in μt])
 
 fitt = drm(bf(@formula(y ~ x), @formula(sigma ~ 1)), TruncatedNegBinomial2(); data = (; y = yt, x))
-exp(coef(fitt, :sigma)[1])      # recovered dispersion θ
+exp(-2 * coef(fitt, :sigma)[1])      # recovered dispersion θ = 1/σ²
 ```
 
 ## Random effects: a count GLMM

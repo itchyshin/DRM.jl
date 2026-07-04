@@ -57,7 +57,7 @@ end
                                  link = :log, se = false)
     @test is_converged(fit)
     @test isfinite(loglik(fit))
-    τ̂ = re_sd(fit)[:g]
+    τ̂ = re_sd(fit)[:g_logsigma]     # scale-axis RE SD keyed on the log-σ axis
     @test isfinite(τ̂) && τ̂ > 0
     @test 0.2 < τ̂ < 1.0                      # recovers τ = 0.5 within generous sampling bounds
 end

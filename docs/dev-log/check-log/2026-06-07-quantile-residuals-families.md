@@ -22,7 +22,7 @@ in-repo source for these conventions):
 | Gamma | `Gamma(α, μ/α)` | **α = σ⁻²** (shape) |
 | Beta | `Beta(μφ, (1−μ)φ)` | **φ = σ⁻²** (precision) |
 | Poisson | `Poisson(μ)` | — |
-| NegBinomial2 | `NegativeBinomial(φ, φ/(φ+μ))` | **φ = `scales[:sigma]` directly** — the NB2 kernel stores size θ = `exp(η_σ)` in the sigma slot, **NOT** σ⁻². (Design table's "σ⁻²" was wrong here; the kernel and `simulate` both use the value directly.) |
+| NegBinomial2 | `NegativeBinomial(θ, θ/(θ+μ))` | **θ = σ⁻² = `exp(-2·coef(:sigma))`** (size). Superseded by #328: the NB2 kernel now carries the dispersion on the log-σ scale like Beta/Gamma, so `θ = 1/σ² = exp(-2·η_σ)` (NOT the earlier `exp(η_σ)`). `scales[:sigma]` stores σ; recover θ via `1 ./ scales[:sigma].^2`. |
 | TruncNB2 | base NB2, then zero-truncate | `F_t(k) = (NB.cdf(k) − NB.cdf(0))/(1 − NB.cdf(0))`, k ≥ 1 (avoids the `truncated` discrete-lower-bound convention) |
 | Binomial | `Binomial(n, p)` | p = μ (success prob), n = `scales[:trials]`; PIT count = `obs[:mu]·trials` (obs stores the proportion) |
 | BetaBinomial | `BetaBinomial(n, μφ, (1−μ)φ)` | **φ = σ⁻²**, n = `scales[:trials]` |
@@ -32,11 +32,12 @@ in-repo source for these conventions):
 
 ## Key parameterization gotchas confirmed
 
-- **NB2 size is stored directly, not as σ⁻².** This is the single biggest trap and
-  the design doc's table had it as σ⁻². The kernel (`negbinomial.jl`) uses
-  `r = exp(η_σ)` and `scales[:sigma] = exp(Xσβ)`, and `simulate` uses
-  `NegativeBinomial(θ, θ/(θ+μ))` with `θ = scales[:sigma]`. The residuals map
-  matches that exactly. (Beta/Gamma/BetaBinomial *do* use σ⁻².)
+- **NB2 size (superseded by #328): now σ⁻², like Beta/Gamma.** The 2026-06-07 note
+  recorded the kernel storing size directly as `exp(η_σ)`. #328 changed this so the
+  NB2 dispersion is `θ = 1/σ² = exp(-2·η_σ)`, matching Beta/Gamma/BetaBinomial. The
+  kernel and `simulate` now use `NegativeBinomial(θ, θ/(θ+μ))` with
+  `θ = 1 ./ scales[:sigma].^2` (`scales[:sigma]` stores σ). Recover θ via
+  `exp(-2·coef(:sigma))`.
 - **LogNormal `means[:mu]` is the response-scale median `exp(η_μ)`, not meanlog.**
   Recovered meanlog as `log(means[:mu])`.
 - **Binomial/BetaBinomial `obs[:mu]` is the observed proportion**, so the PIT count
