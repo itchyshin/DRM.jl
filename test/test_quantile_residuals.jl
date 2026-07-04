@@ -123,6 +123,43 @@ moments_ok(r) = abs(mean(r)) < 0.15 && 0.85 < std(r) < 1.18
         @test ks_ok(r)
     end
 
+    @testset "Gamma location–scale — sigma slot holds the SHAPE (#302)" begin
+        # A coupled `(1 | p | group)` triggers the location–scale Gamma route,
+        # whose kernel sets shape α = exp ψ and stores scales[:sigma] = α (the
+        # shape ITSELF), unlike the plain Gamma fit that stores scales[:sigma] = σ
+        # with α = σ⁻². Before the fix, _conditional_dist(::Gamma) always computed
+        # α = σ⁻², so for a location–scale fit it used α = 1/α² — inverting the
+        # shape and producing grossly non-normal quantile residuals even for a
+        # correctly-specified model (mean ≈ 1.26, std ≈ 0.09, √n·D ≈ 46). Keep the
+        # group-level RE variance small so the marginal (RE = 0) predictors the
+        # residual map uses are close to the per-observation truth; this isolates
+        # the shape-convention defect rather than RE-marginalization slack.
+        Random.seed!(424242)
+        G = 60; m = 50; n = G * m
+        species = repeat(1:G, inner = m)
+        x = randn(n)
+        βμ = [0.3, 0.4]; βψ = [1.6]              # shape α = exp ψ ≈ 4.95
+        LΛ = [sqrt(0.02) 0.0; 0.0 sqrt(0.01)]    # small coupled-RE (mean, log-shape)
+        A = [LΛ * randn(2) for _ in 1:G]
+        y = [ (α = exp(βψ[1] + A[species[i]][2]);
+               μ = exp(βμ[1] + βμ[2] * x[i] + A[species[i]][1]);
+               rand(Distributions.Gamma(α, μ / α))) for i in 1:n ]
+        data = (; y, x, species)
+
+        fit = drm(bf(@formula(y ~ x + (1 | p | species)),
+                     @formula(sigma ~ 1 + (1 | p | species))),
+                  Gamma(); data = data, se = false)
+
+        # The sigma slot IS the shape here (≈ true α ≈ 4.95), not σ ≈ 1/√α ≈ 0.45.
+        @test 3.5 < fit.scales[:sigma][1] < 6.5
+
+        Random.seed!(1)
+        r = residuals(fit; type = :quantile)
+        @test all(isfinite, r)
+        @test moments_ok(r)     # was mean ≈ 1.26, std ≈ 0.09 before the fix
+        @test ks_ok(r)          # was √n·D ≈ 46 before the fix (threshold 1.7)
+    end
+
     @testset "Beta — continuous PIT (precision φ = σ⁻²)" begin
         Random.seed!(404)
         n = 2000
