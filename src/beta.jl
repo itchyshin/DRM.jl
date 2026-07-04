@@ -196,8 +196,11 @@ function _fit_beta(fam::Beta, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     function nll(θ)
         βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
-        ημ = clamp.(Xμ * βμ, -30.0, 30.0)        # μ ∈ (0,1) strictly
-        ησ = clamp.(Xσ * βσ, -15.0, 15.0)        # φ = exp(-2ησ) finite & > 0
+        # Soft guards (see `_softclamp` in negbinomial.jl): identity across the
+        # original hard band so no legitimate fit is distorted, smooth beyond so
+        # the gradient stays live — restoring agreement with drmTMB's smooth guard.
+        ημ = _softclamp.(Xμ * βμ, -30.0, 30.0, 3.0)   # μ ∈ (0,1) strictly
+        ησ = _softclamp.(Xσ * βσ, -15.0, 15.0, 3.0)   # φ = exp(-2ησ) finite & > 0
         s = zero(eltype(θ))
         @inbounds for i in 1:n
             μ = _logistic(ημ[i]); φ = exp(-2 * ησ[i])

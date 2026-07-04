@@ -9,6 +9,25 @@
 
 using Distributions: NegativeBinomial, logpdf
 
+# Smooth clamp of a linear predictor, in the spirit of drmTMB's
+# `drm_softclamp_log_sigma` (src/drmTMB.cpp): EXACTLY the identity inside the band
+# `[lo, hi]` and C1-smoothly saturating within `margin` beyond each bound (overall
+# range `[lo - margin, hi + margin]`). It replaces the fixed-effect paths' old hard
+# `clamp`, whose gradient was a flat zero beyond the bound — a divergence drmTMB
+# never has, since drmTMB does not clamp the mean predictor and soft-clamps only
+# the log-scale. We keep each family's identity band equal to its original hard
+# bound (rather than drmTMB's numeric [-12,12] log-σ band, which is calibrated for
+# the Gaussian `sigma = exp(eta_sigma)` and is too tight for these families'
+# `size/shape/precision = exp(-2·eta_sigma)` parameterisation — a legitimate
+# near-Poisson NB2 wants eta_sigma ≈ -15, which that band would distort into a
+# singular Hessian). So every fit the hard clamp accepted is unchanged to the bit;
+# only the flat-gradient runaway tail becomes smooth. Branchless / ForwardDiff-safe.
+# See docs/design/03-likelihoods.md ("Numerical guard on the scale linear
+# predictor") and #324.
+_softclamp(x, lo, hi, margin) =
+    ifelse(x > hi, hi + margin * tanh((x - hi) / margin),
+           ifelse(x < lo, lo - margin * tanh((lo - x) / margin), x))
+
 """
     NegBinomial2()
 
@@ -302,8 +321,11 @@ function _fit_negbin2(fam::NegBinomial2, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     yint = round.(Int, y)
     function nll(θ)
         βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
-        ημ = clamp.(Xμ * βμ, -20.0, 20.0)        # bound predictors so p ∈ (0,1) strictly
-        ησ = clamp.(Xσ * βσ, -20.0, 20.0)        # (NegativeBinomial rejects p ≤ 0 / size ≤ 0)
+        # Soft guards (see `_softclamp` above): identity across the original hard
+        # band so no legitimate fit is distorted, smooth beyond so the gradient
+        # stays live — restoring agreement with drmTMB's smooth guard.
+        ημ = _softclamp.(Xμ * βμ, -20.0, 20.0, 3.0)  # keep p ∈ (0,1) on a runaway
+        ησ = _softclamp.(Xσ * βσ, -20.0, 20.0, 3.0)  # NegativeBinomial rejects p ≤ 0 / size ≤ 0
         s = zero(eltype(θ))
         @inbounds for i in 1:n
             μ = exp(ημ[i]); r = exp(-2 * ησ[i]); p = r / (r + μ)   # r = θ (size)
