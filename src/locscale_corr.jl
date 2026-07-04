@@ -75,10 +75,14 @@ function _corr_loadings(rk::Symbol, xs)
 end
 
 # Initial λ (log-Cholesky [logL11, L21, logL22]) for the group covariance.
-# For the independent slope the intercept axis is pinned to a tiny variance so
-# Λ stays PD while contributing nothing (its loading column is zero).
+# For the independent slope `(0 + x | g)` the SLOPE loads axis-1 (Zη = [xᵢ 0]),
+# so axis-1 is the identified variance and axis-2 is genuinely unused (its loading
+# column is zero). The start therefore seeds axis-1 (logL11) at a sensible slope
+# variance and pins axis-2 (logL22) to a tiny variance so Λ stays PD while
+# contributing nothing. (The `:slope` fitter also FIXES axis-2 at ε and L21 = 0
+# rather than leaving it free — see `_fit_slope_axis_re`.)
 _corr_λ0(rk::Symbol) = rk === :corr ? [log(0.4), 0.0, log(0.4)] :
-                                      [log(1e-3), 0.0, log(0.4)]
+                                      [log(0.4), 0.0, log(1e-3)]
 
 """
     _fit_corr_locscale(fam, kind, rk, y, Xμ, Xψ, xs, gidx, G, nmμ, nmσ, grp;
@@ -99,12 +103,130 @@ function _fit_corr_locscale(fam, kind, rk::Symbol, y, Xμ, Xψ, xs, gidx, G,
                             se::Bool = true, g_tol::Real = 1e-6,
                             respobs = nothing, trials = nothing,
                             Q = sparse(1.0 * I, G, G))
-    Zη, Zψ = _corr_loadings(rk, xs)
-    fitres = _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
-                           Zη = Zη, Zψ = Zψ, λ0 = _corr_λ0(rk),
-                           g_tol = g_tol, se = se)
+    if rk === :slope
+        # Independent slope `(0 + x | g)`: only axis-1 loads η (Zη = [xᵢ 0]); the
+        # unused axis-2 variance is unidentified, so FIX it at ε and optimise only
+        # the identified slope variance (mirrors `_fit_sigma_axis_re`'s discipline).
+        fitres = _fit_slope_axis_re(kind, y, Xμ, Xψ, xs, gidx, G, Q; g_tol = g_tol, se = se)
+    else
+        Zη, Zψ = _corr_loadings(rk, xs)
+        fitres = _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
+                               Zη = Zη, Zψ = Zψ, λ0 = _corr_λ0(rk),
+                               g_tol = g_tol, se = se)
+    end
     return _corr_build_drmfit(kind, fam, fitres, Xμ, Xψ, nmμ, nmσ, grp, y, link;
                               respobs = respobs, trials = trials)
+end
+
+# Pinned fitter for the INDEPENDENT slope `(0 + x | g)`. The slope loads axis-1
+# (Zη = [xᵢ 0], Zψ = [0 0]); axis-2 carries no loading, so its variance is not
+# identified. We therefore FIX Λ = diag(L11², ε²) with L21 = 0 (reusing the
+# σ-axis machinery `_sigma_re_Lambda`/`_sigma_re_grad`, which pin axis-2 at ε and
+# L21 = 0) and optimise only θ = [βμ; βψ; logL11] via the exact O(p) gradient.
+# The identified SLOPE variance is Λ[1,1] = L11². Returns a named tuple in the
+# same 5-packing `[βμ; βψ; logL11, L21, logL22]` that `_corr_build_drmfit`
+# consumes: L21 and logL22 are held at their pinned values (0 and log ε), with
+# zero reported uncertainty (the vcov rows/cols for the pinned entries are 0).
+function _fit_slope_axis_re(kind, y, Xμ, Xψ, xs, gidx, G, Q;
+                            g_tol::Real = 1e-6, se::Bool = true)
+    n = length(y); pμ = size(Xμ, 2); pψ = size(Xψ, 2)
+    Zη = hcat(Float64.(xs), zeros(n))   # slope on axis-1, axis-2 unused
+    Zψ = zeros(n, 2)
+
+    warm = Ref{Union{Nothing,Vector{Float64}}}(nothing)
+    function obj(θ)
+        βμ = @view θ[1:pμ]; βψ = @view θ[pμ+1:pμ+pψ]
+        Λ = _sigma_re_Lambda(θ[pμ+pψ+1])       # diag(L11², ε²), L21 = 0
+        P = prior_precision(Q, _ls_inv2x2(Λ))
+        val, a, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P, Zη, Zψ; a0 = warm[])
+        ok && (warm[] = copy(a))
+        return ok ? val : 1e18
+    end
+    grad!(g, θ) = (g .= _sigma_re_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; warm = warm); g)
+    # Reduced observed information over [βμ; βψ; logL11]. The full engine Hessian
+    # `_ls_obs_information` is (pμ+pψ+3)² over [βμ; βψ; logL11, L21, logL22]; the
+    # pinned coordinates (L21, logL22) are dropped, giving a well-conditioned
+    # sub-block for the NewtonTrustRegion outer step (LBFGS alone stalls here
+    # because the βψ intercept and logL11 gradients differ by ~10²× at the start).
+    ired = vcat(collect(1:(pμ+pψ)), pμ+pψ+1)
+    function hred(θr)
+        θf = vcat(θr[1:pμ+pψ], θr[pμ+pψ+1], 0.0, log(_SIGMA_RE_EPS))
+        Hf = _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θf, Zη, Zψ)
+        return Matrix(Hf)[ired, ired]
+    end
+    h!(H, θ) = (H .= hred(θ); H)
+
+    βμ0 = _ls_default_betastart(kind, y, Xμ)
+    βψ0 = zeros(pψ)
+    θ0 = vcat(βμ0, βψ0, log(0.4))            # seed logL11 (identified slope axis)
+
+    opts = Optim.Options(g_tol = g_tol, iterations = 1000)
+    nm() = (warm[] = nothing; Optim.optimize(obj, θ0, Optim.NelderMead(),
+                                             Optim.Options(iterations = 3000)))
+    res = try
+        Optim.optimize(obj, grad!, h!, θ0, Optim.NewtonTrustRegion(), opts)
+    catch err
+        err isa InterruptException && rethrow(err)
+        warm[] = nothing
+        try
+            Optim.optimize(obj, grad!, θ0, Optim.LBFGS(), opts)
+        catch err2
+            err2 isa InterruptException && rethrow(err2)
+            nm()
+        end
+    end
+    θ̂r = Optim.minimizer(res)
+    if any(!isfinite, θ̂r) || !(obj(θ̂r) < 1e17)
+        res = nm()
+        θ̂r = Optim.minimizer(res)
+    end
+    nll_val = obj(θ̂r)
+
+    # Reduced vcov over [βμ; βψ; logL11] via FD Hessian of the exact gradient.
+    npr = length(θ̂r)
+    Vr = if se
+        try
+            h = 1e-4
+            H = zeros(npr, npr)
+            for j in 1:npr
+                tp = copy(θ̂r); tp[j] += h
+                tm = copy(θ̂r); tm[j] -= h
+                gp = _sigma_re_grad(kind, y, Xμ, Xψ, gidx, G, Q, tp, Zη, Zψ)
+                gm = _sigma_re_grad(kind, y, Xμ, Xψ, gidx, G, Q, tm, Zη, Zψ)
+                H[:, j] .= (gp .- gm) ./ (2h)
+            end
+            Matrix(inv(Symmetric(H)))
+        catch
+            fill(NaN, npr, npr)
+        end
+    else
+        nothing
+    end
+
+    # Embed the reduced estimate into the 5-packing [βμ; βψ; logL11, L21, logL22]
+    # with the pinned entries L21 = 0 and logL22 = log ε. Pad the vcov to the full
+    # 5-param layout with zero uncertainty on the two pinned coordinates.
+    logL11 = θ̂r[pμ+pψ+1]
+    θ_full = vcat(θ̂r[1:pμ+pψ], logL11, 0.0, log(_SIGMA_RE_EPS))
+    npf = pμ + pψ + 3
+    Vfull = if Vr === nothing
+        nothing
+    else
+        Vf = zeros(npf, npf)
+        idx = vcat(collect(1:(pμ+pψ)), pμ+pψ+1)          # [βμ; βψ; logL11]
+        Vf[idx, idx] .= Vr
+        Vf
+    end
+    Λ̂ = _sigma_re_Lambda(logL11)
+    return (θ = θ_full,
+            beta_mu = θ_full[1:pμ],
+            beta_psi = θ_full[pμ+1:pμ+pψ],
+            Lambda = Λ̂,
+            components = _ls_components(Λ̂),
+            vcov = Vfull,
+            se = _ls_se(Vfull),
+            nll = nll_val,
+            converged = Optim.converged(res))
 end
 
 # Parse a formula rhs for a structured correlated slope:

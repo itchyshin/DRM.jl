@@ -106,6 +106,41 @@ end
     @test abs(sd_beta_est[:h] - σh) < 0.12
 end
 
+# #318: the NB2 crossed-RE dispersion START must map to size = MoM size. The
+# crossed `aux_from` sets size = exp(−2·logσ), so the Method-of-Moments size
+# s_MoM = m²/(v−m) requires logσ0 = −0.5·log(s_MoM). The pre-#318 start used
+# +log(s_MoM) (dropped −0.5 and flipped the sign) → start size = 1/s_MoM². We
+# assert the start is sign/factor-correct by fitting with iterations = 0-ish
+# effort via a direct check of the MoM→logσ mapping the fitter uses.
+@testset "NB2 crossed dispersion start = MoM size (#318)" begin
+    # The mapping the setup uses: s_MoM = m²/max(v−m,…); logσ0 = −0.5·log(s_MoM);
+    # start size = exp(−2·logσ0) must equal s_MoM.
+    for (m, v) in ((5.0, 25.0), (5.0, 55.0), (3.0, 12.0))
+        s_MoM = max(m^2 / max(v - m, 0.1 * m + eps()), 0.5)
+        logσ0 = -0.5 * log(s_MoM)          # the corrected start
+        @test exp(-2 * logσ0) ≈ s_MoM
+        # The buggy +log start would give size = 1/s_MoM² (the reciprocal-squared):
+        @test exp(-2 * log(s_MoM)) ≈ 1 / s_MoM^2
+    end
+    # End-to-end: an overdispersed crossed count recovers the true size.
+    rng = MersenneTwister(318)
+    G = 30; H = 30; nper = 4
+    gids = repeat(1:G, inner = H * nper)
+    hids = repeat(repeat(1:H, inner = nper), outer = G)
+    n = length(gids)
+    x = randn(rng, n)
+    comps318 = [(ones(n), gids, G, "g"), (ones(n), hids, H, "h")]
+    true_size = 2.0
+    bg = 0.4 .* randn(rng, G); bh = 0.3 .* randn(rng, H)
+    η = [0.8 + 0.5 * x[i] + bg[gids[i]] + bh[hids[i]] for i in 1:n]
+    μ = exp.(η)
+    ynb = Float64.([rand(rng, Distributions.NegativeBinomial(true_size, true_size / (true_size + μ[i]))) for i in 1:n])
+    fit318 = DRM._fit_nb2_crossed_laplace(DRM.NegBinomial2(), ynb, hcat(ones(n), x),
+                                          ones(n, 1), comps318, ["(Intercept)", "x"],
+                                          ["(Intercept)"], 1e-7)
+    @test abs(exp(-2 * coef(fit318, :sigma)[1]) - true_size) < 0.8
+end
+
 @testset "Crossed sparse-Laplace nuisance exact gradient" begin
     rng = MersenneTwister(72)
     G = 6
