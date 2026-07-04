@@ -19,24 +19,50 @@
 # driver call, so we can call the fixed functions directly on a tiny problem.
 
 using Test, LinearAlgebra, Random, Statistics
+using DRM   # provides `DRM.Optim` (the Optim module DRM already depends on)
 
 const _EXP_DIR = joinpath(@__DIR__, "..", "src", "experimental")
 
-# Load a standalone experimental source into a fresh module, dropping any
-# `include(...)` line and any bare top-level driver call (`main()`/`run_tests()`).
-function _load_experimental(mod::Module, relpath::String; deps::Vector{String} = String[])
-    for d in deps
-        Base.include(mod, joinpath(@__DIR__, "..", "src", d))
-    end
-    src = read(joinpath(_EXP_DIR, relpath), String)
+# Read a .jl source and strip every top-level `include(...)`, `using …`,
+# `import …` line plus the trailing driver call (`main()`/`run_tests()`). The
+# `using` lines are re-supplied by the caller (see `_load_experimental`) so the
+# module never depends on machine-specific include resolution or a package the
+# test environment does not provide.
+function _strip_source(path::String)
     kept = String[]
-    for ln in split(src, '\n')
+    for ln in split(read(path, String), '\n')
         s = strip(ln)
         startswith(s, "include(") && continue
+        startswith(s, "using ") && continue
+        startswith(s, "import ") && continue
         (s == "main()" || s == "run_tests()") && continue
         push!(kept, ln)
     end
-    Base.include_string(mod, join(kept, '\n'), relpath)
+    return join(kept, '\n')
+end
+
+# Load a standalone experimental source into a fresh module.
+#   * `usepkgs` are brought in with `using` so their EXPORTED names (e.g.
+#     `SparseMatrixCSC`) are in scope — these must all be in the test project.
+#   * `Optim` is a dependency of DRM but NOT of the test project, so a bare
+#     `using Optim` inside a test-created module throws "Package Optim not found in
+#     current path" on a clean CI checkout. We instead alias it (and the only
+#     unqualified Optim name the scripts use, `LBFGS`) from the loaded `DRM`.
+#   * dependency + main sources are `include_string`-ed with all `using`/`import`/
+#     `include`/driver lines stripped, so nothing depends on the load path or CWD.
+function _load_experimental(mod::Module, relpath::String;
+                            deps::Vector{String} = String[],
+                            usepkgs::Vector{Symbol} = Symbol[],
+                            need_optim::Bool = false)
+    isempty(usepkgs) || Core.eval(mod, Expr(:using, (Expr(:., p) for p in usepkgs)...))
+    if need_optim
+        Core.eval(mod, :(const Optim = $(DRM.Optim)))
+        Core.eval(mod, :(const LBFGS = $(DRM.Optim.LBFGS)))   # used unqualified in location_only.jl
+    end
+    for d in deps
+        Base.include_string(mod, _strip_source(joinpath(@__DIR__, "..", "src", d)), d)
+    end
+    Base.include_string(mod, _strip_source(joinpath(_EXP_DIR, relpath)), relpath)
     return mod
 end
 
@@ -46,9 +72,10 @@ end
     # location_only.jl  (#305 deterministic gradient, #306 monotone EM)
     # ---------------------------------------------------------------------------
     LocOnly = Module(:LocOnlyTest)
-    Core.eval(LocOnly, :(using LinearAlgebra, SparseArrays, Random, Statistics, Printf, Optim))
     _load_experimental(LocOnly, "location_only.jl";
-                       deps = ["sparse_phy.jl", "takahashi_selinv.jl"])
+                       deps = ["sparse_phy.jl", "takahashi_selinv.jl"],
+                       usepkgs = [:LinearAlgebra, :SparseArrays, :Random, :Statistics, :Printf],
+                       need_optim = true)
 
     # A small conjugate location-only phylo problem.
     prob, β_true, σ²_phy_true, σ²_true =
@@ -99,8 +126,8 @@ end
     # q4_em_dense.jl  (#307 gradient-norm convergence, #325.1 guarded step)
     # ---------------------------------------------------------------------------
     Q4 = Module(:Q4EmDenseTest)
-    Core.eval(Q4, :(using LinearAlgebra, ForwardDiff, Statistics))
-    _load_experimental(Q4, "q4_em_dense.jl")
+    _load_experimental(Q4, "q4_em_dense.jl";
+                       usepkgs = [:LinearAlgebra, :ForwardDiff, :Statistics])
 
     # Build a tiny well-posed q4 instance (p species, 1 obs each; intercept-only
     # sigma/rho, an intercept+slope mean). Random phylo Σ from a small AR(1)-like
