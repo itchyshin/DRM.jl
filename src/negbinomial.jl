@@ -1,9 +1,11 @@
 # negbinomial.jl — Negative-binomial (NB2) family for overdispersed counts.
-# Log link on the mean μ and on the dispersion/size θ (carried in the `sigma`
-# slot, matching the project convention that `sigma` is the family's secondary
-# parameter). Variance = μ + μ²/θ, so θ → ∞ recovers Poisson. The likelihood is
-# Distributions' NegativeBinomial(θ, p) with p = θ/(θ+μ) — verified
-# ForwardDiff-safe. Fixed effects, ML. Mirrors drmTMB's `nbinom2`.
+# Log link on the mean μ. The `sigma` slot carries `log σ` (the family's secondary
+# parameter, matching Gaussian/Beta/Gamma), and the NB2 size is θ = 1/σ² =
+# exp(-2·coef(:sigma)) — the locked twin convention (drmTMB: size = 1/σ²). Every
+# fitter here computes `r = exp(-2·ησ)` accordingly. Variance = μ + μ²/θ, so θ → ∞
+# recovers Poisson. The likelihood is Distributions' NegativeBinomial(θ, p) with
+# p = θ/(θ+μ) — verified ForwardDiff-safe. Fixed effects, ML. Mirrors drmTMB's
+# `nbinom2`.
 
 using Distributions: NegativeBinomial, logpdf
 
@@ -11,14 +13,16 @@ using Distributions: NegativeBinomial, logpdf
     NegBinomial2()
 
 Negative-binomial (NB2) family for overdispersed counts: log link on the mean
-`μ`, and log link on the dispersion/size `θ` (the `sigma` formula slot, so
-`coef(fit, :sigma)` is `log θ`). Var = `μ + μ²/θ`; as `θ → ∞` it tends to
-[`Poisson`](@ref). Mirrors `drmTMB`'s `nbinom2` family.
+`μ`, and log link on the scale `σ` (the `sigma` formula slot, so
+`coef(fit, :sigma)` is `log σ`). The NB2 size is `θ = 1/σ² = exp(-2·coef(:sigma))`,
+matching the Gamma/Beta convention and `drmTMB` (`size = 1/σ²`). Var = `μ + μ²/θ`;
+as `θ → ∞` it tends to [`Poisson`](@ref). Mirrors `drmTMB`'s `nbinom2` family.
 Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
 sparse-Laplace engine when `sigma ~ 1`. A phylogenetic random intercept on the
 mean, `phylo(1 | species)`, also uses the sparse-Laplace engine; here a covariate
-dispersion formula `sigma ~ x` is supported (a per-observation log-size; #164),
-while the crossed-intercept route still requires `sigma ~ 1`.
+dispersion formula `sigma ~ x` is supported (a per-observation log σ, so a
+per-observation size θ = 1/σ²; #164), while the crossed-intercept route still
+requires `sigma ~ 1`.
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), NegBinomial2(); data = dat)
@@ -26,8 +30,8 @@ fit = drm(bf(y ~ x + (1 | g) + (1 | h), sigma ~ 1), NegBinomial2(); data = dat)
 fit_phy = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
               NegBinomial2(); data = dat, tree = tr, se = false)
 fit_disp = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ x)),
-               NegBinomial2(); data = dat, tree = tr, se = false)  # log-size ~ x
-exp(coef(fit, :sigma)[1])     # estimated dispersion θ (size)
+               NegBinomial2(); data = dat, tree = tr, se = false)  # log σ ~ x
+exp(-2 * coef(fit, :sigma)[1])  # estimated size θ = 1/σ²
 ```
 """
 struct NegBinomial2 end
@@ -119,8 +123,9 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, K = nothing
 end
 
 # NB2 count GLMM with a random intercept (1|g) on log μ. b_g ~ N(0,σ_b²) is
-# integrated out per group by 32-node Gauss–Hermite quadrature; the dispersion θ
-# (the `sigma` slot) is a fixed effect. Same scheme as the Poisson GLMM.
+# integrated out per group by 32-node Gauss–Hermite quadrature; the scale `log σ`
+# (the `sigma` slot, size θ = 1/σ²) is a fixed effect. Same scheme as the Poisson
+# GLMM.
 function _fit_negbin2_ranef(fam::NegBinomial2, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol)
     n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     members = [Int[] for _ in 1:G]
@@ -324,7 +329,8 @@ end
 
 Zero-truncated negative-binomial (NB2) family for strictly-positive counts (≥ 1)
 — litter sizes, group sizes given presence. Same parameterisation as
-[`NegBinomial2`](@ref) (log-link mean `μ`, dispersion `θ` in the `sigma` slot)
+[`NegBinomial2`](@ref) (log-link mean `μ`, `log σ` in the `sigma` slot, size
+`θ = 1/σ²`)
 but conditioned on `y ≥ 1`: `P(k) = NB(k) / (1 − NB(0))`. Mirrors `drmTMB`'s
 `truncated_nbinom2`.
 

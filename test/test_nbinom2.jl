@@ -1,6 +1,7 @@
-# Negative-binomial (NB2) family: overdispersed counts. Log link on the mean μ
-# and on the dispersion/size θ (carried in the `sigma` slot). Var = μ + μ²/θ; as
-# θ → ∞ it tends to Poisson. Fixed effects, ML. Mirrors drmTMB's `nbinom2`.
+# Negative-binomial (NB2) family: overdispersed counts. Log link on the mean μ;
+# the `sigma` slot carries `log σ` with size θ = 1/σ² = exp(-2·coef(:sigma))
+# (#315/#316, matching drmTMB). Var = μ + μ²/θ; as θ → ∞ it tends to Poisson.
+# Fixed effects, ML. Mirrors drmTMB's `nbinom2`.
 using DRM
 using Test, Random
 import Distributions          # qualified — DRM has its own family type

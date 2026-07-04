@@ -13,9 +13,10 @@ using Distributions: TDist, logpdf
 
 Student-t response family: identity link on the location `μ`, log link on the
 scale `σ`, and the degrees of freedom as `ν = 2 + exp(η)` (so `ν > 2` and the
-variance is always finite; `ν` coefficients act on `log(ν − 2)`). Robust sibling
-of [`Gaussian`](@ref) — heavy tails downweight outliers, and `ν → ∞` tends to
-Gaussian. Mirrors `drmTMB`'s `student` family.
+variance is always finite; `ν` coefficients act on `log(ν − 2)`). Note that `σ` is
+the scale, not the standard deviation: for `ν > 2`, `SD[y] = σ·sqrt(ν/(ν − 2))`
+(mirroring `drmTMB`). Robust sibling of [`Gaussian`](@ref) — heavy tails downweight
+outliers, and `ν → ∞` tends to Gaussian. Mirrors `drmTMB`'s `student` family.
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1, nu ~ 1), Student(); data = dat)
