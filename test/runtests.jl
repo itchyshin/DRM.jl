@@ -79,6 +79,10 @@ include("test_poisson.jl")
 include("test_nbinom2.jl")
 include("test_beta.jl")
 include("test_gamma.jl")
+# eta-clamp twin parity (#324): the NB2/Gamma/Beta density guards now use the
+# ported soft-clamp (identity in the band, smooth beyond) so DRM.jl agrees with
+# drmTMB instead of hard-clamping the mean/scale predictors.
+include("test_eta_clamp_parity.jl")
 include("test_zi.jl")
 include("test_lognormal.jl")
 include("test_hurdle.jl")

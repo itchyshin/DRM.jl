@@ -199,8 +199,12 @@ function _fit_gamma(fam::Gamma, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     n = length(y); pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     function nll(θ)
         βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
-        ημ = clamp.(Xμ * βμ, -30.0, 30.0)        # μ > 0 finite
-        ησ = clamp.(Xσ * βσ, -15.0, 15.0)        # α = exp(-2ησ) > 0 finite
+        # Soft guards matching drmTMB (identity in the well-posed band; smooth
+        # beyond) — see `_softclamp` in negbinomial.jl. drmTMB leaves the mean
+        # unclamped; the wide mean band only keeps μ finite on a runaway. Scale
+        # uses drmTMB's exact log-σ band [-12,12]→[-15,15].
+        ημ = _softclamp.(Xμ * βμ, -27.0, 27.0, 3.0)   # μ > 0 finite
+        ησ = _softclamp.(Xσ * βσ, -12.0, 12.0, 3.0)   # α = exp(-2ησ) > 0 finite
         s = zero(eltype(θ))
         @inbounds for i in 1:n
             μ = exp(ημ[i]); α = exp(-2 * ησ[i])  # shape = 1/σ²
