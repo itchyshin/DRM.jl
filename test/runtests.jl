@@ -258,6 +258,21 @@ include("test_comparison.jl")
 # Chi-bar-square boundary-corrected p-values for variance-component LR tests.
 include("test_chibar.jl")
 
+# #304: lrtest/anova warn on a boundary variance-component drop (naive χ² invalid).
+include("test_lrtest_boundary_warn.jl")
+
+# #320 / #323.2: coeftable/show suppress z/p for non-location blocks and Inf-SE rows.
+include("test_summary_zp_suppress.jl")
+
+# #325.3: bootstrap summary indexes coefficients by stored block range, not a counter.
+include("test_bootstrap_block_index.jl")
+
+# #313: heritability :profile is a TRUE profile (re-optimises nuisance), not ELR.
+include("test_heritability_true_profile.jl")
+
+# #310: REML-reported Wald vcov includes the restricted-penalty curvature.
+include("test_reml_vcov_curvature.jl")
+
 # Randomized quantile residuals (DHARMa/glmmTMB style) — feat-quantile-residuals.
 include("test_quantile_residuals.jl")
 

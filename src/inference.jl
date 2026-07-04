@@ -1216,9 +1216,13 @@ end
 function _bootstrap_summary_rows(fit0, draws, est, level)
     α = (1 - level) / 2
     rows = _BootstrapSummaryRow[]
-    col = 1
+    # Index by the stored UnitRange `r` of each block, NOT a private sequential
+    # counter (issue #325.3): `coef`/`vcov`/`draws` columns are in θ order, so the
+    # block's own range `r` is the correct column set. A sequential `col += 1` is
+    # correct only when the blocks partition 1:p contiguously and in θ order — a
+    # latent misalignment if a future/bivariate fit reorders or gaps its blocks.
     for ((pp, r), (_, nms)) in zip(fit0.blocks, fit0.coefnames)
-        for (j, _) in enumerate(r)
+        for (j, col) in enumerate(r)
             v = @view draws[:, col]
             push!(
                 rows,
@@ -1231,7 +1235,6 @@ function _bootstrap_summary_rows(fit0, draws, est, level)
                     upper=Statistics.quantile(v, 1 - α),
                 ),
             )
-            col += 1
         end
     end
     return rows

@@ -10,9 +10,10 @@
 # epsilon-method / generalized-delta infrastructure (`bias_correct`) to get a
 # point estimate + bias-corrected estimate + delta-method SE + Wald CI, with the
 # EXACT gradient/Hessian threaded through the log → variance map by ForwardDiff.
-# Optionally a profile-likelihood CI on the derived ratio (a constrained re-fit:
-# minimise the stored NLL subject to the ratio being held fixed) is available via
-# `method = :profile`.
+# Optionally a TRUE profile-likelihood CI on the derived ratio (a constrained
+# re-fit: at each fixed ratio, re-maximise the stored NLL over ALL nuisance
+# parameters — not a substitution/ELR profile that freezes them at the MLE) is
+# available via `method = :profile`.
 #
 # All ratios are bounded in [0, 1] by construction (a sum of one nonnegative
 # variance over the sum of all). The Wald CI is CLAMPED to [0, 1]; the point
@@ -29,6 +30,7 @@
 using LinearAlgebra: dot
 import ForwardDiff
 using Distributions: Normal, quantile, Chisq
+using Optim: Optim
 
 # ---------------------------------------------------------------------------
 # Variance-component bookkeeping: map each grouping factor to the WORKING-scale
@@ -113,16 +115,25 @@ function _ratio_delta(fit::DrmFit, focal::Int, denom::Vector{Int}; level::Real)
 end
 
 # ---------------------------------------------------------------------------
-# Profile-likelihood CI on the derived RATIO. We hold the ratio r = g(θ) fixed at
-# a trial value v and minimise the stored NLL over everything else, then invert
-# the LRT: the (1−α) interval is {v : 2[NLL_v − NLL̂] ≤ χ²_{1,1−α}}. We enforce
-# r = v by substitution on the focal log σ: with the OTHER denom variances held
-# at their MLE, σ²_focal = v/(1−v) · Σ_{others} σ²_k (for v<1), i.e.
-#   θ_focal = ½ log( v/(1−v) · S_others ),  S_others = Σ_{k≠focal} σ²_k(θ).
-# Reasonable and cheap: it profiles the focal component against a fixed residual /
-# co-component background. (A full re-optimisation of S_others under the
-# constraint is a heavier follow-up; this matches the delta CI well on
-# well-identified fits — see the test anchors.)
+# TRUE profile-likelihood CI on the derived RATIO. We hold the ratio r = g(θ)
+# fixed at a trial value v and RE-MAXIMISE the likelihood over ALL nuisance
+# parameters (not just substitute the focal SD), then invert the LRT: the (1−α)
+# interval is {v : 2[NLL_v − NLL̂] ≤ χ²_{1,1−α}}.
+#
+# The ratio r = σ²_focal / Σ_{k∈denom} σ²_k = v is enforced by SUBSTITUTION on the
+# focal log σ, with S_others RE-COMPUTED from the CURRENT nuisance values at every
+# inner iteration:
+#   θ_focal = ½ log( v/(1−v) · S_others(θ_free) ),  S_others = Σ_{k∈others} σ²_k.
+# Everything else (the other variance components, residual, and mean coefficients)
+# is optimised freely inside `nll`. Because the co-components can absorb variance as
+# v moves away from r̂, the profiled deviance rises at the correct (shallower) rate,
+# so the interval has the intended profile-likelihood coverage — unlike an ELR /
+# substitution profile that freezes S_others at the MLE (which is anti-conservative
+# when the components trade off; this package deliberately does NOT use ELR).
+#
+# Cost: one inner Nelder-Mead re-optimisation per trial v (a handful of variance +
+# mean parameters). Falls back to the substitution profile only if the stored NLL
+# is missing (handled by the caller error) — otherwise the true profile is used.
 # ---------------------------------------------------------------------------
 function _ratio_profile(fit::DrmFit, focal::Int, denom::Vector{Int}; level::Real)
     nll = fit.nll
@@ -134,21 +145,43 @@ function _ratio_profile(fit::DrmFit, focal::Int, denom::Vector{Int}; level::Real
     r̂ = g(θ̂)
     nllhat = nll(θ̂)
 
-    # Constrained NLL as a function of the trial ratio v ∈ (0,1): set the focal
-    # log σ to satisfy the ratio with the others fixed at θ̂, optimise nothing else
-    # (cheap, deterministic substitution profile). Returns NLL at that point.
-    S_others = sum(_var_from_log(θ̂, idx) for idx in others; init = 0.0)
-    function nll_at_ratio(v)
-        v <= 0 && return nll_with_focal_var(0.0)
-        v >= 1 && return Inf
-        σ²focal = v / (1 - v) * (S_others <= 0 ? eps() : S_others)
-        return nll_with_focal_var(σ²focal)
-    end
-    function nll_with_focal_var(σ²focal)
+    # Free (nuisance) parameters re-optimised at each fixed ratio: everything
+    # except the focal log σ, which is pinned by the ratio constraint.
+    free = setdiff(1:length(θ̂), focal)
+
+    # Map a free-parameter vector `z` (in `free` order) + trial ratio `v` to the
+    # full θ, deriving θ[focal] from the ratio and the CURRENT (re-optimised) others.
+    function build_θ(z, v)
         θ = copy(θ̂)
-        # Represent σ²→0 by a very negative log σ (avoids log(0) = -Inf).
-        θ[focal] = σ²focal <= 0 ? -50.0 : 0.5 * log(σ²focal)
-        return nll(θ)
+        @inbounds for (k, idx) in enumerate(free)
+            θ[idx] = z[k]
+        end
+        if v <= 0
+            θ[focal] = -50.0                       # σ²_focal → 0 (log σ → −∞ proxy)
+        elseif v >= 1
+            θ[focal] = 50.0                        # σ²_focal → ∞ (all-variance limit)
+        else
+            S_others = sum(_var_from_log(θ, idx) for idx in others; init = 0.0)
+            σ²focal = v / (1 - v) * (S_others <= 0 ? eps() : S_others)
+            θ[focal] = σ²focal <= 0 ? -50.0 : 0.5 * log(σ²focal)
+        end
+        return θ
+    end
+
+    # Profiled NLL at ratio v: minimise `nll` over the free nuisance parameters,
+    # warm-started from the MLE. Nelder-Mead is derivative-free (the stored NLL may
+    # not be dual-safe) and robust on the small nuisance block here.
+    z0 = θ̂[free]
+    function nll_at_ratio(v)
+        v >= 1 && return Inf
+        obj(z) = nll(build_θ(z, v))
+        res = try
+            Optim.optimize(obj, copy(z0), Optim.NelderMead(),
+                           Optim.Options(iterations = 2000, g_tol = 1e-8))
+        catch
+            return Inf
+        end
+        return Optim.minimum(res)
     end
 
     half = quantile(Chisq(1), level) / 2          # LRT half-width on the NLL scale
@@ -213,11 +246,16 @@ structured component (e.g. `+ animal(1 | id)`) the denominator includes it too.
 `component` selects which grouping factor is the numerator (a `Symbol`, e.g.
 `:species`); if omitted and the fit has exactly one structured component, that one
 is used. `method` is `:delta` (epsilon-method / generalized-delta via
-[`bias_correct`](@ref), the default) or `:profile` (profile-likelihood CI on the
-ratio). For the dense phylogenetic correlation-scale parameterisation, fit with
-`algorithm = :gls` before using delta-method Wald intervals; the default sparse
-all-node phylogenetic route stores only partial covariance information in this
-slice, so profile intervals are the safer uncertainty path there.
+[`bias_correct`](@ref), the default) or `:profile` (a **true** profile-likelihood
+CI on the ratio: at each fixed ratio the likelihood is re-maximised over ALL
+nuisance parameters — the other variance components, residual, and mean
+coefficients — so the co-components can absorb variance and the profiled deviance
+rises at the correct rate; it is NOT a substitution/ELR profile that freezes the
+nuisance variances at the MLE). For the dense phylogenetic correlation-scale
+parameterisation, fit with `algorithm = :gls` before using delta-method Wald
+intervals; the default sparse all-node phylogenetic route stores only partial
+covariance information in this slice, so profile intervals are the safer
+uncertainty path there.
 
 Returns a `NamedTuple`:
 
