@@ -34,9 +34,11 @@ end
 """
     _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ) -> Vector
 
-Exact gradient of `_ls_fit_nll` at the packed θ = [βμ; βψ; λ(3)]. Returns a
-zero vector if the inner mode fails to converge (rare; the caller treats this as
-a flat step). O(p) in the number of groups.
+Exact gradient of `_ls_fit_nll` at the packed θ = [βμ; βψ; λ(3)]. Returns an
+all-`NaN` vector if the inner Laplace mode fails to converge (rare; this is the
+infeasibility signal that pairs with the `_ls_fit_nll` value sentinel — a
+gradient-based optimiser rejects a NaN step rather than mistaking a zero gradient
+for stationarity, see #314). O(p) in the number of groups.
 """
 function _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ,
                            Zη = _ls_canonical_Zeta(length(y)),
@@ -50,8 +52,12 @@ function _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ,
     η0 = Xμ * βμ; ψ0 = Xψ * βψ
 
     a, ch, ok = _ls_inner_mode(kind, y, η0, ψ0, gidx, G, P, Zη, Zψ; a0 = a0)
+    # Inner-mode failure ⇒ infeasible θ. Return NaN (not zeros) so a gradient-based
+    # optimiser treats the step as rejected instead of reading a zero gradient as
+    # convergence at an infeasible point (#314). The paired value sentinel in
+    # `_ls_fit_nll`/`_ls_profile_nll` covers the objective side.
+    ok || return fill(NaN, length(θ))
     grad = zeros(length(θ))
-    ok || return grad
 
     # 2×2 diagonal blocks of H⁻¹ from the Takahashi selected inverse.
     Hinv = takahashi_selinv(ch)

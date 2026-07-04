@@ -111,6 +111,11 @@ include("test_locscale_fit.jl")
 include("test_locscale_grad.jl")
 include("test_locscale_infer.jl")
 include("test_locscale_profile.jl")
+# Optimizer / mode-accuracy robustness for the module-wired locscale + sparse-aug
+# paths: NaN (not zero) outer gradient on inner-mode failure (#314), tightened
+# fast E-step acceptance gate (#317), and Zη/Zψ threading through the profiler
+# (#325.4).
+include("test_optimizer_robustness.jl")
 include("test_locscale_gamma_e2e.jl")
 include("test_locscale_phylo_e2e.jl")
 include("test_locscale_frontend.jl")
@@ -246,6 +251,12 @@ include("test_reml_q4_allaxes.jl")
 include("test_164_mean_re_covariate_sigma.jl")
 # Same covariate-dispersion path extended to Gamma and Beta (#164).
 include("test_164_gamma_hetero.jl")
+
+# Experimental optimizer / EM-robustness fixes for the not-yet-wired sources under
+# src/experimental/ (#305 deterministic LBFGS gradient, #306 monotone conjugate EM,
+# #307 gradient-norm E-step convergence, #325.1 guarded step). Loads the standalone
+# experimental scripts into isolated modules and exercises the specific defects.
+include("test_experimental_optimizer.jl")
 
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"

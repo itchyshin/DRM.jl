@@ -143,6 +143,20 @@ end
 # PD at the mode, but indefinite far from it — the log-σ axes have negative
 # curvature when residuals are small, and Q_topology is rank-deficient.)
 function sparse_pd_chol(H::SparseMatrixCSC)
+    # Non-finite guard. `cholesky(...; check=false)` suppresses the *not-PD*
+    # exception but STILL throws `ArgumentError("matrix contains Infs or NaNs")`
+    # on non-finite input. During optimisation a trial θ (e.g. the line search
+    # probing the σ→0 collapse region) can hand `estep_mode` a Hessian with
+    # Inf/NaN entries; without this guard that ArgumentError escapes `estep_mode`
+    # BEFORE the caller's `any(!isfinite, g)` objective guard runs, crashing the
+    # fit instead of the step being rejected. Substitute a finite PD surrogate so
+    # the downstream marginal/gradient goes non-finite and the objective rejects
+    # the step cleanly. (Tightening the fast-path acceptance gate in #317 routes
+    # more warm E-steps through here, so this path must not throw.)
+    if !all(isfinite, nonzeros(H))
+        nu = size(H, 1)
+        return cholesky(sparse(1.0I, nu, nu)), Inf   # finite surrogate; Inf flags failure
+    end
     Hs = Symmetric(H)
     ch = cholesky(Hs; check = false)
     issuccess(ch) && return ch, 0.0
@@ -196,15 +210,18 @@ end
 #
 # Acceptance (ok=true): the observed-Newton step direction hits a curvature floor
 # near the mode and the line search can no longer strictly decrease joint_nll
-# while ‖∇J‖ is still ~1e-4–1e-6 (MEASURED: 90% of warm stalls have ‖∇J‖<1e-3,
-# median 1e-5). A mode that accurate is exact enough for the FROZEN-mode Laplace
-# marginal (the outer optimiser only needs g_tol=1e-3 on θ), so we ACCEPT a clean
-# convergence (‖∇J‖<ftol) OR a line-search stall once ‖∇J‖<stall_tol. We FALL
-# BACK only on a genuine failure: non-finite f, a non-finite step, a |u| blow-up,
-# or a stall while still far from the mode (‖∇J‖≥stall_tol) — the hard surface the
-# robust LM exists for.
+# while ‖∇J‖ is at the mode. The FROZEN-mode Laplace marginal assumes ∇_u J = 0
+# EXACTLY: a residual gradient ~ε leaves an O(ε) error in the mode that biases
+# ½ logdet H and the joint term (H is evaluated off the mode). The phylo/crossed
+# FG paths drive the inner mode to ~1e-8 for exactly this reason, so accepting a
+# loose 1e-3 stall here would feed an off-mode b̂ into the marginal (#317).
+# We therefore ACCEPT only a genuinely converged step: a clean convergence
+# (‖∇J‖<ftol) OR a line-search stall once ‖∇J‖<stall_tol with stall_tol=1e-6.
+# We FALL BACK (to the robust LM, which handles the indefinite log-σ curvature)
+# on any of: non-finite f, a non-finite step, a |u| blow-up, or a stall while
+# ‖∇J‖≥stall_tol — the hard surface the robust LM exists for.
 function _estep_fast(prob::AugProblem, P::SparseMatrixCSC, β, u0::Vector{Float64};
-                     n_newton=40, ftol=1e-6, stall_tol=1e-3, ucap=1e3)
+                     n_newton=40, ftol=1e-6, stall_tol=1e-6, ucap=1e3)
     u = copy(u0)
     f = joint_nll(prob, P, u, β)
     isfinite(f) || return u, false
@@ -302,6 +319,13 @@ end
 function laplace_ll(prob::AugProblem, P::SparseMatrixCSC, β, u, ch_H)
     nu = 4 * prob.n_total
     jn = joint_nll(prob, P, u, β)
+    # Non-finite guard: at an extreme trial θ (huge/near-singular Λ ⇒ non-finite
+    # prior precision, or an overflowing mode) `jn` is non-finite and the
+    # `cholesky(Symmetric(P) + 1e-10I; check=false)` below would THROW
+    # `ArgumentError("matrix contains Infs or NaNs")` (check=false suppresses only
+    # the not-PD path). Return -Inf so the caller's `nll = -laplace_ll` is +Inf and
+    # the optimiser rejects the step, instead of crashing the fit.
+    (isfinite(jn) && all(isfinite, nonzeros(P))) || return -Inf
     logdetH = logdet(ch_H)
     # logdet of prior precision (ridge keeps the trial-Λ path finite; see above)
     chP = cholesky(Symmetric(P) + 1e-10I; check=false)

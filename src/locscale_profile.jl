@@ -37,6 +37,8 @@ const _LS_PROFILE_INFEASIBLE = 1e18
 # a non-finite optimum), so the endpoint search can treat that trial as a boundary
 # rather than a genuine deviance crossing.
 function _ls_profile_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, idx::Int, val::Real;
+                         Zη = _ls_canonical_Zeta(length(y)),
+                         Zψ = _ls_canonical_Zpsi(length(y)),
                          x0 = nothing, mwarm = Ref{Union{Nothing,Vector{Float64}}}(nothing))
     p = length(θ̂); pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     free = [k for k in 1:p if k != idx]
@@ -46,12 +48,12 @@ function _ls_profile_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, idx::Int, val::Rea
         βμ = @view θ[1:pμ]; βψ = @view θ[pμ+1:pμ+pψ]
         Λ = _ls_lc_to_Λ(θ[pμ+pψ+1:pμ+pψ+3])
         P = prior_precision(Q, _ls_inv2x2(Λ))
-        v, a, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P; a0 = mwarm[])
+        v, a, ok = _ls_marginal_nll(kind, y, Xμ * βμ, Xψ * βψ, gidx, G, P, Zη, Zψ; a0 = mwarm[])
         ok && (mwarm[] = copy(a))
         return ok ? v : _LS_PROFILE_INFEASIBLE
     end
     function g!(gf, θf)
-        gfull = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, build(θf); a0 = mwarm[])
+        gfull = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, build(θf), Zη, Zψ; a0 = mwarm[])
         gf .= gfull[free]
         return gf
     end
@@ -137,14 +139,23 @@ deviance and its envelope-theorem slope, bracket-safeguarded). Endpoints are
 or when the constrained solve becomes infeasible before a crossing (a variance/
 correlation boundary). `se` (a Wald SE for `idx`) seeds the bracket width; if
 omitted it is derived from the observed information.
+
+`Zη`/`Zψ` are the mean/scale latent loadings and MUST match the model that was
+fit: the profiler reconstructs the marginal from `(kind, y, Xμ, Xψ, gidx, G, Q)`
+plus these loadings, so passing the wrong loadings profiles a different model
+(#325.4). They default to the canonical loadings (`Zη=[1 0]`, `Zψ=[0 1]`) — the
+only case wired through `LocScaleObjective` today; a non-canonical (slope-axis)
+fit must pass its own `Zη`/`Zψ` here for the CI to be correct.
 """
 function _ls_profile_ci(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; idx::Int, level::Real = 0.95,
-                        nll_min = nothing, se = nothing)
-    nmin = nll_min === nothing ? _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ̂) : nll_min
+                        nll_min = nothing, se = nothing,
+                        Zη = _ls_canonical_Zeta(length(y)),
+                        Zψ = _ls_canonical_Zpsi(length(y)))
+    nmin = nll_min === nothing ? _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ) : nll_min
     thr = nmin + Distributions.quantile(Distributions.Chisq(1), level) / 2
     z = Distributions.quantile(Distributions.Normal(), 1 - (1 - level) / 2)
     if se === nothing
-        V = _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂)
+        V = _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ)
         se = (V === nothing || V[idx, idx] ≤ 0) ? abs(θ̂[idx]) + 1.0 : sqrt(V[idx, idx])
     end
     step0 = max(z * se, 1e-3)
@@ -154,13 +165,13 @@ function _ls_profile_ci(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; idx::Int, level::Re
     # Profile gap, its envelope-theorem slope, and feasibility at θ[idx] = val.
     function evalh(val)
         v, s, ok = _ls_profile_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, idx, val;
-                                   x0 = lastsol[], mwarm = mwarm)
+                                   Zη = Zη, Zψ = Zψ, x0 = lastsol[], mwarm = mwarm)
         ok || return (NaN, NaN, false)
         lastsol[] = s
         # Slope ∂nll/∂θ[idx] at the constrained optimum: the idx-component of the
         # exact full gradient (free-parameter components ≈ 0 by stationarity).
         θ = collect(float.(θ̂)); θ[free] .= s; θ[idx] = val
-        g = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ; a0 = mwarm[])
+        g = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0 = mwarm[])
         slope = (length(g) == p && isfinite(g[idx])) ? g[idx] : NaN
         return (v - thr, slope, true)
     end

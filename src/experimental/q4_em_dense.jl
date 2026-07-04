@@ -93,7 +93,9 @@ eta(D::Q4Design, P::Q4Params) = (
 """
     estep(y1, y2, D, params, Σ_inv; n_newton=30, tol=1e-9)
 
-Returns (Û::4×p, Hinv::4p×4p dense posterior covariance, nll_joint at û).
+Newton solve for the joint-NLL mode û, converging on the TRUE gradient norm
+(`norm(∇_u J) < tol`), NOT on the step size — see #307. Returns (Û::4×p,
+Hinv::4p×4p dense posterior covariance, H::4p×4p observed Hessian at û).
 """
 function estep(y1, y2, D::Q4Design, par::Q4Params, Σ_inv::Matrix{Float64};
                n_newton::Int = 30, tol::Float64 = 1e-9)
@@ -123,8 +125,16 @@ function estep(y1, y2, D::Q4Design, par::Q4Params, Σ_inv::Matrix{Float64};
             g[idx] .+= data_grad_species(ui, args...)
             H[idx, idx] .+= data_hess_species(ui, args...)
         end
+        # FIRST-ORDER convergence test on the TRUE gradient at the current û
+        # (#307). The old `norm(α·step) < tol` test gives FALSE convergence once
+        # backtracking drives α tiny while ‖g‖ is still large — the exact bug the
+        # sibling estep files (estep_armijoguard/estep_lm/estep_trustregion) were
+        # written to remove. As the correctness-oracle, this E-step must reach the
+        # mode (∇=0), not merely stall, or the reference Λ/logLik are wrong.
+        norm(g) < tol && break
         step = pd_solve(H, g)
-        # backtracking line search on the joint nll
+        # backtracking line search on the joint nll (globalisation only — a tiny
+        # step is NOT treated as convergence).
         f0 = joint_nll(u)
         α = 1.0
         unew = u .- α .* step
@@ -134,9 +144,6 @@ function estep(y1, y2, D::Q4Design, par::Q4Params, Σ_inv::Matrix{Float64};
             unew = u .- α .* step
         end
         u = unew
-        if norm(α .* step) < tol
-            break
-        end
     end
     # Final Hessian at û
     H = copy(Pprec)
@@ -336,14 +343,24 @@ function fit_q4_em(y1, y2, D::Q4Design, Σ_phy::Matrix{Float64};
     function guarded(par_cur::Q4Params, ll_cur::Float64, par_prop::Q4Params)
         ll_prop = marginal_ll(y1, y2, D, par_prop, Σ_inv)
         best_par = par_prop; best_ll = ll_prop
+        # Always probe at least one interior α before accepting the full step
+        # (#325.1). The old loop only backtracked when ll_prop < ll_cur, so a step
+        # that OVERSHOT but still marginally beat ll_cur was accepted whole even
+        # when a partial step would have increased the marginal far more — slow,
+        # zig-zag convergence that can exhaust max_em on an identifiable model.
+        # Now we keep the argmax over {full step} ∪ {interior α}; backtracking
+        # continues while we are still below ll_cur OR still finding improvement.
         α = 1.0
-        while best_ll < ll_cur && α > 1e-4
+        while α > 1e-4
             α *= 0.5
             par_try = interp_params(par_cur, par_prop, α)
             ll_try = marginal_ll(y1, y2, D, par_try, Σ_inv)
-            if ll_try > best_ll
-                best_par = par_try; best_ll = ll_try
-            end
+            improved = ll_try > best_ll
+            improved && (best_par = par_try; best_ll = ll_try)
+            # Stop once we have a point above ll_cur AND the interior probe no
+            # longer improves — keeps the extra cost to ~1 interior evaluation in
+            # the common (already-increasing) case while still fixing overshoot.
+            (best_ll >= ll_cur && !improved) && break
         end
         return best_ll >= ll_cur ? (best_par, best_ll) : (par_cur, ll_cur)
     end

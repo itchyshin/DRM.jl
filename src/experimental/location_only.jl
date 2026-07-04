@@ -25,8 +25,10 @@
 # TWO FITTERS:
 #   (A) EM   — closed-form E-step + closed-form M-step with EXACT Takahashi traces.
 #              Deterministic (no stochastic noise) → crisp convergence.
-#   (B) LBFGS — analytical gradient (Woodbury + Hutchinson) on the marginal NLL.
-#               Stochastic trace with nprobe=30 is sufficient for the gradient.
+#   (B) LBFGS — analytical gradient (Woodbury + EXACT Takahashi trace) on the
+#               marginal NLL. The variance-gradient trace Tr(S M^{-1} S') is the
+#               same exact selected-inverse diagonal the EM M-step uses, so the
+#               gradient is a deterministic function of θ, consistent with F.
 #
 # GATE (p=200, nrep=4): both fitters agree on logLik (|Δ| < 0.01) and parameter
 # estimates (max param rel-diff < 0.05). Both recover the true params within
@@ -202,14 +204,16 @@ function em_fit(prob::LocOnlyProblem;
     σ²_phy = σ²_phy0
     σ²     = σ²0
 
-    ll_prev = -Inf
+    # Marginal at the starting parameters; the loop only accepts non-decreasing
+    # updates (monotonicity guard, #306).
+    ll_prev = marginal_loglik(prob, β, σ²_phy, σ²)
     iter    = 0
 
     for it in 1:max_iter
         iter = it
         P, M, chM, chP = build_M(prob, σ²_phy, σ²)
 
-        # ── E-step: posterior mean ──────────────────────────────────────────
+        # ── E-step: posterior mean at the CURRENT β ─────────────────────────
         e      = prob.y .- prob.X * β
         μ_post = chM \ (prob.S' * e / σ²)          # n_keep × 1
 
@@ -221,23 +225,45 @@ function em_fit(prob::LocOnlyProblem;
         Vy  = Vinv_mul(prob, chM, σ², prob.y)       # n × 1
         β_new = (prob.X' * VX) \ (prob.X' * Vy)
 
-        # ── M-step (σ²_phy): closed form ───────────────────────────────────
+        # ── M-step (σ²_phy): closed form (uses μ_post at the current β) ──────
         qquad = dot(μ_post, prob.Q_cond * μ_post)
         σ²_phy_new = max(1e-8, (qquad + tr_QM) / n_keep)
 
         # ── M-step (σ²): closed form ────────────────────────────────────────
-        e2 = prob.y .- prob.X * β_new .- prob.S * μ_post
+        # Recompute the posterior mean at β_new before forming the residual so
+        # (β, μ_post) are the SAME-iteration pair (#306). M = P + S'S/σ² does not
+        # depend on β, so chM is unchanged — this is one extra cheap solve, not a
+        # refactorisation. Using the stale (old-β) μ_post here left the σ² M-step
+        # at a non-maximiser and could make the marginal decrease across an EM
+        # step (the ECM cross-term evaluated at an inconsistent pair).
+        e_new       = prob.y .- prob.X * β_new
+        μ_post_new  = chM \ (prob.S' * e_new / σ²)
+        e2          = e_new .- prob.S * μ_post_new
         σ²_new = max(1e-8, (dot(e2, e2) + tr_SMS) / n)
+
+        ll = marginal_loglik(prob, β_new, σ²_phy_new, σ²_new)
+
+        # ── Monotonicity guard: reject a decreasing update (#306) ───────────
+        # EM ascends the marginal in exact arithmetic; a decrease signals an
+        # inconsistent M-step (or round-off at the optimum). Do not accept a step
+        # that drops the marginal below the incumbent — halt at the last good
+        # point so the timing/agreement gate cannot pass on a non-monotone run.
+        if ll < ll_prev - 1e-8 * (1 + abs(ll_prev))
+            if verbose
+                @printf "  EM %3d: REJECTED decreasing step (LL=%.5f < prev=%.5f); halting\n" it ll ll_prev
+            end
+            break
+        end
 
         β      = β_new
         σ²_phy = σ²_phy_new
         σ²     = σ²_new
 
-        ll = marginal_loglik(prob, β, σ²_phy, σ²)
         if verbose
             @printf "  EM %3d: LL=%.5f  σ²_phy=%.5f  σ²=%.5f\n" it ll σ²_phy σ²
         end
         if abs(ll - ll_prev) < reltol * (1 + abs(ll_prev))
+            ll_prev = ll
             break
         end
         ll_prev = ll
@@ -251,12 +277,12 @@ end
 # LBFGS FITTER (B) — analytical gradient of marginal NLL
 #
 # θ = [β (k); log σ²_phy (1); log σ² (1)]
-# Gradient uses Woodbury + Hutchinson Tr(V^{-1}) with 30 probes.
+# Gradient uses Woodbury + EXACT Takahashi Tr(V^{-1}) (deterministic in θ).
 # ─────────────────────────────────────────────────────────────────────────────
 
 function lbfgs_fit(prob::LocOnlyProblem;
                    β0=nothing, σ²_phy0=0.5, σ²0=0.5,
-                   g_tol=1e-6, iterations=300, nprobe=30)
+                   g_tol=1e-6, iterations=300)
     k = prob.k
     β_init = β0 === nothing ? zeros(k) : copy(Float64.(β0))
     θ_init = vcat(β_init, [log(σ²_phy0), log(σ²0)])
@@ -281,16 +307,16 @@ function lbfgs_fit(prob::LocOnlyProblem;
             # ∂F/∂β = -X' V^{-1} e
             @views G[1:k] .= -(prob.X' * Ve)
 
-            # Hutchinson Tr(V^{-1}) = n/σ² - Tr(S M^{-1} S')/σ²²
+            # EXACT Tr(V^{-1}) = n/σ² - Tr(S M^{-1} S')/σ²², with
+            # Tr(S M^{-1} S') = Σ_j STS_diag[j]·M^{-1}[j,j] computed EXACTLY from
+            # the same Takahashi selected inverse the EM fitter uses (#305). The
+            # old nprobe Hutchinson estimate drew a fresh randn(n) each fg! call,
+            # so the two variance-gradient components were a stochastic, non-
+            # reproducible function of θ that MoreThuente/LBFGS could not reconcile
+            # with the exact objective F. The exact diagonal is O(p) and makes the
+            # gradient a deterministic function of θ, consistent with F.
             n = prob.n
-            tr_SMS = 0.0
-            for _ in 1:nprobe
-                z   = randn(n)
-                STz = prob.S' * z
-                Miz = chM \ STz
-                tr_SMS += dot(z, prob.S * Miz)
-            end
-            tr_SMS   /= nprobe
+            _, tr_SMS = exact_traces(prob, chM)
             trVinv    = n / σ² - tr_SMS / σ²^2
 
             # ∂logdetV/∂(log σ²_phy) = n - σ² Tr(V^{-1})
@@ -473,7 +499,7 @@ function main()
             @printf "  LBFGS wins at p=200: %.3fs (%d iters) vs EM %.3fs (%d iters, %.2fx)\n" t_lb r_lb.iterations t_em r_em.iterations (t_em/t_lb)
         end
         println("  EM each-iter cost: Takahashi exact trace (O(p)) + GLS (O(p))")
-        println("  LBFGS each-iter cost: Woodbury gradient + 30-probe Hutchinson (O(p))")
+        println("  LBFGS each-iter cost: Woodbury gradient + exact Takahashi trace (O(p))")
     else
         println("GATE FAILED: see diagnostics above.")
     end
