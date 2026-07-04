@@ -131,10 +131,11 @@ end
         X1 = hcat(ones(n), x); X2 = hcat(ones(n), x)
         β1 = [0.6, 0.4]; β2 = [0.3, -0.5]
         λ1 = 0.7; λ2 = 0.6; θ_nb = 6.0; σ2 = 0.5
+        σ_nb = 1 / sqrt(θ_nb)                                # NB2 slot is log σ; θ = 1/σ² (#315/#316)
         u = randn(rng, n)
         η1 = X1 * β1 .+ λ1 .* u
         η2 = X2 * β2 .+ λ2 .* u
-        y1 = [DRM._mf_rand(NegBinomial2(), η1[i], 1.0, θ_nb, rng) for i in 1:n]   # size θ
+        y1 = [DRM._mf_rand(NegBinomial2(), η1[i], 1.0, σ_nb, rng) for i in 1:n]   # scale σ (θ = 1/σ²)
         y2 = [DRM._mf_rand(Gaussian(), η2[i], 1.0, σ2, rng) for i in 1:n]
 
         fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = NegBinomial2(),
@@ -148,12 +149,44 @@ end
         # The NB2 size θ is only WEAKLY identified in this pair: the shared latent
         # already injects variance into the count axis, so θ and λ1 are partly
         # confounded (both add count variance). Across seeds θ̂ scatters widely and
-        # for some draws drifts toward the Poisson limit (θ→∞). We therefore assert
-        # only that θ̂ is finite/positive and that the link-variance mapping holds,
-        # not a tight point recovery. β/λ — the structural targets — are robust.
-        @test isfinite(fit.σ1) && fit.σ1 > 1.0               # NB2 size θ (weakly identified)
-        @test fit.v1 ≈ trigamma(fit.σ1)                      # link-scale variance mapping
+        # for some draws drifts toward the Poisson limit (θ→∞, σ→0). We therefore
+        # assert only that the recovered scale/size is finite/positive and that the
+        # link-variance mapping holds, not a tight point recovery. β/λ — the
+        # structural targets — are robust.
+        θ̂1 = inv(fit.σ1^2)                                   # NB2 size θ = 1/σ² (#315/#316)
+        @test isfinite(fit.σ1) && fit.σ1 > 0.0               # NB2 scale σ (weakly identified)
+        @test isfinite(θ̂1) && θ̂1 > 0.0                       # implied size θ = 1/σ²
+        @test fit.v1 ≈ trigamma(θ̂1)                          # link-scale variance mapping (θ)
         @test fit.rho_latent > 0.0
+    end
+
+    # ---- Parity: the NB2 dispersion slot means log σ (θ = 1/σ²) in BOTH the mixed
+    # and univariate fitters, matching negbinomial.jl's r = exp(-2·ησ) and drmTMB's
+    # size = 1/σ². Locked convention #315/#316. A well-identified NB2×low-noise
+    # Gaussian pair recovers the true size θ via exp(-2·βσ) = 1/σ1².
+    @testset "NB2 dispersion-slot parity (log σ, θ = 1/σ²; #315/#316)" begin
+        rng = StableRNG(20260703)
+        n = 4000
+        x = randn(rng, n)
+        X1 = hcat(ones(n), x); X2 = hcat(ones(n), x)
+        β1 = [1.0, 0.3]; β2 = [0.2, -0.4]
+        λ1 = 0.25; λ2 = 0.25; θ_nb = 4.0; σ2 = 0.1   # small loadings + tiny Gaussian noise → θ well identified
+        σ_nb = 1 / sqrt(θ_nb)
+        u = randn(rng, n)
+        η1 = X1 * β1 .+ λ1 .* u
+        η2 = X2 * β2 .+ λ2 .* u
+        y1 = [DRM._mf_rand(NegBinomial2(), η1[i], 1.0, σ_nb, rng) for i in 1:n]   # scale σ
+        y2 = [DRM._mf_rand(Gaussian(), η2[i], 1.0, σ2, rng) for i in 1:n]
+
+        fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = NegBinomial2(),
+                                   y2 = y2, X2 = X2, fam2 = Gaussian(), confint = false)
+        @test fit.converged
+        βσ = fit.βσ1[1]                                       # NB2 dispersion coefficient = log σ
+        # PARITY: exp(-2·βσ) is the size θ, matching negbinomial.jl (r = exp(-2·ησ))
+        # and drmTMB (size = 1/σ²). The reported σ1 equals exp(βσ) and θ = 1/σ1².
+        @test isapprox(exp(-2 * βσ), θ_nb; rtol = 0.30)       # recovered size θ ≈ true θ
+        @test isapprox(exp(-2 * βσ), inv(fit.σ1^2); rtol = 1e-6)   # θ = 1/σ1² identity
+        @test isapprox(fit.σ1, σ_nb; rtol = 0.20)            # reported scale σ ≈ true σ
     end
 
     @testset "Beta x Binomial recovery (identified)" begin

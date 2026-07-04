@@ -17,15 +17,18 @@
 # are; for Gaussian × non-Gaussian (no free residual variance on the non-Gaussian
 # axis) all parameters are identified.
 
-# Which families carry a (log-native) dispersion parameter in the θ vector. The
-# dispersionless families (Poisson, Binomial) are fully pinned by η alone; every
-# other family adds one slot per axis: log σ for Gaussian/Beta/Gamma, log θ for
-# NB2. The natural dispersion value `d = exp(slot)` is what `_mf_obs_ll` receives.
+# Which families carry a dispersion parameter in the θ vector. The dispersionless
+# families (Poisson, Binomial) are fully pinned by η alone; every other family adds
+# one slot per axis that is UNIFORMLY `log σ` — Gaussian/Beta/Gamma AND NB2 (the
+# locked twin convention, #315/#316: the `sigma` slot is `log σ` everywhere, and the
+# NB2 size is θ = 1/σ²). The scale value `d = exp(slot) = σ` is what `_mf_obs_ll`
+# receives; each family then maps σ to its own dispersion (Beta φ = 1/σ², Gamma
+# α = 1/σ², NB2 θ = 1/σ²).
 _mf_has_disp(fam) = !(fam isa Poisson || fam isa Binomial)
 
 # Per-observation conditional log-density at a latent node, dispatched on family.
-# `d` is the family's NATURAL dispersion (Gaussian/Beta/Gamma: σ; NB2: size θ);
-# dispersionless families ignore it (it is passed as 1).
+# `d` is the family's scale σ = exp(slot) for ALL dispersion-carrying families
+# (Gaussian/Beta/Gamma/NB2); dispersionless families ignore it (it is passed as 1).
 _mf_obs_ll(::Gaussian, η, y, trials, d) =
     -0.5 * ((y - η) / d)^2 - log(d) - 0.9189385332046727  # 0.5*log(2π)
 function _mf_obs_ll(::Poisson, η, y, trials, d)
@@ -37,12 +40,13 @@ function _mf_obs_ll(::Binomial, η, y, trials, d)
     return y * log(p) + (trials - y) * log1p(-p) +
            loggamma(trials + 1) - loggamma(y + 1) - loggamma(trials - y + 1)
 end
-# NB2 (mean μ=exp(η), size θ=d): hand-coded log-pmf with loggamma (ForwardDiff-safe
-# in θ; no Distributions.NegativeBinomial domain checks). Var = μ + μ²/θ. θ is
-# clamped to a finite positive range (cf. negbinomial.jl's ησ∈[-20,20]) so wild
-# line-search steps cannot push the size to 0/∞.
+# NB2 (mean μ=exp(η), scale σ=d, size θ=1/σ²): hand-coded log-pmf with loggamma
+# (ForwardDiff-safe in θ; no Distributions.NegativeBinomial domain checks). Var =
+# μ + μ²/θ. σ is clamped like Gamma/Beta (ησ∈[-15,15]) so wild line-search steps
+# cannot push the size to 0/∞. The slot is `log σ` (θ = 1/σ²), matching
+# negbinomial.jl's `r = exp(-2·ησ)` and the univariate fitter (#315/#316).
 function _mf_obs_ll(::NegBinomial2, η, y, trials, d)
-    μ = exp(clamp(η, -30.0, 30.0)); θ = clamp(d, 2.0e-9, 4.9e8)   # exp(∓20)
+    μ = exp(clamp(η, -30.0, 30.0)); θ = inv(clamp(d, 3.1e-7, 3.3e6)^2)   # θ = 1/σ²
     return loggamma(y + θ) - loggamma(θ) - loggamma(y + 1) +
            θ * (log(θ) - log(θ + μ)) + y * (log(μ) - log(θ + μ))
 end
@@ -77,13 +81,15 @@ _mf_init(::Beta, X, y) = X \ (log.(clamp.(y, 1e-3, 1 - 1e-3)) .-   # logit link
                               log1p.(-clamp.(y, 1e-3, 1 - 1e-3)))
 _mf_init(::Gamma, X, y) = X \ log.(max.(y, 1e-3))                  # log link
 
-# Starting value for the (log-native) dispersion slot, per disp-carrying family.
+# Starting value for the `log σ` dispersion slot, per disp-carrying family
+# (uniform `log σ` for Gaussian/Beta/Gamma/NB2; #315/#316).
 function _mf_disp_init(::Gaussian, y)
     log(max(Statistics.std(y) / 2, 1e-2))                          # log σ
 end
-function _mf_disp_init(::NegBinomial2, y)                          # log θ (MoM)
+function _mf_disp_init(::NegBinomial2, y)                          # log σ = -½ log θ (MoM)
     m = Statistics.mean(y); v = Statistics.var(y)
-    log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    θ_MoM = max(m^2 / max(v - m, 0.1 * m + eps()), 0.5)
+    -0.5 * log(θ_MoM)
 end
 function _mf_disp_init(::Beta, y)                                  # log σ = -½ log φ
     ȳ = Statistics.mean(y); v = Statistics.var(y)
@@ -103,7 +109,7 @@ end
 _mf_disp_v(fam::Gaussian, slot, μ̂) = link_residual(fam; dispersion = exp(2 * slot))      # σ²
 _mf_disp_v(fam::Gamma, slot, μ̂) = link_residual(fam; dispersion = exp(2 * slot))         # σ² → trigamma(1/σ²)
 _mf_disp_v(fam::Beta, slot, μ̂) = link_residual(fam, μ̂; dispersion = exp(-2 * slot))      # φ = 1/σ²
-_mf_disp_v(fam::NegBinomial2, slot, μ̂) = link_residual(fam; dispersion = exp(slot))      # θ
+_mf_disp_v(fam::NegBinomial2, slot, μ̂) = link_residual(fam; dispersion = exp(-2 * slot)) # θ = 1/σ²
 _mf_disp_v(fam::Poisson, slot, μ̂) = link_residual(fam, μ̂)
 _mf_disp_v(fam::Binomial, slot, μ̂) = link_residual(fam, μ̂)
 
@@ -128,7 +134,7 @@ function _mf_rand(::Binomial, η, trials, d, rng)
     return Float64(s)
 end
 function _mf_rand(::NegBinomial2, η, trials, d, rng)
-    μ = exp(clamp(η, -20.0, 20.0)); θ = d; p = θ / (θ + μ)
+    μ = exp(clamp(η, -20.0, 20.0)); θ = inv(d^2); p = θ / (θ + μ)   # d is σ, θ = 1/σ²
     return Float64(rand(rng, Distributions.NegativeBinomial(θ, p)))
 end
 function _mf_rand(::Beta, η, trials, d, rng)
@@ -146,24 +152,24 @@ end
                        Xsigma1=ones(n,1), Xsigma2=ones(n,1), K=32, g_tol=1e-6)
 
 Fit the cross-family bivariate model (shared per-observation latent) and return a
-`NamedTuple` with fixed effects `β1`/`β2`, loadings `λ1`/`λ2`, per-axis dispersion
-`σ1`/`σ2` on the natural scale (`NaN` for dispersionless axes), dispersion
-sub-model coefficients `βσ1`/`βσ2` (log-native scale, empty for dispersionless
-axes), link-scale variances `v1`/`v2`, the latent-scale correlation `rho_latent`,
-`loglik`, `converged`, `iterations`, and the two family instances `fam1`/`fam2`
-(carried so the post-fit accessors in `mixed_family_postfit.jl` can recover each
-axis's inverse link).
+`NamedTuple` with fixed effects `β1`/`β2`, loadings `λ1`/`λ2`, per-axis scale
+`σ1`/`σ2` (`NaN` for dispersionless axes), dispersion sub-model coefficients
+`βσ1`/`βσ2` (`log σ` scale, empty for dispersionless axes), link-scale variances
+`v1`/`v2`, the latent-scale correlation `rho_latent`, `loglik`, `converged`,
+`iterations`, and the two family instances `fam1`/`fam2` (carried so the post-fit
+accessors in `mixed_family_postfit.jl` can recover each axis's inverse link).
 
 `fam1`/`fam2` are DRM family instances. Supported: `Gaussian`, `Poisson`,
 `Binomial`, `NegBinomial2`, `Beta`, `Gamma`. Dispersion-carrying families
-(Gaussian/Beta/Gamma → `σ`; NB2 → size `θ`) carry a per-observation log-native
-dispersion SUB-MODEL `log d_{k,i} = (Xσ_k · β_σk)_i` with `size(Xσ_k, 2)`
-coefficients; `Poisson`/`Binomial` are dispersionless. `Xsigma1`/`Xsigma2` default
-to a single intercept column (`ones(n,1)`), reproducing the intercept-only scalar
-dispersion. For dispersion-carrying families `σ1`/`σ2` returns a representative
-natural dispersion `exp(mean_i log d_{k,i})` (`σ` for Gaussian/Beta/Gamma, `θ` for
-NB2); the full sub-model is in `βσ1`/`βσ2`. `trials*` are Binomial denominators
-(ignored otherwise).
+(Gaussian/Beta/Gamma/NB2) all carry the scale `σ` in a per-observation `log σ`
+SUB-MODEL `log σ_{k,i} = (Xσ_k · β_σk)_i` with `size(Xσ_k, 2)` coefficients;
+`Poisson`/`Binomial` are dispersionless. Each family maps σ to its own dispersion
+(Beta φ = 1/σ², Gamma α = 1/σ², NB2 size θ = 1/σ²), matching the univariate
+fitters and `drmTMB` (#315/#316). `Xsigma1`/`Xsigma2` default to a single intercept
+column (`ones(n,1)`), reproducing the intercept-only scalar dispersion. For
+dispersion-carrying families `σ1`/`σ2` returns a representative scale
+`exp(mean_i log σ_{k,i})` (recover the NB2 size as `θ = 1/σ1²`); the full sub-model
+is in `βσ1`/`βσ2`. `trials*` are Binomial denominators (ignored otherwise).
 """
 function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         trials1 = ones(length(y1)), trials2 = ones(length(y2)),
@@ -174,10 +180,10 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
     n = length(y1)
     n == length(y2) || throw(ArgumentError("y1 and y2 must have equal length"))
     p1 = size(X1, 2); p2 = size(X2, 2)
-    # s1/s2: does each axis carry a (log-native) dispersion SUB-MODEL? log σ for
-    # Gaussian/Beta/Gamma, log θ for NB2; none for Poisson/Binomial. The dispersion
-    # is now a per-observation linear predictor on the log-native scale,
-    #     log d_{k,i} = (Xσ_k · β_σk)_i,
+    # s1/s2: does each axis carry a `log σ` dispersion SUB-MODEL? `log σ` for all of
+    # Gaussian/Beta/Gamma/NB2 (#315/#316); none for Poisson/Binomial. The scale is a
+    # per-observation linear predictor on the `log σ` scale,
+    #     log σ_{k,i} = (Xσ_k · β_σk)_i,
     # with q_k = size(Xσ_k, 2) coefficients (default Xσ_k = ones(n,1) ⇒ q_k = 1,
     # i.e. the single-scalar intercept-only model — byte-identical to the previous
     # scalar slot). Dispersionless axes carry no σ coefficients (q_k effectively 0).
@@ -208,8 +214,8 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         bb2 = θ[p1+1:p1+p2]
         ll1 = exp(θ[iλ1]); ll2 = θ[iλ2]
         T = eltype(θ)
-        # Per-observation natural dispersion (σ or θ) from the log-native sub-model
-        # d_{k,i} = exp((Xσ_k·β_σk)_i). With the default ones-column Xσ this is the
+        # Per-observation scale σ from the `log σ` sub-model
+        # σ_{k,i} = exp((Xσ_k·β_σk)_i). With the default ones-column Xσ this is the
         # constant exp(θ[isk[1]]) for every i — byte-identical to the old scalar.
         sd1v = s1 ? exp.(Xsigma1 * θ[is1]) : nothing
         sd2v = s2 ? exp.(Xsigma2 * θ[is2]) : nothing
@@ -219,7 +225,7 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
         acc = Vector{T}(undef, K)
         total = zero(T)
         @inbounds for i in 1:n
-            sd1 = s1 ? sd1v[i] : one_T   # natural dispersion (σ or θ) at obs i
+            sd1 = s1 ? sd1v[i] : one_T   # scale σ at obs i (θ = 1/σ² for NB2)
             sd2 = s2 ? sd2v[i] : one_T
             for k in 1:K
                 u = rt2 * z[k]
@@ -254,8 +260,8 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
     θ̂ = Float64.(Optim.minimizer(res))   # concrete Float64; the ForwardDiff calls below get copies
     β1 = θ̂[1:p1]; β2 = θ̂[p1+1:p1+p2]
     λ1 = exp(θ̂[iλ1]); λ2 = θ̂[iλ2]
-    # Dispersion sub-model coefficients (log-native scale) and a representative
-    # natural dispersion σ_k = exp(mean_i log d_{k,i}). The mean log-dispersion is
+    # Dispersion sub-model coefficients (`log σ` scale) and a representative scale
+    # σ_k = exp(mean_i log σ_{k,i}). The mean log σ is
     # computed as (column-mean of Xσ)·β_σ — algebraically mean(Xσ·β_σ) but, for the
     # default ones-column, exactly the single intercept (no summation round-off), so
     # σ_k = exp(θ̂[isk[1]]), byte-identical to the old scalar slot.
