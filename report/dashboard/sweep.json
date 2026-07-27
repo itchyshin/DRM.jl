@@ -1,0 +1,56 @@
+{
+  "ts": "live",
+  "tree": "REML math VERIFIED (identity 3e-8) — wiring + end-to-end",
+  "banked": 20,
+  "blockersFound": 15,
+  "blockersFixed": 15,
+  "members": {
+    "Ada": "onit",
+    "Fisher": "onit",
+    "Noether": "onit",
+    "Karpinski": "onit",
+    "Rose": "done",
+    "Curie": "done",
+    "Hopper": "done",
+    "Lovelace": "done",
+    "Grace": "done",
+    "Pat": "done",
+    "Boole": "done",
+    "Florence": "idle"
+  },
+  "activity": [
+    {
+      "ago": "now",
+      "run": true,
+      "who": "Fisher",
+      "what": "REML end-to-end testing (drm(method=:REML) on both-phylo) — identity anchor PASSED at diff 3.17e-8, so the Schur math is correct"
+    },
+    {
+      "ago": "4m",
+      "who": "Fisher",
+      "what": "REML built in the main loop: _glsp_reml_penalty (FD of βμ-gradient → 0.5·logdet S) + re-fit + tagging + asym/separate paths + drm() routing"
+    },
+    {
+      "ago": "8m",
+      "who": "Ada",
+      "what": "previous REML Workflow died (caught by a turn interrupt) — switched to resilient main-loop implementation, ultracode the verify at the end"
+    },
+    {
+      "ago": "12m",
+      "who": "Noether",
+      "what": "NB2 log-σ alignment COMMITTED — all 16 files green",
+      "tag": "794ad58"
+    },
+    {
+      "ago": "16m",
+      "who": "Hopper",
+      "what": "Ayumi branch confusion untangled: shannon/RELEASE-drmtmb is the right branch, just unpushed — delivery is one push"
+    }
+  ],
+  "inflight": [
+    "REML end-to-end test (identity PASSED 3e-8; verifying drm(method=:REML) + tagging + recovery)",
+    "Next: bridge reml_supported relax (R) + ultracode adversarial verify (bias-reduction sim)",
+    "On REML green: commit + push complete ML+REML σ-phylo branch → deliver Ayumi",
+    "Ayumi reply READY + held; 100-trees recommendation ready"
+  ]
+}
