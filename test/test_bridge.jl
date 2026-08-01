@@ -44,6 +44,11 @@ using Test, Random, LinearAlgebra
         family = "gaussian",
         data = data,
     )
+    @test_throws ArgumentError drm_bridge(;
+        formula = "y ~ x; sigma ~ x",
+        family = "not_a_real_family",
+        data = data,
+    )
 
     y2 = -0.2 .+ 0.4 .* x .+ 0.5 .* randn(n)
     bdata = (; y1 = collect(y), y2 = collect(y2), x = collect(x))
@@ -69,14 +74,23 @@ using Test, Random, LinearAlgebra
         family = "biv_gaussian",
         data = bdata,
     )
+    @test bbridged["family"] == "biv_gaussian"
     @test bbridged["coef_names"] == [
         "mu1_(Intercept)", "mu1_x", "mu2_(Intercept)", "mu2_x",
         "sigma1_(Intercept)", "sigma2_(Intercept)", "rho12_(Intercept)",
     ]
     @test bbridged["coefficients"] ≈ coef(bnative)
     @test bbridged["vcov"] ≈ vcov(bnative)
+    @test bbridged["loglik"] ≈ loglik(bnative)
+    @test bbridged["aic"] ≈ aic(bnative)
+    @test bbridged["bic"] ≈ bic(bnative)
+    @test bbridged["df"] == dof(bnative)
+    @test bbridged["nobs"] == nobs(bnative)
+    @test bbridged["converged"] == is_converged(bnative)
     @test bbridged["fitted"]["mu1"] ≈ fitted(bnative)[:mu1]
     @test bbridged["fitted"]["mu2"] ≈ fitted(bnative)[:mu2]
+    @test bbridged["residuals"]["mu1"] ≈ residuals(bnative)[:mu1]
+    @test bbridged["residuals"]["mu2"] ≈ residuals(bnative)[:mu2]
     @test bbridged["sigma"]["sigma1"] ≈ sigma(bnative)[:sigma1]
     @test bbridged["sigma"]["sigma2"] ≈ sigma(bnative)[:sigma2]
     @test bbridged["corpairs"] ≈ corpairs(bnative)
@@ -111,11 +125,20 @@ using Test, Random, LinearAlgebra
         data = pdata,
         tree = phy,
     )
+    @test pbridged["family"] == "gaussian"
     @test pbridged["coefficients"] ≈ coef(pnative)
+    # Phylo vcov can contain NaN blocks for random-effect rows; isequal treats NaN==NaN.
+    @test isequal(pbridged["vcov"], Matrix{Float64}(vcov(pnative)))
     @test pbridged["loglik"] ≈ loglik(pnative)
+    @test pbridged["aic"] ≈ aic(pnative)
+    @test pbridged["bic"] ≈ bic(pnative)
+    @test pbridged["df"] == dof(pnative)
+    @test pbridged["nobs"] == nobs(pnative)
     @test pbridged["converged"] == is_converged(pnative)
     @test pbridged["fitted"] ≈ fitted(pnative)
+    @test pbridged["residuals"] ≈ residuals(pnative)
     @test pbridged["sigma"] ≈ sigma(pnative)
+    @test isempty(pbridged["corpairs"])
 
     Gls = 10
     mls = 3

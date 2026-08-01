@@ -67,6 +67,7 @@ Status legend:
 | Keyed Dict formula `:mu`/`:sigma` + Dict data | **JULIA-EVIDENCED** | `test/test_bridge.jl` |
 | Missing keyed `mu` → `ArgumentError` | **JULIA-EVIDENCED** | `test/test_bridge.jl` |
 | Result-shape field set matches `_bridge_flatten` | **JULIA-EVIDENCED** (Julia Dict keys) | `test/test_bridge.jl` asserts the core fields |
+| Unsupported family string → `ArgumentError` | **JULIA-EVIDENCED** | `test/test_bridge.jl` — `family="not_a_real_family"` (2026-08-01 gap fill) |
 | Field-by-field ≡ native drmTMB `engine="julia"` object | **BLOCKED-until-Codex-free** | Needs drmTMB vignette / Workflow G |
 | Numeric gate-ID on unsupported R formula ops | **BLOCKED-until-Codex-free** | Julia throws message strings (`test/test_bridge_formula_translation.jl`); drmTMB#544 gate registry not confirmed here |
 
@@ -74,7 +75,7 @@ Status legend:
 
 | Cell | Julia status | Evidence |
 |---|---|---|
-| `family="biv_gaussian"`, keyed `mu1/mu2/sigma1/sigma2/rho12` | **JULIA-EVIDENCED** | `test/test_bridge.jl` — coef names, coef/vcov, fitted mu1/mu2, sigma1/sigma2, corpairs vs native |
+| `family="biv_gaussian"`, keyed `mu1/mu2/sigma1/sigma2/rho12` | **JULIA-EVIDENCED** | `test/test_bridge.jl` — family, coef names, coef/vcov, loglik/aic/bic/df/nobs/converged, fitted/residuals mu1/mu2, sigma1/sigma2, corpairs vs native |
 | Result-shape residual correlation payload (`corpairs`) | **JULIA-EVIDENCED** | `test/test_bridge.jl` |
 | ≡ drmTMB bivariate `engine="julia"` result shape | **BLOCKED-until-Codex-free** | Twin R surface |
 
@@ -82,7 +83,7 @@ Status legend:
 
 | Cell | Julia status | Evidence |
 |---|---|---|
-| `mu = y ~ x + phylo(1\|species)`, `sigma ~ 1`, Newick/`PhyloTree` via `tree=` | **JULIA-EVIDENCED** | `test/test_bridge.jl` — coef/loglik/converged/fitted/sigma vs native |
+| `mu = y ~ x + phylo(1\|species)`, `sigma ~ 1`, Newick/`PhyloTree` via `tree=` | **JULIA-EVIDENCED** | `test/test_bridge.jl` — family, coef/vcov (`isequal`, NaN-safe), loglik/aic/bic/df/nobs/converged/fitted/residuals/sigma/empty corpairs vs native |
 | Tree string cache (`_bridge_tree`) | **JULIA-EVIDENCED** | `test/test_bridge.jl` |
 | Semicolon / string formula with phylo (no crash) | **JULIA-EVIDENCED** | `test/test_bridge_formula_translation.jl` |
 | `drm_bridge_inference` profile on phylo-mean residual SD (`param="resd"`) | **JULIA-EVIDENCED** | `test/test_bridge.jl` |
@@ -115,14 +116,16 @@ Julia-evidenced keys on the #5 core cells (`test/test_bridge.jl`):
 
 | Key | Uni Gaussian | Biv Gaussian | Phylo-mean Gaussian |
 |---|---|---|---|
-| `family` | ✓ | ✓ | (implicit via fit) |
+| `family` | ✓ | ✓ | ✓ |
 | `coef_names` / `coefficients` | ✓ | ✓ | ✓ |
-| `vcov` | ✓ | ✓ | (not asserted vs native in phylo block; uni/biv are) |
-| `loglik` / `aic` / `bic` / `df` / `nobs` | ✓ | (loglik via coef path) | ✓ loglik |
-| `converged` | ✓ | — | ✓ |
-| `fitted` / `residuals` / `sigma` | ✓ | fitted + sigma split | ✓ |
-| `corpairs` | empty ✓ | ✓ | — |
+| `vcov` | ✓ | ✓ | ✓ (`isequal`; NaN RE block) |
+| `loglik` / `aic` / `bic` / `df` / `nobs` | ✓ | ✓ | ✓ |
+| `converged` | ✓ | ✓ | ✓ |
+| `fitted` / `residuals` / `sigma` | ✓ | fitted + residuals + sigma split | ✓ |
+| `corpairs` | empty ✓ | ✓ | empty ✓ |
 | Inference flatten (`method`,`param`,`lower`,`upper`,…) | — | q4 multi-row **EXTRA** | uni phylo `resd` ✓ |
+
+**2026-08-01 gap fill (Julia-only, no drmTMB):** bivariate IC/`converged`/`residuals`/`family`, phylo-mean `vcov`+IC+`residuals`+`family`+empty `corpairs`, and unsupported-family `ArgumentError` — all in `test/test_bridge.jl`.
 
 **BLOCKED-until-Codex-free:** mapping these Dict keys onto drmTMB S3/`drm_fit` slots (`$fit`, `$sdr`, `confint` methods, vignette columns).
 
@@ -133,7 +136,7 @@ Julia-evidenced keys on the #5 core cells (`test/test_bridge.jl`):
 | Rejection | Julia evidenced? | drmTMB gate-ID match? |
 |---|---|---|
 | Missing univariate `mu` key | Yes — `test/test_bridge.jl` | **BLOCKED-until-Codex-free** |
-| Unsupported family string | Code path in `_bridge_family` (no dedicated #5 test) | **BLOCKED-until-Codex-free** |
+| Unsupported family string | Yes — `test/test_bridge.jl` (`ArgumentError` message) | **BLOCKED-until-Codex-free** (gate-ID number/string vs drmTMB#544) |
 | R `I`/`poly`/`scale`/`factor`/`^` | Yes — `test/test_bridge_formula_translation.jl` | **BLOCKED-until-Codex-free** (messages cite `engine="julia"`; no `#GATE-…` IDs in DRM.jl) |
 | REML + coupled loc-scale phylo | Yes — `ErrorException` in `test/test_bridge.jl` | **BLOCKED-until-Codex-free** |
 | Wald on q4 among-axis | Yes — `test/test_bridge_bivariate_inference.jl` | **BLOCKED-until-Codex-free** |
@@ -151,7 +154,7 @@ Julia-evidenced keys on the #5 core cells (`test/test_bridge.jl`):
 4. Formula translation / clear rejections (`test_bridge_formula_translation.jl`).
 5. Documenter experimental framing (`docs/src/r-julia-bridge.md`).
 
-No new failing tests added in this slice (matrix-only; existing suite is the evidence).
+**Follow-up (2026-08-01):** remaining Julia-only gaps in §4 for the #5 trio were closed with minimal assertions in `test/test_bridge.jl` (no drmTMB / no Registrator). R-side / gate-ID / Workflow G items below stay blocked.
 
 ### Still **BLOCKED-until-Codex-free** (drmTMB / Codex lane)
 
