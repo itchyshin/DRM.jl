@@ -2,11 +2,12 @@
 
 **Lane:** DRM.jl only (Shannon / Hopper inventory).  
 **Workspace tip:** `.worktrees/ayumi-main-integrate` on `shannon/s3-scoped-hygiene`.  
-**Not done here:** drmTMB `R/julia-bridge.R` inventory, JuliaCall round-trip, gate-ID parity vs drmTMB#544, merge of #340, any R execution.
+**Paired matrix (both sides):** `bridge-finish-matrix-2026-08-01.md` (2026-08-01 Hopper finish).  
+**R inventory:** done on drmTMB worktree `hopper/bridge-finish-phase15-5` off `origin/main` (not the dirty `claude/handover-freshness-0718` checkout).
 
 **Hopper #5 bar (from `LOOP/GOAL.md` / ultra-plan Q3):** admitted cells + result-shape for **Gaussian uni / bivariate / first phylo mean** + gate-ID rejections; stay **experimental**; no new families.
 
-This note inventories what DRM.jl **already evidences in-repo** via direct Julia tests of `drm_bridge` / `drm_bridge_inference`. Anything that needs the twin R surface is marked **BLOCKED-until-Codex-free**.
+This note inventories what DRM.jl **already evidences in-repo** via direct Julia tests of `drm_bridge` / `drm_bridge_inference`. R-side mapping is in the paired matrix (no longer Codex-blocked).
 
 ---
 
@@ -68,8 +69,8 @@ Status legend:
 | Missing keyed `mu` → `ArgumentError` | **JULIA-EVIDENCED** | `test/test_bridge.jl` |
 | Result-shape field set matches `_bridge_flatten` | **JULIA-EVIDENCED** (Julia Dict keys) | `test/test_bridge.jl` asserts the core fields |
 | Unsupported family string → `ArgumentError` | **JULIA-EVIDENCED** | `test/test_bridge.jl` — `family="not_a_real_family"` (2026-08-01 gap fill) |
-| Field-by-field ≡ native drmTMB `engine="julia"` object | **BLOCKED-until-Codex-free** | Needs drmTMB vignette / Workflow G |
-| Numeric gate-ID on unsupported R formula ops | **BLOCKED-until-Codex-free** | Julia throws message strings (`test/test_bridge_formula_translation.jl`); drmTMB#544 gate registry not confirmed here |
+| Field-by-field ≡ native drmTMB `engine="julia"` object | **R-EVIDENCED (offline)** | drmTMB `new_drmTMB_julia` methods + Route C live parity (skip-guarded); see paired matrix |
+| Numeric gate-ID on unsupported R formula ops | **SPLIT (intentional)** | Julia: message strings; R pre-JuliaCall: named `gate_id`s in `drm_julia_intentional_gates()` (#544) |
 
 ### 2.2 Gaussian bivariate (no phylo)
 
@@ -77,7 +78,7 @@ Status legend:
 |---|---|---|
 | `family="biv_gaussian"`, keyed `mu1/mu2/sigma1/sigma2/rho12` | **JULIA-EVIDENCED** | `test/test_bridge.jl` — family, coef names, coef/vcov, loglik/aic/bic/df/nobs/converged, fitted/residuals mu1/mu2, sigma1/sigma2, corpairs vs native |
 | Result-shape residual correlation payload (`corpairs`) | **JULIA-EVIDENCED** | `test/test_bridge.jl` |
-| ≡ drmTMB bivariate `engine="julia"` result shape | **BLOCKED-until-Codex-free** | Twin R surface |
+| ≡ drmTMB bivariate `engine="julia"` result shape | **R-EVIDENCED (offline)** | `test-julia-bridge.R` Hopper #5 bivariate residual shape + Route B parity |
 
 ### 2.3 First Gaussian phylo mean (`phylo(1|species)`, constant sigma)
 
@@ -89,7 +90,7 @@ Status legend:
 | `drm_bridge_inference` profile on phylo-mean residual SD (`param="resd"`) | **JULIA-EVIDENCED** | `test/test_bridge.jl` |
 | `drm_bridge_inference` bootstrap on same cell | **JULIA-EVIDENCED** | `test/test_bridge.jl` |
 | Sparse L-BFGS / location-only route honesty in Documenter | Doc-only | `docs/src/r-julia-bridge.md` (not a test assertion of R parity) |
-| ≡ drmTMB first phylo-mean `engine="julia"` + vignette fields | **BLOCKED-until-Codex-free** | Twin R surface |
+| ≡ drmTMB first phylo-mean `engine="julia"` + vignette fields | **R-EVIDENCED (offline)** | `test-julia-bridge.R` + Route A parity; vignette stays CRAN-deferred |
 
 ---
 
@@ -127,7 +128,7 @@ Julia-evidenced keys on the #5 core cells (`test/test_bridge.jl`):
 
 **2026-08-01 gap fill (Julia-only, no drmTMB):** bivariate IC/`converged`/`residuals`/`family`, phylo-mean `vcov`+IC+`residuals`+`family`+empty `corpairs`, and unsupported-family `ArgumentError` — all in `test/test_bridge.jl`.
 
-**BLOCKED-until-Codex-free:** mapping these Dict keys onto drmTMB S3/`drm_fit` slots (`$fit`, `$sdr`, `confint` methods, vignette columns).
+**R mapping:** `new_drmTMB_julia` reconstructs coef/vcov/logLik/fitted/residuals/sigma/rho12; see paired matrix §2. Public vignette columns stay deferred for CRAN.
 
 ---
 
@@ -135,12 +136,12 @@ Julia-evidenced keys on the #5 core cells (`test/test_bridge.jl`):
 
 | Rejection | Julia evidenced? | drmTMB gate-ID match? |
 |---|---|---|
-| Missing univariate `mu` key | Yes — `test/test_bridge.jl` | **BLOCKED-until-Codex-free** |
-| Unsupported family string | Yes — `test/test_bridge.jl` (`ArgumentError` message) | **BLOCKED-until-Codex-free** (gate-ID number/string vs drmTMB#544) |
-| R `I`/`poly`/`scale`/`factor`/`^` | Yes — `test/test_bridge_formula_translation.jl` | **BLOCKED-until-Codex-free** (messages cite `engine="julia"`; no `#GATE-…` IDs in DRM.jl) |
-| REML + coupled loc-scale phylo | Yes — `ErrorException` in `test/test_bridge.jl` | **BLOCKED-until-Codex-free** |
-| Wald on q4 among-axis | Yes — `test/test_bridge_bivariate_inference.jl` | **BLOCKED-until-Codex-free** |
-| drmTMB#544 admitted/denied cell registry | Not inventoriable without reading drmTMB | **BLOCKED-until-Codex-free** |
+| Missing univariate `mu` key | Yes — `test/test_bridge.jl` | R payload path; not a #544 base gate |
+| Unsupported family string | Yes — `test/test_bridge.jl` | R `base_unsupported_family` (pre-JuliaCall) |
+| R `I`/`poly`/`scale`/`factor`/`^` | Yes — `test/test_bridge_formula_translation.jl` | Julia-side only (no R gate_id; intentional split) |
+| REML + coupled loc-scale phylo | Yes — `ErrorException` in `test/test_bridge.jl` | R warns / ML fallback on unsupported REML cells |
+| Wald on q4 among-axis | Yes — `test/test_bridge_bivariate_inference.jl` | R confint path rejects unsupported targets |
+| drmTMB#544 admitted/denied cell registry | Inventoriable | **Yes** — 15 `gate_id`s + `drm_julia_phase15_admitted_cells()` |
 
 ---
 
@@ -156,24 +157,20 @@ Julia-evidenced keys on the #5 core cells (`test/test_bridge.jl`):
 
 **Follow-up (2026-08-01):** remaining Julia-only gaps in §4 for the #5 trio were closed with minimal assertions in `test/test_bridge.jl` (no drmTMB / no Registrator). R-side / gate-ID / Workflow G items below stay blocked.
 
-### Still **BLOCKED-until-Codex-free** (drmTMB / Codex lane)
+### Remaining (not Codex-blocked)
 
-1. Inventory of `R/julia-bridge.R` admitted cells vs this matrix.
-2. Result-shape parity against a real `drmTMB(..., engine="julia")` object (Workflow G / vignette fields).
-3. Gate-ID string/number alignment with drmTMB#544.
-4. `bf()` R↔Julia round-trip under RCall (`DRM_PARITY_TESTS=1`).
-5. Rose claim-vs-evidence closeout that mentions the twin vignette / NEWS.
-6. Any JuliaCall smoke (explicitly out of scope for this parallel slice).
+1. Rose claim-vs-evidence closeout on the PR pair (experimental / CRAN-deferred honesty).
+2. Optional always-on `DRM_PARITY_TESTS=1` RCall bf round-trip in CI (marshalling already tested offline).
+3. Maintainer decision to close DRM.jl #5 after Rose.
 
 ---
 
-## 7. Suggested next actions (when Codex frees drmTMB)
+## 7. Suggested next actions
 
-1. Codex: publish drmTMB-side admitted-cell + gate-ID table (mirror columns of §2–§5).
-2. Hopper: join tables; mark mismatches only.
-3. Shannon: tiny DRM.jl PR if gate-ID strings need to land in `_BRIDGE_REJECT_CALLS` (API-stable after S3).
-4. Rose: experimental wording pass; close #5 only when both sides agree.
+1. Merge drmTMB Hopper PR (capability rows + offline biv shape + matrix).
+2. Merge DRM.jl PR (Julia assert gaps + paired matrix).
+3. Rose: experimental wording pass; close #5 when both PRs land.
 
 ---
 
-*Perspectives: Shannon (coord) + Hopper (bridge inventory). No subagents. No JuliaCall/R invoked. #340 not merged.*
+*Perspectives: Shannon (coord) + Hopper (bridge inventory). Paired with drmTMB `hopper/bridge-finish-phase15-5`.*
