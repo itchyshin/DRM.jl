@@ -8,9 +8,9 @@
 | S3 | Scoped registry hygiene (#8) | done | no | MERGED #341–#343 (+ docs #344–#348, #350) |
 | S4 | Registrator / General | cancelled | n/a | D-111: out until R catch-up + both working; drmTMB likely first |
 | S5 | Phase 1.5 #5 Hopper bar | done | soft | MERGED #349 + drmTMB #878; Rose PASS; #5 CLOSED |
-| S6 | Mechanical verify | pending | no | tip hygiene via #352 |
+| S6 | Mechanical verify | done | no | tip hygiene #352 + Cursor agents #353; CI green on tip |
 | S7 | Rose audit | done (S5) | claim | Phase 1.5 #5 PASS; General fence via #352 |
-| S8 | Melissa reconcile | pending | no | |
+| S8 | Melissa reconcile | pending | no | hub-only; Melissa not a DRM.jl `.cursor/agents/` persona |
 
 ## Deferred
 #136 VA · #291 REML speed · #13 fit_em_natgrad / full experimental wire · AGENTS tip commits

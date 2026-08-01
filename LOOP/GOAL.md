@@ -19,7 +19,7 @@ GitHub / `Pkg.develop` (or a future private path) — **not** via General.
 
 S2/S3 hygiene and tip verify already landed. Phase 1.5 Julia+twin (#349 +
 drmTMB #878) merged and #5 CLOSED; fence General Registrator as cancelled
-(D-111); finish tip hygiene via this PR.
+(D-111); tip hygiene #352 + Cursor agents #353 landed.
 
 ## Invariants
 
@@ -44,5 +44,6 @@ See `LOOP/ultra-plan.md` (copy of `docs/dev-log/plans/2026-08-01-ultra-plan-regi
 - [x] S3: scoped hygiene PR merged — Aqua + `Pkg.test` green; load-print silenced; HANDOVER/README honesty; no oversell of bridge or unwired experimental (#341–#343).
 - [x] **S4: CANCELLED / out of scope (D-111)** — General not until R catch-up + both working; drmTMB likely first. `v0.1.2` git tag may remain — **not** General membership.
 - [x] S5: #5 Hopper matrix evidenced; Rose experimental wording PASS; DRM.jl #349 @ `d296703` + drmTMB #878 @ `fb59cd3` MERGED; **#5 CLOSED**.
-- [ ] S6–S8: mechanical verify + Rose audit + Melissa reconcile landed (bridge closeout / tip hygiene — this PR #352).
+- [x] S6–S7: tip hygiene #352 @ `6d73539` + Cursor agents #353 @ `14cec07`; Rose Phase 1.5 PASS already on tip.
+- [ ] S8: Melissa reconcile (hub-only; not Registrator).
 - [ ] Mission Control `drmTMB` status updated; after-task + check-log.d for closed slices.
