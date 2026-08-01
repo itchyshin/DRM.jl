@@ -30,15 +30,24 @@
   model-selection guard against the REML trap; the **conjugate-EM** Gaussian
   phylo-mean solver (`algorithm = :em`, promoted from `experimental/location_only.jl`,
   #12/#224); **heritability / repeatability / ICC** accessors with CIs (#233);
-  **DHARMa-style randomised quantile residuals** for all families (#183/#234); the
-  **coevolution q=4 phylo front end** (#201) and its accessors (#187/#188); and the
-  **R bridge** (`drm_bridge`, `drm_bridge_inference`, sparse-phylo companion, #5).
-  `src/experimental/` still retains **alternative estimator prototypes** not in the
-  public API (SQUAREM / natural-gradient EM, trust-region & line-search E-steps,
-  dense q=4 EM, the experimental `reml_q4` path, and warm-start fit variants).
-- **Next:** the Julia General-registry submission (post tests-green + Aqua),
-  Phase 1.1 R-parity gate, Phase 3 articles, and the variational-approximation
-  track (issue #136).
+  **DHARMa-style randomised quantile residuals** for all families (#183/#234); and the
+  **coevolution q=4 phylo front end** (#201) and its accessors (#187/#188).
+  Julia-side R↔Julia helpers (`drm_bridge`, `drm_bridge_inference`, sparse-phylo
+  companion) are in-tree; **Phase 1.5 / #5 is not done** (drmTMB
+  `engine = "julia"` finish + Hopper matrix remain open — do not oversell as
+  bridge-shipped). `src/experimental/` is **not fully wired**: it still holds
+  alternative estimator prototypes outside the public API (SQUAREM /
+  natural-gradient EM, trust-region & line-search E-steps, dense q=4 EM, the
+  experimental `reml_q4` path, and warm-start fit variants). SCOPED registry
+  hygiene does **not** wire the rest.
+- **Next:** after integrate PR **#340** merges, finish **SCOPED S3** registry
+  hygiene (load-print silence + docs honesty; Aqua / `Pkg.test` green on the
+  tip), then **Registrator only with explicit Shinichi OK** (S4 — do not
+  submit from this slice). **Version / tag drift:** git tags `v0.1.0` and
+  `v0.1.1` exist while `Project.toml` + `CITATION.cff` still say `0.1.0` —
+  bump-vs-reuse is an S4 decision, not silently claimed here. Longer horizon:
+  Phase 1.1 R-parity (#17), Phase 1.5 bridge finish (#5), Phase 3 articles,
+  VA/ELBO (#136, deferred).
 
 ---
 
@@ -132,10 +141,13 @@ data attach only at the p leaf nodes.
 `lognormal`, `zeroonebeta`, `tweedie`, `cumulative`) · `inference` (Wald +
 profile + bootstrap; `infer_q4` graduated here) · `summary` · `visualization` ·
 `DRM.jl`.
-**Experimental** (`src/experimental/`, migrated, still NOT wired): `reml_q4`
-(Laplace-REML) · `location_only` (conjugate EM vs LBFGS) · `fit_em_natgrad`
-(natural-gradient EM) · `estep_{lm,trustregion,armijoguard,initprior}`
-(mode-finder candidates) · dense oracle (`q4_em_dense`, `fit_q4_tmbgrad`).
+**Experimental** (`src/experimental/`, migrated; **not fully wired** into the
+public API — do not claim otherwise): Laplace-REML `reml_q4` · remaining
+`location_only` / EM prototypes · `fit_em_natgrad` ·
+`estep_{lm,trustregion,armijoguard,initprior}` · dense oracle (`q4_em_dense`,
+`fit_q4_tmbgrad`). (Public opt-in REML is `method = :REML`; conjugate-EM
+phylo-mean is `algorithm = :em` — those promotions do **not** mean the whole
+`experimental/` tree is wired.)
 
 ---
 
@@ -208,19 +220,21 @@ public module and exported**: opt-in **REML** (`method = :REML`, #11/#235) with
 the model-selection guard, the **conjugate-EM** Gaussian phylo-mean solver
 (`algorithm = :em`, from `experimental/location_only.jl`, #12/#224),
 **heritability / repeatability / ICC** accessors (#233), **DHARMa quantile
-residuals** (#183/#234), the **coevolution q=4 phylo front end** + accessors
-(#201/#187/#188), and the **R bridge** (`drm_bridge` / `drm_bridge_inference`
-plus the sparse-phylo companion, #5). `src/experimental/` is **no longer the home
-of those features** but still holds alternative estimator prototypes not in the
-public API (SQUAREM / natural-gradient EM, trust-region & line-search E-steps,
-dense q=4 EM, the experimental `reml_q4` path, warm-start fit variants). `bench/`
-has runnable benchmarks + the `q4_p100` fixtures + the R fixture-gen. `report/`
-has all 13 design/provenance docs. CI is Linux-only, PR + `workflow_dispatch`
-(cost-disciplined). **Honest:** the engine still carries some of the PoC's
-script-style includes (one stray load-time print still fires from
-`sparse_aug_plsm.jl:267`; cleanup tracked under Workflow A). The module docstring
-in `src/DRM.jl` still carries the original "experimental … NOT yet wired" note
-and lags this state.
+residuals** (#183/#234), and the **coevolution q=4 phylo front end** + accessors
+(#201/#187/#188). Julia-side bridge helpers (`drm_bridge` /
+`drm_bridge_inference` + sparse-phylo companion) exist; **#5 / Phase 1.5 is
+still open**. `src/experimental/` is **no longer the home of the promoted
+features above** but is **not fully wired** — alternative estimator prototypes
+remain outside the public API (SQUAREM / natural-gradient EM, trust-region &
+line-search E-steps, dense q=4 EM, experimental `reml_q4`, warm-start fit
+variants). `bench/` has runnable benchmarks + the `q4_p100` fixtures + the R
+fixture-gen. `report/` has all 13 design/provenance docs. CI is Linux-only,
+PR + `workflow_dispatch` (cost-disciplined). **Honest — registry:** General-
+registry submission waits on **#340** (ayumi↔main integrate) then SCOPED S3
+hygiene + green Aqua/`Pkg.test`; Registrator is gated on Shinichi OK.
+**Version / tag:** tags `v0.1.0`/`v0.1.1` vs tree `0.1.0` in `Project.toml` +
+`CITATION.cff` — undecided until S4. Residual load-banner silence is a parallel
+S3 hygiene slice (not claimed done here).
 
 ---
 
@@ -257,9 +271,10 @@ that already works here.
 **MIT license** (Julia-ecosystem norm + matches GLLVM.jl; DRM.jl is fresh code,
 not a port of drmTMB's GPL source, so it's legally free to be MIT); **public**
 repo at `itchyshin/DRM.jl`; cost-disciplined CI.
-**Open:** the v0.1 pilot scope cut; whether to vendor any drmTMB GPL source later
-(would force GPL — avoid, or isolate); registration in the Julia General registry
-(after v0.1 + tests green).
+**Open:** whether to vendor any drmTMB GPL source later (would force GPL —
+avoid, or isolate); Julia General-registry submission (after **#340** + SCOPED
+S3 green + explicit Shinichi OK); version bump vs reuse of tag `v0.1.1` while
+`Project.toml` / `CITATION.cff` remain `0.1.0`; Phase 1.5 bridge finish (#5).
 
 ---
 

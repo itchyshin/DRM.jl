@@ -105,18 +105,28 @@ julia --project=. bench/run_scaling.jl           # O(p) curve to p=10,000
 src/                core engine (verified): sparse_phy, takahashi_selinv,
                     sparse_aug_plsm (robust mode-finder), sparse_em_fit,
                     fit_ml_q4, fit_q4_sparse_tmb; DRM.jl module
-src/experimental/   migrated but NOT yet wired: REML (reml_q4),
-                    location-only (location_only), EM variants,
-                    mode-finder candidates, dense oracle
+src/experimental/   remaining prototypes NOT fully wired into the public API
+                    (Laplace reml_q4, EM / location_only variants, mode-finder
+                    candidates, dense oracle). Public opt-in REML is
+                    method=:REML — not the same as wiring reml_q4.
 bench/              runnable benchmarks + the q4_p100 fixtures + R fixture gen
-test/               runtests.jl + migrated correctness checks (need path fixes)
+test/               runtests.jl + migrated correctness checks
 report/             13 design/provenance reports (the full poc record)
 docs/               Documenter site (mirrors drmTMB navbar) + dev-log; CONTRACT.md
 AGENTS.md ROADMAP.md   the 12-persona team + the phase plan
 .claude/workflows/  10 scripted workflows (W0/Q/A/B/D/F/G/H/S/R)
 ```
 
-## Status — honest (v0.1.0)
+## Status — honest (v0.1.x)
+
+Git tags **`v0.1.0` and `v0.1.1`** exist; `Project.toml` and `CITATION.cff`
+still report **`0.1.0`**. Treat that drift as open until a deliberate S4
+registry decision — do not infer the tree is already `0.1.1`.
+
+**Next (registry):** after ayumi↔main integrate PR
+[#340](https://github.com/itchyshin/DRM.jl/pull/340) merges, finish SCOPED S3
+hygiene + green local/`Pkg.test`/Aqua, then Registrator **only** with explicit
+maintainer OK. This README does **not** claim General-registry membership.
 
 **Public `drm()` / `bf()` front end** — recovery-tested, drmTMB-mirroring syntax:
 
@@ -143,17 +153,20 @@ over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
 **Inference:** Wald + profile + parametric bootstrap; opt-in **REML** for the
 fixed-effect Gaussian location–scale fit (`method = :REML`, with the
 model-selection guard); epsilon-method bias correction; `heritability` /
-`repeatability` / `icc` with delta + profile CIs. The Julia side of the R↔Julia
-bridge (`drm_bridge` / `drm_bridge_inference`) is wired and tested.
+`repeatability` / `icc` with delta + profile CIs. Julia-side R↔Julia helpers
+(`drm_bridge` / `drm_bridge_inference`) are in-tree and checked against native
+`drm`; **Phase 1.5 / [#5](https://github.com/itchyshin/DRM.jl/issues/5)**
+(drmTMB `engine = "julia"` ship + Hopper finish-matrix) remains **open** — not
+bridge-done.
 
-**Not yet wired / absent:** `src/experimental/` (the Laplace-REML `reml_q4`,
-location-only, EM variants); a **labelled q=4 coevolution-correlation accessor
-with CIs** (the raw `Σ_a` is stored and surfaced via `vc(fit)`, but a derived-ρ_a
-accessor is not); **χ̄² boundary inference**; **cross-family bivariate** models;
-the **variational (VA/ELBO)** marginal (`method = :VA` is a stub); and
-**missing-data** handling. The full, test-cited breakdown is in
-[Capabilities](docs/src/capabilities.md); see also
-[HANDOVER.md](HANDOVER.md) / [ROADMAP.md](ROADMAP.md).
+**Not fully wired / still open:** remaining `src/experimental/` prototypes
+(Laplace-REML `reml_q4`, EM / `location_only` variants — SCOPED hygiene does
+**not** wire these); **χ̄² boundary inference** where not yet exported;
+the **variational (VA/ELBO)** marginal track (#136, deferred). See
+[Capabilities](docs/src/capabilities.md),
+[capability-status](docs/design/capability-status.md),
+[HANDOVER.md](HANDOVER.md), and [ROADMAP.md](ROADMAP.md) for the
+test-cited breakdown — prefer those over any shorter summary here.
 
 ## License
 
