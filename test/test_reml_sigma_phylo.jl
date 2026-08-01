@@ -1,10 +1,12 @@
 # REML for the Gaussian σ-phylo location-scale route (Ayumi #2, her 2nd ask).
-# The Patterson–Thompson correction integrates the mean fixed effects β_μ out of
-# the Laplace marginal: nll_REML = nll_ML + 0.5·logdet(S), S = ∂²nll_marginal/∂β_μ²
-# (the marginal information of β_μ = the Schur complement).
+# Production path (PR #337): `_glsp_reml_refit_clean(..., pμ + pψ)` restricts BOTH
+# mean and scale fixed effects (β_μ and β_ψ) — the complete Cox–Reid / Patterson–
+# Thompson correction for a scale-side variance component. Restricting β_μ alone
+# left σ²_v ~ML-biased.
 #
-# ANCHOR: as the σ-phylo SD → 0 (no latent), S → Xμᵀ W Xμ with W = diag(exp(−2ψ)),
-# so the REML penalty must equal _fit_fixed_gaussian_reml's 0.5·logdet(Xμ'WXμ).
+# The unit-test ANCHOR below still probes the β_μ Schur complement at σ-phylo SD→0
+# (calls `_glsp_reml_penalty(..., pμ)` directly): as the latent vanishes,
+# S → Xμᵀ W Xμ with W = diag(exp(−2ψ)), matching fixed-effect REML's 0.5·logdet(Xμ'WXμ).
 using DRM
 using Test, Random, LinearAlgebra, SparseArrays
 
