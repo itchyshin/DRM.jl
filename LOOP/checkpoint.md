@@ -1,4 +1,4 @@
-GOAL: see GOAL.md.   STATE: Tip verify PASS @ `e7261d9`; **S4 submitted** (0.1.2 bump merged, tag pushed, `@JuliaRegistrator register` posted). Watching AutoMerge — do **NOT** claim registered until `JuliaRegistries/General` merges `D/DRM`. S5 Hopper #5 bar **evidenced** (Rose PASS); #349 rebasing onto main / awaiting CI.
+GOAL: see GOAL.md.   STATE: Tip verify PASS @ `e7261d9`; **S4 submitted** (0.1.2 bump merged, tag pushed, `@JuliaRegistrator register` posted). Watching AutoMerge — do **NOT** claim registered until `JuliaRegistries/General` merges `D/DRM`. S5 Hopper #5 bar **evidenced** (Rose PASS); #349 rebased onto main — awaiting CI. drmTMB #878 waiting re-CI after ASCII fix.
 
 ARCS DONE (verified):
 - S0 RECON — checklist at `docs/dev-log/plans/registry-checklist-2026-08-01.md`
@@ -11,9 +11,9 @@ ARCS DONE (verified):
 - **S4 tag** — annotated `v0.1.2` → `651c96c` (pushed to origin)
 - **S4 Registrator comment** — `@JuliaRegistrator register` on merge commit + PR #346 thread
 - S4 submitted checkpoint — MERGED #351
-- S5 Hopper finish matrix (paired) — DRM.jl #349 open (rebase onto `origin/main`); drmTMB #878 open (ASCII fix; wait green). Rose PASS @ `docs/dev-log/plans/rose-phase15-5-verdict-2026-08-01.md`
+- S5 Hopper finish matrix (paired) — DRM.jl #349 open (rebased onto `5f782fa`; CI pending); drmTMB #878 open (ASCII fix `e300249`; wait green). Rose PASS @ `docs/dev-log/plans/rose-phase15-5-verdict-2026-08-01.md`
 
-ARC IN PROGRESS: Finish #349 rebase + CI green, then merge; watch JuliaRegistrator / AutoMerge (do NOT claim registered). drmTMB #878 only after re-check green.
+ARC IN PROGRESS: Merge #349 when CI green; watch JuliaRegistrator / AutoMerge (do NOT claim registered). drmTMB #878 only after re-check green (bridge-only; Codex #858 no overlap).
 
 NEXT:
 1. Merge DRM.jl #349 when CI green; close #5 after twin lands (experimental bar)
@@ -46,6 +46,6 @@ RESUME:
 You are DRM.jl registry→bridge lane — running LOOP goal. RESUME.
 READ FIRST: LOOP/GOAL.md → LOOP/checkpoint.md → LOOP/ultra-plan.md → AGENTS.md.
 WORKSPACE: origin/main @ 5f782fa (v0.1.2; S4 submitted, not registered).
-CONTINUE FROM: S5 Rose PASS; finish #349 rebase/CI; watch AutoMerge / JuliaRegistrator reply; do NOT claim registered; do NOT dump AGENTS. Q2=SCOPED. DEFER #136 #291 #13.
+CONTINUE FROM: S5 Rose PASS; #349 rebased awaiting CI; #878 waits ASCII re-CI; watch AutoMerge / JuliaRegistrator reply; do NOT claim registered; do NOT dump AGENTS. Q2=SCOPED. DEFER #136 #291 #13.
 Pause at: General membership claim; human Registrator app install if bot silent; public claims beyond experimental.
 ```

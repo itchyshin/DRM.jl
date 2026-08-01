@@ -27,7 +27,7 @@ Hopper #5 bar (Gaussian uni / bivariate residual / first phylo-mean + gate rejec
 ## Merge advice
 
 - **DRM.jl #349:** merge when `test (1)` + `test (1.10)` (+ docs) green.
-- **drmTMB #878:** bridge-only; no file overlap with open Codex Lane B [#858](https://github.com/itchyshin/drmTMB/pull/858). Prefer merge when R-CMD-check green.
+- **drmTMB #878:** bridge-only; no file overlap with open Codex Lane B [#858](https://github.com/itchyshin/drmTMB/pull/858). First CI run failed on **non-ASCII WARNING** (em-dash in Route C `claim_boundary` string; tests `FAIL 0`). ASCII fix pushed; **leave open until re-check green**, then merge.
 - **S4 Registrator / AutoMerge:** out of scope — still waiting separate Shinichi OK.
 
 *Rose: PASS. Perspectives active: Rose + Shannon.*
