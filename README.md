@@ -145,8 +145,9 @@ General registration. S2/S3 hygiene already landed (#340–#342).
   figures (incl. the Confidence Eye), executed examples, honest per-page tags.
 
 Families are validated by **simulation parameter recovery**; the numerical
-drmTMB-parity gate (RCall vs. drmTMB v0.1.3 outputs) is tracked in
-[#17](https://github.com/itchyshin/DRM.jl/issues/17).
+drmTMB-parity gate (RCall vs. drmTMB v0.1.3 outputs) lives under opt-in
+`DRM_PARITY_TESTS=1` ([#17](https://github.com/itchyshin/DRM.jl/issues/17)
+closed).
 
 **Verified engine (foundation):** the q=4 ML location-scale single fit — 2.18×
 over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
@@ -155,10 +156,10 @@ over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
 fixed-effect Gaussian location–scale fit (`method = :REML`, with the
 model-selection guard); epsilon-method bias correction; `heritability` /
 `repeatability` / `icc` with delta + profile CIs. Julia-side R↔Julia helpers
-(`drm_bridge` / `drm_bridge_inference`) are in-tree and checked against native
-`drm`; **Phase 1.5 / [#5](https://github.com/itchyshin/DRM.jl/issues/5)**
-(drmTMB `engine = "julia"` ship + Hopper finish-matrix) remains **open** — not
-bridge-done.
+(`drm_bridge` / `drm_bridge_inference`) are in-tree; **Phase 1.5 /
+[#5](https://github.com/itchyshin/DRM.jl/issues/5)** is **closed** at the
+experimental Hopper finish-matrix bar (#349 + drmTMB #878) — not a CRAN /
+“supported” promotion.
 
 **Not fully wired / still open:** remaining `src/experimental/` prototypes
 (SQUAREM / natgrad EM, E-step variants, dense oracle, leftover `location_only`

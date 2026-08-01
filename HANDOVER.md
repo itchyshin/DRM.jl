@@ -33,9 +33,9 @@
   **DHARMa-style randomised quantile residuals** for all families (#183/#234); and the
   **coevolution q=4 phylo front end** (#201) and its accessors (#187/#188).
   Julia-side R↔Julia helpers (`drm_bridge`, `drm_bridge_inference`, sparse-phylo
-  companion) are in-tree; **Phase 1.5 / #5 is not done** (drmTMB
-  `engine = "julia"` finish + Hopper matrix remain open — do not oversell as
-  bridge-shipped). `src/experimental/` still holds **alternative estimator
+  companion) are in-tree; **Phase 1.5 / #5 is closed** at the experimental
+  Hopper finish-matrix bar (#349 + drmTMB #878) — do not oversell as CRAN /
+  “supported”. `src/experimental/` still holds **alternative estimator
   prototypes** outside the public API (SQUAREM / natural-gradient EM,
   trust-region & line-search E-steps, dense q=4 EM, warm-start fit variants,
   leftover `location_only.jl` copy). Public REML is `src/reml_q4.jl`
@@ -43,9 +43,10 @@
 - **Next:** Phase 1.5 / #5 **landed** (#349 + drmTMB #878; #5 CLOSED). Tip
   hygiene: keep claims off Julia General (**D-111** — catch up with drmTMB +
   both working well; drmTMB likely R/CRAN first). MIT via GitHub /
-  `Pkg.develop`; do **not** pursue JuliaRegistrator. Longer horizon: Phase 1.1
-  R-parity (#17), Phase 3 articles, VA/ELBO (#136, deferred). **Version / tag:**
-  tree + tag **`0.1.2` / `v0.1.2`** (#346) — **not** General membership.
+  `Pkg.develop`; do **not** pursue JuliaRegistrator. Longer horizon: optional
+  deeper opt-in R-parity (`DRM_PARITY_TESTS=1`; #17 closed), Phase 3 articles,
+  VA/ELBO (#136, deferred). **Version / tag:** tree + tag **`0.1.2` / `v0.1.2`**
+  (#346) — **not** General membership.
 
 ---
 
@@ -212,27 +213,29 @@ Published, MIT, public; **v0.1.0 and v0.1.1 tagged**. `src/` core loads cleanly
 (`using DRM` resolves the include chain + exports). The `drm()` / `bf()` front
 end, all 13 families (12 univariate + bivariate Gaussian), and the inference
 surface (Wald + profile + bootstrap) are wired and exported; families are
-validated by simulation parameter recovery (the numerical drmTMB-parity gate is
-#17). Several comparison-suite capabilities have since been **promoted into the
-public module and exported**: opt-in **REML** (`method = :REML`, #11/#235) with
-the model-selection guard, the **conjugate-EM** Gaussian phylo-mean solver
-(`algorithm = :em`, from `experimental/location_only.jl`, #12/#224),
-**heritability / repeatability / ICC** accessors (#233), **DHARMa quantile
-residuals** (#183/#234), and the **coevolution q=4 phylo front end** + accessors
-(#201/#187/#188). Julia-side bridge helpers (`drm_bridge` /
-`drm_bridge_inference` + sparse-phylo companion) exist; **#5 / Phase 1.5 is
-still open**. `src/experimental/` is **no longer the home of the promoted
-features above** but is **not fully wired** — alternative estimator prototypes
-remain outside the public API (SQUAREM / natural-gradient EM, trust-region &
-line-search E-steps, dense q=4 EM, warm-start fit variants, leftover
-`location_only` copy). There is **no** `experimental/reml_q4.jl` on tip —
-public REML is `src/reml_q4.jl`. `bench/` has runnable benchmarks + the
-`q4_p100` fixtures + the R fixture-gen. `report/` has all 13 design/provenance
-docs. CI is Linux-only, PR + `workflow_dispatch` (cost-disciplined).
+validated by simulation parameter recovery (numerical drmTMB-parity gate
+[#17](https://github.com/itchyshin/DRM.jl/issues/17) is **closed**;
+`DRM_PARITY_TESTS=1` stays opt-in). Several comparison-suite capabilities have
+since been **promoted into the public module and exported**: opt-in **REML**
+(`method = :REML`, #11/#235) with the model-selection guard, the **conjugate-EM**
+Gaussian phylo-mean solver (`algorithm = :em`, from
+`experimental/location_only.jl`, #12/#224), **heritability / repeatability /
+ICC** accessors (#233), **DHARMa quantile residuals** (#183/#234), and the
+**coevolution q=4 phylo front end** + accessors (#201/#187/#188). Julia-side
+bridge helpers (`drm_bridge` / `drm_bridge_inference` + sparse-phylo companion)
+exist; **#5 / Phase 1.5 is closed** (experimental bar; #349 + drmTMB #878).
+`src/experimental/` is **no longer the home of the promoted features above** but
+is **not fully wired** — alternative estimator prototypes remain outside the
+public API (SQUAREM / natural-gradient EM, trust-region & line-search E-steps,
+dense q=4 EM, warm-start fit variants, leftover `location_only` copy). There is
+**no** `experimental/reml_q4.jl` on tip — public REML is `src/reml_q4.jl`.
+`bench/` has runnable benchmarks + the `q4_p100` fixtures + the R fixture-gen.
+`report/` has all 13 design/provenance docs. CI is Linux-only, PR +
+`workflow_dispatch` (cost-disciplined).
 **Honest — distribution:** S2/S3 (#340–#342) landed; **General deferred** until
 readiness (**D-111**: R twin catch-up + both working; drmTMB likely CRAN first).
-Do not claim membership; do not pursue Registrator. Phase 1.5 / #5 landed;
-Next = tip hygiene / deeper parity — not General. **Version / tag:** `0.1.2` /
+Do not claim membership; do not pursue Registrator. Tip idle after #357 handover;
+Next = owner-opened goal — not General. **Version / tag:** `0.1.2` /
 `v0.1.2` are git artifacts only (#346).
 
 ---

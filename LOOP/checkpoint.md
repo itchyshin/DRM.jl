@@ -24,8 +24,8 @@ ARC CANCELLED:
 ARC IN PROGRESS: none — Phase 1.5 / registry→bridge closeout complete.
 
 NEXT:
-1. Idle on DRM.jl ship work unless Shinichi opens deeper Hopper parity (#17)
-2. Optional (non-blocking): Rose nit uni `r_bridge_status=supported` vs `claim_status=partial`
+1. Idle on DRM.jl ship work unless Shinichi opens a new goal
+2. Tip honesty landed: Rose nit (`supported`→`experimental`) + #17 closed wording
 3. Do not dump AGENTS fence commits; do not pursue JuliaRegistrator / General
 4. Melissa stays hub-only (not a DRM.jl `.cursor/agents/` persona)
 

@@ -1,0 +1,1 @@
+| 2026-08-01 | **Tip honesty: Rose nit + #17/#5 wording** | docs review + drmTMB registry statuses | ✅ uni `r_bridge_status`→experimental; ROADMAP/HANDOVER/README mark #17/#5 closed (opt-in parity); no engine | Shannon+Rose |

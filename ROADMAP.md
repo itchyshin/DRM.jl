@@ -16,12 +16,13 @@ implemented, exported, and recovery-tested. **v0.1.0 and v0.1.1 are tagged.**
 Many Phase 3 articles are filled (formula-grammar, adding-families,
 testing-likelihoods, source-map, large-data, convergence, structural-dependence,
 Rosetta). The variational-approximation track is newly opened (issue #136).
-**Still open:** the numerical RCall.jl drmTMB-parity gate (#17, Workflow G), the
-remaining `experimental/` prototypes (`fit_em_natgrad` / E-step variants / dense
-oracle — **not** the public `method = :REML` or `algorithm = :em` surfaces, which
-are already wired from `src/reml_q4.jl` and `src/location_only.jl`), and the
-Phase 1.5 R-side bridge (#5). **The verified q=4 PLSM engine (2.18× over drmTMB,
-O(p) to p=10,000) stays exactly as handed over.**
+**Still open:** the remaining `experimental/` prototypes (`fit_em_natgrad` /
+E-step variants / dense oracle — **not** the public `method = :REML` or
+`algorithm = :em` surfaces, which are already wired from `src/reml_q4.jl` and
+`src/location_only.jl`). Phase 1.5 / #5 is **closed** (experimental bridge bar);
+Workflow G / [#17](https://github.com/itchyshin/DRM.jl/issues/17) is **closed** —
+always-on `DRM_PARITY_TESTS=1` stays opt-in. **The verified q=4 PLSM engine
+(2.18× over drmTMB, O(p) to p=10,000) stays exactly as handed over.**
 
 ## Target
 
@@ -71,7 +72,7 @@ call DRM.jl from R via `engine = "julia"`. Parity anchor: **drmTMB v0.1.3**.
   **tree-I/O** design issues. — ✅ `bf()` shipped, including bivariate
   keyword-form grammar (#115) and reserved-syntax rejections (#109).
 - Workflow G: RCall.jl parity gate (`DRM_PARITY_TESTS=1`) against vendored
-  drmTMB v0.1.3 outputs in `test/parity/fixtures/`. — open (numerical gate #17).
+  drmTMB v0.1.3 outputs in `test/parity/fixtures/`. — ✅ issue [#17](https://github.com/itchyshin/DRM.jl/issues/17) closed; harness remains opt-in.
 - Fisher: thread the bootstrap and *measure* the speedup (currently unrun).
   — ✅ bootstrap entry points + threaded timing fixture (#131/#132).
 - Pat / Florence: first application articles (location–scale, bivariate
@@ -91,7 +92,7 @@ call DRM.jl from R via `engine = "julia"`. Parity anchor: **drmTMB v0.1.3**.
   Gaussian, Student-t, LogNormal, Gamma, Tweedie, Beta, zero-one-inflated beta,
   beta-binomial, Binomial, Poisson, NegBinomial2, truncated-NB2,
   cumulative-logit, + bivariate Gaussian); see `NEWS.md` v0.1.0 / v0.1.1. The
-  numerical drmTMB-parity gate (#17) is still open.
+  numerical drmTMB-parity gate (#17) is closed (opt-in harness).
 
 ### Phase 3 — Articles to mirror drmTMB  ·  *milestone: `Phase 3`*  ·  nearly complete
 
