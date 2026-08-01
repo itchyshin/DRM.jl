@@ -1,0 +1,1 @@
+| 2026-08-01 | **Bridge #5 Julia assert gaps** (Hopper / Shannon) | `julia --project=. -e 'using Test; include("test/test_bridge.jl")'` + matrix note | ✅ green (69 pass); filled bivariate IC/converged/residuals/family, phylo-mean vcov(isequal)+IC/residuals/family/corpairs, unsupported-family ArgumentError — no drmTMB | Shannon |

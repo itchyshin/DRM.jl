@@ -1,0 +1,1 @@
+| 2026-08-01 | **Bridge #5 paired matrix** (Hopper / Shannon) | DRM.jl `test_bridge` asserts + drmTMB `test-julia-bridge`/`gate-vs-engine` (worktree off main) | ✅ green; #5 trio evidenced experimental; Rose closeout pending | Shannon |

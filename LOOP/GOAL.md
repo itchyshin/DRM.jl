@@ -41,7 +41,7 @@ See `LOOP/ultra-plan.md` (copy of `docs/dev-log/plans/2026-08-01-ultra-plan-regi
 
 - [x] S2: ayumi↔main integrated on a clean tip (PR #340).
 - [x] S3: scoped hygiene PR merged — Aqua + `Pkg.test` green; load-print silenced; HANDOVER/README honesty; no oversell of bridge or unwired experimental (#341–#343).
-- [ ] **S4: CANCELLED / out of scope (D-111)** — General not until R catch-up + both working; drmTMB likely first. `v0.1.2` git tag may remain — **not** General membership.
-- [ ] S5: #5 Hopper matrix evidenced; Rose accepts experimental wording; no new families. (DRM.jl #349 in flight.)
-- [ ] S6–S8: mechanical verify + Rose audit + Melissa reconcile landed (bridge closeout only).
+- [x] **S4: CANCELLED / out of scope (D-111)** — General not until R catch-up + both working; drmTMB likely first. `v0.1.2` git tag may remain — **not** General membership.
+- [x] S5: #5 Hopper matrix evidenced on Julia side; Rose experimental wording PASS (#349 MERGED @ `d296703`). Twin drmTMB #878 may still be open.
+- [ ] S6–S8: mechanical verify + Rose audit + Melissa reconcile landed (bridge closeout / tip hygiene — PR #352).
 - [ ] Mission Control `drmTMB` status updated; after-task + check-log.d for closed slices.
