@@ -571,8 +571,3 @@ function fit_q4_sparse_tmb(prob::AugProblem, Q_cond::SparseMatrixCSC;
         g_calls = Optim.g_calls(res),
     )
 end
-
-if abspath(PROGRAM_FILE) == @__FILE__
-    println("fit_q4_sparse_tmb.jl loaded: marginal_nll, marginal_and_exact_grad, " *
-            "fit_q4_sparse_tmb available.")
-end
