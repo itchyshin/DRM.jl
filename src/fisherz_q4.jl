@@ -296,8 +296,3 @@ function fit_q4_sparse_fisherz(prob::AugProblem, Q_cond::SparseMatrixCSC;
         g_calls = Optim.g_calls(res),
     )
 end
-
-if abspath(PROGRAM_FILE) == @__FILE__
-    println("fisherz_q4.jl loaded: fz_DRD, fz_R, fz_phi_to_lc, fz_correlations, " *
-            "fz_marginal_and_grad, fit_q4_sparse_fisherz available.")
-end
