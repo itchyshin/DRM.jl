@@ -1,44 +1,47 @@
-GOAL: see GOAL.md.   STATE: S2+S3 hygiene merged (#340–#343). Tip verify on `origin/main` @ `e7261d9` = **PASS** (Totoro Aqua 10/10 + full `Pkg.test`). OPEN GATE **S4 Registrator** — do **NOT** submit without explicit Shinichi OK.
+GOAL: see GOAL.md.   STATE: Tip verify PASS @ `e7261d9`; **S4 submitted** (0.1.2 bump merged, tag pushed, `@JuliaRegistrator register` posted). Watching AutoMerge — do **NOT** claim registered until `JuliaRegistries/General` merges `D/DRM`.
 
 ARCS DONE (verified):
 - S0 RECON — checklist at `docs/dev-log/plans/registry-checklist-2026-08-01.md`
 - S1 Merge #339 — MERGED @ `7cb868d`
-- S2 ayumi→main integrate — MERGED PR #340 @ `7df22b4`
-- S3 scoped hygiene — MERGED PR #341 @ `50faf6d` (load-print silence + checklist bank)
-- S3 docs honesty — MERGED PR #342 @ `74f30a8` (Rose-honest HANDOVER/README)
-- Post-merge checkpoint docs — MERGED PR #343 @ `e7261d9`
-- **Tip verify (2026-08-01, Totoro CPU, Julia 1.12.6)** on clean tree @ `e7261d9`:
-  - Aqua standalone: **10/10 Pass** — log `totoro:/home/snakagaw/scratch/drm-pkg-test-logs/aqua-main-e7261d9-20260801-081817.log` (+ local `/tmp/drm-pkg-test-logs/aqua-main-e7261d9-20260801-081817.log`)
-  - Full `Pkg.test`: **PASS** (`Testing DRM tests passed`, exit 0) — ~4726 Pass / 0 Fail / 3 Broken (VA scaffold #136 only) — log `totoro:/home/snakagaw/scratch/drm-pkg-test-logs/pkg-test-main-e7261d9-20260801-081817.log` (+ local `/tmp/drm-pkg-test-logs/pkg-test-main-e7261d9-20260801-081817.log`)
-  - In-suite Aqua: **10/10** (12.0s)
+- S2 ayumi→main integrate — MERGED PR #340
+- S3 scoped hygiene — MERGED PR #341 (load-print silence) + #342 (docs honesty) + #343 (checkpoint)
+- Docs prep / DoD / Rose / tip-verify LOOP — MERGED #344 #345 #347 #348 #350
+- **Tip verify (2026-08-01, Totoro CPU, Julia 1.12.6)** on `e7261d9`: Aqua **10/10**; full `Pkg.test` **PASS** (~4726 Pass / 0 Fail / 3 Broken VA scaffold)
+- **S4 version bump** — MERGED PR #346 @ `651c96c` (`Project.toml` / `CITATION.cff` / NEWS → **0.1.2**)
+- **S4 tag** — annotated `v0.1.2` → `651c96c` (pushed to origin)
+- **S4 Registrator comment** — `@JuliaRegistrator register` on merge commit + PR #346 thread
 
-ARC IN PROGRESS: none on tip verify. Next human gate = S4.
+ARC IN PROGRESS: Watch JuliaRegistrator / AutoMerge. Bot has **not** replied yet as of submit; may need Shinichi to install [JuliaRegistrator GitHub App](https://github.com/apps/julia-registrator) on `itchyshin/DRM.jl` (no prior JuliaRegistrator comments on this org). Do not double-register once a General PR exists.
 
 NEXT:
-1. **S4 Registrator** — ask Shinichi for OK; **do not submit** until then. Version/tag drift still noted: Project.toml/`CITATION.cff` `0.1.0` vs tags `v0.1.0`/`v0.1.1` (resolve bump plan before/at submit).
-2. S5 #5 Julia-side Hopper matrix drafted; drmTMB inventory still deferred (free drmTMB lane).
-3. Do not dump AGENTS fence commits.
+1. Confirm JuliaRegistrator reply + `JuliaRegistries/General` PR for `DRM` 0.1.2; watch AutoMerge
+2. After General merge only: claim membership; close/check #8 registry bullet; TagBot may re-touch tag if needed
+3. S5 #5 Julia-side matrix — PR #349 open but **CONFLICTING** / no CI; drmTMB inventory still blocked on Codex lane
+4. Do not dump AGENTS fence commits
 
 OPEN GATES (need human):
-- **S4 Registrator submit — do not submit without explicit OK**
+- **Install / authorize JuliaRegistrator** on `itchyshin/DRM.jl` if the bot stays silent (click: https://github.com/apps/julia-registrator)
+- Do not claim “registered” until General merges
 - Do not dump AGENTS fence commits
 
 COMPUTE (ask before heavy runs):
-- Totoro: CPU only — used for this tip verify
+- Totoro: CPU only — tip verify done
 - DRAC: GPU / large arrays
 - Local Mac: smoke OK
 
 TRUTH LIVES IN:
 - LOOP/GOAL.md (Q2 SCOPED)
-- `origin/main` @ `e7261d9` (Merge #343; includes #340–#342)
-- Totoro + `/tmp` pkg-test logs above
-- `docs/dev-log/plans/registry-checklist-2026-08-01.md`
+- `origin/main` @ `651c96c` (Merge #346; version 0.1.2)
+- tag `v0.1.2` → `651c96c`
+- Registrator comment: https://github.com/itchyshin/DRM.jl/commit/651c96c6b94f39c380eb7954fd8800ceb31bd17e#commitcomment-194611869
+- Totoro tip-verify logs under `/tmp/drm-pkg-test-logs/` + totoro scratch
+- `docs/dev-log/plans/registrator-prep-2026-08-01.md`
 
 RESUME:
 ```
 You are DRM.jl registry→bridge lane — running LOOP goal. RESUME.
 READ FIRST: LOOP/GOAL.md → LOOP/checkpoint.md → LOOP/ultra-plan.md → AGENTS.md.
-WORKSPACE: clean tip origin/main @ e7261d9 (tip verify PASS).
-CONTINUE FROM: S2+S3 merged; Aqua+Pkg.test green on tip; OPEN GATE S4 — ask Shinichi for Registrator OK, do NOT submit; do NOT touch drmTMB; do NOT dump AGENTS. Q2=SCOPED. #5 R inventory deferred. DEFER #136 #291 #13.
-Pause at: S4 Registrator submit; public claims.
+WORKSPACE: clean tip at origin/main @ 651c96c (v0.1.2).
+CONTINUE FROM: S4 submitted; watch AutoMerge / JuliaRegistrator reply; do NOT claim registered; do NOT touch drmTMB; do NOT dump AGENTS. #349 CONFLICTING. Q2=SCOPED. DEFER #136 #291 #13.
+Pause at: General membership claim; human Registrator app install if bot silent.
 ```
