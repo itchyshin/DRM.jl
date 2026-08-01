@@ -6,6 +6,29 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## Unreleased
 
+## v0.1.2 (2026-08-01)
+
+**Version catch-up on the post–v0.1.1 `main` tip (registry candidate — not yet
+in Julia General).** `Project.toml` / `CITATION.cff` advance `0.1.0` → `0.1.2`
+so a first General registration does not collide with the existing git tags
+`v0.1.0` / `v0.1.1` (May 2026; tip is hundreds of commits past those tags).
+Prep + gates: [`docs/dev-log/plans/registrator-prep-2026-08-01.md`](docs/dev-log/plans/registrator-prep-2026-08-01.md).
+**Registrator submit and tagging wait explicit Shinichi OK** (ultra-plan S4).
+This note does **not** claim General membership, Phase 1.5 / #5 bridge closeout,
+or a full public wire of remaining `src/experimental/`.
+
+Post–v0.1.1 tip highlights already on `main` (Rose-honest; measured claims stay
+in `HANDOVER.md` / `report/`):
+
+- **Registry hygiene (S2/S3)** — ayumi↔main integrate (#340), load-banner silence
+  (#341), docs honesty on Next / bridge / version drift (#342), post-merge
+  checkpoint (#343).
+- **σ-phylo REML correctness** — REML restricts both β_μ and β_ψ (#337).
+- **Opt-in Gaussian REML**, conjugate-EM phylo-mean solver, heritability /
+  repeatability / ICC accessors, DHARMa-style randomised quantile residuals, and
+  the coevolution q=4 phylo front end (see HANDOVER TL;DR).
+- **Julia-side bridge surface** (`drm_bridge` / `drm_bridge_inference`) remains
+  in-tree; R-side `engine = "julia"` finish is still open (#5).
 - **Bivariate q=4 coevolution bootstrap uncertainty** — `bootstrap_sigma_a` gives
   parametric-bootstrap intervals for the q=4 phylogenetic among-axis SDs
   (`sqrt(diag(Σ_a))`) and the six among-axis coevolution correlations, reachable
