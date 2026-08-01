@@ -40,12 +40,12 @@
   trust-region & line-search E-steps, dense q=4 EM, warm-start fit variants,
   leftover `location_only.jl` copy). Public REML is `src/reml_q4.jl`
   (`method = :REML`) — there is **no** `experimental/reml_q4.jl` on tip.
-- **Next:** S2/S3 hygiene **landed** (#340–#342). Watch the **0.1.2 Registrator /
-  AutoMerge** lane (other PR — do **not** claim General-registry membership
-  here). Parallel: Phase 1.5 bridge finish (#5). Longer horizon: Phase 1.1
+- **Next:** Phase 1.5 / #5 **landed** (#349 + drmTMB #878; #5 CLOSED). Tip
+  hygiene: keep claims off Julia General (**D-111** — catch up with drmTMB +
+  both working well; drmTMB likely R/CRAN first). MIT via GitHub /
+  `Pkg.develop`; do **not** pursue JuliaRegistrator. Longer horizon: Phase 1.1
   R-parity (#17), Phase 3 articles, VA/ELBO (#136, deferred). **Version / tag:**
-  tags `v0.1.0`/`v0.1.1` vs tree version are owned by the 0.1.2 bump lane
-  (#346) — not silently claimed here.
+  tree + tag **`0.1.2` / `v0.1.2`** (#346) — **not** General membership.
 
 ---
 
@@ -229,9 +229,11 @@ line-search E-steps, dense q=4 EM, warm-start fit variants, leftover
 public REML is `src/reml_q4.jl`. `bench/` has runnable benchmarks + the
 `q4_p100` fixtures + the R fixture-gen. `report/` has all 13 design/provenance
 docs. CI is Linux-only, PR + `workflow_dispatch` (cost-disciplined).
-**Honest — registry:** S2/S3 (#340–#342) landed; Next = watch **0.1.2
-Registrator / AutoMerge** (other lane) and Phase 1.5 / #5 — do **not** claim
-General membership. **Version / tag:** owned by the 0.1.2 bump lane (#346).
+**Honest — distribution:** S2/S3 (#340–#342) landed; **General deferred** until
+readiness (**D-111**: R twin catch-up + both working; drmTMB likely CRAN first).
+Do not claim membership; do not pursue Registrator. Phase 1.5 / #5 landed;
+Next = tip hygiene / deeper parity — not General. **Version / tag:** `0.1.2` /
+`v0.1.2` are git artifacts only (#346).
 
 ---
 
@@ -270,9 +272,9 @@ that already works here.
 not a port of drmTMB's GPL source, so it's legally free to be MIT); **public**
 repo at `itchyshin/DRM.jl`; cost-disciplined CI.
 **Open:** whether to vendor any drmTMB GPL source later (would force GPL —
-avoid, or isolate); Julia General-registry membership (0.1.2 Registrator /
-AutoMerge lane in flight — do not claim registered until AutoMerge lands);
-Phase 1.5 bridge finish (#5).
+avoid, or isolate); Phase 1.5 bridge finish (#5).
+**Closed this arc / deferred:** Julia General-registry submission — **not until
+ready** (**D-111**); `v0.1.2` may remain as a git tag without General.
 
 ---
 
