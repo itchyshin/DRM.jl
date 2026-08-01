@@ -154,7 +154,7 @@ TEAM RAISED
 | Gate | Status |
 |---|---|
 | S1 #339 merge | **DONE** — MERGED 2026-08-01T13:06:15Z into `shannon/ayumi-integration` @ `7cb868d` (capability-status on tip) |
-| S2 ayumi↔main | **IN PROGRESS** (this session) |
+| S2 ayumi↔main | **PR OPEN** — https://github.com/itchyshin/DRM.jl/pull/340 (`shannon/ayumi-main-integrate`) |
 | S3 FULL #3 + hygiene | queued after S2 |
 | S4 Registrator | blocked on Shinichi explicit OK |
 | S5 Phase 1.5 #5 | Hopper bar; after API-stable S3 |
