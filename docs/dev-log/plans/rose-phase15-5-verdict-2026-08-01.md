@@ -24,10 +24,10 @@ Hopper #5 bar (Gaussian uni / bivariate residual / first phylo-mean + gate rejec
 - **Mild pre-existing tension (not blocking):** uni cell `base_gaussian_location_scale` still has `r_bridge_status = "supported"` while `claim_status` stays `partial` and the claim_boundary now stresses CRAN readers use TMB / vignette deferred. Do not promote that row further in this slice; a later honesty pass can align `supported` → `experimental` if desired.
 - Live Route A/B/C TMB↔Julia numeric parity remains **optional / skip-guarded** — docs correctly mark it as such, not as always-on CI evidence.
 
-## Merge advice
+## Merge advice / outcome (2026-08-01)
 
-- **DRM.jl #349:** merge when `test (1)` + `test (1.10)` (+ docs) green.
-- **drmTMB #878:** bridge-only; no file overlap with open Codex Lane B [#858](https://github.com/itchyshin/drmTMB/pull/858). First CI run failed on **non-ASCII WARNING** (em-dash in Route C `claim_boundary` string; tests `FAIL 0`). ASCII fix pushed; **leave open until re-check green**, then merge.
+- **DRM.jl #349:** MERGED @ `d296703` (CI green after main rebase).
+- **drmTMB #878:** MERGED @ `fb59cd3` after ASCII fix (em-dash → ASCII); bridge-only; no Codex #858 overlap.
 - **S4 Registrator / AutoMerge:** out of scope — still waiting separate Shinichi OK.
 
-*Rose: PASS. Perspectives active: Rose + Shannon.*
+*Rose: PASS. Perspectives active: Rose + Shannon. No spawned subagents.*

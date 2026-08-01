@@ -40,13 +40,12 @@
   trust-region & line-search E-steps, dense q=4 EM, warm-start fit variants,
   leftover `location_only.jl` copy). Public REML is `src/reml_q4.jl`
   (`method = :REML`) — there is **no** `experimental/reml_q4.jl` on tip.
-- **Next:** Phase 1.5 bridge finish (#5 / PR #349) + tip hygiene. **Julia
-  General registry stays out** until readiness (brain **D-111**, Shinichi
-  2026-08-01): catch up with drmTMB **and** both halves working well; drmTMB
-  likely R/CRAN first. MIT via GitHub / `Pkg.develop` until then; do **not**
-  pursue JuliaRegistrator. Longer horizon: Phase 1.1 R-parity (#17), Phase 3
-  articles, VA/ELBO (#136, deferred). **Version / tag:** tree + tag **`0.1.2` /
-  `v0.1.2`** exist as git artifacts (#346) — that is **not** General membership.
+- **Next:** Phase 1.5 / #5 **landed** (#349 + drmTMB #878; #5 CLOSED). Tip
+  hygiene: keep claims off Julia General (**D-111** — catch up with drmTMB +
+  both working well; drmTMB likely R/CRAN first). MIT via GitHub /
+  `Pkg.develop`; do **not** pursue JuliaRegistrator. Longer horizon: Phase 1.1
+  R-parity (#17), Phase 3 articles, VA/ELBO (#136, deferred). **Version / tag:**
+  tree + tag **`0.1.2` / `v0.1.2`** (#346) — **not** General membership.
 
 ---
 
@@ -232,8 +231,9 @@ public REML is `src/reml_q4.jl`. `bench/` has runnable benchmarks + the
 docs. CI is Linux-only, PR + `workflow_dispatch` (cost-disciplined).
 **Honest — distribution:** S2/S3 (#340–#342) landed; **General deferred** until
 readiness (**D-111**: R twin catch-up + both working; drmTMB likely CRAN first).
-Do not claim membership; do not pursue Registrator. Next = Phase 1.5 / #5.
-**Version / tag:** `0.1.2` / `v0.1.2` are git artifacts only (#346).
+Do not claim membership; do not pursue Registrator. Phase 1.5 / #5 landed;
+Next = tip hygiene / deeper parity — not General. **Version / tag:** `0.1.2` /
+`v0.1.2` are git artifacts only (#346).
 
 ---
 

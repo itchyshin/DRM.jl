@@ -125,10 +125,9 @@ Tree version and git tag are **`0.1.2` / `v0.1.2`**. Older tags `v0.1.0` /
 brain **D-111**). MIT via GitHub / `Pkg.develop` until then. Do not treat
 `v0.1.2` as General registration; do not chase Registrator.
 
-**Next:** Phase 1.5 /
-[#5](https://github.com/itchyshin/DRM.jl/issues/5) (drmTMB `engine = "julia"`)
-closeout + tip hygiene / parity — **not** General. S2/S3 hygiene already landed
-(#340–#342).
+**Next:** Phase 1.5 / [#5](https://github.com/itchyshin/DRM.jl/issues/5) is
+**closed** (#349 + drmTMB #878). Tip hygiene / deeper parity remain — **not**
+General registration. S2/S3 hygiene already landed (#340–#342).
 
 **Public `drm()` / `bf()` front end** — recovery-tested, drmTMB-mirroring syntax:
 
