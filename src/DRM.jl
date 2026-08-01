@@ -22,10 +22,14 @@ Verified results (see report/comparison-grid.md):
 NOTE (see HANDOVER.md): the engine files were migrated as the poc's script-style
 includes (chain: fit_q4_sparse_tmb → fit_ml_q4 → sparse_em_fit → sparse_aug_plsm
 → sparse_phy / takahashi_selinv). Inference (Wald + profile + parametric bootstrap)
-is wired in `src/inference.jl`, and REML is wired (`src/reml_q4.jl`, public
-`drm(method = :REML)`; the restricted correction covers all four among-axis axes —
-see #11). The remaining comparison-suite engines (location-only, EM) live in
-`src/experimental/` and are not yet wired into this module.
+is wired in `src/inference.jl`. **Public / included on tip:** opt-in REML
+(`src/reml_q4.jl`, `drm(method = :REML)`; restricted correction covers all four
+among-axis axes — see #11) and the conjugate-EM Gaussian phylo-mean solver
+(`src/location_only.jl`, `algorithm = :em` — see #12). **Still experimental
+(not wired into this module):** SQUAREM / natural-gradient EM, trust-region &
+line-search E-steps, dense q=4 EM, warm-start fit variants, and the leftover
+`src/experimental/location_only.jl` prototype copy — do not treat that directory
+as the public REML / `:em` surface.
 """
 module DRM
 
