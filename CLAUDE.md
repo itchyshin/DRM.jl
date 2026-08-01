@@ -47,3 +47,6 @@ the parity / bridge / license contracts) and [`ROADMAP.md`](ROADMAP.md)
   GPL source.** R-parity uses generated outputs only. Rose audits this per tag.
 - **Definition of Done** (per `AGENTS.md`): impl + tests + docstrings + worked
   example + check-log + after-task + Rose audit.
+
+<!-- shinichi-hub -->
+@/Users/z3437171/Dropbox/Github Local/Shinichi/AGENTS.md

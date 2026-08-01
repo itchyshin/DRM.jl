@@ -630,7 +630,13 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
             # Newton `_glsp_reml_newton` is faster on benign data, but the adversarial
             # verification found a β-coupling bias at larger pμ/pψ and boundary issues, so it is
             # EXPERIMENTAL, not the production path — see its docstring.)
-            θ̂, conv, ml_nll, reml_nll, _ = _glsp_reml_refit_clean(asym_obj, asym_grad_fn, θ̂, pμ; ml_converged = conv)
+            # Restrict BOTH the mean AND the scale fixed effects (pμ+pψ), not β_μ
+            # alone: the σ variance component's downward bias needs the β_ψ (log-σ
+            # coefficient) DoF integrated too -- the complete Cox-Reid restricted
+            # likelihood. Restricting β_μ alone leaves σ²_v ~ML-biased (native drmTMB
+            # REML, which marginalizes both via Laplace, debiases 30/30 vs ML 0/30;
+            # Noether math review 2026-07-06).
+            θ̂, conv, ml_nll, reml_nll, _ = _glsp_reml_refit_clean(asym_obj, asym_grad_fn, θ̂, pμ + pψ; ml_converged = conv)
         end
         nll_val = reml ? reml_nll : ml_nll
         βμ̂ = θ̂[1:pμ]; βψ̂ = θ̂[pμ+1:pμ+pψ]; logL22 = θ̂[pμ+pψ+1]
@@ -716,7 +722,10 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
             # Newton `_glsp_reml_newton` is faster on benign data, but the adversarial
             # verification found a β-coupling bias at larger pμ/pψ and boundary issues, so it is
             # EXPERIMENTAL, not the production path — see its docstring.)
-            θ̂, conv, ml_nll, reml_nll, _ = _glsp_reml_refit_clean(sep_obj, sep_grad_fn, θ̂, pμ; ml_converged = conv)
+            # Restrict BOTH mean AND scale fixed effects (pμ+pψ), not β_μ alone --
+            # the complete Cox-Reid restricted likelihood the σ variance component
+            # needs (see the asymmetric branch above; Noether review 2026-07-06).
+            θ̂, conv, ml_nll, reml_nll, _ = _glsp_reml_refit_clean(sep_obj, sep_grad_fn, θ̂, pμ + pψ; ml_converged = conv)
         end
         nll_val = reml ? reml_nll : ml_nll
         βμ̂ = θ̂[1:pμ]; βψ̂ = θ̂[pμ+1:pμ+pψ]

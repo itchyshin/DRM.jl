@@ -203,3 +203,6 @@ or `itchyshin/GLLVM.jl` when relevant. Nothing evaporates in chat.
 
 We track **drmTMB v0.1.3 (2026-05-20)**, pinned — not the moving dev branch.
 Re-anchor (and regenerate parity fixtures) on each tagged drmTMB release.
+
+<!-- shinichi-hub -->
+> Read first — personal operating contract & second brain (house rules, memory, agents): /Users/z3437171/Dropbox/Github Local/Shinichi/AGENTS.md  (repo rules override the hub where they differ)
