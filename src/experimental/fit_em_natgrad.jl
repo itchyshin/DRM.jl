@@ -9,22 +9,18 @@
 #   (4) relative-objective stopping (singular boundary).
 # This is block-coordinate natural-gradient ascent — distinct from Julia-2's
 # joint LBFGS. ML objective (β_μ are parameters, not integrated out).
+#
+# #13 DECISION GATE (2026-08-01): FAIL on q4_p100 — stalls at logLik ≈ −259.80
+# vs sparse-TMB MLE −256.51 (same class as plain EM). Do NOT wire as
+# `algorithm = :natgrad`. The Fisher metric `lc_metric` was extracted to
+# `src/lc_metric.jl` (public infra). See
+# `docs/dev-log/plans/2026-08-01-natgrad-decision-gate.md`.
+# This file remains an unwired experimental prototype.
 using LinearAlgebra, SparseArrays, ForwardDiff, Random, Statistics, Printf
-include(joinpath(@__DIR__, "fit_q4_sparse_tmb.jl"))  # marginal_and_exact_grad, marginal_nll, pack/unpack_theta, mstep_beta, lc_to_Λ, Λ_to_lc, make_problem
-
-# observed-information metric for the 10 lc params: finite-diff of the EXACT
-# lc-gradient (20 exact-grad evals, warm). Reused across iters (changes slowly).
-function lc_metric(prob, Q_cond, θ, u0; h=1e-5)
-    H = zeros(10, 10)
-    for k in 1:10
-        θp = copy(θ); θp[7+k] += h; _, gp, _, _ = marginal_and_exact_grad(prob, Q_cond, θp; u0=u0, n_newton=30)
-        θm = copy(θ); θm[7+k] -= h; _, gm, _, _ = marginal_and_exact_grad(prob, Q_cond, θm; u0=u0, n_newton=30)
-        H[:, k] = (gp[8:17] .- gm[8:17]) ./ (2h)
-    end
-    Hs = Symmetric((H + H') / 2)
-    ev = eigen(Hs); λf = max(1e-3, 1e-3 * maximum(abs.(ev.values)))   # ridge to SPD
-    return ev.vectors * Diagonal(max.(ev.values, λf)) * ev.vectors'
-end
+# Standalone script path (broken relative include historically): prefer
+# `using DRM` + `DRM.lc_metric` / `fit_q4_sparse_tmb` from the public module.
+include(joinpath(@__DIR__, "..", "fit_q4_sparse_tmb.jl"))  # marginal_and_exact_grad, …
+include(joinpath(@__DIR__, "..", "lc_metric.jl"))          # extracted Fisher metric (#13 S1b)
 
 function fit_em_natgrad(prob, Q_cond, β0, Λ0; max_em=60, tol=1e-7, refresh=8, verbose=true)
     β = β0; Λ = Matrix(Λ0); θ = pack_theta(β, Λ)

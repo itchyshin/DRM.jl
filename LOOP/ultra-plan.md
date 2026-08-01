@@ -1,285 +1,147 @@
-# Ultra-plan — DRM.jl point 2: registry/hygiene → Phase 1.5 bridge
+# Phase 1.0 remainder — Ultra Plan (approved copy)
 
-**Phases covered:** 0–2 planned; **Phase 3+ EXECUTION APPROVED** 2026-08-01 (Shinichi; Q1–Q3 locked below).
-**PLATFORM (this session):** Cursor / Claude (Shannon speaking; Ada orchestrates).
-`session_ownership.sh` printed `PLATFORM: unknown` — overridden by explicit solo-platform assignment in the brief: **this Cursor/Claude session**.
-**Date:** 2026-08-01 · **Arc name:** ultra-plan point 2 (registry → bridge)
+> Source: ~/.cursor/plans/phase_1.0_ultra-plan_6633f778.plan.md — do not edit the plan file.
 
----
+# Phase 1.0 remainder (#3) — Ultra Plan
 
 ```
-🎯 GOAL — paste into a fresh session
-
-PLATFORM: Cursor/Claude (this session / Shannon+Ada). Do NOT hand to Codex unless
-explicitly reassigned. HANDS TO: none.
-
-DELIVERABLE: (1) Julia General-registry readiness + hygiene gate on a clean base
-(#8 / scoped #3), then (2) Phase 1.5 R↔Julia bridge ship checklist against #5 —
-DRM.jl side + drmTMB `engine = "julia"` contract — with Hopper parity evidence
-and Rose claim-vs-evidence closeout. Plan artifact already at
-docs/dev-log/plans/2026-08-01-ultra-plan-registry-bridge.md; execution waits for
-Shinichi sign-off.
-
-HEADLINE: After #339 merges into shannon/ayumi-integration, land a clean
-registry/hygiene PR onto the agreed integration base, then finish Phase 1.5 bridge
-honestly (reuse the large existing bridge surface — do not rebuild).
-
-IN PARALLEL (cheap, after merge gate): Haiku/Scout recon of registry checklist vs
-main tip; Hopper inventory of drmTMB julia-bridge admitted cells vs DRM.jl
-drm_bridge exports; Grace CI/Aqua/TagBot green-read.
-
-DEFER (hard fence — do not open in this arc):
-  • VA/ELBO alternative marginal (#136) — scaffold may exist; no promotion, no
-    public claim, no estimator work.
-  • REML speed / AI-REML track (#291) — correctness of #337 is done; speed is later.
-  • Do NOT dump the 4 unrelated local AGENTS/Ranganathan commits on
-    drmjl/sigma-phylo-reml-beta-psi-fix (a4585bd, 7520d9d, 88a2382, 66514a0)
-    into registry or bridge PRs.
-  • Full wire of remaining experimental/ (reml_q4 dense path, fit_em_natgrad #13)
-    unless Shinichi explicitly expands #3 beyond registry hygiene.
-
-DISCIPLINE: verify before claiming (local Pkg.test + Aqua before Registrator);
-compute = Totoro for any multi-shape / parity matrix, laptop only for smoke;
-closure = Rose audit + Melissa reconcile + after-task on the executing branch.
-Merge #339 only when Shinichi says so (MERGEABLE/CLEAN as of plan time).
+GOAL (paste-ready)
+PLATFORM: Cursor (Shannon+Ada). HANDS TO: /goal after G0 (same platform; Totoro for
+heavy Q/multi-shape if needed; Codex only if owner reassigns live toolchain).
+DELIVERABLE: SCOPED Phase 1.0 closeout — #13 decision gate resolved (wire :natgrad OR
+lc_metric infra), JET Workflow Q gap closed, leftover experimental/ parked with
+Rose-honest tip docs, #338 tracker closed (content already on tip via #339).
+HEADLINE: resolve #13 per report/wire-em-solvers-design.md without overselling a
+stalling EM as a public solver.
+IN PARALLEL: tip-honesty merge hygiene (#358/#887) ‖ S0 gate prep ‖ JET scout.
+DEFER/FENCE: JuliaRegistrator/General (D-111); FULL wire of all 14 experimental/
+prototypes; #136 VA; #291 REML speed; AGENTS fence commits; Workflow R first run
+(park unless Arc under-runs).
+DISCIPLINE: failing/decision test first for #13 · verify before claim · Totoro for
+multi-shape/heavy · Rose claim-vs-evidence · Melissa plan-actual at close.
 ```
 
----
+**ARC PROGRAM:** mode=size · ~8 h · Arc 0 = #13 decision gate (60–90 min) · under-run → JET + park docs · integrate/close reserved · Actuals → `docs/dev-log/plan-actual/2026-08-01-phase10-remainder.md` (date may slip).
 
-## Context (one paragraph)
-
-Step 1 is done: **#337** (σ-phylo REML must restrict β_μ **and** β_ψ) is **MERGED** into `shannon/ayumi-integration` (`dc96273`). **PR #339** (docs-only `docs/design/capability-status.md` for Mission Control parity) is **OPEN**, base `shannon/ayumi-integration`, **MERGEABLE / CLEAN**, and deliberately excludes the four local AGENTS commits. Mission Control `drmTMB.json` `next_safe_action` already points here: merge #339, then ultra-plan #2 = registry/hygiene → Phase 1.5. This plan scopes that #2 arc only.
+**Locked default (Ada):** SCOPED `#3` — **not** dump-all-experimental. Follow [`report/wire-em-solvers-design.md`](report/wire-em-solvers-design.md) #13 rules. `#12` already shipped (`algorithm = :em`).
 
 ---
 
-## Phase 0.25 — Prior-work sweep RECEIPT
+## Phase 0.25 sweep receipt
 
-| Surface | Evidence ran | Finding | Call |
+| Surface | Evidence | Finding | Call |
 |---|---|---|---|
-| **repo git state** | `git status -sb` (on `drmjl/sigma-phylo-reml-beta-psi-fix`, ahead 4 / behind 1 of its origin); `git worktree list` (many locked agent worktrees + `.worktrees/capability-status` @ `docs/capability-status-parity`); `bash ~/shinichi-brain/tools/branch_drift_check.sh` → **25 ahead / 51 behind `origin/main`**; `git rev-list --left-right --count origin/main...shannon/ayumi-integration` → **51 behind / 20 ahead**; `git rev-list … docs/capability-status-parity` → **51 behind / 24 ahead**; tip of capability branch includes `dc96273` Merge #337 + `0a6f8b4` capability-status; four tip commits `a4585bd`…`66514a0` are AGENTS/Ranganathan/coord only | Dirty/drifted REML tip is **not** the ship base. #337 is on ayumi + #339 branch, **not** on `origin/main`. #339 is the merge gate. | **resume** `docs/capability-status-parity` / ayumi for docs land; **fence** REML tip's 4 AGENTS commits; **build-the-gap** registry+bridge from a clean worktree off agreed base after #339 |
-| **twin / sister (drmTMB)** | `rg` + `R/julia-bridge.R` (4363 lines); `git ls-tree origin/main R/julia-bridge.R` present; `DESCRIPTION` Suggests `JuliaCall`; vignette `julia-engine.Rmd` + NEWS `#544/#555` Julia REML bridge notes; many historical `shannon/bridge-*` / `codex/julia-*` branches; current drmTMB WT on `claude/handover-freshness-0718` (dirty, unrelated REML/AGHQ work) | Bridge is **already shipped experimentally** on drmTMB main (`engine = "julia"` → JuliaCall → `DRM.drm_bridge*`). Gap is finish/parity/honesty for Phase 1.5 checklist (#5), not greenfield Lovelace glue. | **reuse / co-opt** existing R bridge + DRM.jl `src/bridge.jl`; **build-the-gap** = admitted-cell matrix, result-shape parity, bf round-trip, Rose claim fence |
-| **brain** (`search_notes`, `search_all_projects: true`) | Queries: `DRM.jl registry hygiene Phase 1.5 R Julia bridge JuliaCall`; `DRM.jl VA ELBO REML speed registry #8 #3 #5 bridge decision`; `Julia General registry DRM.jl registration TagBot Aqua hygiene shannon/a1-registry`; `DRM.jl registered General registry v0.1.0 decision D-` (project `shinichi-brain`) | Hits: after-tasks for `drm_bridge` entry (#5 tracker), julia-via-R audits, gate-id registry (drmTMB#544), HANDOVER "Next = General-registry submission"; **no** decision saying "DRM.jl is already in General". Mission Control status file confirms #337 done + #339 next. VA (#136) and REML-speed (#291) remain separate open ideas. | **reuse** bridge audits + a1-registry hygiene already ancestral to `origin/main` (`f86645b` / Aqua path); **build-the-gap** = actual Registrator/General submission + Phase 1.5 closeout evidence; **park** #136/#291 |
-| **external / NotebookLM** | Not run (no novelty / "first to" claim in this arc) | N/A | **Offer only** if Shinichi wants prior-art on Julia Registrator norms — not required to decompose |
+| repo git | `git status -sb`; open [#358](https://github.com/itchyshin/DRM.jl/pull/358); tip honesty branch 1 ahead of main | tip-honesty open; `?? .worktrees/` | merge #358 before engine PR base; leave worktrees |
+| experimental map | [explore recon](81e8e005-70fd-4978-a9de-0401b134645b) | 14 unwired files; promotions already in `inference`/`reml_q4`/`location_only` | build gap = #13 + JET + park |
+| design reuse | [`report/wire-em-solvers-design.md`](report/wire-em-solvers-design.md); remote `origin/design-wire-em-solvers-12-13` unmerged | #13 = decision gate; #12 done | **reuse design**; do not rewrite |
+| twin | n/a for natgrad wire | solver is Julia-only | n/a |
+| brain | MCP search Phase 1.0 / Q2 SCOPED | last LOOP held Q2 SCOPED; #13 deferred | continue SCOPED |
+| Verdict | | Genuine gap = #13 gate + JET + tip tracker honesty | **build-the-gap** |
 
-**Verdict:** Genuine new work = (A) **merge-gate #339**, then (B) **registry submission + residual hygiene** on a clean base (#8 + scoped #3), then (C) **Phase 1.5 bridge finish** (#5) reusing the large existing twin surface. Do **not** rebuild bridge or re-land a1-registry. **DEFER** VA (#136) and REML-speed (#291).
-
----
-
-## Phase 0.3 — Live model-roster (this platform)
-
-| Tier | This session (Cursor → Task models) | Effort |
-|---|---|---|
-| Scout / mechanical | `composer-2.5-fast` or Claude Haiku-class if Claude Task used | low–medium |
-| Build / default | parent Composer / Claude Sonnet-class | medium–high |
-| Ceiling / verify | Claude Opus/Fable-class or `gpt-5.6-sol-*` only if handed to Codex | high |
-
-Volatile roster file `~/shinichi-brain/memory/MODEL-ROUTING.md` last Claude refresh **2026-07-25** (Opus 5 / D-81). No web refresh needed for this plan. **LUNA/Haiku suitability: yes** — RECON + MECHANICAL-VERIFY are bounded read-only.
+**LUNA SUITABILITY:** yes — RECON inventory + mechanical JET/test greps.  
+**ULTRA EFFORT:** no.  
+**SEARCH / NotebookLM:** none (wiring existing code; no novelty claim).  
+**Phase 0.3b:** glance Settings → Usage both bars before `/goal`.
 
 ---
 
-## WHAT THE BRAIN / REPO ALREADY KNOWS
+## WHAT THE BRAIN / REPO ALREADY KNOW
 
-- Sequence agreed: finish #337 → registry/hygiene (#8/#3) → Phase 1.5 (#5); DEFER #136, #291.
-- #337 merged to **ayumi-integration**, not yet to **origin/main**.
-- #339 MERGEABLE/CLEAN into ayumi; docs-only; closes #338; excludes 4 AGENTS commits.
-- Tags **v0.1.0 / v0.1.1** exist; HANDOVER still lists **Julia General-registry submission** as Next; local General registry has **no** `DRM/Package.toml` (not installed/registered locally).
-- `shannon/a1-registry` hygiene tip is **already ancestral to `origin/main`**; residual register-ready commits live on `claude/julia-package-register-ready-SuLOC` (**3 ahead / 178 behind** main) — cherry-pick candidates only after rebase check.
-- DRM.jl already exports `drm_bridge` / `drm_bridge_inference`; drmTMB main already has `R/julia-bridge.R` + JuliaCall Suggests + `vignette("julia-engine")`.
-- ROADMAP Phase 1.0 still partial (`reml_q4` / `fit_em_natgrad` unwired); issue #13 is EM natgrad — **out of default hygiene scope**.
-- License: DRM.jl MIT; never vendor drmTMB GPL (Rose).
-
-## WHAT SHINICHI TOLD US (this brief)
-
-- Plan-first Phases 0–2 only; no code edits beyond the plan file; no merges/pushes.
-- Default sequence + DEFER fences as above.
-- Solo platform = this Cursor/Claude session.
-- Do not dump the 4 local AGENTS commits into this work.
-- Note #339 merge gate if still open (it is).
+- `#12` conjugate EM is public (`algorithm = :em`).
+- `#13` design: wire `:natgrad` **only if** head-to-head vs `fit_q4_sparse_tmb` clears stall; else extract `lc_metric` for AI-REML infra ([`report/wire-em-solvers-design.md`](report/wire-em-solvers-design.md) L47–74, L100–101).
+- Workflow Q: FD/Allocs/multi-shape evidenced June; **JET missing**; ROADMAP still unmarked.
+- `#338` content on tip via #339; issue still OPEN (close-only).
+- D-111 General OUT; tip honesty PRs in flight.
 
 ## WHAT THE TEAM RAISED
 
-```
-TEAM RAISED
-  Ada    — Merge #339 is the hard gate before any ship branch; ayumi is 51 behind
-           main so registry work needs an explicit base-branch decision.
-           · matters: wrong base → replay conflicts (#4/#5 trap)
-           · rec: merge #339 → choose base (Q1) → fresh worktree
-           · default if "use your judgment": base = origin/main + cherry #337+#339
-             design file only if ayumi not ready to integrate
-  Rose   — HANDOVER/ROADMAP still drift on experimental wiring + "Next: registry";
-           capability-status design file corrects 3 stale capabilities.md claims
-           without rewriting the audit page — keep that honesty.
-           · rec: registry PR must not claim bridge "done" or reml_q4 "public"
-           · default: Rose blocks any README/registry blurb that oversells Phase 1.5
-  Hopper — Bridge surface already large on both sides; Phase 1.5 is a finish matrix
-           (admitted cells, result-shape, bf round-trip, unsupported-cell honesty),
-           not a new JuliaCall scaffold.
-           · rec: inventory-first against drmTMB#544 gate registry + DRM tests
-           · default: expand no new family through the bridge in this arc
-  Grace  — Registry needs green local Pkg.test + Aqua + Linux CI; TagBot/Documenter
-           already present from Phase 0.
-           · rec: hygiene slice = CI green on register-ready tip before Registrator
-           · default: no macOS/Windows CI expansion (cost discipline)
-  Lovelace — R glue lives in drmTMB; DRM.jl owns stable drm_bridge contract.
-           · rec: any bridge finish PR pair must name which repo owns which file
-           · default: DRM.jl-only changes first if R surface already admits the cell
-  Noether — Do not touch verified q=4 engine / logLik −256.51 baseline for registry.
-           · default: hygiene is load-print / API docstring / Aqua — not estimator
-```
+- **Noether** — #13 is a decision gate, not a reflex wire · verified-negative plain EM stall · recommend gate-first · default: infra extract if fail  
+- **Rose** — do not claim “faster solver” without reconciled logLik · park leftovers explicitly · default: experimental opt-in only  
+- **Karpinski** — JET is the standing Q hole · cheap high leverage · default: add gate this arc  
+- **Ada** — SCOPED `#3`; merge tip-honesty first; hand long run to `/goal`
 
-## ADA'S RECOMMENDATION
-
-1. **Shinichi merges #339** (or explicitly asks this session to merge) into `shannon/ayumi-integration`.
-2. Answer **Q1–Q3** below (base branch, #3 scope, bridge Definition of Done).
-3. Then execute slices S0→S5 on a **fresh worktree**; fence AGENTS commits and #136/#291.
-
-## DECISIONS LOCKED (from prior + Shinichi approval 2026-08-01)
+## DECISIONS LOCKED
 
 | ID | Decision |
 |---|---|
-| Seq | #337 → #339 → registry/hygiene → Phase 1.5 |
-| **Q1 BASE** | **YES — Ada rec A.** After #339 merges, integrate `shannon/ayumi-integration` ↔ `main` before Registrator (**not** cherry-only onto main). |
-| **Q2 #3 SCOPE** | **SCOPED** — `/goal` paste 2026-08-01 supersedes oral "full". Registry hygiene only (#8 / scoped #3). Defer `#13 fit_em_natgrad` / remaining experimental wire. Do **NOT** dump the 4 unrelated AGENTS/Ranganathan commits. |
-| **Q3 #5 SHIPPED BAR** | **OK — Hopper finish-matrix.** Admitted cells + result-shape for Gaussian uni/bivariate/first phylo mean + gate-ID rejections; stay **experimental**; **no new families**. |
-| DEFER | #136 VA/ELBO; #291 REML speed (**hard fence**) |
-| Fence | 4 AGENTS/Ranganathan commits on REML tip stay out |
-| Platform | Cursor/Claude this session |
-| License | MIT; no GPL vendoring |
-| Registrator | Do **not** submit without explicit Shinichi say-so even after green |
+| D-scope | SCOPED Phase 1.0 — not full experimental dump |
+| D-13 | Run decision gate; wire `:natgrad` **iff** MLE parity; else `lc_metric` infra + close #13 honestly |
+| D-q | Add JET; refresh ROADMAP Q checkmarks for already-green FD/Allocs/multi-shape |
+| D-park | Remaining experimental/ stays unwired; tip docs say so |
+| D-338 | Close #338 after confirm tip file exists (no rewrite) |
+| D-fence | No Registrator; no `#136`/`#291`; no AGENTS fence dumps |
 
-## QUESTIONS — CLOSED (answers above)
+## QUESTIONS STILL OPEN
 
-### Execution status (live)
-
-| Gate | Status |
-|---|---|
-| S1 #339 merge | **DONE** — MERGED 2026-08-01T13:06:15Z into `shannon/ayumi-integration` @ `7cb868d` (capability-status on tip) |
-| S2 ayumi↔main | **IN PROGRESS** (this session) |
-| S3 FULL #3 + hygiene | queued after S2 |
-| S4 Registrator | blocked on Shinichi explicit OK |
-| S5 Phase 1.5 #5 | Hopper bar; after API-stable S3 |
+None blocking. (Owner glance Usage % optional.)
 
 ---
 
-## Phase 0.4 — Questions for Shinichi (max 3)
+## Slice table
 
-**QUESTION 1 — Integration base for registry/hygiene**
-· **WHY NOW:** ayumi is **20 ahead / 51 behind** `origin/main`; #337+#339 live on ayumi, not main. Registry PRs from a drifted tip replay the conflict trap.
-· **TEAM VIEW:** Ada + Grace want a named base; Rose wants claim surfaces consistent with main docs.
-· **RECOMMENDATION:** **Option A (preferred):** merge #339 → open a short ayumi→main integration PR (or rebase ayumi onto main) **before** Registrator; do registry from the integrated tip. **Option B:** registry from `origin/main` + minimal cherry of #337 engine fix + capability-status file only.
-· **IF YOU DO NOT MIND:** Option A.
-· **WHAT CONTINUES:** #339 stays merge-ready; plan writing; no Registrator yet.
+| Slice | Member | Bar / model | Time | Detail | Dep |
+|---|---|---|---:|---|---|
+| S0 RECON | Hopper/Noether scout | Cursor Models · Composer/Grok | 45–60m | Reproduce #13 gate: `fit_em_natgrad` vs sparse TMB on q4_p100; write brief to `docs/dev-log/plans/2026-08-01-natgrad-decision-gate.md` with PASS/FAIL + numbers | tip base clean |
+| S1a WIRE | Noether | Cursor Models · Composer (or hand Claude if repair loops) | 3–4h | **If S0 PASS:** promote into public path as `algorithm = :natgrad` (experimental); tests + docstring | S0 PASS |
+| S1b INFRA | Noether | Cursor Models · Composer | 2–3h | **If S0 FAIL:** extract `lc_metric` to gradient utils; unit test; do **not** expose solver; close #13 as infra | S0 FAIL |
+| S2 JET | Karpinski | Cursor Models · Composer | 1–2h | Add JET gate test/docs; laptop smoke; Totoro if heavy | S0 done (parallel OK with S1) |
+| S3 PARK+DOCS | Rose/Pat | Cursor Models · Composer | 45–60m | ROADMAP/#3 honesty; park list; close #338; check-log.d + after-task | S1 done |
+| S4 VERIFY | Hopper | Cursor Models · Composer | 45m | `Pkg.test` smoke; assert #13 outcome; JET runs | S1+S2 |
+| S5 ROSE | Rose | Other Models · Auto Cost / Claude | 30m | Claim-vs-evidence; no oversell | S4 |
+| RECONCILE | Melissa | Other Models · Auto Cost | 20m | `docs/dev-log/plan-actual/YYYY-MM-DD-phase10-remainder.md` | S5 |
 
-**QUESTION 2 — Scope of #3 inside "registry/hygiene"**
-· **WHY NOW:** #3 is the whole Phase 1.0 milestone (wire experimental + Manifests + Workflow Q/R). Full #3 would swallow the bridge arc.
-· **TEAM VIEW:** Noether/Ada — scope #3 to **package hygiene for General registry** (Aqua green, silence load-time print, docstring/HANDOVER honesty, register-ready metadata); defer `reml_q4` / `#13 fit_em_natgrad` / Workflow R.
-· **RECOMMENDATION:** **Scoped #3** = registry hygiene only; leave experimental wiring as follow-on issues.
-· **IF YOU DO NOT MIND:** Scoped #3.
-· **WHAT CONTINUES:** Inventory of residual SuLOC commits vs main.
+**PARALLEL after S0:** S1a XOR S1b ‖ S2. **SEQUENTIAL:** S3←S1; S4←S1+S2; S5←S4; RECONCILE←S5.
 
-**QUESTION 3 — Phase 1.5 "shipped" bar for #5**
-· **WHY NOW:** twin already has experimental `engine = "julia"`; #5 checklist still open (JuliaCall bridge / result-shape / bf round-trip). Need the closeout bar so Hopper/Rose don't move the goalposts mid-arc.
-· **TEAM VIEW:** Hopper — close #5 when (i) admitted-cell matrix is published + tested, (ii) result-shape parity for the **Gaussian uni + bivariate + first phylo mean** slice matches native drmTMB fields needed by vignette, (iii) unsupported cells error with gate IDs, (iv) Rose accepts "experimental" wording. Lovelace — no new family cells in this arc.
-· **RECOMMENDATION:** Adopt Hopper's bar; keep status **experimental** in NEWS/vignette; do not claim CRAN/registry dependency on JuliaCall for drmTMB (Suggests only).
-· **IF YOU DO NOT MIND:** Hopper bar above.
-· **WHAT CONTINUES:** Read-only matrix draft after approval.
+**FAN-OUT BUDGET:** checkpoint=`phase10-2026-08-01` · children ≤4 · scout 1 · ceiling 0 (unless #13 math stuck → hand Claude/Codex) · no Sol by default.
 
-**NotebookLM offer (optional, not blocking):** Want a short grounded pass on current Julia General Registrator / AutoMerge norms? Default = **no** (process is well-trodden; not a novelty claim).
-
----
-
-## Phase 1 — Decomposition (slices)
-
-### SLICE TABLE
-
-| ID | Member | Model+effort | Dispatch | ~Time | Detail / output | Dep |
-|---|---|---|---|---|---|---|
-| **S0 RECON** | Ada+Scout | Haiku / composer-fast · low | native/explicit | 20–40m | Fresh drift vs main+ayumi; residual SuLOC vs main; registry checklist file `docs/dev-log/plans/registry-checklist-2026-08-01.md` | #339 merged (or explicit skip) |
-| **S1** Merge gate | Shannon (human/gh) | — | manual | 5–15m | Merge PR #339 into `shannon/ayumi-integration` when Shinichi approves; confirm tip = capability-status without AGENTS commits | Shinichi |
-| **S2** Base integrate | Ada+Grace | Sonnet · medium | native/explicit | 1–3h | Per Q1: ayumi↔main integration or cherry path; fresh worktree; **no** AGENTS commits | S1, Q1 |
-| **S3** Registry hygiene | Grace+Rose (+Karpinski Aqua) | Sonnet · medium | native/explicit | 2–4h | Scoped #3/#8: load-print silence, Aqua/Pkg.test green, metadata/README register blurb honesty, HANDOVER "Next" refresh; **output:** PR `closes` scoped hygiene + Registrator-ready tip | S2, Q2 |
-| **S4** Registrator | Grace+Rose | Sonnet · medium | native/explicit | 1–2h + wait | Tag policy (reuse v0.1.1 vs bump); submit General registry PR; watch AutoMerge | S3, Shinichi tag OK |
-| **S5** Phase 1.5 bridge finish | Hopper+Lovelace (+Boole bf) | Sonnet · medium–high | native/explicit | 4–8h | #5 matrix: admitted cells, result-shape tests, bf round-trip where CI allows; drmTMB vignette honesty; DRM.jl `r-julia-bridge.md` sync; **no new families** | S3 (stable API), Q3 |
-| **S6 MECHANICAL-VERIFY** | Scout | Haiku · low | native/explicit | 30–60m | Re-read PR diffs, issue checklists, CI conclusions, fence DEFER items still closed | S4–S5 |
-| **S7** Rose plan+ship audit | Rose | Sonnet→Opus if claim gate · medium–high | native/explicit | 45–90m | Claim-vs-evidence on registry README + bridge "experimental" wording; license boundary | S6 |
-| **S8 RECONCILE** | Melissa | Sonnet · low–medium | native/explicit | 20–40m | `docs/dev-log/plan-actual/2026-08-01-registry-bridge.md` | S7 |
-
-**PARALLEL after S2:** S0 leftovers / matrix inventory can overlap S3 drafting; **S4 sequential after S3**; **S5** may start inventory in parallel with S3 but must not change public bridge claims until S3 API freeze.
-
-**SEQUENTIAL spine:** S1 → S2 → S3 → S4; S5 finishes after API-stable S3; S6→S7→S8 close.
-
-### Explicit DEFER fences
-
-```
-DEFER — do not schedule, implement, or "just quickly" open:
-  [#136] VA/ELBO marginal (variational.jl scaffold stays untouched)
-  [#291] REML speed / AI-REML / q4 acceleration
-  [#13]  fit_em_natgrad public wire (unless Q2 expands #3)
-  dense experimental reml_q4 promotion
-  dumping commits a4585bd / 7520d9d / 88a2382 / 66514a0 into ship PRs
+```mermaid
+flowchart TD
+  tipHonesty[Merge tip honesty 358] --> S0[S0 natgrad decision gate]
+  S0 -->|PASS| S1a[Wire algorithm natgrad]
+  S0 -->|FAIL| S1b[Extract lc_metric infra]
+  S0 --> S2[JET Q gate]
+  S1a --> S3[Park docs plus close 338]
+  S1b --> S3
+  S2 --> S4[Verify Pkg.test]
+  S3 --> S4
+  S4 --> S5[Rose]
+  S5 --> Mel[Melissa reconcile]
 ```
 
-### #339 merge gate (status at plan time)
+---
 
-| Field | Value |
-|---|---|
-| URL | https://github.com/itchyshin/DRM.jl/pull/339 |
-| State | **OPEN** |
-| mergeable | **MERGEABLE** |
-| mergeStateStatus | **CLEAN** |
-| base ← head | `shannon/ayumi-integration` ← `docs/capability-status-parity` |
-| Includes | #337 merge `dc96273` + capability-status `0a6f8b4` |
-| Excludes | 4 AGENTS commits on REML tip |
-| Action | **Shinichi (or session after approval) merges** before S2 |
+## Files (expected)
+
+- [`src/experimental/fit_em_natgrad.jl`](src/experimental/fit_em_natgrad.jl) — source
+- [`src/DRM.jl`](src/DRM.jl) / fit dispatch — only if S1a
+- New or existing gradient util module — if S1b
+- `test/` — #13 gate test + JET test
+- [`ROADMAP.md`](ROADMAP.md), [`HANDOVER.md`](HANDOVER.md) — Phase 1.0 / Q honesty
+- [`report/wire-em-solvers-design.md`](report/wire-em-solvers-design.md) — reuse, maybe status tick
+- `docs/dev-log/plans/2026-08-01-natgrad-decision-gate.md` — S0 artefact
+- after-task + check-log.d + plan-actual
+
+**Do not touch:** Registrator prep; `.worktrees/`; AGENTS fence commits; `#136`/`#291` implementation.
 
 ---
 
-## Phase 2 — Runnable plan metadata
+## Preflight before `/goal`
 
-| Field | Value |
-|---|---|
-| **SEARCH** | none required; NotebookLM offered (default no) |
-| **FAN-OUT** | ≤6 children / checkpoint `registry-bridge-2026-08-01`; 1 scout RECON, 2–4 build, 0–1 Rose ceiling if claim gate |
-| **FAN-OUT BUDGET** | checkpoint=registry-bridge-2026-08-01 · new children≤6 · scout=1 · build≤4 · ceiling≤1 · reuse on repair |
-| **LUNA SUITABILITY** | yes — S0 RECON + S6 MECHANICAL-VERIFY |
-| **ULTRA EFFORT** | no |
-| **CONTEXT BRAKE** | parent unknown · fresh-task if session compacts twice |
-| **COMPACTIONS** | open |
-| **LANE RECEIPT** | CONTINUE HERE for Q&A; START A FRESH TASK for execution after approval |
-| **D-43 PANEL** | milestone=`registry-or-bridge-ship` · fire once when claiming registered or #5 closed · 2 build + 1 ceiling |
-| **ESTIMATE** | wall-clock **~1–2 working days** after answers (registry AutoMerge wait extra); fits **one execution session + registry wait handoff** |
-| **ARC PROGRAM** | Arc 0 = this plan (~now); Arc 1 (2–4h) hygiene PR; Arc 2 (4–8h) bridge finish; integration/closeout 1h |
-| **REVIEW (plan)** | Rose confirms this receipt is non-vacuous ✅; Hopper confirms bridge = finish-not-rebuild ✅ |
-| **VERIFY** | local `Pkg.test` + Aqua; Workflow G / bridge tests where R available; CI Linux; Rose audit |
-| **CONSOLIDATE** | after-task + check-log.d + Mission Control status refresh + close #8/#5 checklists as earned |
-| **RECONCILE** | Melissa → `docs/dev-log/plan-actual/2026-08-01-registry-bridge.md` |
-| **COMPUTE** | Totoro for any multi-shape / parity matrix; laptop smoke OK; **not** GHA for heavy benches (D-50) |
-
-### Members plan-review (pre-execution)
-
-- **Rose:** Sweep receipt present with cited commands/queries — **PASS**. Plan does not smuggle VA/REML-speed. Risk: calling #5 "ship" while vignette still says experimental — mitigated by Q3.
-- **Hopper:** Decomposition correctly treats bridge as finish matrix; warns against dual-repo drive-by on dirty drmTMB WT (`claude/handover-freshness-0718`) — execution must use clean drmTMB worktree/main.
+1. Merge [#358](https://github.com/itchyshin/DRM.jl/pull/358) (+ drmTMB [#887](https://github.com/itchyshin/drmTMB/pull/887) if still open) when CI green.
+2. Branch engine work from updated `origin/main`.
+3. Totoro for multi-shape / heavy parity if S4 needs it — ask at scope time.
 
 ---
 
-## Execution trigger (Phase 3 — NOT started)
+## G0 → `/goal` handoff
 
-Do **not** begin S1–S8 until Shinichi answers Q1–Q3 (or says *"use your judgment"*) **and** explicitly approves leaving plan-only mode. Preferred first execution prompt:
+```text
+/goal SCOPED Phase 1.0 remainder (#3 / #13 / JET)
+READ FIRST: this ultra-plan · report/wire-em-solvers-design.md · LOOP/GOAL.md fences
+WORKSPACE: origin/main after tip-honesty merge; new branch (not tip-honesty)
+CONTINUE: S0 decision gate → S1a XOR S1b ‖ S2 JET → S3 park/docs/#338 → S4 → Rose → Melissa
+FENCE: D-111 no Registrator; no FULL experimental dump; no #136/#291; leave .worktrees alone
+DONE: #13 resolved per design; JET gated; #3 closable or explicitly re-scoped; Rose PASS; plan-actual filed
+```
 
-> Approved. Merge #339. Use Ada defaults on Q1–Q3. Execute ultra-plan point 2 from `docs/dev-log/plans/2026-08-01-ultra-plan-registry-bridge.md`. Fence AGENTS commits, #136, #291.
-
----
-
-## Issue map (ledger)
-
-| Issue | Role in this arc |
-|---|---|
-| #337 | Done (merged to ayumi) |
-| #339 / #338 | Merge gate (docs capability-status) |
-| #8 | Registry / v0.1.x release gate — primary hygiene+register target |
-| #3 | Scoped to registry hygiene (Q2) |
-| #5 | Phase 1.5 bridge finish |
-| #13 | Out unless Q2 expands |
-| #17 | Parity gate — may support S5; not a blocker for Registrator if R CI absent |
-| #136 | **DEFER** |
-| #291 | **DEFER** |
+**STOP here.** Do not start Phase 3 in this chat until G0 approval + `/goal`.

@@ -106,9 +106,9 @@ src/                core engine (verified): sparse_phy, takahashi_selinv,
                     sparse_aug_plsm (robust mode-finder), sparse_em_fit,
                     fit_ml_q4, fit_q4_sparse_tmb; DRM.jl module
 src/experimental/   leftover prototypes NOT wired into the public API
-                    (SQUAREM / natgrad EM, E-step variants, dense oracle,
-                    leftover location_only copy). Public surfaces live in src/:
-                    method=:REML (reml_q4.jl) and algorithm=:em (location_only.jl).
+                    (SQUAREM / natgrad EM [\#13 FAIL — parked], E-step variants,
+                    dense oracle, leftover location_only copy). Public surfaces
+                    in src/: method=:REML, algorithm=:em, lc_metric (Fisher infra).
 bench/              runnable benchmarks + the q4_p100 fixtures + R fixture gen
 test/               runtests.jl + migrated correctness checks
 report/             13 design/provenance reports (the full poc record)
@@ -161,8 +161,9 @@ model-selection guard); epsilon-method bias correction; `heritability` /
 bridge-done.
 
 **Not fully wired / still open:** remaining `src/experimental/` prototypes
-(SQUAREM / natgrad EM, E-step variants, dense oracle, leftover `location_only`
-copy — public `method = :REML` and `algorithm = :em` are already in `src/`);
+(SQUAREM / `fit_em_natgrad` [#13 FAIL — not a public solver], E-step variants,
+dense oracle, leftover `location_only` copy — public `method = :REML`,
+`algorithm = :em`, and `lc_metric` Fisher infra are already in `src/`);
 **χ̄² boundary inference** where not yet exported; the **variational (VA/ELBO)**
 marginal track (#136, deferred). See
 [Capabilities](docs/src/capabilities.md),

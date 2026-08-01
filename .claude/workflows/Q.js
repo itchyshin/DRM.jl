@@ -16,12 +16,12 @@ const JULIA = 'julia --project=.' // ~/.juliaup/bin/julia locally; setup-julia i
 
 const GATES = [
   { key: 'aqua',       ready: true,  phase: '0',   how: `${JULIA} -e 'using Pkg; Pkg.test()' — Aqua.jl project hygiene clean` },
-  { key: 'jet',        ready: true,  phase: '0',   how: 'JET.report_package(DRM) — no errors in the hot path' },
-  { key: 'fd',         ready: false, phase: '1.0', how: 'finite-diff vs the exact marginal gradient ≤ 1e-6' },
+  { key: 'jet',        ready: true,  phase: '0',   how: 'Pkg.test — test/test_qgate_jet.jl (JET.@test_opt on lc_to_Λ / Λ_to_lc)' },
+  { key: 'fd',         ready: true,  phase: '1.0', how: 'test/test_qgate_fd_gradient.jl — exact vs FD ≤ 1e-6' },
   { key: 'crosscheck', ready: false, phase: '1.0', how: 'two independent gradient paths agree ≤ 1e-8' },
-  { key: 'allocs',     ready: false, phase: '1.0', how: 'Allocs.jl — zero allocation in the inner mode-finder loop' },
-  { key: 'multishape', ready: false, phase: '1.0', how: 'balanced + caterpillar trees, p ∈ {100, 1000, 10000}' },
-  { key: 'rparity',    ready: false, phase: '1.1', how: 'RCall.jl vs vendored drmTMB v0.1.3 outputs ≤ 1e-6 (DRM_PARITY_TESTS=1)' },
+  { key: 'allocs',     ready: true,  phase: '1.0', how: 'test/test_qgate_alloc_inner.jl — zero alloc in inner Newton arithmetic' },
+  { key: 'multishape', ready: true,  phase: '1.0', how: 'bench scaling — balanced + caterpillar, p ∈ {100, 1000, 10000} (Totoro for heavy)' },
+  { key: 'rparity',    ready: true,  phase: '1.1', how: 'RCall.jl vs vendored drmTMB v0.1.3 outputs ≤ 1e-6 (DRM_PARITY_TESTS=1; opt-in)' },
 ]
 
 phase('Gates')

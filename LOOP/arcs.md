@@ -1,16 +1,16 @@
-# Arcs — DRM.jl registry → Phase 1.5 bridge
+# Arcs — SCOPED Phase 1.0 remainder (#3 / #13 / JET)
 
 | ID | Arc | Status | Gate? | Notes |
 |---|---|---|---|---|
-| S0 | RECON — registry checklist | done | no | `docs/dev-log/plans/registry-checklist-2026-08-01.md` |
-| S1 | Merge #339 into ayumi | done | was | 7cb868d |
-| S2 | Integrate ayumi ↔ main (Q1=A) | done | was | MERGED #340 |
-| S3 | Scoped registry hygiene (#8) | done | no | MERGED #341–#343 (+ docs #344–#348, #350) |
-| S4 | Registrator / General | cancelled | n/a | D-111: out until R catch-up + both working; drmTMB likely first |
-| S5 | Phase 1.5 #5 Hopper bar | done | soft | MERGED #349 + drmTMB #878; Rose PASS; #5 CLOSED |
-| S6 | Mechanical verify | done | no | tip hygiene #352 + Cursor agents #353; CI green on tip |
-| S7 | Rose audit | done (S5) | claim | Phase 1.5 #5 PASS; General fence via #352 |
-| S8 | Melissa reconcile | done | no | hub-only; `docs/dev-log/plan-actual/2026-08-01-registry-bridge.md` |
+| pre | Merge tip-honesty #358 + drmTMB #887 | parallel | yes (CI) | docs-only; leave `.worktrees/` |
+| S0 | #13 natgrad decision gate | **done FAIL** | no | brief → `docs/dev-log/plans/2026-08-01-natgrad-decision-gate.md` |
+| S1a | Wire `algorithm = :natgrad` | skipped | — | S0 FAIL |
+| S1b | Extract `lc_metric` infra | **done** | soft | `src/lc_metric.jl` + unit test; no public solver |
+| S2 | JET Workflow Q gate | **done** | no | `test_qgate_jet.jl`; ROADMAP Q ticks |
+| S3 | Park experimental/ + close #338 | **done** | no | tip docs honesty; check-log.d + after-task |
+| S4 | Verify `Pkg.test` smoke | **done** | soft | lc_metric 5/5 + JET OK |
+| S5 | Rose claim-vs-evidence | **done** | claim | PASS in after-task |
+| Mel | Melissa plan-actual | **done** | no | `docs/dev-log/plan-actual/2026-08-01-phase10-remainder.md` |
 
-## Deferred
-#136 VA · #291 REML speed · #13 fit_em_natgrad / full experimental wire · AGENTS tip commits
+## Deferred / fenced
+JuliaRegistrator/General (D-111) · FULL experimental dump · #136 VA · #291 REML · AGENTS fence commits · Workflow R (parked)

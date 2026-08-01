@@ -25,17 +25,24 @@ includes (chain: fit_q4_sparse_tmb → fit_ml_q4 → sparse_em_fit → sparse_au
 is wired in `src/inference.jl`. **Public / included on tip:** opt-in REML
 (`src/reml_q4.jl`, `drm(method = :REML)`; restricted correction covers all four
 among-axis axes — see #11) and the conjugate-EM Gaussian phylo-mean solver
-(`src/location_only.jl`, `algorithm = :em` — see #12). **Still experimental
-(not wired into this module):** SQUAREM / natural-gradient EM, trust-region &
+(`src/location_only.jl`, `algorithm = :em` — see #12). **#13 decision gate FAIL
+(2026-08-01):** natural-gradient EM stalls vs sparse TMB on q4_p100 — do **not**
+expose `algorithm = :natgrad`; the reusable Fisher metric lives in
+`src/lc_metric.jl`. **Still experimental (not wired):** SQUAREM EM, trust-region &
 line-search E-steps, dense q=4 EM, warm-start fit variants, and the leftover
-`src/experimental/location_only.jl` prototype copy — do not treat that directory
-as the public REML / `:em` surface.
+`src/experimental/location_only.jl` / `fit_em_natgrad.jl` prototypes — do not
+treat that directory as the public REML / `:em` surface.
 """
 module DRM
 
 # Load the verified core engine. The relative @__DIR__ includes inside
 # fit_q4_sparse_tmb.jl transitively pull the whole chain from this src/ dir.
 include("fit_q4_sparse_tmb.jl")
+
+# Fisher / observed-information metric on log-Cholesky params (#13 S1b infra).
+# Extracted after the natgrad solver failed the MLE-parity gate — not a public
+# solver path. Feeds AI-REML / exact REML gradient follow-ups (#11 / #165).
+include("lc_metric.jl")
 
 # q=4 REML (Patterson–Thompson restricted likelihood; β_μ profiled out via a
 # bordered augmented state). Additive — reuses the engine symbols above; ML
@@ -108,6 +115,7 @@ include("missing_data.jl")       # #49: documented listwise-deletion preprocessi
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
        fit_q4_sparse_tmb, marginal_and_exact_grad, marginal_nll,
+       lc_metric,
        fit_q4_sparse_fisherz, fz_DRD, fz_R, fz_correlations, fz_marginal_and_grad,
        fz_phi_to_lc, fz_init_from_Sigma,
        estep_mode, prior_precision, build_Huu, joint_grad, joint_nll, aug_prior_grad!,
