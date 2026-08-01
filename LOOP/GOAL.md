@@ -5,9 +5,11 @@
 Finish Phase 1.5 R↔Julia bridge ship checklist against #5 — DRM.jl side +
 drmTMB `engine = "julia"` contract — with Hopper parity evidence and Rose
 claim-vs-evidence closeout. Keep tip hygiene honest (version / tag / claim
-surfaces). **Julia General-registry submission is OUT OF SCOPE for this arc**
-(Shinichi correction 2026-08-01): do not install/pursue JuliaRegistrator; do
-not claim registration is a goal.
+surfaces). **Julia General-registry submission is OUT OF SCOPE** (brain
+**D-111**, Shinichi 2026-08-01): stay off General until ready — at least catch
+up with the R twin **and** both halves working well; **probably drmTMB goes to
+R/CRAN first**. Do not install/pursue JuliaRegistrator; tip-green / `v0.1.2` ≠
+registered.
 
 Exact finish line: #5 closed at Hopper finish-matrix bar (experimental wording
 only); tip docs Rose-honest that DRM.jl is an MIT package distributed via
@@ -28,7 +30,7 @@ drmTMB work) honestly; fence General Registrator as a cancelled deliverable.
 - **DEFER hard:** #136 VA/ELBO; #291 REML speed.
 - **License:** MIT; never vendor drmTMB GPL.
 - **Engine:** do not regress verified q=4 baseline (logLik −256.51).
-- **General registry / JuliaRegistrator:** CANCELLED / out of scope — do **not** post `@JuliaRegistrator register`, do **not** ask Shinichi to install the app, do **not** merge any General PR if one appears (report URL for Shinichi to close).
+- **General registry / JuliaRegistrator:** OUT until readiness (**D-111**) — do **not** post `@JuliaRegistrator register`, do **not** ask Shinichi to install the app, do **not** merge any General PR if one appears (report URL for Shinichi to close).
 - **Compute:** Totoro for multi-shape/parity; laptop smoke only; not GHA for heavy benches.
 
 ## Authoritative WHAT
@@ -39,7 +41,7 @@ See `LOOP/ultra-plan.md` (copy of `docs/dev-log/plans/2026-08-01-ultra-plan-regi
 
 - [x] S2: ayumi↔main integrated on a clean tip (PR #340).
 - [x] S3: scoped hygiene PR merged — Aqua + `Pkg.test` green; load-print silenced; HANDOVER/README honesty; no oversell of bridge or unwired experimental (#341–#343).
-- [ ] **S4: CANCELLED / out of scope** — General Registrator not wanted. `v0.1.2` git tag + tree version may remain; that is **not** General membership and must not be pursued or claimed as registration.
+- [ ] **S4: CANCELLED / out of scope (D-111)** — General not until R catch-up + both working; drmTMB likely first. `v0.1.2` git tag may remain — **not** General membership.
 - [ ] S5: #5 Hopper matrix evidenced; Rose accepts experimental wording; no new families. (DRM.jl #349 in flight.)
 - [ ] S6–S8: mechanical verify + Rose audit + Melissa reconcile landed (bridge closeout only).
 - [ ] Mission Control `drmTMB` status updated; after-task + check-log.d for closed slices.

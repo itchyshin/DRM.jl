@@ -41,8 +41,9 @@
   leftover `location_only.jl` copy). Public REML is `src/reml_q4.jl`
   (`method = :REML`) — there is **no** `experimental/reml_q4.jl` on tip.
 - **Next:** Phase 1.5 bridge finish (#5 / PR #349) + tip hygiene. **Julia
-  General registry is out of scope** this arc (Shinichi 2026-08-01) — MIT
-  package via GitHub / `Pkg.develop` (or a future private path); do **not**
+  General registry stays out** until readiness (brain **D-111**, Shinichi
+  2026-08-01): catch up with drmTMB **and** both halves working well; drmTMB
+  likely R/CRAN first. MIT via GitHub / `Pkg.develop` until then; do **not**
   pursue JuliaRegistrator. Longer horizon: Phase 1.1 R-parity (#17), Phase 3
   articles, VA/ELBO (#136, deferred). **Version / tag:** tree + tag **`0.1.2` /
   `v0.1.2`** exist as git artifacts (#346) — that is **not** General membership.
@@ -229,9 +230,10 @@ line-search E-steps, dense q=4 EM, warm-start fit variants, leftover
 public REML is `src/reml_q4.jl`. `bench/` has runnable benchmarks + the
 `q4_p100` fixtures + the R fixture-gen. `report/` has all 13 design/provenance
 docs. CI is Linux-only, PR + `workflow_dispatch` (cost-disciplined).
-**Honest — distribution:** S2/S3 (#340–#342) landed; **General registry not in
-scope** (do not claim membership; do not pursue Registrator). Next = Phase 1.5 /
-#5. **Version / tag:** `0.1.2` / `v0.1.2` are git artifacts only (#346).
+**Honest — distribution:** S2/S3 (#340–#342) landed; **General deferred** until
+readiness (**D-111**: R twin catch-up + both working; drmTMB likely CRAN first).
+Do not claim membership; do not pursue Registrator. Next = Phase 1.5 / #5.
+**Version / tag:** `0.1.2` / `v0.1.2` are git artifacts only (#346).
 
 ---
 
@@ -271,8 +273,8 @@ not a port of drmTMB's GPL source, so it's legally free to be MIT); **public**
 repo at `itchyshin/DRM.jl`; cost-disciplined CI.
 **Open:** whether to vendor any drmTMB GPL source later (would force GPL —
 avoid, or isolate); Phase 1.5 bridge finish (#5).
-**Closed this arc:** Julia General-registry submission — **not wanted**
-(Shinichi 2026-08-01); `v0.1.2` may remain as a git tag without General.
+**Closed this arc / deferred:** Julia General-registry submission — **not until
+ready** (**D-111**); `v0.1.2` may remain as a git tag without General.
 
 ---
 

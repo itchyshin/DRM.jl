@@ -1,4 +1,4 @@
-GOAL: see GOAL.md.   STATE: Tip verify PASS @ `e7261d9`; version **0.1.2** + tag `v0.1.2` @ `651c96c` exist as git artifacts. **S4 General Registrator = CANCELLED / out of scope** (Shinichi 2026-08-01) — do NOT install app, do NOT re-post `@JuliaRegistrator register`, do NOT pursue/merge General. Next = Phase 1.5 closeout (#349 / Rose #5) + tip hygiene only.
+GOAL: see GOAL.md.   STATE: Tip verify PASS @ `e7261d9`; version **0.1.2** + tag `v0.1.2` @ `651c96c` exist as git artifacts. **S4 General = OUT (brain D-111)** — stay off Julia General until R twin catch-up + both working well; drmTMB likely CRAN first. Do NOT Registrator. Next = Phase 1.5 closeout (#349 / Rose #5) + tip hygiene / parity only.
 
 ARCS DONE (verified):
 - S0 RECON — checklist at `docs/dev-log/plans/registry-checklist-2026-08-01.md`
@@ -12,7 +12,7 @@ ARCS DONE (verified):
 - S4 submitted checkpoint #351 — MERGED (historical; superseded by General-out-of-scope correction)
 
 ARC CANCELLED:
-- **S4 General registration** — OUT OF SCOPE. A prior `@JuliaRegistrator register` comment exists on `651c96c` / #346 but is **not** to be followed up. Checked `JuliaRegistries/General`: no `D/DRM` path and no open DRM PR (2026-08-01). If a General PR appears later, report URL — do **not** merge.
+- **S4 General registration** — OUT OF SCOPE (**D-111**). Readiness bar: catch up with drmTMB + both working well; probably drmTMB R/CRAN first. Prior `@JuliaRegistrator register` on #346 is **not** to be followed up. No `D/DRM` in General (2026-08-01). If a General PR appears later, report URL — do **not** merge.
 
 ARC IN PROGRESS: Phase 1.5 / #5 Julia-side finish matrix — PR #349; tip claim hygiene so HANDOVER/README/Mission Control no longer treat General as Next.
 

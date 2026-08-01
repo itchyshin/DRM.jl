@@ -120,13 +120,15 @@ AGENTS.md ROADMAP.md   the 12-persona team + the phase plan
 ## Status — honest (v0.1.x)
 
 Tree version and git tag are **`0.1.2` / `v0.1.2`**. Older tags `v0.1.0` /
-`v0.1.1` remain historical. **Julia General-registry membership is not in
-scope** this arc — MIT package distributed via GitHub / `Pkg.develop` (or a
-future private path). Do not treat the `v0.1.2` tag as General registration.
+`v0.1.1` remain historical. **Julia General stays out** until readiness
+(catch up with drmTMB + both working well; drmTMB likely R/CRAN first —
+brain **D-111**). MIT via GitHub / `Pkg.develop` until then. Do not treat
+`v0.1.2` as General registration; do not chase Registrator.
 
 **Next:** Phase 1.5 /
 [#5](https://github.com/itchyshin/DRM.jl/issues/5) (drmTMB `engine = "julia"`)
-closeout + tip hygiene. S2/S3 hygiene already landed (#340–#342).
+closeout + tip hygiene / parity — **not** General. S2/S3 hygiene already landed
+(#340–#342).
 
 **Public `drm()` / `bf()` front end** — recovery-tested, drmTMB-mirroring syntax:
 
