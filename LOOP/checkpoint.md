@@ -1,43 +1,35 @@
-GOAL: see GOAL.md.   STATE: S2 PR #340 open (merge gate); S3 hygiene draft PR #341 open (draft, land AFTER #340). Do NOT merge #340 from this lane.
+GOAL: see GOAL.md.   STATE: S2 done (#340); S3 hygiene landed (#341 silence + #342 HANDOVER/README/checklist). NEXT = remaining Aqua/`Pkg.test` verify on main tip `74f30a8`. S4 Registrator still OPEN GATE (needs explicit Shinichi OK — do not submit).
 
 ARCS DONE (verified):
 - S0 RECON — checklist at `docs/dev-log/plans/registry-checklist-2026-08-01.md`
-- S1 Merge #339 — MERGED @ 7cb868d on shannon/ayumi-integration
-- S2 merge commit on branch — `4bce123`; PR https://github.com/itchyshin/DRM.jl/pull/340
-- S3 draft (reversible, waiting on #340): branch `shannon/s3-scoped-hygiene` @ `5ca011b`
-  - (preferred name was `shannon/s3-load-print-silence`; prior agent used `s3-scoped-hygiene` — keep #341, do not duplicate)
-  - Removed include-time load banners: former `fit_q4_sparse_tmb.jl:575–578`, `fisherz_q4.jl:300–303`
-  - Live `using DRM` silent (markers empty) after patch — rechecked 2026-08-01 ~07:47
-  - Draft PR https://github.com/itchyshin/DRM.jl/pull/341 (base main; land AFTER #340; rebase if needed)
-  - Version/CITATION left at `0.1.0` despite tags `v0.1.0`/`v0.1.1` (S4 decision)
-  - Focused local: `test/test_reml_sigma_phylo.jl` **PASS** (12/12) — log `/tmp/drm-pkg-test-logs/test-reml-sigma-phylo-20260801-073456.log`
-  - Full local `Pkg.test` **PASS** — log `/tmp/drm-pkg-test-logs/pkg-test-ayumi-integrate-20260801-071902.log` (`Testing DRM tests passed`; REML σ-phylo suite green inside)
+- S1 Merge #339 — MERGED @ `7cb868d`
+- S2 ayumi→main integrate — MERGED PR #340 @ `7df22b4` (2026-08-01T14:05:23Z); CI green (test 1 + test 1.10)
+- S3 scoped hygiene — MERGED PR #341 @ `50faf6d` (load-print silence + checklist bank)
+- S3 docs honesty — MERGED PR #342 @ `74f30a8` (Rose-honest HANDOVER/README; checklist identical to #341)
+- Pre-merge local evidence (from #341 tip): focused `test_reml_sigma_phylo` PASS; full `Pkg.test` PASS (logs under `/tmp/drm-pkg-test-logs/`)
 
-ARC IN PROGRESS: Wait #340 CI + Shinichi merge OK. Then rebase/land #341.
+ARC IN PROGRESS: Post-merge tip verify (Aqua + `Pkg.test` on `origin/main` @ `74f30a8`) if not yet re-run after the three merges.
 
-NEXT after #340 merges:
-1. Rebase/retarget #341 onto post-merge main if needed
-2. Confirm Aqua/`Pkg.test` green from LOG + CI on #341
-3. Merge #341 (S3 scoped hygiene)
-4. Then S4 Registrator only with explicit Shinichi OK
-5. S5 #5 Julia-side Hopper matrix drafted (`docs/dev-log/plans/bridge-finish-matrix-julia-side-2026-08-01.md`); drmTMB inventory SKIPPED this session
+NEXT:
+1. Confirm Aqua / `Pkg.test` green on main tip (CI on merged SHAs or clean worktree)
+2. S4 Registrator — **only with explicit Shinichi OK** (version/tag drift still noted: Project.toml/`CITATION.cff` `0.1.0` vs tags `v0.1.0`/`v0.1.1`)
+3. S5 #5 Julia-side Hopper matrix drafted (`docs/dev-log/plans/bridge-finish-matrix-julia-side-2026-08-01.md`); drmTMB inventory still deferred
 
 OPEN GATES (need human):
-- Merge PR #340 into main (after CI green) — **not this lane**
-- Land #341 after #340
-- S4 Registrator submit — later
+- S4 Registrator submit — **do not submit without explicit OK**
+- Do not dump AGENTS fence commits
 
 TRUTH LIVES IN:
 - LOOP/GOAL.md (Q2 SCOPED)
-- .worktrees/ayumi-main-integrate (on shannon/s3-scoped-hygiene for reversible S3)
-- PR #340 / PR #341
-- origin/main tip until merge (do not assume merge)
+- origin/main tip `74f30a8` (Merge #342)
+- PRs #340 / #341 / #342 (all MERGED)
+- `docs/dev-log/plans/registry-checklist-2026-08-01.md`
 
 RESUME:
 ```
 You are DRM.jl registry→bridge lane — running LOOP goal. RESUME.
 READ FIRST: LOOP/GOAL.md → LOOP/checkpoint.md → LOOP/ultra-plan.md → AGENTS.md.
-WORKSPACE: .worktrees/ayumi-main-integrate; S3 branch shannon/s3-scoped-hygiene (#341 draft); wait #340 merge.
-CONTINUE FROM: do NOT merge #340; do NOT touch drmTMB; finish/record Pkg.test LOG exit; after #340 land #341. Q2=SCOPED. #5 R inventory deferred. DEFER #136 #291 #13.
-Pause at: merge to main; S4 Registrator; public claims.
+WORKSPACE: clean worktree at origin/main @ 74f30a8.
+CONTINUE FROM: S2+S3 landed; run/confirm tip Aqua+Pkg.test; do NOT Registrator; do NOT touch drmTMB; do NOT dump AGENTS. Q2=SCOPED. #5 R inventory deferred. DEFER #136 #291 #13.
+Pause at: S4 Registrator; public claims.
 ```
