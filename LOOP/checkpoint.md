@@ -1,4 +1,4 @@
-GOAL: see GOAL.md.   STATE: S2–S3 + tip verify PASS (@ `e7261d9`); Rose docs #347/#348 + tip-verify #350 MERGED; version **0.1.2** + tag `v0.1.2` @ `651c96c` (git artifacts only). **S4 General = OUT (brain D-111)** — stay off Julia General until R twin catch-up + both working well; drmTMB likely CRAN first; do NOT Registrator. **S5 landed:** DRM.jl #349 @ `d296703` + drmTMB #878 @ `fb59cd3`; Rose PASS; **#5 CLOSED**. **Tip hygiene #352 MERGED** @ `6d73539`; **Cursor agents #353 MERGED** @ `14cec07` (Ada/Rose/Noether/Hopper; Melissa hub-only). NEXT = optional Rose nit + Mission Control off Registrator — **not** General.
+GOAL: see GOAL.md.   STATE: registry→bridge arc **closed**. S2–S3 + tip verify PASS; version **0.1.2** / `v0.1.2` (git only — **not** General). **S4 OUT (D-111)**. **S5** #349 + drmTMB #878; **#5 CLOSED**; Rose PASS. Tip hygiene #352 @ `6d73539`; agents #353 @ `14cec07`; checkpoint #354 @ `81e02c7`. **S8** Melissa plan-actual landed. NEXT = idle / optional deeper Hopper parity (#17) if opened — **not** Registrator/General.
 
 ARCS DONE (verified):
 - S0 RECON — checklist at `docs/dev-log/plans/registry-checklist-2026-08-01.md`
@@ -19,11 +19,11 @@ ARCS DONE (verified):
 ARC CANCELLED:
 - **S4 General registration** — OUT OF SCOPE (**D-111**). Readiness bar: catch up with drmTMB + both working well; probably drmTMB R/CRAN first. Prior `@JuliaRegistrator register` on #346 is **not** to be followed up. No `D/DRM` in General (2026-08-01). If a General PR appears later, report URL — do **not** merge.
 
-ARC IN PROGRESS: none on tip — optional Rose nit only.
+ARC IN PROGRESS: none — Phase 1.5 / registry→bridge closeout complete.
 
 NEXT:
-1. Optional: align uni `r_bridge_status=supported` vs `claim_status=partial` (Rose nit, non-blocking)
-2. Keep Mission Control `next_safe_action` off Registrator
+1. Idle on DRM.jl ship work unless Shinichi opens deeper Hopper parity (#17)
+2. Optional (non-blocking): Rose nit uni `r_bridge_status=supported` vs `claim_status=partial`
 3. Do not dump AGENTS fence commits; do not pursue JuliaRegistrator / General
 4. Melissa stays hub-only (not a DRM.jl `.cursor/agents/` persona)
 

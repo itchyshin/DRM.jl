@@ -45,5 +45,5 @@ See `LOOP/ultra-plan.md` (copy of `docs/dev-log/plans/2026-08-01-ultra-plan-regi
 - [x] **S4: CANCELLED / out of scope (D-111)** — General not until R catch-up + both working; drmTMB likely first. `v0.1.2` git tag may remain — **not** General membership.
 - [x] S5: #5 Hopper matrix evidenced; Rose experimental wording PASS; DRM.jl #349 @ `d296703` + drmTMB #878 @ `fb59cd3` MERGED; **#5 CLOSED**.
 - [x] S6–S7: tip hygiene #352 @ `6d73539` + Cursor agents #353 @ `14cec07`; Rose Phase 1.5 PASS already on tip.
-- [ ] S8: Melissa reconcile (hub-only; not Registrator).
-- [ ] Mission Control `drmTMB` status updated; after-task + check-log.d for closed slices.
+- [x] S8: Melissa reconcile (hub-only; not Registrator) — `docs/dev-log/plan-actual/2026-08-01-registry-bridge.md`.
+- [x] Mission Control `drmTMB` status `next_safe_action` off Registrator/General; after-task + check-log.d for closed slices.
