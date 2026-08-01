@@ -1,4 +1,4 @@
-GOAL: see GOAL.md.   STATE: registry→bridge arc **closed**. S2–S3 + tip verify PASS; version **0.1.2** / `v0.1.2` (git only — **not** General). **S4 OUT (D-111)**. **S5** #349 + drmTMB #878; **#5 CLOSED**; Rose PASS. Tip hygiene #352 @ `6d73539`; agents #353 @ `14cec07`; checkpoint #354 @ `81e02c7`. **S8** Melissa plan-actual landed. NEXT = idle / optional deeper Hopper parity (#17) if opened — **not** Registrator/General.
+GOAL: see GOAL.md.   STATE: registry→bridge arc **closed**. S2–S3 + tip verify PASS; version **0.1.2** / `v0.1.2` (git only — **not** General). **S4 OUT (D-111)**. **S5** #349 + drmTMB #878; **#5 CLOSED**; Rose PASS. Tip hygiene #352 @ `6d73539`; agents #353 @ `14cec07`; checkpoint #354 @ `81e02c7`. **S8** Melissa plan-actual #356 @ `1c49656`. NEXT = idle / optional Rose nit or new goal — **not** Registrator/General.
 
 ARCS DONE (verified):
 - S0 RECON — checklist at `docs/dev-log/plans/registry-checklist-2026-08-01.md`
@@ -15,6 +15,8 @@ ARCS DONE (verified):
 - S5 Hopper finish matrix — MERGED DRM.jl #349 + drmTMB #878; Rose PASS @ `docs/dev-log/plans/rose-phase15-5-verdict-2026-08-01.md`; #5 CLOSED
 - Tip claim hygiene (D-111 fence) — MERGED #352 @ `6d73539`
 - Cursor project agents scaffold — MERGED #353 @ `14cec07`
+- Post-353 checkpoint — MERGED #354 @ `81e02c7`
+- Melissa S8 plan-actual — MERGED #356 @ `1c49656`
 
 ARC CANCELLED:
 - **S4 General registration** — OUT OF SCOPE (**D-111**). Readiness bar: catch up with drmTMB + both working well; probably drmTMB R/CRAN first. Prior `@JuliaRegistrator register` on #346 is **not** to be followed up. No `D/DRM` in General (2026-08-01). If a General PR appears later, report URL — do **not** merge.
@@ -41,15 +43,17 @@ TRUTH LIVES IN:
 - LOOP/GOAL.md (General out of scope / D-111; Q2 SCOPED; Q3 S5 landed)
 - Rose verdict `docs/dev-log/plans/rose-phase15-5-verdict-2026-08-01.md`
 - Paired matrix `docs/dev-log/plans/bridge-finish-matrix-2026-08-01.md`
-- `origin/main` @ `14cec07` (#352+#353 landed; version 0.1.2)
+- Melissa plan-actual `docs/dev-log/plan-actual/2026-08-01-registry-bridge.md`
+- **START HERE (Cursor):** `docs/dev-log/handover/2026-08-01-cursor-handover.md`
+- `origin/main` @ `1c49656` (#356 landed; version 0.1.2)
 - tag `v0.1.2` → `651c96c` (git tag only — **not** General membership)
 - Historical prep only: `docs/dev-log/plans/registrator-prep-2026-08-01.md` (superseded for General)
 
 RESUME:
 ```
-You are DRM.jl Phase 1.5 bridge closeout lane — running LOOP goal. RESUME.
-READ FIRST: LOOP/GOAL.md → LOOP/checkpoint.md → LOOP/ultra-plan.md → AGENTS.md.
-WORKSPACE: origin/main @ 14cec07 (#349/#878/#352/#353 landed; #5 closed; General NOT in scope / D-111).
-CONTINUE FROM: tip hygiene + Cursor agents MERGED; optional Rose nit only; do NOT Registrator; do NOT dump AGENTS. Q2=SCOPED. DEFER #136 #291 #13.
+You are DRM.jl after Phase 1.5 bridge closeout — idle tip. RESUME.
+READ FIRST: docs/dev-log/handover/2026-08-01-cursor-handover.md → LOOP/GOAL.md → LOOP/checkpoint.md → AGENTS.md.
+WORKSPACE: origin/main @ 1c49656 (#349/#878/#352/#353/#354/#356 landed; #5 closed; General NOT in scope / D-111).
+CONTINUE FROM: arc closed; optional Rose nit only; do NOT Registrator; do NOT dump AGENTS. Q2=SCOPED. DEFER #136 #291 #13.
 Pause at: public claims beyond experimental; any surprise General PR (report URL, do not merge).
 ```
