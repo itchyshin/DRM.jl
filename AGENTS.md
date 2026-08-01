@@ -23,7 +23,8 @@ relearning anything.
 Each agent below is a *perspective*, not a separate program. When Claude speaks,
 it speaks as **Shannon** (coordination) and names the active perspectives, and
 explicitly says when no spawned subagents are running. Codex agent configs that
-mirror these live in `.codex/agents/*.toml`.
+mirror these live in `.codex/agents/*.toml`; Cursor project adapters (thin
+mirrors of those charters) live in `.cursor/agents/*.md`.
 
 | # | Persona | Role | Charter |
 |---|---|---|---|
