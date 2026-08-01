@@ -17,9 +17,11 @@ Many Phase 3 articles are filled (formula-grammar, adding-families,
 testing-likelihoods, source-map, large-data, convergence, structural-dependence,
 Rosetta). The variational-approximation track is newly opened (issue #136).
 **Still open:** the numerical RCall.jl drmTMB-parity gate (#17, Workflow G), the
-remaining `experimental/` wiring (`reml_q4` / `location_only` / `fit_em_natgrad`),
-and the Phase 1.5 R-side bridge. **The verified q=4 PLSM engine (2.18× over
-drmTMB, O(p) to p=10,000) stays exactly as handed over.**
+remaining `experimental/` prototypes (`fit_em_natgrad` / E-step variants / dense
+oracle — **not** the public `method = :REML` or `algorithm = :em` surfaces, which
+are already wired from `src/reml_q4.jl` and `src/location_only.jl`), and the
+Phase 1.5 R-side bridge (#5). **The verified q=4 PLSM engine (2.18× over drmTMB,
+O(p) to p=10,000) stays exactly as handed over.**
 
 ## Target
 
@@ -50,8 +52,10 @@ call DRM.jl from R via `engine = "julia"`. Parity anchor: **drmTMB v0.1.3**.
 
 - Workflow A: wire `infer_q4`, `reml_q4`, `location_only`, `fit_em_natgrad` into
   the public API; fix the orphan tests. — ✅ `infer_q4` graduated into
-  `src/inference.jl` (Wald + profile + bootstrap, #106); `reml_q4` /
-  `location_only` / `fit_em_natgrad` **still in `experimental/`, not wired**.
+  `src/inference.jl` (Wald + profile + bootstrap, #106); ✅ public opt-in REML
+  (`src/reml_q4.jl`, `method = :REML`, #11/#235) and conjugate-EM phylo-mean
+  (`src/location_only.jl`, `algorithm = :em`, #12/#224) are **included/exported**;
+  `fit_em_natgrad` / leftover `experimental/` prototypes **still not wired**.
 - Workflow D ×N: fill the "Get Started" + easy stubs (first-fit,
   what-can-I-fit-today, working-with-large-data — the verified engine supports
   them today). — ✅ large-data / convergence guides filled.

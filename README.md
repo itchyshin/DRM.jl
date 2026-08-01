@@ -105,10 +105,10 @@ julia --project=. bench/run_scaling.jl           # O(p) curve to p=10,000
 src/                core engine (verified): sparse_phy, takahashi_selinv,
                     sparse_aug_plsm (robust mode-finder), sparse_em_fit,
                     fit_ml_q4, fit_q4_sparse_tmb; DRM.jl module
-src/experimental/   remaining prototypes NOT fully wired into the public API
-                    (Laplace reml_q4, EM / location_only variants, mode-finder
-                    candidates, dense oracle). Public opt-in REML is
-                    method=:REML — not the same as wiring reml_q4.
+src/experimental/   leftover prototypes NOT wired into the public API
+                    (SQUAREM / natgrad EM, E-step variants, dense oracle,
+                    leftover location_only copy). Public surfaces live in src/:
+                    method=:REML (reml_q4.jl) and algorithm=:em (location_only.jl).
 bench/              runnable benchmarks + the q4_p100 fixtures + R fixture gen
 test/               runtests.jl + migrated correctness checks
 report/             13 design/provenance reports (the full poc record)
@@ -123,10 +123,10 @@ Git tags **`v0.1.0` and `v0.1.1`** exist; `Project.toml` and `CITATION.cff`
 still report **`0.1.0`**. Treat that drift as open until a deliberate S4
 registry decision — do not infer the tree is already `0.1.1`.
 
-**Next (registry):** after ayumi↔main integrate PR
-[#340](https://github.com/itchyshin/DRM.jl/pull/340) merges, finish SCOPED S3
-hygiene + green local/`Pkg.test`/Aqua, then Registrator **only** with explicit
-maintainer OK. This README does **not** claim General-registry membership.
+**Next (registry):** S2/S3 hygiene already landed (#340–#342). Watch the **0.1.2
+Registrator / AutoMerge** lane (version bump + submission are other PRs — do
+**not** claim General-registry membership here). Parallel open work: Phase 1.5 /
+[#5](https://github.com/itchyshin/DRM.jl/issues/5) (drmTMB `engine = "julia"`).
 
 **Public `drm()` / `bf()` front end** — recovery-tested, drmTMB-mirroring syntax:
 
@@ -160,9 +160,10 @@ model-selection guard); epsilon-method bias correction; `heritability` /
 bridge-done.
 
 **Not fully wired / still open:** remaining `src/experimental/` prototypes
-(Laplace-REML `reml_q4`, EM / `location_only` variants — SCOPED hygiene does
-**not** wire these); **χ̄² boundary inference** where not yet exported;
-the **variational (VA/ELBO)** marginal track (#136, deferred). See
+(SQUAREM / natgrad EM, E-step variants, dense oracle, leftover `location_only`
+copy — public `method = :REML` and `algorithm = :em` are already in `src/`);
+**χ̄² boundary inference** where not yet exported; the **variational (VA/ELBO)**
+marginal track (#136, deferred). See
 [Capabilities](docs/src/capabilities.md),
 [capability-status](docs/design/capability-status.md),
 [HANDOVER.md](HANDOVER.md), and [ROADMAP.md](ROADMAP.md) for the

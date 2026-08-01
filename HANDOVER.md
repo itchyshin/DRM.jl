@@ -35,19 +35,17 @@
   Julia-side R↔Julia helpers (`drm_bridge`, `drm_bridge_inference`, sparse-phylo
   companion) are in-tree; **Phase 1.5 / #5 is not done** (drmTMB
   `engine = "julia"` finish + Hopper matrix remain open — do not oversell as
-  bridge-shipped). `src/experimental/` is **not fully wired**: it still holds
-  alternative estimator prototypes outside the public API (SQUAREM /
-  natural-gradient EM, trust-region & line-search E-steps, dense q=4 EM, the
-  experimental `reml_q4` path, and warm-start fit variants). SCOPED registry
-  hygiene does **not** wire the rest.
-- **Next:** after integrate PR **#340** merges, finish **SCOPED S3** registry
-  hygiene (load-print silence + docs honesty; Aqua / `Pkg.test` green on the
-  tip), then **Registrator only with explicit Shinichi OK** (S4 — do not
-  submit from this slice). **Version / tag drift:** git tags `v0.1.0` and
-  `v0.1.1` exist while `Project.toml` + `CITATION.cff` still say `0.1.0` —
-  bump-vs-reuse is an S4 decision, not silently claimed here. Longer horizon:
-  Phase 1.1 R-parity (#17), Phase 1.5 bridge finish (#5), Phase 3 articles,
-  VA/ELBO (#136, deferred).
+  bridge-shipped). `src/experimental/` still holds **alternative estimator
+  prototypes** outside the public API (SQUAREM / natural-gradient EM,
+  trust-region & line-search E-steps, dense q=4 EM, warm-start fit variants,
+  leftover `location_only.jl` copy). Public REML is `src/reml_q4.jl`
+  (`method = :REML`) — there is **no** `experimental/reml_q4.jl` on tip.
+- **Next:** S2/S3 hygiene **landed** (#340–#342). Watch the **0.1.2 Registrator /
+  AutoMerge** lane (other PR — do **not** claim General-registry membership
+  here). Parallel: Phase 1.5 bridge finish (#5). Longer horizon: Phase 1.1
+  R-parity (#17), Phase 3 articles, VA/ELBO (#136, deferred). **Version / tag:**
+  tags `v0.1.0`/`v0.1.1` vs tree version are owned by the 0.1.2 bump lane
+  (#346) — not silently claimed here.
 
 ---
 
@@ -142,12 +140,12 @@ data attach only at the p leaf nodes.
 profile + bootstrap; `infer_q4` graduated here) · `summary` · `visualization` ·
 `DRM.jl`.
 **Experimental** (`src/experimental/`, migrated; **not fully wired** into the
-public API — do not claim otherwise): Laplace-REML `reml_q4` · remaining
-`location_only` / EM prototypes · `fit_em_natgrad` ·
-`estep_{lm,trustregion,armijoguard,initprior}` · dense oracle (`q4_em_dense`,
-`fit_q4_tmbgrad`). (Public opt-in REML is `method = :REML`; conjugate-EM
-phylo-mean is `algorithm = :em` — those promotions do **not** mean the whole
-`experimental/` tree is wired.)
+public API — do not claim otherwise): leftover `location_only` prototype copy ·
+`fit_em_natgrad` · `estep_{lm,trustregion,armijoguard,initprior}` · dense
+oracle (`q4_em_dense`, `fit_q4_tmbgrad`) · warm-start / SQUAREM EM variants.
+**Public (in `src/`, included):** opt-in REML (`reml_q4.jl`, `method = :REML`)
+and conjugate-EM phylo-mean (`location_only.jl`, `algorithm = :em`) — those
+promotions do **not** mean the whole `experimental/` tree is wired.
 
 ---
 
@@ -226,15 +224,14 @@ residuals** (#183/#234), and the **coevolution q=4 phylo front end** + accessors
 still open**. `src/experimental/` is **no longer the home of the promoted
 features above** but is **not fully wired** — alternative estimator prototypes
 remain outside the public API (SQUAREM / natural-gradient EM, trust-region &
-line-search E-steps, dense q=4 EM, experimental `reml_q4`, warm-start fit
-variants). `bench/` has runnable benchmarks + the `q4_p100` fixtures + the R
-fixture-gen. `report/` has all 13 design/provenance docs. CI is Linux-only,
-PR + `workflow_dispatch` (cost-disciplined). **Honest — registry:** General-
-registry submission waits on **#340** (ayumi↔main integrate) then SCOPED S3
-hygiene + green Aqua/`Pkg.test`; Registrator is gated on Shinichi OK.
-**Version / tag:** tags `v0.1.0`/`v0.1.1` vs tree `0.1.0` in `Project.toml` +
-`CITATION.cff` — undecided until S4. Residual load-banner silence is a parallel
-S3 hygiene slice (not claimed done here).
+line-search E-steps, dense q=4 EM, warm-start fit variants, leftover
+`location_only` copy). There is **no** `experimental/reml_q4.jl` on tip —
+public REML is `src/reml_q4.jl`. `bench/` has runnable benchmarks + the
+`q4_p100` fixtures + the R fixture-gen. `report/` has all 13 design/provenance
+docs. CI is Linux-only, PR + `workflow_dispatch` (cost-disciplined).
+**Honest — registry:** S2/S3 (#340–#342) landed; Next = watch **0.1.2
+Registrator / AutoMerge** (other lane) and Phase 1.5 / #5 — do **not** claim
+General membership. **Version / tag:** owned by the 0.1.2 bump lane (#346).
 
 ---
 
@@ -251,10 +248,11 @@ load-time prints, deliberate public API); make `Pkg.instantiate(); using DRM;
 Pkg.test()` green (the migrated `test/*.jl` need path/`using DRM` fixes); add
 `Manifest.toml`, `docs/` Documenter site, `TagBot.yml`/`Documenter.yml`,
 `bench/Project.toml`.
-**B. Wire `experimental/` into the API.** The q=4 bivariate `bf()` front end and
-`infer_q4` inference path are now public; remaining migrated pieces include
-`reml_q4`, `location_only`, and EM variants. **Thread the bootstrap** and
-*measure* the speedup (currently unrun end-to-end).
+**B. Wire `experimental/` into the API.** The q=4 bivariate `bf()` front end,
+`infer_q4`, public REML (`method = :REML`), and conjugate-EM (`algorithm = :em`)
+are now public; remaining migrated pieces are EM / E-step / dense-oracle
+prototypes in `src/experimental/`. **Thread the bootstrap** and *measure* the
+speedup (currently unrun end-to-end).
 **C. Open research items.** REML scale-axis + exact REML gradient (keep ML
 default); χ̄² boundary inference (Self–Liang 1987; Stram–Lee 1994); drmTMB
 head-to-head at nrep=4/p>100 to replace the extrapolated scaling comparison.
@@ -272,9 +270,9 @@ that already works here.
 not a port of drmTMB's GPL source, so it's legally free to be MIT); **public**
 repo at `itchyshin/DRM.jl`; cost-disciplined CI.
 **Open:** whether to vendor any drmTMB GPL source later (would force GPL —
-avoid, or isolate); Julia General-registry submission (after **#340** + SCOPED
-S3 green + explicit Shinichi OK); version bump vs reuse of tag `v0.1.1` while
-`Project.toml` / `CITATION.cff` remain `0.1.0`; Phase 1.5 bridge finish (#5).
+avoid, or isolate); Julia General-registry membership (0.1.2 Registrator /
+AutoMerge lane in flight — do not claim registered until AutoMerge lands);
+Phase 1.5 bridge finish (#5).
 
 ---
 
