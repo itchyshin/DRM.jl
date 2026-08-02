@@ -1,19 +1,21 @@
-GOAL: see GOAL.md. STATE: Arc 0 complete as the approved issue #291 baseline
-record slice.
-ARCS DONE (verified): 0 — the Gaussian q4 REML design boundary, small baseline
-harness, and report-contract test.
-ARC IN PROGRESS: none.
+GOAL: Arc 0's immutable contract is retained in GOAL.md. STATE: Arc 0 is closed;
+Arc 1 is a separate, bounded evidence/documentation continuation of #291.
+ARCS DONE (verified): 0 — design boundary, p=8/nrep=3 baseline record, and
+report-contract test; PR #361 is open with CI pending.
+ARC IN PROGRESS: 1 — establish the first baseline-route bottleneck and record
+candidate acceptance gates; no candidate estimator is authorized.
 LANE C: LOOP freeze, check-log, after-task, and Rose claim fence recorded.
-**PASS**: on 2026-08-02, the committed harness emitted and its Markdown artifact
-was read at `/tmp/reml-baseline.md`; both small-fixture fits converged and the
-artifact explicitly records `interval_status=not_evaluated`. The direct focused
-contract test passed 13/13. This is harness evidence only: do not infer or state
-a speed / AI-REML result.
-NEXT: open the narrow Arc 0 PR; keep the baseline record and all claim fences intact.
-OPEN GATES (need human): merge / public speed claim / heavy compute.
-TRUTH LIVES IN: `feat/291-reml-baseline-ladder` from `main` @ `63c4266`;
-`LOOP/GOAL.md` and `LOOP/ultra-plan.md` define the authorized scope.
-RESUME: You are Ada reviewing the DRM.jl issue #291 Arc 0 PR. Read
-`LOOP/GOAL.md` → `LOOP/checkpoint.md` → `LOOP/ultra-plan.md` → `AGENTS.md`;
-review only the small Gaussian q4 design-note and baseline-harness PR. Do not
-touch `src/`, prototypes, #136, bridge APIs, `.worktrees/`, General, or Registrator.
+**PASS (Arc 0)**: the committed harness emitted a Markdown artifact read at
+`/tmp/reml-arc1-baseline.md`; both small-fixture fits converged and the artifact
+records `interval_status=not_evaluated`. The focused contract test passed 13/13.
+These are baseline-harness facts, not a speed or AI-REML result.
+NEXT: complete the Arc 1 bottleneck note and optional report-contract field on
+`feat/291-reml-arc1-bottleneck`, stacked on the Arc 0 PR head. Open a follow-up
+PR against `feat/291-reml-baseline-ladder`; it must not enlarge PR #361.
+OPEN GATES (need human): merging either PR; public speed / AI-REML claim; heavy compute.
+TRUTH LIVES IN: Arc 0 PR #361 @ `f159206`; Arc 1 is a stacked follow-up. The
+immutable Arc 0 contract is `LOOP/GOAL.md`; `LOOP/arcs.md` is the live arc ledger.
+RESUME: You are Ada continuing DRM.jl issue #291 Arc 1. Read `LOOP/GOAL.md` →
+`LOOP/checkpoint.md` → `LOOP/arcs.md` → `AGENTS.md`; finish only the
+baseline-route bottleneck record and report-contract addition. Do not touch
+`src/`, prototypes, #136, bridge APIs, `.worktrees/`, General, or Registrator.
