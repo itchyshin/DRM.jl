@@ -21,7 +21,7 @@ Hopper #5 bar (Gaussian uni / bivariate residual / first phylo-mean + gate rejec
 ## Oversell watch
 
 - **No oversell of CRAN/JuliaCall Depends.** Explicit fence in both finish matrices; Suggests-only preserved.
-- **Mild pre-existing tension (not blocking):** uni cell `base_gaussian_location_scale` still has `r_bridge_status = "supported"` while `claim_status` stays `partial` and the claim_boundary now stresses CRAN readers use TMB / vignette deferred. Do not promote that row further in this slice; a later honesty pass can align `supported` → `experimental` if desired.
+- **Resolved (tip honesty, 2026-08-01):** uni cells `base_gaussian_location_scale` and `gaussian_response_mask` now use `r_bridge_status = "experimental"` to match `claim_status = partial` (drmTMB registry + regenerated `julia-capabilities.tsv`). Not a capability promotion.
 - Live Route A/B/C TMB↔Julia numeric parity remains **optional / skip-guarded** — docs correctly mark it as such, not as always-on CI evidence.
 
 ## Merge advice / outcome (2026-08-01)

@@ -20,6 +20,8 @@ Companion notes:
 
 R helper: `drmTMB:::drm_julia_phase15_admitted_cells()` returns exactly these three rows from `drm_julia_capability_comparison()`.
 
+**Tip honesty (2026-08-01):** `base_gaussian_location_scale` and `gaussian_response_mask` use `r_bridge_status = experimental` (aligned with `claim_status = partial`); not a promotion beyond the experimental #5 bar.
+
 **Not in #5 bar** (extra / gated): q4 phylo REML, count phylo, non-Gaussian phylo, structured `relmat`, cross-family, response masks beyond Gaussian, `engine_control`.
 
 ---

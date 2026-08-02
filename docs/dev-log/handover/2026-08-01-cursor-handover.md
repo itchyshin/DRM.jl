@@ -80,14 +80,13 @@ declared below (not arc debt). Paste/annotate:
 Classify on resume. Prefer idle.
 
 1. **DONE (arc):** Phase 1.5 / registry→bridge LOOP — no further LOOP steps.
-2. **OWED (optional, non-blocking only):** Rose nit — uni cell
-   `base_gaussian_location_scale` has `r_bridge_status=supported` vs
-   `claim_status=partial` (see Rose verdict). Align only if Shinichi wants a
-   tiny honesty PR; otherwise leave.
+2. **DONE (tip honesty):** Rose nit — uni `r_bridge_status` aligned to
+   `experimental` where `claim_status=partial`; ROADMAP/HANDOVER/README #17/#5
+   closed wording refreshed (follow-up PR after this handover landed).
 3. **RETRACTED / PROTECTED:** JuliaRegistrator / General chase; dumping AGENTS
    fence commits; engine/`src/` edits; opening #136/#291/#13 without owner.
-4. **Default:** arc closed; next is a **new goal** from Shinichi (e.g. #17) —
-   do not invent one.
+4. **Default:** arc closed; next is a **new goal** from Shinichi — do not invent
+   one. (#17 is already closed; do not reopen casually.)
 
 ## Blockers / Open Questions
 
