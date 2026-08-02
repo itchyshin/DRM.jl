@@ -10,6 +10,11 @@ include(joinpath(@__DIR__, "..", "bench", "reml_baseline_ladder.jl"))
     @test !isempty(metadata.julia_version)
     @test !isempty(metadata.blas)
 
+    @test REML_BASELINE_LADDER_INTERMEDIATE_FIXTURE == (p = 16, nrep = 3, seed = 291)
+    intermediate = _reml_baseline_ladder_fixture(; REML_BASELINE_LADDER_INTERMEDIATE_FIXTURE...)
+    @test length(intermediate.data.y1) == 48
+    @test length(intermediate.phy.leaf_names) == 16
+
     accounting = reml_baseline_q4_structural_accounting()
     @test accounting.n_outer_phi == 11
     @test accounting.structural_evals_per_gradient_request == 23

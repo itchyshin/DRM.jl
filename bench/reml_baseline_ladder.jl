@@ -26,6 +26,10 @@ const REML_BASELINE_LADDER_FIT_FIELDS = (
     :fit_order,
 )
 
+# A deterministic next rung beyond the p=8 smoke fixture. It remains intentionally
+# small enough for local warm-harness runs, rather than implying an Ayumi/10k scale test.
+const REML_BASELINE_LADDER_INTERMEDIATE_FIXTURE = (p = 16, nrep = 3, seed = 291)
+
 """
 Report-only structural accounting for the current central-FD REML outer loop.
 
@@ -223,6 +227,11 @@ Run with:
 Set `DRM_REML_LADDER_OUTPUT=/path/to/report.md` to also write the Markdown
 record to a durable artifact. Set `DRM_REML_LADDER_PROTOCOL=cold_ml_first` to
 force the cold protocol from the CLI entrypoint.
+
+The named intermediate rung preserves the seed family while increasing the
+number of tips:
+
+    reml_baseline_ladder_report(; REML_BASELINE_LADDER_INTERMEDIATE_FIXTURE...)
 """
 function reml_baseline_ladder_report(; p::Int = 8, nrep::Int = 3, seed::Int = 291,
                                      protocol::Symbol = :warm_bidirectional,

@@ -1,0 +1,1 @@
+| 2026-08-02 | #291 Arc 3 intermediate fixture rung | focused contract test + p=16/nrep=3 warm harness artifact | **PASS 26/26; artifact read** | `diagnostic_only`: timed REML fits did not converge, so no timing comparison |

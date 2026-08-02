@@ -1,10 +1,11 @@
-# GOAL — issue #291 Arcs 0–2 sparse-first track (**CLOSED**)
+# GOAL — issue #291 Arcs 0–3 sparse-first track (**CLOSED**)
 
 ## Mission (completed)
 Land an auditable sparse Gaussian q4 REML baseline before any acceleration:
 design boundary, small-fixture harness, FD bottleneck note, warm/order-safe
-protocol with report-only accounting, and H²/Szymek sparse-first framing
-without inventing a quotation or exposing AI-REML.
+protocol with report-only accounting, p=16 intermediate fixture rung, and
+H²/Szymek sparse-first framing without inventing a quotation or exposing
+AI-REML.
 
 ## Headline
 Do not assume AI-REML is a speed win — characterize the sparse baseline first.
@@ -17,9 +18,12 @@ Do not assume AI-REML is a speed win — characterize the sparse baseline first.
 - Broader issue #291 may remain open for later acceleration slices.
 
 ## Authoritative WHAT
-Historical plan freeze: `LOOP/ultra-plan.md` (Arc 2). Merged PRs #361–#363.
+Historical plan freeze: `LOOP/ultra-plan.md` (Arc 2); Arc 3 adds the
+intermediate fixture rung. Merged PRs #361–#363; Arc 3 PR pending.
 
 ## Definition of done — **met**
 1. Design boundary + harness on main (#361).
 2. Bottleneck / candidate gates on main (#362).
 3. Warm/order accounting + framing on main (#363); Rose PASS; tip idle.
+4. Named p=16/nrep=3/seed=291 intermediate rung; read artifact records
+   `diagnostic_only` rather than a timing comparison.

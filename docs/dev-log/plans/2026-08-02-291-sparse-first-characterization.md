@@ -47,6 +47,20 @@ Harness protocol `:warm_bidirectional` in `bench/reml_baseline_ladder.jl`:
 
 Intervals remain `not_evaluated` in this harness.
 
+## Arc 3 — intermediate fixture rung
+
+`REML_BASELINE_LADDER_INTERMEDIATE_FIXTURE` fixes the next reproducible local
+rung at `p=16`, `nrep=3`, `seed=291`. It uses the same balanced-tree generator,
+Gaussian q4 formula, seed family, structural accounting, and
+`:warm_bidirectional` protocol as the p=8 smoke fixture.
+
+The recorded p=16 artifact at `/tmp/reml-arc3-intermediate.md` was
+`diagnostic_only`: its timed baseline REML fits did not report convergence.
+That is useful harness evidence, but it **does not** support a timing
+comparison, a failure-generalization claim, or an optimizer change. The
+intermediate rung remains available for repeatable local checks and for a
+separately approved convergence/acceleration investigation.
+
 ## Non-claims
 
 - No public AI-REML or `:natgrad` API.
@@ -54,6 +68,7 @@ Intervals remain `not_evaluated` in this harness.
 - No 10k / Ayumi speed headline.
 - No Julia General / Registrator work (D-111).
 - No change to `src/reml_q4.jl` in this arc.
+- No p=16 method ranking while its evidence class is `diagnostic_only`.
 
 ## Next authorized slice (not this PR)
 
