@@ -11,14 +11,19 @@ using SpecialFunctions: loggamma, digamma
 _bbcr_logistic(x) = 1 / (1 + exp(-x))
 
 @testset "BetaBinomial crossed random intercepts - sparse Laplace route" begin
+    # G/H/n sized like test_crossed_laplace_generic.jl (G=28, H=24, n=2400) —
+    # a handful of groups makes ML variance-component recovery both
+    # small-sample-biased and sensitive to platform-level floating-point
+    # noise (BLAS/libm) propagating through the Laplace Newton iterations;
+    # this scale keeps both σg/σh comfortably inside tolerance across
+    # macOS/Linux and Julia 1.10/1.12.
     rng = MersenneTwister(20260804)
-    G = 14
-    H = 12
-    reps = 6
-    gids = repeat(1:G, inner = H * reps)
-    hids = repeat(repeat(1:H, inner = reps), outer = G)
-    n = length(gids)
+    G = 28
+    H = 24
+    n = 2400
     x = randn(rng, n)
+    gids = [rand(rng, 1:G) for _ in 1:n]
+    hids = [rand(rng, 1:H) for _ in 1:n]
     g = [Symbol("g", j) for j in gids]
     h = [Symbol("h", j) for j in hids]
     β = [0.10, 0.40]
@@ -39,7 +44,7 @@ _bbcr_logistic(x) = 1 / (1 + exp(-x))
               BetaBinomial(); data = (; successes, failures, x, g, h))
 
     @test fit.converged
-    @test coef(fit, :mu)[2] ≈ β[2] atol = 0.15
+    @test coef(fit, :mu)[2] ≈ β[2] atol = 0.12
     @test haskey(re_sd(fit), :g)
     @test haskey(re_sd(fit), :h)
     @test abs(re_sd(fit)[:g] - σg) < 0.15

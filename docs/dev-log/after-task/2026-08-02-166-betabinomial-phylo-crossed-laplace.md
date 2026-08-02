@@ -77,3 +77,18 @@ julia --project=test test/test_betabinomial_crossed_laplace.jl   # 12 pass
 julia --project=test test/test_nongaussian_phylo_grad_gate.jl     # incl. beta-binomial gate 6.6e-8
 julia --project=test test/runtests.jl                             # full Pkg.test() equivalent
 ```
+
+## CI follow-up
+
+The first push (local macOS/Julia 1.10 green throughout) hit one flaky
+recovery assertion in CI (Linux/Julia 1.12): `test_betabinomial_crossed_laplace.jl`'s
+`abs(re_sd(fit)[:h] - σh) < 0.15` evaluated `0.15577 < 0.15` — false by 0.006.
+Root cause: the original fixture used only `G=14`/`H=12` groups, where ML
+variance-component recovery is both small-sample-biased (known; ML shrinks
+variance components downward relative to REML) and sensitive to
+platform-level floating-point differences (BLAS/libm) propagating through the
+Laplace Newton iterations on 12 groups' worth of curvature. Fix: scaled the
+fixture to `G=28`/`H=24`/`n=2400` — the same order as the pre-existing
+`test_crossed_laplace_generic.jl` fixture — which gave `σg`/`σh` errors of
+0.01–0.11 across five independent reseeds (all comfortably inside the 0.15
+bound), vs. the original's single marginal draw.
