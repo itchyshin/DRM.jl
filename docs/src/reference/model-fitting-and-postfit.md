@@ -28,6 +28,9 @@ nobs
 sigma
 corpairs
 rho12
+coevolution_cor
+coevolution_vc
+coevolution_summary
 ```
 
 ## Random-effect estimates
