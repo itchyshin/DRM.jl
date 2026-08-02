@@ -54,8 +54,9 @@ inspection of `fit_q4_reml`, not a newly asserted runtime counter.
 ## 7a. Issue Ledger
 
 This continues issue #291 only. Arc 0 is in [PR #361](https://github.com/itchyshin/DRM.jl/pull/361)
-with CI pending. This stacked follow-up records a precise possible next slice
-(report-only evaluation-count instrumentation); it does not close #291.
+with CI pending; this record is stacked in [PR #362](https://github.com/itchyshin/DRM.jl/pull/362).
+It records a precise possible next slice (report-only evaluation-count
+instrumentation) and does not close #291.
 
 ## 8. Consistency Audit
 

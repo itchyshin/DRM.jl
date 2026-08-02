@@ -12,13 +12,13 @@ These are baseline-harness facts, not a speed or AI-REML result.
 **PASS (Arc 1)**: the static baseline route has 11 outer coordinates for this
 fixture and uses up to 23 restricted-objective/mode evaluations per gradient
 request before line-search calls. This is a structural count, not a speed result.
-NEXT: push `feat/291-reml-arc1-bottleneck` and open its stacked follow-up PR
-against `feat/291-reml-baseline-ladder`. The next implementation, if approved,
+NEXT: review stacked PR [#362](https://github.com/itchyshin/DRM.jl/pull/362)
+against `feat/291-reml-baseline-ladder`; the next implementation, if approved,
 is report-only evaluation-count instrumentation with a contract test.
 OPEN GATES (need human): merging either PR; public speed / AI-REML claim; heavy compute.
-TRUTH LIVES IN: Arc 0 PR #361 @ `980a6f7`; Arc 1 branch
-`feat/291-reml-arc1-bottleneck` (stacked). The immutable Arc 0 contract is
-`LOOP/GOAL.md`; `LOOP/arcs.md` is the live arc ledger.
+TRUTH LIVES IN: Arc 0 PR #361 @ `980a6f7`; Arc 1 PR #362 @ `f1539c8`
+(stacked). The immutable Arc 0 contract is `LOOP/GOAL.md`; `LOOP/arcs.md` is
+the live arc ledger.
 RESUME: You are Ada continuing DRM.jl issue #291 after Arc 1. Read
 `LOOP/GOAL.md` → `LOOP/checkpoint.md` → `LOOP/arcs.md` → `AGENTS.md`; do only
 the next explicitly approved report-instrumentation or candidate-validation
