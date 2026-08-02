@@ -1,29 +1,29 @@
-# GOAL — issue #291 Arcs 0–3 sparse-first track (**CLOSED**)
+# GOAL — issue #189 q=4 structured coevolution providers (IMMUTABLE — re-read at the top of EVERY arc)
 
-## Mission (completed)
-Land an auditable sparse Gaussian q4 REML baseline before any acceleration:
-design boundary, small-fixture harness, FD bottleneck note, warm/order-safe
-protocol with report-only accounting, p=16 intermediate fixture rung, and
-H²/Szymek sparse-first framing without inventing a quotation or exposing
-AI-REML.
+## Mission
+Close DRM.jl #189: bivariate q=4 coevolution from `spatial` / `relmat` / `animal`
+(not only a phylo tree), with tests + docs + Rose claim fence; PR `closes #189`.
 
 ## Headline
-Do not assume AI-REML is a speed win — characterize the sparse baseline first.
+Reuse verified `fit_q4_sparse_tmb(prob, Q_cond)`; generalize front-end `Q_cond`
+assembly only — never rewrite the Laplace / exact-grad core.
 
-## Invariants (still binding for follow-ons)
-- No Registrator / General (D-111). No `:natgrad` public API. No 10k headline
-  without a new approved compute gate. Leave `.worktrees/` unstaged.
-- Do not edit the verified engine lightly; any `src/reml_q4.jl` candidate needs
-  a fresh G0 and Gates 1–3 from the Arc 1 bottleneck note.
-- Broader issue #291 may remain open for later acceleration slices.
+## Invariants
+- One DRM.jl lane; leave `.worktrees/` unstaged.
+- No Registrator / Julia General (D-111).
+- No `:natgrad` / AI-REML; no #291 acceleration follow-on.
+- No drmTMB R-bridge edits; never vendor GPL source.
+- Do not edit `src/fit_q4_sparse_tmb.jl` / `src/sparse_aug_plsm.jl` / Takahashi core.
+- Non-tree bootstrap CIs out of scope — clear `ArgumentError` only.
+- Twin doctrine: API/capability parity; bridge R→Julia only.
 
 ## Authoritative WHAT
-Historical plan freeze: `LOOP/ultra-plan.md` (Arc 2); Arc 3 adds the
-intermediate fixture rung. Merged PRs #361–#363; [Arc 3 PR #365](https://github.com/itchyshin/DRM.jl/pull/365) is open.
+`LOOP/ultra-plan.md` (frozen copy of the approved #189 ultra-plan).
 
-## Definition of done — **met**
-1. Design boundary + harness on main (#361).
-2. Bottleneck / candidate gates on main (#362).
-3. Warm/order accounting + framing on main (#363); Rose PASS; tip idle.
-4. Named p=16/nrep=3/seed=291 intermediate rung; read artifact records
-   `diagnostic_only` rather than a timing comparison.
+## Definition of done
+1. `drm(bf(... + spatial|relmat|animal on all four axes), Gaussian(); …)` routes to
+   the q=4 engine and returns `fit.ranef.Sigma_a`.
+2. Parameter-recovery or strong smoke + FD for each provider; phylo path regression-safe.
+3. `coevolution_cor` works; non-tree bootstrap CI errors clearly.
+4. Docs + DoD artifacts (tests, docstring, worked example, check-log.d, after-task, Rose).
+5. PR closes #189.

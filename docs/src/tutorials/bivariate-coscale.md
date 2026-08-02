@@ -91,8 +91,40 @@ fit_phy.ranef.axes         # (:mu1, :mu2, :sigma1, :sigma2)
 
 The internal `:phylocov` coefficient block is not a distributional predictor, so
 [`predict_parameters`](@ref) returns `:mu1`, `:mu2`, `:sigma1`, `:sigma2`, and
-`:rho12`, but not `:phylocov`. Labelled coevolution summaries and intervals are
-the next accessor layer; this slice stores the covariance on the fit.
+`:rho12`, but not `:phylocov`. Use [`coevolution_cor`](@ref) for the among-axis
+correlation matrix of `Σ_a`.
+
+## Relmat / animal / spatial q=4 coevolution (#189)
+
+The same verified q=4 engine accepts level-indexed structured providers. Put
+`relmat(1 | id)`, `animal(1 | id)`, or `spatial(1 | site)` on **all four** axes
+and pass `K=…`, `A=…`, or `coords=…` respectively. Spatial uses a **fixed**
+range (`spatial_range`; default = mean pairwise site distance) in this slice —
+joint range estimation is deferred. Non-tree `bootstrap_sigma_a` is not yet
+supported (clear `ArgumentError`).
+
+```julia
+using DRM, LinearAlgebra, Random
+Random.seed!(189)
+
+G = 8; nrep = 3
+id = repeat([Symbol("g$k") for k in 1:G], inner = nrep)
+n = length(id); x = randn(n)
+R = randn(G, G); K = Matrix(Symmetric(R' * R + I))   # SPD relatedness
+y1 = randn(n); y2 = randn(n)
+dat = (; y1, y2, x, id)
+
+fit_k = drm(
+    bf(mu1 = @formula(y1 ~ x + relmat(1 | id)),
+       mu2 = @formula(y2 ~ x + relmat(1 | id)),
+       sigma1 = @formula(sigma1 ~ 1 + relmat(1 | id)),
+       sigma2 = @formula(sigma2 ~ 1 + relmat(1 | id)),
+       rho12 = @formula(rho12 ~ 1)),
+    Gaussian(); data = dat, K = K, q4_vcov = false,
+)
+fit_k.ranef.Sigma_a
+coevolution_cor(fit_k)
+```
 
 ## See also
 

@@ -136,10 +136,12 @@ residual correlation ρ12. This is the verified core engine (`src/sparse_phy.jl`
 | Verified q=4 sparse-Laplace single fit + exact O(p) gradient | `src/fit_q4_sparse_tmb.jl` | **Tested** — `test/test_q4_laplace.jl`, `test/test_sparse_aug.jl`, FD gradient gate `test/test_qgate_fd_gradient.jl`, zero-alloc inner gate `test/test_qgate_alloc_inner.jl` |
 | Sparse augmented phylo precision `kron(Q, Λ⁻¹)` foundation | `src/sparse_phy.jl` | **Tested** — `test/runtests.jl:13`, `test/test_step1_sparse.jl`, `test/test_crossed_selected_inverse.jl` |
 | Takahashi selected inverse | `src/takahashi_selinv.jl` | **Tested** — `test/test_crossed_selected_inverse.jl`, used throughout the gradient gates |
-| Public `bf(mu1=…, mu2=…, sigma1=…, sigma2=…, rho12=…)` q=4 front end | `src/gaussian_bivariate.jl:117` | **Tested** — `test/test_gaussian_bivariate_phylo.jl` (recovers Σ_a, β; validates marker constraints) |
-| `Σ_a` stored on the fit (`fit.ranef.Sigma_a`, axes `mu1,mu2,sigma1,sigma2`) and surfaced via `vc(fit)` / `ranef(fit)` | `src/gaussian_ranef.jl:277` | **Tested** — `test/test_gaussian_bivariate_phylo.jl` (S1/S2 testsets) |
+| Public `bf(mu1=…, mu2=…, sigma1=…, sigma2=…, rho12=…)` q=4 front end | `src/gaussian_bivariate.jl` | **Tested** — `test/test_gaussian_bivariate_phylo.jl` (recovers Σ_a, β; validates marker constraints) |
+| q=4 `relmat` / `animal` / fixed-range `spatial` providers (level-indexed `Q_cond`) | `src/gaussian_bivariate.jl`, `src/sparse_em_fit.jl` (`make_problem_from_Q`) | **Tested** — `test/test_gaussian_bivariate_q4_structured.jl` (#189); spatial uses fixed `spatial_range` (default = mean pairwise distance); joint ρ estimation deferred |
+| `Σ_a` stored on the fit (`fit.ranef.Sigma_a`, axes `mu1,mu2,sigma1,sigma2`) and surfaced via `vc(fit)` / `ranef(fit)` / `coevolution_cor` | `src/gaussian_ranef.jl`, `src/coevo_accessors.jl` | **Tested** — `test/test_gaussian_bivariate_phylo.jl`, `test/test_coevo_accessors.jl`, `test/test_gaussian_bivariate_q4_structured.jl` |
 | Default `q4_vcov=true` path → finite vcov, Wald SEs for the fixed effects | `src/gaussian_bivariate.jl` | **Tested** — `test/test_gaussian_bivariate_phylo.jl` (B2 testset) |
-| **Labelled coevolution-correlation accessor with CIs** (ρ_a between axes, with intervals) | — | **Absent** — `Σ_a` is stored and surfaced, but there is no dedicated derived-correlation-with-CI accessor for the q=4 group-level covariance |
+| Non-tree `bootstrap_sigma_a` for q=4 structured providers | `src/bootstrap_q4_phylo.jl` | **Rejected** — clear `ArgumentError`; tree-driven phylo bootstrap only |
+| **Labelled coevolution-correlation accessor with bootstrap CIs** (ρ_a between axes) | `src/coevo_accessors.jl`, `src/bootstrap_q4_phylo.jl` | **Tested for phylo** — `test/test_coevo_accessors.jl`, `test/test_bootstrap_sigma_a.jl`; point `coevolution_cor` works for structured providers too |
 
 ## Structured q=2 bivariate Gaussian (mu1/mu2 only)
 
@@ -182,15 +184,15 @@ support.
 | REML for the **fixed-effect Gaussian location–scale** fit (`method=:REML`), with the model-selection guard | `src/gaussian_core.jl`, `src/comparison.jl:84` | **Tested** — `test/test_reml.jl` |
 | `reml_loglik` / `ml_loglik` / `estimation_method` accessors | `src/gaussian_core.jl` (exported `src/DRM.jl:89`) | **Tested** — `test/test_reml.jl` |
 | Epsilon-method bias correction (`bias_correct`, TMB sdreport analogue) | `src/bias_correct.jl:97` | **Tested** — `test/test_bias_correct.jl` |
-| **χ̄² (chi-bar-square) boundary inference** (Self–Liang / Stram–Lee mixture) | — | **Absent** — no implementation; listed as an open research item in `HANDOVER.md` §8C |
-| **Exact REML gradient / REML on the q=4 Laplace model** (`reml_q4`) | `src/experimental/reml_q4.jl` | **Impl, untested / not wired** — present in `src/experimental/` only; not in the `DRM.jl` include list, no default-suite test |
+| **χ̄² (chi-bar-square) boundary inference** (Self–Liang / Stram–Lee mixture) | `src/chibar.jl` | **Tested** — `test/test_chibar.jl` (corrects older audit text that listed this as Absent) |
+| REML on the q=4 Laplace model (`method = :REML`, `reml_q4`) | `src/reml_q4.jl` | **Tested** — wired into the module; `test/test_reml_q4_allaxes.jl` (corrects older audit text that left this in `experimental/`) |
 
 !!! warning "REML scope"
-    `method=:REML` is wired and tested **only** for the fixed-effect Gaussian
-    location–scale model (`test/test_reml.jl`); a random effect on the mean under
-    REML is explicitly rejected. The general/Laplace-REML path (`reml_q4`) is
-    experimental and unwired. **ML is the default** (REML likelihoods are not
-    comparable across fixed-effect structures).
+    `method=:REML` is wired for the fixed-effect Gaussian location–scale model
+    (`test/test_reml.jl`) and for the bivariate q=4 location–scale engine
+    (`test/test_reml_q4_allaxes.jl`). Ordinary random effects under REML remain
+    rejected. **ML is the default** (REML likelihoods are not comparable across
+    fixed-effect structures).
 
 ## Model comparison & accessors
 

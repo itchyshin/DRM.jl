@@ -37,8 +37,8 @@ function _coevo_sigma_a(fit::DrmFit)
         axes = collect(Symbol, fit.ranef.axes)
         return Σ, axes
     end
-    error("coevolution accessors require a q=4 phylogenetic bivariate " *
-          "location–scale fit (the shared `phylo(1 | group)` marker on " *
+    error("coevolution accessors require a q=4 structured bivariate " *
+          "location–scale fit (shared `phylo`/`relmat`/`animal`/`spatial` on " *
           "mu1/mu2/sigma1/sigma2); this fit stores no 4×4 among-axis Σ_a")
 end
 

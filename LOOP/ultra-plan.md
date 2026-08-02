@@ -1,16 +1,17 @@
-# Approved ultra-plan — #291 sparse-first REML characterization (Arc 2)
+# Ultra-plan freeze — DRM.jl #189 (G0 approved 2026-08-02)
 
-Frozen at G0 approval (2026-08-02). Binding detail for this `/goal` run.
+Platform: Cursor `/goal` execution.
+Deliverable: close #189 — q=4 coevolution from spatial / relmat / animal.
+Headline: reuse `fit_q4_sparse_tmb(prob, Q_cond)`; front-end `Q_cond` only.
+Fence: D-111; no `:natgrad`; no #291 accel; no drmTMB R edits; no GPL vendor;
+no `.worktrees/`; no non-tree bootstrap CI; no engine-core rewrite.
 
-```text
-PLATFORM: Cursor. HANDS TO: /goal (this run).
-DELIVERABLE: Report-only baseline accounting + warm/order-safe harness;
-sparse-vs-AI framing; fixed small fixtures; tests + Rose + Melissa.
-HEADLINE: Do not assume AI-REML is a speed win — characterize the sparse
-baseline before writing another optimizer.
-FENCE: no src/ · no AI-REML solver · no :natgrad · no 10k · no Registrator ·
-no .worktrees/ · no invented Szymek quotation.
-```
+## Locked decisions
+- All three providers in one #189 PR.
+- Add level-indexed `make_problem_from_Q` (no `AugmentedPhy` required for fit).
+- Spatial: fixed-ρ fixture (`spatial_range` or mean pairwise distance) for this slice.
+- Bootstrap for non-tree: clear ArgumentError.
+- Hygiene: #366 merge when green + sync `docs/src/capabilities.md`.
 
-Stack: branch from `feat/291-reml-arc1-bottleneck` (PR #362) as
-`feat/291-reml-sparse-first`. Related to #291; do not overclaim issue close.
+## Acceptance
+See `LOOP/GOAL.md` Definition of done.
