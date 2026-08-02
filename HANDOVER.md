@@ -142,11 +142,14 @@ profile + bootstrap; `infer_q4` graduated here) · `summary` · `visualization` 
 `DRM.jl`.
 **Experimental** (`src/experimental/`, migrated; **not fully wired** into the
 public API — do not claim otherwise): leftover `location_only` prototype copy ·
-`fit_em_natgrad` · `estep_{lm,trustregion,armijoguard,initprior}` · dense
-oracle (`q4_em_dense`, `fit_q4_tmbgrad`) · warm-start / SQUAREM EM variants.
-**Public (in `src/`, included):** opt-in REML (`reml_q4.jl`, `method = :REML`)
-and conjugate-EM phylo-mean (`location_only.jl`, `algorithm = :em`) — those
-promotions do **not** mean the whole `experimental/` tree is wired.
+`fit_em_natgrad` (**#13 FAIL** — stalls vs sparse TMB; not a public solver) ·
+`estep_{lm,trustregion,armijoguard,initprior}` · dense oracle (`q4_em_dense`,
+`fit_q4_tmbgrad`) · warm-start / SQUAREM EM variants.
+**Public (in `src/`, included):** opt-in REML (`reml_q4.jl`, `method = :REML`),
+conjugate-EM phylo-mean (`location_only.jl`, `algorithm = :em`), and the
+extracted Fisher / observed-info metric `lc_metric` (`lc_metric.jl`, #13 S1b
+infra for AI-REML — **not** `algorithm = :natgrad`). Those promotions do
+**not** mean the whole `experimental/` tree is wired.
 
 ---
 
@@ -253,14 +256,14 @@ load-time prints, deliberate public API); make `Pkg.instantiate(); using DRM;
 Pkg.test()` green (the migrated `test/*.jl` need path/`using DRM` fixes); add
 `Manifest.toml`, `docs/` Documenter site, `TagBot.yml`/`Documenter.yml`,
 `bench/Project.toml`.
-**B. Wire `experimental/` into the API.** The q=4 bivariate `bf()` front end,
-`infer_q4`, public REML (`method = :REML`), and conjugate-EM (`algorithm = :em`)
-are now public; remaining migrated pieces are EM / E-step / dense-oracle
-prototypes in `src/experimental/`. **Thread the bootstrap** and *measure* the
-speedup (currently unrun end-to-end).
-**C. Open research items.** REML scale-axis + exact REML gradient (keep ML
-default); χ̄² boundary inference (Self–Liang 1987; Stram–Lee 1994); drmTMB
-head-to-head at nrep=4/p>100 to replace the extrapolated scaling comparison.
+**B. Wire `experimental/` into the API (SCOPED).** The q=4 bivariate `bf()` front
+end, `infer_q4`, public REML (`method = :REML`), conjugate-EM (`algorithm = :em`),
+and `lc_metric` Fisher infra (#13 S1b) are public; **#13 natgrad solver FAIL** —
+do not expose `:natgrad`. Remaining EM / E-step / dense-oracle prototypes stay
+in `src/experimental/`. Bootstrap threading already has entry points (#131/#132).
+**C. Open research items.** Exact REML / AI-REML gradient via `lc_metric` (#11
+follow-up); χ̄² boundary inference where not yet exported; VA/ELBO (#136,
+deferred); drmTMB head-to-head at nrep=4/p>100 to replace extrapolated scaling.
 **D. v0.1.0 pilot scope.** Gaussian-only, fixed-effects pilot (univariate +
 bivariate distributional regression, closed-form marginal) shipped with the
 bench/ADEMP harness vs drmTMB; then grow toward the phylogenetic Laplace path

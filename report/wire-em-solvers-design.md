@@ -94,9 +94,9 @@ the reusable Fisher/AI-REML metric, more than a new default ML path.
 
 ## Implementation checklist
 
-- [ ] `algorithm = :auto` kwarg on `drm(...)` (`:auto|:em|:gls|:lbfgs|:natgrad`); validate per model.
-- [ ] **#12** route conjugate Gaussian phylo-mean → `make_loc_problem`/`em_fit`; `DrmFit` packaging; `:gls` default unchanged; conjugacy detection for `:auto`.
-- [ ] **#12** tests: EM≡GLS MLE, speed at p=1k, no-regression.
-- [ ] **#13** head-to-head verification gate vs `fit_q4_sparse_tmb`; wire `:natgrad` **only if** it clears the stall.
-- [ ] **#13** otherwise extract `lc_metric` (Fisher/AI-REML) into gradient utils for #11/#165 + a unit test; document outcome.
-- [ ] Docstrings (mark `:natgrad` experimental); update `comparison-grid.md` with the reconciled #13 result.
+- [x] `algorithm = :auto` kwarg on `drm(...)` (`:auto|:em|:gls|:lbfgs|:sparse|:sparse_lbfgs`); validate per model. (`:natgrad` **not** added — #13 FAIL.)
+- [x] **#12** route conjugate Gaussian phylo-mean → `make_loc_problem`/`em_fit`; `DrmFit` packaging; `:gls` default unchanged; conjugacy detection for `:auto`.
+- [x] **#12** tests: EM≡GLS MLE, speed at p=1k, no-regression.
+- [x] **#13** head-to-head verification gate vs `fit_q4_sparse_tmb` — **FAIL** (ng −259.80 vs ref −256.51); do **not** wire `:natgrad`. Brief: `docs/dev-log/plans/2026-08-01-natgrad-decision-gate.md`.
+- [x] **#13** extract `lc_metric` (Fisher/AI-REML) into `src/lc_metric.jl` + `test/test_lc_metric.jl`; document outcome.
+- [x] Docstrings on `lc_metric`; reconciled #13 result in the decision-gate brief (comparison-grid stall class confirmed).

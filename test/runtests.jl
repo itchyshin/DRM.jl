@@ -5,7 +5,8 @@ using Test, LinearAlgebra, SparseArrays, Random
     @testset "public API present" begin
         for f in (:fit_q4_sparse_tmb, :marginal_and_exact_grad, :make_problem,
                   :estep_mode, :prior_precision, :augmented_phy,
-                  :random_balanced_tree, :sigma_phy_dense, :takahashi_selinv)
+                  :random_balanced_tree, :sigma_phy_dense, :takahashi_selinv,
+                  :lc_metric)
             @test isdefined(DRM, f)
         end
     end
@@ -211,6 +212,25 @@ include("test_qgate_fd_gradient.jl")
 # Newton mode-finder's pure-Julia arithmetic (the CHOLMOD factor is excluded as
 # out-of-Julia-control). Cheap → per-PR. (Workflow Q.)
 include("test_qgate_alloc_inner.jl")
+
+# Standing Workflow Q JET gate (Karpinski): type-stability of hot lc↔Λ kernels.
+# JET lives in test/Project.toml — skip gracefully when absent (bare
+# `julia --project=. test/runtests.jl`). Macro body is in a separate file so it
+# is only parsed when JET is present (same pattern as GLLVM.jl).
+const _HAS_JET = Base.find_package("JET") !== nothing
+@testset "Q-gate: JET type-stability (lc_to_Λ / Λ_to_lc)" begin
+    if _HAS_JET
+        @eval using JET
+        include("test_qgate_jet.jl")
+    else
+        @info "JET not in this environment — run `Pkg.test()` for the Workflow Q JET gate"
+        @test_skip false
+    end
+end
+
+# #13 S1b: extracted Fisher / observed-information metric (natgrad solver FAIL —
+# infra only; not a public `:natgrad` path).
+include("test_lc_metric.jl")
 
 # Standing FD-vs-exact gradient gate (issue #165) for the non-Gaussian (Poisson)
 # phylogenetic sparse-Laplace route — the exact implicit-logdet outer gradient.

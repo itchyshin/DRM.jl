@@ -1,0 +1,1 @@
+| 2026-08-01 | **SCOPED Phase 1.0 (#13 FAIL → lc_metric + JET)** | S0 gate q4_p100 + `Pkg.test` smoke (lc_metric + JET) | ✅ ng −259.80 vs ref −256.51 → S1b infra; JET on lc↔Λ; #338 close-only; no `:natgrad` | Shannon+Noether+Karpinski+Rose |

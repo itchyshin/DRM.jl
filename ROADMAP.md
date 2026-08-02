@@ -16,13 +16,15 @@ implemented, exported, and recovery-tested. **v0.1.0 and v0.1.1 are tagged.**
 Many Phase 3 articles are filled (formula-grammar, adding-families,
 testing-likelihoods, source-map, large-data, convergence, structural-dependence,
 Rosetta). The variational-approximation track is newly opened (issue #136).
-**Still open:** the remaining `experimental/` prototypes (`fit_em_natgrad` /
-E-step variants / dense oracle — **not** the public `method = :REML` or
-`algorithm = :em` surfaces, which are already wired from `src/reml_q4.jl` and
-`src/location_only.jl`). Phase 1.5 / #5 is **closed** (experimental bridge bar);
-Workflow G / [#17](https://github.com/itchyshin/DRM.jl/issues/17) is **closed** —
-always-on `DRM_PARITY_TESTS=1` stays opt-in. **The verified q=4 PLSM engine
-(2.18× over drmTMB, O(p) to p=10,000) stays exactly as handed over.**
+**Phase 1.0 SCOPED closeout:** #13 decision gate **FAIL** — `fit_em_natgrad` not
+a public solver; `lc_metric` Fisher infra landed; Workflow Q JET gate added
+(FD/Allocs/multi-shape already evidenced). Leftover `experimental/` prototypes
+(SQUAREM / E-step variants / dense oracle / parked `fit_em_natgrad.jl`) stay
+unwired — **not** the public `method = :REML`, `algorithm = :em`, or `lc_metric`
+surfaces. Phase 1.5 / #5 and Workflow G / [#17](https://github.com/itchyshin/DRM.jl/issues/17)
+are **closed** (experimental bridge bar; always-on `DRM_PARITY_TESTS=1` stays opt-in).
+**The verified q=4 PLSM engine (2.18× over drmTMB, O(p) to p=10,000) stays exactly as handed over.**
+
 
 ## Target
 
@@ -49,21 +51,29 @@ call DRM.jl from R via `engine = "julia"`. Parity anchor: **drmTMB v0.1.3**.
 - **Gate:** engine still loads + `bench/run_sparse_tmb_nd.jl` still logLik
   −256.51; docs build locally; ledger live; Rose scope pass.
 
-### Phase 1.0 — Hygiene + wire `experimental/`  ·  *milestone: `Phase 1.0`*  ·  partial
+### Phase 1.0 — Hygiene + wire `experimental/`  ·  *milestone: `Phase 1.0`*  ·  SCOPED closeout
 
 - Workflow A: wire `infer_q4`, `reml_q4`, `location_only`, `fit_em_natgrad` into
   the public API; fix the orphan tests. — ✅ `infer_q4` graduated into
   `src/inference.jl` (Wald + profile + bootstrap, #106); ✅ public opt-in REML
   (`src/reml_q4.jl`, `method = :REML`, #11/#235) and conjugate-EM phylo-mean
   (`src/location_only.jl`, `algorithm = :em`, #12/#224) are **included/exported**;
-  `fit_em_natgrad` / leftover `experimental/` prototypes **still not wired**.
+  ✅ **#13 decision gate FAIL** (2026-08-01): `fit_em_natgrad` stalls at
+  logLik ≈ −259.80 vs sparse-TMB −256.51 — **not** wired as
+  `algorithm = :natgrad`; reusable Fisher metric extracted to
+  `src/lc_metric.jl` (+ unit test). Leftover `experimental/` prototypes
+  (SQUAREM / E-step variants / dense oracle / `fit_em_natgrad.jl`) stay parked.
 - Workflow D ×N: fill the "Get Started" + easy stubs (first-fit,
   what-can-I-fit-today, working-with-large-data — the verified engine supports
   them today). — ✅ large-data / convergence guides filled.
-- Workflow Q: complete FD + Allocs gates, the multi-shape sweep.
+- Workflow Q: ✅ FD gate (`test_qgate_fd_gradient.jl`); ✅ Allocs inner gate
+  (`test_qgate_alloc_inner.jl`); ✅ multi-shape / O(p) sweep evidenced in
+  `report/`; ✅ **JET gate** (`test_qgate_jet.jl` on `lc_to_Λ` / `Λ_to_lc`).
+  Cross-check ≤ 1e-8 remains open.
 - `docs/Manifest.toml` + `bench/Manifest.toml` pinned (root Manifest stays
   uncommitted — DRM.jl is a library).
-- Workflow R: first real estimator-optimisation run on the verified bench.
+- Workflow R: first real estimator-optimisation run on the verified bench
+  (parked unless a later arc under-runs).
 
 ### Phase 1.1 — `bf()` front end + inference + R-parity live  ·  *milestone: `Phase 1.1`*  ·  mostly complete
 

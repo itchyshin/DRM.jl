@@ -90,6 +90,9 @@ across families).
 | REML (Gaussian fixed-effect location-scale) | implemented |
 | REML with ordinary random effects (Gaussian mean) | rejected |
 | REML bivariate phylogenetic location-scale (q4, all axes) | implemented |
+| Conjugate-EM Gaussian phylo-mean (`algorithm = :em`) | implemented |
+| Natural-gradient EM (`algorithm = :natgrad`) | rejected |
+| Fisher / observed-info metric (`lc_metric`) | implemented |
 | Wald SEs and CIs (observed information) | implemented |
 | Profile-likelihood CIs | implemented |
 | Parametric bootstrap CIs | implemented |
@@ -98,6 +101,14 @@ across families).
 | Chi-bar-square boundary LRT p-value | implemented |
 | Model comparison suite (LRT/anova/AICc/weights/update) | implemented |
 | Heritability/repeatability/ICC accessors | implemented |
+
+`Natural-gradient EM (algorithm = :natgrad)` is `rejected` on measured evidence
+(2026-08-01 #13 decision gate): `fit_em_natgrad` stalls at logLik ≈ −259.80 on
+`q4_p100` vs `fit_q4_sparse_tmb` −256.51 (same class as plain block-coordinate
+EM). Brief: `docs/dev-log/plans/2026-08-01-natgrad-decision-gate.md`. The
+reusable Fisher metric was extracted as `lc_metric` (`src/lc_metric.jl`,
+`test/test_lc_metric.jl`) — infrastructure for AI-REML / #11/#165, **not** a
+public solver.
 
 `REML with ordinary random effects (Gaussian mean)` is `rejected` on direct
 code evidence: `src/gaussian_core.jl:407` throws
