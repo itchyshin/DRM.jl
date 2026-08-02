@@ -1,12 +1,12 @@
-GOAL: see GOAL.md (#189 q=4 structured providers). STATE: implementation complete
-on `feat/189-q4-structured-providers`; awaiting PR / CI.
-ARCS DONE (verified): 0 LOOP scaffold + capabilities sync (partial — #366 CI
-still pending); 1 design+TDD; 2 build (`make_problem_from_Q` + routing);
-3 docs/DoD/Rose draft. Tests: 26/26 on structured suite.
-ARC IN PROGRESS: none — PR open next.
-NEXT: push branch; open PR closes #189; merge when CI green.
-OPEN GATES: PR merge; optional merge of docs PR #366 when its CI greens.
-TRUTH LIVES IN: this branch; `docs/dev-log/after-task/2026-08-02-189-q4-structured-providers.md`.
+GOAL: see GOAL.md (#189 q=4 structured providers). STATE: PR #367 open
+(`feat/189-q4-structured-providers` @ `12f9bc6`); awaiting CI / merge.
+ARCS DONE (verified): 0–3 implementation + DoD on branch; local structured
+suite 26/26. Engine core untouched.
+ARC IN PROGRESS: none.
+NEXT: await CI on #367; merge when green (human/self-merge per lane rules).
+OPEN GATES: PR #367 merge; optional docs PR #366 (CI still pending).
+TRUTH LIVES IN: PR #367; after-task
+`docs/dev-log/after-task/2026-08-02-189-q4-structured-providers.md`.
 START HERE: `docs/dev-log/plans/2026-08-02-189-q4-structured-providers.md`.
-RESUME: if PR not merged — read AGENTS.md → LOOP/GOAL.md → this checkpoint;
-do not redo landed arcs; leave `.worktrees/` alone; no Registrator.
+RESUME: monitor #367 CI; do not invent follow-ons; leave `.worktrees/` alone;
+no Registrator; no AI-REML.
