@@ -18,19 +18,21 @@ speed, interval, or AI-REML claim.
 - Recorded the Arc 0 control-plane state in `LOOP/arcs.md` and
   `LOOP/checkpoint.md`.
 - Added this after-task report and its collision-free check-log entry.
-
-The sibling-lane design-boundary note, a purpose-built small-fixture
-ML-vs-baseline-REML harness, and its report-contract test were read after their
-commits landed. Their local execution evidence remains pending and is not
-represented as complete here.
+- Integrated the sibling-lane design-boundary note, purpose-built small-fixture
+  ML-vs-baseline-REML harness, and report-contract test after their commits
+  landed.
+- Ran the harness with `DRM_REML_LADDER_OUTPUT=/tmp/reml-baseline.md`, then read
+  its emitted Markdown artifact. Both fits converged; the record explicitly
+  retains `interval_status=not_evaluated`.
+- Ran the focused report-contract test directly after `Pkg.test(...;
+  test_args=...)` proved incompatible with the project's test environment. It
+  passed 13/13.
 
 ## 3a. Decisions and Rejected Alternatives
 
-The verdict is **CONDITIONAL PASS** for scope honesty and the claim fence only.
-I rejected a PASS for Arc 0: the authoritative plan requires a reproducible
-report and read local output. The design, harness, and contract-test artifacts
-are committed from a sibling lane, but no emitted report or local verification
-was available to this lane.
+The verdict is **PASS** for Arc 0's scope and evidence gate. The authoritative
+plan requires a reproducible report and read local output; both are now present,
+and the focused report-contract test passes.
 
 I also rejected treating the sibling harness source itself as an acceleration
 result. The source deliberately labels itself a baseline record and records
@@ -56,7 +58,8 @@ git ls-files "bench/ml_vs_reml_boundary.jl" "docs/dev-log/plans/*291*" "test/*re
 rg -n "#291|291-reml|baseline ladder|AI-REML" --glob '*.md'
 bash ~/shinichi-brain/tools/lane_preflight.sh "$PWD"
 git diff --check
-python3 ~/shinichi-brain/tools/closeout.py check docs/dev-log/after-task/2026-08-02-291-reml-baseline-ladder.md
+DRM_REML_LADDER_OUTPUT=/tmp/reml-baseline.md julia --project=. bench/reml_baseline_ladder.jl
+julia --project=. -e 'using DRM, Test; include("test/test_reml_baseline_ladder.jl")'
 ```
 
 The branch is `feat/291-reml-baseline-ladder`. The #291 LOOP files are
@@ -72,17 +75,18 @@ newly opened or uncommitted foreign work.
 
 ## 6. Tests of the Tests
 
-No executable test changed in this documentation-only lane. A sibling lane has
-added a report-contract test, but this lane did not run it and does not assert
-it as passed. The claim fence is tested by the negative execution inventory:
-missing emitted harness output and unverified local execution prevent a
-completion or performance verdict.
+The report-contract test is included by `test/runtests.jl`. `Pkg.test(...;
+test_args=...)` stopped before executing tests with `can not merge projects`;
+direct inclusion under `julia --project=.` passed all 13 assertions. The emitted
+report confirms its required metadata and fit fields, while preserving the
+negative claim fence: no interval comparison, acceleration evaluation, or speed
+headline is asserted.
 
 ## 7a. Issue Ledger
 
-Issue #291 remains in Arc 0. This lane does not open a PR, merge, publish, push,
-or alter the issue. Public PR opening, merge, publication, speed claims, and
-heavy compute remain OPEN GATES.
+Issue #291's Arc 0 is ready for a narrow PR. This evidence does not close the
+broader issue. Merge, publication, speed claims, and heavy compute remain OPEN
+GATES.
 
 ## 8. Consistency Audit
 
@@ -104,15 +108,14 @@ Neither result changes the directly verified branch scope or claim fence.
 
 ## 10. Known Residuals
 
-The sibling lane has committed the design note, harness, and report-contract
-test. Their local execution and emitted report remain unverified by this lane.
-Therefore this report neither negates sibling implementation nor promotes it to
-a verified Arc 0 result.
+The baseline record covers only one deterministic p=8, nrep=3 fixture on the
+recorded local environment. Its observed elapsed times are retained as audit
+metadata, not a general performance comparison.
 
-This lane does NOT cover the restricted objective derivation, baseline-harness
-execution, timing, convergence, estimates, CI/status, test wiring, agreement
-gate, candidate acceleration, AI-REML, public API, general-scale benchmark,
-non-Gaussian REML, bridge behaviour, issue #136, or release readiness.
+This lane does NOT cover the restricted-objective derivation, estimate/objective
+agreement gate, candidate acceleration, AI-REML, public API, general-scale
+benchmark, non-Gaussian REML, bridge behaviour, issue #136, or release
+readiness.
 
 ## 11. Team Learning
 
@@ -133,13 +136,15 @@ does not add or modify a behavioral test.
 | Surface | This lane covers | This lane does NOT cover |
 |---|---|---|
 | Scope / gates | ✓ Arc 0 boundaries, OPEN GATES, and archived-plan separation | ✗ human approval for PR, merge, publication, claim, or heavy compute |
-| REML baseline | ✓ language that identifies it as the existing baseline route | ✗ objective, convergence, estimates, timing, CIs, or report output |
+| REML baseline | ✓ ML/REML objectives, convergence, estimates, timing metadata, and explicit no-CI status | ✗ estimate/objective agreement or interval-comparison gate |
 | Candidate acceleration | ✓ explicit prohibition on `:natgrad` / public AI-REML claim | ✗ AI / observed-information implementation or evaluation |
-| Evidence harness | ✓ ledger records its required fields and sibling-commit state | ✗ local execution, emitted report, or independent verification |
+| Evidence harness | ✓ local execution, emitted report, direct contract-test verification | ✗ general performance comparison or interval evaluation |
 
 ## Rose Verdict
 
-**CONDITIONAL PASS — scope honesty and claim fence.** The documentation makes
-no speed or AI-REML overclaim, and it keeps ML default / REML opt-in explicit.
-Arc 0 itself is **not complete** until sibling lanes land the design and harness
-artifacts and the required local evidence is read.
+**PASS — Arc 0 harness evidence, scope honesty, and claim fence.** The
+documentation makes no speed or AI-REML overclaim, and keeps ML default / REML
+opt-in explicit. The read local artifact shows both p=8/nrep=3 fits converged
+and records intervals as not evaluated; the direct focused report-contract test
+passes 13/13. This does not validate acceleration, general-scale performance,
+or any public AI-REML surface.
