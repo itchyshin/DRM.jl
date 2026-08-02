@@ -1,4 +1,4 @@
-GOAL: see GOAL.md (Arc 2 sparse-first). STATE: Arc 2 implemented; PR pending merge gate.
+GOAL: see GOAL.md (Arc 2 sparse-first). STATE: Arc 2 landed in PR #363; merge gate open.
 ARCS DONE (verified): 0 (#361), 1 (#362), 2 — accounting + warm/order harness +
 framing; focused test 23/23; smoke `/tmp/reml-sparse-first.md` read as
 `warm_comparable`.
