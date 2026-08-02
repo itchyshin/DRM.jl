@@ -1,16 +1,20 @@
-# Arcs — SCOPED Phase 1.0 remainder (#3 / #13 / JET)
+# Issue #291 Arc list
 
-| ID | Arc | Status | Gate? | Notes |
-|---|---|---|---|---|
-| pre | Merge tip-honesty #358 + drmTMB #887 | parallel | yes (CI) | docs-only; leave `.worktrees/` |
-| S0 | #13 natgrad decision gate | **done FAIL** | no | brief → `docs/dev-log/plans/2026-08-01-natgrad-decision-gate.md` |
-| S1a | Wire `algorithm = :natgrad` | skipped | — | S0 FAIL |
-| S1b | Extract `lc_metric` infra | **done** | soft | `src/lc_metric.jl` + unit test; no public solver |
-| S2 | JET Workflow Q gate | **done** | no | `test_qgate_jet.jl`; ROADMAP Q ticks |
-| S3 | Park experimental/ + close #338 | **done** | no | tip docs honesty; check-log.d + after-task |
-| S4 | Verify `Pkg.test` smoke | **done** | soft | lc_metric 5/5 + JET OK |
-| S5 | Rose claim-vs-evidence | **done** | claim | PASS in after-task |
-| Mel | Melissa plan-actual | **done** | no | `docs/dev-log/plan-actual/2026-08-01-phase10-remainder.md` |
+| Arc | Scope | Status | Verification / gate |
+|---|---|---|---|
+| 0 | Gaussian q4 REML design boundary and small ML-vs-baseline-REML harness | **done** | Design note + emitted p=8/nrep=3 record read; focused contract test passed 13/13; Rose PASS. PR [#361](https://github.com/itchyshin/DRM.jl/pull/361) CI remains a merge gate. |
+| 1 | Document the baseline route's first bottleneck and its candidate acceptance gates; optional report-only harness field | in progress | Static route inspection plus a fresh small-fixture record; no candidate solver, speed claim, or heavy run. |
 
-## Deferred / fenced
-JuliaRegistrator/General (D-111) · FULL experimental dump · #136 VA · #291 REML · AGENTS fence commits · Workflow R (parked)
+## Arc 0 completion record
+
+- Design boundary: `docs/dev-log/plans/2026-08-02-291-gaussian-q4-reml-acceleration-boundary.md`
+- Harness + report contract: `bench/reml_baseline_ladder.jl` +
+  `test/test_reml_baseline_ladder.jl`, wired in `test/runtests.jl`
+- Local verification: `DRM_REML_LADDER_OUTPUT=/tmp/reml-arc1-baseline.md julia
+  --project=. bench/reml_baseline_ladder.jl` emitted a read p=8/nrep=3 report;
+  both fits converged and intervals remained `not_evaluated`. Direct focused
+  test passed 13/13.
+- Rose: PASS for baseline evidence and claim fence; no acceleration, general
+  performance, interval, or AI-REML result.
+- PR: [#361](https://github.com/itchyshin/DRM.jl/pull/361), open; CI is a merge
+  gate only, not a block on the reversible Arc 1 documentation follow-up.

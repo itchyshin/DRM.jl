@@ -1,6 +1,47 @@
-# Phase 1.0 remainder — Ultra Plan (approved copy)
+# Approved plan — issue #291 Arc 0: REML baseline ladder
 
-> Source: ~/.cursor/plans/phase_1.0_ultra-plan_6633f778.plan.md — do not edit the plan file.
+G0 was approved by Shinichi on 2026-08-02. This file freezes the executable
+scope; it is not a fresh design exercise.
+
+## Objective
+Prepare the evidence and design boundary for the first, small Gaussian q4 REML
+acceleration slice. The deliverable is a baseline, not an accelerated estimator.
+
+## Arc 0
+1. Write a short Gaussian q4 REML acceleration design-boundary note. State the
+   restricted objective and parameter boundary; distinguish the existing baseline
+   finite-difference REML optimizer from any later exact-Gaussian AI / observed-
+   information candidate. `lc_metric` may be cited as future infrastructure only.
+   Do not make a public AI-REML claim.
+2. Add a reproducible small-fixture harness comparing ML and *baseline* REML.
+   Its report must record repository SHA, dirty state, Julia version, Julia
+   threads, BLAS configuration, timing, convergence, objective, estimates, and
+   CI/status. Keep the fixture small; no 10k benchmark.
+3. Add a focused test for the report contract and wire it into `test/runtests.jl`.
+   Document one runnable invocation as a worked note.
+4. Run the harness and relevant tests locally. Read the actual report/logs.
+5. Add a check-log entry, after-task report, and Rose claim-vs-evidence audit.
+   Commit scoped paths and push the branch.
+
+## Non-goals / fences
+- No `src/` change, no experimental prototype, and no `:natgrad` / public AI-REML API.
+- No bridge API, issue #136, `.worktrees/`, General / Registrator, or public
+  speed headline.
+- Do not claim acceleration without an estimate, objective, and interval-status
+  agreement gate. Future candidates require a new approved arc.
+
+## Gates
+- G0: approved.
+- OPEN GATE after local verification: opening or merging a public PR, publishing,
+  a public speed claim, or heavy compute.
+
+---
+
+# Archived prior plan — non-authoritative for issue #291
+
+> Retained only as prior LOOP history. `#291` is governed exclusively by the
+> approved Arc 0 plan above; none of the following Phase 1.0 scope is authorized
+> by this branch.
 
 # Phase 1.0 remainder (#3) — Ultra Plan
 
