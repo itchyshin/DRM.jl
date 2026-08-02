@@ -19,7 +19,7 @@ Do not assume AI-REML is a speed win — characterize the sparse baseline first.
 
 ## Authoritative WHAT
 Historical plan freeze: `LOOP/ultra-plan.md` (Arc 2); Arc 3 adds the
-intermediate fixture rung. Merged PRs #361–#363; Arc 3 PR pending.
+intermediate fixture rung. Merged PRs #361–#363; [Arc 3 PR #365](https://github.com/itchyshin/DRM.jl/pull/365) is open.
 
 ## Definition of done — **met**
 1. Design boundary + harness on main (#361).

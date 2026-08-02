@@ -70,8 +70,9 @@ After defining the fixture and correcting the test to use the actual
 ## 7a. Issue Ledger
 
 Continues #291 and does not close it: the broader acceleration issue remains
-open. This PR is related to #291; it records a fixture rung and does not claim
-to satisfy an acceleration acceptance gate.
+open. [PR #365](https://github.com/itchyshin/DRM.jl/pull/365) is related to
+#291; it records a fixture rung and does not claim to satisfy an acceleration
+acceptance gate.
 
 ## 8. Consistency Audit
 
