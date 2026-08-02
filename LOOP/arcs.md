@@ -2,9 +2,9 @@
 
 | Arc | Scope | Status | Verification / gate |
 |---|---|---|---|
-| 0 | Gaussian q4 REML design boundary and small ML-vs-baseline-REML harness | **done** | PR [#361](https://github.com/itchyshin/DRM.jl/pull/361) |
-| 1 | Baseline FD bottleneck note + candidate gates | **done** | PR [#362](https://github.com/itchyshin/DRM.jl/pull/362) (stacked) |
-| 2 | Sparse-first characterization: report-only accounting + warm/order harness + H²/Szymek framing | **done** | Focused test 23/23; warm artifact `warm_comparable`; Rose PASS; PR [#363](https://github.com/itchyshin/DRM.jl/pull/363) |
+| 0 | Gaussian q4 REML design boundary and small ML-vs-baseline-REML harness | **done / merged** | [#361](https://github.com/itchyshin/DRM.jl/pull/361) → `main` |
+| 1 | Baseline FD bottleneck note + candidate gates | **done / merged** | [#362](https://github.com/itchyshin/DRM.jl/pull/362) → `main` |
+| 2 | Sparse-first characterization: report-only accounting + warm/order harness + H²/Szymek framing | **done / merged** | [#363](https://github.com/itchyshin/DRM.jl/pull/363) → `main` @ `5c251c8` |
 
 ## Arc 2 acceptance
 
