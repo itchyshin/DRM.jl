@@ -266,6 +266,7 @@ include("test_reml_newton_sigma_phylo.jl")
 # Bivariate q4 REML must correct ALL FOUR among-axis SDs (β_μ AND β_σ profiled), not
 # just the means — regression for the scale-axis REML gap (#18).
 include("test_reml_q4_allaxes.jl")
+include("test_reml_baseline_ladder.jl")
 # Covariate dispersion (`sigma ~ x`) with a mean-only phylo RE for NB2 (#164):
 # the per-observation log-dispersion (vector-nuisance) generalisation of the
 # scalar phylo Laplace spine, with its own FD-vs-exact gate ≤ 1e-6.
