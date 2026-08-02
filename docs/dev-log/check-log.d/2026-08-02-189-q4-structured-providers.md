@@ -1,0 +1,1 @@
+| 2026-08-02 | **#189 q=4 structured providers** (relmat/animal/spatial) | `include("test/test_gaussian_bivariate_q4_structured.jl")` — 26/26 pass; engine core untouched | ✅ green; `make_problem_from_Q` + front-end routing; spatial fixed-ρ; bootstrap fenced | Shannon |

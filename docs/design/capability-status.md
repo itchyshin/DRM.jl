@@ -157,7 +157,9 @@ working VA fit.
 `Bivariate structured random effect on all four axes (q4 PLSM)` is the
 flagship verified engine (`src/sparse_phy.jl`, `src/takahashi_selinv.jl`,
 `src/sparse_aug_plsm.jl`, `src/fit_q4_sparse_tmb.jl`), with `Sigma_a` stored
-on the fit and `test/test_gaussian_bivariate_phylo.jl` in the default suite.
+on the fit. Providers: phylo tree (`test/test_gaussian_bivariate_phylo.jl`) and
+level-indexed `relmat` / `animal` / fixed-range `spatial` via
+`make_problem_from_Q` (`test/test_gaussian_bivariate_q4_structured.jl`, #189).
 `Cross-family bivariate` is `missing`: `docs/src/capabilities.md` states the
 bivariate path is Gaussian-only and no cross-family bivariate model exists;
 confirmed by the single `gaussian_bivariate.jl` bivariate source file.

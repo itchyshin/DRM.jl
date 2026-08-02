@@ -55,9 +55,12 @@ function bootstrap_sigma_a(fit::DrmFit; data, B::Int = 300, level::Real = 0.95,
                            q4_g_tol::Real = 1e-3, q4_iterations::Int = 300)
     re = fit.ranef
     (re isa NamedTuple && haskey(re, :Sigma_a) && haskey(re, :Q_cond) &&
-     haskey(re, :phy) && haskey(re, :species)) || throw(ArgumentError(
-        "bootstrap_sigma_a requires a bivariate q=4 phylogenetic fit " *
-        "(fit.ranef with Sigma_a / Q_cond / phy / species)"))
+     haskey(re, :phy) && re.phy isa AugmentedPhy && haskey(re, :species) &&
+     !isempty(re.species)) || throw(ArgumentError(
+        "bootstrap_sigma_a currently supports only tree-driven q=4 phylo fits " *
+        "(fit.ranef with Sigma_a / Q_cond / AugmentedPhy phy / species). " *
+        "Non-tree structured providers (spatial / relmat / animal; issue #189) " *
+        "do not yet have a bootstrap path."))
     fit.formula isa BivariateDrmFormula || throw(ArgumentError(
         "bootstrap_sigma_a requires a BivariateDrmFormula fit created by drm"))
     B >= 1 || throw(ArgumentError("bootstrap requires B >= 1"))

@@ -34,6 +34,55 @@ function make_problem(phy, y1, y2, X1, X2, Xs1, Xs2, Xr; species = 1:phy.n_leave
     return prob, Q_cond
 end
 
+# Placeholder AugmentedPhy so AugProblem's typed `phy` field is filled for
+# level-indexed (relmat / animal / spatial) q=4 fits. `fit_q4_sparse_tmb` never
+# reads `prob.phy` — only `n_total`, `leaf_node`, and the design/response fields.
+function _placeholder_aug_phy(G::Int)
+    G >= 1 || error("structured Q_cond must have at least one level")
+    Q = sparse(1.0 * I, G, G)
+    names = ["L$i" for i in 1:G]
+    return AugmentedPhy{Float64}(G, G, Q, collect(1:G), names, Float64[], 1)
+end
+
+"""
+    make_problem_from_Q(Q_cond, y1, y2, X1, X2, Xs1, Xs2, Xr; group) -> (prob, Q)
+
+Build an [`AugProblem`](@ref) from a known G×G group-level precision (relmat /
+animal / fixed-range spatial) rather than from an augmented phylogeny. `group[i]`
+maps data row `i` to a 1-based level in `1:G`. Returns `(prob, sparse(Q_cond))`
+for [`fit_q4_sparse_tmb`](@ref).
+
+This is the #189 level-indexed entry point; the phylo path keeps [`make_problem`](@ref).
+"""
+function make_problem_from_Q(Q_cond::AbstractMatrix, y1, y2, X1, X2, Xs1, Xs2, Xr;
+                             group)
+    G = LinearAlgebra.checksquare(Q_cond)
+    n = length(y1)
+    length(y2) == n || error("y1/y2 length mismatch in make_problem_from_Q")
+    length(group) == n || error("group has $(length(group)) entries but y1 has $n rows")
+    size(X1, 1) == n && size(X2, 1) == n && size(Xs1, 1) == n &&
+        size(Xs2, 1) == n && size(Xr, 1) == n ||
+        error("design matrices must have $n rows")
+    leaf_node = Int.(collect(group))
+    all(1 .<= leaf_node .<= G) ||
+        error("group indices must be 1-based integers in 1:$G")
+    Qdense = Matrix{Float64}(Q_cond)
+    isposdef(Symmetric(Qdense)) ||
+        error("known structured precision Q_cond must be positive definite")
+    Q = sparse(Symmetric(Qdense))
+    y1f = Vector{Float64}(y1); y2f = Vector{Float64}(y2)
+    obs1 = .!isnan.(y1f); obs2 = .!isnan.(y2f)
+    y1c = ifelse.(obs1, y1f, 0.0); y2c = ifelse.(obs2, y2f, 0.0)
+    phy = _placeholder_aug_phy(G)
+    # n_total = G (levels); p = G (placeholder leaf count). Engine loops use leaf_node.
+    prob = AugProblem(phy, G, G, leaf_node,
+                      y1c, y2c,
+                      Matrix{Float64}(X1), Matrix{Float64}(X2),
+                      Matrix{Float64}(Xs1), Matrix{Float64}(Xs2), Matrix{Float64}(Xr),
+                      obs1, obs2)
+    return prob, Q
+end
+
 # --- M-step (a): closed-form Λ (4×4) ----------------------------------------
 # Λ_new = (1/N)( Û Q_cond Û'  +  Σ_{(s,t)} Q_cond[s,t]·Cov(u_s,u_t|y) ),
 # N = n_keep. Posterior covariance blocks from Takahashi selected inverse.

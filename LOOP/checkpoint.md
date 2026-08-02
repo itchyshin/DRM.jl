@@ -1,19 +1,12 @@
-GOAL: see GOAL.md (Arc 3 sparse-first — PR #365 open). STATE: branch
-`feat/291-reml-arc3-intermediate-fixture` from `origin/main` @ `cc49449`.
-ARCS DONE (verified): 0 design+harness (#361); 1 FD bottleneck (#362);
-2 sparse-first warm/order + framing (#363); 3 named p=16/nrep=3 intermediate
-rung (contract test green; artifact read). No AI-REML/`src/` change.
-ARC IN PROGRESS: none.
-NEXT: await scoped Arc 3 PR #365, then prefer idle — further #291
-acceleration/`src/` work needs a new owner G0.
-Do not assume AI-REML is a speed win; harness is the evidence path.
-OPEN GATES: none for this goal. The p=16 artifact is `diagnostic_only` because
-timed REML fits did not converge; it cannot rank methods. Still fenced: public
-speed headline, Registrator (D-111), `:natgrad`, 10k claims, `.worktrees/`
-staging.
-TRUTH LIVES IN: `origin/main` @ merge #364; framing
-`docs/dev-log/plans/2026-08-02-291-sparse-first-characterization.md`; harness
-`bench/reml_baseline_ladder.jl`.
-RESUME: Arc 3 PR #365 is open. Read AGENTS.md → this checkpoint. New
-acceleration work only if Shinichi opens a goal; leave `.worktrees/` alone; no
-Registrator.
+GOAL: see GOAL.md (#189 q=4 structured providers). STATE: implementation complete
+on `feat/189-q4-structured-providers`; awaiting PR / CI.
+ARCS DONE (verified): 0 LOOP scaffold + capabilities sync (partial — #366 CI
+still pending); 1 design+TDD; 2 build (`make_problem_from_Q` + routing);
+3 docs/DoD/Rose draft. Tests: 26/26 on structured suite.
+ARC IN PROGRESS: none — PR open next.
+NEXT: push branch; open PR closes #189; merge when CI green.
+OPEN GATES: PR merge; optional merge of docs PR #366 when its CI greens.
+TRUTH LIVES IN: this branch; `docs/dev-log/after-task/2026-08-02-189-q4-structured-providers.md`.
+START HERE: `docs/dev-log/plans/2026-08-02-189-q4-structured-providers.md`.
+RESUME: if PR not merged — read AGENTS.md → LOOP/GOAL.md → this checkpoint;
+do not redo landed arcs; leave `.worktrees/` alone; no Registrator.

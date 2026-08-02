@@ -123,6 +123,7 @@ fit = drm(
 """
 function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
              K = nothing, A = nothing, coords = nothing,
+             spatial_range = nothing,
              g_tol::Real = 1e-8, q4_g_tol::Real = 1e-3,
              q4_iterations::Int = 300, q4_n_newton::Int = 40,
              q4_vcov::Bool = true, method::Symbol = :ML)
@@ -133,6 +134,16 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
     if structured_marker !== nothing && structured_marker[1] === :phylo_q4
         return _fit_bivariate_q4_phylo(
             f, fam, data, fixed, structured_marker, tree;
+            q4_g_tol = q4_g_tol,
+            q4_iterations = q4_iterations,
+            q4_n_newton = q4_n_newton,
+            q4_vcov = q4_vcov,
+            method = method,
+        )
+    elseif structured_marker !== nothing && structured_marker[1] === :structured_q4
+        return _fit_bivariate_q4_structured(
+            f, fam, data, fixed, structured_marker, tree, K, A, coords;
+            spatial_range = spatial_range,
             q4_g_tol = q4_g_tol,
             q4_iterations = q4_iterations,
             q4_n_newton = q4_n_newton,
@@ -151,13 +162,13 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
         )
     end
     # The residual-only bivariate route has no random effects / structured terms;
-    # REML (Patterson–Thompson) is implemented only for the q=4 phylogenetic path,
+    # REML (Patterson–Thompson) is implemented only for the q=4 structured paths,
     # so reject it here as the univariate core does (gaussian_core.jl:383-393).
     method === :REML &&
         throw(ArgumentError("drm: method = :REML is implemented only for the bivariate q=4 " *
-            "phylogenetic location–scale engine (shared `phylo(1 | g)` on mu1, mu2, sigma1, " *
-            "sigma2). The residual-only bivariate Gaussian model has no random effects; use " *
-            "method = :ML (the default)."))
+            "location–scale engine (shared `phylo`/`relmat`/`animal`/`spatial` on mu1, mu2, " *
+            "sigma1, sigma2). The residual-only bivariate Gaussian model has no random " *
+            "effects; use method = :ML (the default)."))
     return _fit_bivariate_residual(f, fam, data, rhs, g_tol)
 end
 
@@ -295,16 +306,20 @@ function _bivariate_q4_marker(rhs)
         return fixed, (:structured_q2, kind, groups[1])
     end
     length(markers) == length(params) ||
-        error("bivariate phylogenetic Julia fits require either q=2 phylo on mu1 and mu2 only, or q=4 phylo on mu1, mu2, sigma1, and sigma2")
+        error("bivariate structured Julia fits require either q=2 markers on mu1 and mu2 only, or q=4 markers on mu1, mu2, sigma1, and sigma2")
     marker_vals = [markers[p] for p in params]   # one (kind, group, tag) per axis
-    all(m -> m[1] === :phylo, marker_vals) ||
-        error("the bivariate q=4 front end currently supports only `phylo(...)` markers")
+    kind = marker_vals[1][1]
+    kind in (:phylo, :relmat, :animal, :spatial) ||
+        error("the bivariate q=4 front end supports `phylo(...)`, `relmat(...)`, `animal(...)`, or `spatial(...)` markers")
+    all(m -> m[1] === kind, marker_vals) ||
+        error("the q=4 structured markers on mu1, mu2, sigma1, and sigma2 must use the same structured type")
     groups = [m[2] for m in marker_vals]
     all(==(groups[1]), groups) ||
-        error("the q=4 phylogenetic markers on mu1, mu2, sigma1, and sigma2 must use the same grouping variable")
+        error("the q=4 structured markers on mu1, mu2, sigma1, and sigma2 must use the same grouping variable")
     tags = [m[3] for m in marker_vals]           # axis order: mu1, mu2, sigma1, sigma2
     lc_zero = _q4_block_lc_zero(tags)
-    return fixed, (:phylo_q4, groups[1], lc_zero)
+    kind === :phylo && return fixed, (:phylo_q4, groups[1], lc_zero)
+    return fixed, (:structured_q4, kind, groups[1], lc_zero)
 end
 
 # Translate the per-axis correlation tags into the set of log-Cholesky indices to
@@ -342,12 +357,12 @@ function _split_bivariate_q4_rhs(rhs, param::Symbol)
     structured = nothing
     for t in terms
         if t isa FunctionTerm && t.f === (|)
-            error("bivariate q=4 phylogenetic fits support only `phylo(1 | group)` markers, not ordinary random effects")
+            error("bivariate q=4 structured fits support only `phylo`/`relmat`/`animal`/`spatial(1 | group)` markers, not ordinary random effects")
         elseif t isa FunctionTerm && t.f === meta_V
-            error("bivariate q=4 phylogenetic fits do not support `meta_V` markers")
+            error("bivariate q=4 structured fits do not support `meta_V` markers")
         elseif t isa FunctionTerm && (t.f === relmat || t.f === animal || t.f === phylo || t.f === spatial)
             structured === nothing ||
-                error("`$param` contains multiple structured markers; the q=4 front end accepts exactly one `phylo(1 | group)` marker per predictor")
+                error("`$param` contains multiple structured markers; the q=4 front end accepts exactly one structured intercept marker per predictor")
             grp, tag = _q4_marker_group(t, param)
             structured = (_structured_marker_kind(t), grp, tag)
         else
@@ -365,26 +380,27 @@ end
 # block-diagonal Σ_a — axes sharing a `tag` form one block). Julia parses
 # `1 | tag | group` left-associatively as `|(|(1, tag), group)`.
 function _q4_marker_group(t, param::Symbol)
+    kind = _structured_marker_kind(t)
     inner = t.args[1]
     inner isa FunctionTerm && inner.f === (|) ||
-        error("`$param` structured marker must be written as `phylo(1 | group)` or `phylo(1 | tag | group)`")
+        error("`$param` structured marker must be written as `$kind(1 | group)` or `$kind(1 | tag | group)`")
     if inner.args[1] isa FunctionTerm && inner.args[1].f === (|)
         # 3-arg tagged form: |(|(1, tag), group)
         coef = inner.args[1].args[1]
         (coef isa ConstantTerm && coef.n == 1) ||
-            error("`$param` uses `$(_structured_marker_kind(t))`, but the bivariate q=4 front end supports only intercept markers (`phylo(1 | tag | group)`)")
+            error("`$param` uses `$kind`, but the bivariate q=4 front end supports only intercept markers (`$kind(1 | tag | group)`)")
         inner.args[1].args[2] isa Term ||
-            error("`$param` correlation tag must be a bare symbol in `phylo(1 | tag | group)`")
+            error("`$param` correlation tag must be a bare symbol in `$kind(1 | tag | group)`")
         inner.args[2] isa Term ||
-            error("`$param` group must be a bare grouping variable in `phylo(1 | tag | group)`")
+            error("`$param` group must be a bare grouping variable in `$kind(1 | tag | group)`")
         return inner.args[2].sym, inner.args[1].args[2].sym
     end
     # 2-arg form: |(1, group)
     length(inner.args) == 2 && inner.args[2] isa Term ||
-        error("`$param` structured marker must be written as `phylo(1 | group)` or `phylo(1 | tag | group)`")
+        error("`$param` structured marker must be written as `$kind(1 | group)` or `$kind(1 | tag | group)`")
     lhs = inner.args[1]
     (lhs isa ConstantTerm && lhs.n == 1) ||
-        error("`$param` uses `$(_structured_marker_kind(t))`, but the bivariate q=4 front end supports only intercept markers (`phylo(1 | group)`)")
+        error("`$param` uses `$kind`, but the bivariate q=4 front end supports only intercept markers (`$kind(1 | group)`)")
     return inner.args[2].sym, nothing
 end
 
@@ -528,6 +544,204 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
     fit = DrmFit(fam, blocks, names, θ̂, V, fit_q2.loglik, length(y1),
                  fit_q2.converged, means, obs, scales)
     return _withranef(_withformula(_withnll(fit, nll), f), re)
+end
+
+# Build a G×G SPD precision for level-indexed q=4 structured providers (#189).
+# Spatial uses a *fixed* range (keyword `spatial_range`, else mean pairwise
+# distance) — joint ρ estimation is deferred.
+function _q4_structured_precision(kind::Symbol, grp::Symbol, G::Int;
+                                  K, A, coords, spatial_range)
+    if kind === :relmat
+        K === nothing && error("relmat(1 | $grp) needs `K = …`")
+        C = Matrix{Float64}(K)
+        size(C) == (G, G) || error("relmat structured matrix must be $(G)×$(G) (the number of `$grp` levels)")
+        isposdef(Symmetric(C)) || error("relmat K must be positive definite")
+        return Matrix(inv(cholesky(Symmetric(C))))
+    elseif kind === :animal
+        A === nothing && error("animal(1 | $grp) needs `A = …`")
+        C = Matrix{Float64}(A)
+        size(C) == (G, G) || error("animal relatedness matrix must be $(G)×$(G) (the number of `$grp` levels)")
+        isposdef(Symmetric(C)) || error("animal A must be positive definite")
+        return Matrix(inv(cholesky(Symmetric(C))))
+    elseif kind === :spatial
+        coords === nothing && error("spatial(1 | $grp) needs `coords = …`")
+        G >= 2 || error("spatial(1 | $grp) needs at least 2 distinct sites; got G=$G")
+        Cmat = Matrix{Float64}(coords)
+        size(Cmat, 1) == G ||
+            error("spatial coords must have $G rows (one per `$grp` level); got $(size(Cmat, 1))")
+        size(Cmat, 2) >= 1 || error("spatial coords must have at least one coordinate column")
+        Ddist = [sqrt(sum(abs2, Cmat[k, :] .- Cmat[l, :])) for k in 1:G, l in 1:G]
+        any(Ddist .> 0) ||
+            error("spatial(1 | $grp): all site coordinates coincide; the spatial range is not identified")
+        ρ = if spatial_range === nothing
+            sum(Ddist) / (G^2 - G)
+        else
+            Float64(spatial_range)
+        end
+        ρ > 0 || error("spatial_range must be positive (got $ρ)")
+        Ksp = exp.(-Ddist ./ ρ) + 1e-8 * I
+        return Matrix(inv(cholesky(Symmetric(Matrix{Float64}(Ksp)))))
+    else
+        error("internal error: unsupported q4 structured kind `$kind`")
+    end
+end
+
+"""
+    _fit_bivariate_q4_structured(...)
+
+q=4 PLSM front end for level-indexed structured providers (`relmat` / `animal` /
+`spatial`) — issue #189. Reuses [`fit_q4_sparse_tmb`](@ref) via
+[`make_problem_from_Q`](@ref); does not rewrite the verified Laplace engine.
+
+Spatial uses a fixed range (`spatial_range`, default = mean pairwise distance).
+Non-tree `bootstrap_sigma_a` is deliberately unsupported.
+"""
+function _fit_bivariate_q4_structured(f::BivariateDrmFormula, fam::Gaussian, data, fixed, marker,
+                                      tree, K, A, coords;
+                                      spatial_range = nothing,
+                                      q4_g_tol::Real, q4_iterations::Int,
+                                      q4_n_newton::Int, q4_vcov::Bool, method::Symbol = :ML)
+    marker[1] === :structured_q4 || error("internal error: expected q4 structured marker")
+    kind = marker[2]
+    grp = marker[3]
+    lc_zero = length(marker) >= 4 ? marker[4] : Int[]
+    _ = tree   # unused for non-phylo providers; accepted for API symmetry
+    y1, X1, nm1 = _design(f.response1, fixed[:mu1], data)
+    y2, X2, nm2 = _design(f.response2, fixed[:mu2], data)
+    _, Xs1, nms1 = _design(f.response1, fixed[:sigma1], data)
+    _, Xs2, nms2 = _design(f.response1, fixed[:sigma2], data)
+    _, Xr, nmr = _design(f.response1, fixed[:rho12], data)
+    obs1 = _observed_response_mask(y1)
+    obs2 = _observed_response_mask(y2)
+    (count(obs1) >= size(X1, 2) && count(obs2) >= size(X2, 2)) ||
+        throw(ArgumentError("drm: too few observed `$(f.response1)`/`$(f.response2)` rows " *
+            "for the bivariate q=4 mean coefficients"))
+
+    group_values = getproperty(data, grp)
+    gidx, G = _group_index(group_values)
+    Qdense = _q4_structured_precision(kind, grp, G;
+                                      K = K, A = A, coords = coords,
+                                      spatial_range = spatial_range)
+    prob, Q_cond = make_problem_from_Q(Qdense, y1, y2, X1, X2, Xs1, Xs2, Xr; group = gidx)
+
+    β1 = X1[obs1, :] \ y1[obs1]
+    β2 = X2[obs2, :] \ y2[obs2]
+    res1 = y1[obs1] .- X1[obs1, :] * β1
+    res2 = y2[obs2] .- X2[obs2, :] * β2
+    β0 = (
+        mu1 = β1,
+        mu2 = β2,
+        s1 = _initial_scale_beta(Xs1, res1),
+        s2 = _initial_scale_beta(Xs2, res2),
+        rho = zeros(size(Xr, 2)),
+    )
+    Λ0 = Matrix(Symmetric([
+        0.30 0.02 0.01 0.010
+        0.02 0.30 0.01 0.010
+        0.01 0.01 0.08 0.005
+        0.01 0.01 0.005 0.080
+    ]))
+    if !isempty(lc_zero)
+        lc0 = Λ_to_lc(Λ0)
+        lc0[lc_zero] .= 0.0
+        Λ0 = lc_to_Λ(lc0)
+    end
+    reml_ll = NaN
+    ml_ll = NaN
+    if method === :REML
+        rr = fit_q4_reml(
+            prob, Q_cond;
+            beta0 = β0,
+            Lambda0 = Λ0,
+            g_tol = Float64(q4_g_tol),
+            iterations = q4_iterations,
+            n_newton = q4_n_newton,
+            lc_zero = lc_zero,
+        )
+        β_reml = (mu1 = rr.beta.mu1, mu2 = rr.beta.mu2,
+                  s1 = rr.beta.s1, s2 = rr.beta.s2, rho = rr.beta.rho)
+        θ_reml = pack_theta(β_reml, rr.Lambda)
+        reml_ll = rr.reml_loglik
+        ml_ll = rr.ml_loglik
+        r = (θ = θ_reml, β = β_reml, Λ = Matrix(rr.Lambda),
+             loglik = rr.reml_loglik, converged = rr.converged)
+    else
+        r = fit_q4_sparse_tmb(
+            prob, Q_cond;
+            β0 = β0,
+            Λ0 = Λ0,
+            g_tol = Float64(q4_g_tol),
+            iterations = q4_iterations,
+            n_newton = q4_n_newton,
+            lc_zero = lc_zero,
+        )
+    end
+
+    k1, k2, ks1, ks2, kr = beta_widths(prob)
+    offs = cumsum([0, k1, k2, ks1, ks2, kr, 10])
+    rng(k) = (offs[k] + 1):offs[k + 1]
+    blocks = [
+        :mu1 => rng(1),
+        :mu2 => rng(2),
+        :sigma1 => rng(3),
+        :sigma2 => rng(4),
+        :rho12 => rng(5),
+        :phylocov => rng(6),
+    ]
+    names = [
+        :mu1 => nm1,
+        :mu2 => nm2,
+        :sigma1 => nms1,
+        :sigma2 => nms2,
+        :rho12 => nmr,
+        :phylocov => _q4_phylocov_names(),
+    ]
+    θ̂ = Vector{Float64}(r.θ)
+    nll(θ) = marginal_nll(prob, Q_cond, Vector{Float64}(θ); n_newton = q4_n_newton)[1]
+    nllgrad! = function (g, θ)
+        _, gg, _, _ = marginal_and_exact_grad(prob, Q_cond, Vector{Float64}(θ); n_newton = q4_n_newton)
+        copyto!(g, gg)
+        return g
+    end
+    V = q4_vcov ? _q4_fd_vcov(prob, Q_cond, θ̂; n_newton = q4_n_newton) :
+        fill(NaN, length(θ̂), length(θ̂))
+
+    β̂ = r.β
+    means = Dict(:mu1 => X1 * β̂.mu1, :mu2 => X2 * β̂.mu2)
+    obs = Dict(:mu1 => Vector{Float64}(y1), :mu2 => Vector{Float64}(y2))
+    scales = Dict(
+        :sigma1 => exp.(Xs1 * β̂.s1),
+        :sigma2 => exp.(Xs2 * β̂.s2),
+        :rho12 => RHO_GUARD .* tanh.(Xr * β̂.rho),
+    )
+    _, u_hat, _, _ = marginal_nll(prob, Q_cond, θ̂; n_newton = q4_n_newton)
+    blups = reshape(Vector{Float64}(u_hat), 4, prob.n_total)   # 4 × G levels
+    re = (;
+        effects = Dict(Symbol(grp) => blups),
+        Sigma_a = Matrix{Float64}(r.Λ),
+        axes = (:mu1, :mu2, :sigma1, :sigma2),
+        structured_type = kind,
+        Q_cond = Q_cond,
+        phy = nothing,
+        group = grp,
+        group_index = gidx,
+        species = Int[],
+        spatial_range = kind === :spatial ?
+            (spatial_range === nothing ?
+                _q4_default_spatial_range(coords, G) : Float64(spatial_range)) :
+            nothing,
+        prob = prob,
+        n_newton = q4_n_newton,
+    )
+    fit = DrmFit(fam, blocks, names, θ̂, V, r.loglik, length(y1), r.converged, means, obs, scales)
+    fit = method === :REML ? _withreml(fit, reml_ll, ml_ll) : fit
+    return _withranef(_withformula(_withnll(fit, nll, nllgrad!), f), re)
+end
+
+function _q4_default_spatial_range(coords, G::Int)
+    Cmat = Matrix{Float64}(coords)
+    Ddist = [sqrt(sum(abs2, Cmat[k, :] .- Cmat[l, :])) for k in 1:G, l in 1:G]
+    return sum(Ddist) / (G^2 - G)
 end
 
 function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fixed, marker, tree;
