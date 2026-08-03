@@ -1,10 +1,16 @@
-# Arcs — #370 bridge fixture coefficient-scale parity
-# G0 APPROVED 2026-08-03 (Shinichi). Defaults: timing no-claim OK; hold until all six pass.
+# Arcs — #372 measured wall-clock for six #370 bridge cells
+# Status: G0 APPROVED 2026-08-03. Arcs 0–3 done; PR #373 open.
 
 | Arc | Status | Gate | Budget | Deliverable |
 |---|---|---|---|---|
-| 0 Smoke + inventory | **done** | G0 approved | 20–40 min | Smoke log in `docs/dev-log/evidence/2026-08-03-370-arc0-smoke.md`; student scale drift found |
-| 1 Bridge parity harness | **done** | Arc 0 | 1–2 h | `compare_bridge` + `runparity_bridge.jl` under `DRM_PARITY_TESTS=1` |
-| 2 Admit six cells | **done** | harness | 1–2 h | 6/6 bridge + 6/6 native; student fixture scale fixed; xfam skip |
-| 3 Timing cells | **done** | Arc 2 | 30–60 min | Honest no-claim artifact `docs/dev-log/evidence/2026-08-03-370-timing-no-claim.md` |
-| 4 Docs + DoD + close | **done** | Arc 2+3 | 45–90 min | `r-julia-bridge.md`; check-log.d; after-task; Rose; [PR #371](https://github.com/itchyshin/DRM.jl/pull/371) `closes #370` |
+| 0 Probe + protocol | **done** | G0 approved | 30–45 min | `docs/dev-log/evidence/2026-08-03-372-arc0-probe.md` |
+| 1 Six-cell measure | **done** | Arc 0 | 90–150 min | `docs/dev-log/evidence/2026-08-03-372-six-cell-timing.md` (+ JSON/TOML) |
+| 2 Docs + DoD + Rose | **done** | Arc 1 | 45–75 min | bridge docs + check-log.d + after-task + Rose |
+| 3 PR close | **done** (open) | Arc 2 | 30–45 min | PR https://github.com/itchyshin/DRM.jl/pull/373 closes #372 |
+
+## Prior lane (#370)
+
+| Arc | Status | Note |
+|---|---|---|
+| 0–4 | **done** | Coef-scale `drm_bridge` parity |
+| PR #371 | open / CI | #373 stacked on this base until merge → retarget to main |

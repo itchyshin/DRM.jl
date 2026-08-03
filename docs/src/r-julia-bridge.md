@@ -1,6 +1,6 @@
 # R ↔ Julia bridge
 
-!!! note "Status — Experimental bridge + fixture-backed coefficient-scale gate (#370)"
+!!! note "Status — Experimental bridge + fixture-backed coefficient-scale gate (#370) + measured six-cell timing (#372)"
     DRM.jl exposes `drm_bridge()`, a marshalling-friendly entry point for the R-side `drmTMB(formula, ..., engine = "julia")` glue. The companion R glue lives in the **drmTMB R repository** via [JuliaCall](https://github.com/JuliaInterop/JuliaCall).
 
     **Admitted fixture-backed coefficient-scale parity** (opt-in `DRM_PARITY_TESTS=1`, via `drm_bridge` + committed drmTMB v0.1.3 generated numbers only):
@@ -12,7 +12,14 @@
     - `proportion-beta`
     - `meta-analysis-V`
 
-    Timing for these six cells: **timing not measured — no claim** (no retained wall-clock artifact vs local drmTMB in this slice). The verified q=4 PLSM 2.18× speed cell remains documented elsewhere (`report/comparison-grid.md`) and is **not** evidence for these fixture families. For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
+    **Measured warm wall-clock** for the same six fixtures (local machine;
+    Julia `drm_bridge` vs installed drmTMB **0.6.0**; BLAS/OMP threads = 1;
+    1 warmup + 5 timed reps; median R/Julia ratios ≈ **4.8×–46×** depending on
+    cell — full method, versions, and per-cell medians retained in
+    `docs/dev-log/evidence/2026-08-03-372-six-cell-timing.md`).
+    This is **not** a general “Nx faster for all drmTMB models” claim, and it is
+    **not** the verified q=4 PLSM 2.18× cell (`report/comparison-grid.md`).
+    For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
 
 ## The idea
 
@@ -79,8 +86,9 @@ Tracked in the issue ledger:
   (Workflow G, issue #17) plus the `drm_bridge` fixture path (#370).
 - **Round-trip `bf()` formulas** — an R formula and its Julia translation must
   describe the same model; the parity tests enforce this once R is available in CI.
-- **Measured wall-clock edge vs drmTMB for the six cells** — not claimed here;
-  re-open only with a retained measurement artifact (Rose speed fence).
+- **Broader measured speed campaigns** — the six-cell fixture timing in #372 is
+  retained and scoped; ROADMAP p>100 head-to-head and other large-n campaigns
+  remain separate issues (Rose: do not promote extrapolated p-scaling).
 
 Use the bridge for Gaussian one-response / two-response, the admitted Gaussian
 phylogenetic smoke runs, the narrow q=2 structured exact-Gaussian fixture

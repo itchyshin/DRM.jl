@@ -1,10 +1,14 @@
-GOAL: see GOAL.md (IMMUTABLE — G0 APPROVED 2026-08-03).
-STATE: Arcs 0–4 implementation/DoD landed; PR #371 open. Docs CI dead-link repair pushed (restore `# R ↔ Julia bridge` H1 for Documenter `@ref`).
-ARCS DONE (verified): 0 smoke · 1 harness · 2 six cells · 3 timing no-claim · 4 docs/DoD/Rose/PR.
-ARC IN PROGRESS: none (docs CI re-check after heading restore; then human merge).
-NEXT: wait for docs + test CI green on https://github.com/itchyshin/DRM.jl/pull/371 ; Shinichi merges (closes #370).
-OPEN GATES (need human): PR #371 merge after CI green.
-TRUTH LIVES IN: `feat/370-bridge-fixture-parity` (docs fix on tip); PR #371;
-after-task `docs/dev-log/after-task/2026-08-03-370-bridge-fixture-parity.md`.
-RESUME: after merge, tip-idle LOOP update on main; do not reopen #370 work.
+GOAL: see GOAL.md (G0 APPROVED 2026-08-03 for #372).
+STATE: Arcs 0–3 landed — PR #373 open (closes #372), stacked on #371 base.
+ARCS DONE (verified):
+  - Arc 0: smoke both arms; probe md retained
+  - Arc 1: six cells both arms measured; evidence md + TOML/JSON retained
+  - Arc 2: bridge docs match; check-log.d; after-task; Rose PASS
+  - Arc 3: PR https://github.com/itchyshin/DRM.jl/pull/373
+ARC IN PROGRESS: none (await CI / #371 merge then retarget base → main).
+NEXT: after #371 merges, `gh pr edit 373 --base main`; merge when green.
+OPEN GATES (need human): merge of #371 (external); then merge #373.
+TRUTH LIVES IN: `feat/372-six-cell-measured-timing` @ 70c456e;
+  PR #373; `docs/dev-log/evidence/2026-08-03-372-six-cell-timing.md`.
+RESUME: watch #371 merge → retarget #373 to main → merge #373.
 Leave `.worktrees/` alone.
