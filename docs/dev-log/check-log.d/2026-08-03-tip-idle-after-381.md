@@ -1,0 +1,1 @@
+| 2026-08-03 | **Tip idle after #381** (START HERE clean desk; DRM.jl only) | Confirm `origin/main` @ 08bc4dc; #381 MERGED; supersede after-380 tip `f5c93e8`; `.worktrees/` unstaged; no `src/`; no cross-lane bleed | ✅ tip idle START HERE @ 08bc4dc; Rose scope PASS; L2 owner merge only | Shannon |
