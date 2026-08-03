@@ -284,9 +284,13 @@ include("test_164_gamma_hetero.jl")
 include("test_experimental_optimizer.jl")
 
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
+# Native `drm()` path (#17) plus `drm_bridge` marshalling path (#370).
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
     @testset "R-parity vs drmTMB v0.1.3" begin
         include("parity/runparity.jl")
+    end
+    @testset "R-parity via drm_bridge vs drmTMB v0.1.3" begin
+        include("parity/runparity_bridge.jl")
     end
 else
     @info "R-parity suite skipped (set DRM_PARITY_TESTS=1 to run)"

@@ -258,3 +258,113 @@ function compare_fit(fit, expected::ParityExpected;
 
     return (passed = isempty(failures), failures = failures)
 end
+
+"""
+    compare_bridge(out, expected::ParityExpected;
+                   rtol_coef=1e-4, atol_coef=1e-6,
+                   rtol_vcov=1e-3, atol_vcov=1e-8, atol_loglik=1e-4)
+        -> (passed, failures)
+
+Compare a flattened `drm_bridge` dictionary (`out`) against a
+[`ParityExpected`](@ref) reference under the same tolerance contract as
+[`compare_fit`](@ref).
+
+`out` must supply at least `"coef"` (name → Float64), `"loglik"`, `"nobs"`,
+and `"df"`. Optional `"aic"` / `"vcov"` (+ `"vcov_names"` or `"coef_names"` for
+row order) are checked when present on both sides. This is the marshalling-path
+parity gate for R callers (`engine = "julia"`); it never throws on a numerical
+mismatch.
+"""
+function compare_bridge(out::AbstractDict, expected::ParityExpected;
+        rtol_coef::Real = 1e-4, atol_coef::Real = 1e-6,
+        rtol_vcov::Real = 1e-3, atol_vcov::Real = 1e-8,
+        atol_loglik::Real = 1e-4)
+
+    failures = String[]
+
+    rc = _tol(expected, "rtol_coef", Float64(rtol_coef))
+    ac = _tol(expected, "atol_coef", Float64(atol_coef))
+    rv = _tol(expected, "rtol_vcov", Float64(rtol_vcov))
+    av = _tol(expected, "atol_vcov", Float64(atol_vcov))
+    al = _tol(expected, "atol_loglik", Float64(atol_loglik))
+    aa = _tol(expected, "atol_aic", al)
+
+    coef_raw = get(out, "coef", nothing)
+    coef_raw === nothing &&
+        return (passed = false, failures = ["bridge out missing \"coef\""])
+    got = Dict{String,Float64}(String(k) => Float64(v) for (k, v) in pairs(coef_raw))
+
+    nfit = Int(out["nobs"])
+    nfit == expected.n ||
+        push!(failures, "nobs: drmTMB=$(expected.n) DRM.jl=$(nfit)")
+    dfit = Int(out["df"])
+    dfit == expected.df ||
+        push!(failures, "df: drmTMB=$(expected.df) DRM.jl=$(dfit)")
+
+    for name in sort!(collect(keys(expected.coef)))
+        want = expected.coef[name]
+        if !haskey(got, name)
+            push!(failures, "coef[$name]: expected name absent from drm_bridge out " *
+                "(have: $(join(sort!(collect(keys(got))), ", ")))")
+            continue
+        end
+        have = got[name]
+        if !_within(want, have, rc, ac)
+            push!(failures, "coef[$name]: drmTMB=$(want) DRM.jl=$(have) " *
+                "|Δ|=$(abs(want - have)) > (rtol=$(rc), atol=$(ac))")
+        end
+    end
+
+    llh = Float64(out["loglik"])
+    if !_within(expected.loglik, llh, 0.0, al)
+        push!(failures, "loglik: drmTMB=$(expected.loglik) DRM.jl=$(llh) " *
+            "|Δ|=$(abs(expected.loglik - llh)) > atol=$(al)")
+    end
+
+    if haskey(out, "aic")
+        aic_fit = Float64(out["aic"])
+        if !_within(expected.aic, aic_fit, 0.0, aa)
+            push!(failures, "aic: drmTMB=$(expected.aic) DRM.jl=$(aic_fit) " *
+                "|Δ|=$(abs(expected.aic - aic_fit)) > atol=$(aa)")
+        end
+    end
+
+    if expected.vcov !== nothing && expected.vcov_order !== nothing && haskey(out, "vcov")
+        order = expected.vcov_order
+        fitnames = if haskey(out, "vcov_names")
+            String[String(nm) for nm in out["vcov_names"]]
+        elseif haskey(out, "coef_names")
+            String[String(nm) for nm in out["coef_names"]]
+        else
+            # Fall back to Dict iteration order — unstable; prefer explicit names.
+            sort!(collect(keys(got)))
+        end
+        idx = Dict(nm => i for (i, nm) in enumerate(fitnames))
+        Vfit = Matrix{Float64}(out["vcov"])
+        missing_names = [nm for nm in order if !haskey(idx, nm)]
+        if !isempty(missing_names)
+            push!(failures, "vcov: expected order names absent from drm_bridge out: " *
+                join(missing_names, ", "))
+        else
+            perm = [idx[nm] for nm in order]
+            Vp = Vfit[perm, perm]
+            k = length(order)
+            if size(expected.vcov) != (k, k)
+                push!(failures, "vcov: expected matrix is $(size(expected.vcov)) " *
+                    "but order has $k names")
+            else
+                for i in 1:k, j in 1:k
+                    want = expected.vcov[i, j]
+                    have = Vp[i, j]
+                    if !_within(want, have, rv, av)
+                        push!(failures, "vcov[$(order[i]),$(order[j])]: " *
+                            "drmTMB=$(want) DRM.jl=$(have) " *
+                            "|Δ|=$(abs(want - have)) > (rtol=$(rv), atol=$(av))")
+                    end
+                end
+            end
+        end
+    end
+
+    return (passed = isempty(failures), failures = failures)
+end

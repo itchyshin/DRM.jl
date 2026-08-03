@@ -101,6 +101,21 @@ include("parity/loadfixture.jl")
         res_rt = compare_fit(refit, loaded_exp)
         @test res_rt.passed == true
     end
+
+    # --- compare_bridge: flattened drm_bridge Dict vs same self-expected ------
+    bridged = drm_bridge(; formula = "y ~ 1 + x; sigma ~ 1 + x",
+                         family = "gaussian", data = data)
+    res_br = compare_bridge(bridged, self_expected)
+    @test res_br.passed == true
+    @test isempty(res_br.failures)
+
+    bad_bridge = copy(bridged)
+    bad_bridge["coef"] = Dict(bridged["coef"])  # shallow copy of nested dict
+    bad_bridge["coef"] = Dict{String,Float64}(String(k) => Float64(v) for (k, v) in bridged["coef"])
+    bad_bridge["coef"]["mu_x"] += 1.0
+    res_br_bad = compare_bridge(bad_bridge, self_expected)
+    @test res_br_bad.passed == false
+    @test any(f -> occursin("coef[mu_x]", f), res_br_bad.failures)
 end
 
 @testset "parity harness: group-level covariance (ranef) comparison" begin

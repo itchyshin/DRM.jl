@@ -1,9 +1,7 @@
 # Ultra-plan — DRM.jl #370: bridge fixture coefficient-scale parity
 
-**Status:** Phases 0–2, READ-ONLY. **STOP at G0.** No implementation has started;
-no `src/` / `test/` code has been changed by this plan. Written by Shannon
-(Ada + Rose perspectives named; no nested subagents). Shinichi: **read and
-approve (yes/no)** before any `/goal` execution.
+**Status:** G0 **APPROVED** 2026-08-03 by Shinichi. `/goal` executing on
+`feat/370-bridge-fixture-parity` (rebased onto `origin/main` @ `379890a`).
 
 **Issue:** https://github.com/itchyshin/DRM.jl/issues/370  
 **Branch (already created):** `feat/370-bridge-fixture-parity` @ `0d93070` (== `origin/main`)  
