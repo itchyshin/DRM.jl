@@ -1,10 +1,6 @@
-# Arcs — #376 q4 scaling head-to-head
+# arcs — #376 closed; tip idle after #376+#377
 
-| Arc | Status | Gate | Notes |
-|---|---|---|---|
-| 0 — Open issue + LOOP scaffold + branch | DONE | — | #376; `feat/376-q4-scaling-h2h` |
-| 1 — Paired Julia+R harness | DONE | — | ultrametricize + public R API |
-| 2 — Local smoke p=100 | DONE | — | both arms non-empty |
-| 3 — Totoro full grid | DONE | L2 compute | all four p measured |
-| 4 — Docs rewrite from artifact | DONE | L2 public claim | comparison-grid etc. |
-| 5 — DoD + PR closes #376 | IN PROGRESS | L2 merge | check-log + after-task + Rose |
+- Arc 0–4: issue + harness + smoke + Totoro grid + docs rewrite from artifact
+- Arc 5: DoD + PR #377 merged (`closes #376`) @ ae4e67d
+- Tip-idle hygiene (this docs PR): LOOP refresh + handover after-376 (pattern #375)
+- Status: DONE / tip idle — next is owner G0; leave `.worktrees/` alone; D-111 OFF

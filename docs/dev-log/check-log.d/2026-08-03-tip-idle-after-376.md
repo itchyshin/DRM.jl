@@ -1,0 +1,1 @@
+| 2026-08-03 | **Tip idle after #376+#377** (docs hygiene / pattern #375) | Inspect `origin/main` @ ae4e67d; PR #377 MERGED; LOOP no “awaiting merge”; `.worktrees/` unstaged; no `src/` | ✅ tip idle ledger + handover; Rose scope PASS; L2 owner merge only | Shannon |

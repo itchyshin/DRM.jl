@@ -1,5 +1,6 @@
 # GOAL — #376 measured drmTMB head-to-head nrep=4 / p>100
 # (IMMUTABLE once G0 APPROVED — re-read at the top of EVERY arc)
+# Status: DONE 2026-08-03 — closed by PR #377 @ ae4e67d (G0 was APPROVED earlier same day).
 
 ## Mission
 Close DRM.jl #376: retain a **paired** Julia vs drmTMB wall-clock artifact on the
@@ -24,7 +25,8 @@ R-blocked) cells.
 - Rose: every public speed sentence cites the retained evidence file.
 
 ## Authoritative WHAT
-`LOOP/ultra-plan.md` (approved G0 ultra-plan).
+Historical: `docs/dev-log/plans/2026-08-03-376-q4-scaling-h2h-ultra-plan.md`.
+Current tip-idle kit: `LOOP/ultra-plan.md` (docs hygiene after #376/#377).
 
 ## Definition of done
 - Retained evidence md + JSON/TOML (both arms or honest R-blocked cells)
