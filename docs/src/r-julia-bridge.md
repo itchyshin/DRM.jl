@@ -1,3 +1,5 @@
+# R ↔ Julia bridge
+
 !!! note "Status — Experimental bridge + fixture-backed coefficient-scale gate (#370)"
     DRM.jl exposes `drm_bridge()`, a marshalling-friendly entry point for the R-side `drmTMB(formula, ..., engine = "julia")` glue. The companion R glue lives in the **drmTMB R repository** via [JuliaCall](https://github.com/JuliaInterop/JuliaCall).
 

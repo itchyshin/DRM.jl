@@ -7,4 +7,4 @@
 | 1 Bridge parity harness | **done** | Arc 0 | 1–2 h | `compare_bridge` + `runparity_bridge.jl` under `DRM_PARITY_TESTS=1` |
 | 2 Admit six cells | **done** | harness | 1–2 h | 6/6 bridge + 6/6 native; student fixture scale fixed; xfam skip |
 | 3 Timing cells | **done** | Arc 2 | 30–60 min | Honest no-claim artifact `docs/dev-log/evidence/2026-08-03-370-timing-no-claim.md` |
-| 4 Docs + DoD + close | **in progress** | Arc 2+3 | 45–90 min | `r-julia-bridge.md`; check-log.d; after-task; Rose; PR `closes #370` |
+| 4 Docs + DoD + close | **done** | Arc 2+3 | 45–90 min | `r-julia-bridge.md`; check-log.d; after-task; Rose; [PR #371](https://github.com/itchyshin/DRM.jl/pull/371) `closes #370` |
