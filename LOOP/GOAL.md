@@ -1,6 +1,6 @@
 # GOAL — issue #372 measured wall-clock for six #370 bridge cells
 # (IMMUTABLE once G0 APPROVED — re-read at the top of EVERY arc)
-# Status: G0 APPROVED 2026-08-03 (Shinichi). Executing via Cursor `/goal`.
+# Status: DONE 2026-08-03 — closed by PR #374 @ 04c482a (G0 was APPROVED earlier same day).
 
 ## Mission
 Close DRM.jl #372: replace the six #370-bridge fixture cells' **timing not
