@@ -1,11 +1,7 @@
-GOAL: see GOAL.md (#372 DONE — closed by PR #374).
-STATE: Tip idle after #370+#372.
-DONE:
-  - #370 / PR #371 squash-merged @ 393a34b (bridge fixture coef parity)
-  - #372 / PR #374 squash-merged @ 04c482a (six-cell measured wall-clock)
-  - #373 closed/superseded (base branch deleted after #371; replaced by #374)
-ARCS: 0–3 complete; CI green then squash-merge.
-NEXT: owner G0 for the next twin/roadmap slice; leave `.worktrees/` alone.
-TRUTH LIVES IN: `origin/main` @ 04c482a;
-  evidence `docs/dev-log/evidence/2026-08-03-372-six-cell-timing.md`.
-RESUME: tip idle — no active #370/#372 lane; do not invent ship work.
+GOAL: see GOAL.md.   STATE: PR #377 opened; awaiting merge for #376.
+ARCS DONE (verified): 0–5 implementation+DoD; evidence on Totoro; docs rewrite; PR opened.
+ARC IN PROGRESS: none (human merge gate)
+NEXT: merge PR #377 when CI green → tip idle
+OPEN GATES (need human): PR merge https://github.com/itchyshin/DRM.jl/pull/377
+TRUTH LIVES IN: origin/feat/376-q4-scaling-h2h @ 4ac6c9a; evidence 2026-08-03-376-q4-scaling-h2h.md
+RESUME: Review/merge PR #377. Leave .worktrees/ alone. Do not re-run Totoro grid unless CI/docs need refresh.

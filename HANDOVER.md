@@ -84,11 +84,14 @@ near-perfect O(p) (where gllvmTMB's multi-trait gradient is O(p²) — *their* c
 `sparse_phy_grad.jl`, "slope≈2"), EM wins on conjugate sub-models, and it returns
 usable uncertainty where drmTMB's Hessian is singular.
 
-**Do NOT oversell:** the "~12× vs drmTMB at p=10,000" is **extrapolated** from
-drmTMB's measured slope, not measured at scale on the same nrep=4 data. The
-scaling curve uses the synthetic per-dimension-variance model with replicates.
-The threaded-bootstrap speedup is **unmeasured** (the verified run was serial,
-39 s); warm-start is **not** a lever (tested: 0.8×).
+**Do NOT oversell:** the historical “~12× vs drmTMB at p=10,000” figure was an
+**extrapolation** and is **retired**. The measured nrep=4 head-to-head on Totoro
+(#376; `docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`) shows Julia
+faster at p=100 (~3.3×) and drmTMB 0.6.0 comparable or faster at p≥1000 on that
+synthetic ultrametric balanced grid — distinct from the real-data q4_p100
+**2.18×** cell. The scaling curve uses the synthetic per-dimension-variance model
+with replicates. The threaded-bootstrap speedup is **unmeasured** (the verified
+run was serial, 39 s); warm-start is **not** a lever (tested: 0.8×).
 
 ---
 
@@ -263,7 +266,8 @@ do not expose `:natgrad`. Remaining EM / E-step / dense-oracle prototypes stay
 in `src/experimental/`. Bootstrap threading already has entry points (#131/#132).
 **C. Open research items.** Exact REML / AI-REML gradient via `lc_metric` (#11
 follow-up); χ̄² boundary inference where not yet exported; VA/ELBO (#136,
-deferred); drmTMB head-to-head at nrep=4/p>100 to replace extrapolated scaling.
+deferred). ~~drmTMB head-to-head at nrep=4/p>100~~ **done in #376** (measured;
+“~12×” extrapolation retired).
 **D. v0.1.0 pilot scope.** Gaussian-only, fixed-effects pilot (univariate +
 bivariate distributional regression, closed-form marginal) shipped with the
 bench/ADEMP harness vs drmTMB; then grow toward the phylogenetic Laplace path
