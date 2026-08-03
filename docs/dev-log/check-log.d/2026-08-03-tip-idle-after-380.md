@@ -1,0 +1,1 @@
+| 2026-08-03 | **Tip idle after #376+#377+#378+#379+#380** (START HERE SHA refresh) | Confirm `origin/main` @ f5c93e8; #380 MERGED; supersede after-379 tip `0d5ccd7`; anti-cascade; `.worktrees/` unstaged; no `src/` | ✅ tip idle START HERE @ f5c93e8; Rose scope PASS; L2 owner merge only | Shannon |
