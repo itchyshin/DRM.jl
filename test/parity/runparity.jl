@@ -109,6 +109,14 @@ let fixtures_root = joinpath(@__DIR__, "fixtures")
         for dir in cases
             casename = basename(dir)
             @testset "$casename" begin
+                # xfam-external-gllvm is a cross-package estimand OUT of the
+                # Workflow G / #370 cohort; skip rather than error on incomplete
+                # expected.toml (missing aic / not a DRM.jl family fit).
+                if casename == "xfam-external-gllvm"
+                    @info "Skipping `$casename`: out of Workflow G / #370 cohort (cross-package gllvm estimand)"
+                    @test_skip xfam_out_of_cohort
+                    continue
+                end
                 expected = load_expected(dir)
                 fam = _parity_family(expected.family)
                 if fam === nothing

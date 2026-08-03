@@ -1,7 +1,16 @@
-# R ↔ Julia bridge
+!!! note "Status — Experimental bridge + fixture-backed coefficient-scale gate (#370)"
+    DRM.jl exposes `drm_bridge()`, a marshalling-friendly entry point for the R-side `drmTMB(formula, ..., engine = "julia")` glue. The companion R glue lives in the **drmTMB R repository** via [JuliaCall](https://github.com/JuliaInterop/JuliaCall).
 
-!!! note "Status — Experimental first slice (Phase 1.5)"
-    DRM.jl now exposes `drm_bridge()`, a marshalling-friendly entry point for the R-side `drmTMB(formula, ..., engine = "julia")` glue. The companion R glue lives in the **drmTMB R repository** via [JuliaCall](https://github.com/JuliaInterop/JuliaCall). The first tested bridge slice covers Gaussian one-response and two-response fits, plus narrow complete-response q=2 structured Gaussian fixture cells; broader families wait for coefficient-scale parity tests. For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
+    **Admitted fixture-backed coefficient-scale parity** (opt-in `DRM_PARITY_TESTS=1`, via `drm_bridge` + committed drmTMB v0.1.3 generated numbers only):
+
+    - `gaussian-locscale`
+    - `gaussian-bivariate-rho12`
+    - `robust-student`
+    - `count-nbinom2`
+    - `proportion-beta`
+    - `meta-analysis-V`
+
+    Timing for these six cells: **timing not measured — no claim** (no retained wall-clock artifact vs local drmTMB in this slice). The verified q=4 PLSM 2.18× speed cell remains documented elsewhere (`report/comparison-grid.md`) and is **not** evidence for these fixture families. For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
 
 ## The idea
 
@@ -13,8 +22,10 @@ Two ways to use DRM.jl from R, in increasing integration:
    marshals the formula and data across JuliaCall, calls DRM.jl to fit, and
    returns a result object shaped like a native drmTMB fit. Experimental for
    Gaussian one-response and two-response models, the first Gaussian
-   `phylo(1 | species)` mean bridge with constant `sigma`, and narrow
-   complete-response q=2 structured Gaussian fixtures.
+   `phylo(1 | species)` mean bridge with constant `sigma`, narrow
+   complete-response q=2 structured Gaussian fixtures, and the six
+   fixture-backed coefficient-scale cells listed above (Julia-side
+   `drm_bridge` gate; R-side Lovelace glue remains in the drmTMB repo).
 
 ## The DRM.jl-side contract
 
@@ -40,6 +51,18 @@ finite mean-coefficient covariance block. Scale and variance-component
 covariance are still left unset for the R bridge, so profile/bootstrap work
 remains the next inference slice.
 
+## Coefficient-scale parity gate (#370)
+
+Behind `DRM_PARITY_TESTS=1`, `test/parity/runparity_bridge.jl` fits the six
+cohort fixtures through `drm_bridge` and compares against committed
+`expected.toml` numbers via `compare_bridge` (same coef bar as Workflow G /
+`compare_fit`: default `atol_coef=1e-6`, `rtol_coef=1e-4`, with per-case
+`[tol]` overrides). Native `drm()` parity (`runparity.jl`, #17) still runs in
+the same env gate. `xfam-external-gllvm` remains OUT (cross-package estimand).
+
+MIT/GPL: fixtures are **generated numeric outputs only** — never vendored
+drmTMB source.
+
 ## Open design questions
 
 Tracked in the issue ledger:
@@ -51,12 +74,14 @@ Tracked in the issue ledger:
   non-Gaussian phylogenetic models still need separate parity tests (issue #19).
 - **Result-shape parity** — exact field-by-field equivalence between a native
   drmTMB fit and the Julia-engine fit (issue #5), guarded by the R-parity suite
-  (Workflow G, issue #17).
+  (Workflow G, issue #17) plus the `drm_bridge` fixture path (#370).
 - **Round-trip `bf()` formulas** — an R formula and its Julia translation must
   describe the same model; the parity tests enforce this once R is available in CI.
+- **Measured wall-clock edge vs drmTMB for the six cells** — not claimed here;
+  re-open only with a retained measurement artifact (Rose speed fence).
 
-Until broader parity ships, use the bridge for Gaussian one-response,
-two-response, the admitted Gaussian phylogenetic smoke runs, and the narrow q=2
-structured exact-Gaussian fixture cells. Use hand-translation via the Rosetta
-phrasebook or native `drmTMB` for the remaining families and unsupported formula
-features.
+Use the bridge for Gaussian one-response / two-response, the admitted Gaussian
+phylogenetic smoke runs, the narrow q=2 structured exact-Gaussian fixture
+cells, and the six coefficient-scale fixture families above. Use hand-translation
+via the Rosetta phrasebook or native `drmTMB` for remaining families and
+unsupported formula features.

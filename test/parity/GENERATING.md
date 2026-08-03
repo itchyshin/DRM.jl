@@ -72,14 +72,11 @@ write.csv(dat, "data.csv", row.names = FALSE)
 For `meta-analysis-V`, local drmTMB uses `meta_V(V = v)` in the R call; DRM.jl's
 runner uses the current Julia marker spelling `meta_V(v)`.
 
-For NB2 and Student, generated coefficients are written on DRM.jl's public
-working scale:
+For NB2 and Student, generated coefficients are written on the **shared**
+drmTMB / DRM.jl working scale (no Jacobian transform):
 
-- NB2: drmTMB `log(σ)` becomes DRM.jl `log(θ) = -2 log(σ)`.
-- Student: drmTMB `log(ν - 2)` becomes DRM.jl `log(ν)`.
-
-The corresponding covariance rows/columns are transformed by the same
-Jacobians before writing `[vcov]`.
+- NB2: `log(σ)` with size = `exp(-2·σ)` in both packages.
+- Student: `log(ν − 2)` with `ν = 2 + exp(η)` in both packages.
 
 ## `expected.toml` format
 

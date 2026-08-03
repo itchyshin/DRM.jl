@@ -126,13 +126,14 @@ Tolerances are per-case overridable in `expected.toml` (`[tol]` block) so a hard
 case (e.g. beta-binomial near a boundary) can relax without loosening the whole
 suite.
 
-The committed NB2 and Student fixtures are transformed onto DRM.jl's documented
-working coefficient scales before writing `expected.toml`: NB2 `sigma` from
-drmTMB `log(σ)` to DRM.jl `log(θ) = -2 log(σ)`, and Student `nu` from drmTMB
-`log(ν - 2)` to DRM.jl `log(ν)`. The covariance rows/columns are transformed by
-the same Jacobians. This keeps the fixture values mathematical-parity numbers
-for DRM.jl's public coefficient scale while recording the exact R call in
-`expected.meta.toml`.
+The committed NB2 and Student fixtures use the **shared** working coefficient
+scales of current DRM.jl and drmTMB v0.1.3 — no Jacobian reparameterisation:
+
+- NB2 `sigma` is `log(σ)` in both (size = `exp(-2·σ)`).
+- Student `nu` is `log(ν − 2)` in both (`ν = 2 + exp(η)`).
+
+(An older Student transform to DRM.jl `log(ν)` was undone for #370 once DRM.jl
+matched drmTMB's `log(ν − 2)` scale.)
 
 ---
 
@@ -145,15 +146,20 @@ run) and turns on with `DRM_PARITY_TESTS=1`:
 # in test/runtests.jl, after the in-package testsets:
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
     @testset "R-parity vs drmTMB v0.1.3" begin
-        include("parity/runparity.jl")   # iterates test/parity/fixtures/*
+        include("parity/runparity.jl")          # native drm() path
+    end
+    @testset "R-parity via drm_bridge vs drmTMB v0.1.3" begin
+        include("parity/runparity_bridge.jl")   # marshalling path (#370 cohort)
     end
 else
     @info "R-parity suite skipped (set DRM_PARITY_TESTS=1 to run)"
 end
 ```
 
-`runparity.jl` globs `fixtures/*/expected.toml`, fits each case with DRM.jl, and
-applies `compare.jl`'s contract. **No RCall at run time** — fixtures are static.
+`runparity.jl` globs `fixtures/*/expected.toml`, fits each case with native
+`drm()`, and applies `compare.jl`'s contract. `runparity_bridge.jl` (#370) fits
+the six Workflow G cohort cells through `drm_bridge` + `compare_bridge`
+(xfam-external-gllvm is OUT). **No RCall at run time** — fixtures are static.
 Regeneration is explicit and local-only:
 
 ```sh

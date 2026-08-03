@@ -54,15 +54,10 @@ transform_expected <- function(case, coefs, V, order) {
   deriv <- rep(1.0, length(order))
   names(deriv) <- order
 
-  ## NB2 sigma is on the log(sigma) scale in both drmTMB and DRM.jl now
-  ## (size = exp(-2*sigma)); the former -2 reparameterisation is the identity.
-
-  if (case == "robust-student") {
-    idx <- startsWith(names(coefs), "nu_")
-    raw <- coefs[idx]
-    coefs[idx] <- log(exp(raw) + 2.0)
-    deriv[names(raw)] <- exp(raw) / (exp(raw) + 2.0)
-  }
+  ## NB2 sigma and Student nu are on the same working scales in drmTMB and
+  ## DRM.jl now (NB2: log(sigma) with size = exp(-2*sigma); Student:
+  ## log(nu - 2) with nu = 2 + exp(eta)). The former reparameterisation
+  ## transforms are the identity — keep this hook for any future scale drift.
 
   D <- diag(deriv[order], nrow = length(order))
   list(coef = coefs, vcov = D %*% V %*% D)
@@ -230,7 +225,7 @@ generate_student <- function() {
     "robust-student", seed, dat, "y ~ x; sigma ~ 1; nu ~ 1", "student",
     "drmTMB(drm_formula(y ~ x, sigma ~ 1, nu ~ 1), family = student(), data = dat)",
     fit,
-    "Student nu is transformed from drmTMB log(nu - 2) to DRM.jl log(nu)."
+    "Student nu on shared log(nu - 2) scale (nu = 2 + exp(eta)); no transform."
   )
 }
 
