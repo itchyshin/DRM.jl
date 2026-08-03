@@ -87,8 +87,10 @@ Tracked in the issue ledger:
 - **Round-trip `bf()` formulas** — an R formula and its Julia translation must
   describe the same model; the parity tests enforce this once R is available in CI.
 - **Broader measured speed campaigns** — the six-cell fixture timing in #372 is
-  retained and scoped; ROADMAP p>100 head-to-head and other large-n campaigns
-  remain separate issues (Rose: do not promote extrapolated p-scaling).
+  retained and scoped; #376 measured the ROADMAP nrep=4 / p>100 q4 scaling
+  head-to-head on Totoro (extrapolated “~12×” **retired** — see
+  `docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`). Other large-n
+  campaigns remain separate (Rose: do not invent unmeasured ratios).
 
 Use the bridge for Gaussian one-response / two-response, the admitted Gaussian
 phylogenetic smoke runs, the narrow q=2 structured exact-Gaussian fixture

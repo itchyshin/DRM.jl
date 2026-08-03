@@ -29,10 +29,12 @@ reproduced numbers (`report/comparison-grid.md`); the harness is
 `bench/run_scaling.jl`.
 
 !!! note "On head-to-head claims"
-    The O(p) result above is measured for DRM.jl. A drmTMB head-to-head at
-    `nrep = 4` / `p > 100` was **not** run, so any "N× faster at p = 10,000" figure
-    would be an extrapolation, not a measurement — this guide does not claim one.
-    The measured single-fit comparison (same model, real data) is **2.18× over
+    The O(p) result above is measured for DRM.jl. A paired drmTMB head-to-head on
+    the same nrep=4 synthetic grid was measured on Totoro (#376;
+    `docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`): Julia faster at
+    p=100 (~3.3×); at p≥1000 drmTMB 0.6.0 was comparable or faster under that
+    protocol. The older “N× faster at p=10,000” extrapolation is **retired**.
+    The measured single-fit comparison on real q4_p100 data remains **2.18× over
     drmTMB**; see the [model map](model-map.md) and `HANDOVER.md`.
 
 ## Why it scales

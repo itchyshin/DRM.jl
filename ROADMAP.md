@@ -127,6 +127,7 @@ documented per family.
 
 - REML scale-axis + exact REML gradient (ML stays default).
 - χ̄² boundary inference (Self–Liang 1987; Stram–Lee 1994).
-- drmTMB head-to-head at nrep=4 / p>100 to replace the *extrapolated* scaling
-  comparison with a measured one.
+- ~~drmTMB head-to-head at nrep=4 / p>100~~ **done (#376)** — measured Totoro
+  table; “~12×” extrapolation retired
+  (`docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`).
 - Creative combinations from Pólya's scout (Workflow S).

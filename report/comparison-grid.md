@@ -42,7 +42,7 @@ Julia g_resid=1.7e-3). Model-geometry artefact, not an engine bug.
 
 ---
 
-## 3. O(p) scaling — biological per-dimension-variance model  ✓ VERIFIED
+## 3. O(p) scaling — biological per-dimension-variance model  ✓ VERIFIED (Julia) + ✓ PAIRED (2026-08-03)
 *4×4 Λ (separate phylo variance per axis + cross-cov); nrep=4 replicates; O(p)
 sparse-precision sampler (CHOLMOD, Cov(û)≈P⁻¹ at p=8, rel-err 0.023). Julia-TMB-like.*
 
@@ -55,8 +55,22 @@ sparse-precision sampler (CHOLMOD, Cov(û)≈P⁻¹ at p=8, rel-err 0.023). Juli
 
 **k = 1.08 (near-perfect O(p))**, flat iters, consistent per-obs logLik.
 - vs gllvmTMB multi-trait: their gradient is O(p²) (own code, "slope≈2"), caps ~p=500. Ours is O(p) (Takahashi, never forms dense Σ_phy).
-- vs drmTMB at scale: NOT measured at nrep=4/p>100 — the "~12× at p=10000" is **extrapolation of drmTMB's k≈1.36, not a measured result. Do not cite as measured.**
+- **vs drmTMB at scale (measured 2026-08-03, issue #376):** same nrep=4 ultrametric
+  balanced synthetic grid on **Totoro**, drmTMB **0.6.0**, 1 warmup + 2 timed reps,
+  BLAS/OMP=1. Retained artifact:
+  `docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`.
 
+| p | Julia median (s) | drmTMB 0.6.0 median (s) | ratio R/J |
+|---:|---:|---:|---:|
+| 100 | 0.529 | 1.752 | **3.31×** (Julia faster) |
+| 1000 | 6.921 | 5.581 | 0.81× |
+| 5000 | 82.141 | 41.996 | 0.51× |
+| 10000 | 115.178 | 104.869 | 0.91× |
+
+The older “~12× at p=10,000” figure was an **extrapolation** of drmTMB's slope and
+is **retired**. On this protocol/machine/model, Julia is faster at p=100; at
+p≥1000 drmTMB 0.6.0 is comparable or faster. Distinct from the real-data q4_p100
+**2.18×** single-fit cell (§2).
 ---
 
 ## 4. Location-only (conjugate) cell — EM's home turf  ✓ VERIFIED
@@ -122,9 +136,11 @@ At the q4_p100 ML optimum:
 
 **NEEDS HUMAN REVIEW:**
 1. REML scale-axis behaviour + exact REML gradient + production stability (§5).
-2. drmTMB at nrep=4 / p>100 (the scaling head-to-head is one-sided; 12× is extrapolated).
+2. ~~drmTMB at nrep=4 / p>100~~ **DONE (#376)** — measured on Totoro; “~12×”
+   extrapolation **retired** (see §3 table).
 3. Threaded bootstrap end-to-end timing (verified serial; threaded ~8× unrun).
 4. χ̄² boundary inference (motivated, not implemented).
 5. lc3/lc7 ε-nudge auto-detection for arbitrary user data.
 
-*Do not promote extrapolated numbers (drmTMB-at-p=10000) to measured results.*
+*Do not promote unmeasured numbers to measured results. The #376 Totoro table is
+the measured drmTMB scaling head-to-head for this model.*
