@@ -7,7 +7,7 @@ DONE:
   - Prior twin idle: #370/#371 @ 393a34b; #372/#374 @ 04c482a; tip-idle docs #375 @ e3b3b8a
 ARCS: 0–5 complete; CI green then squash-merge of #377; tip-idle #378+#379 merged.
 NEXT: owner G0 for the next twin/roadmap slice; leave `.worktrees/` alone. Do not invent ship work.
-OPEN GATES (need human): none for #376/#378/#379 (merged). Any docs tip-idle PR after this = owner merge only.
+OPEN GATES (need human): docs tip-idle PR #380 = owner merge only. #376/#378/#379 already merged.
 TRUTH LIVES IN: `origin/main` @ 0d5ccd7;
   evidence `docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`
   (+ `docs/dev-log/evidence/376-q4-scaling-h2h/{julia_q4_scaling.toml,r_q4_scaling.json}`).
