@@ -4,9 +4,9 @@
     Mirrors drmTMB's [Phylogenetic structured effects](https://itchyshin.github.io/drmTMB/articles/phylogenetic-models.html).
     **In DRM.jl today:** `phylo(1 | species)` on the **mean** — a phylogenetic
     random intercept. For Gaussian it is fit in closed form; for the non-Gaussian
-    families (Poisson, NB2, Binomial, Gamma, Beta) it is fit by the sparse
-    augmented-state Laplace engine, currently with a **constant `sigma`**. The q=4
-    phylogenetic *location–scale* model (a shared effect on `log σ` too) is
+    families (Poisson, NB2, Binomial, Gamma, Beta, BetaBinomial) it is fit by the
+    sparse augmented-state Laplace engine, currently with a **constant `sigma`**.
+    The q=4 phylogenetic *location–scale* model (a shared effect on `log σ` too) is
     Gaussian-only today and uses the verified sparse-Laplace engine (see
     `HANDOVER.md`); the non-Gaussian location–scale extension is scoped on the
     ledger (issue #202).
@@ -55,8 +55,8 @@ Phylogenetic signal is not a Gaussian-only luxury — abundances, presence/absen
 and rates are all correlated across related species. For a non-Gaussian family the
 marginal is no longer closed-form, so `phylo(1 | species)` routes to the **sparse
 augmented-state Laplace** engine (the same machinery behind the q=4 PLSM, here
-with a non-Gaussian data term). Five families carry the phylo route today:
-**Poisson, NegBinomial2, Binomial, Gamma, Beta**.
+with a non-Gaussian data term). Six families carry the phylo route today:
+**Poisson, NegBinomial2, Binomial, Gamma, Beta, BetaBinomial** (#166).
 
 The call site is identical — add `phylo(1 | species)` to the mean formula, pass
 `tree =`. Here is a phylogenetic Poisson count model: a shared tree effect on
@@ -91,6 +91,32 @@ coef(fit, :mu)            # (intercept, slope) — slope ≈ 0.35
 re_sd(fit)[:species]      # phylogenetic SD on log λ (≈ 0.45)
 ```
 
+`BetaBinomial()` follows the same shape, with `cbind(successes, failures)` for
+the known-trials response and constant overdispersion via `sigma ~ 1`
+(`φ = 1/σ²`, #166):
+
+```@example phybb
+Random.seed!(20260802)
+G2 = 24
+phy2 = random_balanced_tree(G2; branch_length = 0.20)
+species2 = repeat(1:G2, inner = 10)
+n2 = length(species2)
+x2 = randn(n2)
+φbb = 16.0
+σphy2 = 0.35
+C2 = sigma_phy_dense(phy2; σ²_phy = σphy2^2)
+u2 = cholesky(Symmetric(C2)).L * randn(G2)
+μbb = 1 ./ (1 .+ exp.(-(-0.10 .+ 0.45 .* x2 .+ u2[species2])))
+trials2 = fill(10, n2)
+succ2 = Float64.([rand(Distributions.BetaBinomial(trials2[i], μbb[i] * φbb, (1 - μbb[i]) * φbb)) for i in 1:n2])
+fail2 = Float64.(trials2) .- succ2
+
+fitbb_phy = drm(bf(@formula(cbind(succ2, fail2) ~ x2 + phylo(1 | species2)), @formula(sigma ~ 1)),
+                BetaBinomial(); data = (; succ2, fail2, x2, species2), tree = phy2, se = false)
+
+re_sd(fitbb_phy)[:species2]        # phylogenetic SD on the logit mean (≈ 0.35)
+```
+
 A few things worth knowing:
 
 - **Replicates matter.** Use at least two observations per species (`m ≥ 2`
@@ -101,11 +127,12 @@ A few things worth knowing:
   scale axis: vary the **mean** with predictors and the structured effect, and
   keep `sigma ~ 1`. A predictor on `sigma` (#164) and a *structured* effect on
   `sigma` — the non-Gaussian phylogenetic *location–scale* model (#202) — are on
-  the ledger.
+  the ledger. `BetaBinomial()`'s phylo/crossed routes are constant-σ only for
+  the same reason (#166's own acceptance bar).
 - **Other families, same shape.** Swap `Poisson()` for `NegBinomial2()` (counts
-  with overdispersion), `Binomial()` (`cbind(s, f) ~ …` for successes/trials),
-  `Gamma()`, or `Beta()` — the `phylo(1 | species)` term and `tree =` argument are
-  unchanged.
+  with overdispersion), `Binomial()` or `BetaBinomial()` (`cbind(s, f) ~ …` for
+  successes/trials, the latter with extra-binomial overdispersion), `Gamma()`, or
+  `Beta()` — the `phylo(1 | species)` term and `tree =` argument are unchanged.
 - **Standard errors / intervals.** Pass `se = true` for finite-difference Wald
   SEs, or use [`bootstrap_ci`](@ref) for a parametric bootstrap. We used
   `se = false` here to keep the example fast.

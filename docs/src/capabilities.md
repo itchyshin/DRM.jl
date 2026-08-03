@@ -35,7 +35,7 @@ off by default (`DRM_PARITY_TESTS`, `test/runtests.jl:153`).
 | NegBinomial2 | `src/negbinomial.jl` | yes | intercept + slope + phylo | **Tested** — `test/test_nbinom2.jl`, `test/test_nbinom2_re.jl`, `test/test_nbinom2_slope_re.jl` |
 | TruncatedNegBinomial2 | `src/negbinomial.jl` | yes | — | **Tested** — `test/test_truncated_nb.jl` |
 | Beta | `src/beta.jl` | yes | intercept + slope + phylo | **Tested** — `test/test_beta.jl`, `test/test_beta_re.jl`, `test/test_beta_slope_re.jl` |
-| BetaBinomial | `src/betabinomial.jl` | yes | intercept + slope | **Tested** — `test/test_betabinomial.jl`, `test/test_betabinomial_re.jl`, `test/test_betabinomial_slope_re.jl` |
+| BetaBinomial | `src/betabinomial.jl` | yes | intercept + slope + crossed + phylo | **Tested** — `test/test_betabinomial.jl`, `test/test_betabinomial_re.jl`, `test/test_betabinomial_slope_re.jl`, `test/test_betabinomial_phylo_laplace.jl`, `test/test_betabinomial_crossed_laplace.jl` (#166; constant-σ only) |
 | Binomial | `src/binomial.jl` | yes | intercept + phylo | **Tested** — `test/test_binomial.jl`, `test/test_binomial_re.jl` |
 | Gamma | `src/gamma.jl` | yes | intercept + slope + phylo | **Tested** — `test/test_gamma.jl`, `test/test_gamma_re.jl`, `test/test_gamma_slope_re.jl` |
 | LogNormal | `src/lognormal.jl` | yes | intercept + slope | **Tested** — `test/test_lognormal.jl`, `test/test_lognormal_re.jl`, `test/test_lognormal_slope_re.jl` |

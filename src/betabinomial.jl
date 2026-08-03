@@ -25,16 +25,24 @@ extra-binomial overdispersion. Logit link on the mean success probability `μ`;
 the `sigma` slot carries `σ` with precision `φ = 1/σ²` (so `coef(fit, :sigma)`
 is `log σ`). Likelihood `BetaBinomial(n, μφ, (1-μ)φ)`. Requires a two-column
 response via [`cbind`](@ref). Mirrors `drmTMB`'s `beta_binomial`.
+Crossed random intercepts on the mean, such as `(1 | g) + (1 | h)`, use the
+sparse-Laplace engine when `sigma ~ 1`. A phylogenetic random intercept on the
+mean, `phylo(1 | species)`, also uses the sparse-Laplace engine (#166); both
+routes are constant-σ (overdispersion) only for now.
 
 ```julia
 fit = drm(bf(cbind(successes, failures) ~ x, sigma ~ 1), BetaBinomial(); data = dat)
+fit = drm(bf(cbind(successes, failures) ~ x + (1 | g) + (1 | h), sigma ~ 1), BetaBinomial(); data = dat)
+fit_phy = drm(bf(@formula(cbind(successes, failures) ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
+              BetaBinomial(); data = dat, tree = tr, se = false)
 ```
 """
 struct BetaBinomial end
 
-function drm(f::DrmFormula, fam::BetaBinomial; data, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::BetaBinomial; data, tree = nothing, g_tol::Real = 1e-8,
+             se::Bool = true)
     missing_fit = _fit_observed_response_rows(f, data) do data_observed
-        drm(f, fam; data = data_observed, g_tol = g_tol)
+        drm(f, fam; data = data_observed, tree = tree, g_tol = g_tol, se = se)
     end
     missing_fit !== nothing && return missing_fit
 
@@ -42,8 +50,8 @@ function drm(f::DrmFormula, fam::BetaBinomial; data, g_tol::Real = 1e-8)
         error("BetaBinomial() needs a two-column response: bf(cbind(successes, failures) ~ …)")
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
-    (mv === nothing && st === nothing) ||
-        error("BetaBinomial() does not support meta_V / structured markers")
+    mv === nothing ||
+        error("BetaBinomial() does not support meta_V markers")
     for (pname, r) in f.forms          # only the mean may carry a random effect
         pname === :mu && continue
         _, re2, mv2, st2 = _split_ranef(r)
@@ -57,8 +65,30 @@ function drm(f::DrmFormula, fam::BetaBinomial; data, g_tol::Real = 1e-8)
     ntr = s .+ fl                                        # trials
     _, Xμ, nmμ = _design(f.response, fixed_mu, data)     # successes column is a dummy LHS
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
-    if !isempty(re)                    # random effect on the logit mean → GHQ
-        length(re) == 1 || error("BetaBinomial() supports a single random-effect term on the mean")
+    if st !== nothing
+        isempty(re) ||
+            error("BetaBinomial() phylo structured effects cannot be combined with ordinary random effects yet")
+        kind, grp = st
+        kind === :phylo ||
+            error("BetaBinomial() currently supports only phylo(1 | group) among structured markers")
+        tree === nothing && error("phylo(1 | $grp) needs `tree = ...`")
+        (size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])) ||
+            error("BetaBinomial() phylo(1 | group) currently supports only a constant sigma formula")
+        labels = getproperty(data, grp)
+        return _withformula(_fit_betabinomial_phylo_laplace(fam, s, ntr, Xμ, labels, tree, nmμ, nmσ, grp, g_tol; se = se), f)
+    end
+    if !isempty(re)                    # random effect on the logit mean → GHQ/Laplace
+        if length(re) > 1
+            all(_re_kind(r[1])[1] === :intercept for r in re) ||
+                error("BetaBinomial() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
+            (size(Xσ, 2) == 1 && all(x -> x == 1.0, @view Xσ[:, 1])) ||
+                error("BetaBinomial() crossed random intercepts currently support only a constant sigma formula")
+            comps = map(re) do r
+                grp = r[2]; gidx, G = _group_index(getproperty(data, grp))
+                (ones(length(s)), gidx, G, String(grp))
+            end
+            return _withformula(_fit_betabinomial_crossed_laplace(fam, s, ntr, Xμ, comps, nmμ, nmσ, g_tol), f)
+        end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
         if rk === :intercept                              # (1 | g) → 1-D GHQ
             return _withformula(_fit_betabinomial_ranef(fam, s, ntr, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), f)

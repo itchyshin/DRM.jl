@@ -1,7 +1,7 @@
 # test_nongaussian_phylo_grad_gate.jl — STANDING FD-vs-analytic gradient gates (#165)
 # for the non-Gaussian PHYLOGENETIC sparse-Laplace routes that carry an exact
 # implicit-function gradient via the `_laplace_v123`/`_laplace_v123_nuisance` d3
-# kernels: NB2, Gamma, Binomial (and Beta, reported honestly).
+# kernels: NB2, Gamma, Binomial, Beta-binomial (#166) (and Beta, reported honestly).
 #
 # Companion to test_poisson_phylo_grad_gate.jl. Each route's analytic outer
 # gradient (the exact implicit-logdet gradient that reuses `takahashi_selinv`)
@@ -188,4 +188,37 @@ const BETA_TOL = 1e-4
     max_abs_diff = maximum(abs, g_an .- g_fd)
     @info "Beta phylo gradient gate (honest, line-search inner mode)" max_abs_diff g_an g_fd
     @test max_abs_diff ≤ BETA_TOL
+end
+
+# ---- Beta-binomial (#166) ---------------------------------------------------
+# Generalizes the `:beta_fixed` kernel above to beta-binomial's discrete
+# known-trials data term (shifted digamma/trigamma/polygamma arguments; see
+# docs/dev-log/plans/2026-08-02-166-betabinomial-kernel-design.md). Unlike Beta,
+# the discrete data term keeps the inner mode's Newton basin well-behaved
+# enough in practice to reach the tight ≤ 1e-6 gate (measured, not assumed).
+@testset "Beta-binomial phylo Laplace gradient gate (#166): FD-vs-exact ≤ 1e-6" begin
+    s = _phylo_setup_for_gate(2045; p = 10, m = 4)
+    _logistic(z) = 1 / (1 + exp(-z))
+    φtrue = 9.0
+    μ = _logistic.(0.10 .+ 0.30 .* s.x .+ s.u[s.species])
+    ntr = fill(8, s.n)
+    sint = [rand(Distributions.BetaBinomial(ntr[i], μ[i] * φtrue, (1 - μ[i]) * φtrue)) for i in 1:s.n]
+    logchoose = [DRM._logfactorial(ntr[i]) - DRM._logfactorial(sint[i]) -
+                 DRM._logfactorial(ntr[i] - sint[i]) for i in 1:s.n]
+    function aux_from(logsigma)
+        φ = exp(clamp(-2 * logsigma, -8.0, 8.0))
+        lgamma_nphi = [loggamma(ntr[i] + φ) for i in 1:s.n]
+        return (s = sint, ntr = ntr, logchoose = logchoose, precision = φ,
+                lgamma_nphi = lgamma_nphi, lgammaφ = loggamma(φ), digammaφ = digamma(φ))
+    end
+    θ = [0.05, 0.35, -0.5 * log(6.0), log(0.55)]
+    val0, g_an, b_base, ok = DRM._phylo_mean_laplace_nuisance_fg(
+        Val(:betabinomial_fixed), aux_from, s.n, s.Xμ, s.leaf_node, s.Q, s.logdetQ, θ;
+        grad = true, b0 = zeros(s.q), newton_tol = NTOL, newton_maxiter = NMAX,
+    )
+    @test ok && isfinite(val0) && val0 < 1e17
+    g_fd = _fd_nuisance(Val(:betabinomial_fixed), aux_from, s.n, s.Xμ, s.leaf_node, s.Q, s.logdetQ, θ, b_base)
+    max_abs_diff = maximum(abs, g_an .- g_fd)
+    @info "Beta-binomial phylo gradient gate" max_abs_diff g_an g_fd
+    @test max_abs_diff ≤ 1e-6
 end

@@ -660,12 +660,13 @@ function _fit_phylo_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, labe
                                           tree, nmμ, nmσ, grp, g_tol; θβ0,
                                           θσ0::Real, sigma_scale,
                                           se::Bool = false,
-                                          polish_iterations::Int = 0)
+                                          polish_iterations::Int = 0,
+                                          extra_scales = Dict{Symbol,Vector{Float64}}())
     Q, leaf_node, _ = _poisson_phylo_setup(tree, labels)
     return _fit_general_mean_laplace_nuisance(
         fam, kind, aux_from, n, Xμ, Q, leaf_node, nmμ, nmσ, grp, g_tol;
         θβ0 = θβ0, θσ0 = θσ0, sigma_scale = sigma_scale, se = se,
-        polish_iterations = polish_iterations,
+        polish_iterations = polish_iterations, extra_scales = extra_scales,
         prec_error = "phylo(1 | $grp) tree precision is not positive definite after root conditioning"
     )
 end
@@ -682,6 +683,7 @@ function _fit_general_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, Q,
                                             θσ0::Real, sigma_scale,
                                             se::Bool = false,
                                             polish_iterations::Int = 0,
+                                            extra_scales = Dict{Symbol,Vector{Float64}}(),
                                             prec_error::AbstractString = "structured(1 | $grp) precision is not positive definite")
     q = size(Q, 1)
     pμ = size(Xμ, 2)
@@ -766,7 +768,7 @@ function _fit_general_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, Q,
     auxhat = aux_from(clamp(θ̂[pμ+1], -8.0, 8.0))
     means = Dict(:mu => [_laplace_mean(kind, dot(@view(Xμ[i, :]), θ̂[1:pμ])) for i in 1:n])
     obs = Dict(:mu => [_laplace_obs(kind, auxhat, i) for i in 1:n])
-    scales = Dict(:sigma => fill(sigma_scale(θ̂[pμ+1]), n))
+    scales = merge(Dict(:sigma => fill(sigma_scale(θ̂[pμ+1]), n)), extra_scales)
     fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
     return _withnll(fit, nll, grad!)
 end
@@ -1368,6 +1370,53 @@ function _fit_beta_relmat_laplace(fam, y, Xμ, Xσ, C, labels, nmμ, nmσ, grp,
         fam, Val(:beta_fixed), aux_from, length(y), Xμ, Q, leaf_node, nmμ, nmσ,
         grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
         se = se, polish_iterations = polish_iterations
+    )
+end
+
+# Shared beta-binomial setup for the sparse-Laplace nuisance routes (phylo +
+# crossed; #166): the precision-dependent `aux_from` (φ = 1/σ², the
+# per-observation `lgamma_nphi[i] = loggamma(ntr[i]+φ)` rebuilt each outer
+# iterate since it depends on φ, mirroring `_beta_laplace_setup`), the
+# fixed-effect start, and a moderate-precision log-σ start (matches
+# `_fit_betabinomial_ranef`'s φ ≈ 10 init). Constant-σ (overdispersion) only;
+# nonconstant-sigma beta-binomial is out of scope for #166.
+function _betabinomial_laplace_setup(s, ntr, Xμ)
+    sint = round.(Int, s)
+    nint = round.(Int, ntr)
+    logchoose = [_logfactorial(nint[i]) - _logfactorial(sint[i]) - _logfactorial(nint[i] - sint[i]) for i in eachindex(sint)]
+    function aux_from(logsigma)
+        φ = exp(clamp(-2 * logsigma, -8.0, 8.0))
+        lgamma_nphi = [loggamma(nint[i] + φ) for i in eachindex(nint)]
+        return (s = sint, ntr = nint, logchoose = logchoose, precision = φ,
+                lgamma_nphi = lgamma_nphi, lgammaφ = loggamma(φ), digammaφ = digamma(φ))
+    end
+    p̄ = clamp(sum(s) / max(sum(ntr), 1), 1e-4, 1 - 1e-4)
+    θβ0 = zeros(size(Xμ, 2))
+    θβ0[1] = log(p̄ / (1 - p̄))
+    return aux_from, θβ0, -0.5 * log(10.0)   # moderate precision init (φ ≈ 10)
+end
+
+"""
+    _fit_betabinomial_phylo_laplace(fam, s, ntr, Xμ, labels, tree, nmμ, nmσ, grp, g_tol; se)
+
+Beta-binomial sparse-Laplace fit with a phylogenetic random intercept
+`phylo(1 | grp)` on the logit mean, constant-σ (overdispersion) only. Reuses
+the verified Beta-family nuisance Laplace spine
+([`_fit_phylo_mean_laplace_nuisance`](@ref)) with the `:betabinomial_fixed`
+kernel — shifted digamma/trigamma/polygamma arguments (`s+a`, `n-s+b`, `n+a+b`)
+replace Beta's `(a, b)` (#166; see
+`docs/dev-log/plans/2026-08-02-166-betabinomial-kernel-design.md`).
+"""
+function _fit_betabinomial_phylo_laplace(fam, s, ntr, Xμ, labels, tree, nmμ, nmσ,
+                                         grp, g_tol; se::Bool = true,
+                                         polish_iterations::Int = 0)
+    aux_from, θβ0, θσ0 = _betabinomial_laplace_setup(s, ntr, Xμ)
+    nint = round.(Int, ntr)
+    return _fit_phylo_mean_laplace_nuisance(
+        fam, Val(:betabinomial_fixed), aux_from, length(s), Xμ, labels, tree, nmμ, nmσ,
+        grp, g_tol; θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
+        se = se, polish_iterations = polish_iterations,
+        extra_scales = Dict(:trials => Float64.(nint))
     )
 end
 
@@ -2156,6 +2205,106 @@ function _laplace_nuisance_d2(::Val{:beta_fixed}, aux, i, η)
     return -2φ * (dB * v^2 + dA * vp)
 end
 
+# ---- Beta-binomial (successes out of known trials, constant σ; #166) --------
+# Generalizes the `:beta_fixed` kernel above from Beta's continuous data term
+# to beta-binomial's discrete known-trials term. log P(s) = logchoose(n,s) +
+# loggamma(s+a) + loggamma(n-s+b) - loggamma(n+φ) - loggamma(a) - loggamma(b) +
+# loggamma(φ), a = μφ, b = (1-μ)φ. The mean-axis score/curvature/skew (A, B, C)
+# take the same `φ·(digamma(a)-digamma(b))`-type forms as `:beta_fixed`, but
+# evaluated once at (a, b) and once at the *shifted* arguments (s+a, n-s+b) and
+# subtracted — the "shifted digamma/trigamma/polygamma" from the design note
+# (docs/dev-log/plans/2026-08-02-166-betabinomial-kernel-design.md). Constant-σ
+# (overdispersion) only: `aux.precision` is a fixed scalar φ, exactly mirroring
+# `:beta_fixed`'s aux shape plus the trials/logchoose/lgamma_nphi data fields.
+function _laplace_betabinomial_terms(aux, i, η)
+    μ = _laplace_logistic(clamp(η, -30.0, 30.0))
+    φ = aux.precision
+    a = μ * φ
+    b = (1 - μ) * φ
+    s = aux.s[i]
+    n = aux.ntr[i]
+    sa = s + a
+    nsb = (n - s) + b
+    A = φ * (digamma(a) - digamma(b)) - φ * (digamma(sa) - digamma(nsb))
+    B = φ^2 * (trigamma(a) + trigamma(b)) - φ^2 * (trigamma(sa) + trigamma(nsb))
+    C = φ^3 * (polygamma(2, a) - polygamma(2, b)) - φ^3 * (polygamma(2, sa) - polygamma(2, nsb))
+    v = μ * (1 - μ)
+    u = 1 - 2μ
+    vp = v * u
+    vpp = v * u^2 - 2v^2
+    return μ, A, B, C, v, vp, vpp
+end
+
+function _laplace_value(::Val{:betabinomial_fixed}, aux, i, η)
+    μ = _laplace_logistic(clamp(η, -30.0, 30.0))
+    φ = aux.precision
+    a = μ * φ
+    b = (1 - μ) * φ
+    s = aux.s[i]
+    n = aux.ntr[i]
+    return -(aux.logchoose[i] + loggamma(s + a) + loggamma((n - s) + b) -
+              aux.lgamma_nphi[i] - loggamma(a) - loggamma(b) + aux.lgammaφ)
+end
+
+function _laplace_d1(::Val{:betabinomial_fixed}, aux, i, η)
+    _, A, _, _, v, _, _ = _laplace_betabinomial_terms(aux, i, η)
+    return A * v
+end
+
+function _laplace_d2(::Val{:betabinomial_fixed}, aux, i, η)
+    _, A, B, _, v, vp, _ = _laplace_betabinomial_terms(aux, i, η)
+    return B * v^2 + A * vp
+end
+
+function _laplace_d3(::Val{:betabinomial_fixed}, aux, i, η)
+    _, A, B, C, v, vp, vpp = _laplace_betabinomial_terms(aux, i, η)
+    return C * v^3 + 3 * B * v * vp + A * vpp
+end
+
+_laplace_mean(::Val{:betabinomial_fixed}, η) = _laplace_logistic(clamp(η, -30.0, 30.0))
+_laplace_obs(::Val{:betabinomial_fixed}, aux, i) = aux.s[i] / aux.ntr[i]
+
+# φ-axis (nuisance) derivatives for the constant-σ phylo/crossed spine. By
+# Clairaut's theorem the mixed partials reuse the same (a, b, sa, nsb) terms —
+# `dA`/`dB` below are ∂A/∂φ, ∂B/∂φ, exactly as `_laplace_beta_nuisance_terms`
+# computes for `:beta_fixed` (see the design note for the closed forms).
+function _laplace_betabinomial_nuisance_terms(aux, i, η)
+    μ = _laplace_logistic(clamp(η, -30.0, 30.0))
+    φ = aux.precision
+    a = μ * φ
+    b = (1 - μ) * φ
+    s = aux.s[i]
+    n = aux.ntr[i]
+    sa = s + a
+    nsb = (n - s) + b
+    da = digamma(a); db = digamma(b); dsa = digamma(sa); dnsb = digamma(nsb)
+    ta = trigamma(a); tb = trigamma(b); tsa = trigamma(sa); tnsb = trigamma(nsb)
+    p2a = polygamma(2, a); p2b = polygamma(2, b)
+    p2sa = polygamma(2, sa); p2nsb = polygamma(2, nsb)
+    v = μ * (1 - μ)
+    vp = v * (1 - 2μ)
+    dL = digamma(n + φ) - aux.digammaφ + μ * (da - dsa) + (1 - μ) * (db - dnsb)
+    dA = (da - db - dsa + dnsb) + φ * μ * (ta - tsa) - φ * (1 - μ) * (tb - tnsb)
+    dB = 2φ * ((ta + tb) - (tsa + tnsb)) +
+         φ^2 * μ * (p2a - p2sa) + φ^2 * (1 - μ) * (p2b - p2nsb)
+    return φ, v, vp, dL, dA, dB
+end
+
+function _laplace_nuisance_value(::Val{:betabinomial_fixed}, aux, i, η)
+    φ, _, _, dL, _, _ = _laplace_betabinomial_nuisance_terms(aux, i, η)
+    return -2φ * dL
+end
+
+function _laplace_nuisance_d1(::Val{:betabinomial_fixed}, aux, i, η)
+    φ, v, _, _, dA, _ = _laplace_betabinomial_nuisance_terms(aux, i, η)
+    return -2φ * dA * v
+end
+
+function _laplace_nuisance_d2(::Val{:betabinomial_fixed}, aux, i, η)
+    φ, v, vp, _, dA, dB = _laplace_betabinomial_nuisance_terms(aux, i, η)
+    return -2φ * (dB * v^2 + dA * vp)
+end
+
 # ---- Beta with a per-observation log-dispersion (`sigma ~ x`; #164) ----------
 # Identical likelihood to `:beta_fixed`, but the precision φ is a per-observation
 # vector `aux.precision[i] = exp(-2·Xσ[i,:]·βσ)` rather than one scalar. The
@@ -2396,6 +2545,42 @@ function _laplace_v123_nuisance(::Val{:beta_fixed}, aux, i, η)
          μ * logy - (1 - μ) * log1my
     dA = da - db - aux.ylogit[i] + φ * (μ * ta - (1 - μ) * tb)
     dB = 2φ * (ta + tb) + φ^2 * (μ * p2a + (1 - μ) * p2b)
+    return (value,
+            A * v,
+            B * v^2 + A * vp,
+            C * v^3 + 3 * B * v * vp + A * vpp,
+            -2φ * dL,
+            -2φ * dA * v,
+            -2φ * (dB * v^2 + dA * vp))
+end
+
+function _laplace_d12(::Val{:betabinomial_fixed}, aux, i, η)
+    _, A, B, _, v, vp, _ = _laplace_betabinomial_terms(aux, i, η)
+    return A * v, B * v^2 + A * vp
+end
+
+function _laplace_v123(::Val{:betabinomial_fixed}, aux, i, η)
+    μ, A, B, C, v, vp, vpp = _laplace_betabinomial_terms(aux, i, η)
+    φ = aux.precision
+    a = μ * φ
+    b = (1 - μ) * φ
+    s = aux.s[i]
+    n = aux.ntr[i]
+    value = -(aux.logchoose[i] + loggamma(s + a) + loggamma((n - s) + b) -
+              aux.lgamma_nphi[i] - loggamma(a) - loggamma(b) + aux.lgammaφ)
+    return value, A * v, B * v^2 + A * vp, C * v^3 + 3 * B * v * vp + A * vpp
+end
+
+function _laplace_v123_nuisance(::Val{:betabinomial_fixed}, aux, i, η)
+    μ, A, B, C, v, vp, vpp = _laplace_betabinomial_terms(aux, i, η)
+    φ = aux.precision
+    a = μ * φ
+    b = (1 - μ) * φ
+    s = aux.s[i]
+    n = aux.ntr[i]
+    value = -(aux.logchoose[i] + loggamma(s + a) + loggamma((n - s) + b) -
+              aux.lgamma_nphi[i] - loggamma(a) - loggamma(b) + aux.lgammaφ)
+    _, _, _, dL, dA, dB = _laplace_betabinomial_nuisance_terms(aux, i, η)
     return (value,
             A * v,
             B * v^2 + A * vp,
@@ -2683,7 +2868,8 @@ function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gi
                                             hidx, Hh, nmμ, nmσ, labels, g_tol;
                                             θβ0, θσ0::Real, sigma_scale,
                                             se::Bool = false,
-                                            polish_iterations::Int = 0)
+                                            polish_iterations::Int = 0,
+                                            extra_scales = Dict{Symbol,Vector{Float64}}())
     pμ = size(Xμ, 2)
     last_b = zeros(G + Hh)
 
@@ -2764,7 +2950,7 @@ function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gi
     auxhat = aux_from(clamp(θ̂[pμ+1], -8.0, 8.0))
     means = Dict(:mu => [_laplace_mean(kind, dot(@view(Xμ[i, :]), θ̂[1:pμ])) for i in 1:n])
     obs = Dict(:mu => [_laplace_obs(kind, auxhat, i) for i in 1:n])
-    scales = Dict(:sigma => fill(sigma_scale(θ̂[pμ+1]), n))
+    scales = merge(Dict(:sigma => fill(sigma_scale(θ̂[pμ+1]), n)), extra_scales)
     fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
     return _withnll(fit, nll, grad!)
 end
@@ -2857,6 +3043,32 @@ function _fit_beta_crossed_laplace(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol;
         comps[2][2], comps[2][3], nmμ, nmσ, [comps[1][4], comps[2][4]], g_tol;
         θβ0 = θβ0, θσ0 = -0.5 * log(φ0), sigma_scale = exp,
         se = se, polish_iterations = polish_iterations
+    )
+end
+
+"""
+    _fit_betabinomial_crossed_laplace(fam, s, ntr, Xμ, comps, nmμ, nmσ, g_tol; se)
+
+Beta-binomial sparse-Laplace fit with two crossed random intercepts on the
+logit mean, e.g. `(1 | g) + (1 | h)`, constant-σ (overdispersion) only. Reuses
+the verified Beta-family crossed nuisance Laplace spine
+([`_fit_crossed_mean_laplace_nuisance`](@ref)) with the `:betabinomial_fixed`
+kernel (#166; see
+`docs/dev-log/plans/2026-08-02-166-betabinomial-kernel-design.md`).
+"""
+function _fit_betabinomial_crossed_laplace(fam, s, ntr, Xμ, comps, nmμ, nmσ, g_tol;
+                                           se::Bool = false, polish_iterations::Int = 0)
+    length(comps) == 2 || error("_fit_betabinomial_crossed_laplace requires two random-intercept components")
+    all(==(1.0), comps[1][1]) && all(==(1.0), comps[2][1]) ||
+        error("_fit_betabinomial_crossed_laplace supports scalar random intercepts only")
+    aux_from, θβ0, θσ0 = _betabinomial_laplace_setup(s, ntr, Xμ)
+    nint = round.(Int, ntr)
+    return _fit_crossed_mean_laplace_nuisance(
+        fam, Val(:betabinomial_fixed), aux_from, length(s), Xμ, comps[1][2], comps[1][3],
+        comps[2][2], comps[2][3], nmμ, nmσ, [comps[1][4], comps[2][4]], g_tol;
+        θβ0 = θβ0, θσ0 = θσ0, sigma_scale = exp,
+        se = se, polish_iterations = polish_iterations,
+        extra_scales = Dict(:trials => Float64.(nint))
     )
 end
 

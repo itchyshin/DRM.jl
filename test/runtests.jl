@@ -105,7 +105,9 @@ include("test_spatial_coord_poisson.jl")
 include("test_nb2_phylo_laplace.jl")
 include("test_gamma_beta_phylo_laplace.jl")
 include("test_binomial_phylo_laplace.jl")
+include("test_betabinomial_phylo_laplace.jl")
 include("test_crossed_laplace_generic.jl")
+include("test_betabinomial_crossed_laplace.jl")
 include("test_crossed_selected_inverse.jl")
 include("test_locscale_kernels.jl")
 include("test_locscale_inner.jl")
@@ -242,7 +244,7 @@ include("test_poisson_phylo_grad_gate.jl")
 include("test_poisson_crossed_grad_gate.jl")
 
 # Standing FD-vs-exact gradient gates (#165) for the other non-Gaussian phylo
-# routes (NB2, Gamma, Binomial ≤ 1e-6; Beta reported honestly).
+# routes (NB2, Gamma, Binomial, Beta-binomial (#166) ≤ 1e-6; Beta reported honestly).
 include("test_nongaussian_phylo_grad_gate.jl")
 
 # Non-Gaussian phylogenetic LOCATION–SCALE (#202): scale-axis SD recovery + the
