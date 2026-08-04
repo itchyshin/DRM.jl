@@ -1,12 +1,10 @@
-GOAL: see GOAL.md (#385). STATE: DONE pending owner merge of PR.
+GOAL: see GOAL.md (tip-idle after #386). STATE: docs hygiene in progress on branch.
 ARCS DONE (verified):
-  Arc0 — #385 opened
-  Rung1 — fixture generated (drmTMB 0.6.0)
-  Rung2 — cohort + docs; `_nb2` Dual guard; atol_coef soft-diff
-  Verify — harness 17+8; native 11+xfam skip; bridge 11/11; test_nbinom2 FE sigma~x
-  Closeout — check-log.d + after-task + Rose
-ARC IN PROGRESS: none
-NEXT: owner merge of https://github.com/itchyshin/DRM.jl/pull/386 (closes #385)
-OPEN GATES (need human): merge PR #386 to main
-TRUTH LIVES IN: feat/nbinom2-dispersion-parity; issue #385
-RESUME: Owner merge gate. Do not reopen #370/#383/#376. Leave .worktrees/ alone.
+  RECON — tip d543f94; #386 MERGED (gh + fetch)
+  S1 — LOOP kit rewritten for tip IDLE
+  S2 — handover after-386 written (supersedes after-381)
+ARC IN PROGRESS: S3 — commit + open docs PR
+NEXT: push branch; open docs PR; MECH-VERIFY + Rose; optional vault MC tip refresh
+OPEN GATES (need human): owner merge of this tip-idle docs PR (L2)
+TRUTH LIVES IN: docs/tip-idle-after-386 @ pre-push; tip baseline d543f94
+RESUME: Finish tip-idle after #386 docs PR. Do not invent ship G0. Leave .worktrees/ alone.
