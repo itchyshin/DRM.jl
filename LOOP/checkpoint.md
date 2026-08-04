@@ -6,7 +6,7 @@ ARCS DONE (verified):
   Verify — harness 17+8; native 11+xfam skip; bridge 11/11; test_nbinom2 FE sigma~x
   Closeout — check-log.d + after-task + Rose
 ARC IN PROGRESS: none
-NEXT: owner merge of PR (closes #385)
-OPEN GATES (need human): merge PR to main
+NEXT: owner merge of https://github.com/itchyshin/DRM.jl/pull/386 (closes #385)
+OPEN GATES (need human): merge PR #386 to main
 TRUTH LIVES IN: feat/nbinom2-dispersion-parity; issue #385
 RESUME: Owner merge gate. Do not reopen #370/#383/#376. Leave .worktrees/ alone.
