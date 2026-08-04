@@ -1,0 +1,19 @@
+[fit]
+family = "binomial"
+formula = "cbind(successes, failures) ~ x"
+loglik = -3.235445998008322e+02
+aic = 6.510891996016644e+02
+df = 2
+n = 180
+
+[coef]
+"mu_(Intercept)" = -2.0353870192000145e-01
+"mu_x" = 4.4797950210387205e-01
+
+[vcov]
+order = ["mu_(Intercept)", "mu_x"]
+data = [[2.3982143941611378e-03, -3.9403876320842548e-04], [-3.9403876320842553e-04, 2.6056091332692564e-03]]
+
+[tol]
+atol_loglik = 1e-3
+atol_aic = 1e-3

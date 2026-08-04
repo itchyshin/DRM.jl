@@ -1,7 +1,7 @@
 # DRM.jl R-parity +4 FE bridge parity (Workflow G)
 
-**Status:** G0 — awaiting owner approval. Plan-only; **STOP at G0** (no Phase 3).  
-**Tip truth:** `origin/main` @ **`b538768`** (#382 tip-idle after #381 MERGED).  
+**Status:** G0 APPROVED → `/goal` executing (issue **#383**).  
+**Tip truth:** `origin/main` @ **`b538768`** (+ branch `feat/r-parity-plus4-fe-bridge`).  
 **Human review link:** [`docs/dev-log/plans/2026-08-03-r-parity-plus4-fe-bridge-ultra-plan.md`](2026-08-03-r-parity-plus4-fe-bridge-ultra-plan.md)
 
 **Fences (hard):** D-111 OFF · leave `.worktrees/` · no GPL vendoring · no q4 `src/` · no Lovelace / drmTMB R edits · do not reopen #5 / #17 / #370 / #376 (nor #349 / #372).
@@ -59,7 +59,15 @@
 
 ### Actuals (complete at close)
 
-*(empty until `/goal` closes)*
+| Item | Actual |
+|---|---|
+| Issue | [#383](https://github.com/itchyshin/DRM.jl/issues/383) |
+| Admitted | all 4: poisson / gamma / binomial / lognormal (slugs `count-poisson`, `positive-gamma`, `binomial-trials`, `positive-lognormal`) |
+| drmTMB version (new fixtures) | **0.6.0** (meta.toml); old six remain v0.1.3 numbers |
+| Scale transforms | none (loglik Δ ~1e-12) |
+| Verify | harness 17+8; native 10+xfam skip; bridge **10/10** |
+| Under-run | #186 CLOSED (ledger; #187–#189 already CLOSED) |
+| Timing claim | **no-claim** for +4 |
 
 **HAND TO ULTRA PLAN:** Cursor · 2–3 h · expand Workflow G/`drm_bridge` coef parity to poisson+gamma+binomial+lognormal · reuse #370 harness · fences D-111 / `.worktrees/` / no GPL / no q4 src / no Lovelace / do not rebuild closed #5/#17/#370/#376.
 

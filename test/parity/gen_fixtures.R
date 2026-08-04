@@ -346,13 +346,100 @@ generate_nbinom2_dispersion <- function() {
   )
 }
 
-generate_gaussian()
-generate_bivariate()
-generate_meta()
-generate_student()
-generate_nbinom2()
-generate_beta()
-generate_nbinom2_dispersion()
+## +4 FE cohort (#383): families already in drm_bridge `_bridge_family` but
+## previously absent from committed fixtures / `_BRIDGE_PARITY_COHORT`.
+generate_poisson <- function() {
+  seed <- 20260803
+  set.seed(seed)
+  n <- 180
+  x <- rnorm(n)
+  y <- rpois(n, lambda = exp(0.3 + 0.45 * x))
+  dat <- data.frame(y = y, x = x)
+  fit <- drmTMB(drm_formula(y ~ x), family = poisson(), data = dat)
+  write_case(
+    "count-poisson", seed, dat, "y ~ x", "poisson",
+    "drmTMB(drm_formula(y ~ x), family = poisson(), data = dat)",
+    fit,
+    "Poisson mean-only (log link); no sigma slot."
+  )
+}
+
+generate_gamma <- function() {
+  seed <- 20260804
+  set.seed(seed)
+  n <- 180
+  x <- rnorm(n)
+  mu <- exp(0.1 + 0.3 * x)
+  shape <- 4
+  y <- rgamma(n, shape = shape, scale = mu / shape)
+  dat <- data.frame(y = y, x = x)
+  ## drmTMB requires Gamma(link = "log"); base::gamma() is the math function.
+  fit <- drmTMB(drm_formula(y ~ x, sigma ~ 1),
+                family = Gamma(link = "log"), data = dat)
+  write_case(
+    "positive-gamma", seed, dat, "y ~ x; sigma ~ 1", "gamma",
+    "drmTMB(drm_formula(y ~ x, sigma ~ 1), family = Gamma(link = \"log\"), data = dat)",
+    fit,
+    "Gamma: log(mu), log(sigma) with sigma = CV (alpha = 1/sigma^2); shared scale."
+  )
+}
+
+generate_binomial <- function() {
+  seed <- 20260805
+  set.seed(seed)
+  n <- 180
+  x <- rnorm(n)
+  trials <- rep(10L, n)
+  p <- plogis(-0.2 + 0.5 * x)
+  successes <- rbinom(n, size = trials, prob = p)
+  failures <- as.integer(trials - successes)
+  dat <- data.frame(successes = successes, failures = failures, x = x)
+  fit <- drmTMB(drm_formula(cbind(successes, failures) ~ x),
+                family = binomial(), data = dat)
+  write_case(
+    "binomial-trials", seed, dat, "cbind(successes, failures) ~ x", "binomial",
+    "drmTMB(drm_formula(cbind(successes, failures) ~ x), family = binomial(), data = dat)",
+    fit,
+    "Binomial mean-only (logit link); cbind(successes, failures) response."
+  )
+}
+
+generate_lognormal <- function() {
+  seed <- 20260806
+  set.seed(seed)
+  n <- 180
+  x <- rnorm(n)
+  y <- exp(0.2 + 0.4 * x + 0.5 * rnorm(n))
+  dat <- data.frame(y = y, x = x)
+  fit <- drmTMB(drm_formula(y ~ x, sigma ~ 1),
+                family = lognormal(), data = dat)
+  write_case(
+    "positive-lognormal", seed, dat, "y ~ x; sigma ~ 1", "lognormal",
+    "drmTMB(drm_formula(y ~ x, sigma ~ 1), family = lognormal(), data = dat)",
+    fit,
+    "LogNormal: mu = E[log y], sigma = SD(log y) on log link; shared scale."
+  )
+}
+
+## Optional filter: DRM_PARITY_ONLY=count-poisson,positive-gamma regenerates
+## only those slugs (comma-separated). Empty = all default FE cases below.
+.parity_only <- strsplit(Sys.getenv("DRM_PARITY_ONLY", unset = ""), ",", fixed = TRUE)[[1]]
+.parity_only <- trimws(.parity_only[.parity_only != ""])
+.run_parity <- function(slug, fn) {
+  if (length(.parity_only) == 0L || slug %in% .parity_only) fn()
+}
+
+.run_parity("gaussian-locscale", generate_gaussian)
+.run_parity("gaussian-bivariate-rho12", generate_bivariate)
+.run_parity("meta-analysis-V", generate_meta)
+.run_parity("robust-student", generate_student)
+.run_parity("count-nbinom2", generate_nbinom2)
+.run_parity("proportion-beta", generate_beta)
+.run_parity("nbinom2-dispersion", generate_nbinom2_dispersion)
+.run_parity("count-poisson", generate_poisson)
+.run_parity("positive-gamma", generate_gamma)
+.run_parity("binomial-trials", generate_binomial)
+.run_parity("positive-lognormal", generate_lognormal)
 
 ## The coupled (1|p|species) mu/sigma correlated random effect is NOT yet
 ## supported by drmTMB ("planned for a later non-Gaussian random-effect gate"),
@@ -360,9 +447,11 @@ generate_nbinom2_dispersion()
 ## DRM.jl already fits this model; until drmTMB catches up it is validated
 ## internally (marginal vs Gauss–Hermite, exact gradient vs finite differences,
 ## recovery, stationarity), not against drmTMB.
-tryCatch(generate_nbinom2_locscale(),
-         error = function(e) message(
-             "Skipping `nbinom2-locscale`: drmTMB does not yet support the coupled ",
-             "(1|p|species) mu/sigma random effect for nbinom2 — ", conditionMessage(e)))
+if (length(.parity_only) == 0L || "nbinom2-locscale" %in% .parity_only) {
+  tryCatch(generate_nbinom2_locscale(),
+           error = function(e) message(
+               "Skipping `nbinom2-locscale`: drmTMB does not yet support the coupled ",
+               "(1|p|species) mu/sigma random effect for nbinom2 — ", conditionMessage(e)))
+}
 
 message("Generated drmTMB parity fixtures under test/parity/fixtures/")

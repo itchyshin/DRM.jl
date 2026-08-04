@@ -1,9 +1,11 @@
 # R ↔ Julia bridge
 
-!!! note "Status — Experimental bridge + fixture-backed coefficient-scale gate (#370) + measured six-cell timing (#372)"
+!!! note "Status — Experimental bridge + fixture-backed coefficient-scale gate (#370/#383) + measured six-cell timing (#372)"
     DRM.jl exposes `drm_bridge()`, a marshalling-friendly entry point for the R-side `drmTMB(formula, ..., engine = "julia")` glue. The companion R glue lives in the **drmTMB R repository** via [JuliaCall](https://github.com/JuliaInterop/JuliaCall).
 
-    **Admitted fixture-backed coefficient-scale parity** (opt-in `DRM_PARITY_TESTS=1`, via `drm_bridge` + committed drmTMB v0.1.3 generated numbers only):
+    **Admitted fixture-backed coefficient-scale parity** (opt-in `DRM_PARITY_TESTS=1`, via `drm_bridge` + committed drmTMB generated numbers only):
+
+    Original six (#370; drmTMB **v0.1.3** numbers):
 
     - `gaussian-locscale`
     - `gaussian-bivariate-rho12`
@@ -12,13 +14,21 @@
     - `proportion-beta`
     - `meta-analysis-V`
 
-    **Measured warm wall-clock** for the same six fixtures (local machine;
-    Julia `drm_bridge` vs installed drmTMB **0.6.0**; BLAS/OMP threads = 1;
-    1 warmup + 5 timed reps; median R/Julia ratios ≈ **4.8×–46×** depending on
-    cell — full method, versions, and per-cell medians retained in
+    +4 FE cohort (#383; drmTMB **0.6.0** numbers — recorded in each `expected.meta.toml`):
+
+    - `count-poisson`
+    - `positive-gamma`
+    - `binomial-trials`
+    - `positive-lognormal`
+
+    **Measured warm wall-clock** for the original six fixtures only (#372; local
+    machine; Julia `drm_bridge` vs installed drmTMB **0.6.0**; BLAS/OMP
+    threads = 1; 1 warmup + 5 timed reps; median R/Julia ratios ≈ **4.8×–46×**
+    depending on cell — full method, versions, and per-cell medians retained in
     `docs/dev-log/evidence/2026-08-03-372-six-cell-timing.md`).
-    This is **not** a general “Nx faster for all drmTMB models” claim, and it is
-    **not** the verified q=4 PLSM 2.18× cell (`report/comparison-grid.md`).
+    This is **not** a general “Nx faster for all drmTMB models” claim, **not** a
+    timing claim for the +4 FE cells (Rose: default no-claim until measured),
+    and it is **not** the verified q=4 PLSM 2.18× cell (`report/comparison-grid.md`).
     For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
 
 ## The idea
@@ -32,7 +42,7 @@ Two ways to use DRM.jl from R, in increasing integration:
    returns a result object shaped like a native drmTMB fit. Experimental for
    Gaussian one-response and two-response models, the first Gaussian
    `phylo(1 | species)` mean bridge with constant `sigma`, narrow
-   complete-response q=2 structured Gaussian fixtures, and the six
+   complete-response q=2 structured Gaussian fixtures, and the ten
    fixture-backed coefficient-scale cells listed above (Julia-side
    `drm_bridge` gate; R-side Lovelace glue remains in the drmTMB repo).
 
@@ -60,14 +70,17 @@ finite mean-coefficient covariance block. Scale and variance-component
 covariance are still left unset for the R bridge, so profile/bootstrap work
 remains the next inference slice.
 
-## Coefficient-scale parity gate (#370)
+## Coefficient-scale parity gate (#370 / #383)
 
-Behind `DRM_PARITY_TESTS=1`, `test/parity/runparity_bridge.jl` fits the six
-cohort fixtures through `drm_bridge` and compares against committed
-`expected.toml` numbers via `compare_bridge` (same coef bar as Workflow G /
-`compare_fit`: default `atol_coef=1e-6`, `rtol_coef=1e-4`, with per-case
-`[tol]` overrides). Native `drm()` parity (`runparity.jl`, #17) still runs in
-the same env gate. `xfam-external-gllvm` remains OUT (cross-package estimand).
+Behind `DRM_PARITY_TESTS=1`, `test/parity/runparity_bridge.jl` fits the
+admitted cohort fixtures (original six + four FE families) through
+`drm_bridge` and compares against committed `expected.toml` numbers via
+`compare_bridge` (same coef bar as Workflow G / `compare_fit`: default
+`atol_coef=1e-6`, `rtol_coef=1e-4`, with per-case `[tol]` overrides). Native
+`drm()` parity (`runparity.jl`, #17) still runs in the same env gate.
+`xfam-external-gllvm` remains OUT (cross-package estimand).
+`nbinom2-dispersion` may exist as a generator output but is not in the
+bridge cohort until separately admitted.
 
 MIT/GPL: fixtures are **generated numeric outputs only** — never vendored
 drmTMB source.
@@ -94,6 +107,6 @@ Tracked in the issue ledger:
 
 Use the bridge for Gaussian one-response / two-response, the admitted Gaussian
 phylogenetic smoke runs, the narrow q=2 structured exact-Gaussian fixture
-cells, and the six coefficient-scale fixture families above. Use hand-translation
+cells, and the ten coefficient-scale fixture families above. Use hand-translation
 via the Rosetta phrasebook or native `drmTMB` for remaining families and
 unsupported formula features.

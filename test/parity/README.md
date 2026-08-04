@@ -148,8 +148,8 @@ if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
     @testset "R-parity vs drmTMB v0.1.3" begin
         include("parity/runparity.jl")          # native drm() path
     end
-    @testset "R-parity via drm_bridge vs drmTMB v0.1.3" begin
-        include("parity/runparity_bridge.jl")   # marshalling path (#370 cohort)
+    @testset "R-parity via drm_bridge vs drmTMB fixtures" begin
+        include("parity/runparity_bridge.jl")   # marshalling path (#370 + #383 cohort)
     end
 else
     @info "R-parity suite skipped (set DRM_PARITY_TESTS=1 to run)"
@@ -157,13 +157,16 @@ end
 ```
 
 `runparity.jl` globs `fixtures/*/expected.toml`, fits each case with native
-`drm()`, and applies `compare.jl`'s contract. `runparity_bridge.jl` (#370) fits
-the six Workflow G cohort cells through `drm_bridge` + `compare_bridge`
-(xfam-external-gllvm is OUT). **No RCall at run time** — fixtures are static.
-Regeneration is explicit and local-only:
+`drm()`, and applies `compare.jl`'s contract. `runparity_bridge.jl` (#370 /
+#383) fits the admitted Workflow G cohort (original six + four FE families)
+through `drm_bridge` + `compare_bridge` (xfam-external-gllvm is OUT). **No
+RCall at run time** — fixtures are static. Regeneration is explicit and
+local-only:
 
 ```sh
 Rscript --vanilla test/parity/gen_fixtures.R
+# or a slug subset:
+DRM_PARITY_ONLY=count-poisson,positive-gamma Rscript --vanilla test/parity/gen_fixtures.R
 ```
 
 CI: the parity gate is a dedicated `workflow_dispatch` / opt-in job that sets
@@ -174,7 +177,8 @@ discipline). The default PR test run stays fast and R-free.
 
 ## What #17 delivers vs. defers
 
-- **This suite (#17):** directory + fixture format + comparison contract +
-  env-gate wiring + committed canonical fixtures. License-clean by construction.
-- **Deferred:** opt-in CI scheduling for the parity gate and additional fixture
-  cells beyond the six canonical cases.
+- **This suite (#17 / #370 / #383):** directory + fixture format + comparison
+  contract + env-gate wiring + committed canonical fixtures (six + four FE).
+  License-clean by construction.
+- **Deferred:** opt-in CI scheduling for the parity gate and further fixture
+  cells beyond the admitted cohort.

@@ -36,7 +36,15 @@ From the repository root:
 Rscript --vanilla test/parity/gen_fixtures.R
 ```
 
-The script writes the six canonical fixture folders:
+Optional filter (comma-separated slugs) — regenerate only those folders:
+
+```sh
+DRM_PARITY_ONLY=count-poisson,positive-gamma,binomial-trials,positive-lognormal \
+  Rscript --vanilla test/parity/gen_fixtures.R
+```
+
+The script writes the canonical fixture folders (plus optional extras when
+supported by the installed drmTMB):
 
 - `gaussian-locscale`
 - `gaussian-bivariate-rho12`
@@ -44,10 +52,13 @@ The script writes the six canonical fixture folders:
 - `robust-student`
 - `count-nbinom2`
 - `proportion-beta`
+- `count-poisson` / `positive-gamma` / `binomial-trials` / `positive-lognormal` (#383)
 
 The generator records the exact `drmTMB` package version in each
-`expected.meta.toml`. To force the pinned tag without modifying the user's
-normal R library, prepend a temporary library containing `drmTMB 0.1.3` before
+`expected.meta.toml`. The original six were generated against drmTMB
+**v0.1.3**; the +4 FE cohort (#383) against the maintainer’s installed
+**0.6.0**. To force the pinned tag without modifying the user's normal R
+library, prepend a temporary library containing `drmTMB 0.1.3` before
 sourcing the script.
 
 ## R snippet shape
