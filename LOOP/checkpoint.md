@@ -1,13 +1,12 @@
-GOAL: see GOAL.md.   STATE: DONE pending owner merge of PR #384 (closes #383).
+GOAL: see GOAL.md (#385). STATE: DONE pending owner merge of PR.
 ARCS DONE (verified):
-  Arc0 — #383; drm_bridge smoke 4/4 PASS
-  Rung1 — generators + fixtures (drmTMB 0.6.0); no GPL
-  Rung2 — cohort wired; native 10+xfam skip; bridge 10/10
-  Docs — r-julia-bridge.md + parity README/GENERATING
-  Under#186 — epic CLOSED (ledger)
-  Closeout — check-log.d + after-task + Rose; PR #384 opened
+  Arc0 — #385 opened
+  Rung1 — fixture generated (drmTMB 0.6.0)
+  Rung2 — cohort + docs; `_nb2` Dual guard; atol_coef soft-diff
+  Verify — harness 17+8; native 11+xfam skip; bridge 11/11; test_nbinom2 FE sigma~x
+  Closeout — check-log.d + after-task + Rose
 ARC IN PROGRESS: none
-NEXT: owner merge of https://github.com/itchyshin/DRM.jl/pull/384 (OPEN GATE)
-OPEN GATES (need human): merge PR #384 to main (owner)
-TRUTH LIVES IN: feat/r-parity-plus4-fe-bridge @ e9999ae; PR #384; issue #383
-RESUME: Owner merge gate only. If more work: READ LOOP/GOAL.md -> checkpoint.md. Do not reopen closed #5/#17/#370/#376.
+NEXT: owner merge of https://github.com/itchyshin/DRM.jl/pull/386 (closes #385)
+OPEN GATES (need human): merge PR #386 to main
+TRUTH LIVES IN: feat/nbinom2-dispersion-parity; issue #385
+RESUME: Owner merge gate. Do not reopen #370/#383/#376. Leave .worktrees/ alone.
