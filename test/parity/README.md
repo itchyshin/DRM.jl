@@ -149,7 +149,7 @@ if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
         include("parity/runparity.jl")          # native drm() path
     end
     @testset "R-parity via drm_bridge vs drmTMB fixtures" begin
-        include("parity/runparity_bridge.jl")   # marshalling path (#370 + #383 cohort)
+        include("parity/runparity_bridge.jl")   # marshalling path (#370/#383/#385 cohort)
     end
 else
     @info "R-parity suite skipped (set DRM_PARITY_TESTS=1 to run)"
@@ -158,10 +158,10 @@ end
 
 `runparity.jl` globs `fixtures/*/expected.toml`, fits each case with native
 `drm()`, and applies `compare.jl`'s contract. `runparity_bridge.jl` (#370 /
-#383) fits the admitted Workflow G cohort (original six + four FE families)
-through `drm_bridge` + `compare_bridge` (xfam-external-gllvm is OUT). **No
-RCall at run time** — fixtures are static. Regeneration is explicit and
-local-only:
+#383 / #385) fits the admitted Workflow G cohort (original six + four FE
+families + `nbinom2-dispersion`) through `drm_bridge` + `compare_bridge`
+(xfam-external-gllvm is OUT). **No RCall at run time** — fixtures are static.
+Regeneration is explicit and local-only:
 
 ```sh
 Rscript --vanilla test/parity/gen_fixtures.R
@@ -177,8 +177,8 @@ discipline). The default PR test run stays fast and R-free.
 
 ## What #17 delivers vs. defers
 
-- **This suite (#17 / #370 / #383):** directory + fixture format + comparison
-  contract + env-gate wiring + committed canonical fixtures (six + four FE).
-  License-clean by construction.
+- **This suite (#17 / #370 / #383 / #385):** directory + fixture format +
+  comparison contract + env-gate wiring + committed canonical fixtures (six +
+  four FE + `nbinom2-dispersion`). License-clean by construction.
 - **Deferred:** opt-in CI scheduling for the parity gate and further fixture
   cells beyond the admitted cohort.

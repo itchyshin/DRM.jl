@@ -53,13 +53,14 @@ supported by the installed drmTMB):
 - `count-nbinom2`
 - `proportion-beta`
 - `count-poisson` / `positive-gamma` / `binomial-trials` / `positive-lognormal` (#383)
+- `nbinom2-dispersion` (#385; `y ~ x; sigma ~ x`, FE)
 
 The generator records the exact `drmTMB` package version in each
 `expected.meta.toml`. The original six were generated against drmTMB
-**v0.1.3**; the +4 FE cohort (#383) against the maintainer’s installed
-**0.6.0**. To force the pinned tag without modifying the user's normal R
-library, prepend a temporary library containing `drmTMB 0.1.3` before
-sourcing the script.
+**v0.1.3**; the +4 FE cohort (#383) and `nbinom2-dispersion` (#385) against
+the maintainer’s installed **0.6.0**. To force the pinned tag without modifying
+the user's normal R library, prepend a temporary library containing
+`drmTMB 0.1.3` before sourcing the script.
 
 ## R snippet shape
 
