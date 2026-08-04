@@ -1,13 +1,13 @@
-GOAL: see GOAL.md.   STATE: verify green; DoD artifacts written; awaiting PR open.
+GOAL: see GOAL.md.   STATE: DONE pending owner merge of PR #384 (closes #383).
 ARCS DONE (verified):
-  Arc0 — issue #383; drm_bridge smoke 4/4 PASS (no scale-risk)
-  Rung1 — generators + fixtures (drmTMB 0.6.0 meta); DRM_PARITY_ONLY used
-  Rung2 — cohort+family wire; native 10+xfam skip, bridge 10/10 (log read)
+  Arc0 — #383; drm_bridge smoke 4/4 PASS
+  Rung1 — generators + fixtures (drmTMB 0.6.0); no GPL
+  Rung2 — cohort wired; native 10+xfam skip; bridge 10/10
   Docs — r-julia-bridge.md + parity README/GENERATING
-  Under#186 — epic CLOSED (ledger; #187–#189 already CLOSED)
-  Closeout DoD — check-log.d + after-task + Rose table written
-ARC IN PROGRESS: Closeout PR (OPEN GATE: open PR; merge = owner)
-NEXT: commit implementation + open PR closes #383
-OPEN GATES (need human): merge to main (owner may merge after review)
-TRUTH LIVES IN: branch feat/r-parity-plus4-fe-bridge; fixtures test/parity/fixtures/{count-poisson,positive-gamma,binomial-trials,positive-lognormal}/; /tmp/drm-parity-full.log
-RESUME: You are DRM.jl +4 FE R-parity lane — RESUME. READ FIRST: LOOP/GOAL.md -> LOOP/checkpoint.md -> LOOP/ultra-plan.md. WORKSPACE: feat/r-parity-plus4-fe-bridge. CONTINUE FROM: commit + gh pr create closes #383. Pause at merge (owner).
+  Under#186 — epic CLOSED (ledger)
+  Closeout — check-log.d + after-task + Rose; PR #384 opened
+ARC IN PROGRESS: none
+NEXT: owner merge of https://github.com/itchyshin/DRM.jl/pull/384 (OPEN GATE)
+OPEN GATES (need human): merge PR #384 to main (owner)
+TRUTH LIVES IN: feat/r-parity-plus4-fe-bridge @ e9999ae; PR #384; issue #383
+RESUME: Owner merge gate only. If more work: READ LOOP/GOAL.md -> checkpoint.md. Do not reopen closed #5/#17/#370/#376.
