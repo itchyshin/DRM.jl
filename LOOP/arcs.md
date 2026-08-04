@@ -1,7 +1,15 @@
-# arcs — #376 closed; tip idle after #376+#377+#378+#379+#380+#381
+# Arcs — R-parity +4 FE bridge (status-marked)
 
-- Arc 0–5: #376 measured q4 scaling H2H; PR #377 merged @ ae4e67d
-- Tip-idle hygiene #378–#381 MERGED (latest #381 @ 08bc4dc)
-- START HERE refresh (this docs PR): handover after-381 so tip SHA matches `08bc4dc`
-- Status: DONE / tip idle — next is owner **DRM.jl** G0; leave `.worktrees/` alone; D-111 OFF
-- Lane fence: DRM.jl only — do not bleed other subjects into this LOOP
+| ID | Status | Gate? | Arc |
+|---|---|---|---|
+| Arc0 | PENDING | no | Issue + 4-cell drm_bridge smoke inventory |
+| Rung1 | PENDING | no | gen_fixtures.R + MIT fixtures + meta.toml |
+| Rung2 | PENDING | no | `_BRIDGE_PARITY_COHORT` + `_parity_family` + DRM_PARITY_TESTS=1 |
+| Docs | PENDING | no | `r-julia-bridge.md` (+ parity README if needed) |
+| Closeout | PENDING | OPEN GATE: PR open (merge = owner) | check-log.d + after-task + Rose + PR |
+| Under#186 | OPTIONAL | no | Close stale epic #186 checklist only if early |
+
+## Verify (always)
+1. `test_parity_harness.jl` green
+2. `DRM_PARITY_TESTS=1` native + bridge: old six + new admitted
+3. Rose: admitted list = evidence; no speed claim; MIT/GPL boundary
