@@ -1,0 +1,1 @@
+| 2026-08-03 | #385 admit `nbinom2-dispersion` Workflow G bridge+native | `DRM_PARITY_TESTS=1` native 11+xfam-skip; bridge 11/11; harness 17+8; `test_nbinom2` FE sigma~x | ✅ Generator→fixture (drmTMB 0.6.0); `_BRIDGE_PARITY_COHORT`; `_nb2(; check_args=false)` Dual(p=1) fix; `[tol] atol_coef=2e-5` soft-diff; Rose no-claim timing | Shannon/Hopper/Rose |

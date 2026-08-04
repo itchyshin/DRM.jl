@@ -12,8 +12,9 @@ using TOML
 isdefined(@__MODULE__, :ParityExpected) || include("compare.jl")
 isdefined(@__MODULE__, :load_expected) || include("loadfixture.jl")
 
-# Cohort admitted by #370 + #383 (+4 FE). Anything else under fixtures/ is
-# skipped here (native runparity.jl still walks the full directory).
+# Cohort admitted by #370 + #383 (+4 FE) + #385 (nbinom2-dispersion).
+# Anything else under fixtures/ is skipped here (native runparity.jl still
+# walks the full directory).
 const _BRIDGE_PARITY_COHORT = Set([
     "gaussian-locscale",
     "gaussian-bivariate-rho12",
@@ -25,6 +26,7 @@ const _BRIDGE_PARITY_COHORT = Set([
     "positive-gamma",
     "binomial-trials",
     "positive-lognormal",
+    "nbinom2-dispersion",
 ])
 
 let fixtures_root = joinpath(@__DIR__, "fixtures")

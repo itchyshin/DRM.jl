@@ -9,6 +9,13 @@
 
 using Distributions: NegativeBinomial, logpdf
 
+# Distributions' `zero(p) < p <= one(p)` rejects ForwardDiff Duals whose *value*
+# is 1.0 but whose partials are nonzero — `one(p)` has zero partials, so Dual
+# ordering fails `p <= one(p)` and FE `sigma ~ x` L-BFGS aborts mid-step
+# (#385 / nbinom2-dispersion). Soft-clamped η keep r>0 and p∈(0,1] in exact
+# arithmetic; disable constructor checks for AD.
+@inline _nb2(r, p) = NegativeBinomial(r, p; check_args = false)
+
 # Smooth clamp of a linear predictor, in the spirit of drmTMB's
 # `drm_softclamp_log_sigma` (src/drmTMB.cpp): EXACTLY the identity inside the band
 # `[lo, hi]` and C1-smoothly saturating within `margin` beyond each bound (overall
@@ -165,7 +172,7 @@ function _fit_negbin2_ranef(fam::NegBinomial2, y, Xμ, Xσ, gidx, G, nmμ, nmσ,
                 gll = logw[k]
                 for i in idx
                     μ = exp(clamp(η0[i] + δ, -20.0, 20.0)); r = exp(-2 * ησ[i]); p = r / (r + μ)
-                    gll += logpdf(NegativeBinomial(r, p), yint[i])
+                    gll += logpdf(_nb2(r, p), yint[i])
                 end
                 terms[k] = gll
             end
@@ -219,7 +226,7 @@ function _fit_negbin2_corr_ranef(fam::NegBinomial2, y, Xμ, Xσ, xs, gidx, G, nm
                 gll = lw[j] + lw[k]
                 for i in idx
                     μ = exp(clamp(η0[i] + b0 + b1 * xs[i], -20.0, 20.0)); r = exp(-2 * ησ[i]); p = r / (r + μ)
-                    gll += logpdf(NegativeBinomial(r, p), yint[i])
+                    gll += logpdf(_nb2(r, p), yint[i])
                 end
                 terms[t] = gll
             end
@@ -255,7 +262,7 @@ function _fit_negbin2_zi(fam::NegBinomial2, y, Xμ, Xσ, Xzi, nmμ, nmσ, nmzi, 
         @inbounds for i in 1:n
             μ = exp(ημ[i]); r = exp(-2 * ησ[i]); p = r / (r + μ)
             lπ = _log_logistic(ηz[i]); l1mπ = _log1m_logistic(ηz[i])
-            nb = logpdf(NegativeBinomial(r, p), yint[i])
+            nb = logpdf(_nb2(r, p), yint[i])
             if iszero_y[i]
                 s -= _logaddexp(lπ, l1mπ + nb)             # log(π + (1-π)·NB(0))
             else
@@ -295,7 +302,7 @@ function _fit_negbin2_hu(fam::NegBinomial2, y, Xμ, Xσ, Xhu, nmμ, nmσ, nmhu, 
                 s -= lπ
             else
                 μ = exp(ημ[i]); r = exp(-2 * ησ[i]); p = r / (r + μ)
-                d = NegativeBinomial(r, p)
+                d = _nb2(r, p)
                 s -= l1mπ + logpdf(d, yint[i]) - _log1mexp(logpdf(d, 0))
             end
         end
@@ -329,7 +336,7 @@ function _fit_negbin2(fam::NegBinomial2, y, Xμ, Xσ, nmμ, nmσ, g_tol)
         s = zero(eltype(θ))
         @inbounds for i in 1:n
             μ = exp(ημ[i]); r = exp(-2 * ησ[i]); p = r / (r + μ)   # r = θ (size)
-            s -= logpdf(NegativeBinomial(r, p), yint[i])
+            s -= logpdf(_nb2(r, p), yint[i])
         end
         return s
     end
@@ -390,7 +397,7 @@ function _fit_truncated_negbin2(fam::TruncatedNegBinomial2, y, Xμ, Xσ, nmμ, n
         s = zero(eltype(θ))
         @inbounds for i in 1:n
             μ = exp(ημ[i]); r = exp(-2 * ησ[i]); p = r / (r + μ)
-            d = NegativeBinomial(r, p)
+            d = _nb2(r, p)
             s -= logpdf(d, yint[i]) - _log1mexp(logpdf(d, 0))   # divide out P(0): zero-truncated
         end
         return s

@@ -23,3 +23,21 @@ import Distributions          # qualified — DRM has its own family type
     @test isfinite(loglik(fit))
     @test all(fitted(fit) .> 0)
 end
+
+@testset "NB2 FE sigma ~ x does not DomainError under ForwardDiff (#385)" begin
+    # Regression: Dual(p=1.0) fails Distributions' `p <= one(p)` during L-BFGS.
+    Random.seed!(20260611)
+    n = 200
+    x = randn(n)
+    μ = exp.(0.3 .+ 0.45 .* x)
+    ησ = -0.10 .+ 0.25 .* x
+    θ = exp.(-2 .* ησ)
+    y = Float64.([rand(Distributions.NegativeBinomial(ti, ti / (ti + μi)))
+                  for (ti, μi) in zip(θ, μ)])
+    data = (; y, x)
+    fit = drm(bf(@formula(y ~ x), @formula(sigma ~ x)), NegBinomial2(); data = data)
+    @test length(coef(fit, :sigma)) == 2
+    @test isfinite(loglik(fit))
+    @test all(isfinite, coef(fit, :mu))
+    @test all(isfinite, coef(fit, :sigma))
+end

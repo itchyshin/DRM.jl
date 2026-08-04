@@ -1,0 +1,5 @@
+drmtmb_version = "0.6.0"
+generated_on = "2026-08-03"
+r_call = "drmTMB(drm_formula(y ~ x, sigma ~ x), family = nbinom2(), data = dat)"
+seed = 20260611
+note = "Generated outputs only; no drmTMB source vendored. NB2 varying dispersion; sigma coefs on log(sigma) in both (no transform)."

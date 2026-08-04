@@ -1,15 +1,9 @@
-# Arcs — R-parity +4 FE bridge (status-marked)
+# arcs — #385 nbinom2-dispersion parity
 
-| ID | Status | Gate? | Arc |
-|---|---|---|---|
-| Arc0 | DONE | no | Issue #383 + 4-cell drm_bridge smoke (4/4 PASS) |
-| Rung1 | DONE | no | gen_fixtures.R + MIT fixtures + meta.toml (0.6.0) |
-| Rung2 | DONE | no | cohort + `_parity_family`; DRM_PARITY_TESTS=1 green |
-| Docs | DONE | no | r-julia-bridge.md + parity README/GENERATING |
-| Under#186 | DONE | no | Epic #186 CLOSED (ledger; subtasks already CLOSED) |
-| Closeout | IN PROGRESS | OPEN GATE: PR open (merge = owner) | check-log.d + after-task + Rose + PR |
+- [x] Arc0: issue #385 opened; tip `c9b9bd9`
+- [x] Rung1: generate + commit fixture (`DRM_PARITY_ONLY=nbinom2-dispersion`)
+- [x] Rung2: wire `_BRIDGE_PARITY_COHORT` + docs; `_nb2` AD guard; atol_coef
+- [x] Verify: `DRM_PARITY_TESTS=1` native 11 + bridge 11/11
+- [x] Closeout: check-log.d + after-task + Rose + PR `closes #385`
 
-## Verify receipt
-1. harness 17+8 PASS
-2. native 10 PASS + 1 Broken(xfam skip); bridge 10/10
-3. Rose: admitted list = evidence; no speed claim; MIT/GPL OK
+Fences held: D-111; `.worktrees/`; no GPL; no q4 core redesign; no Lovelace.
