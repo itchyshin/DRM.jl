@@ -1,35 +1,38 @@
-# GOAL — #376 measured drmTMB head-to-head nrep=4 / p>100
-# (IMMUTABLE once G0 APPROVED — re-read at the top of EVERY arc)
-# Status: DONE 2026-08-03 — closed by PR #377 @ ae4e67d (G0 was APPROVED earlier same day).
+# GOAL — R-parity +4 FE bridge cohort (IMMUTABLE — re-read at the top of EVERY arc)
+# G0 APPROVED 2026-08-03. Platform: Cursor. `/goal` execution.
 
 ## Mission
-Close DRM.jl #376: retain a **paired** Julia vs drmTMB wall-clock artifact on the
-q=4 PLSM biological per-dimension-variance model at **nrep=4**,
-**p ∈ {100, 1000, 5000, 10000}**, rewrite claim surfaces only from that artifact,
-PR `closes #376`.
+Open and close one DRM.jl issue — expand Workflow G coefficient-scale R↔Julia
+parity (native `drm()` + `drm_bridge`) to four fixed-effect families already
+bridge-mapped but not fixture-gated: **poisson**, **gamma**, **binomial**,
+**lognormal**. Commit MIT-clean generated drmTMB numbers only; wire into
+`_BRIDGE_PARITY_COHORT` + runners; update `docs/src/r-julia-bridge.md`; PR
+closes the new issue.
 
 ## Headline
-Kill the extrapolated “~12× vs drmTMB at p=10,000” claim with measured (or honest
-R-blocked) cells.
+Retire the #370 after-task gap “families beyond the six fixtures” for the next
+FE cohort without rebuilding Phase 1.5 / #370 harness.
 
 ## Invariants
-- One lane: branch `feat/376-q4-scaling-h2h` from `e3b3b8a`. Leave `.worktrees/` alone.
-- D-111 OFF (no Registrator / Julia General).
-- Never vendor GPL drmTMB source; public API + generated fixtures only.
-- Do not regress verified q=4 engine (logLik −256.51 / 2.18×); do not edit
-  `src/fit_q4_sparse_tmb.jl` / `src/sparse_aug_plsm.jl` / Takahashi core unless
-  Noether + maintainer (prefer bench-only).
-- Do not cite #372 six-cell bridge ratios as this evidence.
-- Heavy grid on Totoro (D-50); no GHA heavy drmTMB sweeps.
-- Smoke-first: non-empty paired p=100 before scaling up.
-- Rose: every public speed sentence cites the retained evidence file.
+- One lane on this repo; leave `.worktrees/` alone / never stage it.
+- D-111 OFF — no Registrator / Julia General.
+- Never vendor GPL drmTMB source — generated fixture numbers + meta only.
+- No q4 engine `src/` edits (`fit_q4_sparse_tmb.jl` / `sparse_aug_plsm.jl` / Takahashi).
+- No Lovelace / drmTMB R-side `engine="julia"` edits.
+- Do not reopen #5 / #349 / #17 / #370 / #372 / #376; do not rebuild #376;
+  no tip-idle SHA-churn; defer #202 / #49 / #136 / xfam.
+- ML default; `DRM_PARITY_TESTS=1` local first; Rose default **no speed claim**.
+- Risk branch: if a family needs non-trivial scale transform beyond `[tol]`,
+  admit green subset and document failures — do not redesign the engine.
 
 ## Authoritative WHAT
-Historical: `docs/dev-log/plans/2026-08-03-376-q4-scaling-h2h-ultra-plan.md`.
-Current tip-idle kit: `LOOP/ultra-plan.md` (docs hygiene after #376/#377).
+`LOOP/ultra-plan.md` ← `docs/dev-log/plans/2026-08-03-r-parity-plus4-fe-bridge-ultra-plan.md`
 
 ## Definition of done
-- Retained evidence md + JSON/TOML (both arms or honest R-blocked cells)
-- comparison-grid / HANDOVER / large-data / ROADMAP match the artifact
-- check-log.d + after-task + Rose claim-vs-evidence
-- PR closes #376
+- New issue opened + closed by PR (`closes #NN`)
+- Fixtures (or honest admitted subset ≥1) committed under `test/parity/fixtures/`
+- `_BRIDGE_PARITY_COHORT` + native `_parity_family` admit the new cells
+- `DRM_PARITY_TESTS=1` native + bridge green for old six **and** new admitted
+- `docs/src/r-julia-bridge.md` claim list updated
+- check-log.d + after-task + Rose claim-vs-evidence PASS
+- Optional under-run only if early: close stale epic #186 checklist (ledger only)

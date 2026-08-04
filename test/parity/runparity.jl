@@ -29,6 +29,10 @@ function _parity_family(family::AbstractString)
     fam == "student" && return Student()
     fam == "nbinom2" && return NegBinomial2()
     fam == "beta" && return Beta()
+    fam == "poisson" && return Poisson()
+    fam == "gamma" && return Gamma()
+    fam == "binomial" && return Binomial()
+    fam == "lognormal" && return LogNormal()
     return nothing
 end
 

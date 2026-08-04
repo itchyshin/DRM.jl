@@ -1,0 +1,5 @@
+drmtmb_version = "0.6.0"
+generated_on = "2026-08-03"
+r_call = "drmTMB(drm_formula(y ~ x, sigma ~ 1), family = Gamma(link = \"log\"), data = dat)"
+seed = 20260804
+note = "Generated outputs only; no drmTMB source vendored. Gamma: log(mu), log(sigma) with sigma = CV (alpha = 1/sigma^2); shared scale."

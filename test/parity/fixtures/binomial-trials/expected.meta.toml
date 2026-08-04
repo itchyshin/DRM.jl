@@ -1,0 +1,5 @@
+drmtmb_version = "0.6.0"
+generated_on = "2026-08-03"
+r_call = "drmTMB(drm_formula(cbind(successes, failures) ~ x), family = binomial(), data = dat)"
+seed = 20260805
+note = "Generated outputs only; no drmTMB source vendored. Binomial mean-only (logit link); cbind(successes, failures) response."
