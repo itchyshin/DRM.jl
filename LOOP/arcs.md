@@ -1,9 +1,11 @@
-# arcs — tip idle after #390+#393
+# arcs — #202 locscale closeout (G0 approved)
 
-- [x] RECON: tip `e32a2c6`; #390 MERGED; #393 MERGED
-- [x] S1 LOOP: GOAL/arcs/checkpoint/ultra-plan → tip IDLE
-- [x] S2 handover: `…-drm-idle-after-393.md` supersedes after-386
-- [x] S3 docs PR: https://github.com/itchyshin/DRM.jl/pull/394
-- [x] Rose: docs-only; `.worktrees/` unstaged
+- [ ] RECON: twin-bar cite; probe grammar B `(1|p|phylo(sp))` vs A dual-phylo; freeze cohort
+- [ ] S1: grammar B route — forward `tree=` into NB2/Gamma locscale frontend if missing; fix stale #209 comment
+- [ ] S2: public NB2 phylo locscale recovery + FD ≤1e-6; wire `runtests.jl`
+- [ ] S3: Gamma public path (mirror private `test_phylo_locscale` or document)
+- [ ] S4: capability-status + tutorial honesty + NEWS; #202 disposition
+- [ ] VERIFY: focused tests + Rose claim audit
+- [ ] PR: DoD logs + open PR `closes #202` — **L2 merge gate**
 
-Fences: D-111; `.worktrees/`; no invent ship; no Lovelace rebuild; no `src/`.
+Fences: no q=4 core; D-111; `.worktrees/`; no GPL; no #49/#136; no R nbinom2-locscale fixture; no dual-phylo alias (A) unless under-run.
