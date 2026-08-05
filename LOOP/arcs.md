@@ -1,9 +1,11 @@
-# arcs — #385 nbinom2-dispersion parity
+# arcs — tip idle after #386
 
-- [x] Arc0: issue #385 opened; tip `c9b9bd9`
-- [x] Rung1: generate + commit fixture (`DRM_PARITY_ONLY=nbinom2-dispersion`)
-- [x] Rung2: wire `_BRIDGE_PARITY_COHORT` + docs; `_nb2` AD guard; atol_coef
-- [x] Verify: `DRM_PARITY_TESTS=1` native 11 + bridge 11/11
-- [x] Closeout: check-log.d + after-task + Rose + PR `closes #385`
+- [x] RECON: tip `origin/main` @ `d543f94`; #386 MERGED
+- [x] S1 LOOP: GOAL/arcs/checkpoint/ultra-plan → tip IDLE; NEXT = owner G0
+- [x] S2 handover: `…-drm-idle-after-386.md` supersedes after-381
+- [x] S3 docs PR: https://github.com/itchyshin/DRM.jl/pull/387
+- [x] MECH-VERIFY: no OPEN GATE “merge #386”; only historical retire notes in GOAL/ultra-plan
+- [x] Rose: docs-only scope; `.worktrees/` unstaged
+- [x] RECONCILE: N/A (tiny docs hygiene)
 
-Fences held: D-111; `.worktrees/`; no GPL; no q4 core redesign; no Lovelace.
+Fences held: D-111; `.worktrees/`; no invent ship; no `src/`; no claim inflation.

@@ -1,0 +1,1 @@
+| 2026-08-04 | **Tip idle after #386** (START HERE clean desk; DRM.jl only) | Confirm `origin/main` @ d543f94; #386 MERGED; supersede after-381; retire stale LOOP merge-#386 gate; `.worktrees/` unstaged; no `src/`; no invent ship | ✅ tip idle START HERE @ d543f94; Rose scope PASS; L2 owner merge only | Shannon |
