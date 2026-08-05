@@ -1,6 +1,6 @@
 # R ↔ Julia bridge
 
-!!! note "Status — Experimental bridge + fixture-backed coefficient-scale gate (#370/#383/#385) + measured six-cell timing (#372)"
+!!! note "Status — Experimental bridge + fixture-backed coefficient-scale gate (#370/#383/#385) + measured timing (#372/#389)"
     DRM.jl exposes `drm_bridge()`, a marshalling-friendly entry point for the R-side `drmTMB(formula, ..., engine = "julia")` glue. The companion R glue lives in the **drmTMB R repository** via [JuliaCall](https://github.com/JuliaInterop/JuliaCall).
 
     **Admitted fixture-backed coefficient-scale parity** (opt-in `DRM_PARITY_TESTS=1`, via `drm_bridge` + committed drmTMB generated numbers only):
@@ -25,16 +25,17 @@
 
     - `nbinom2-dispersion` (`y ~ x; sigma ~ x`)
 
-    **Measured warm wall-clock** for the original six fixtures only (#372; local
-    machine; Julia `drm_bridge` vs installed drmTMB **0.6.0**; BLAS/OMP
-    threads = 1; 1 warmup + 5 timed reps; median R/Julia ratios ≈ **4.8×–46×**
-    depending on cell — full method, versions, and per-cell medians retained in
-    `docs/dev-log/evidence/2026-08-03-372-six-cell-timing.md`).
-    This is **not** a general “Nx faster for all drmTMB models” claim, **not** a
-    timing claim for the +4 FE cells or `nbinom2-dispersion` (Rose: default
-    no-claim until measured), and it is **not** the verified q=4 PLSM 2.18×
-    cell (`report/comparison-grid.md`). For translating R syntax to Julia by
-    hand, see the [Rosetta page](rosetta.md).
+    **Measured warm wall-clock** (local machine; Julia `drm_bridge` vs installed
+    drmTMB **0.6.0**; BLAS/OMP threads = 1; 1 warmup + 5 timed reps):
+
+    - Original six (#372) — median R/Julia ratios ≈ **4.8×–46×**; retained in
+      `docs/dev-log/evidence/2026-08-03-372-six-cell-timing.md`.
+    - +4 FE + `nbinom2-dispersion` (#389) — median R/Julia ratios ≈ **11.4×–59.6×**;
+      retained in `docs/dev-log/evidence/2026-08-05-389-plus5-bridge-timing.md`.
+
+    Neither artifact is a general “Nx faster for all drmTMB models” claim, and
+    neither is the verified q=4 PLSM 2.18× cell (`report/comparison-grid.md`).
+    For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
 
 ## The idea
 
