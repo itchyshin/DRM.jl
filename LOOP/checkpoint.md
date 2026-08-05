@@ -1,12 +1,9 @@
-GOAL: see GOAL.md (tip-idle after #386). STATE: DONE pending owner merge of docs PR.
+GOAL: see GOAL.md (#389). STATE: DONE pending owner merge of PR.
 ARCS DONE (verified):
-  RECON — tip d543f94; #386 MERGED
-  S1–S2 — LOOP + handover after-386
-  S3 — PR #387 opened @ bf7c008 (+ closeout commit)
-  MECH-VERIFY / Rose — docs-only; `.worktrees/` unstaged; no merge-#386 OPEN GATE
+  Arc0–Rung2 — five cells measured; evidence + docs
+  Closeout — PR https://github.com/itchyshin/DRM.jl/pull/390 (closes #389)
 ARC IN PROGRESS: none
-NEXT: owner merge of https://github.com/itchyshin/DRM.jl/pull/387 then tip IDLE @ new tip-idle SHA
-OPEN GATES (need human): merge docs PR #387 to main
-TRUTH LIVES IN: docs/tip-idle-after-386; START HERE
-  docs/dev-log/handover/2026-08-04-cursor-handover-drm-idle-after-386.md
-RESUME: Owner merge gate for tip-idle #387. Do not invent ship G0. Leave .worktrees/ alone.
+NEXT: owner merge of PR #390 when CI green
+OPEN GATES (need human): merge PR #390 to main
+TRUTH LIVES IN: feat/389-plus5-bridge-timing @ 1f14ac3; issue #389
+RESUME: Owner merge gate for #390. Do not re-time #372 six. Leave .worktrees/ alone.

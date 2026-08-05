@@ -9,7 +9,8 @@
 ##
 ## Env:
 ##   DRM_372_REPS   timed reps after one warmup (default 5)
-##   DRM_372_CELLS  comma-separated cell ids (default: all six)
+##   DRM_372_CELLS  comma-separated cell ids (overrides cohort default)
+##   DRM_BRIDGE_TIMING_COHORT  "six" (default, #372) or "plus5" (#389)
 
 suppressPackageStartupMessages({
   if (!requireNamespace("drmTMB", quietly = TRUE)) {
@@ -33,10 +34,15 @@ repo_root <- if (length(file_arg)) {
 }
 
 fixtures_root <- file.path(repo_root, "test", "parity", "fixtures")
-results_dir <- file.path(repo_root, "bench", "results", "bridge_six_cell_372")
+cohort_name <- tolower(Sys.getenv("DRM_BRIDGE_TIMING_COHORT", unset = "six"))
+is_plus5 <- identical(cohort_name, "plus5")
+results_subdir <- if (is_plus5) "bridge_plus5_389" else "bridge_six_cell_372"
+results_dir <- file.path(repo_root, "bench", "results", results_subdir)
 dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
+issue_tag <- if (is_plus5) "#389" else "#372"
+out_basename <- if (is_plus5) "r_bridge_plus5.json" else "r_bridge_six_cell.json"
 
-cohort_default <- c(
+cohort_six <- c(
   "gaussian-locscale",
   "gaussian-bivariate-rho12",
   "robust-student",
@@ -44,6 +50,14 @@ cohort_default <- c(
   "proportion-beta",
   "meta-analysis-V"
 )
+cohort_plus5 <- c(
+  "count-poisson",
+  "positive-gamma",
+  "binomial-trials",
+  "positive-lognormal",
+  "nbinom2-dispersion"
+)
+cohort_default <- if (is_plus5) cohort_plus5 else cohort_six
 
 cells_env <- Sys.getenv("DRM_372_CELLS", unset = "")
 cells <- if (nzchar(cells_env)) {
@@ -78,6 +92,25 @@ fit_cell <- function(cell, dat) {
       drm_formula(y ~ x + meta_V(V = v), sigma ~ 1),
       family = gaussian(), data = dat
     )
+  } else if (identical(cell, "count-poisson")) {
+    drmTMB(drm_formula(y ~ x), family = poisson(), data = dat)
+  } else if (identical(cell, "positive-gamma")) {
+    drmTMB(
+      drm_formula(y ~ x, sigma ~ 1),
+      family = Gamma(link = "log"), data = dat
+    )
+  } else if (identical(cell, "binomial-trials")) {
+    drmTMB(
+      drm_formula(cbind(successes, failures) ~ x),
+      family = binomial(), data = dat
+    )
+  } else if (identical(cell, "positive-lognormal")) {
+    drmTMB(
+      drm_formula(y ~ x, sigma ~ 1),
+      family = lognormal(), data = dat
+    )
+  } else if (identical(cell, "nbinom2-dispersion")) {
+    drmTMB(drm_formula(y ~ x, sigma ~ x), family = nbinom2(), data = dat)
   } else {
     stop("unknown cell: ", cell)
   }
@@ -132,7 +165,7 @@ rows <- lapply(cells, function(cell) {
 
 out <- list(
   arm = "r_drmTMB",
-  issued = "#372",
+  issued = issue_tag,
   timestamp_utc = format(Sys.time(), tz = "UTC", usetz = TRUE),
   drmTMB_version = as.character(packageVersion("drmTMB")),
   R_version = R.version.string,
@@ -144,7 +177,7 @@ out <- list(
   cells = rows
 )
 
-out_path <- file.path(results_dir, "r_bridge_six_cell.json")
+out_path <- file.path(results_dir, out_basename)
 jsonlite::write_json(out, out_path, auto_unbox = TRUE, pretty = TRUE, digits = 12)
 cat("wrote ", out_path, "\n", sep = "")
 for (r in rows) {

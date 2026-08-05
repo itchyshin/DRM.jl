@@ -9,7 +9,8 @@
 #
 # Env:
 #   DRM_372_REPS   timed reps after one warmup (default 5)
-#   DRM_372_CELLS  comma-separated cell ids (default: all six)
+#   DRM_372_CELLS  comma-separated cell ids (overrides cohort default)
+#   DRM_BRIDGE_TIMING_COHORT  "six" (default, #372) or "plus5" (#389)
 
 using Dates
 using LinearAlgebra
@@ -22,7 +23,7 @@ using DRM
 
 include(joinpath(@__DIR__, "..", "test", "parity", "loadfixture.jl"))
 
-const COHORT = [
+const COHORT_SIX = [
     "gaussian-locscale",
     "gaussian-bivariate-rho12",
     "robust-student",
@@ -31,10 +32,37 @@ const COHORT = [
     "meta-analysis-V",
 ]
 
+const COHORT_PLUS5 = [
+    "count-poisson",
+    "positive-gamma",
+    "binomial-trials",
+    "positive-lognormal",
+    "nbinom2-dispersion",
+]
+
+function _cohort_default()
+    c = lowercase(get(ENV, "DRM_BRIDGE_TIMING_COHORT", "six"))
+    return c == "plus5" ? copy(COHORT_PLUS5) : copy(COHORT_SIX)
+end
+
 function _parse_cells()
     raw = get(ENV, "DRM_372_CELLS", "")
-    isempty(raw) && return copy(COHORT)
+    isempty(raw) && return _cohort_default()
     return String.(split(raw, ","; keepempty = false))
+end
+
+function _issue_tag()
+    return lowercase(get(ENV, "DRM_BRIDGE_TIMING_COHORT", "six")) == "plus5" ? "#389" : "#372"
+end
+
+function _results_subdir()
+    return lowercase(get(ENV, "DRM_BRIDGE_TIMING_COHORT", "six")) == "plus5" ?
+           "bridge_plus5_389" : "bridge_six_cell_372"
+end
+
+function _out_basename()
+    return lowercase(get(ENV, "DRM_BRIDGE_TIMING_COHORT", "six")) == "plus5" ?
+           "julia_bridge_plus5.toml" : "julia_bridge_six_cell.toml"
 end
 
 function _reps()
@@ -117,7 +145,7 @@ function main()
 
     out = Dict{String,Any}(
         "arm" => "julia_drm_bridge",
-        "issued" => "#372",
+        "issued" => _issue_tag(),
         "timestamp_utc" => string(Dates.now(Dates.UTC)),
         "julia_version" => string(VERSION),
         "blas_threads" => BLAS.get_num_threads(),
@@ -127,9 +155,9 @@ function main()
         "cells" => rows,
     )
 
-    results_dir = joinpath(@__DIR__, "results", "bridge_six_cell_372")
+    results_dir = joinpath(@__DIR__, "results", _results_subdir())
     mkpath(results_dir)
-    out_path = joinpath(results_dir, "julia_bridge_six_cell.toml")
+    out_path = joinpath(results_dir, _out_basename())
     open(out_path, "w") do io
         TOML.print(io, out)
     end

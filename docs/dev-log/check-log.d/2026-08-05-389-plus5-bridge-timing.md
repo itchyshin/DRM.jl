@@ -1,0 +1,1 @@
+| 2026-08-05 | **#389 +5 bridge measured wall-clock** (+4 FE + nbinom2-dispersion) | `DRM_BRIDGE_TIMING_COHORT=plus5` J+R (1 warmup+5); evidence md+TOML/JSON; `r-julia-bridge.md` claim update; no `src/`; original six not re-timed | ✅ all five both-ok; ratios ≈11.4×–59.6× scoped; Rose PASS; PR closes #389 | Shannon/Curie/Rose |

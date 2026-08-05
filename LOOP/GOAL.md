@@ -1,32 +1,32 @@
-# GOAL — tip idle after #386 (IMMUTABLE — re-read every arc)
-# Status: ACTIVE 2026-08-04 — G0 approved via /goal (tip-idle hygiene).
+# GOAL — #389 +5 bridge timing (IMMUTABLE — re-read every arc)
+# Status: ACTIVE 2026-08-05 — G0 approved via /goal.
 
 ## Mission
-Docs-only tip-idle START HERE after #385/#386 MERGED: refresh stale LOOP/*
-(still said “merge #386”), write handover
-`docs/dev-log/handover/2026-08-04-cursor-handover-drm-idle-after-386.md`
-superseding after-381, open docs PR (pattern #378–#382). Tip IDLE; next
-session waits for owner-named DRM.jl ship G0 only.
+Measure warm wall-clock for five admitted-but-untimed bridge cells
+(`count-poisson`, `positive-gamma`, `binomial-trials`, `positive-lognormal`,
+`nbinom2-dispersion`) by reusing the #372 harness (Julia `drm_bridge` vs local
+drmTMB). Retain evidence + update `docs/src/r-julia-bridge.md` from that
+artifact only. PR closes #389.
 
 ## Headline
-LOOP/checkpoint claimed a merge gate for #386 while tip was already
-`d543f94` — fix ledger drift before the next lane.
+Coef parity is green for these cells; docs still say timing no-claim — close
+the Rose gap with the #372 protocol.
 
 ## Invariants
-- One lane: branch `docs/tip-idle-after-386` from `d543f94`. Leave `.worktrees/` alone.
-- D-111 OFF (no Registrator / Julia General).
-- Docs/LOOP/handover/check-log/after-task only — no `src/` engine edits.
-- Do not invent ship from ROADMAP; do not rebuild #376/#383/#385.
-- No fixture 0.6.0 refresh, timing campaigns, #202/#49, or Lovelace in this arc.
-- Rose: docs-only scope; no speed claims; ML default.
-- Never stage `.worktrees/`.
+- One lane: branch `feat/389-plus5-bridge-timing` from `a956dbd`.
+- Leave `.worktrees/` alone; D-111 OFF; no GPL vendoring.
+- Do not re-time original six; do not refresh v0.1.3 fixtures; no #376/q4;
+  no Lovelace; no inventing general “Nx faster”.
+- No `src/` unless a fit bug blocks a cell (then STOP).
+- Protocol: 1 warmup + 5 timed; BLAS/OMP=1; median R/J; record versions.
+- Honest block per cell if R fails — never invent timings.
+- ML default; Rose scoped ratios only.
 
 ## Authoritative WHAT
-`docs/dev-log/plans/2026-08-04-tip-idle-after-386-ultra-plan.md` (and
-`LOOP/ultra-plan.md` copy). Tip `origin/main` @ `d543f94`.
+`docs/dev-log/plans/2026-08-05-plus5-bridge-timing-ultra-plan.md` /
+`LOOP/ultra-plan.md`. Tip `origin/main` @ `a956dbd`.
 
 ## Definition of done
-- LOOP/{GOAL,arcs,checkpoint,ultra-plan} say tip IDLE; no stale merge-#386 gate
-- Handover after-386 is START HERE; supersedes after-381
-- check-log.d + after-task + docs PR open (owner merge = L2)
-- Optional: vault MC drmTMB.json Julia tip string refreshed (brain local)
+- Evidence artifact for all five cells (or honest FAIL notes)
+- `r-julia-bridge.md` claim surface updated from artifact only
+- check-log.d + after-task + Rose; PR closes #389
