@@ -8,8 +8,9 @@
 #   drm(bf(@formula(y ~ x + (1|p|sp)), @formula(sigma ~ x + (1|p|sp))),
 #       NegBinomial2(); data) → _fit_locscale(Val(:nb2), …; se=true)
 #
-# First cut: intercept-only coupled term, i.i.d. grouping (Q = I). The phylo
-# correlated-RE path waits on the phylo-fit-robustness fix (see #209).
+# Intercept-only coupled term `(1 | tag | group)`. Bare `group` → i.i.d. (Q = I);
+# `phylo(group)` / `relmat` / `animal` / `spatial` → structured Q (#209 closed;
+# family `drm()` must forward `tree`/`K`/`A`/`coords` into this frontend).
 
 using SparseArrays: sparse
 using LinearAlgebra: I
@@ -163,7 +164,8 @@ function _ls_frontend_grouping(lc, data, tree, K, A, coords)
         gidx, G = _group_index(labels)
         return sparse(1.0 * I, G, G), gidx, G
     elseif lc.structkind === :phylo
-        tree === nothing && error("phylo(1 | tag | $(lc.group)) needs `tree = …`")
+        tree === nothing &&
+            error("(1 | tag | phylo($(lc.group))) needs `tree = …`")
         return _locscale_phylo_setup(tree, labels)
     else  # :relmat / :animal / :spatial
         C = _poisson_structured_cov(lc.structkind, lc.group, K, A, coords)
