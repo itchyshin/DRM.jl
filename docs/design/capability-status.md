@@ -75,6 +75,7 @@ rows; each has a `test/test_*.jl` file cited in `docs/src/capabilities.md`'s
 | Gaussian animal-model random intercept (mean) | implemented |
 | Gaussian relmat random intercept (mean) | implemented |
 | Non-Gaussian phylogenetic random intercept (mean) | implemented |
+| Non-Gaussian phylogenetic location-scale (μ + log σ) | implemented |
 
 `Non-Gaussian phylogenetic random intercept (mean)` is `implemented` via the
 sparse augmented-state Laplace engine (`src/sparse_laplace_glmm.jl`) for
@@ -82,6 +83,16 @@ Poisson, NegBinomial2, Gamma, Binomial, and Beta, each with its own
 `test/test_*_phylo_laplace.jl` plus a gradient gate. This is a genuine R <-> Julia
 gap: drmTMB reports this row `scope-limited` (mixed rejected/scope-limited
 across families).
+
+`Non-Gaussian phylogenetic location-scale (μ + log σ)` is `implemented`
+(`closes #202`): shared structured RE on mean **and** scale via grammar B
+`(1 | p | phylo(species))` on both axes, routed through `src/locscale_*.jl`.
+Public evidence: `test/test_public_phylo_locscale.jl` (NB2 recovery + Gamma
+smoke; dual issue-text `phylo(1|sp)` on both axes still rejected). Private
+Gamma recovery + FD ≤1e-6 already in `test/test_phylo_locscale.jl` (#253).
+**D-94 honesty:** drmTMB still skips coupled `(1|p|species)` for nbinom2 in
+our parity generator; R q=1 NB2 structured-σ covers scale-axis existence.
+No `nbinom2-locscale` R fixture in this closeout.
 
 ## Estimation and inference
 
@@ -183,8 +194,8 @@ scope in the same file).
 
 ## Snapshot
 
-- 42 capabilities, all `implemented`/`rejected`/`planned`/`missing` per the
-  mapping above; 36 `implemented`, 1 `rejected`, 1 `planned`, 4 `missing`.
+- 43 capabilities, all `implemented`/`rejected`/`planned`/`missing` per the
+  mapping above; 37 `implemented`, 1 `rejected`, 1 `planned`, 4 `missing`.
 - Sources read: `src/DRM.jl` (include list + export list), `README.md`,
   `docs/src/capabilities.md`, `docs/src/families.md`, `test/runtests.jl`
   (default-suite include list), and targeted `grep`/`git log` against

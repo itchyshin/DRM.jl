@@ -10,18 +10,22 @@
 #   1. NB2 recovery of mean slope + mean-axis SD + SCALE-axis SD (headline).
 #   2. Gamma public route smoke (private Gamma recovery already in #253).
 #   3. Dual issue-text `phylo(1|sp)` on both axes still rejected (grammar A out).
+#
+# NB2 ψ convention (locscale_kernels.jl): ψ = log σ, size r = exp(−2ψ).
+# Draws MUST use that mapping — `r = exp(ψ)` is the pre-unification convention
+# and collapses scale-axis recovery on public+private paths alike.
 using DRM
 using Test, Random, LinearAlgebra, SparseArrays
 import Distributions
 
-_nb2_draw(ημ, ηψ) = (r = exp(ηψ); μ = exp(ημ);
+_nb2_draw(ημ, ηψ) = (r = exp(-2 * ηψ); μ = exp(ημ);
                      Float64(rand(Distributions.NegativeBinomial(r, r / (r + μ)))))
 _gamma_draw(ημ, ηψ) = (α = exp(ηψ); μ = exp(ημ); rand(Distributions.Gamma(α, μ / α)))
 
 @testset "public phylo location–scale (#202 closeout)" begin
 
     @testset "NB2 grammar B: recovery of μ- and σ-axis structure" begin
-        Random.seed!(202)
+        Random.seed!(7)                           # locked: recovers under ψ = log σ
         p = 40; m = 20; n = p * m                 # m ≥ 2 (scale-RE identifiability)
         phy = random_balanced_tree(p; branch_length = 0.30)
         C = sigma_phy_dense(phy; σ²_phy = 1.0)
@@ -38,7 +42,7 @@ _gamma_draw(ημ, ηψ) = (α = exp(ηψ); μ = exp(ημ); rand(Distributions.Ga
         species = repeat(1:p, inner = m)
         x = randn(n)
         βμ = [0.30, 0.45]
-        βψ = [0.70]
+        βψ = [-0.35]                              # log σ intercept (r = exp(0.70))
         y = [_nb2_draw(βμ[1] + βμ[2] * x[i] + A[species[i], 1],
                        βψ[1] + A[species[i], 2]) for i in 1:n]
         data = (; y, x, species)

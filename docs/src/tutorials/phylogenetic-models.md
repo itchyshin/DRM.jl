@@ -1,15 +1,17 @@
 # Phylogenetic structured effects
 
-!!! note "Status — Stable (Gaussian + non-Gaussian mean)"
+!!! note "Status — Stable (Gaussian + non-Gaussian mean; NB2/Gamma location–scale)"
     Mirrors drmTMB's [Phylogenetic structured effects](https://itchyshin.github.io/drmTMB/articles/phylogenetic-models.html).
     **In DRM.jl today:** `phylo(1 | species)` on the **mean** — a phylogenetic
     random intercept. For Gaussian it is fit in closed form; for the non-Gaussian
     families (Poisson, NB2, Binomial, Gamma, Beta, BetaBinomial) it is fit by the
-    sparse augmented-state Laplace engine, currently with a **constant `sigma`**.
-    The q=4 phylogenetic *location–scale* model (a shared effect on `log σ` too) is
-    Gaussian-only today and uses the verified sparse-Laplace engine (see
-    `HANDOVER.md`); the non-Gaussian location–scale extension is scoped on the
-    ledger (issue #202).
+    sparse augmented-state Laplace engine (constant `sigma` by default).
+    **Non-Gaussian phylogenetic location–scale** (#202) ships for
+    `NegBinomial2()` / `Gamma()` via the coupled tag
+    `(1 | p | phylo(species))` on **both** `mu` and `sigma` (grammar B). Dual
+    issue-text `phylo(1|sp)` on both axes is **not** the public acceptance
+    surface. The q=4 bivariate PLSM remains the Gaussian flagship (see
+    `HANDOVER.md`).
 
 Related species are not independent: closely related species have correlated
 trait values. `phylo(1 | species)` adds a random intercept with the
@@ -123,12 +125,11 @@ A few things worth knowing:
   above). With a single observation per tip the scale of the latent effect is not
   identified — this is a modelling constraint, not a solver limit (see
   `HANDOVER.md` §6).
-- **Dispersion is constant (for now).** The non-Gaussian phylo route fixes the
-  scale axis: vary the **mean** with predictors and the structured effect, and
-  keep `sigma ~ 1`. A predictor on `sigma` (#164) and a *structured* effect on
-  `sigma` — the non-Gaussian phylogenetic *location–scale* model (#202) — are on
-  the ledger. `BetaBinomial()`'s phylo/crossed routes are constant-σ only for
-  the same reason (#166's own acceptance bar).
+- **Mean-only phylo keeps constant dispersion.** The default non-Gaussian phylo
+  route varies the **mean** with predictors and the structured effect and keeps
+  `sigma ~ 1`. Fixed predictors on `sigma` (#164) are separate. For a *structured*
+  effect on both axes, see **Phylogenetic location–scale** below (#202).
+  `BetaBinomial()`'s phylo/crossed mean routes remain constant-σ (#166).
 - **Other families, same shape.** Swap `Poisson()` for `NegBinomial2()` (counts
   with overdispersion), `Binomial()` or `BetaBinomial()` (`cbind(s, f) ~ …` for
   successes/trials, the latter with extra-binomial overdispersion), `Gamma()`, or
@@ -136,6 +137,25 @@ A few things worth knowing:
 - **Standard errors / intervals.** Pass `se = true` for finite-difference Wald
   SEs, or use [`bootstrap_ci`](@ref) for a parametric bootstrap. We used
   `se = false` here to keep the example fast.
+
+## Phylogenetic location–scale (non-Gaussian)
+
+When relatedness shapes **dispersion** as well as the mean (lineages that are
+intrinsically more variable), put the same phylogenetic coupler on both axes:
+
+```julia
+fit = drm(
+    bf(@formula(y ~ x + (1 | p | phylo(species))),
+       @formula(sigma ~ 1 + (1 | p | phylo(species)))),
+    NegBinomial2(); data = (; y, x, species), tree = phy, se = false)
+```
+
+`vc(fit)[:species]` is then a 2×2 named group-level covariance (mean-axis SD,
+scale-axis SD, and their correlation) — **not** residual `rho12`. Public
+recovery for NB2 and a Gamma public-route smoke live in
+`test/test_public_phylo_locscale.jl`. Prefer the coupled `(1 | p | phylo(…))`
+spelling; dual `phylo(1 | sp)` on both axes is rejected on the non-Gaussian
+families.
 
 ## See also
 
