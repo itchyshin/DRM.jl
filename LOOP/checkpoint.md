@@ -1,10 +1,9 @@
-GOAL: see GOAL.md (#392). STATE: DONE pending owner merge of PR (rebased).
+GOAL: see GOAL.md (tip-idle after #393). STATE: docs hygiene in progress.
 ARCS DONE (verified):
-  Arc0–Rung3 — six @ 0.6.0; parity 11+11; docs+AGENTS
-  Closeout — PR https://github.com/itchyshin/DRM.jl/pull/393 (closes #392)
-  Desk — #390 MERGED @ d5adb57; rebased onto origin/main
-ARC IN PROGRESS: none
-NEXT: owner merge of PR #393 when CI green
-OPEN GATES (need human): merge PR #393
-TRUTH LIVES IN: feat/392-refresh-six-060 (rebased); issue #392
-RESUME: Owner merge gate for #393. Leave .worktrees/ alone.
+  RECON — tip e32a2c6; #390+#393 MERGED
+  S1 — LOOP kit for tip IDLE
+ARC IN PROGRESS: S2–S3 — handover + docs PR
+NEXT: write after-393 handover; commit; open docs PR
+OPEN GATES (need human): owner merge of tip-idle docs PR (L2)
+TRUTH LIVES IN: docs/tip-idle-after-393; tip baseline e32a2c6
+RESUME: Finish tip-idle after #393 docs PR. Do not invent ship G0. Leave .worktrees/ alone.
