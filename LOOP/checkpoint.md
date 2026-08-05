@@ -1,9 +1,10 @@
-GOAL: see GOAL.md (#389). STATE: DONE pending owner merge of PR.
+GOAL: see GOAL.md (#392). STATE: DONE pending owner merge of PR (rebased).
 ARCS DONE (verified):
-  Arc0–Rung2 — five cells measured; evidence + docs
-  Closeout — PR https://github.com/itchyshin/DRM.jl/pull/390 (closes #389)
+  Arc0–Rung3 — six @ 0.6.0; parity 11+11; docs+AGENTS
+  Closeout — PR https://github.com/itchyshin/DRM.jl/pull/393 (closes #392)
+  Desk — #390 MERGED; rebased onto origin/main @ d5adb57
 ARC IN PROGRESS: none
-NEXT: owner merge of PR #390 when CI green
-OPEN GATES (need human): merge PR #390 to main
-TRUTH LIVES IN: feat/389-plus5-bridge-timing @ 1f14ac3; issue #389
-RESUME: Owner merge gate for #390. Do not re-time #372 six. Leave .worktrees/ alone.
+NEXT: owner merge of PR #393 when CI green
+OPEN GATES (need human): merge PR #393
+TRUTH LIVES IN: feat/392-refresh-six-060 (rebased); issue #392
+RESUME: Owner merge gate for #393. Leave .worktrees/ alone.

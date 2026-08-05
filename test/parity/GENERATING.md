@@ -1,9 +1,10 @@
 # Generating R-parity fixtures (maintainer recipe)
 
 The parity suite (`runparity.jl`, gated by `DRM_PARITY_TESTS=1`) compares DRM.jl
-against **committed drmTMB v0.1.3 reference numbers** — it never calls R at run
-time. Those reference numbers are produced **out-of-band** by a maintainer with
-local R + drmTMB using `gen_fixtures.R`. This file is the recipe.
+against **committed drmTMB reference numbers** (currently recorded as
+**0.6.0** in each fixture’s `expected.meta.toml` after #392) — it never calls R
+at run time. Those reference numbers are produced **out-of-band** by a
+maintainer with local R + drmTMB using `gen_fixtures.R`. This file is the recipe.
 
 ## License boundary (read first)
 
@@ -56,11 +57,11 @@ supported by the installed drmTMB):
 - `nbinom2-dispersion` (#385; `y ~ x; sigma ~ x`, FE)
 
 The generator records the exact `drmTMB` package version in each
-`expected.meta.toml`. The original six were generated against drmTMB
-**v0.1.3**; the +4 FE cohort (#383) and `nbinom2-dispersion` (#385) against
-the maintainer’s installed **0.6.0**. To force the pinned tag without modifying
-the user's normal R library, prepend a temporary library containing
-`drmTMB 0.1.3` before sourcing the script.
+`expected.meta.toml`. As of #392, the original six, the +4 FE cohort (#383),
+and `nbinom2-dispersion` (#385) all record the maintainer’s installed
+**0.6.0**. To regenerate against another installed version, run with that
+library on `R_LIBS` and commit the new `packageVersion` string — do not assert
+CRAN/tag status beyond what `packageVersion("drmTMB")` reports.
 
 ## R snippet shape
 
@@ -161,7 +162,7 @@ drmTMB's actual layout before trusting the numbers.
 ## `expected.meta.toml` (provenance only)
 
 ```toml
-drmtmb_version = "0.1.3"
+drmtmb_version = "0.6.0"
 generated_on   = "2026-06-02"
 r_call         = "drmTMB(drm_formula(y ~ x, sigma ~ x), family = gaussian(), data = dat)"
 seed           = 1

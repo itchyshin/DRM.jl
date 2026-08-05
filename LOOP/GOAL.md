@@ -1,32 +1,31 @@
-# GOAL — #389 +5 bridge timing (IMMUTABLE — re-read every arc)
+# GOAL — #392 refresh original six fixtures → drmTMB 0.6.0 (IMMUTABLE)
 # Status: ACTIVE 2026-08-05 — G0 approved via /goal.
 
 ## Mission
-Measure warm wall-clock for five admitted-but-untimed bridge cells
-(`count-poisson`, `positive-gamma`, `binomial-trials`, `positive-lognormal`,
-`nbinom2-dispersion`) by reusing the #372 harness (Julia `drm_bridge` vs local
-drmTMB). Retain evidence + update `docs/src/r-julia-bridge.md` from that
-artifact only. PR closes #389.
+Regenerate the original six Workflow G parity fixtures against local installed
+drmTMB **0.6.0** (same seeds/DGPs via `gen_fixtures.R`). Re-verify
+`DRM_PARITY_TESTS=1` native + bridge (11 cells). Update provenance docs so the
+cohort is not split 0.1.3 vs 0.6.0. PR closes #392.
 
 ## Headline
-Coef parity is green for these cells; docs still say timing no-claim — close
-the Rose gap with the #372 protocol.
+Coef pins for the original six still say v0.1.3 while +4 FE /
+nbinom2-dispersion / timing arms already use 0.6.0 — close the twin version split.
 
 ## Invariants
-- One lane: branch `feat/389-plus5-bridge-timing` from `a956dbd`.
+- One lane: branch `feat/392-refresh-six-060` from tip (prefer after #390).
 - Leave `.worktrees/` alone; D-111 OFF; no GPL vendoring.
-- Do not re-time original six; do not refresh v0.1.3 fixtures; no #376/q4;
-  no Lovelace; no inventing general “Nx faster”.
-- No `src/` unless a fit bug blocks a cell (then STOP).
-- Protocol: 1 warmup + 5 timed; BLAS/OMP=1; median R/J; record versions.
-- Honest block per cell if R fails — never invent timings.
-- ML default; Rose scoped ratios only.
+- Same seeds/DGPs; six cells only; do not redesign DGPs.
+- Soft `[tol]` only with measured Δ + Rose note.
+- No re-time #372/#389; no Lovelace; no #202/#49; no `src/` unless STOP.
+- Record `packageVersion("drmTMB")` only — no CRAN/tag claim.
+- AGENTS.md parity-anchor: maintainer-approved via this G0 `/goal`.
+- ML default.
 
 ## Authoritative WHAT
-`docs/dev-log/plans/2026-08-05-plus5-bridge-timing-ultra-plan.md` /
-`LOOP/ultra-plan.md`. Tip `origin/main` @ `a956dbd`.
+`docs/dev-log/plans/2026-08-05-refresh-six-fixtures-060-ultra-plan.md` /
+`LOOP/ultra-plan.md`.
 
 ## Definition of done
-- Evidence artifact for all five cells (or honest FAIL notes)
-- `r-julia-bridge.md` claim surface updated from artifact only
-- check-log.d + after-task + Rose; PR closes #389
+- Six `expected.meta.toml` show drmtmb_version 0.6.0 (exact installed)
+- native 11 + bridge 11/11 green under `DRM_PARITY_TESTS=1`
+- Docs provenance unified; check-log.d + after-task + Rose; PR closes #392

@@ -3,9 +3,11 @@
 !!! note "Status — Experimental bridge + fixture-backed coefficient-scale gate (#370/#383/#385) + measured timing (#372/#389)"
     DRM.jl exposes `drm_bridge()`, a marshalling-friendly entry point for the R-side `drmTMB(formula, ..., engine = "julia")` glue. The companion R glue lives in the **drmTMB R repository** via [JuliaCall](https://github.com/JuliaInterop/JuliaCall).
 
-    **Admitted fixture-backed coefficient-scale parity** (opt-in `DRM_PARITY_TESTS=1`, via `drm_bridge` + committed drmTMB generated numbers only):
+    **Admitted fixture-backed coefficient-scale parity** (opt-in `DRM_PARITY_TESTS=1`, via `drm_bridge` + committed drmTMB generated numbers only).
+    All eleven cells below record **drmTMB 0.6.0** in `expected.meta.toml`
+    (#392 re-anchored the original six; #383/#385 already used 0.6.0):
 
-    Original six (#370; drmTMB **v0.1.3** numbers):
+    Original six (#370 / refresh #392):
 
     - `gaussian-locscale`
     - `gaussian-bivariate-rho12`
@@ -14,14 +16,14 @@
     - `proportion-beta`
     - `meta-analysis-V`
 
-    +4 FE cohort (#383; drmTMB **0.6.0** numbers — recorded in each `expected.meta.toml`):
+    +4 FE cohort (#383):
 
     - `count-poisson`
     - `positive-gamma`
     - `binomial-trials`
     - `positive-lognormal`
 
-    NB2 location–scale FE (#385; drmTMB **0.6.0** numbers):
+    NB2 location–scale FE (#385):
 
     - `nbinom2-dispersion` (`y ~ x; sigma ~ x`)
 

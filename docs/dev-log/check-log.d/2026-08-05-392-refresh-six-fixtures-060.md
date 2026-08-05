@@ -1,0 +1,1 @@
+| 2026-08-05 | **#392 refresh original six fixtures → drmTMB 0.6.0** | `DRM_PARITY_ONLY=<six>` regen; soft-tol student/meta; `DRM_PARITY_TESTS=1` native 11+xfam-skip, bridge 11/11; docs+AGENTS pin; no `src/` | ✅ all six meta 0.6.0; Rose PASS (packageVersion only; measured soft-tol) | Shannon/Hopper/Rose |

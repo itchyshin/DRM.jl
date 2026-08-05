@@ -1,6 +1,6 @@
 # runparity_bridge.jl — gated drm_bridge fixture runner (DRM_PARITY_TESTS=1).
 #
-# Same committed drmTMB v0.1.3 generated numbers as runparity.jl, but fits via
+# Same committed drmTMB-generated numbers as runparity.jl (0.6.0 meta), but fits via
 # `drm_bridge` (string formula + family string + data) — the marshalling path R
 # calls. xfam-external-gllvm is OUT of the #370 cohort (unsupported family /
 # cross-package estimand) and is skipped here.

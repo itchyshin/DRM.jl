@@ -1,5 +1,5 @@
-drmtmb_version = "0.1.3"
-generated_on = "2026-06-03"
+drmtmb_version = "0.6.0"
+generated_on = "2026-08-05"
 r_call = "drmTMB(drm_formula(y ~ x, sigma ~ 1, nu ~ 1), family = student(), data = dat)"
 seed = 20260607
-note = "Generated outputs only; no drmTMB source vendored. Student nu is on the shared log(nu - 2) scale in both drmTMB and DRM.jl (nu = 2 + exp(eta)); the older log(nu) reparameterisation transform was undone 2026-08-03 for #370 after DRM.jl matched drmTMB."
+note = "Generated outputs only; no drmTMB source vendored. Student nu on shared log(nu - 2) scale (nu = 2 + exp(eta)); no transform."
