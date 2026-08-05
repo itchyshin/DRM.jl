@@ -5,8 +5,9 @@
 `DRM_PARITY_TESTS=1`; `gen_fixtures.R` regenerates the committed numeric
 fixtures on a maintainer machine with local R + drmTMB.
 
-This directory hosts the DRM.jl ↔ **drmTMB v0.1.3** numerical-parity suite. It
-runs against **pre-generated drmTMB reference outputs** committed under
+This directory hosts the DRM.jl ↔ **drmTMB** numerical-parity suite (fixtures
+currently record **drmTMB 0.6.0** in `expected.meta.toml`, #392). It runs
+against **pre-generated drmTMB reference outputs** committed under
 `test/parity/fixtures/` so the gate runs on CI with **no live R + drmTMB
 install** and with **no live R required** at all once fixtures exist.
 
@@ -84,7 +85,7 @@ data  = [ [ … ], [ … ], … ]     # row-major numeric matrix
 `expected.meta.toml` (provenance, no GPL code):
 
 ```toml
-drmtmb_version = "0.1.3"
+drmtmb_version = "0.6.0"
 generated_on   = "2026-06-02"
 r_call         = "drmTMB(drm_formula(y ~ x, sigma ~ x), family = gaussian(), data = dat)"
 seed           = 1
@@ -127,7 +128,7 @@ case (e.g. beta-binomial near a boundary) can relax without loosening the whole
 suite.
 
 The committed NB2 and Student fixtures use the **shared** working coefficient
-scales of current DRM.jl and drmTMB v0.1.3 — no Jacobian reparameterisation:
+scales of current DRM.jl and drmTMB 0.6.0 — no Jacobian reparameterisation:
 
 - NB2 `sigma` is `log(σ)` in both (size = `exp(-2·σ)`).
 - Student `nu` is `log(ν − 2)` in both (`ν = 2 + exp(η)`).
@@ -145,7 +146,7 @@ run) and turns on with `DRM_PARITY_TESTS=1`:
 ```julia
 # in test/runtests.jl, after the in-package testsets:
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
-    @testset "R-parity vs drmTMB v0.1.3" begin
+    @testset "R-parity vs drmTMB 0.6.0" begin
         include("parity/runparity.jl")          # native drm() path
     end
     @testset "R-parity via drm_bridge vs drmTMB fixtures" begin

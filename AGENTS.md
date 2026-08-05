@@ -38,7 +38,7 @@ mirrors of those charters) live in `.cursor/agents/*.md`.
 | 8 | **Pat** | PhD-student tester / UX | Quickstart UX, error messages, tutorials, the "what can I fit today?" reader voice, the biologist-on-Julia path. Owns Documenter voice consistency (reader-first, like drmTMB). |
 | 9 | **Grace** | CI / Documenter / release | GitHub Actions discipline, `Documenter.yml`, `TagBot.yml`, Aqua.jl hygiene, the Julia General registry. Keeps CI cost-disciplined. |
 | 10 | **Karpinski** | Julia performance | Type stability (`@code_warntype`), JET.jl, Allocs.jl, sparse linalg, ForwardDiff dispatch, formatter config. Owns the engine-quality battery's perf gates. |
-| 11 | **Hopper** | R↔Julia translator | RCall.jl parity tests (`DRM_PARITY_TESTS=1`), `bf()` round-trip R↔Julia, drmTMB result-shape parity against vendored v0.1.3 outputs. Day-1 standing reviewer. |
+| 11 | **Hopper** | R↔Julia translator | RCall.jl parity tests (`DRM_PARITY_TESTS=1`), `bf()` round-trip R↔Julia, drmTMB result-shape parity against committed generated outputs (fixtures record drmTMB **0.6.0**, #392). Day-1 standing reviewer. |
 | 12 | **Pólya** | Scouting + creative combination | (a) Routine watch of drmTMB pkgdown, gllvmTMB capabilities + NEWS, GLLVM.jl, and the statistics/ecology/Bayesian literature; diffs against the last scout, files an `idea` issue per actionable signal. (b) On phase-start, a creative-combination pass — what unexpected pairing opens the next slice? **Pólya proposes; Pólya does not implement.** |
 
 **Deferred / ad-hoc roles.** **Lovelace** (R-side `engine = "julia"` bridge
@@ -81,7 +81,7 @@ block for details.
 | **B** `bf-formula-frontend.js` | `bf(mu,sigma,rho12)` + markers — drmTMB-exact parity (incl. reserved-syntax rejections) |
 | **D** `mirror-article.js` | Per-article: scaffold → ingest → Florence figure → Pat reader → Rose claim-vs-evidence |
 | **F** `pre-publish-audit.js` | Rose-led drift + scope-honesty + missing-cell audit before every tag |
-| **G** `r-parity-suite.js` | RCall.jl round-trip vs vendored drmTMB v0.1.3 outputs |
+| **G** `r-parity-suite.js` | RCall.jl round-trip vs committed drmTMB-generated fixture outputs (0.6.0) |
 | **H** `add-family.js` | Per-family: link infra → Laplace path → ADEMP cell → article stub → R-parity gate |
 | **S** `scout-and-combine.js` | Pólya's routine + phase-start scout → `idea` issues + `docs/dev-log/scout/` snapshot |
 | **R** `autoresearch.js` | Estimator-optimisation loop with verify-and-revert against the verified baseline |
@@ -139,7 +139,9 @@ The PR closes its issue (`closes #NN`) and uses `.github/PULL_REQUEST_TEMPLATE.m
 `DRM.jl`'s `bf()` must be **syntactically identical** to drmTMB's so an R user
 can paste-and-run. This includes the *rejections*: the reserved-but-unsupported
 syntax drmTMB errors on, DRM.jl must error on too, with parallel messages.
-Anchor: **drmTMB v0.1.3**. See `docs/src/developer-notes/formula-grammar.md`.
+Anchor: formula grammar still mirrors **drmTMB v0.1.3** spelling; numeric
+Workflow G fixtures record **drmTMB 0.6.0** (`expected.meta.toml`, #392).
+See `docs/src/developer-notes/formula-grammar.md`.
 
 ### 2. R↔Julia bridge (Hopper + Lovelace own)
 
@@ -202,8 +204,12 @@ or `itchyshin/GLLVM.jl` when relevant. Nothing evaporates in chat.
 
 ## drmTMB parity anchor
 
-We track **drmTMB v0.1.3 (2026-05-20)**, pinned — not the moving dev branch.
-Re-anchor (and regenerate parity fixtures) on each tagged drmTMB release.
+**Formula grammar** remains pinned to **drmTMB v0.1.3** spelling (rejections +
+aliases). **Numeric Workflow G fixtures** record the maintainer-installed
+`packageVersion("drmTMB")` used at generation — currently **0.6.0** for all
+eleven admitted cells (#392 refreshed the original six). Do not assert CRAN/tag
+status beyond that recorded string. Re-anchor fixtures when regenerating against
+a new installed version.
 
 <!-- shinichi-hub -->
 > Read first — personal operating contract & second brain (house rules, memory, agents): /Users/z3437171/Dropbox/Github Local/Shinichi/AGENTS.md  (repo rules override the hub where they differ)

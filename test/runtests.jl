@@ -286,10 +286,10 @@ include("test_experimental_optimizer.jl")
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
 # Native `drm()` path (#17) plus `drm_bridge` marshalling path (#370).
 if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
-    @testset "R-parity vs drmTMB v0.1.3" begin
+    @testset "R-parity vs drmTMB 0.6.0" begin
         include("parity/runparity.jl")
     end
-    @testset "R-parity via drm_bridge vs drmTMB v0.1.3" begin
+    @testset "R-parity via drm_bridge vs drmTMB 0.6.0" begin
         include("parity/runparity_bridge.jl")
     end
 else
