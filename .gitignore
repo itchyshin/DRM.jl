@@ -24,6 +24,9 @@ deps/deps.jl
 # Subagent worktrees (created by the Agent tool; never commit).
 /.claude/worktrees/
 
+# Local git worktrees under the repo (D-111 / lane fence — never stage).
+/.worktrees/
+
 # Generated benchmark fixtures/results. Regenerate with bench/*.jl scripts.
 /bench/fixtures/crossed_poisson/
 /bench/fixtures/crossed_family/
