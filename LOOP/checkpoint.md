@@ -1,9 +1,11 @@
-GOAL: see GOAL.md (tip-idle after #393). STATE: docs hygiene in progress.
+GOAL: see GOAL.md (tip-idle after #393). STATE: DONE pending owner merge of docs PR.
 ARCS DONE (verified):
   RECON — tip e32a2c6; #390+#393 MERGED
-  S1 — LOOP kit for tip IDLE
-ARC IN PROGRESS: S2–S3 — handover + docs PR
-NEXT: write after-393 handover; commit; open docs PR
-OPEN GATES (need human): owner merge of tip-idle docs PR (L2)
-TRUTH LIVES IN: docs/tip-idle-after-393; tip baseline e32a2c6
-RESUME: Finish tip-idle after #393 docs PR. Do not invent ship G0. Leave .worktrees/ alone.
+  S1–S3 — LOOP + handover + PR #394
+  Rose — docs-only; `.worktrees/` unstaged
+ARC IN PROGRESS: none
+NEXT: owner merge of https://github.com/itchyshin/DRM.jl/pull/394
+OPEN GATES (need human): merge docs PR #394 to main
+TRUTH LIVES IN: docs/tip-idle-after-393; START HERE
+  docs/dev-log/handover/2026-08-05-cursor-handover-drm-idle-after-393.md
+RESUME: Owner merge gate for tip-idle #394. Do not invent ship G0. Leave .worktrees/ alone.
