@@ -1,10 +1,9 @@
-# arcs — #392 refresh six fixtures → 0.6.0
+# arcs — tip idle after #390+#393
 
-- [x] Arc0: issue #392; branch `feat/392-refresh-six-060`; drmTMB 0.6.0 recorded
-- [x] Rung1: regen original six; meta all 0.6.0
-- [x] Rung2: native 11 + bridge 11/11 (soft-tol student/meta)
-- [x] Rung3: GENERATING / README / bridge / AGENTS / runtests names
-- [x] Closeout: check-log.d + after-task + Rose + PR #393 `closes #392`
+- [x] RECON: tip `e32a2c6`; #390 MERGED; #393 MERGED
+- [x] S1 LOOP: GOAL/arcs/checkpoint/ultra-plan → tip IDLE
+- [x] S2 handover: `…-drm-idle-after-393.md` supersedes after-386
+- [x] S3 docs PR: https://github.com/itchyshin/DRM.jl/pull/394
+- [x] Rose: docs-only; `.worktrees/` unstaged
 
-Desk: #390 MERGED @ d5adb57 — rebased onto main.
-Fences held: D-111; `.worktrees/`; no re-time; no GPL; packageVersion only.
+Fences: D-111; `.worktrees/`; no invent ship; no Lovelace rebuild; no `src/`.

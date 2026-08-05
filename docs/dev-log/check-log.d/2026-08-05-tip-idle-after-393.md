@@ -1,0 +1,1 @@
+| 2026-08-05 | **Tip idle after #393** (START HERE after #390+#393; DRM.jl only) | Confirm tip e32a2c6; #390+#393 MERGED; supersede after-386; `.worktrees/` unstaged; no `src/`; no Lovelace rebuild | ✅ tip idle START HERE @ e32a2c6; Rose scope PASS; L2 owner merge only | Shannon |

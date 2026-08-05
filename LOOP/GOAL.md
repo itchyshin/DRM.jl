@@ -1,31 +1,31 @@
-# GOAL — #392 refresh original six fixtures → drmTMB 0.6.0 (IMMUTABLE)
-# Status: ACTIVE 2026-08-05 — G0 approved via /goal.
+# GOAL — tip idle after #390+#393 (IMMUTABLE — re-read every arc)
+# Status: ACTIVE 2026-08-05 — G0 approved via /goal (tip-idle hygiene).
 
 ## Mission
-Regenerate the original six Workflow G parity fixtures against local installed
-drmTMB **0.6.0** (same seeds/DGPs via `gen_fixtures.R`). Re-verify
-`DRM_PARITY_TESTS=1` native + bridge (11 cells). Update provenance docs so the
-cohort is not split 0.1.3 vs 0.6.0. PR closes #392.
+Docs-only tip-idle START HERE after #390 (+5 timing) and #393 (six-fixture
+0.6.0 refresh) MERGED. Refresh LOOP/*, write handover
+`docs/dev-log/handover/2026-08-05-cursor-handover-drm-idle-after-393.md`
+superseding after-386, open docs PR (pattern #378–#387). Tip IDLE; next
+session waits for owner-named DRM.jl / twin ship G0 only.
 
 ## Headline
-Coef pins for the original six still say v0.1.3 while +4 FE /
-nbinom2-dispersion / timing arms already use 0.6.0 — close the twin version split.
+After two ship merges, desk ledger must say IDLE + owner G0 — not stale
+merge gates for #390/#393.
 
 ## Invariants
-- One lane: branch `feat/392-refresh-six-060` from tip (prefer after #390).
-- Leave `.worktrees/` alone; D-111 OFF; no GPL vendoring.
-- Same seeds/DGPs; six cells only; do not redesign DGPs.
-- Soft `[tol]` only with measured Δ + Rose note.
-- No re-time #372/#389; no Lovelace; no #202/#49; no `src/` unless STOP.
-- Record `packageVersion("drmTMB")` only — no CRAN/tag claim.
-- AGENTS.md parity-anchor: maintainer-approved via this G0 `/goal`.
-- ML default.
+- One lane: branch `docs/tip-idle-after-393` from tip after #393.
+- Leave `.worktrees/` alone; D-111 OFF.
+- Docs/LOOP/handover/check-log/after-task only — no `src/`.
+- Do not invent ship; do not rebuild closed Phase 1.5 / Lovelace #5.
+- Rose: docs-only; no speed claims; ML default.
+- Never stage `.worktrees/`.
 
 ## Authoritative WHAT
-`docs/dev-log/plans/2026-08-05-refresh-six-fixtures-060-ultra-plan.md` /
-`LOOP/ultra-plan.md`.
+`docs/dev-log/plans/2026-08-05-tip-idle-after-393-ultra-plan.md` /
+`LOOP/ultra-plan.md`. Tip `origin/main` @ `e32a2c6`.
 
 ## Definition of done
-- Six `expected.meta.toml` show drmtmb_version 0.6.0 (exact installed)
-- native 11 + bridge 11/11 green under `DRM_PARITY_TESTS=1`
-- Docs provenance unified; check-log.d + after-task + Rose; PR closes #392
+- LOOP says tip IDLE; NEXT = owner G0 only
+- Handover after-393 is START HERE
+- check-log.d + after-task + docs PR open
+- Optional: vault MC Julia tip refreshed (brain local)

@@ -1,12 +1,10 @@
-# Ultra-plan (frozen at G0) — #392 refresh six → drmTMB 0.6.0
+# Ultra-plan (frozen at G0) — tip idle after #390+#393
 
-G0 approved via /goal. Tip after #390: `d5adb57`. Issue #392.
+G0 approved: docs-only tip-idle START HERE after #390 and #393 MERGED.
+Tip `origin/main` @ `e32a2c6`. Pattern = docs PR like #378–#387.
 
 Authoritative plan:
-`docs/dev-log/plans/2026-08-05-refresh-six-fixtures-060-ultra-plan.md`
+`docs/dev-log/plans/2026-08-05-tip-idle-after-393-ultra-plan.md`
 
-Cohort: gaussian-locscale, gaussian-bivariate-rho12, robust-student,
-count-nbinom2, proportion-beta, meta-analysis-V.
-
-Fences: same seeds; MIT outputs only; D-111; `.worktrees/`; no re-time;
-record packageVersion only; AGENTS pin update allowed by this G0.
+Fences: D-111; `.worktrees/`; no invent ship; no rebuild Phase 1.5 /
+Lovelace #5 (CLOSED); no `src/`; no claim inflation.
