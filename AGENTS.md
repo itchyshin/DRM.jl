@@ -209,11 +209,17 @@ Re-anchor (and regenerate parity fixtures) on each tagged drmTMB release.
 
 ## Cursor Cloud specific instructions
 
-Durable, non-obvious notes for cloud agents (the VM snapshot already has Julia
-1.10 installed via `juliaup`, and the startup update script runs
-`julia --project=. -e 'using Pkg; Pkg.instantiate()'`). Standard commands live
-in `README.md` / `.github/workflows/CI.yml`; don't duplicate them here.
+Durable, non-obvious notes for cloud agents. The VM snapshot already has Julia
+1.10 installed via `juliaup`, `JuliaFormatter` in the default shared env, and the
+package depot pre-warmed for **all four project envs** (`.`, `test`, `bench`,
+`docs` — Makie/CairoMakie/Documenter included). The startup update script only
+refreshes the main env (`julia --project=. -e 'using Pkg; Pkg.instantiate()'`) to
+stay minimal/reliable; the other envs instantiate fast because their deps are
+already cached. Standard commands live in `README.md` /
+`.github/workflows/CI.yml`; don't duplicate them here.
 
+- **The env serves every lane.** Engine/inference/grammar/perf lanes run directly
+  on `--project=.`; bench and docs need one fast (cached) instantiate first (below).
 - **`julia` on PATH.** `juliaup` added `~/.juliaup/bin` to `~/.bashrc` /
   `~/.profile`, so interactive/login shells find `julia`. Non-login shells may
   not — use the absolute launcher `~/.juliaup/bin/julia` when PATH is uncertain.
@@ -224,18 +230,26 @@ in `README.md` / `.github/workflows/CI.yml`; don't duplicate them here.
   Full command: `julia --project=. -e 'using Pkg; Pkg.test()'` (Aqua.jl + JET.jl
   quality gates run inside it; the suite is long — a single bootstrap testset
   alone is ~3 min).
-- **Lint = JuliaFormatter, file-scoped only.** Never run repo-wide (`.JuliaFormatter.toml`
-  is `blue`/margin 92; the verified `src/` engine is intentionally not blue-clean,
-  so a repo-wide format would churn it). Check one file without writing:
-  `format("src/foo.jl"; overwrite=false)` (JuliaFormatter isn't a project dep —
-  add it to a throwaway env). CI does **not** gate on formatting.
-- **R / RCall are not needed to test.** The `DRM_PARITY_TESTS=1` suite compares
-  against committed numeric fixtures in `test/parity/fixtures/`; live R (`Rscript`)
-  is only for *regenerating* those fixtures (`test/parity/gen_fixtures.R`).
-- **Docs (optional)** need a develop+instantiate first:
-  `julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'`
-  then `julia --project=docs docs/make.jl` (Node comes from `NodeJS_20_jll`; no
-  system Node install needed).
+- **Lint = JuliaFormatter, file-scoped only, already installed.** It lives in the
+  default shared env, so `julia -e 'using JuliaFormatter; format("src/foo.jl"; overwrite=false)'`
+  works from anywhere (no throwaway env, no project dep). Never run repo-wide:
+  `.JuliaFormatter.toml` is `blue`/margin 92 and the verified `src/` engine is
+  intentionally not blue-clean, so a repo-wide format churns it. CI does **not**
+  gate on formatting.
+- **Benchmarks.** `bench/run_*.jl` scripts self-activate the root project
+  (`Pkg.activate(dirname(@__DIR__))`), so run them as `julia --project=. bench/run_sparse_tmb_nd.jl`
+  — the engine baseline to expect is `logLik ≈ -256.52` (matches drmTMB). The
+  separate `bench/Project.toml` is a scaffold; if a runner needs it, `julia --project=bench -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'` first.
+- **Docs.** `julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'`
+  then `julia --project=docs docs/make.jl` (the develop step is needed because
+  Manifests are git-ignored; deps are pre-warmed so it's fast). Node/VitePress
+  come from `NodeJS_20_jll` (no system Node); `deploydocs` no-ops off-CI; HTML
+  lands in `docs/build/1/`. `docs/build` and all `Manifest.toml` are git-ignored.
+- **R / RCall are not needed to test** and R is **not installed**. The
+  `DRM_PARITY_TESTS=1` suite compares against committed numeric fixtures in
+  `test/parity/fixtures/`; live R (`Rscript`) is only for *regenerating* those
+  fixtures (`test/parity/gen_fixtures.R`) or the Phase 1.5+ R-side bridge — a lane
+  needing those must install R + drmTMB itself.
 
 <!-- shinichi-hub -->
 > Read first — personal operating contract & second brain (house rules, memory, agents): /Users/z3437171/Dropbox/Github Local/Shinichi/AGENTS.md  (repo rules override the hub where they differ)
