@@ -1,10 +1,9 @@
-GOAL: see GOAL.md (#389). STATE: closeout — open PR.
+GOAL: see GOAL.md (#389). STATE: DONE pending owner merge of PR.
 ARCS DONE (verified):
-  Arc0 — smoke count-poisson J+R ok; drmTMB 0.6.0
-  Rung1 — five cells both arms measured (bench/results/bridge_plus5_389)
-  Rung2 — evidence + r-julia-bridge.md updated from artifact
-ARC IN PROGRESS: Closeout — commit + PR closes #389
-NEXT: push + gh pr create; owner merge (L2)
-OPEN GATES (need human): merge PR when CI green
-TRUTH LIVES IN: feat/389-plus5-bridge-timing; evidence 2026-08-05-389-plus5
-RESUME: Finish #389 PR closeout. Do not re-time six. Leave .worktrees/ alone.
+  Arc0–Rung2 — five cells measured; evidence + docs
+  Closeout — PR https://github.com/itchyshin/DRM.jl/pull/390 (closes #389)
+ARC IN PROGRESS: none
+NEXT: owner merge of PR #390 when CI green
+OPEN GATES (need human): merge PR #390 to main
+TRUTH LIVES IN: feat/389-plus5-bridge-timing @ 1f14ac3; issue #389
+RESUME: Owner merge gate for #390. Do not re-time #372 six. Leave .worktrees/ alone.
