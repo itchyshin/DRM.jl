@@ -1,37 +1,29 @@
-# GOAL — #202 locscale closeout (IMMUTABLE — re-read every arc)
-# Status: ACTIVE 2026-08-05 — G0 APPROVED via /goal (judgment defaults).
+# GOAL — #388 dual-Julia RNG CI exposure (IMMUTABLE — re-read every arc)
+# Status: ACTIVE 2026-08-07 — G0 APPROVED via ultra-plan implement.
 
 ## Mission
-Close or honestly re-scope open #202 by landing the remaining **PUBLIC**
-surface + evidence for non-Gaussian phylogenetic location–scale (NB2 primary;
-Gamma already engine-gated), then DoD PR (`closes #202` or splits remainder).
+Close or honestly disposition DRM.jl #388: dual-Julia (1.10 vs 1.x) RNG
+exposure evidenced on a risk cohort; repair only proven fragile classes.
 
 ## Headline
-Tip already has `src/locscale_*.jl` + Gamma phylo recovery via private
-`_fit_locscale` — this lane is CLOSEOUT / public API / ledger honesty, **not**
-a greenfield q=2 kernel rebuild.
+Reuse HSquared 2026-08-04 playbook (CI stays RNG-free for recovery claims;
+literal fixtures / env-gated sim). Do NOT blanket-add StableRNGs to main
+Project.toml.
 
-## G0 locked (judgment defaults)
-- **Grammar B:** public acceptance =
-  `bf(y ~ x + (1|p|phylo(species)), sigma ~ 1 + (1|p|phylo(species)))`
-  Dual issue-text `phylo(1|sp)` on both axes is **out of cohort** (document;
-  do not implement alias unless under-run).
-- **D-94:** ship public phylo locscale; defer `nbinom2-locscale` R fixture until
-  drmTMB supports coupled `(1|p|species)` (cite R q=1 NB2 structured-σ as
-  scale-axis existence cover).
+## G0 locked
+- Sequence: #395 MERGED @ 26d39efe; branch `feat/388-ci-rng-exposure` from tip.
+- Repair taxonomy: (1) env-gate / (2) literal fixtures; StableRNGs last resort.
+- Arc 0 = named risk cohort, not immediate double full Pkg.test.
 
 ## Invariants
-- One lane: branch `feat/202-locscale-closeout` from tip after #394.
-- Reuse `locscale_*`; **no q=4 verified core edits**.
-- D-111 OFF; leave `.worktrees/` alone; never stage them.
-- No GPL vendoring; no #49 / #136; no tip-idle SHA-churn padding.
-- ML default; Rose claim-vs-evidence; one issue → one PR.
+- No #136 / #49 / D-111 / tip-idle padding.
+- Never stage `.worktrees/`.
+- Rose: latent ≠ fixed; no suite-wide immunity claim from one cohort.
 
 ## Authoritative WHAT
-`LOOP/ultra-plan.md` (= `docs/dev-log/plans/2026-08-05-202-locscale-closeout-ultra-plan.md`).
+`docs/dev-log/plans/2026-08-07-388-rng-ci-ultra-plan.md` (+ Cursor plan).
 
 ## Definition of done
-- Public NB2 phylo locscale fits via grammar B; recovery + FD ≤1e-6 evidenced
-- Gamma public path honest (test or documented parity with private gate)
-- capability-status row + tutorial/docs; stale “waits on #209” comment fixed
-- check-log.d + after-task + Rose; PR open `closes #202` (or close+split)
+- Dual-version cohort evidence retained
+- Repair if red, else latent-OK with Rose honesty
+- check-log.d + after-task + Rose; PR `closes #388`
