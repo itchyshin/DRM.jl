@@ -217,7 +217,8 @@ support.
 | `simulate` | `src/gaussian_core.jl` | **Tested** — `test/test_simulate.jl` |
 | `check_drm` (convergence / gradient / vcov diagnostics) | `src/gaussian_core.jl` | **Tested** — `test/test_check_drm.jl` |
 | Randomized (Dunn–Smyth) quantile residuals, per family | `src/quantile_residuals.jl` | **Tested** — `test/test_quantile_residuals.jl` |
-| Visualization (CairoMakie figures incl. the Confidence Eye) | `src/visualization.jl` | **Tested** — `test/test_visualization.jl` |
+| Visualization *data* providers (`profile_curve` / `parameter_surface` / `corpairs_data`) | `src/visualization.jl` | **Tested** — `test/test_visualization.jl` |
+| Drawing layer (`drm_figure` / thin `plot_*`; Confidence Eye on `:profile`) | `src/plotting_ext.jl` + `ext/DRMMakieExt.jl` (Makie + AlgebraOfGraphics weakdeps) | **Stub-tested in CI** — `test/test_makie_ext_stub.jl` (`isempty(methods(drm_figure))` without Makie). Actual rendering is opt-in local (`using CairoMakie, AlgebraOfGraphics`); default CI does **not** draw. |
 
 ## R → Julia bridge (engine = "julia")
 

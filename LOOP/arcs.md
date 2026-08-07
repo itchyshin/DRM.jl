@@ -1,13 +1,13 @@
-# Arcs — Phase 3 (#7) honesty closeout
+# Arcs — #336 DRMMakieExt
 
 | ID | Arc | Status | Gate? |
 |---|---|---|---|
-| A1 | Orient: tip main @ ≥f3d8ce7d; branch `docs/7-phase3-closeout` | done | no |
-| A2 | Inventory evidence: 26/26 slugs + two banners; write evidence receipt | done | no |
-| A3 | Docs/ledger: ROADMAP Phase 3 complete-with-carveouts; light coordination-board tip refresh | done | no |
-| A4 | DoD: check-log.d + after-task; Rose claim-vs-evidence PASS | done | no |
-| A5 | Commit (scope-stage), push, open PR `closes #7`; comment on #7 | done | PR #397 |
-| A6 | Merge PR | blocked | **OPEN GATE — owner only** |
+| A0 | Scaffold LOOP/ + durable ultra-plan copy | **done** | — |
+| A1 | Orient tip main @ ≥6c224a6c; branch `feat/336-makie-ext` | **done** | — |
+| A2 | Project.toml weakdeps/extensions + `src/plotting_ext.jl` + wire DRM.jl | **done** | — |
+| A3 | `ext/DRMMakieExt.jl` — `:profile` Eye, `:parameter_surface`, `:corpairs` | **done** | — |
+| A4 | Stub tests in default CI (Makie OUT) | **done** (8/8 Pass) | — |
+| A5 | Docs honesty (visualization / grammar / capabilities) | **done** | — |
+| A6 | DoD + commit + PR `closes #336` | in-progress | **OPEN GATE: merge** |
 
-Fences: no `src/`; no #136/#336/#49/R-bridge impl; no tip-idle padding;
-never stage `.worktrees/`; no GPL; do not start #336.
+Rung 1 (optional / out of Arc 0): AoG faceted corpairs polish — separate issue unless owner asks.

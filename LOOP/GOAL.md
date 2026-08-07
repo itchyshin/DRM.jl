@@ -1,31 +1,32 @@
-# GOAL — Phase 3 (#7) honesty closeout (IMMUTABLE — re-read every arc)
-# Status: ACTIVE 2026-08-07 — G0 APPROVED (owner: CLOSE #7 with carve-outs).
+# GOAL — #336 DRMMakieExt (IMMUTABLE — re-read every arc)
+# Status: ACTIVE 2026-08-07 — G0 APPROVED (owner: ship DRMMakieExt; merge OPEN GATE).
 
 ## Mission
-Close DRM.jl #7 via one Rose-honest docs/ledger PR from tip `origin/main`
-@ `f3d8ce7d`. Disposition locked: **CLOSE #7** with named carve-outs.
+Close DRM.jl #336 via one PR that adds `DRMMakieExt` (HSquared-pattern Makie
+drawing layer) from tip `origin/main` @ `6c224a6c`. Prepare-data stays in
+`src/visualization.jl`; drawing lives in `ext/DRMMakieExt.jl`.
 
 ## Headline
-26/26 Documenter target slugs already exist — do **not** invent article fills.
-Carve-outs only: `phylogenetic-spatial` Theory+roadmap (engine later) +
-`marginal-la-vs-va` Planned (#136).
+Makie + AlgebraOfGraphics as **weakdeps** only; CI gates the method-less stub
+(Makie OUT of CI). Public API: `drm_figure` + thin `plot_*` aliases. Kinds:
+`:profile` (Confidence Eye), `:parameter_surface`, `:corpairs`.
 
 ## Invariants
-- One lane; branch `docs/7-phase3-closeout` from updated main.
-- Fence: no `src/` engine; no #136/#336/#49/R-bridge implementation;
-  no tip-idle SHA padding; never stage `.worktrees/`; no GPL vendoring.
-- Do not claim simultaneous phylo×spatial or VA as shipped.
+- One lane; branch `feat/336-makie-ext` from updated main.
+- Fence: no `src/` q=4 engine / families; no #136 VA; no #49 FIML; no R-bridge;
+  never stage `.worktrees/`; no GPL vendoring.
+- Do **not** put Makie in `[deps]` or default CI test deps.
 - Opening PR = OK; **do not merge** without owner (OPEN GATE).
-- STOP: do not start #336 in the same PR.
+- STOP: do not start VA/FIML/R-bridge in the same PR.
 
 ## Authoritative WHAT
 `LOOP/ultra-plan.md` ↔
-`docs/dev-log/plans/2026-08-07-7-phase3-closeout-ultra-plan.md`
-(Cursor plan "Phase 3 #7 closeout").
+`docs/dev-log/plans/2026-08-07-336-makie-ext-ultra-plan.md`
+(Cursor plan "336 Makie Ext").
 
 ## Definition of done
-- Inventory receipt retained (26/26 + two banners)
-- ROADMAP Phase 3 → complete-with-carveouts
+- `Project.toml` weakdeps/extensions; `src/plotting_ext.jl`; `ext/DRMMakieExt.jl`
+- Stub tests green (no Makie in default CI)
+- Docs honesty (visualization + simulation-plot-grammar + capabilities)
 - check-log.d + after-task with Rose PASS
-- PR open with `closes #7`; #7 comment names carve-outs
-- Merge left as OPEN GATE for owner
+- PR open with `closes #336`; merge left as OPEN GATE

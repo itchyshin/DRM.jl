@@ -1,7 +1,7 @@
 # Simulation plot grammar
 
 !!! note "Status — Implemented"
-    Mirrors drmTMB's [Simulation plot grammar](https://itchyshin.github.io/drmTMB/articles/simulation-plot-grammar.html). DRM.jl keeps the base package **plotting-dependency-free**: the helpers below return the *numbers a plot needs* — grids, deviances, correlations — so any backend (Makie / Plots / …) renders them in a few lines. This is the data behind drmTMB's `plot_parameter_surface` / `plot_corpairs`.
+    Mirrors drmTMB's [Simulation plot grammar](https://itchyshin.github.io/drmTMB/articles/simulation-plot-grammar.html). DRM.jl keeps the base package **plotting-dependency-free**: the helpers below return the *numbers a plot needs* — grids, deviances, correlations. Optional drawing is provided by **`DRMMakieExt`** (Makie + AlgebraOfGraphics weakdeps) via [`drm_figure`](../reference/visualization.md) / thin `plot_*` aliases. Default CI does **not** load Makie or render figures — only the method-less stub is gated.
 
 There are two ingredients: **`simulate`** (generate replicate data from a fit) and
 the **plot-data providers** (turn a fit into plottable grids).
@@ -61,10 +61,11 @@ heatmap panel.
 
 ## The Confidence Eye
 
-The figure gallery renders a profile interval as a **Confidence Eye** (a pale
-lens with a dark outline and a hollow point estimate) drawn directly from
-`profile_curve` / `confint` — a compact, honest depiction of an asymmetric
-likelihood interval.
+Florence's **Confidence Eye** contract: a pale compatibility region, a darker
+outline, and a hollow point estimate. With Makie + AlgebraOfGraphics loaded,
+`drm_figure(profile_curve(...); kind = :profile)` (or `plot_profile`) draws that
+Eye on the profile interval. The Documenter figure gallery may also render Eyes
+from `confint` rows — that is docs/gallery evidence, not default-CI evidence.
 
-Because every provider returns numbers (not figures), the package stays free of a
-plotting dependency while remaining fully plottable.
+Because every provider returns numbers (not figures), the base package stays free
+of a plotting dependency; drawing is opt-in via `DRMMakieExt`.
