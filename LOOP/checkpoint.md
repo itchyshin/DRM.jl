@@ -1,7 +1,7 @@
-GOAL: see GOAL.md.   STATE: Arc 0 committed @ bcc389fe; pushing PR (merge OPEN GATE).
-ARCS DONE (verified): A0–A5 — stub tests 8/8 Pass; A6 commit landed (`feat(#336): add DRMMakieExt…` @ bcc389fe).
-ARC IN PROGRESS: A6 push + PR open.
-NEXT: after PR open → STOP at merge OPEN GATE (owner only).
-OPEN GATES (need human): **merge** — do not merge without owner.
-TRUTH LIVES IN: branch feat/336-makie-ext @ bcc389fe; LOOP/; docs/dev-log/after-task/2026-08-07-336-makie-ext.md.
-RESUME: /goal DRM.jl #336 — READ LOOP/GOAL.md → checkpoint.md → ultra-plan.md; if PR open, pause at merge; do not start #136/#49/R-bridge.
+GOAL: see GOAL.md.   STATE: DONE for Arc 0 — PR #398 open; merge OPEN GATE.
+ARCS DONE (verified): A0–A6 — DRMMakieExt shipped; stub tests 8/8 Pass; Rose PASS; PR https://github.com/itchyshin/DRM.jl/pull/398 closes #336.
+ARC IN PROGRESS: none (paused at merge gate).
+NEXT: owner merge decision only. Do not start #136/#49/R-bridge.
+OPEN GATES (need human): **merge PR #398** — do not merge without owner.
+TRUTH LIVES IN: branch feat/336-makie-ext @ 875c1f90; PR #398; LOOP/; docs/dev-log/after-task/2026-08-07-336-makie-ext.md.
+RESUME: If owner asks to continue after merge: tip-idle / next G0 — not this lane. If PR needs CI repair: re-read GOAL → fix on feat/336-makie-ext; do not expand fence.

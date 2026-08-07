@@ -8,6 +8,6 @@
 | A3 | `ext/DRMMakieExt.jl` — `:profile` Eye, `:parameter_surface`, `:corpairs` | **done** | — |
 | A4 | Stub tests in default CI (Makie OUT) | **done** (8/8 Pass) | — |
 | A5 | Docs honesty (visualization / grammar / capabilities) | **done** | — |
-| A6 | DoD + commit + PR `closes #336` | in-progress | **OPEN GATE: merge** |
+| A6 | DoD + commit + PR `closes #336` | **done** (PR #398) | **OPEN GATE: merge** |
 
-Rung 1 (optional / out of Arc 0): AoG faceted corpairs polish — separate issue unless owner asks.
+Rung 1 (optional / out of Arc 0): AoG faceted polish — separate issue unless owner asks.
