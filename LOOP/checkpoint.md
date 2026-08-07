@@ -1,13 +1,14 @@
-GOAL: see GOAL.md (#388 RNG CI). STATE: READY FOR PR — Arc 0 green (latent-OK); policy landed.
+GOAL: see GOAL.md.   STATE: DONE for /goal reversible arcs; merge OPEN GATE.
 ARCS DONE (verified):
-  S0 — PR #395 MERGED; #202 CLOSED; tip @ 26d39efe
-  S1 — dual-version risk cohort Pass both Julias; stream split @ 8189 evidenced
-  S3 — test/README.md CI RNG policy (under-run; no Rung-1 repair needed)
-  DoD — check-log + after-task + Rose PASS
-ARCS DONE (unverified / do not claim): full-suite dual Pkg.test; suite-wide immunity
-ARC IN PROGRESS: none — open PR closes #388; pause for L2 merge
-NEXT: gh pr create; wait owner merge
-OPEN GATES (need human): merge of #388 DoD PR
-TRUTH LIVES IN: branch feat/388-ci-rng-exposure;
-  docs/dev-log/evidence/2026-08-07-388-rng-probe.md
-RESUME: if PR open, watch CI + owner merge. Never stage .worktrees/.
+  A1 — tip f3d8ce7d; branch docs/7-phase3-closeout
+  A2 — evidence 26/26 + banners BANNER_OK
+  A3 — ROADMAP complete-with-carveouts; coordination-board tip refresh
+  A4 — check-log.d + after-task; Rose PASS
+  A5 — PR #397 open; #7 comment landed; HEAD c9610915
+ARC IN PROGRESS: none
+NEXT: A6 owner merge of PR #397 (then optional separate G0 for #336 — not this lane)
+OPEN GATES (need human): **merge PR #397** (do not merge without owner). CI may still run.
+TRUTH LIVES IN: branch docs/7-phase3-closeout @ c9610915;
+  PR https://github.com/itchyshin/DRM.jl/pull/397;
+  evidence + ROADMAP + after-task; #7 comment.
+RESUME: only if merge/CI needs follow-up. Do not start #336 here.

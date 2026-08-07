@@ -7,15 +7,17 @@
 
 ## Where we are
 
-**Phase 2 (families) effectively complete; Phase 3 (articles) nearly complete.**
+**Phase 2 (families) effectively complete; Phase 3 (articles) complete-with-carveouts.**
 Phase 0 (team/workflows/ledger/docs shell) is done; the `bf()` / `drm()` front
 end ships with drmTMB-exact grammar (Phase 1.1, Workflow B); inference graduated
 from `experimental/` into `src/inference.jl` (`infer_q4` wired — Wald + profile +
 bootstrap); and **all 13 families** (12 univariate + bivariate Gaussian) are
 implemented, exported, and recovery-tested. **v0.1.0 and v0.1.1 are tagged.**
-Many Phase 3 articles are filled (formula-grammar, adding-families,
-testing-likelihoods, source-map, large-data, convergence, structural-dependence,
-Rosetta). The variational-approximation track is newly opened (issue #136).
+Phase 3 / [#7](https://github.com/itchyshin/DRM.jl/issues/7): all **26** drmTMB-target
+Documenter slugs exist (inventory
+`docs/dev-log/evidence/2026-08-07-7-phase3-inventory.md`). Named carve-outs (pages
+present, not Stable): `phylogenetic-spatial` (**Theory + roadmap** — simultaneous
+phylo×spatial engine later) and `marginal-la-vs-va` (**Planned**, [#136](https://github.com/itchyshin/DRM.jl/issues/136)).
 **Phase 1.0 SCOPED closeout:** #13 decision gate **FAIL** — `fit_em_natgrad` not
 a public solver; `lc_metric` Fisher infra landed; Workflow Q JET gate added
 (FD/Allocs/multi-shape already evidenced). Leftover `experimental/` prototypes
@@ -104,12 +106,17 @@ call DRM.jl from R via `engine = "julia"`. Parity anchor: **drmTMB v0.1.3**.
   cumulative-logit, + bivariate Gaussian); see `NEWS.md` v0.1.0 / v0.1.1. The
   numerical drmTMB-parity gate (#17) is closed (opt-in harness).
 
-### Phase 3 — Articles to mirror drmTMB  ·  *milestone: `Phase 3`*  ·  nearly complete
+### Phase 3 — Articles to mirror drmTMB  ·  *milestone: `Phase 3`*  ·  ✅ complete-with-carveouts
 
-- Workflow D: fill the remaining Tutorials, Diagnostics & Validation, and
-  Developer Notes articles. Target = drmTMB's 26 articles. — many filled
-  (formula-grammar, adding-families, testing-likelihoods, source-map,
-  large-data, convergence, structural-dependence, Rosetta); remainder in flight.
+- Workflow D target = drmTMB's **26** article slugs (#7). **All 26 paths exist**
+  under `docs/src/` (2026-08-07 inventory). Closing #7 does **not** claim two
+  non-Stable pages as shipped capabilities:
+  - `tutorials/phylogenetic-spatial` — **Theory + roadmap** (joint phylo×spatial
+    fit is engine work, tracked outside the articles milestone).
+  - `model-guides/marginal-la-vs-va` — **Planned (#136)** (VA/ELBO; LA remains
+    today's default).
+- Next docs/UX ship after this ledger close is separate (e.g. #336 Makie) — not
+  Phase 3 article fill.
 
 ### v0.1.0  ·  *milestone: `v0.1.0`*
 
