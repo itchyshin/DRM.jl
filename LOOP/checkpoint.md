@@ -1,13 +1,15 @@
-GOAL: see GOAL.md.   STATE: A1–A4 landed; A5 commit/push/PR next.
+GOAL: see GOAL.md.   STATE: DONE for /goal reversible arcs; merge OPEN GATE.
 ARCS DONE (verified):
   A1 — tip f3d8ce7d; branch docs/7-phase3-closeout
-  A2 — evidence receipt 26/26 + banners BANNER_OK
-  A3 — ROADMAP Phase 3 complete-with-carveouts; coordination-board tip refresh
-  A4 — check-log.d + after-task; Rose PASS in after-task
-ARC IN PROGRESS: A5 — scope-stage commit, push, gh pr create closes #7, issue comment.
-NEXT: A5 then STOP at A6 merge OPEN GATE.
-OPEN GATES (need human): merge PR (A6).
-TRUTH LIVES IN: branch docs/7-phase3-closeout; evidence + ROADMAP + after-task;
-  plan docs/dev-log/plans/2026-08-07-7-phase3-closeout-ultra-plan.md.
-RESUME: /goal Phase 3 (#7) honesty closeout RESUME. READ LOOP/GOAL.md →
-  checkpoint.md. CONTINUE FROM A5/A6. Do not start #336. Never stage .worktrees/.
+  A2 — evidence 26/26 + banners BANNER_OK
+  A3 — ROADMAP complete-with-carveouts; coordination-board tip refresh
+  A4 — check-log.d + after-task; Rose PASS
+  A5 — commit d65d842f; PR #397; #7 comment landed
+ARC IN PROGRESS: none
+NEXT: A6 owner merge of PR #397 (then optional separate G0 for #336 — not this lane)
+OPEN GATES (need human): **merge PR #397** (do not merge without owner). CI may still run.
+TRUTH LIVES IN: branch docs/7-phase3-closeout @ d65d842f;
+  PR https://github.com/itchyshin/DRM.jl/pull/397;
+  evidence + ROADMAP + after-task; #7 comment.
+RESUME: /goal Phase 3 (#7) honesty closeout RESUME — only if merge/CI needs follow-up.
+  READ LOOP/GOAL.md → checkpoint.md. Do not start #336 here. Never stage .worktrees/.
