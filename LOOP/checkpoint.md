@@ -4,11 +4,11 @@ ARCS DONE (verified):
   A2 — evidence 26/26 + banners BANNER_OK
   A3 — ROADMAP complete-with-carveouts; coordination-board tip refresh
   A4 — check-log.d + after-task; Rose PASS
-  A5 — commit d65d842f; PR #397; #7 comment landed
+  A5 — commits d65d842f + f9e5fb27; PR #397; #7 comment landed
 ARC IN PROGRESS: none
 NEXT: A6 owner merge of PR #397 (then optional separate G0 for #336 — not this lane)
 OPEN GATES (need human): **merge PR #397** (do not merge without owner). CI may still run.
-TRUTH LIVES IN: branch docs/7-phase3-closeout @ d65d842f;
+TRUTH LIVES IN: branch docs/7-phase3-closeout @ f9e5fb27;
   PR https://github.com/itchyshin/DRM.jl/pull/397;
   evidence + ROADMAP + after-task; #7 comment.
 RESUME: /goal Phase 3 (#7) honesty closeout RESUME — only if merge/CI needs follow-up.
