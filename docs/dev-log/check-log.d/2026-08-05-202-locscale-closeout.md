@@ -1,0 +1,1 @@
+| 2026-08-05 | **#202 public phylo locscale closeout** | `test/test_public_phylo_locscale.jl` 13/13 (NB2 recovery + Gamma smoke + A reject); capability-status + tutorial + NEWS; grammar B; D-94 no R nbinom2-locscale fixture | ✅ green; Rose PASS (claim = public grammar B + Julia evidence; dual-phylo A out) | Shannon/Noether/Rose |

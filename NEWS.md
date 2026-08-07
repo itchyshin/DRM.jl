@@ -6,6 +6,16 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## Unreleased
 
+- **Non-Gaussian phylogenetic location–scale (#202)** — public `drm()` path for
+  `NegBinomial2()` / `Gamma()` with a shared structured RE on **μ and log σ**
+  via grammar B `(1 | p | phylo(species))` on both axes (`tree=` forwarded into
+  the locscale frontend). `vc(fit)[:species]` reports the 2×2 group-level
+  covariance (never residual `rho12`). Dual issue-text `phylo(1|sp)` on both
+  axes stays rejected. Evidence: `test/test_public_phylo_locscale.jl` (NB2
+  recovery + Gamma smoke). R `nbinom2-locscale` fixture deferred until drmTMB
+  supports coupled `(1|p|species)` (D-94; R q=1 structured-σ covers scale-axis
+  existence).
+
 ## v0.1.2 (2026-08-01)
 
 **Version catch-up on the post–v0.1.1 `main` tip (registry candidate — not yet

@@ -1,31 +1,37 @@
-# GOAL — tip idle after #390+#393 (IMMUTABLE — re-read every arc)
-# Status: ACTIVE 2026-08-05 — G0 approved via /goal (tip-idle hygiene).
+# GOAL — #202 locscale closeout (IMMUTABLE — re-read every arc)
+# Status: ACTIVE 2026-08-05 — G0 APPROVED via /goal (judgment defaults).
 
 ## Mission
-Docs-only tip-idle START HERE after #390 (+5 timing) and #393 (six-fixture
-0.6.0 refresh) MERGED. Refresh LOOP/*, write handover
-`docs/dev-log/handover/2026-08-05-cursor-handover-drm-idle-after-393.md`
-superseding after-386, open docs PR (pattern #378–#387). Tip IDLE; next
-session waits for owner-named DRM.jl / twin ship G0 only.
+Close or honestly re-scope open #202 by landing the remaining **PUBLIC**
+surface + evidence for non-Gaussian phylogenetic location–scale (NB2 primary;
+Gamma already engine-gated), then DoD PR (`closes #202` or splits remainder).
 
 ## Headline
-After two ship merges, desk ledger must say IDLE + owner G0 — not stale
-merge gates for #390/#393.
+Tip already has `src/locscale_*.jl` + Gamma phylo recovery via private
+`_fit_locscale` — this lane is CLOSEOUT / public API / ledger honesty, **not**
+a greenfield q=2 kernel rebuild.
+
+## G0 locked (judgment defaults)
+- **Grammar B:** public acceptance =
+  `bf(y ~ x + (1|p|phylo(species)), sigma ~ 1 + (1|p|phylo(species)))`
+  Dual issue-text `phylo(1|sp)` on both axes is **out of cohort** (document;
+  do not implement alias unless under-run).
+- **D-94:** ship public phylo locscale; defer `nbinom2-locscale` R fixture until
+  drmTMB supports coupled `(1|p|species)` (cite R q=1 NB2 structured-σ as
+  scale-axis existence cover).
 
 ## Invariants
-- One lane: branch `docs/tip-idle-after-393` from tip after #393.
-- Leave `.worktrees/` alone; D-111 OFF.
-- Docs/LOOP/handover/check-log/after-task only — no `src/`.
-- Do not invent ship; do not rebuild closed Phase 1.5 / Lovelace #5.
-- Rose: docs-only; no speed claims; ML default.
-- Never stage `.worktrees/`.
+- One lane: branch `feat/202-locscale-closeout` from tip after #394.
+- Reuse `locscale_*`; **no q=4 verified core edits**.
+- D-111 OFF; leave `.worktrees/` alone; never stage them.
+- No GPL vendoring; no #49 / #136; no tip-idle SHA-churn padding.
+- ML default; Rose claim-vs-evidence; one issue → one PR.
 
 ## Authoritative WHAT
-`docs/dev-log/plans/2026-08-05-tip-idle-after-393-ultra-plan.md` /
-`LOOP/ultra-plan.md`. Tip `origin/main` @ `e32a2c6`.
+`LOOP/ultra-plan.md` (= `docs/dev-log/plans/2026-08-05-202-locscale-closeout-ultra-plan.md`).
 
 ## Definition of done
-- LOOP says tip IDLE; NEXT = owner G0 only
-- Handover after-393 is START HERE
-- check-log.d + after-task + docs PR open
-- Optional: vault MC Julia tip refreshed (brain local)
+- Public NB2 phylo locscale fits via grammar B; recovery + FD ≤1e-6 evidenced
+- Gamma public path honest (test or documented parity with private gate)
+- capability-status row + tutorial/docs; stale “waits on #209” comment fixed
+- check-log.d + after-task + Rose; PR open `closes #202` (or close+split)

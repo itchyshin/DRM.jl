@@ -250,6 +250,8 @@ include("test_nongaussian_phylo_grad_gate.jl")
 # Non-Gaussian phylogenetic LOCATION–SCALE (#202): scale-axis SD recovery + the
 # ≤ 1e-6 FD gradient gate on the q=2 (mean + log-σ) Laplace marginal.
 include("test_phylo_locscale.jl")
+# #202 closeout: PUBLIC drm() grammar B `(1 | p | phylo(species))` (tree= forward).
+include("test_public_phylo_locscale.jl")
 # σ-phylo location-scale (Ayumi #2): separate/coupled/asymmetric blocks + boundary CIs.
 include("test_gaussian_locscale_phylo.jl")
 include("test_gaussian_locscale_phylo_boundary.jl")

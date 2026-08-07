@@ -57,6 +57,10 @@ fit_phy = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
               NegBinomial2(); data = dat, tree = tr, se = false)
 fit_disp = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ x)),
                NegBinomial2(); data = dat, tree = tr, se = false)  # log σ ~ x
+# Coupled phylogenetic location–scale (#202): shared tag + phylo group on both axes.
+fit_ls = drm(bf(@formula(y ~ x + (1 | p | phylo(species))),
+                @formula(sigma ~ 1 + (1 | p | phylo(species)))),
+             NegBinomial2(); data = dat, tree = tr, se = false)
 exp(-2 * coef(fit, :sigma)[1])  # estimated size θ = 1/σ²
 ```
 """
@@ -76,7 +80,9 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, K = nothing
     lc = _ls_coupled_re(rhs[:mu], get(rhs, :sigma, ConstantTerm(1)))
     lc === nothing ||
         return _withformula(_fit_locscale_frontend(Val(:nb2), fam, f, rhs, lc, data;
-                                                    g_tol = g_tol, se = se), f)
+                                                    g_tol = g_tol, se = se,
+                                                    tree = tree, K = K, A = A,
+                                                    coords = coords), f)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
         error("NegBinomial2() does not support meta_V markers")
