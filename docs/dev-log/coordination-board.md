@@ -4,9 +4,10 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
-_Refreshed to HEAD reality 2026-06-02 (`chore-coordination-board`). All 13
-drmTMB families are implemented / exported / tested; inference is wired;
-v0.1.0 and v0.1.1 are tagged. See the "Verified state" section below._
+_Light tip refresh 2026-08-07 (`docs/7-phase3-closeout`): tip base `f3d8ce7d`
+(Merge #396 / #388). Phase 3 / #7 → complete-with-carveouts (26/26 slugs;
+phylo×spatial Theory+roadmap + VA Planned #136). Prior refresh 2026-06-02
+still holds for families/inference wiring — see "Verified state" below._
 
 ## Lane split — Claude ↔ Codex
 
@@ -42,19 +43,20 @@ Full Codex brief: **#76** (pinned).
 - **Engine — crossed/structured Laplace merged.** Codex's lane landed crossed
   random effects (`closes #70`) plus a series of crossed/structured Laplace
   speed/correctness merges: #89, #97, #108, #111, #114, #119, #123, #126, #128.
-- **Phase-3 docs + VA scaffold (Claude).** Developer/parity articles filled
-  (#112/#116/#117/#121/#122, etc.); VA/ELBO marginal method-selection surface
-  in progress (#136 — design spec + LA-vs-VA guide + `src/variational.jl`
-  scaffold; Laplace stays the default, `_fit_va` is a stub).
+- **Phase 3 / #7 complete-with-carveouts (2026-08-07).** All 26 drmTMB-target
+  Documenter slugs exist; carve-outs named (phylo×spatial Theory+roadmap;
+  VA Planned #136). VA/ELBO remains design/scaffold only — Laplace default;
+  `_fit_va` stub. Inventory:
+  `docs/dev-log/evidence/2026-08-07-7-phase3-inventory.md`.
 
 ## Active branches
 
 | Branch | Owner | Touching | Status |
 |---|---|---|---|
-| `main` | — | docs deploy (DocumenterVitepress, deploy-on-main) | green / deploying |
-| Codex engine lane (`codex/crossed-poisson-speed`, `codex/profile-ci-*`) | Codex | engine: `sparse_aug_plsm.jl`, `fit_q4_sparse_tmb.jl`, crossed/structured Laplace + profile-CI speed | active — **#80 / #113** |
-| Claude docs + VA lane (`#136` scaffold) | Shannon (Claude) | `src/variational.jl`, `docs/`, `test/test_variational.jl` | active — Phase-3 docs + VA scaffold (#136) |
+| `main` | — | tip @ `f3d8ce7d` (Merge #396); docs deploy | tip IDLE for ship after #7 close |
+| `docs/7-phase3-closeout` | Shannon (Cursor `/goal`) | `ROADMAP.md`, LOOP/, `docs/dev-log/*` (evidence/plans/check-log/after-task), light coordination-board | **active** — Phase 3 / #7 honesty closeout (docs/ledger only; no `src/`) |
+| #136 VA / #336 Makie | — | deferred | **fence** — not this PR; next owner G0 after #7 merges |
 
-> Note: crossed/structured Laplace (#70 and follow-ons) and the 13-family +
-> inference surface are **merged**; no stale "PR #74 open", "Phase 0 current", or
-> "#70 not started" rows remain. Coordinate on `src/DRM.jl` include/export edits.
+> Note: Phase 3 article-fill work is exhausted (26/26). Do not invent tip-idle
+> SHA padding. Never stage `.worktrees/`. Coordinate on `src/DRM.jl` if an
+> engine lane reopens.

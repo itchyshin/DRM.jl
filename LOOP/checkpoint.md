@@ -1,13 +1,13 @@
-GOAL: see GOAL.md (#388 RNG CI). STATE: READY FOR PR — Arc 0 green (latent-OK); policy landed.
+GOAL: see GOAL.md.   STATE: A1–A4 landed; A5 commit/push/PR next.
 ARCS DONE (verified):
-  S0 — PR #395 MERGED; #202 CLOSED; tip @ 26d39efe
-  S1 — dual-version risk cohort Pass both Julias; stream split @ 8189 evidenced
-  S3 — test/README.md CI RNG policy (under-run; no Rung-1 repair needed)
-  DoD — check-log + after-task + Rose PASS
-ARCS DONE (unverified / do not claim): full-suite dual Pkg.test; suite-wide immunity
-ARC IN PROGRESS: none — open PR closes #388; pause for L2 merge
-NEXT: gh pr create; wait owner merge
-OPEN GATES (need human): merge of #388 DoD PR
-TRUTH LIVES IN: branch feat/388-ci-rng-exposure;
-  docs/dev-log/evidence/2026-08-07-388-rng-probe.md
-RESUME: if PR open, watch CI + owner merge. Never stage .worktrees/.
+  A1 — tip f3d8ce7d; branch docs/7-phase3-closeout
+  A2 — evidence receipt 26/26 + banners BANNER_OK
+  A3 — ROADMAP Phase 3 complete-with-carveouts; coordination-board tip refresh
+  A4 — check-log.d + after-task; Rose PASS in after-task
+ARC IN PROGRESS: A5 — scope-stage commit, push, gh pr create closes #7, issue comment.
+NEXT: A5 then STOP at A6 merge OPEN GATE.
+OPEN GATES (need human): merge PR (A6).
+TRUTH LIVES IN: branch docs/7-phase3-closeout; evidence + ROADMAP + after-task;
+  plan docs/dev-log/plans/2026-08-07-7-phase3-closeout-ultra-plan.md.
+RESUME: /goal Phase 3 (#7) honesty closeout RESUME. READ LOOP/GOAL.md →
+  checkpoint.md. CONTINUE FROM A5/A6. Do not start #336. Never stage .worktrees/.

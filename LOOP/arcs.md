@@ -1,11 +1,13 @@
-# arcs — #202 locscale closeout (G0 approved)
+# Arcs — Phase 3 (#7) honesty closeout
 
-- [x] RECON: twin-bar cite; probe grammar B `(1|p|phylo(sp))` vs A dual-phylo; freeze cohort
-- [x] S1: grammar B route — forward `tree=` into NB2/Gamma locscale frontend; fix stale #209 comment; add public test file
-- [ ] S2: **VERIFY** public NB2 phylo locscale recovery (run test log — interrupted last session)
-- [ ] S3: Gamma public path honesty (smoke in same test file)
-- [ ] S4: capability-status + tutorial honesty + NEWS; #202 disposition
-- [ ] VERIFY: focused tests + Rose claim audit
-- [ ] PR: DoD logs + open PR `closes #202` — **L2 merge gate**
+| ID | Arc | Status | Gate? |
+|---|---|---|---|
+| A1 | Orient: tip main @ ≥f3d8ce7d; branch `docs/7-phase3-closeout` | done | no |
+| A2 | Inventory evidence: 26/26 slugs + two banners; write evidence receipt | done | no |
+| A3 | Docs/ledger: ROADMAP Phase 3 complete-with-carveouts; light coordination-board tip refresh | done | no |
+| A4 | DoD: check-log.d + after-task; Rose claim-vs-evidence PASS | done | no |
+| A5 | Commit (scope-stage), push, open PR `closes #7`; comment on #7 | pending | PR open OK |
+| A6 | Merge PR | blocked | **OPEN GATE — owner only** |
 
-Fences: no q=4 core; D-111; `.worktrees/`; no GPL; no #49/#136; no R nbinom2-locscale fixture; no dual-phylo alias (A) unless under-run.
+Fences: no `src/`; no #136/#336/#49/R-bridge impl; no tip-idle padding;
+never stage `.worktrees/`; no GPL; do not start #336.

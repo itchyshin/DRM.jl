@@ -1,29 +1,31 @@
-# GOAL — #388 dual-Julia RNG CI exposure (IMMUTABLE — re-read every arc)
-# Status: ACTIVE 2026-08-07 — G0 APPROVED via ultra-plan implement.
+# GOAL — Phase 3 (#7) honesty closeout (IMMUTABLE — re-read every arc)
+# Status: ACTIVE 2026-08-07 — G0 APPROVED (owner: CLOSE #7 with carve-outs).
 
 ## Mission
-Close or honestly disposition DRM.jl #388: dual-Julia (1.10 vs 1.x) RNG
-exposure evidenced on a risk cohort; repair only proven fragile classes.
+Close DRM.jl #7 via one Rose-honest docs/ledger PR from tip `origin/main`
+@ `f3d8ce7d`. Disposition locked: **CLOSE #7** with named carve-outs.
 
 ## Headline
-Reuse HSquared 2026-08-04 playbook (CI stays RNG-free for recovery claims;
-literal fixtures / env-gated sim). Do NOT blanket-add StableRNGs to main
-Project.toml.
-
-## G0 locked
-- Sequence: #395 MERGED @ 26d39efe; branch `feat/388-ci-rng-exposure` from tip.
-- Repair taxonomy: (1) env-gate / (2) literal fixtures; StableRNGs last resort.
-- Arc 0 = named risk cohort, not immediate double full Pkg.test.
+26/26 Documenter target slugs already exist — do **not** invent article fills.
+Carve-outs only: `phylogenetic-spatial` Theory+roadmap (engine later) +
+`marginal-la-vs-va` Planned (#136).
 
 ## Invariants
-- No #136 / #49 / D-111 / tip-idle padding.
-- Never stage `.worktrees/`.
-- Rose: latent ≠ fixed; no suite-wide immunity claim from one cohort.
+- One lane; branch `docs/7-phase3-closeout` from updated main.
+- Fence: no `src/` engine; no #136/#336/#49/R-bridge implementation;
+  no tip-idle SHA padding; never stage `.worktrees/`; no GPL vendoring.
+- Do not claim simultaneous phylo×spatial or VA as shipped.
+- Opening PR = OK; **do not merge** without owner (OPEN GATE).
+- STOP: do not start #336 in the same PR.
 
 ## Authoritative WHAT
-`docs/dev-log/plans/2026-08-07-388-rng-ci-ultra-plan.md` (+ Cursor plan).
+`LOOP/ultra-plan.md` ↔
+`docs/dev-log/plans/2026-08-07-7-phase3-closeout-ultra-plan.md`
+(Cursor plan "Phase 3 #7 closeout").
 
 ## Definition of done
-- Dual-version cohort evidence retained
-- Repair if red, else latent-OK with Rose honesty
-- check-log.d + after-task + Rose; PR `closes #388`
+- Inventory receipt retained (26/26 + two banners)
+- ROADMAP Phase 3 → complete-with-carveouts
+- check-log.d + after-task with Rose PASS
+- PR open with `closes #7`; #7 comment names carve-outs
+- Merge left as OPEN GATE for owner
