@@ -1,32 +1,38 @@
-# GOAL — #336 DRMMakieExt (IMMUTABLE — re-read every arc)
-# Status: ACTIVE 2026-08-07 — G0 APPROVED (owner: ship DRMMakieExt; merge OPEN GATE).
+# GOAL — drm-136-va-poisson (IMMUTABLE — re-read at the top of EVERY arc)
+Read this first, every cycle. Auto-compact eats messages, not this file. Unsure after a compaction?
+Re-read THIS, then checkpoint.md, then continue.
 
 ## Mission
-Close DRM.jl #336 via one PR that adds `DRMMakieExt` (HSquared-pattern Makie
-drawing layer) from tip `origin/main` @ `6c224a6c`. Prepare-data stays in
-`src/visualization.jl`; drawing lives in `ext/DRMMakieExt.jl`.
+One PR from tip `origin/main` @ `94a47e8b`: Poisson random-intercept
+`drm(...; marginal=:VA)` is a real public path (routes to existing
+`_fit_poisson_ranef_va`; `DrmFit` tagged; mixed LA/VA AIC/LRT errors;
+unsupported VA rejects; capabilities/guide honesty). Issue **#136 stays OPEN**.
+Do **not** start rungs 1–4 / 136e.
 
 ## Headline
-Makie + AlgebraOfGraphics as **weakdeps** only; CI gates the method-less stub
-(Makie OUT of CI). Public API: `drm_figure` + thin `plot_*` aliases. Kinds:
-`:profile` (Confidence Eye), `:parameter_surface`, `:corpairs`.
+Reuse existing `_fit_poisson_ranef_va`; wire the public `marginal=:VA` gap on
+Poisson `(1|g)` only — do not rebuild kernels; do not cherry-pick the stale
+5-family `method=:VA` commit wholesale.
 
 ## Invariants
-- One lane; branch `feat/336-makie-ext` from updated main.
-- Fence: no `src/` q=4 engine / families; no #136 VA; no #49 FIML; no R-bridge;
-  never stage `.worktrees/`; no GPL vendoring.
-- Do **not** put Makie in `[deps]` or default CI test deps.
-- Opening PR = OK; **do not merge** without owner (OPEN GATE).
-- STOP: do not start VA/FIML/R-bridge in the same PR.
+- One lane; branch `feat/136-va-poisson-frontend` from `origin/main` @ `94a47e8b`.
+- Keyword is **`marginal=:LA/:VA`** (default `:LA`). Reject `method=:VA` on
+  Poisson with a pointer to `marginal`. Gaussian `method=:ML/:REML` untouched.
+- Fence: no q=4 core rewrite; ML default; no close #136; #49 parked; no R-bridge;
+  never stage `.worktrees/`; no GPL vendoring; no Gamma/Binomial/NB2/Beta public
+  VA; no 136e bias report; no kernel rewrite; do **not** merge
+  `shannon/overnight-audit-verify-20260619`.
+- Opening PR = OK. **Do not merge.** OPEN GATE = Noether + maintainer sign-off.
+- ELBO ≠ logLik; no silent LA fallback; verify by LOG not exit code.
 
 ## Authoritative WHAT
 `LOOP/ultra-plan.md` ↔
-`docs/dev-log/plans/2026-08-07-336-makie-ext-ultra-plan.md`
-(Cursor plan "336 Makie Ext").
+`docs/dev-log/plans/2026-08-08-136-va-poisson-frontend-ultra-plan.md`
 
 ## Definition of done
-- `Project.toml` weakdeps/extensions; `src/plotting_ext.jl`; `ext/DRMMakieExt.jl`
-- Stub tests green (no Makie in default CI)
-- Docs honesty (visualization + simulation-plot-grammar + capabilities)
-- check-log.d + after-task with Rose PASS
-- PR open with `closes #336`; merge left as OPEN GATE
+- Poisson `(1|g)` `drm(...; marginal=:VA)` ≡ `_fit_poisson_ranef_va` (routing identity)
+- Default `:LA` unchanged; `DrmFit.marginal` tagged; mixed AIC/LRT errors
+- Unsupported VA (phylo/crossed/corr/zi/hu/FE-only) errors citing #136
+- `test/test_va_frontend_poisson.jl` in `runtests.jl`; local subset green
+- capabilities.md + marginal-la-vs-va.md honesty (Experimental Poisson RI, not everywhere)
+- check-log.d + after-task; Rose PASS; PR does **not** `closes #136`
