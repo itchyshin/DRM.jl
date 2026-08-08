@@ -1,14 +1,7 @@
-GOAL: see GOAL.md.   STATE: DONE for /goal reversible arcs; merge OPEN GATE.
-ARCS DONE (verified):
-  A1 — tip f3d8ce7d; branch docs/7-phase3-closeout
-  A2 — evidence 26/26 + banners BANNER_OK
-  A3 — ROADMAP complete-with-carveouts; coordination-board tip refresh
-  A4 — check-log.d + after-task; Rose PASS
-  A5 — PR #397 open; #7 comment landed; HEAD c9610915
-ARC IN PROGRESS: none
-NEXT: A6 owner merge of PR #397 (then optional separate G0 for #336 — not this lane)
-OPEN GATES (need human): **merge PR #397** (do not merge without owner). CI may still run.
-TRUTH LIVES IN: branch docs/7-phase3-closeout @ c9610915;
-  PR https://github.com/itchyshin/DRM.jl/pull/397;
-  evidence + ROADMAP + after-task; #7 comment.
-RESUME: only if merge/CI needs follow-up. Do not start #336 here.
+GOAL: see GOAL.md.   STATE: DONE for Arc 0 — PR #398 open; merge OPEN GATE.
+ARCS DONE (verified): A0–A6 — DRMMakieExt shipped; stub tests 8/8 Pass; Rose PASS; PR https://github.com/itchyshin/DRM.jl/pull/398 closes #336.
+ARC IN PROGRESS: none (paused at merge gate).
+NEXT: owner merge decision only. Do not start #136/#49/R-bridge.
+OPEN GATES (need human): **merge PR #398** — do not merge without owner.
+TRUTH LIVES IN: branch feat/336-makie-ext @ 875c1f90; PR #398; LOOP/; docs/dev-log/after-task/2026-08-07-336-makie-ext.md.
+RESUME: If owner asks to continue after merge: tip-idle / next G0 — not this lane. If PR needs CI repair: re-read GOAL → fix on feat/336-makie-ext; do not expand fence.
