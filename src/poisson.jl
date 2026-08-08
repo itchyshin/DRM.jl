@@ -34,18 +34,7 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
              A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true,
              marginal::Symbol = :LA, method = nothing)
     # `method` is the Gaussian ML/REML selector. LA/VA is `marginal` (Q1 / #136).
-    if method !== nothing
-        ms = Symbol(uppercase(String(method)))
-        if ms === :VA || ms === :LA
-            throw(ArgumentError(
-                "drm (Poisson): `method = :$ms` is not the Laplace/VA selector. " *
-                "Use `marginal = :$ms` (`:LA` default Laplace; `:VA` opt-in ELBO, #136). " *
-                "`method` is reserved for `:ML`/`:REML` on Gaussian models."))
-        end
-        ms === :ML || throw(ArgumentError(
-            "drm (Poisson): unknown `method = :$method`. Poisson is ML-only; " *
-            "for Laplace vs variational use `marginal = :LA` or `marginal = :VA` (#136)."))
-    end
+    _reject_method_as_marginal(fam, method)
 
     missing_fit = _fit_observed_response_rows(f, data) do data_observed
         drm(f, fam; data = data_observed, tree = tree, K = K, A = A,

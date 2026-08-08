@@ -1,38 +1,35 @@
-# GOAL — drm-136-va-poisson (IMMUTABLE — re-read at the top of EVERY arc)
+# GOAL — drm-136-va-rung1 (IMMUTABLE — re-read at the top of EVERY arc)
 Read this first, every cycle. Auto-compact eats messages, not this file. Unsure after a compaction?
 Re-read THIS, then checkpoint.md, then continue.
 
 ## Mission
-One PR from tip `origin/main` @ `94a47e8b`: Poisson random-intercept
-`drm(...; marginal=:VA)` is a real public path (routes to existing
-`_fit_poisson_ranef_va`; `DrmFit` tagged; mixed LA/VA AIC/LRT errors;
-unsupported VA rejects; capabilities/guide honesty). Issue **#136 stays OPEN**.
-Do **not** start rungs 1–4 / 136e.
+One PR from tip `origin/main` @ `ed35e13c` (PR #399 merged): public
+`drm(...; marginal=:VA)` for Binomial / NB2 / Gamma / Beta `(1 | g)` routes to
+existing kernels. Same keyword / `_va_reject` / `DrmFit.marginal` / mixed
+LA/VA guard as Poisson Arc 0. Issue **#136 stays OPEN**. Do **not** start 136e.
 
 ## Headline
-Reuse existing `_fit_poisson_ranef_va`; wire the public `marginal=:VA` gap on
-Poisson `(1|g)` only — do not rebuild kernels; do not cherry-pick the stale
-5-family `method=:VA` commit wholesale.
+Reuse existing `_fit_{binomial,nb2,gamma,beta}_ranef_va`; wire public dispatch
+only — do not rebuild kernels; do not rewrite Gamma MGF.
 
 ## Invariants
-- One lane; branch `feat/136-va-poisson-frontend` from `origin/main` @ `94a47e8b`.
-- Keyword is **`marginal=:LA/:VA`** (default `:LA`). Reject `method=:VA` on
-  Poisson with a pointer to `marginal`. Gaussian `method=:ML/:REML` untouched.
+- One lane; branch `feat/136-va-rung1-families` from `origin/main` @ `ed35e13c`.
+- Keyword is **`marginal=:LA/:VA`** (default `:LA`). Reject `method=:VA` with a
+  pointer to `marginal`.
 - Fence: no q=4 core rewrite; ML default; no close #136; #49 parked; no R-bridge;
-  never stage `.worktrees/`; no GPL vendoring; no Gamma/Binomial/NB2/Beta public
-  VA; no 136e bias report; no kernel rewrite; do **not** merge
-  `shannon/overnight-audit-verify-20260619`.
+  never stage `.worktrees/`; no GPL vendoring; no 136e bias report; no kernel
+  rewrite; no ZI/phylo/crossed/corr public VA.
 - Opening PR = OK. **Do not merge.** OPEN GATE = Noether + maintainer sign-off.
 - ELBO ≠ logLik; no silent LA fallback; verify by LOG not exit code.
 
 ## Authoritative WHAT
-`LOOP/ultra-plan.md` ↔
-`docs/dev-log/plans/2026-08-08-136-va-poisson-frontend-ultra-plan.md`
+Owner “go Rung 1” brief + Poisson Arc 0 pattern
+(`test/test_va_frontend_poisson.jl`, `src/poisson.jl`).
 
 ## Definition of done
-- Poisson `(1|g)` `drm(...; marginal=:VA)` ≡ `_fit_poisson_ranef_va` (routing identity)
-- Default `:LA` unchanged; `DrmFit.marginal` tagged; mixed AIC/LRT errors
-- Unsupported VA (phylo/crossed/corr/zi/hu/FE-only) errors citing #136
-- `test/test_va_frontend_poisson.jl` in `runtests.jl`; local subset green
-- capabilities.md + marginal-la-vs-va.md honesty (Experimental Poisson RI, not everywhere)
+- Four families `(1|g)` `drm(...; marginal=:VA)` ≡ internal `_fit_*_ranef_va`
+- Default `:LA` unchanged; `DrmFit.marginal` tagged
+- Unsupported VA errors citing #136; `method=:VA` points at `marginal`
+- `test/test_va_frontend_families.jl` in `runtests.jl`; local subset green
+- capabilities.md + marginal-la-vs-va.md honesty (Experimental five-family RI)
 - check-log.d + after-task; Rose PASS; PR does **not** `closes #136`

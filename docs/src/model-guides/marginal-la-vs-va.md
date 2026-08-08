@@ -7,9 +7,11 @@
     remains the default. This page documents the planned VA path so the design,
     its motivation, and the gates it must pass are recorded before any code lands.
 
-    **Experimental public path (Arc 0, does not close #136):** Poisson random-intercept
-    `(1 | g)` can be fit with `drm(...; marginal = :VA)`. That `loglik` is an ELBO,
-    not a Laplace log-likelihood. Other families and bias-recovery (136e) stay internal.
+    **Experimental public path (does not close #136):** Poisson, Binomial,
+    NegBinomial2, Gamma, and Beta random-intercept `(1 | g)` can be fit with
+    `drm(...; marginal = :VA)` (scale families need `sigma ~ 1`). That `loglik`
+    is an ELBO, not a Laplace log-likelihood. Phylo / crossed / ZI / 136e stay
+    unwired.
 
 ## What "the marginal" is, and why it matters
 
@@ -122,13 +124,14 @@ LA remains the default:
 # default — Laplace, as today
 drm(...; marginal = :LA)
 
-# opt-in variational marginal (Experimental: Poisson `(1 | g)` only)
+# opt-in variational marginal (Experimental: `(1 | g)` on Poisson / Binomial /
+# NegBinomial2 / Gamma / Beta; scale families need sigma ~ 1)
 drm(...; marginal = :VA)
 ```
 
 Everything else about the call — the `bf(...)` formulas, the family, the data —
 stays the same; only how the random effects are integrated out changes.
-`method = :VA` on Poisson is rejected with a pointer to `marginal`.
+`method = :VA` on non-Gaussian families is rejected with a pointer to `marginal`.
 
 ## How we'll trust it
 
