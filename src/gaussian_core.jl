@@ -135,38 +135,46 @@ struct DrmFit{F}
     estim_method::Symbol                   # :ML (default) or :REML — the estimator used
     reml_loglik::Float64                   # REML log-likelihood (NaN unless estim_method == :REML)
     ml_loglik::Float64                     # ML log-likelihood (always set; for cross-structure comparison)
+    marginal::Symbol                       # :LA (default Laplace) or :VA (ELBO; #136)
 end
 
 # 11-arg outer constructor: formula + nll + nllgrad + ranef default to nothing;
 # estim_method defaults to :ML and reml/ml loglik to NaN / the supplied loglik
 # (the fitters use this; drm() attaches the formula via _withformula, the
 # objective via _withnll, the BLUPs via _withranef, and REML metadata via _withreml).
+# `marginal` defaults to `:LA` (Laplace); `_withmarginal` tags a VA/ELBO fit.
 DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales) =
     DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales,
-           nothing, nothing, nothing, nothing, :ML, NaN, loglik)
+           nothing, nothing, nothing, nothing, :ML, NaN, loglik, :LA)
 
 _withformula(fit::DrmFit, f) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, f, fit.nll, fit.nllgrad, fit.ranef,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal)
 
 # Attach the (negative) log-likelihood closure so profile intervals can re-optimise
 # the nuisance parameters at each fixed value. nll(θ) must accept the full θ vector.
 _withnll(fit::DrmFit, nll, nllgrad = nothing) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, nll, nllgrad, fit.ranef,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal)
 
 # Attach per-group conditional random-effect estimates (BLUPs). `re` is a
 # Dict{Symbol,...} keyed by grouping factor; see ranef(fit) for the public accessor.
 _withranef(fit::DrmFit, re) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, re,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal)
 
 # Mark the fit as REML-estimated, recording both the REML and ML log-likelihoods.
 # The public `loglik` slot is set to the REML value (with the documented
 # cross-structure caveat); `ml_loglik` stays available for ML-style comparison.
 _withreml(fit::DrmFit, reml_ll::Real, ml_ll::Real) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, Float64(reml_ll), fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
-    :REML, Float64(reml_ll), Float64(ml_ll))
+    :REML, Float64(reml_ll), Float64(ml_ll), fit.marginal)
+
+# Tag the integral approximation (`:LA` Laplace default, `:VA` ELBO). Does not
+# change `loglik`; the caller is responsible for putting an ELBO in that slot.
+_withmarginal(fit::DrmFit, m::Symbol) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, m)
 
 # Response-missing helpers. R's `NA_real_` may reach Julia as either `missing`
 # or `NaN`, so the Gaussian response path treats both as absent observations.
@@ -585,7 +593,7 @@ function _with_full_fixed_gaussian_rows(fit::DrmFit, y_full, Xμ_full, Xσ_full)
         fit.family, fit.blocks, fit.coefnames, fit.theta, fit.vcov,
         fit.loglik, fit.nobs, fit.converged, means, obs, scales,
         fit.formula, fit.nll, fit.nllgrad, fit.ranef,
-        fit.estim_method, fit.reml_loglik, fit.ml_loglik,
+        fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal,
     )
 end
 
@@ -754,7 +762,7 @@ function _with_full_response_rows(fit::DrmFit, f::DrmFormula, data)
         fit.family, fit.blocks, fit.coefnames, fit.theta, fit.vcov,
         fit.loglik, fit.nobs, fit.converged, means, obs, scales,
         fit.formula, fit.nll, fit.nllgrad, fit.ranef,
-        fit.estim_method, fit.reml_loglik, fit.ml_loglik,
+        fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal,
     )
 end
 
@@ -1579,6 +1587,16 @@ function _reml_infocrit_warn(fit::DrmFit, which::AbstractString)
     return nothing
 end
 
+# VA information-criterion guard (#136): `loglik` on a VA fit is an ELBO, so AIC /
+# BIC / AICc are not defined and must not be mixed with Laplace criteria.
+function _va_infocrit_guard(fit::DrmFit, which::AbstractString)
+    fit.marginal === :VA && throw(ArgumentError(
+        "$which on a VA fit is undefined: `loglik` carries an ELBO (a lower bound), " *
+        "not a Laplace/GHQ marginal log-likelihood (#136). Do not mix VA and LA " *
+        "information criteria. Compare ELBOs directly, or refit with `marginal = :LA`."))
+    return nothing
+end
+
 """
     aic(fit) -> Float64
 
@@ -1590,6 +1608,7 @@ comparing models that differ in **variance structure only** (same mean structure
 a one-time warning is emitted. Use ML for cross-mean-structure selection.
 """
 function aic(fit::DrmFit)
+    _va_infocrit_guard(fit, "aic")
     _reml_infocrit_warn(fit, "aic")
     return -2 * fit.loglik + 2 * length(fit.theta)
 end
@@ -1603,6 +1622,7 @@ On a **REML** fit this carries the same variance-only-comparison caveat as
 [`aic`](@ref) and emits a one-time warning.
 """
 function bic(fit::DrmFit)
+    _va_infocrit_guard(fit, "bic")
     _reml_infocrit_warn(fit, "bic")
     return -2 * fit.loglik + length(fit.theta) * log(fit.nobs)
 end

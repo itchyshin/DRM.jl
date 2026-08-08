@@ -237,8 +237,10 @@ A marshalling-friendly boundary for `drmTMB(..., engine = "julia")`
 
 | Capability | Source | Status |
 |---|---|---|
-| `method=:LA` (Laplace) — the default and only working marginal | engine-wide | **Tested** — implicitly by every fit test |
-| `method=:VA` (variational / ELBO) | `src/variational.jl:37` | **Absent (stub)** — `_fit_va` deliberately `error`s and points to issue #136; `test/test_variational.jl` asserts the **method-selection plumbing**, not a VA fit |
+| `marginal=:LA` (Laplace) — the default | engine-wide | **Tested** — implicitly by every fit test |
+| `marginal=:VA` Poisson `(1\|g)` public path | `src/poisson.jl`, `_fit_poisson_ranef_va` | **Experimental** — routes to the existing ELBO kernel; `DrmFit.marginal === :VA`; mixed LA/VA AIC/LRT error. **Does not close #136.** |
+| `marginal=:VA` for Binomial / NB2 / Gamma / Beta | internal kernels in `src/variational.jl` | **Absent** from public `drm()` (kernels exist; not wired) |
+| `method=:VA` on Poisson | `src/poisson.jl` | **Rejected** — `method` is ML/REML; pointer to `marginal` |
 
 ## Absent / out-of-scope (explicit)
 
@@ -250,7 +252,7 @@ To avoid overclaiming, these are confirmed **not** implemented in this worktree:
   merged here.)
 - **χ̄² boundary inference** — see Inference table.
 - **Cross-family bivariate models** — see Bivariate table.
-- **Variational (VA/ELBO) marginal** — stub only.
+- **Variational (VA/ELBO) public path beyond Poisson `(1\|g)`** — Experimental Poisson RI only; other families and 136e bias report remain open on #136. `_fit_va` still errors for unwired families.
 - **Dense/bivariate `meta_V`** — diagonal known variances only.
 - **Labelled q=4 coevolution-correlation accessor with CIs** — `Σ_a` is stored
   and surfaced, but no derived-correlation-with-interval accessor exists.

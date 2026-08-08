@@ -64,6 +64,7 @@ t.pvalue       # < 0.05 when x is truly predictive
 """
 function lrtest(reduced::DrmFit, full::DrmFit)
     _reml_compare_guard(reduced, full, "lrtest")
+    _marginal_compare_guard(reduced, full, "lrtest")
     Δdof = dof(full) - dof(reduced)
     Δdof > 0 || throw(ArgumentError(
         "lrtest: `full` must have more parameters than `reduced` " *
@@ -137,6 +138,16 @@ function _reml_compare_guard(a::DrmFit, b::DrmFit, verb::AbstractString)
             "variance structures). Refit both with method = :ML for a cross-mean-structure test."))
     end
     return nothing
+end
+
+# Mixed-marginal guard (#136 Arc 0): a VA `loglik` is an ELBO, not a Laplace
+# marginal. Mixing `:LA` and `:VA` in lrtest / anova would be meaningless.
+function _marginal_compare_guard(a::DrmFit, b::DrmFit, verb::AbstractString)
+    a.marginal === b.marginal && return nothing
+    throw(ArgumentError(
+        "$verb: cannot compare fits with different marginal approximations " *
+        "(`$(a.marginal)` vs `$(b.marginal)`) — the VA objective is an ELBO, not a " *
+        "Laplace log-likelihood (#136). Refit both with the same `marginal`."))
 end
 
 """

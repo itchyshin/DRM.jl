@@ -7,6 +7,10 @@
     remains the default. This page documents the planned VA path so the design,
     its motivation, and the gates it must pass are recorded before any code lands.
 
+    **Experimental public path (Arc 0, does not close #136):** Poisson random-intercept
+    `(1 | g)` can be fit with `drm(...; marginal = :VA)`. That `loglik` is an ELBO,
+    not a Laplace log-likelihood. Other families and bias-recovery (136e) stay internal.
+
 ## What "the marginal" is, and why it matters
 
 When a model has random effects `z`, `drm` does not maximise the joint
@@ -111,18 +115,20 @@ models where the GLLVM evidence above shows LA struggling.
 
 ## The intended API (planned)
 
-The marginal will be selected with a single keyword, LA remaining the default:
+The marginal is selected with `marginal` (not Gaussian `method = :ML/:REML`).
+LA remains the default:
 
 ```julia
 # default — Laplace, as today
-drm(...; method = :LA)
+drm(...; marginal = :LA)
 
-# opt-in variational marginal
-drm(...; method = :VA)
+# opt-in variational marginal (Experimental: Poisson `(1 | g)` only)
+drm(...; marginal = :VA)
 ```
 
 Everything else about the call — the `bf(...)` formulas, the family, the data —
 stays the same; only how the random effects are integrated out changes.
+`method = :VA` on Poisson is rejected with a pointer to `marginal`.
 
 ## How we'll trust it
 
