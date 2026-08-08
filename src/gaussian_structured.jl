@@ -626,5 +626,5 @@ function _remap_resid_block(fit::DrmFit)
     return DrmFit(fit.family, blocks, names, fit.theta, fit.vcov, fit.loglik,
                   fit.nobs, fit.converged, fit.means, fit.obs, fit.scales,
                   fit.formula, fit.nll, fit.nllgrad, fit.ranef,
-                  fit.estim_method, fit.reml_loglik, fit.ml_loglik)
+                  fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal)
 end

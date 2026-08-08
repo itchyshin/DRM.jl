@@ -1,7 +1,7 @@
-GOAL: see GOAL.md.   STATE: DONE for Arc 0 — PR #398 open; merge OPEN GATE.
-ARCS DONE (verified): A0–A6 — DRMMakieExt shipped; stub tests 8/8 Pass; Rose PASS; PR https://github.com/itchyshin/DRM.jl/pull/398 closes #336.
-ARC IN PROGRESS: none (paused at merge gate).
-NEXT: owner merge decision only. Do not start #136/#49/R-bridge.
-OPEN GATES (need human): **merge PR #398** — do not merge without owner.
-TRUTH LIVES IN: branch feat/336-makie-ext @ 875c1f90; PR #398; LOOP/; docs/dev-log/after-task/2026-08-07-336-makie-ext.md.
-RESUME: If owner asks to continue after merge: tip-idle / next G0 — not this lane. If PR needs CI repair: re-read GOAL → fix on feat/336-makie-ext; do not expand fence.
+GOAL: see GOAL.md.   STATE: Arc 0 implemented + locally verified; opening PR (does not close #136).
+ARCS DONE (verified): A0 recon (b32488d5 pattern); A1–A5 TDD+dispatch+tag+guards+docs+local subset log; A7 Melissa plan-actual.
+ARC IN PROGRESS: A6 DoD + PR — landed when PR URL exists and issue #136 comment posted; merge not done.
+NEXT: human merge GATE (Noether + maintainer). Do not start rungs 1–4 / 136e.
+OPEN GATES (need human): **merge** = Noether + maintainer sign-off (`src/` + public API). G0 already approved.
+TRUTH LIVES IN: branch `feat/136-va-poisson-frontend`; LOOP/; plan copy; after-task `docs/dev-log/after-task/2026-08-08-136-va-poisson-frontend.md`.
+RESUME: You are drm-136-va-poisson — RESUME after merge decision. READ FIRST: LOOP/GOAL.md → LOOP/checkpoint.md → LOOP/ultra-plan.md. WORKSPACE: `/Users/z3437171/Dropbox/Github Local/DRM.jl` branch `feat/136-va-poisson-frontend`. CONTINUE FROM: merge GATE only. Do not close #136. Do not start rungs 1–4.

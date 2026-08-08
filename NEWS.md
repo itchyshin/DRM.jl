@@ -6,6 +6,12 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## Unreleased
 
+- **Poisson public variational marginal (#136 Arc 0)** — Experimental
+  `drm(...; marginal = :VA)` for Poisson `(1 | g)` routes to the existing ELBO
+  kernel. Default remains Laplace (`marginal = :LA`). `loglik` on a VA fit is an
+  ELBO; mixed LA/VA AIC/LRT errors. Unsupported VA (phylo/crossed/corr/zi/hu/FE)
+  rejects. `method = :VA` on Poisson points at `marginal`. **Does not close #136.**
+
 - **Non-Gaussian phylogenetic location–scale (#202)** — public `drm()` path for
   `NegBinomial2()` / `Gamma()` with a shared structured RE on **μ and log σ**
   via grammar B `(1 | p | phylo(species))` on both axes (`tree=` forwarded into
