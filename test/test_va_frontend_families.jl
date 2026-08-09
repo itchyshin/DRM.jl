@@ -9,8 +9,9 @@
 #       one family is enough once Poisson already covers the same message).
 #   (5) Default Laplace is unchanged (`marginal = :LA` ≡ omitting the keyword).
 #
-# Mixed LA/VA AIC/LRT is already covered in the Poisson frontend test — not
-# duplicated here. Issue #136 stays OPEN (phylo/crossed/ZI public VA + 136e later).
+# Mixed LA/VA AIC/LRT is guarded in `comparison.jl` / `aic`; Poisson Arc 0 covers
+# the Poisson public path. Rung 2 adds one Rung-1 family (NB2) so the guard is
+# not Poisson-only. Issue #136 stays OPEN (phylo/crossed/ZI public VA + 136e later).
 
 using DRM
 using Test
@@ -141,6 +142,24 @@ end
         @test fit_la.marginal === :LA
         @test family(fit_va) isa Beta
         @test isfinite(loglik(fit_va))
+    end
+
+    @testset "mixed LA/VA AIC and LRT error (NB2)" begin
+        rng = MersenneTwister(1363)
+        G = 30; per = 8; n = G * per
+        g = repeat(1:G, inner = per); x = randn(rng, n)
+        y = Float64.([rand(rng, Distributions.NegativeBinomial(4.0, 4.0 / (4.0 + exp(0.3 + 0.4 * x[i] + 0.4 * randn(rng)))))
+                      for i in 1:n])
+        data = (; y, x, g)
+        fit_va = drm(bf(@formula(y ~ x + (1 | g)), @formula(sigma ~ 1)), NegBinomial2();
+                     data = data, marginal = :VA)
+        fit_la = drm(bf(@formula(y ~ x + (1 | g)), @formula(sigma ~ 1)), NegBinomial2(); data = data)
+        @test_throws ArgumentError lrtest(fit_la, fit_va)
+        @test_throws ArgumentError anova(fit_la, fit_va)
+        @test_throws ArgumentError aic(fit_va)
+        @test_throws ArgumentError bic(fit_va)
+        @test_throws ArgumentError aicc(fit_va)
+        @test isfinite(aic(fit_la)) && isfinite(bic(fit_la))
     end
 
     @testset "method=:VA rejected with pointer to marginal (Binomial)" begin

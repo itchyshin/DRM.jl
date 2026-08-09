@@ -45,7 +45,8 @@
   both working well; drmTMB likely R/CRAN first). MIT via GitHub /
   `Pkg.develop`; do **not** pursue JuliaRegistrator. Longer horizon: optional
   deeper opt-in R-parity (`DRM_PARITY_TESTS=1`; #17 closed), Phase 3 articles,
-  VA/ELBO (#136, deferred). **Version / tag:** tree + tag **`0.1.2` / `v0.1.2`**
+  VA/ELBO (#136 open — Experimental `(1 | g)` on Poisson/Binomial/NB2/Gamma/Beta;
+  136e / phylo/ZI still deferred). **Version / tag:** tree + tag **`0.1.2` / `v0.1.2`**
   (#346) — **not** General membership.
 
 ---
@@ -265,8 +266,8 @@ and `lc_metric` Fisher infra (#13 S1b) are public; **#13 natgrad solver FAIL** �
 do not expose `:natgrad`. Remaining EM / E-step / dense-oracle prototypes stay
 in `src/experimental/`. Bootstrap threading already has entry points (#131/#132).
 **C. Open research items.** Exact REML / AI-REML gradient via `lc_metric` (#11
-follow-up); χ̄² boundary inference where not yet exported; VA/ELBO (#136,
-deferred). ~~drmTMB head-to-head at nrep=4/p>100~~ **done in #376** (measured;
+follow-up); χ̄² boundary inference where not yet exported; VA/ELBO (#136 open —
+Experimental random-intercept path; 136e / phylo/ZI deferred). ~~drmTMB head-to-head at nrep=4/p>100~~ **done in #376** (measured;
 “~12×” extrapolation retired).
 **D. v0.1.0 pilot scope.** Gaussian-only, fixed-effects pilot (univariate +
 bivariate distributional regression, closed-form marginal) shipped with the

@@ -1,7 +1,8 @@
 # variational.jl — opt-in Gaussian-variational (VA/ELBO) marginal as an
 # alternative to the Laplace (LA) marginal for latent-integral models. See #136.
-# Numerical ELBO kernels are intentionally NOT implemented here yet; this file
-# establishes the method-selection surface the fitters will dispatch on.
+# Public Experimental path: Poisson / Binomial / NB2 / Gamma / Beta `(1 | g)`
+# (`sigma ~ 1` where the family has a scale). `_fit_va` remains the unwired-family
+# stub. Phylo / crossed / ZI / 136e stay open; #136 stays open.
 
 """
     MarginalMethod
@@ -35,10 +36,10 @@ function _marginal_method(s::Symbol)
     throw(ArgumentError("unknown marginal method `:$s`; use :LA (Laplace, default) or :VA (variational, #136)"))
 end
 
-# Generic stub entry point. The VA marginal is implemented for the tractable proof
-# cases below (Poisson and Binomial/Bernoulli random intercept, #136 Phase 2);
-# every other family still errors clearly rather than silently falling back, so
-# opt-in callers know the state.
+# Generic stub entry point. Public VA kernels live on the per-family
+# `_fit_*_ranef_va` entry points (Poisson / Binomial / NB2 / Gamma / Beta
+# random intercept). Every other family still errors clearly rather than
+# silently falling back, so opt-in callers know the state.
 function _fit_va(args...; kwargs...)
     error("The variational (VA/ELBO) marginal is implemented only for the Poisson " *
           "(`_fit_poisson_ranef_va`), Binomial/Bernoulli (`_fit_binomial_ranef_va`), " *

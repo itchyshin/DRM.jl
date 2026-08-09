@@ -238,8 +238,8 @@ A marshalling-friendly boundary for `drmTMB(..., engine = "julia")`
 | Capability | Source | Status |
 |---|---|---|
 | `marginal=:LA` (Laplace) — the default | engine-wide | **Tested** — implicitly by every fit test |
-| `marginal=:VA` Poisson `(1\|g)` public path | `src/poisson.jl`, `_fit_poisson_ranef_va` | **Experimental** — routes to the existing ELBO kernel; `DrmFit.marginal === :VA`; mixed LA/VA AIC/LRT error. **Does not close #136.** |
-| `marginal=:VA` Binomial / NB2 / Gamma / Beta `(1\|g)` | family `drm()` + `_fit_*_ranef_va` | **Experimental** (Rung 1) — same keyword / `_va_reject` / `DrmFit.marginal` tag as Poisson; scale families require `sigma ~ 1`. **Does not close #136.** |
+| `marginal=:VA` Poisson `(1\|g)` public path | `src/poisson.jl`, `_fit_poisson_ranef_va` | **Experimental** — routes to the existing ELBO kernel; `DrmFit.marginal === :VA`; mixed LA/VA AIC/LRT error; `aicc` errors on VA before the small-n `Inf` short-circuit. **Does not close #136.** |
+| `marginal=:VA` Binomial / NB2 / Gamma / Beta `(1\|g)` | family `drm()` + `_fit_*_ranef_va` | **Experimental** — same keyword / `_va_reject` / `DrmFit.marginal` tag as Poisson; scale families require `sigma ~ 1`. Mixed LA/VA AIC/LRT covered on NB2 as well as Poisson. **Does not close #136.** |
 | `method=:VA` on non-Gaussian `drm()` | `_reject_method_as_marginal` | **Rejected** — `method` is ML/REML; pointer to `marginal` |
 
 ## Absent / out-of-scope (explicit)

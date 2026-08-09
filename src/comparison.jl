@@ -179,7 +179,8 @@ of thumb is `n / k < 40`). Like AIC, AICc compares models fit by **ML** on the
 same data; lower is better.
 
 If `n - k - 1 <= 0` (too few observations for the correction to be defined),
-returns `Inf`.
+returns `Inf`. On a **VA** fit this errors before that short-circuit: `loglik`
+carries an ELBO, not a marginal log-likelihood (#136).
 
 # Example
 ```julia
@@ -189,6 +190,7 @@ isfinite(aicc(fit))         # finite whenever n - k - 1 > 0
 ```
 """
 function aicc(fit::DrmFit)
+    _va_infocrit_guard(fit, "aicc")
     k = dof(fit)
     n = nobs(fit)
     n - k - 1 > 0 || return Inf

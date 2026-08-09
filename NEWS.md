@@ -6,6 +6,12 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## Unreleased
 
+- **VA Rung 2+3 (#136)** — scaffold anchors a/b/c in `test/test_variational.jl`
+  are live (RE→0 ELBO = GLM loglik; ELBO ≤ adaptive GHQ; NB2 `r→∞` ≈ Poisson-VA).
+  `aicc` on a VA fit errors even when `n − k − 1 ≤ 0` (no `Inf` short-circuit).
+  Docs status is **Experimental** for Poisson + Binomial + NB2 + Gamma + Beta
+  `(1 | g)`, not Planned-only. **Does not close #136.**
+
 - **Public variational marginal Rung 1 (#136)** — Experimental
   `drm(...; marginal = :VA)` now covers Poisson **and** Binomial / NegBinomial2 /
   Gamma / Beta random intercept `(1 | g)` (scale families need `sigma ~ 1`),
