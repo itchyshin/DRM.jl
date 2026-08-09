@@ -1,0 +1,1 @@
+| 2026-08-09 | **Tip idle after #401** (START HERE; DRM.jl IDLE; next = drmTMB engine=julia) | Confirm `origin/main` @ 3181eaa1; #401 MERGED; #136 OPEN; `.worktrees/` unstaged; no `src/` | ✅ tip idle START HERE @ 3181eaa1; Rose scope PASS; L2 owner merge only | Shannon |
