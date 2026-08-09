@@ -17,7 +17,8 @@ Phase 3 / [#7](https://github.com/itchyshin/DRM.jl/issues/7): all **26** drmTMB-
 Documenter slugs exist (inventory
 `docs/dev-log/evidence/2026-08-07-7-phase3-inventory.md`). Named carve-outs (pages
 present, not Stable): `phylogenetic-spatial` (**Theory + roadmap** — simultaneous
-phylo×spatial engine later) and `marginal-la-vs-va` (**Planned**, [#136](https://github.com/itchyshin/DRM.jl/issues/136)).
+phylo×spatial engine later) and `marginal-la-vs-va` (**Experimental** `(1 | g)`
+on five families; [#136](https://github.com/itchyshin/DRM.jl/issues/136) stays open).
 **Phase 1.0 SCOPED closeout:** #13 decision gate **FAIL** — `fit_em_natgrad` not
 a public solver; `lc_metric` Fisher infra landed; Workflow Q JET gate added
 (FD/Allocs/multi-shape already evidenced). Leftover `experimental/` prototypes
@@ -113,8 +114,9 @@ call DRM.jl from R via `engine = "julia"`. Parity anchor: **drmTMB v0.1.3**.
   non-Stable pages as shipped capabilities:
   - `tutorials/phylogenetic-spatial` — **Theory + roadmap** (joint phylo×spatial
     fit is engine work, tracked outside the articles milestone).
-  - `model-guides/marginal-la-vs-va` — **Planned (#136)** (VA/ELBO; LA remains
-    today's default).
+  - `model-guides/marginal-la-vs-va` — **Experimental (#136 open)** (VA/ELBO for
+    Poisson / Binomial / NB2 / Gamma / Beta `(1 | g)`; LA remains the default;
+    phylo / crossed / ZI / 136e unwired).
 - Next docs/UX ship after this ledger close is separate (e.g. #336 Makie) — not
   Phase 3 article fill.
 

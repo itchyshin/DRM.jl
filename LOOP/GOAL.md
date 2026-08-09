@@ -1,35 +1,27 @@
-# GOAL — drm-136-va-rung1 (IMMUTABLE — re-read at the top of EVERY arc)
+# GOAL — drm-136-va-rung2-3 (IMMUTABLE — re-read at the top of EVERY arc)
 Read this first, every cycle. Auto-compact eats messages, not this file. Unsure after a compaction?
 Re-read THIS, then checkpoint.md, then continue.
 
 ## Mission
-One PR from tip `origin/main` @ `ed35e13c` (PR #399 merged): public
-`drm(...; marginal=:VA)` for Binomial / NB2 / Gamma / Beta `(1 | g)` routes to
-existing kernels. Same keyword / `_va_reject` / `DrmFit.marginal` / mixed
-LA/VA guard as Poisson Arc 0. Issue **#136 stays OPEN**. Do **not** start 136e.
+One PR from tip `origin/main` @ `fbbb8a56` (PR #400 merged): Rung 2 promote
+scaffold `@test_skip` anchors a/b/c where true; finish mixed-marginal AIC/LRT
+guard. Rung 3 docs honesty — public VA is **Experimental** for Poisson +
+Binomial + NB2 + Gamma + Beta `(1 | g)`. Issue **#136 stays OPEN**. Do **not**
+start 136e / Rung 4. Do **not** start drmTMB `engine="julia"`.
 
 ## Headline
-Reuse existing `_fit_{binomial,nb2,gamma,beta}_ranef_va`; wire public dispatch
-only — do not rebuild kernels; do not rewrite Gamma MGF.
+Promote true anchors; do not fake-pass; banners match tip after #399+#400.
 
 ## Invariants
-- One lane; branch `feat/136-va-rung1-families` from `origin/main` @ `ed35e13c`.
-- Keyword is **`marginal=:LA/:VA`** (default `:LA`). Reject `method=:VA` with a
-  pointer to `marginal`.
+- One lane; branch `feat/136-va-rung2-3` from `origin/main` @ `fbbb8a56`.
 - Fence: no q=4 core rewrite; ML default; no close #136; #49 parked; no R-bridge;
   never stage `.worktrees/`; no GPL vendoring; no 136e bias report; no kernel
-  rewrite; no ZI/phylo/crossed/corr public VA.
-- Opening PR = OK. **Do not merge.** OPEN GATE = Noether + maintainer sign-off.
-- ELBO ≠ logLik; no silent LA fallback; verify by LOG not exit code.
-
-## Authoritative WHAT
-Owner “go Rung 1” brief + Poisson Arc 0 pattern
-(`test/test_va_frontend_poisson.jl`, `src/poisson.jl`).
+  rewrite; no ZI/phylo/crossed/corr public VA; no merge.
+- Opening PR = OK. **Do not merge.** OPEN GATE = owner + Noether sign-off.
+- ELBO ≠ logLik; verify by LOG not exit code.
 
 ## Definition of done
-- Four families `(1|g)` `drm(...; marginal=:VA)` ≡ internal `_fit_*_ranef_va`
-- Default `:LA` unchanged; `DrmFit.marginal` tagged
-- Unsupported VA errors citing #136; `method=:VA` points at `marginal`
-- `test/test_va_frontend_families.jl` in `runtests.jl`; local subset green
-- capabilities.md + marginal-la-vs-va.md honesty (Experimental five-family RI)
+- Scaffold a/b/c promoted or honestly still skipped
+- Mixed AIC/LRT guard complete (`aicc` VA-first; NB2 public mixed test)
+- capabilities.md + marginal-la-vs-va.md Experimental (not Planned-only stub)
 - check-log.d + after-task; Rose PASS; PR does **not** `closes #136`

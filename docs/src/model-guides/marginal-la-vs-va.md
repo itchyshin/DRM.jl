@@ -1,17 +1,15 @@
 # Laplace vs variational marginals
 
-!!! note "Status — Planned (#136)"
-    A variational (VA / ELBO) marginal is an opt-in alternative under design.
-    **In DRM.jl today** the marginal likelihood is computed by the Laplace
-    approximation (LA) — the same family of method drmTMB and TMB use — and LA
-    remains the default. This page documents the planned VA path so the design,
-    its motivation, and the gates it must pass are recorded before any code lands.
+!!! note "Status — Experimental (#136 open)"
+    A variational (VA / ELBO) marginal is an **opt-in Experimental** alternative
+    for random-intercept `(1 | g)` models. **Laplace remains the default** — the
+    same family of method drmTMB and TMB use.
 
-    **Experimental public path (does not close #136):** Poisson, Binomial,
-    NegBinomial2, Gamma, and Beta random-intercept `(1 | g)` can be fit with
-    `drm(...; marginal = :VA)` (scale families need `sigma ~ 1`). That `loglik`
-    is an ELBO, not a Laplace log-likelihood. Phylo / crossed / ZI / 136e stay
-    unwired.
+    **Public path today (does not close #136):** Poisson, Binomial, NegBinomial2,
+    Gamma, and Beta `(1 | g)` via `drm(...; marginal = :VA)` (scale families need
+    `sigma ~ 1`). That `loglik` is an ELBO, not a Laplace log-likelihood. Mixed
+    LA/VA AIC / LRT errors. Phylo / crossed / correlated slopes / ZI / hurdle /
+    `sigma ~ x` / 136e stay unwired — not “implemented everywhere.”
 
 ## What "the marginal" is, and why it matters
 
@@ -115,7 +113,7 @@ In short: **LA is faster and is the default; VA is an opt-in for the
 bias-sensitive cells** — the two-part / hurdle, zero-inflated, and shape-driven
 models where the GLLVM evidence above shows LA struggling.
 
-## The intended API (planned)
+## The public API (Experimental)
 
 The marginal is selected with `marginal` (not Gaussian `method = :ML/:REML`).
 LA remains the default:
@@ -133,21 +131,24 @@ Everything else about the call — the `bf(...)` formulas, the family, the data 
 stays the same; only how the random effects are integrated out changes.
 `method = :VA` on non-Gaussian families is rejected with a pointer to `marginal`.
 
-## How we'll trust it
+## How we trust it (anchors on tip)
 
-A new marginal earns its place only by passing deterministic anchors — checks
-with a known answer, not just "the numbers look plausible":
+The Experimental `(1 | g)` path is gated by deterministic anchors in
+`test/test_variational.jl` (and per-family ELBO tests) — checks with a known
+answer, not just "the numbers look plausible":
 
 1. **Variance → 0 collapses to independence.** As the random-effect variance is
-   driven to zero there is nothing left to integrate, so the ELBO must equal the
+   driven to zero there is nothing left to integrate, so the ELBO equals the
    ordinary independent log-likelihood. This pins the no-RE limit exactly.
-2. **ELBO ≤ dense quadrature.** At low latent dimension we can compute the true
-   marginal by dense quadrature. The ELBO, being a lower bound, must sit at or
-   below it — never above. A VA value exceeding quadrature is a bug, by
-   construction.
-3. **Family limits.** Family parameters have known degenerate limits — e.g. the
-   negative binomial as its size `r → ∞` becomes Poisson, so NB-VA must converge
-   to Poisson-VA. Each family is anchored to its limit.
+2. **ELBO ≤ dense quadrature.** At low latent dimension the true marginal is
+   computed by dense *adaptive* Gauss–Hermite. The ELBO, being a lower bound,
+   must sit at or below it — never above. (Non-adaptive engine GHQ centred at 0
+   can sit below the ELBO; that is not a counterexample.)
+3. **Family limits.** The negative binomial as its size `r → ∞` becomes Poisson,
+   so NB2-VA converges to Poisson-VA on a shared fixture.
+
+Closing #136 still needs the 136e bias-recovery report (Gamma-shape / ZINB) and
+any public VA beyond random intercept — those are not claimed here.
 
 ## A place DRM.jl can exceed drmTMB
 
