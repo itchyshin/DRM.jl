@@ -1,0 +1,1 @@
+| 2026-08-09 | **New Julia lane START HERE** (after #402; DRM.jl IDLE pending owner G0; drmTMB sibling not orphaned) | Confirm `origin/main` @ a913af8d; #402 MERGED; #136 OPEN; no open ship PR; `.worktrees/` unstaged; no `src/` | ✅ Julia-lane handover + LOOP + Active-Lane-Split; Rose scope PASS; L2 owner merge only | Shannon |
