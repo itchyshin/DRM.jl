@@ -1,17 +1,20 @@
-# Arcs — new DRM.jl Julia lane (IDLE pending owner G0)
+# Arcs — #136e honest public-path VA bias report
 
-Status: `pending` | `in_progress` | `done` | `blocked`
+Status: `pending` | `in_progress` | `done` | `blocked` | `skipped`
 Gates: `[GATE]` = pause for human.
 
 | id | status | slice | what | gate? |
 |---|---|---|---|---|
-| R2.0–R2.4 | done | VA Rung 2+3 | anchors a/b/c + aicc guard + Experimental docs | no |
-| R2.5 | done | merge #401 | CI green; `gh pr merge 401 --merge`; #136 stays OPEN | no |
-| T1 | done | morning tip-idle START HERE | handover + LOOP after #401; #402 MERGED @ `a913af8d` | no |
-| T2 | in_progress | Julia-lane START HERE | new handover + LOOP + Active-Lane-Split (drmTMB not orphaned) | **[GATE]** owner merge docs PR |
-| NEXT | blocked | first Julia G0 | owner names it; then ultra-plan | **[GATE]** owner names G0 |
-| drmTMB | sibling | `engine="julia"` Workflow G | **other repo** — possibly in progress; unknown here | do not start from DRM.jl |
-| 136e | parked | bias report | `report/va-vs-laplace-bias.md` | owner-named only |
-| #49 | parked | FIML / missing data | issue stays open | owner-named only |
+| S0 | done | recon | git + design + frontend fixture (planning chat) | no |
+| S1 | in_progress | ADEMP + harness | `bench/va_vs_laplace_bias.jl` + ADEMP in report stub | no |
+| S2 | pending | smoke | 1–3 local reps; read log (finite α_LA, α_VA, times) | no |
+| S3 | pending | report | `report/va-vs-laplace-bias.md` with numbers + not-7×-unless-measured | no |
+| S4 | pending | docs honesty | cite report in guide + capabilities; Experimental held | no |
+| S5 | pending | optional n-ladder | only if S2 shows material α gap | **[GATE]** Totoro if n_sim would exceed ~15 min laptop |
+| S6 | pending | Rose + LOOP + PR | check-log, after-task, PR **without** `closes #136` | **[GATE]** owner merge |
+| S7 | pending | mechanical verify | file exists; numbers match log; Experimental strings held | no |
+| S8 | pending | Melissa | `docs/dev-log/plan-actual/2026-08-09-136e-va-bias.md` | no |
+| #49 | parked | FIML | not this lane | owner-named only |
+| drmTMB | sibling | `engine="julia"` | other repo; do not start from DRM.jl | do not claim finished |
 
-STOP on DRM.jl after T2 until owner names G0. Do not autoload 136e / #49.
+Do not close #136. Do not hunt 7× by inventing an unwired two-part DGP.

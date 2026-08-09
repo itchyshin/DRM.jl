@@ -1,26 +1,29 @@
-# GOAL — new DRM.jl Julia lane IDLE pending owner G0 (IMMUTABLE — re-read every arc)
-Read this first, every cycle. Auto-compact eats messages, not this file. Unsure after a compaction?
-Re-read THIS, then checkpoint.md, then continue.
+# GOAL — drm-136e-va-bias-report (IMMUTABLE — re-read at the top of EVERY arc)
 
 ## Mission
-New **Julia DRM.jl** lane after owner merged [#402](https://github.com/itchyshin/DRM.jl/pull/402)
-@ `a913af8d` and started drmTMB elsewhere. Tip is **IDLE**. Issue **#136 stays
-OPEN**. Do **not** start 136e / #49 / any ship slice unless the owner names it.
-Do **not** start drmTMB from this tree. Do **not** claim the drmTMB sibling
-lane is finished (status unknown from this session).
+Land one PR from `origin/main` @ `cc113cbb` that writes `report/va-vs-laplace-bias.md`:
+an ADEMP comparison of public Gamma `(1 | g)` Laplace vs VA on shape
+**α = 1/σ²**. Docs stay **Experimental**. Issue **#136 stays OPEN**.
 
 ## Headline
-Julia lane desk-ready; no invented G0; #136e / #49 PARKED; drmTMB = sibling.
+Measure the public path honestly. If simple Gamma RI does not reproduce
+GLLVM’s ~7× two-part (Delta-Gamma) cell, say so (Rose). That still closes
+136e-as-scoped.
 
 ## Invariants
-- One *DRM.jl* ship lane at a time. Multi-lane split: DRM.jl Julia + drmTMB sibling.
-- Fence: no q=4 core rewrite; ML default; no close #136; #49 parked; no GPL
-  vendoring; never stage `.worktrees/`; D-111 OFF; no inventing ship from ROADMAP.
-- START HERE: `docs/dev-log/handover/2026-08-09-cursor-handover-drm-julia-lane.md`.
-- Morning note `docs/dev-log/handover/2026-08-09-cursor-handover.md` is historical
-  (drmTMB handoff). Active-Lane-Split on `docs/dev-log/coordination-board.md`.
+- One DRM.jl ship lane. drmTMB sibling = other repo; do not start from here.
+- Public path only: `drm(...; Gamma(); marginal=:LA|:VA)` with `sigma ~ 1` + `(1 | g)`.
+- Estimand: `α = exp(-2 · coef(fit, :sigma)[1])`. ELBO ≠ logLik — do not compare as IC.
+- No `src/` kernel rewrite unless smoke proves a kernel bug.
+- No ZINB / Delta-Gamma / `zi`/`hu`×RE in this PR.
+- Do **not** flip Experimental → Implemented. Do **not** `closes #136`.
+- D-111 OFF. No q=4. No GPL. Never stage `.worktrees/`.
+- Compute: local smoke first; Totoro only if n-ladder after a material α gap.
+- Authoritative WHAT: `LOOP/ultra-plan.md`.
 
-## Definition of done (this hygiene slice)
-- New Julia-lane handover + LOOP + coordination-board match tip `a913af8d` / #402 MERGED
-- #136 confirmed OPEN; drmTMB row not orphaned
-- Next Immediate Steps = rehydrate → ask owner for first G0 (not 136e, not drmTMB)
+## Definition of done
+- `report/va-vs-laplace-bias.md` exists with ADEMP + measured smoke numbers +
+  explicit “not ZINB / not two-part / Experimental held / #136 open”
+- Docs cite the report; Experimental banner unchanged
+- check-log.d + after-task + Rose PASS
+- PR open **without** `closes #136`; owner merges
