@@ -33,17 +33,24 @@ fit = drm(bf(cbind(successes, failures) ~ x + (1 | g) + (1 | h)), Binomial(); da
 fit_phy = drm(bf(@formula(cbind(successes, failures) ~ x + phylo(1 | species))),
               Binomial(); data = dat, tree = tr, se = false)
 fitted(fit)        # fitted success probabilities μ̂ = logistic(Xβ̂)
+
+# Experimental (#136 Rung 1): Binomial random-intercept variational (ELBO) marginal.
+fit_va = drm(bf(@formula(y ~ x + (1 | g))), Binomial(); data = dat, marginal = :VA)
 ```
 """
 struct Binomial end
 
 function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, g_tol::Real = 1e-8,
-             se::Bool = true)
+             se::Bool = true, marginal::Symbol = :LA, method = nothing)
+    _reject_method_as_marginal(fam, method)
     missing_fit = _fit_observed_response_rows(f, data) do data_observed
-        drm(f, fam; data = data_observed, tree = tree, g_tol = g_tol, se = se)
+        drm(f, fam; data = data_observed, tree = tree, g_tol = g_tol, se = se,
+            marginal = marginal, method = method)
     end
     missing_fit !== nothing && return missing_fit
 
+    marg = _marginal_method(marginal)                     # :LA (default) or :VA (#136)
+    isva = marg isa Variational
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
@@ -68,6 +75,7 @@ function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, g_tol::Real = 1
     end
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)      # successes column is a dummy LHS
     if st !== nothing
+        isva && _va_reject(fam, "a phylogenetic/structured random effect")
         isempty(re) ||
             error("Binomial() phylo structured effects cannot be combined with ordinary random effects yet")
         kind, grp = st
@@ -77,8 +85,9 @@ function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, g_tol::Real = 1
         labels = getproperty(data, grp)
         return _withformula(_fit_binomial_phylo_laplace(fam, s, ntr, Xμ, labels, tree, nmμ, grp, g_tol; se = se), f)
     end
-    if !isempty(re)                                       # random intercept (1|g) → GHQ/Laplace marginal
+    if !isempty(re)                                       # random intercept (1|g) → GHQ/Laplace or VA (#136)
         if length(re) > 1
+            isva && _va_reject(fam, "crossed/multiple random intercepts")
             all(_re_kind(r[1])[1] === :intercept for r in re) ||
                 error("Binomial() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
             comps = map(re) do r
@@ -88,10 +97,16 @@ function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, g_tol::Real = 1
             return _withformula(_fit_binomial_crossed_laplace(fam, s, ntr, Xμ, comps, nmμ, g_tol), f)
         end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
-        rk === :intercept ||
+        if rk === :intercept                              # (1 | g) → 1-D GHQ (Laplace) or VA (#136)
+            isva && return _withformula(_withmarginal(
+                _fit_binomial_ranef_va(fam, s, ntr, Xμ, gidx, G, nmμ, grp, g_tol), :VA), f)
+            return _withformula(_fit_binomial_ranef(fam, s, ntr, Xμ, gidx, G, nmμ, grp, g_tol), f)
+        else
+            isva && _va_reject(fam, "a correlated random slope `(1 + x | g)`")
             error("Binomial() supports `(1 | g)` on the mean")
-        return _withformula(_fit_binomial_ranef(fam, s, ntr, Xμ, gidx, G, nmμ, grp, g_tol), f)
+        end
     end
+    isva && _va_reject(fam, "no random intercept (fixed-effects-only)")
     return _withformula(_fit_binomial(fam, s, ntr, Xμ, nmμ, g_tol), f)
 end
 

@@ -12,7 +12,7 @@
 #   (4) `method = :VA` is rejected with a pointer to `marginal`.
 #   (5) Default Laplace is unchanged (`marginal = :LA` ≡ omitting the keyword).
 #
-# Issue #136 stays OPEN (Binomial/NB2/Gamma/Beta public VA + 136e are later rungs).
+# Issue #136 stays OPEN (Rung 1 wires Binomial/NB2/Gamma/Beta `(1|g)`; 136e later).
 
 using DRM
 using Test

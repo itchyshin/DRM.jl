@@ -62,27 +62,38 @@ fit_ls = drm(bf(@formula(y ~ x + (1 | p | phylo(species))),
                 @formula(sigma ~ 1 + (1 | p | phylo(species)))),
              NegBinomial2(); data = dat, tree = tr, se = false)
 exp(-2 * coef(fit, :sigma)[1])  # estimated size θ = 1/σ²
+
+# Experimental (#136 Rung 1): NB2 random-intercept variational (ELBO) marginal.
+# Requires `sigma ~ 1`. Default remains Laplace (`marginal = :LA`).
+fit_va = drm(bf(@formula(y ~ x + (1 | g)), @formula(sigma ~ 1)), NegBinomial2();
+             data = dat, marginal = :VA)
 ```
 """
 struct NegBinomial2 end
 
 function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, K = nothing,
-             A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true)
+             A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true,
+             marginal::Symbol = :LA, method = nothing)
+    _reject_method_as_marginal(fam, method)
     missing_fit = _fit_observed_response_rows(f, data) do data_observed
         drm(f, fam; data = data_observed, tree = tree, K = K, A = A,
-            coords = coords, g_tol = g_tol, se = se)
+            coords = coords, g_tol = g_tol, se = se, marginal = marginal, method = method)
     end
     missing_fit !== nothing && return missing_fit
 
+    marg = _marginal_method(marginal)                     # :LA (default) or :VA (#136)
+    isva = marg isa Variational
     rhs = Dict(f.forms)
     # Location–scale: a coupled `(1 | tag | group)` shared by the mean and sigma
     # formulas → one 2×2 group-level covariance fit by the augmented-state engine.
     lc = _ls_coupled_re(rhs[:mu], get(rhs, :sigma, ConstantTerm(1)))
-    lc === nothing ||
+    if lc !== nothing
+        isva && _va_reject(fam, "a coupled location–scale random effect")
         return _withformula(_fit_locscale_frontend(Val(:nb2), fam, f, rhs, lc, data;
                                                     g_tol = g_tol, se = se,
                                                     tree = tree, K = K, A = A,
                                                     coords = coords), f)
+    end
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
         error("NegBinomial2() does not support meta_V markers")
@@ -97,6 +108,7 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, K = nothing
     all(yi -> yi ≥ 0 && isinteger(yi), y) ||
         error("NegBinomial2() requires non-negative integer counts as the response")
     if st !== nothing
+        isva && _va_reject(fam, "a phylogenetic/structured random effect")
         isempty(re) ||
             error("NegBinomial2() phylo structured effects cannot be combined with ordinary random effects yet")
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
@@ -119,10 +131,13 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, K = nothing
             error("NegBinomial2() supports phylo/relmat/animal/spatial(1 | group) among structured markers")
         end
     end
-    if !isempty(re)                                       # random effect on the mean → GHQ/Laplace
+    if !isempty(re)                                       # random effect on the mean → GHQ/Laplace or VA (#136)
+        isva && (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
+            _va_reject(fam, "`zi`/`hu` combined with a random effect")
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
             error("NegBinomial2() random effects cannot be combined with `zi`/`hu` yet")
         if length(re) > 1
+            isva && _va_reject(fam, "crossed/multiple random intercepts")
             all(_re_kind(r[1])[1] === :intercept for r in re) ||
                 error("NegBinomial2() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
             comps = map(re) do r
@@ -133,14 +148,21 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, K = nothing
         end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]
         gidx, G = _group_index(getproperty(data, grp))
-        if rk === :intercept                              # (1 | g) → 1-D GHQ
+        if rk === :intercept                              # (1 | g) → 1-D GHQ (Laplace) or VA (#136)
+            if isva
+                size(Xσ, 2) == 1 || _va_reject(fam, "a non-constant `sigma` formula (VA kernels require `sigma ~ 1`)")
+                return _withformula(_withmarginal(
+                    _fit_nb2_ranef_va(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), :VA), f)
+            end
             return _withformula(_fit_negbin2_ranef(fam, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_tol), f)
         elseif rk === :corr                               # (1 + x | g) → 2-D GHQ
+            isva && _va_reject(fam, "a correlated random slope `(1 + x | g)`")
             return _withformula(_fit_negbin2_corr_ranef(fam, y, Xμ, Xσ, Float64.(getproperty(data, var)), gidx, G, nmμ, nmσ, grp, g_tol), f)
         else
             error("NegBinomial2() supports (1|g) or (1+x|g) on the mean")
         end
     end
+    isva && _va_reject(fam, "no random intercept (fixed-effects-only / zi / hu)")
     haskey(rhs, :zi) && haskey(rhs, :hu) &&
         error("`zi` and `hu` cannot both be specified (zero-inflation vs hurdle)")
     if haskey(rhs, :zi)                                   # zero-inflated NB (ZINB)

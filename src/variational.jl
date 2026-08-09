@@ -20,9 +20,10 @@ struct Laplace <: MarginalMethod end
 """    Variational <: MarginalMethod
 
 Gaussian-variational (VA/ELBO) marginal — opt-in alternative to [`Laplace`](@ref)
-for bias-sensitive random-effect models (#136). Public `drm` path: Poisson
-`(1 | g)` via `marginal = :VA` (Experimental). Other families keep internal
-kernels only; #136 stays open."""
+for bias-sensitive random-effect models (#136). Public `drm` path (Experimental):
+Poisson / Binomial / NegBinomial2 / Gamma / Beta random intercept `(1 | g)` via
+`marginal = :VA` (scale families need `sigma ~ 1`). Phylo, crossed, correlated
+slopes, ZI/hu, and 136e stay unwired; #136 stays open."""
 struct Variational <: MarginalMethod end
 
 # Resolve a user-facing `method` symbol (:LA/:VA, case-insensitive) to a type.
@@ -47,19 +48,40 @@ function _fit_va(args...; kwargs...)
           "marginal = :LA (Laplace, the default).")
 end
 
-# Route-or-reject for the public `marginal = :VA` front end (#136 Arc 0). The
-# Poisson VA kernel covers exactly one structure: a single Gaussian random
-# intercept `(1 | g)` on the mean. Any other model under `:VA` — fixed-effects-
-# only, correlated `(1 + x | g)`, crossed `(1 | g) + (1 | h)`, phylo/spatial/
-# relmat/animal, or `zi`/`hu` — has no public VA path, so we reject here with a
-# uniform message rather than silently falling back to Laplace (that would
-# mislabel `loglik` as an ELBO). `fam` names the family; `what` describes the
-# offending structure.
+# Route-or-reject for the public `marginal = :VA` front end (#136). Public VA
+# kernels cover a single Gaussian random intercept `(1 | g)` on the mean for
+# Poisson, Binomial, NegBinomial2, Gamma, and Beta (`sigma ~ 1` where the family
+# has a scale). Any other model under `:VA` — fixed-effects-only, correlated
+# `(1 + x | g)`, crossed `(1 | g) + (1 | h)`, phylo/spatial/relmat/animal,
+# locscale, non-constant `sigma`, or `zi`/`hu` — has no public VA path, so we
+# reject here with a uniform message rather than silently falling back to
+# Laplace (that would mislabel `loglik` as an ELBO). `fam` names the family;
+# `what` describes the offending structure.
 function _va_reject(fam, what)
     throw(ArgumentError(
         "marginal = :VA (variational ELBO, #136) is not available for $(nameof(typeof(fam)))() with $what. " *
-        "The public VA path is Experimental and covers only Poisson with a single random intercept `(1 | g)`. " *
+        "The public VA path is Experimental and covers Poisson, Binomial, NegBinomial2, Gamma, and Beta " *
+        "with a single random intercept `(1 | g)` (`sigma ~ 1` where the family has a scale). " *
         "Use marginal = :LA (Laplace, the default) for this model."))
+end
+
+# `method` is the Gaussian ML/REML selector. LA/VA is `marginal` (Q1 / #136).
+# Non-Gaussian `drm()` accepts `method = :ML` as a no-op and rejects `:VA`/`:LA`
+# with a pointer to `marginal`, matching the Poisson Arc 0 message.
+function _reject_method_as_marginal(fam, method)
+    method === nothing && return nothing
+    ms = Symbol(uppercase(String(method)))
+    famname = nameof(typeof(fam))
+    if ms === :VA || ms === :LA
+        throw(ArgumentError(
+            "drm ($famname): `method = :$ms` is not the Laplace/VA selector. " *
+            "Use `marginal = :$ms` (`:LA` default Laplace; `:VA` opt-in ELBO, #136). " *
+            "`method` is reserved for `:ML`/`:REML` on Gaussian models."))
+    end
+    ms === :ML && return nothing
+    throw(ArgumentError(
+        "drm ($famname): unknown `method = :$method`. $famname is ML-only; " *
+        "for Laplace vs variational use `marginal = :LA` or `marginal = :VA` (#136)."))
 end
 
 # ──────────────────────────────────────────────────────────────────────────────
