@@ -1,5 +1,12 @@
 # Session Handoff: DRM.jl tip IDLE after #401 — next lane is drmTMB
 
+> **HISTORICAL (2026-08-09 afternoon).** This morning note handed the next lane
+> to **drmTMB**. Owner merged #402 @ `a913af8d` and opened a **new DRM.jl Julia
+> lane**. Live START HERE:
+> [`2026-08-09-cursor-handover-drm-julia-lane.md`](2026-08-09-cursor-handover-drm-julia-lane.md).
+> Keep this file as the drmTMB-handoff record. Do not treat it as the current
+> DRM.jl pointer.
+
 Meta: 2026-08-09 · from **Cursor** (Shannon) · TARGET **Cursor** · AUTHOR **cursor**
 
 You are **Cursor**, picking up with **no chat context**. Rehydrate from this
