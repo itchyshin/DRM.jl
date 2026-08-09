@@ -1,12 +1,11 @@
 🎯 GOAL
 Solo platform: Cursor
-Deliverable: One PR from tip `origin/main` @ `fbbb8a56` that promotes VA
-  scaffold anchors a/b/c and flips docs to Experimental five-family RI.
-  Issue #136 stays OPEN.
-HEADLINE: Promote true anchors; finish aicc VA guard; banners match tip.
-DEFER: 136e bias report; ZI/phylo/crossed public VA; closing #136; q=4;
-  #49; R-bridge; drmTMB engine=julia; GPL; staging `.worktrees/`.
-DISCIPLINE: verify before claiming · ML default · no silent LA fallback ·
-  ELBO ≠ logLik · owner+Noether merge gate · PR does not `closes #136`.
+Deliverable: Docs-only tip-idle START HERE after #401 MERGED @ `3181eaa1`.
+  DRM.jl IDLE. #136 stays OPEN. Next lane = drmTMB `engine="julia"` (other repo).
+HEADLINE: Clean desk; do not continue 136e; #49 parked.
+DEFER: 136e; #49; ZI/phylo/crossed public VA; q=4; D-111; `.worktrees/`;
+  starting drmTMB work from this repository.
+DISCIPLINE: verify before claiming · one lane · owner merges docs PR ·
+  never `git add -A`.
 
-Status after execute: Rung 2+3 verified locally (15/15 scaffold). OPEN GATE = merge.
+Status: START HERE written. OPEN GATE = owner merge of docs PR.

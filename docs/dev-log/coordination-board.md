@@ -4,10 +4,21 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
-_Light tip refresh 2026-08-07 (`docs/7-phase3-closeout`): tip base `f3d8ce7d`
-(Merge #396 / #388). Phase 3 / #7 → complete-with-carveouts (26/26 slugs;
-phylo×spatial Theory+roadmap + VA Experimental #136). Prior refresh 2026-06-02
-still holds for families/inference wiring — see "Verified state" below._
+_Light tip refresh 2026-08-09 (`docs/handover-2026-08-09`): tip `3181eaa1`
+(Merge #401). DRM.jl **IDLE**. #136 stays OPEN (VA Experimental five-family RI).
+NEXT LANE = drmTMB R repo `engine="julia"` Workflow G — not this tree.
+Prior 2026-08-07 Phase 3 / #7 complete-with-carveouts still holds._
+
+## Active-Lane-Split (2026-08-09)
+
+| Lane | Repo | State | Pointer |
+|---|---|---|---|
+| DRM.jl tip | this repo | **IDLE** after #401 `3181eaa1` | `docs/dev-log/handover/2026-08-09-cursor-handover.md` |
+| drmTMB `engine="julia"` Workflow G | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **NEXT** — fresh chat | do not start from DRM.jl |
+| #136e / #49 | DRM.jl | **PARKED** | owner-named only |
+
+Rehydrate must read **every** row. A single START HERE must not orphan the
+drmTMB next-lane or the parked DRM epics.
 
 ## Lane split — Claude ↔ Codex
 
@@ -54,9 +65,11 @@ Full Codex brief: **#76** (pinned).
 
 | Branch | Owner | Touching | Status |
 |---|---|---|---|
-| `main` | — | tip @ `fbbb8a56` (Merge #400); docs deploy | tip after VA Rung 1 |
-| `feat/136-va-rung2-3` | Shannon (Cursor) | `test/test_variational.jl`, `test/test_va_frontend_families.jl`, `src/comparison.jl`, VA docs, LOOP/, check-log/after-task | **active** — Rung 2+3; #136 stays OPEN; no merge |
-| #136e / drmTMB `engine="julia"` | — | fenced | **next fresh task after owner merge** — not this PR |
+| `main` | — | tip @ `3181eaa1` (Merge #401) | **IDLE** after VA Rung 2+3 |
+| `docs/handover-2026-08-09` | Shannon (Cursor) | handover + LOOP + this board | **active** docs PR — owner merge |
+| `feat/136-va-rung2-3` | — | — | **MERGED** via #401; do not resume |
+| #136e / #49 | — | fenced | **PARKED** — owner-named only |
+| drmTMB `engine="julia"` | — | **other repo** | **NEXT LANE** — fresh chat in drmTMB |
 
 > Note: Phase 3 article-fill work is exhausted (26/26). Do not invent tip-idle
 > SHA padding. Never stage `.worktrees/`. Coordinate on `src/DRM.jl` if an
