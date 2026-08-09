@@ -4,21 +4,21 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
-_Light tip refresh 2026-08-09 afternoon (`docs/handover-2026-08-09-drm-julia-lane`):
-tip `a913af8d` (Merge #402). DRM.jl = **new Julia lane, IDLE pending owner G0**.
-#136 stays OPEN (VA Experimental five-family RI). drmTMB = **sibling** (owner
-started it elsewhere; status unknown from this DRM.jl session — do not claim
-finished; do not start from this tree). Morning handover
-`2026-08-09-cursor-handover.md` is historical (drmTMB handoff).
+_Light tip refresh 2026-08-09 evening (`feat/136e-va-bias-report`):
+`origin/main` @ `cc113cbb` (#403 MERGED). DRM.jl Julia G0 = **#136e public-path
+bias report** (owner-named). #136 stays OPEN. drmTMB = **sibling** (status
+unknown here; do not claim finished; do not start from this tree). Morning
+handover `2026-08-09-cursor-handover.md` is historical (drmTMB handoff).
 Prior 2026-08-07 Phase 3 / #7 complete-with-carveouts still holds._
 
-## Active-Lane-Split (2026-08-09 afternoon)
+## Active-Lane-Split (2026-08-09 evening)
 
 | Lane | Repo | State | Pointer |
 |---|---|---|---|
-| DRM.jl Julia | this repo | **IDLE** pending owner G0; tip `a913af8d` (#402 MERGED) | `docs/dev-log/handover/2026-08-09-cursor-handover-drm-julia-lane.md` |
+| DRM.jl Julia | this repo | **#136e in flight** — public Gamma RI LA≈VA smoke; tip `cc113cbb` + this PR | `report/va-vs-laplace-bias.md` · LOOP/GOAL.md |
 | drmTMB `engine="julia"` Workflow G | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **sibling — possibly in progress** (unknown from this session) | that repo’s own handover; do not start from DRM.jl; do not claim finished |
-| #136e / #49 | DRM.jl | **PARKED** | owner-named only |
+| #136e | DRM.jl | **named G0** — public-path report (not ZINB / not close #136) | this branch |
+| #49 | DRM.jl | **PARKED** | owner-named only |
 
 Rehydrate must read **every** row. A single START HERE must not orphan the
 drmTMB sibling lane or the parked DRM epics.
@@ -68,11 +68,11 @@ Full Codex brief: **#76** (pinned).
 
 | Branch | Owner | Touching | Status |
 |---|---|---|---|
-| `main` | — | tip @ `a913af8d` (Merge #402) | **IDLE** Julia lane pending owner G0 |
-| `docs/handover-2026-08-09-drm-julia-lane` | Shannon (Cursor) | new START HERE + LOOP + this board | **active** docs PR — owner merge |
-| `docs/handover-2026-08-09` | — | morning drmTMB-handoff kit | **MERGED** via #402; historical |
+| `main` | — | tip @ `cc113cbb` (Merge #403) | landed START HERE; ship = 136e PR |
+| `feat/136e-va-bias-report` | Shannon (Cursor) | report + bench + docs honesty + LOOP | **active** — owner merge; no `closes #136` |
+| `docs/handover-2026-08-09-drm-julia-lane` | — | Julia-lane START HERE | **MERGED** via #403 |
 | `feat/136-va-rung2-3` | — | — | **MERGED** via #401; do not resume |
-| #136e / #49 | — | fenced | **PARKED** — owner-named only |
+| #49 | — | fenced | **PARKED** — owner-named only |
 | drmTMB `engine="julia"` | — | **other repo** | **sibling** — possibly in progress; unknown here |
 
 > Note: Phase 3 article-fill work is exhausted (26/26). Do not invent tip-idle

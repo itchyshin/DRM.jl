@@ -1,7 +1,7 @@
-GOAL: see GOAL.md.   STATE: G0 approved; branch `feat/136e-va-bias-report` from `cc113cbb`; LOOP scaffolded.
-ARCS DONE (verified): S0 recon (planning chat).
-ARC IN PROGRESS: S1 ADEMP + harness.
-NEXT: write `bench/va_vs_laplace_bias.jl` + ADEMP into report stub before multi-rep.
-OPEN GATES (need human): Totoro only if smoke shows material α gap; owner merge; never close #136.
-TRUTH LIVES IN: branch `feat/136e-va-bias-report` @ `cc113cbb`+; LOOP/ultra-plan.md; origin/main `cc113cbb`.
-RESUME: You are drm-136e-va-bias-report. COLD START / RESUME. READ FIRST: LOOP/GOAL.md -> LOOP/checkpoint.md -> LOOP/ultra-plan.md -> AGENTS.md. WORKSPACE: `/Users/z3437171/Dropbox/Github Local/DRM.jl` on `feat/136e-va-bias-report`. CONTINUE FROM: S1. Pause at: Totoro / merge / close #136.
+GOAL: see GOAL.md.   STATE: S1–S5 + S7–S8 done; S6 ship+PR (no `closes #136`). Smoke: LA≈VA, LA faster.
+ARCS DONE (verified): S0 recon; S1 harness; S2 `SMOKE_OK` 3/3; S3 report; S4 Experimental held; S5 skipped; S7 numbers match log; S8 Melissa.
+ARC IN PROGRESS: S6 PR open → **[GATE] owner merge**.
+NEXT: if PR not open, `gh pr create` without `closes #136`. Then STOP.
+OPEN GATES (need human): **owner merge**. Never close #136. Totoro not needed.
+TRUTH LIVES IN: `feat/136e-va-bias-report`; `report/va-vs-laplace-bias.md`; after-task smoke table.
+RESUME: You are drm-136e-va-bias-report. READ FIRST: LOOP/GOAL.md -> LOOP/checkpoint.md -> LOOP/ultra-plan.md -> AGENTS.md. CONTINUE FROM: wait for owner merge. Pause at: merge / close #136.
