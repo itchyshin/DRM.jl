@@ -252,7 +252,7 @@ To avoid overclaiming, these are confirmed **not** implemented in this worktree:
   merged here.)
 - **χ̄² boundary inference** — see Inference table.
 - **Cross-family bivariate models** — see Bivariate table.
-- **Variational (VA/ELBO) public path beyond `(1\|g)` on Poisson / Binomial / NB2 / Gamma / Beta** — Experimental random-intercept VA only (`sigma ~ 1` where the family has a scale). Phylo, crossed, correlated slopes, ZI/hu, and the 136e bias report remain open on #136. `_fit_va` still errors for unwired families.
+- **Variational (VA/ELBO) public path beyond `(1\|g)` on Poisson / Binomial / NB2 / Gamma / Beta** — Experimental random-intercept VA only (`sigma ~ 1` where the family has a scale). Phylo, crossed, correlated slopes, ZI/hu remain open on #136. `_fit_va` still errors for unwired families. Scoped #136e public Gamma RI smoke: `report/va-vs-laplace-bias.md` (LA ≈ VA on shape `α`; LA faster; does not close #136).
 - **Dense/bivariate `meta_V`** — diagonal known variances only.
 - **Labelled q=4 coevolution-correlation accessor with CIs** — `Σ_a` is stored
   and surfaced, but no derived-correlation-with-interval accessor exists.

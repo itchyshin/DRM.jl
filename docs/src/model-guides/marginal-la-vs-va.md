@@ -9,7 +9,8 @@
     Gamma, and Beta `(1 | g)` via `drm(...; marginal = :VA)` (scale families need
     `sigma ~ 1`). That `loglik` is an ELBO, not a Laplace log-likelihood. Mixed
     LA/VA AIC / LRT errors. Phylo / crossed / correlated slopes / ZI / hurdle /
-    `sigma ~ x` / 136e stay unwired — not “implemented everywhere.”
+    `sigma ~ x` stay unwired — not “implemented everywhere.” Public Gamma RI
+    LA-vs-VA smoke: `report/va-vs-laplace-bias.md` (#136e scoped; #136 stays open).
 
 ## What "the marginal" is, and why it matters
 
@@ -105,13 +106,14 @@ against a curvature match at a single point.
 |---|---|
 | Fixed-effects-only model | VA adds nothing — there is no latent integral to approximate. |
 | Gaussian random effect on the mean | VA adds nothing — LA is already exact here. |
-| Non-Gaussian RE with dispersion / shape / zero-inflation of interest | VA is steadier — these are the parameters LA biases. |
-| Skewed or multimodal latent posteriors | VA is more robust — the ELBO does not lock onto a single mode. |
-| Speed-critical, bias-tolerant fits | LA — one inner solve per step is faster. |
+| Ordinary Gamma `(1\|g)` shape | LA ≈ VA in the #136e smoke; **prefer LA** (15–20× faster warm). |
+| Two-part / hurdle / ZINB geometry | VA may help (GLLVM evidence) — **not a public DRM path yet**. |
+| Speed-critical fits | LA — default; one inner solve per step. |
 
-In short: **LA is faster and is the default; VA is an opt-in for the
-bias-sensitive cells** — the two-part / hurdle, zero-inflated, and shape-driven
-models where the GLLVM evidence above shows LA struggling.
+In short: **LA is faster and is the default.** On the public Gamma random-intercept
+cell, Julia matches the R/TMB pattern: the two marginals agree on `α` and LA
+wins on time (`report/va-vs-laplace-bias.md`). VA stays an opt-in for the
+bias-sensitive *two-part / ZI* cells — those are still unwired here.
 
 ## The public API (Experimental)
 
@@ -147,16 +149,18 @@ answer, not just "the numbers look plausible":
 3. **Family limits.** The negative binomial as its size `r → ∞` becomes Poisson,
    so NB2-VA converges to Poisson-VA on a shared fixture.
 
-Closing #136 still needs the 136e bias-recovery report (Gamma-shape / ZINB) and
-any public VA beyond random intercept — those are not claimed here.
+The scoped **#136e** public-path report is `report/va-vs-laplace-bias.md`:
+on Gamma `(1 | g)`, LA ≈ VA on shape `α` and LA is much faster. Closing #136 still
+needs public VA beyond random intercept (phylo / crossed / ZI / hurdle) and any
+two-part bias cell — those are not claimed here.
 
 ## A place DRM.jl can exceed drmTMB
 
 drmTMB is built on TMB, which is **Laplace-only**. Offering a variational
 marginal alongside LA is therefore not parity work — it is a capability drmTMB
-does not have. For the exact cells where Laplace is known to bias the shape and
-zero-inflation parameters, a VA option lets DRM.jl give a steadier answer than
-the R package it mirrors.
+does not have. That option is useful **only** where Laplace is known to fail
+(two-part shape, ZINB multimodality). On ordinary Gamma `(1 | g)`, the #136e
+smoke does **not** show a VA accuracy edge; prefer the default Laplace, as in R.
 
 ## See also
 
