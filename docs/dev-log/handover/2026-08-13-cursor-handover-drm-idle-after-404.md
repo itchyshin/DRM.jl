@@ -133,7 +133,7 @@ Every failure declared:
 | `origin/main` `733ae972` | y | y | #404 MERGED | **LANDED** |
 | #397–#403 + 136e report | y | y | MERGED | **LANDED** |
 | `feat/136e-va-bias-report` | y | y | #404 MERGED | **LANDED** — do not resume |
-| `docs/tip-idle-after-404` (this handover) | y | y (when PR opened) | docs PR open | **LANDED** (artifact); merge = owner |
+| `docs/tip-idle-after-404` (this handover) | y | y | [#405](https://github.com/itchyshin/DRM.jl/pull/405) OPEN | **LANDED** (artifact); merge = owner |
 | 2026-08-09 Julia-lane START HERE | y | y | #403 MERGED | **LANDED** — now **historical** |
 | Stale local unpushed (26 commits / many old branches: `chore/worktree-house-rule`, `shannon/va-frontend`, `codex/local-qgate-fd-gradient`, `docs/rose-registry-claim-audit`, …) | mixed | n | none for this handoff | **CARRIED-OVER** — ignore unless owner names a branch. Resume: **do not checkout**. |
 | `?? .codex/agents/shannon-coordinator.toml` | n | n | none | **CARRIED-OVER** — never stage; not this lane |
