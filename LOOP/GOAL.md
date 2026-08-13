@@ -1,29 +1,29 @@
-# GOAL — drm-136e-va-bias-report (IMMUTABLE — re-read at the top of EVERY arc)
+# GOAL — DRM.jl tip IDLE after #404 (IMMUTABLE — re-read every arc)
+Read this first, every cycle. Auto-compact eats messages, not this file. Unsure after a compaction?
+Re-read THIS, then checkpoint.md, then continue.
 
 ## Mission
-Land one PR from `origin/main` @ `cc113cbb` that writes `report/va-vs-laplace-bias.md`:
-an ADEMP comparison of public Gamma `(1 | g)` Laplace vs VA on shape
-**α = 1/σ²**. Docs stay **Experimental**. Issue **#136 stays OPEN**.
+Land one **docs-only** PR from `origin/main` @ `733ae972` (Merge [#404](https://github.com/itchyshin/DRM.jl/pull/404))
+that writes the tip-idle START HERE kit. Then the desk is **IDLE** pending an
+owner-named G0. Issue **136 stays OPEN**. Do **not** invent a ship G0. Do **not**
+start drmTMB from this tree. Do **not** start later #136 two-part/ZI×RE or #49
+unless the owner names them.
 
 ## Headline
-Measure the public path honestly. If simple Gamma RI does not reproduce
-GLLVM’s ~7× two-part (Delta-Gamma) cell, say so (Rose). That still closes
-136e-as-scoped.
+Tip pointer says **IDLE pending owner G0** — not “merge #404 / 136e in flight”.
 
 ## Invariants
-- One DRM.jl ship lane. drmTMB sibling = other repo; do not start from here.
-- Public path only: `drm(...; Gamma(); marginal=:LA|:VA)` with `sigma ~ 1` + `(1 | g)`.
-- Estimand: `α = exp(-2 · coef(fit, :sigma)[1])`. ELBO ≠ logLik — do not compare as IC.
-- No `src/` kernel rewrite unless smoke proves a kernel bug.
-- No ZINB / Delta-Gamma / `zi`/`hu`×RE in this PR.
-- Do **not** flip Experimental → Implemented. Do **not** `closes #136`.
-- D-111 OFF. No q=4. No GPL. Never stage `.worktrees/`.
-- Compute: local smoke first; Totoro only if n-ladder after a material α gap.
+- One *DRM.jl* docs lane for this run (`docs/tip-idle-after-404`). drmTMB = sibling.
+- Fence: no `src/`; no q=4 core rewrite; ML default; issue 136 stays OPEN; #49 parked;
+  no GPL vendoring; never stage `.worktrees/` or `.codex/agents/shannon-coordinator.toml`;
+  D-111 OFF; no inventing ship from ROADMAP; no Experimental → Implemented.
+- START HERE: `docs/dev-log/handover/2026-08-13-cursor-handover-drm-idle-after-404.md`.
+- 2026-08-09 Julia-lane note is historical. Active-Lane-Split on
+  `docs/dev-log/coordination-board.md`.
 - Authoritative WHAT: `LOOP/ultra-plan.md`.
 
-## Definition of done
-- `report/va-vs-laplace-bias.md` exists with ADEMP + measured smoke numbers +
-  explicit “not ZINB / not two-part / Experimental held / #136 open”
-- Docs cite the report; Experimental banner unchanged
-- check-log.d + after-task + Rose PASS
-- PR open **without** `closes #136`; owner merges
+## Definition of done (this hygiene slice)
+- Handover + LOOP + coordination-board match tip `733ae972` / #404 MERGED
+- Issue 136 confirmed OPEN; PR body has no closer keywords for that issue
+- Next Immediate Steps = rehydrate → STOP and ask owner for next G0
+- PR open; **owner merge** is the OPEN GATE (do not merge from this lane)

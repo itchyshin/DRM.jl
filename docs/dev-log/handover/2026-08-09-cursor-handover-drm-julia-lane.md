@@ -1,5 +1,12 @@
 # Session Handoff: new DRM.jl Julia lane — IDLE pending owner G0
 
+> **HISTORICAL (2026-08-13).** This afternoon-2026-08-09 note was the DRM.jl
+> Julia-lane START HERE before owner named 136e. [#404](https://github.com/itchyshin/DRM.jl/pull/404)
+> merged @ `733ae972`. Live START HERE:
+> [`2026-08-13-cursor-handover-drm-idle-after-404.md`](2026-08-13-cursor-handover-drm-idle-after-404.md).
+> Keep this file as the pre-136e Julia-lane record. Do not treat it as the
+> current DRM.jl pointer.
+
 Meta: 2026-08-09 (afternoon) · from **Cursor** (Shannon) · TARGET **Cursor** · AUTHOR **cursor**
 
 You are **Cursor**, picking up a **new DRM.jl Julia lane** with **no chat

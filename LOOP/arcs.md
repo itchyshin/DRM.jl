@@ -1,20 +1,19 @@
-# Arcs — #136e honest public-path VA bias report
+# Arcs — DRM.jl tip idle after #404
 
-Status: `pending` | `in_progress` | `done` | `blocked` | `skipped`
+Status: `pending` | `in_progress` | `done` | `blocked`
 Gates: `[GATE]` = pause for human.
 
 | id | status | slice | what | gate? |
 |---|---|---|---|---|
-| S0 | done | recon | git + design + frontend fixture | no |
-| S1 | done | ADEMP + harness | `bench/va_vs_laplace_bias.jl` + ADEMP | no |
-| S2 | done | smoke | 3 local reps; log `SMOKE_OK`; LA≈VA | no |
-| S3 | done | report | `report/va-vs-laplace-bias.md` with numbers | no |
-| S4 | done | docs honesty | guide + capabilities; Experimental held | no |
-| S5 | skipped | optional n-ladder | no material α gap | Totoro not needed |
-| S6 | done | Rose + LOOP + PR | [#404](https://github.com/itchyshin/DRM.jl/pull/404) **without** `closes #136` | **[GATE]** owner merge
-| S7 | done | mechanical verify | file exists; numbers match log (`3.7102` / `3.5764` / `4.5822`) | no |
-| S8 | done | Melissa | `docs/dev-log/plan-actual/2026-08-09-136e-va-bias.md` | no |
-| #49 | parked | FIML | not this lane | owner-named only |
-| drmTMB | sibling | `engine="julia"` | other repo; do not start from DRM.jl | do not claim finished |
+| S0 | done | recon | `git fetch`; tip `733ae972`; issue 136 OPEN; no competing ship PR; branch from `origin/main` | no |
+| S1 | done | handover | `docs/dev-log/handover/2026-08-13-cursor-handover-drm-idle-after-404.md`; banner 2026-08-09 Julia-lane historical | no |
+| S2 | done | LOOP + coord | overwrite LOOP (idle, not wait-#404); refresh Active-Lane-Split; drmTMB row kept | no |
+| S3 | done | DoD docs | check-log.d + after-task (`closeout.py` PASS) + Melissa plan-actual | no |
+| S4 | in_progress | PR | commit explicit paths; push; `gh pr create`; confirm issue 136 still OPEN | **[GATE]** owner merge |
+| NEXT | blocked | first Julia G0 after idle | owner names it; then ultra-plan | **[GATE]** owner names G0 |
+| drmTMB | sibling | `engine="julia"` Workflow G | **other repo** — possibly in progress; unknown here | do not start from DRM.jl |
+| later-136 | parked | two-part / ZI×RE | epic stays OPEN; 136e public Gamma report already on main | owner-named only |
+| #49 | parked | FIML / missing data | issue stays open | owner-named only |
 
-Owner prior recorded: LA often similar/faster/more accurate (R/TMB). Smoke agreed.
+STOP on DRM.jl after S4 until owner merges, then a fresh chat asks for G0.
+Do not autoload later-136 / #49 / drmTMB.

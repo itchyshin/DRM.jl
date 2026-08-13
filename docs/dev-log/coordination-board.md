@@ -4,20 +4,22 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
-_Light tip refresh 2026-08-09 evening (`feat/136e-va-bias-report`):
-`origin/main` @ `cc113cbb` (#403 MERGED). DRM.jl Julia G0 = **#136e public-path
-bias report** (owner-named). #136 stays OPEN. drmTMB = **sibling** (status
-unknown here; do not claim finished; do not start from this tree). Morning
-handover `2026-08-09-cursor-handover.md` is historical (drmTMB handoff).
+_Light tip refresh 2026-08-13 (`docs/tip-idle-after-404`):
+`origin/main` @ `733ae972` (#404 MERGED). DRM.jl Julia = **IDLE** pending
+owner G0. Issue 136 stays OPEN (136e public Gamma RI report landed; VA stays
+Experimental). #49 PARKED. drmTMB = **sibling** (status unknown here; do not
+claim finished; do not start from this tree). 2026-08-09 Julia-lane handover
+is historical. Live START HERE:
+`docs/dev-log/handover/2026-08-13-cursor-handover-drm-idle-after-404.md`.
 Prior 2026-08-07 Phase 3 / #7 complete-with-carveouts still holds._
 
-## Active-Lane-Split (2026-08-09 evening)
+## Active-Lane-Split (2026-08-13)
 
 | Lane | Repo | State | Pointer |
 |---|---|---|---|
-| DRM.jl Julia | this repo | **#136e in flight** — public Gamma RI LA≈VA smoke; tip `cc113cbb` + this PR | `report/va-vs-laplace-bias.md` · LOOP/GOAL.md |
+| DRM.jl Julia | this repo | **IDLE after #404** — pending owner G0; tip `733ae972` + this docs PR | `docs/dev-log/handover/2026-08-13-cursor-handover-drm-idle-after-404.md` · LOOP/GOAL.md |
 | drmTMB `engine="julia"` Workflow G | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **sibling — possibly in progress** (unknown from this session) | that repo’s own handover; do not start from DRM.jl; do not claim finished |
-| #136e | DRM.jl | **named G0** — public-path report (not ZINB / not close #136) | this branch |
+| #136 epic | DRM.jl | **OPEN** — 136e public Gamma report **DONE** on main; two-part / ZI×RE later | issue 136; `report/va-vs-laplace-bias.md` |
 | #49 | DRM.jl | **PARKED** | owner-named only |
 
 Rehydrate must read **every** row. A single START HERE must not orphan the
@@ -63,18 +65,22 @@ Full Codex brief: **#76** (pinned).
   Binomial / NB2 / Gamma / Beta (`marginal = :VA`); Laplace remains default;
   `_fit_va` still errors for unwired families; #136 stays OPEN. Inventory:
   `docs/dev-log/evidence/2026-08-07-7-phase3-inventory.md`.
+- **#136e public-path report (2026-08-13 on main via #404).** Gamma `(1 | g)`
+  smoke: LA ≈ VA on α; LA faster warm. VA stays Experimental. Not ZINB / not
+  two-part. Report: `report/va-vs-laplace-bias.md`.
 
 ## Active branches
 
 | Branch | Owner | Touching | Status |
 |---|---|---|---|
-| `main` | — | tip @ `cc113cbb` (Merge #403) | landed START HERE; ship = 136e PR |
-| `feat/136e-va-bias-report` | Shannon (Cursor) | report + bench + docs honesty + LOOP | **active** — owner merge; no `closes #136` |
-| `docs/handover-2026-08-09-drm-julia-lane` | — | Julia-lane START HERE | **MERGED** via #403 |
+| `main` | — | tip @ `733ae972` (Merge #404) | landed 136e report; ship = idle pending G0 |
+| `docs/tip-idle-after-404` | Shannon (Cursor) | handover + LOOP + coord + DoD docs | **active docs lane** until owner merge; no closer for issue 136 |
+| `feat/136e-va-bias-report` | — | report + bench + docs honesty | **MERGED** via #404; do not resume |
+| `docs/handover-2026-08-09-drm-julia-lane` | — | Julia-lane START HERE | **MERGED** via #403; now historical |
 | `feat/136-va-rung2-3` | — | — | **MERGED** via #401; do not resume |
 | #49 | — | fenced | **PARKED** — owner-named only |
 | drmTMB `engine="julia"` | — | **other repo** | **sibling** — possibly in progress; unknown here |
 
 > Note: Phase 3 article-fill work is exhausted (26/26). Do not invent tip-idle
-> SHA padding. Never stage `.worktrees/`. Coordinate on `src/DRM.jl` if an
-> engine lane reopens.
+> SHA padding after this PR. Never stage `.worktrees/`. Coordinate on
+> `src/DRM.jl` if an engine lane reopens.

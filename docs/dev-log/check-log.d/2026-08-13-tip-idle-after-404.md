@@ -1,0 +1,1 @@
+| 2026-08-13 | **Tip idle after #404** (START HERE; DRM.jl IDLE pending owner G0; issue 136 OPEN; drmTMB sibling not orphaned) | Confirm `origin/main` @ 733ae972; #404 MERGED; issue 136 OPEN; `.worktrees/` unstaged; no `src/` | ✅ tip idle START HERE @ 733ae972; LOOP no longer “136e in flight”; Rose scope PASS; L2 owner merge only | Shannon |
