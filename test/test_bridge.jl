@@ -31,6 +31,19 @@ using Test, Random, LinearAlgebra
     @test bridged["sigma"] ≈ sigma(native)
     @test isempty(bridged["corpairs"])
 
+    # Per-observation distributional parameters — what drmTMB's post-fit surface
+    # consumes. `fitted_distribution()` (the hub for qq_plot / worm_plot /
+    # centile_chart / exceedance) builds its d/p/q from
+    # `fitted_distribution_params()`, which needs one response-scale column per
+    # dpar and aborts if the columns have inconsistent lengths.
+    dpars = bridged["dpars"]
+    @test Set(keys(dpars)) == Set(["mu", "sigma"])
+    @test length(unique(length.(values(dpars)))) == 1
+    @test all(length(v) == bridged["nobs"] for v in values(dpars))
+    @test all(all(isfinite, v) for v in values(dpars))
+    @test dpars["mu"] ≈ fitted(native)
+    @test dpars["sigma"] ≈ sigma(native)
+
     keyed = drm_bridge(;
         formula = Dict(:mu => "y ~ x", :sigma => "sigma ~ x"),
         family = "gaussian",

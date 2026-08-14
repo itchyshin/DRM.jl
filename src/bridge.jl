@@ -487,6 +487,7 @@ function _bridge_flatten(fit; family::AbstractString)
         "residuals" => _bridge_plain(residuals(fit)),
         "sigma" => _bridge_plain(sigma(fit)),
         "corpairs" => _bridge_plain(corpairs(fit)),
+        "dpars" => _bridge_dpars(fit),
     )
     q4_point_export = _bridge_q4_point_export(fit; family = family)
     if !isempty(q4_point_export)
@@ -626,6 +627,33 @@ function _bridge_q2_point_export(fit; family::AbstractString = "biv_gaussian",
     end
     if haskey(fit, :loglik)
         out["loglik"] = Float64(fit.loglik)
+    end
+    return out
+end
+
+"""
+    _bridge_dpars(fit)
+
+Per-observation distributional parameters on the **response** scale, keyed by
+drmTMB dpar name (`"mu"`, `"sigma"`, …).
+
+This is what drmTMB's post-fit surface actually consumes. `fitted_distribution()`
+— the hub for `qq_plot()`, `worm_plot()`, `centile_chart()` and `exceedance()` —
+builds its `d`/`p`/`q` closures from `fitted_distribution_params()`, which calls
+`predict_parameters(object, dpar = <all dpars>, type = "response")` and needs one
+column per dpar. The R side supplies the density machinery from its own family
+tables; the only thing it cannot derive is the fitted parameter values.
+
+Covers the in-sample case (R's `newdata = NULL`). Fresh-data prediction goes
+through `predict_parameters(fit, newdata)`, which is a separate payload.
+"""
+function _bridge_dpars(fit::DrmFit)
+    out = Dict{String,Vector{Float64}}()
+    for (k, v) in pairs(fit.means)
+        out[String(k)] = collect(float.(v))
+    end
+    for (k, v) in pairs(fit.scales)
+        out[String(k)] = collect(float.(v))
     end
     return out
 end
