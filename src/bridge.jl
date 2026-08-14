@@ -489,6 +489,8 @@ function _bridge_flatten(fit; family::AbstractString)
         "corpairs" => _bridge_plain(corpairs(fit)),
         "dpars" => _bridge_dpars(fit),
     )
+    trials = _bridge_trials(fit)
+    trials === nothing || (out["trials"] = trials)
     q4_point_export = _bridge_q4_point_export(fit; family = family)
     if !isempty(q4_point_export)
         out["q4_point_export"] = q4_point_export
@@ -646,6 +648,19 @@ tables; the only thing it cannot derive is the fitted parameter values.
 
 Covers the in-sample case (R's `newdata = NULL`). Fresh-data prediction goes
 through `predict_parameters(fit, newdata)`, which is a separate payload.
+
+**A dpar is not `fitted()`.** For a mixture family the two differ, and feeding
+the wrong one produces a wrong density *silently* because both are in range.
+drmTMB's `mu` dpar for `zero_one_beta` is the **interior beta component** mean
+`plogis(eta_mu)`, which it feeds to `drm_beta_shapes(mu, sigma)`; DRM.jl stores
+that as `beta_mu` and puts the *unconditional* mean
+`(1 - zoi) * mu + zoi * coi` — the right answer for `fitted()` — in `means[:mu]`.
+The override below repairs that one family.
+
+Checked against drmTMB's full dpar table (`R/family-dpq.R`): every other family
+DRM.jl implements already agrees, including truncated NB2, whose `means[:mu]`
+is the **untruncated** mean and so is already the correct dpar. DRM.jl has no
+zi/hurdle families, the other place this trap lives.
 """
 function _bridge_dpars(fit::DrmFit)
     out = Dict{String,Vector{Float64}}()
@@ -655,8 +670,29 @@ function _bridge_dpars(fit::DrmFit)
     for (k, v) in pairs(fit.scales)
         out[String(k)] = collect(float.(v))
     end
+    if fit.family isa ZeroOneBeta && haskey(out, "beta_mu")
+        out["mu"] = out["beta_mu"]        # interior beta mean is drmTMB's `mu`
+        delete!(out, "beta_mu")           # not a drmTMB dpar name
+    end
+    # `trials` is per-row CONTEXT, not a dpar: drmTMB's binomial dpar set is
+    # `mu` alone and beta_binomial's is `mu`/`sigma`, with
+    # `fitted_distribution_params()` attaching `params\$trials` itself. It ships
+    # as its own payload key (see `_bridge_trials`), not inside `dpars`.
+    delete!(out, "trials")
     return out
 end
+
+"""
+    _bridge_trials(fit)
+
+Per-row binomial denominator, or `nothing` when the family has none.
+
+`fitted_distribution_params()` attaches `params\$trials` for the `binomial` and
+`beta_binomial` model types; without it the R side cannot evaluate those
+densities on a Julia fit.
+"""
+_bridge_trials(fit::DrmFit) =
+    haskey(fit.scales, :trials) ? collect(float.(fit.scales[:trials])) : nothing
 
 _bridge_plain(x::AbstractVector) = collect(x)
 _bridge_plain(x::AbstractMatrix) = Matrix(x)

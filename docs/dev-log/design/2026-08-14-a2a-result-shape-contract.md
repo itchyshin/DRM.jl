@@ -61,6 +61,52 @@ all dpar columns same length: true (== nobs)
 Guarded by `test/test_bridge.jl`, which asserts the exact invariant
 `fitted_distribution_params()` enforces.
 
+## A dpar is not `fitted()` — three instances found
+
+`fitted_distribution()` feeds the dpar straight into a density. For a mixture or
+known-variance family the dpar and the fitted value are **different quantities**,
+both in range, so shipping the wrong one is silently wrong rather than an error.
+Checked every family DRM.jl implements against drmTMB's dpar table
+(`R/family-dpq.R`):
+
+| family | drmTMB dpars | DRM.jl status |
+|---|---|---|
+| gaussian / lognormal / gamma / beta / nbinom2 / beta_binomial | `mu`, `sigma` | agrees |
+| poisson / binomial / cumulative_logit | `mu` | agrees |
+| student / tweedie / skew_normal | `mu`, `sigma`, `nu` | agrees |
+| truncated_nbinom2 | `mu`, `sigma` | agrees — `means[:mu]` is the **untruncated** mean, which is the dpar |
+| **zero_one_beta** | `mu`, `sigma`, `zoi`, `coi` | **FIXED** — see below |
+| zi_/hurdle_ families | — | not implemented in DRM.jl |
+
+**Fixed: `zero_one_beta`.** drmTMB's `mu` dpar is the interior beta component
+mean `plogis(eta_mu)`, which it feeds to `drm_beta_shapes(mu, sigma)`. DRM.jl
+stores that as `scales[:beta_mu]` and puts the *unconditional* mean
+`(1 - zoi)·mu + zoi·coi` — correct for `fitted()` — in `means[:mu]`. The payload
+was shipping the unconditional mean as `mu`. `_bridge_dpars` now maps
+`mu ← beta_mu` and drops the non-drmTMB name. Guarded in `test/test_bridge.jl`,
+which asserts `dpars["mu"] != fitted` on a fixture with real boundary mass.
+
+**Fixed: `trials`.** It sat in `scales` and so leaked into the dpar set, but
+drmTMB's binomial dpar set is `mu` alone — `fitted_distribution_params()`
+attaches `params$trials` itself as per-row context. It now ships as its own
+payload key, and families without a binomial denominator carry no key at all.
+
+**NOT fixed — needs an owner decision: `meta_V` / known sampling variance.**
+`src/gaussian_meta.jl` sets `scales[:sigma] = sqrt(v_i + σ²)` — the **total** SD.
+drmTMB's `sigma` dpar for a meta model is the between-study heterogeneity σ
+alone, with `V_known` supplied separately and the density forming
+`sqrt(V_known + sigma²)` itself. Shipping the total *and* a `V_known` would
+**double-count the sampling variance**.
+
+The clean fix is for the meta fit to retain σ and `v` separately, but the obvious
+route — adding keys to `fit.scales` — is a **public API break**: `sigma(fit)`
+(`src/gaussian_core.jl:975`) returns the bare vector only when `scales` has
+exactly one key, so any extra key silently turns `sigma()` into a `Dict` for
+every meta fit. That is a deliberate design decision about `sigma()`'s contract,
+not a bridge detail, so it is surfaced rather than forced. **Until it is
+resolved, the meta cell must not be admitted for post-fit** — `V_known` is
+absent and `dpars["sigma"]` is the wrong quantity for the density.
+
 ## Remaining for A2a
 
 The in-sample case (R's `newdata = NULL`) is covered. Still open:
@@ -68,9 +114,7 @@ The in-sample case (R's `newdata = NULL`) is covered. Still open:
 - **Fresh data.** `predict_parameters(fit, newdata; type = :response)` exists in
   `src/gaussian_core.jl:1203` but is not marshalled. The vignette records the
   gap: *fresh-data Julia prediction is currently limited to location parameters*.
-- **`V_known`.** `fitted_distribution_params()` sets `params$V_known` from
-  `known_v_diag(object)` / `drm_newdata_v_known()`. Meta-analysis cells need it.
-- **`trials`.** Required for `binomial` / `beta_binomial` model types.
+- **`V_known`.** Blocked on the `sigma()`-contract decision above.
 - **Scale/variance Wald blocks.** The vignette notes the Julia route returns only
   the mean fixed-effect covariance block for the Gaussian phylo route.
 - **Non-Gaussian families — checked, four clear.** Measured 2026-08-14 (n = 120,
