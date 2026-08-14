@@ -103,7 +103,7 @@ function _fit_structured_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, K, nmμ, 
     θ0[pμ+pσ+1] = log(std(res0) / 2 + eps())
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
 
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
@@ -190,7 +190,7 @@ function _fit_two_structured_gaussian(fam::Gaussian, y, Xμ, gidx1, G1, C1, gidx
     θ0[pμ+3] = log(s0 / sqrt(3) + eps())
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
 
     # :resd carries BOTH structured SD parameters (logσ₁, logσ₂) so `re_sd` and
     # `vc` report them per grouping factor; :resid carries the residual logσ.
@@ -259,7 +259,7 @@ function _fit_spatial_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, coords, nmμ
     θ0[pμ+pσ+2] = log(max(meandist, eps()))   # meandist>0 by the G/coincidence guards
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
 
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ),
         :resd => (pμ+pσ+1):(pμ+pσ+1), :range => (pμ+pσ+2):(pμ+pσ+2)]

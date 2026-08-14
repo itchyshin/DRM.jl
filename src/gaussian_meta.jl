@@ -37,7 +37,7 @@ function _fit_meta_gaussian(fam::Gaussian, y, Xμ, Xσ, vv, nmμ, nmσ, g_tol)
     θ0[pμ+1] = log(std(y - Xμ * βμ0) / 2 + eps())   # σ below the total residual sd
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ)]
     names = [:mu => nmμ, :sigma => nmσ]
     means = Dict(:mu => Xμ * θ̂[1:pμ])
