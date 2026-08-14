@@ -44,6 +44,65 @@ using Test, Random, LinearAlgebra
     @test dpars["mu"] ≈ fitted(native)
     @test dpars["sigma"] ≈ sigma(native)
 
+    # A dpar is not `fitted()`. For zero-one-inflated beta, drmTMB's `mu` dpar is
+    # the INTERIOR beta component mean plogis(eta_mu) -- it feeds
+    # drm_beta_shapes(mu, sigma) -- while `fitted()` is the unconditional mean
+    # (1 - zoi) * mu + zoi * coi. Both lie in (0, 1), so shipping the wrong one
+    # yields a wrong density with no error anywhere. Guard the distinction.
+    # Local RNG: `Random.seed!` here would reseed the GLOBAL stream and silently
+    # change the data every later test in this file draws.
+    rngz = MersenneTwister(20260814)
+    nz = 200
+    xz = randn(rngz, nz)
+    yz = clamp.(0.5 .+ 0.15 .* randn(rngz, nz), 0.0, 1.0)
+    yz[1:20] .= 0.0            # real boundary mass, so zoi > 0 and the
+    yz[21:40] .= 1.0           # unconditional mean genuinely differs from `mu`
+    zob = drm_bridge(; formula = "y ~ x", family = "zeroonebeta",
+                     data = (; y = yz, x = xz))
+    zdp = zob["dpars"]
+    @test Set(keys(zdp)) == Set(["mu", "sigma", "zoi", "coi"])   # drmTMB's dpar set
+    @test !haskey(zdp, "beta_mu")                                # not a drmTMB dpar name
+    @test all(0 .< zdp["mu"] .< 1)
+    # the dpar must be the interior beta mean, NOT the unconditional fitted mean
+    unconditional = (1 .- zdp["zoi"]) .* zdp["mu"] .+ zdp["zoi"] .* zdp["coi"]
+    @test zob["fitted"] ≈ unconditional
+    @test !(zdp["mu"] ≈ zob["fitted"])
+    @test length(unique(length.(values(zdp)))) == 1
+
+    # `trials` is per-row CONTEXT, not a dpar. drmTMB's binomial dpar set is
+    # `mu` alone; `fitted_distribution_params()` attaches `params$trials` itself.
+    rngb = MersenneTwister(5)
+    nb, ntr = 120, 10
+    xb = randn(rngb, nb)
+    prb = 1 ./ (1 .+ exp.(-(0.3 .+ 0.6 .* xb)))
+    sb = Float64.([count(_ -> rand(rngb) < prb[i], 1:ntr) for i in 1:nb])
+    fb = Float64.(ntr .- sb)
+    bino = drm_bridge(; formula = "cbind(s, f) ~ x", family = "binomial",
+                      data = (; s = sb, f = fb, x = xb))
+    @test Set(keys(bino["dpars"])) == Set(["mu"])     # drmTMB's binomial dpar set
+    @test !haskey(bino["dpars"], "trials")            # context, not a dpar
+    @test haskey(bino, "trials")                      # ships as its own key
+    @test length(bino["trials"]) == bino["nobs"]
+    @test all(bino["trials"] .== ntr)
+    # families with no binomial denominator must not carry the key at all
+    @test !haskey(bridged, "trials")
+
+    # Fresh-data dpars. `fitted_distribution(object, newdata = ...)` needs
+    # `predict_parameters(..., type = "response")` for EVERY dpar; the
+    # julia-engine vignette records the gap this closes ("fresh-data Julia
+    # prediction is currently limited to location parameters").
+    @test !haskey(bridged, "dpars_newdata")           # absent unless asked for
+    nd = (; x = [-1.0, 0.0, 1.5])
+    withnd = drm_bridge(; formula = "y ~ x; sigma ~ x", family = "gaussian",
+                        data = data, newdata = nd)
+    ndp = withnd["dpars_newdata"]
+    @test Set(keys(ndp)) == Set(["mu", "sigma"])
+    @test all(length(v) == 3 for v in values(ndp))
+    @test all(ndp["sigma"] .> 0)                      # response scale, not log
+    @test all(isfinite, ndp["mu"])
+    # in-sample block is unchanged by asking for fresh rows
+    @test withnd["dpars"]["mu"] ≈ bridged["dpars"]["mu"]
+
     keyed = drm_bridge(;
         formula = Dict(:mu => "y ~ x", :sigma => "sigma ~ x"),
         family = "gaussian",

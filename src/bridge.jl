@@ -10,7 +10,8 @@ const _BRIDGE_TREE_CACHE_MAX = 4
 
 """
     drm_bridge(; formula, family, data, tree = nothing, K = nothing,
-               A = nothing, coords = nothing, options = Dict())
+               A = nothing, coords = nothing, newdata = nothing,
+               options = Dict())
 
 Fit a DRM.jl model through a marshalling-friendly boundary for R callers.
 `formula` may be a semicolon-separated string such as
@@ -21,16 +22,23 @@ or `"biv_gaussian"`. `data` is a column table, dictionary, or named tuple.
 The return value is a `Dict{String,Any}` made of primitive R-reconstructable
 pieces: named coefficients, covariance matrix, likelihood summaries, fitted
 values, residuals, scales, and residual correlations when present.
+
+It also carries what drmTMB's post-fit surface consumes: `"dpars"`, the
+per-observation distributional parameters on the response scale keyed by dpar
+name, plus `"trials"` for binomial-type families. Pass `newdata` (a column
+table) to add `"dpars_newdata"`, the same parameters evaluated on fresh rows —
+what `fitted_distribution(object, newdata = ...)` needs.
 """
 function drm_bridge(; formula, family::AbstractString, data, tree = nothing,
-        K = nothing, A = nothing, coords = nothing, options = Dict{String,Any}())
+        K = nothing, A = nothing, coords = nothing, newdata = nothing,
+        options = Dict{String,Any}())
     dat = _bridge_data(data)
     bundle = _bridge_formula(formula, family)
     fam = _bridge_family(family)
     opts = _bridge_options(options)
     fit = _bridge_fit(bundle, fam, dat; tree = tree, K = K, A = A,
                       coords = coords, options = opts)
-    return _bridge_flatten(fit; family = String(family))
+    return _bridge_flatten(fit; family = String(family), newdata = newdata)
 end
 
 """
@@ -467,7 +475,7 @@ function _bridge_formula_from_expr(expr)
     return eval(Expr(:macrocall, Symbol("@formula"), LineNumberNode(0), expr))
 end
 
-function _bridge_flatten(fit; family::AbstractString)
+function _bridge_flatten(fit; family::AbstractString, newdata = nothing)
     cnames, cvals = _bridge_coef_vector(fit)
     V = Matrix{Float64}(vcov(fit))
     out = Dict{String,Any}(
@@ -489,6 +497,9 @@ function _bridge_flatten(fit; family::AbstractString)
         "corpairs" => _bridge_plain(corpairs(fit)),
         "dpars" => _bridge_dpars(fit),
     )
+    trials = _bridge_trials(fit)
+    trials === nothing || (out["trials"] = trials)
+    newdata === nothing || (out["dpars_newdata"] = _bridge_dpars_newdata(fit, newdata))
     q4_point_export = _bridge_q4_point_export(fit; family = family)
     if !isempty(q4_point_export)
         out["q4_point_export"] = q4_point_export
@@ -646,6 +657,19 @@ tables; the only thing it cannot derive is the fitted parameter values.
 
 Covers the in-sample case (R's `newdata = NULL`). Fresh-data prediction goes
 through `predict_parameters(fit, newdata)`, which is a separate payload.
+
+**A dpar is not `fitted()`.** For a mixture family the two differ, and feeding
+the wrong one produces a wrong density *silently* because both are in range.
+drmTMB's `mu` dpar for `zero_one_beta` is the **interior beta component** mean
+`plogis(eta_mu)`, which it feeds to `drm_beta_shapes(mu, sigma)`; DRM.jl stores
+that as `beta_mu` and puts the *unconditional* mean
+`(1 - zoi) * mu + zoi * coi` — the right answer for `fitted()` — in `means[:mu]`.
+The override below repairs that one family.
+
+Checked against drmTMB's full dpar table (`R/family-dpq.R`): every other family
+DRM.jl implements already agrees, including truncated NB2, whose `means[:mu]`
+is the **untruncated** mean and so is already the correct dpar. DRM.jl has no
+zi/hurdle families, the other place this trap lives.
 """
 function _bridge_dpars(fit::DrmFit)
     out = Dict{String,Vector{Float64}}()
@@ -655,7 +679,50 @@ function _bridge_dpars(fit::DrmFit)
     for (k, v) in pairs(fit.scales)
         out[String(k)] = collect(float.(v))
     end
+    if fit.family isa ZeroOneBeta && haskey(out, "beta_mu")
+        out["mu"] = out["beta_mu"]        # interior beta mean is drmTMB's `mu`
+        delete!(out, "beta_mu")           # not a drmTMB dpar name
+    end
+    # `trials` is per-row CONTEXT, not a dpar: drmTMB's binomial dpar set is
+    # `mu` alone and beta_binomial's is `mu`/`sigma`, with
+    # `fitted_distribution_params()` attaching `params\$trials` itself. It ships
+    # as its own payload key (see `_bridge_trials`), not inside `dpars`.
+    delete!(out, "trials")
     return out
+end
+
+"""
+    _bridge_trials(fit)
+
+Per-row binomial denominator, or `nothing` when the family has none.
+
+`fitted_distribution_params()` attaches `params\$trials` for the `binomial` and
+`beta_binomial` model types; without it the R side cannot evaluate those
+densities on a Julia fit.
+"""
+_bridge_trials(fit::DrmFit) =
+    haskey(fit.scales, :trials) ? collect(float.(fit.scales[:trials])) : nothing
+
+"""
+    _bridge_dpars_newdata(fit, newdata)
+
+Distributional parameters on the **response** scale for fresh rows.
+
+R's `predict_parameters(object, newdata = ..., type = "response")` is what
+`fitted_distribution(object, newdata = ...)` calls, and the `julia-engine`
+vignette records the gap this closes: *fresh-data Julia prediction is currently
+limited to location parameters*.
+
+Unlike the in-sample block this reads the FORMULA rather than the stored
+`means`/`scales`, so each parameter comes back as its own linear predictor
+pushed through its link — which is already the dpar drmTMB wants (for
+`zero_one_beta`, `mu` here is `plogis(eta_mu)`, the interior beta mean, with no
+override needed).
+"""
+function _bridge_dpars_newdata(fit::DrmFit, newdata)
+    nd = _bridge_data(newdata)
+    pred = predict_parameters(fit, nd; type = :response)
+    return Dict(String(k) => collect(float.(v)) for (k, v) in pairs(pred))
 end
 
 _bridge_plain(x::AbstractVector) = collect(x)
