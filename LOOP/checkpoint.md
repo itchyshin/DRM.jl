@@ -1,7 +1,6 @@
-GOAL: see GOAL.md.   STATE: docs Claude-handover kit; tip IDLE pending owner G0; next pickup Claude.
-ARCS DONE (verified): S0 recon (tip d0fac9d7 / #405 MERGED / issue 136 OPEN / #406 OPEN BLOCKED); S1 Claude handover; S2 LOOP+coord (Cursor idle/handing off); S3 DoD docs (`closeout.py` PASS); S4 this PR (no closer keywords; issue 136 still OPEN).
-ARC IN PROGRESS: none. **[GATE] owner-named G0**.
-NEXT: STOP. Claude rehydrates, confirms idle-or-named-work, asks owner for G0. Do not invent next G0. Do not start drmTMB from this tree.
-OPEN GATES (need human): **owner names the next Julia G0**. #406 remains OPEN/BLOCKED (policy note; not a G0).
-TRUTH LIVES IN: `docs/claude-handover-idle`; origin/main `d0fac9d7` until this PR merges; handover `docs/dev-log/handover/2026-08-14-claude-handover-drm-idle.md`.
-RESUME: You are drm-claude-handover-idle. READ FIRST: LOOP/GOAL.md → LOOP/checkpoint.md → LOOP/ultra-plan.md → AGENTS.md → the Claude handover. WORKSPACE: `/Users/z3437171/Dropbox/Github Local/DRM.jl` on `docs/claude-handover-idle` (or `main` after merge). CONTINUE FROM: rehydrate, then STOP and ask for G0. Pause at: inventing G0 / drmTMB from this tree.
+GOAL: see GOAL.md.   STATE: `engine="julia"` catch-up campaign, arcs A0+A1 landed on `feat/drmtmb-catchup-ledger`.
+ARCS DONE (verified): A0 parity ledger (`tools/parity_ledger.py`; anchor drmTMB 0.7.0 `f5ec53634`; 25 export gaps / 11 rows / 14 closed gates; corrected 3 stale premises from a 987-commit-behind drmTMB checkout); A1 vcov guard (`src/vcov_guard.jl`, 45 sites / 17 files, 18 suites pass, VA scaffold 15/15 — unblocks drmTMB #406).
+ARC IN PROGRESS: none. NEXT = **A2a result-shape contract (Julia side)** — no gate, ready to start.
+OPEN GATES (need human): (1) drmTMB PR timing — before or after 0.7.0 ships (its tree has 9 live lanes + release slice #959); (2) **A3 re-scope** — original A3 (admit FE non-Gaussian) was largely delivered by PR #499; replacement is the 0.7.0 bivariate non-Gaussian cluster, materially bigger, re-estimate against deep-research dr18 + dr19 first.
+TRUTH LIVES IN: branch `feat/drmtmb-catchup-ledger` (commits `7e04a424`, `e4c8931f`); origin/main `d1da2fb9`; ledger `docs/dev-log/evidence/2026-08-14-drmtmb-parity-ledger.md`.
+RESUME: You are drm-claude-catchup. READ FIRST: LOOP/GOAL.md → LOOP/checkpoint.md → LOOP/arcs.md → AGENTS.md. WORKSPACE: `/Users/z3437171/Dropbox/Github Local/DRM.jl` on `feat/drmtmb-catchup-ledger`. Re-run `python3 tools/parity_ledger.py --drmtmb ../drmTMB --ref origin/main` before choosing work — the anchor moves. CONTINUE FROM: A2a. Pause at: the two open gates above; any drmTMB edit outside the narrow lane; #49; Registrator.

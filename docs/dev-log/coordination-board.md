@@ -23,11 +23,25 @@ that issue. D-111 Julia General still OFF. Durable decision file is on
 OPEN [#406](https://github.com/itchyshin/DRM.jl/pull/406) (BLOCKED on
 CI `test (1.10)` at last check) until that PR lands._
 
-## Active-Lane-Split (2026-08-14)
+## Active-Lane-Split (2026-08-14, updated — campaign ACTIVE)
+
+_Owner named the G0 on 2026-08-14: **catch up with drmTMB's capability so
+`engine = "julia"` admits what an R user actually fits.** DRM.jl is no longer
+idle. Lane = `feat/drmtmb-catchup-ledger` (Claude). Anchor = drmTMB **0.7.0**
+`f5ec53634`. Countdown: `python3 tools/parity_ledger.py --drmtmb ../drmTMB --ref origin/main`.
+A0 (ledger) + A1 (vcov guard) landed; next A2a. Live pointer: `LOOP/GOAL.md`._
+
+**drmTMB narrow lane claimed** (Claude, same campaign): `R/julia-bridge.R`,
+`tests/testthat/test-julia-*`, `vignettes/julia-engine.Rmd` **only** — nothing
+else in that repo. Its tree carries 9 live lanes, a foreign codex lane, and the
+open 0.7.0 release slice #959; the bridge PR is gated on owner timing. No drmTMB
+edits have been made yet.
 
 | Lane | Repo | State | Pointer |
 |---|---|---|---|
-| DRM.jl Julia | this repo | **IDLE after #405** — next pickup **Claude**; Cursor idle/handing off; tip `d0fac9d7`; pending owner G0 | `docs/dev-log/handover/2026-08-14-claude-handover-drm-idle.md` · LOOP/checkpoint.md |
+| DRM.jl Julia | this repo | **ACTIVE — `engine="julia"` catch-up**; A0+A1 landed on `feat/drmtmb-catchup-ledger` | `LOOP/GOAL.md` · `LOOP/checkpoint.md` |
+| drmTMB bridge (narrow) | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **claimed, not yet edited** — `R/julia-bridge.R` + its tests/vignette only | `LOOP/arcs.md` A2b/A3 gates |
+| DRM.jl Julia (prior) | this repo | superseded — tip-idle handover of 2026-08-14 is now **historical** | `docs/dev-log/handover/2026-08-14-claude-handover-drm-idle.md` |
 | drmTMB `engine="julia"` Workflow G | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **sibling — possibly in progress** (unknown from this session) | that repo’s own handover; do not start from DRM.jl; do not claim finished |
 | #136 epic | DRM.jl | **OPEN** — 136e public Gamma report **DONE** on main; two-part / ZI×RE later | issue 136; `report/va-vs-laplace-bias.md` |
 | #49 | DRM.jl | **PARKED** | owner-named only |
