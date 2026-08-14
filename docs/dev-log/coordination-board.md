@@ -4,20 +4,30 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
-_Light tip refresh 2026-08-13 (`docs/tip-idle-after-404`):
-`origin/main` @ `733ae972` (#404 MERGED). DRM.jl Julia = **IDLE** pending
-owner G0. Issue 136 stays OPEN (136e public Gamma RI report landed; VA stays
-Experimental). #49 PARKED. drmTMB = **sibling** (status unknown here; do not
-claim finished; do not start from this tree). 2026-08-09 Julia-lane handover
-is historical. Live START HERE:
-`docs/dev-log/handover/2026-08-13-cursor-handover-drm-idle-after-404.md`.
+_Light tip refresh 2026-08-14 (`docs/claude-handover-idle`):
+`origin/main` @ `d0fac9d7` (#405 MERGED). DRM.jl Julia = **IDLE** pending
+owner G0. Next pickup = **Claude**. Cursor lane idle/handing off. Issue 136
+stays OPEN (136e public Gamma RI report landed; VA stays Experimental).
+#49 PARKED. drmTMB = **sibling** (status unknown here; do not claim finished;
+do not start from this tree). 2026-08-13 Cursor idle handover is historical.
+Live START HERE:
+`docs/dev-log/handover/2026-08-14-claude-handover-drm-idle.md`.
 Prior 2026-08-07 Phase 3 / #7 complete-with-carveouts still holds._
 
-## Active-Lane-Split (2026-08-13)
+_GitHub auto-merge (2026-08-13, option A): `allow_auto_merge` is ON.
+Agents may `gh pr merge N --auto --merge` after opening a PR. Pause
+(no `--auto`) on `src/` engine / formula grammar / version bump /
+`AGENTS.md` / `CLAUDE.md` / unfinished epic / foreign lane. Never put
+close/fix/resolve next to `#NN` unless the slice is meant to finish
+that issue. D-111 Julia General still OFF. Durable decision file is on
+OPEN [#406](https://github.com/itchyshin/DRM.jl/pull/406) (BLOCKED on
+CI `test (1.10)` at last check) until that PR lands._
+
+## Active-Lane-Split (2026-08-14)
 
 | Lane | Repo | State | Pointer |
 |---|---|---|---|
-| DRM.jl Julia | this repo | **IDLE after #404** — pending owner G0; tip `733ae972` + this docs PR | `docs/dev-log/handover/2026-08-13-cursor-handover-drm-idle-after-404.md` · LOOP/GOAL.md |
+| DRM.jl Julia | this repo | **IDLE after #405** — next pickup **Claude**; Cursor idle/handing off; tip `d0fac9d7`; pending owner G0 | `docs/dev-log/handover/2026-08-14-claude-handover-drm-idle.md` · LOOP/checkpoint.md |
 | drmTMB `engine="julia"` Workflow G | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **sibling — possibly in progress** (unknown from this session) | that repo’s own handover; do not start from DRM.jl; do not claim finished |
 | #136 epic | DRM.jl | **OPEN** — 136e public Gamma report **DONE** on main; two-part / ZI×RE later | issue 136; `report/va-vs-laplace-bias.md` |
 | #49 | DRM.jl | **PARKED** | owner-named only |
@@ -73,8 +83,10 @@ Full Codex brief: **#76** (pinned).
 
 | Branch | Owner | Touching | Status |
 |---|---|---|---|
-| `main` | — | tip @ `733ae972` (Merge #404) | landed 136e report; ship = idle pending G0 |
-| `docs/tip-idle-after-404` | Shannon (Cursor) | handover + LOOP + coord + DoD docs | **active docs lane** until owner merge; no closer for issue 136 |
+| `main` | — | tip @ `d0fac9d7` (Merge #405) | landed idle START HERE; ship = idle pending G0 |
+| `docs/claude-handover-idle` | Shannon (Cursor → Claude) | Claude handover + LOOP + coord + DoD docs | **this docs lane**; no closer for issue 136 |
+| `docs/github-auto-merge` | Shannon (Cursor) | auto-merge policy note | **OPEN #406** / BLOCKED on CI `test (1.10)`; not a G0 |
+| `docs/tip-idle-after-404` | — | handover + LOOP + coord + DoD docs | **MERGED** via #405; now historical |
 | `feat/136e-va-bias-report` | — | report + bench + docs honesty | **MERGED** via #404; do not resume |
 | `docs/handover-2026-08-09-drm-julia-lane` | — | Julia-lane START HERE | **MERGED** via #403; now historical |
 | `feat/136-va-rung2-3` | — | — | **MERGED** via #401; do not resume |
