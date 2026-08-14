@@ -123,6 +123,32 @@ def main() -> int:
     print(f"COUNTDOWN: {len(missing)} export gaps · "
           f"{sum(1 for c in caps if c.get('claim_status') != 'supported')} unsupported capability rows · "
           f"{len(blocked)} closed gates")
+
+    # Closure invariant: every row is either `supported` (which requires a parity
+    # fixture) or says IN WRITING why it is not. Asserting this by hand rots the
+    # moment someone adds a row, so check it and fail loudly.
+    print()
+    unclosed: list[str] = []
+    for row in caps:
+        if row.get("claim_status") == "supported":
+            continue                      # fixture evidence is audited separately
+        if not row.get("claim_boundary", "").strip():
+            unclosed.append(f"capability {row['capability_id']}: no claim_boundary")
+    for g in blocked:
+        if not g.get("evidence", "").strip():
+            unclosed.append(f"gate {g['gate_id']}: no evidence")
+        if not g.get("review_due", "").strip():
+            unclosed.append(f"gate {g['gate_id']}: no review_due")
+
+    if unclosed:
+        print(f"CLOSURE: FAIL — {len(unclosed)} row(s) neither supported nor bounded")
+        for u in unclosed:
+            print(f"  {u}")
+        return 1
+
+    print(f"CLOSURE: PASS — every one of {len(caps)} capability rows is supported "
+          f"or carries a written claim_boundary; all {len(blocked)} closed gates "
+          f"carry evidence + review_due")
     return 0
 
 

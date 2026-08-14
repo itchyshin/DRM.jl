@@ -75,6 +75,29 @@ state. Read a twin through `git show <ref>:<path>`, never the working tree —
 class as the standing rule that `git log` without `--all` measures only the
 checkout.
 
+## Closure invariant — CHECKED, and it PASSES today
+
+The campaign's closure condition is a disjunction: every registry row is either
+`supported` **with a parity fixture**, *or* carries an explicit written boundary
+saying why it is not. The second branch is satisfiable without any promotion.
+
+`tools/parity_ledger.py` now audits it and exits non-zero on failure:
+
+```
+CLOSURE: PASS — every one of 11 capability rows is supported or carries a
+written claim_boundary; all 14 closed gates carry evidence + review_due
+```
+
+Measured 2026-08-14: **11/11** capability rows carry a non-empty
+`claim_boundary`; **14/14** closed gates carry `action`, `evidence`, `issue`,
+`review_due` and `message_pattern`. That is drmTMB's own discipline, not
+something this campaign added — but it was **asserted, never verified**, and
+would have degraded silently the first time a row was added without a boundary.
+It is now mechanically checked on every ledger run.
+
+So the campaign's *honesty* invariant holds now; its *capability* target (rows
+reaching `supported`) is the outstanding work.
+
 ## What this does not establish
 
 Export-name presence is **not** capability parity, and direct DRM.jl evidence is
