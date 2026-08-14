@@ -85,10 +85,30 @@ The in-sample case (R's `newdata = NULL`) is covered. Still open:
 
   The naming also matches drmTMB, which likewise exposes the dispersion as
   family `sigma` (its 0.7.0 NEWS: *"Family `sigma` … controls `phi = sigma^(-2)`"*),
-  consistent with `AGENTS.md`'s `sigma ↔ phi` parity mapping. **Still unchecked:**
-  Tweedie (power `p`), zero-one-inflated beta (`zoi`/`coi`), and any `zi`/`hu`
-  modifier — those carry dpars that may live in neither `means` nor `scales`, in
-  which case their column would be silently absent rather than error.
+  consistent with `AGENTS.md`'s `sigma ↔ phi` parity mapping.
+
+  **Extra-shape families — checked, none drop a column.** The silent-absence
+  risk is closed:
+
+  | family | dpars emitted |
+  |---|---|
+  | lognormal | `mu`, `sigma` |
+  | student | `mu`, `nu`, `sigma` |
+  | tweedie | `mu`, `nu`, `sigma` |
+  | zeroonebeta | `mu`, `sigma`, `zoi`, `coi`, `beta_mu` |
+
+  All columns length `n`. Two naming items remain for the R-side mapping, and
+  they are naming only, not missing data:
+
+  - `zeroonebeta` emits **`beta_mu`**, which is not a drmTMB dpar name — it needs
+    an explicit map (or exclusion) before that cell's post-fit can be admitted.
+  - Tweedie's power parameter is `nu` here; `AGENTS.md` lists `nu` in the
+    shared grammar, so this is expected to map straight through — confirm
+    against drmTMB's Tweedie dpar list before admitting that cell.
+
+  Observed in passing: the A1 guard fired on one of these fits with
+  `rcond = 0.0` — a genuinely singular Hessian caught and warned rather than
+  crashing, which is the guard working as intended on real data.
 
 ## What this does not establish
 
