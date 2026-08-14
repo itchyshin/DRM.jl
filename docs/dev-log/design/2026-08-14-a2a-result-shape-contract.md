@@ -73,10 +73,22 @@ The in-sample case (R's `newdata = NULL`) is covered. Still open:
 - **`trials`.** Required for `binomial` / `beta_binomial` model types.
 - **Scale/variance Wald blocks.** The vignette notes the Julia route returns only
   the mean fixed-effect covariance block for the Gaussian phylo route.
-- **Non-Gaussian families.** `_bridge_dpars` reads `means`/`scales` generically,
-  so families carrying extra shape parameters (NB2 size, Gamma shape, Beta φ,
-  Tweedie p, ZI/hurdle) need checking that those land in one of those dicts —
-  otherwise their dpar column will be silently absent.
+- **Non-Gaussian families — checked, four clear.** Measured 2026-08-14 (n = 120,
+  `y ~ x`):
+
+  | family | dpars emitted | lengths |
+  |---|---|---|
+  | poisson | `mu` | 120 — correct, one dpar |
+  | nbinom2 | `mu`, `sigma` | 120 |
+  | gamma | `mu`, `sigma` | 120 |
+  | beta | `mu`, `sigma` | 120 |
+
+  The naming also matches drmTMB, which likewise exposes the dispersion as
+  family `sigma` (its 0.7.0 NEWS: *"Family `sigma` … controls `phi = sigma^(-2)`"*),
+  consistent with `AGENTS.md`'s `sigma ↔ phi` parity mapping. **Still unchecked:**
+  Tweedie (power `p`), zero-one-inflated beta (`zoi`/`coi`), and any `zi`/`hu`
+  modifier — those carry dpars that may live in neither `means` nor `scales`, in
+  which case their column would be silently absent rather than error.
 
 ## What this does not establish
 
