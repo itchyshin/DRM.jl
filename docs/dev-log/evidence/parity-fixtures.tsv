@@ -1,3 +1,6 @@
 capability_id	label	status	max_abs_coef_diff	loglik_tmb	loglik_julia	loglik_diff	tolerance	note
 base_gaussian_location_scale	Gaussian location-scale, fixed effects	PARITY_PASS	4.56365821638327e-06	-147.200318336657	-147.200318332073	4.58354065813182e-09	1e-04	4 coefficient(s) compared
 base_gaussian_intercept_only	Gaussian, intercept-only sigma	PARITY_PASS	2.49160025944661e-10	-111.916606161749	-111.916606161748	5.25801624462474e-13	1e-04	3 coefficient(s) compared
+fe_poisson	Poisson, fixed effects	PARITY_PASS	1.02884367692013e-12	-244.763152612771	-244.763152612771	1.70530256582424e-13	1e-04	gate REFUSES engine='julia'; compared vs DRM.jl bridge payload
+fe_nbinom2	NegBinomial2, fixed effects	PARITY_PASS	2.78719519686277e-08	-259.886625779688	-259.886625779688	2.27373675443232e-13	1e-04	gate REFUSES engine='julia'; compared vs DRM.jl bridge payload
+fe_gamma	Gamma (log link), fixed effects	PARITY_PASS	3.91165791746584e-06	-172.781768721901	-172.781768719151	2.74985723081045e-09	1e-04	gate REFUSES engine='julia'; compared vs DRM.jl bridge payload

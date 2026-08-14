@@ -42,6 +42,27 @@ cells <- list(
   )
 )
 
+# Fixed-effect non-Gaussian cells. The R gate REFUSES these through
+# `engine = "julia"` ("routes <family> models only with a phylo() random
+# intercept"), and the gate registry's stated reason is the absence of a
+# coefficient-scale parity test. So compare native TMB against the DRM.jl bridge
+# payload directly — the payload the bridge WOULD return if the gate opened.
+# This is the evidence the gate's own `review_due` asks for.
+fe_cells <- list(
+  list(id = "fe_poisson", label = "Poisson, fixed effects", jfam = "poisson",
+       family = function() poisson(),
+       build = function() { set.seed(4242); n <- 150; x <- rnorm(n)
+                            data.frame(y = rpois(n, exp(0.6 + 0.4 * x)), x = x) }),
+  list(id = "fe_nbinom2", label = "NegBinomial2, fixed effects", jfam = "nbinom2",
+       family = function() nbinom2(),
+       build = function() { set.seed(4242); n <- 150; x <- rnorm(n)
+                            data.frame(y = rnbinom(n, mu = exp(0.6 + 0.4 * x), size = 3), x = x) }),
+  list(id = "fe_gamma", label = "Gamma (log link), fixed effects", jfam = "gamma",
+       family = function() Gamma(link = "log"),
+       build = function() { set.seed(4242); n <- 150; x <- rnorm(n)
+                            data.frame(y = rgamma(n, shape = 4, rate = 4 / exp(0.5 + 0.3 * x)), x = x) })
+)
+
 rows <- list()
 for (cell in cells) {
   d <- cell$build()
@@ -77,6 +98,36 @@ for (cell in cells) {
   cat(sprintf("%-32s %-14s coef_diff=%.3e  loglik_diff=%.3e\n",
               res$capability_id, res$status,
               res$max_abs_coef_diff, res$loglik_diff))
+}
+
+drmTMB:::drm_julia_setup()
+for (cell in fe_cells) {
+  d <- cell$build()
+  res <- list(
+    capability_id = cell$id, label = cell$label,
+    status = NA_character_, max_abs_coef_diff = NA_real_,
+    loglik_tmb = NA_real_, loglik_julia = NA_real_, loglik_diff = NA_real_,
+    tolerance = tol, note = "gate REFUSES engine='julia'; compared vs DRM.jl bridge payload"
+  )
+  ft <- try(drmTMB(bf(y ~ x), family = cell$family(), data = d, engine = "tmb"), silent = TRUE)
+  jb <- try(JuliaCall::julia_call("drmTMB_drm_bridge", "y ~ x", cell$jfam,
+                                  as.list(d), NULL, NULL), silent = TRUE)
+  if (inherits(ft, "try-error")) {
+    res$status <- "NATIVE_FAILED"
+  } else if (inherits(jb, "try-error")) {
+    res$status <- "JULIA_FAILED"
+  } else {
+    ct <- unlist(fixef(ft)); cj <- jb$coefficients
+    k <- min(length(ct), length(cj))
+    res$max_abs_coef_diff <- max(abs(ct[seq_len(k)] - cj[seq_len(k)]))
+    res$loglik_tmb <- as.numeric(logLik(ft)); res$loglik_julia <- jb$loglik
+    res$loglik_diff <- abs(res$loglik_tmb - res$loglik_julia)
+    res$status <- if (res$max_abs_coef_diff < tol && res$loglik_diff < tol)
+      "PARITY_PASS" else "PARITY_FAIL"
+  }
+  rows[[length(rows) + 1L]] <- as.data.frame(res, stringsAsFactors = FALSE)
+  cat(sprintf("%-32s %-14s coef_diff=%.3e  loglik_diff=%.3e\n",
+              res$capability_id, res$status, res$max_abs_coef_diff, res$loglik_diff))
 }
 
 tab <- do.call(rbind, rows)
