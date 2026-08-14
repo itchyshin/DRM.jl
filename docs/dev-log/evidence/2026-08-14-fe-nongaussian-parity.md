@@ -61,3 +61,45 @@ Beta, which were not run here. Nor any RE/phylo cell. Nor promotion of a row to
 (`R/julia-bridge.R` + `tests/testthat/test-julia-*` + `vignettes/julia-engine.Rmd`).
 It is not made here: that repo has 9 live lanes and an open 0.7.0 release slice,
 so the timing is the owner's call.
+
+## RESOLUTION — the gate edit is NOT ours to make (verified 2026-08-14)
+
+Before editing drmTMB's gate, I checked whether the change already existed. **It
+does.** On `origin/main`, `drm_julia_family_tag()` (R/julia-bridge.R ~line 542):
+
+```r
+wfg_fe <- c("gaussian", "biv_gaussian", "student", "lognormal",
+            "poisson", "nbinom2", "gamma", "beta", "binomial")
+if (family_type %in% wfg_fe) {
+  return(family_type)
+}
+```
+
+with the accompanying comment:
+
+> *Workflow G fixed-effect cohort families (Gaussian, bivariate Gaussian,
+> Student-t, lognormal, Poisson, NB2, Gamma, Beta, Binomial) **route
+> unconditionally** once live coefficient-scale parity exists (#499).*
+
+The `"routes <family> models only with a phylo() random intercept"` abort is
+still in the file but is **unreachable for those nine families** — it fires only
+for a `phylo_only` family that is not in `wfg_fe`.
+
+**So fixed-effect Poisson / NB2 / Gamma / Beta / Binomial already work through
+`engine = "julia"` on drmTMB main.** PR #499 (2026-08-09) delivered it five days
+before this campaign began. The refusal reproduced above comes from the
+**installed 0.6.0** package, not from drmTMB's current code.
+
+### What that means
+
+- The campaign HEADLINE — *"a plain Poisson/NB2/Gamma/Beta/Binomial GLM CANNOT
+  use the Julia engine"* — is **false on drmTMB main** and true only against the
+  stale installed build. It is not an actionable code change.
+- Writing the gate edit anyway would duplicate an existing implementation in the
+  same file: strictly worse than either version alone.
+- The parity numbers above retain their value: they **independently corroborate
+  the coefficient-scale parity that #499 cited as its own justification**, on
+  cells (`fe_poisson`, `fe_nbinom2`, `fe_gamma`) that #499 admitted. They are
+  reusable as the standing regression for that route.
+- The only action that changes what *this machine* can do is installing drmTMB
+  0.7.0 from `origin/main` — an R-library rebuild, and the owner's call.
