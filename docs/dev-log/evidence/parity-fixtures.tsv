@@ -1,0 +1,3 @@
+capability_id	label	status	max_abs_coef_diff	loglik_tmb	loglik_julia	loglik_diff	tolerance	note
+base_gaussian_location_scale	Gaussian location-scale, fixed effects	PARITY_PASS	4.56365821638327e-06	-147.200318336657	-147.200318332073	4.58354065813182e-09	1e-04	4 coefficient(s) compared
+base_gaussian_intercept_only	Gaussian, intercept-only sigma	PARITY_PASS	2.49160025944661e-10	-111.916606161749	-111.916606161748	5.25801624462474e-13	1e-04	3 coefficient(s) compared
