@@ -87,6 +87,22 @@ using Test, Random, LinearAlgebra
     # families with no binomial denominator must not carry the key at all
     @test !haskey(bridged, "trials")
 
+    # Fresh-data dpars. `fitted_distribution(object, newdata = ...)` needs
+    # `predict_parameters(..., type = "response")` for EVERY dpar; the
+    # julia-engine vignette records the gap this closes ("fresh-data Julia
+    # prediction is currently limited to location parameters").
+    @test !haskey(bridged, "dpars_newdata")           # absent unless asked for
+    nd = (; x = [-1.0, 0.0, 1.5])
+    withnd = drm_bridge(; formula = "y ~ x; sigma ~ x", family = "gaussian",
+                        data = data, newdata = nd)
+    ndp = withnd["dpars_newdata"]
+    @test Set(keys(ndp)) == Set(["mu", "sigma"])
+    @test all(length(v) == 3 for v in values(ndp))
+    @test all(ndp["sigma"] .> 0)                      # response scale, not log
+    @test all(isfinite, ndp["mu"])
+    # in-sample block is unchanged by asking for fresh rows
+    @test withnd["dpars"]["mu"] ≈ bridged["dpars"]["mu"]
+
     keyed = drm_bridge(;
         formula = Dict(:mu => "y ~ x", :sigma => "sigma ~ x"),
         family = "gaussian",

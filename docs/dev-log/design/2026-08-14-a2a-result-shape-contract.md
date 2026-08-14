@@ -111,9 +111,15 @@ absent and `dpars["sigma"]` is the wrong quantity for the density.
 
 The in-sample case (R's `newdata = NULL`) is covered. Still open:
 
-- **Fresh data.** `predict_parameters(fit, newdata; type = :response)` exists in
-  `src/gaussian_core.jl:1203` but is not marshalled. The vignette records the
-  gap: *fresh-data Julia prediction is currently limited to location parameters*.
+- ~~**Fresh data.**~~ **DONE.** `drm_bridge(...; newdata = ...)` now adds
+  `"dpars_newdata"` via `predict_parameters(fit, nd; type = :response)`. It
+  reads the FORMULA rather than stored `means`/`scales`, so each parameter is
+  its own linear predictor through its link — already the dpar drmTMB wants (for
+  `zero_one_beta`, `mu` here is `plogis(eta_mu)` with no override needed). The
+  key is absent unless `newdata` is passed, and the in-sample block is
+  unchanged. This closes the vignette's *"fresh-data Julia prediction is
+  currently limited to location parameters"* — `sigma` now comes through on the
+  response scale. Guarded in `test/test_bridge.jl`.
 - **`V_known`.** Blocked on the `sigma()`-contract decision above.
 - **Scale/variance Wald blocks.** The vignette notes the Julia route returns only
   the mean fixed-effect covariance block for the Gaussian phylo route.
