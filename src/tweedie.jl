@@ -96,7 +96,7 @@ function _fit_tweedie(fam::Tweedie, y, Xμ, Xσ, Xν, nmμ, nmσ, nmν, g_tol)
     θ0[pμ+1] = 0.0                     # σ = 1 (φ = 1)
     θ0[i1+1] = 0.0                     # p = 1.5
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):i1, :nu => (i1+1):i2]
     names = [:mu => nmμ, :sigma => nmσ, :nu => nmν]
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # response-scale μ̂

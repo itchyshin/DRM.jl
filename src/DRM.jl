@@ -39,6 +39,11 @@ module DRM
 # fit_q4_sparse_tmb.jl transitively pull the whole chain from this src/ dir.
 include("fit_q4_sparse_tmb.jl")
 
+# Guarded Hessian→covariance step shared by every family fitter. Must precede the
+# family includes below; boundary-degenerate fits would otherwise hit an
+# unguarded `inv` whose outcome depends on the LAPACK build.
+include("vcov_guard.jl")
+
 # Fisher / observed-information metric on log-Cholesky params (#13 S1b infra).
 # Extracted after the natgrad solver failed the MLE-parity gate — not a public
 # solver path. Feeds AI-REML / exact REML gradient follow-ups (#11 / #165).

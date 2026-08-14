@@ -255,13 +255,7 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
 
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
-    H = Matrix(Symmetric(ForwardDiff.hessian(nll, θ̂)))
-    V0 = try
-        inv(H)
-    catch
-        pinv(H)
-    end
-    V = Matrix(Symmetric((V0 + V0') / 2))
+    V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂); context = "bivariate Gaussian")
 
     blocks = [:mu1 => rng(1), :mu2 => rng(2), :sigma1 => rng(3), :sigma2 => rng(4), :rho12 => rng(5)]
     names = [:mu1 => nm1, :mu2 => nm2, :sigma1 => nms1, :sigma2 => nms2, :rho12 => nmr]
@@ -941,11 +935,5 @@ function _q4_fd_vcov(prob::AugProblem, Q_cond::SparseMatrixCSC, θ::Vector{Float
         _, gm, _, _ = marginal_and_exact_grad(prob, Q_cond, θm; n_newton = n_newton)
         H[:, k] .= (gp .- gm) ./ (2h)
     end
-    H = Matrix(Symmetric((H + H') / 2))
-    invH = try
-        inv(H)
-    catch
-        pinv(H)
-    end
-    return Matrix(Symmetric((invH + invH') / 2))
+    return _vcov_from_hessian(H; context = "q=4 finite-difference Hessian")
 end

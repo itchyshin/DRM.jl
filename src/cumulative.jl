@@ -79,7 +79,7 @@ function _fit_cumulative(fam::CumulativeLogit, y::Vector{Int}, Xμ, K, nmμ, g_t
         θ0[pμ+k] = log(max(θc0[k] - θc0[k-1], 1e-2))
     end
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :cutpoints => (pμ+1):(pμ+nc)]
     names = [:mu => nmμ, :cutpoints => ["theta$k" for k in 1:nc]]
     # fitted = expected category score Σ_k k·P(y=k)
