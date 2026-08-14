@@ -1,0 +1,1 @@
+| 2026-08-14 | **Claude handover while tip idle** (START HERE; next pickup Claude; Cursor idle/handing off; issue 136 OPEN; drmTMB sibling not orphaned) | Confirm `origin/main` @ d0fac9d7; #405 MERGED; issue 136 OPEN; #406 OPEN/BLOCKED; `.worktrees/` unstaged; no `src/` | ✅ Claude START HERE @ d0fac9d7; LOOP no longer “wait for #405”; Rose scope PASS; L2 owner G0 only | Shannon |
