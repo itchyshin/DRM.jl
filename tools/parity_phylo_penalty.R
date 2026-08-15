@@ -107,6 +107,7 @@ JuliaCall::julia_command("pp_tree = DRM.augmented_phy(pp_newick)")
 #   lam*sd - log(sd) - log(lam)       2.82150351154948   <- drmTMB's own formula
 #   DRM.jl fit.phylo_penalty          2.82150351154948   <- agrees to 15 digits
 #
+# Filed upstream as drmTMB#1036 (2026-08-15).
 # DRM.jl matches drmTMB's DOCUMENTED FORMULA and its own internal parameter; the
 # R value is the outlier. Comparing against the reported number would therefore
 # force the port to reproduce an upstream defect, so this fixture evaluates the

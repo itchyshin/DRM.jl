@@ -163,3 +163,78 @@ implying corpair is an accessor. It is a marker.
 NEXT: A4e (parity_ledger deliberately-not-ported class + name-alias map; the 22-gap headline
 decomposes as 9 already-implemented + 7 parked/not-ported + 6 genuinely owed, of which A4c
 closed 2 and A4d closed 2 more and blocked 2).
+
+=== A4e + check_drm fix DONE 2026-08-15 ===
+A4e: tools/parity_ledger.py gained DELIBERATELY_NOT_PORTED, every entry carrying a WRITTEN REASON,
+and the countdown now splits "genuinely owed" from "accounted for in writing".
+COUNTDOWN: 0 export gaps (18 raw, 18 accounted for), down from a 22 headline.
+CORRECTION recorded there: an earlier claim that 9 names were "already implemented in src/ under
+other export names" was right in COUNT and wrong in REASON — the evidence was a text grep matching
+STRING LITERALS AND COMMENTS, not definitions. None of the nine is a Julia symbol. True split:
+3 delivered under a different spelling (family + bivariate formula), 5 R post-fit functions fed by
+the bridge payload (A2a's one-contract finding), 1 a struct field, 5 PARKED (#49), 2 R-side prep,
+2 blocked structurally, 4 built by A4c/A4d.
+NOT a capability claim: 11 capability rows remain un-`supported`, and that bar still needs a
+native-vs-Julia comparison per GOAL.md.
+
+check_drm partial-vcov fix (owner-named arc): check_drm crashed on any NaN-containing vcov — the
+NORMAL state of the sparse phylo route. Now reports `vcov_complete=false` instead of raising.
+Rose sweep for the same class came back NEGATIVE and is recorded as such: location_only.jl:701 is
+already try/caught, gaussian_ranef.jl:397 already guards on isfinite, the coevolution/bivariate
+isposdef calls validate user input and SHOULD throw, and 8 other post-fit accessors were verified
+fine on such a fit. Isolated instance.
+
+PR STACK (each retargets as the one below merges):
+  #414 A4c  -> main                      auto-merge ARMED, test(1.10) PASS, test(1) pending
+  #415 A4d  -> feat/a4c-phylo-penalty    CLEAN
+  #416 A4e  -> feat/a4d-introspection    CLEAN
+  #417 check_drm -> feat/a4e-ledger-honesty
+OPEN GATES (need human, loop is STOPPED at these):
+  (1) drmTMB PR timing — #1032 OPEN and must NEVER be merged from this lane.
+  (2) A2b (result-shape contract, R side) is BLOCKED on that same gate.
+  (3) A-tag release boundary — owner only.
+  (4) NEW: the drmTMB `obj$report()` off-optimum defect (A4c finding) — patch upstream or not?
+  (5) NEW: `corpair` — lift the block with a @drmformula macro (front-end slice), or leave blocked?
+
+=== UPSTREAM drmTMB FIX 2026-08-15 (owner-named; narrow-lane fence lifted for this) ===
+FILED: drmTMB issue #1036 (bare obj$report() read at last.par, not the optimum).
+FIXED: drmTMB PR #1038, branch claude/fix-report-at-optimum, base main.
+  - R/drmTMB.R: re-pin from `tmb_state` (captured at :621, BEFORE sdreport) before the report.
+    Chosen over obj$env$last.par.best because it does not assume last.par.best survives sdreport.
+    Same idiom profile.R already uses at 3 sites.
+  - R/check.R: same defect in check_logsigma_clamp_active (post-hoc, never re-pinned). Fixed.
+  - NOT changed: drm_warn_if_clamp_active (R/drmTMB.R:2928) is a bare report but runs BEFORE
+    sdreport, so it is correct today — safe by ordering, not by construction. Out of scope, noted.
+  - Tests: the old assertion built its "expected" penalty from the SAME bare report(), so both
+    sides moved together — it could never fail. Now derives log_sd from parList(opt$par), tol 1e-8.
+    New test: `se` must not move phylo_penalty or logLik.
+VERIFIED with a purpose-built temp library (installed drmTMB 0.7.0 left UNTOUCHED so the DRM.jl
+parity fixtures still work): penalty error 5.077e-04 -> 0.000e+00; se=TRUE == se=FALSE exactly;
+325 pass / 0 fail / 0 error / 0 skip across the 5 affected test files.
+One "error" seen en route was a HARNESS ARTIFACT of bare test_file() + library() calling an
+INTERNAL function unqualified — vanished when run in the package namespace. Not a regression.
+
+** GATE HELD: PR #1038 is OPEN and NOT merged, auto-merge OFF. ** GOAL.md makes drmTMB a STOP
+GATE (9 live lanes + release slice #959) and the owner lifted only the narrow-lane fence, not the
+merge gate. #1032 also still open and unmerged.
+WORKTREE (declared, not deleted): scratchpad/drmtmb-fix on claude/fix-report-at-optimum, pushed.
+NOT RUN: full R CMD check on drmTMB — flagged in the PR as worth doing before merge.
+
+=== drmTMB #1038 MERGED 2026-08-15T19:47:48Z (owner lifted the merge gate) ===
+main = 874f5eaa1. Verified ON MAIN: obj$report(tmb_state$last.par.best) present in R/drmTMB.R,
+the check.R twin present, and the bare `objective_report <- obj$report()` GONE. Issue #1036
+auto-closed COMPLETED. CI green (ubuntu-latest release, 46m47s).
+
+WHAT THE FIRST ATTEMPT GOT WRONG (kept as the lesson): the initial commit used
+drm_pin_tmb_object_to_optimum(), which MUTATES obj$env$last.par — that mutation persisted into
+the returned fit and moved conditional modes by ~3e-05. A full R CMD check against a CONCURRENT
+unfixed baseline caught it: FAIL 3 vs FAIL 0 on the same commit. Reporting is a READ; the landed
+fix passes the parameter vector instead, and `max|last.par - tmb_state$last.par.best|` is still
+1e-3 after a fit, which is the positive proof of no mutation.
+
+RECEIPT: editing R/drmTMB.R (first entry in C17_C14_SOURCE_FILES) staled drmTMB's capability-claim
+receipt. Refreshed by re-running the committed runner; the re-measurement came back BIT-IDENTICAL
+(mc-0568/0569/0576, 4/4, same digits), which is the evidence that nothing certified moved.
+source_fingerprint LEFT ALONE and asserted unchanged before/after — the claim was not widened.
+
+** #1032 REMAINS OPEN AND UNMERGED — that fence was NOT lifted. **

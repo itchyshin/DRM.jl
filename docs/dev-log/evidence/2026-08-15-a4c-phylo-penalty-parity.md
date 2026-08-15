@@ -85,6 +85,16 @@ Reproducer: `docs/dev-log/evidence/` companion script steps in
 `tools/parity_phylo_penalty.R`; the one-line diagnosis is
 `all.equal(fit$obj$env$last.par, fit$obj$env$last.par.best) == FALSE`.
 
+**FILED UPSTREAM 2026-08-15: [drmTMB#1036](https://github.com/itchyshin/drmTMB/issues/1036).**
+The issue carries a self-contained reproducer, the three bare `report()` call
+sites, and the reason drmTMB's own regression test cannot catch it (the test
+calls the *same* bare `report()` on both sides of its assertion, so both move
+together). A follow-up comment narrows the scope: MSPL is a *latent* hazard not a
+live one, `R/drmTMB.R:2928` is safe-by-ordering, and plain ML fits are unaffected.
+The crispest reproducer turned out to be a `se = TRUE` / `se = FALSE` toggle —
+the same fit at the identical optimum reports a different penalty depending only
+on whether standard errors were requested.
+
 **Not fixed here.** `R/drmTMB.R` is outside this campaign's narrow drmTMB lane
 (`R/julia-bridge.R`, `tests/testthat/test-julia-*`, `vignettes/julia-engine.Rmd`),
 and drmTMB PR #1032 must not be merged. This is an owner decision, filed as a
