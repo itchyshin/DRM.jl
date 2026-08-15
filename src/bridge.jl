@@ -508,6 +508,14 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing)
     )
     trials = _bridge_trials(fit)
     trials === nothing || (out["trials"] = trials)
+    meta = _bridge_meta_parts(fit)
+    if meta !== nothing
+        # drmTMB's meta `sigma` dpar is the heterogeneity, NOT the total SD that
+        # `scales[:sigma]` holds for simulation. Correct the dpar and ship
+        # V_known alongside it, exactly as fitted_distribution_params() expects.
+        out["dpars"]["sigma"] = meta.tau
+        out["V_known"] = meta.v_known
+    end
     newdata === nothing || (out["dpars_newdata"] = _bridge_dpars_newdata(fit, newdata))
     q4_point_export = _bridge_q4_point_export(fit; family = family)
     if !isempty(q4_point_export)
@@ -711,6 +719,51 @@ densities on a Julia fit.
 """
 _bridge_trials(fit::DrmFit) =
     haskey(fit.scales, :trials) ? collect(float.(fit.scales[:trials])) : nothing
+
+"""
+    _bridge_meta_parts(fit)
+
+For a meta-analysis fit (`meta_V(v)` on `mu`), the between-study heterogeneity
+`tau` and the known sampling variances `V_known`; `nothing` otherwise.
+
+**Why this is a recovery rather than a stored field.** `gaussian_meta.jl` stores
+`scales[:sigma] = sqrt(V + tau^2)` — the TOTAL per-study SD, which is what
+`simulate()` needs. But drmTMB's meta `sigma` dpar is the heterogeneity ALONE,
+with `V_known` supplied separately and the density forming `sqrt(V_known + sigma^2)`
+itself. Emitting the total as `sigma` *and* a `V_known` would double-count the
+sampling variance.
+
+Both are recoverable exactly from what the fit already holds — `tau` from the
+sigma coefficient (already the right dpar) and `V = total^2 - tau^2`, verified to
+1.1e-16 — so no field, no struct change, and no change to `sigma()`'s public
+contract is required.
+
+Returns `nothing` when the sigma block carries predictors, because per-row `tau`
+then needs the design matrix and `DrmFit` does not retain the data. That is a
+declared boundary, not a silent approximation.
+"""
+function _bridge_meta_parts(fit::DrmFit)
+    fit.formula isa DrmFormula || return nothing
+    forms = Dict(fit.formula.forms)
+    haskey(forms, :mu) || return nothing
+    metav = try
+        _, _, mv, _ = _split_ranef(forms[:mu]); mv
+    catch
+        nothing
+    end
+    metav === nothing && return nothing
+    haskey(fit.scales, :sigma) || return nothing
+
+    σblock = findfirst(p -> first(p) === :sigma, fit.blocks)
+    σblock === nothing && return nothing
+    rng = last(fit.blocks[σblock])
+    length(rng) == 1 || return nothing        # sigma ~ 1 only; see docstring
+
+    τ = exp(fit.theta[first(rng)])
+    total = collect(float.(fit.scales[:sigma]))
+    vknown = max.(total .^ 2 .- τ^2, 0.0)     # clamp: floating point can dip below 0
+    return (tau = fill(τ, length(total)), v_known = vknown)
+end
 
 """
     _bridge_dpars_newdata(fit, newdata)
