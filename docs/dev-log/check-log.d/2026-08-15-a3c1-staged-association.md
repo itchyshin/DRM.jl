@@ -1,0 +1,3 @@
+| slice | date | change | check | result |
+|---|---|---|---|---|
+| A3c-1 staged association | 2026-08-15 | `src/associate_pairs.jl` — drmTMB's `associate_pairs()` / `latent_normal()` / `association()`, `gaussian_bernoulli` pair class (closed form, **no new dependency**). Multistart bounded α, FD score/curvature, boundary + disagreement flags | `test_associate_pairs.jl`; 8-seed bias check at n=3000 | **PASSED**; η mean **0.5433** vs true 0.55, sd 0.0108, bias −0.0067 — essentially unbiased; refusals tested for unreviewed pair classes, non-Bernoulli binomial, implicit kernel, varying association |
