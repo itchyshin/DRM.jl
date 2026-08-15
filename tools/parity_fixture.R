@@ -142,20 +142,19 @@ for (cell in fe_cells) {
     capability_id = cell$id, label = cell$label,
     status = NA_character_, max_abs_coef_diff = NA_real_,
     loglik_tmb = NA_real_, loglik_julia = NA_real_, loglik_diff = NA_real_,
-    tolerance = tol, note = "gate REFUSES engine='julia'; compared vs DRM.jl bridge payload"
+    tolerance = tol, note = "R-via-Julia bridge parity (engine='julia'), drmTMB 0.7.0"
   )
   ft <- try(drmTMB(bf(y ~ x), family = cell$family(), data = d, engine = "tmb"), silent = TRUE)
-  jb <- try(JuliaCall::julia_call("drmTMB_drm_bridge", "y ~ x", cell$jfam,
-                                  as.list(d), NULL, NULL), silent = TRUE)
+  jb <- try(drmTMB(bf(y ~ x), family = cell$family(), data = d, engine = "julia"), silent = TRUE)
   if (inherits(ft, "try-error")) {
     res$status <- "NATIVE_FAILED"
   } else if (inherits(jb, "try-error")) {
     res$status <- "JULIA_FAILED"
   } else {
-    ct <- unlist(fixef(ft)); cj <- jb$coefficients
+    ct <- unlist(fixef(ft)); cj <- unlist(fixef(jb))
     k <- min(length(ct), length(cj))
     res$max_abs_coef_diff <- max(abs(ct[seq_len(k)] - cj[seq_len(k)]))
-    res$loglik_tmb <- as.numeric(logLik(ft)); res$loglik_julia <- jb$loglik
+    res$loglik_tmb <- as.numeric(logLik(ft)); res$loglik_julia <- as.numeric(logLik(jb))
     res$loglik_diff <- abs(res$loglik_tmb - res$loglik_julia)
     res$status <- if (res$max_abs_coef_diff < tol && res$loglik_diff < tol)
       "PARITY_PASS" else "PARITY_FAIL"
