@@ -80,6 +80,21 @@ biv_cells <- list(
          z1 <- rnorm(n); z2 <- rho * z1 + sqrt(1 - rho^2) * rnorm(n)
          data.frame(y1 = exp(0.4 + 0.9 * x + s1 * z1),
                     y2 = exp(-0.2 + 0.5 * x + s2 * z2), x = x)
+       }),
+  list(id = "biv_student", label = "Bivariate Student-t, fixed effects",
+       jfam = "biv_student",
+       family = function() biv_student(),
+       formula = function() bf(mu1 = y1 ~ x, mu2 = y2 ~ x,
+                               sigma1 = ~ 1, sigma2 = ~ 1, nu = ~ 1, rho12 = ~ 1),
+       jformula = list(mu1 = "y1 ~ x", mu2 = "y2 ~ x", sigma1 = "sigma1 ~ 1",
+                       sigma2 = "sigma2 ~ 1", nu = "nu ~ 1", rho12 = "rho12 ~ 1"),
+       build = function() {
+         set.seed(21); n <- 800; x <- rnorm(n)
+         s1 <- 0.7; s2 <- 1.1; rho <- 0.5; nu <- 6
+         z1 <- rnorm(n); z2 <- rho * z1 + sqrt(1 - rho^2) * rnorm(n)
+         sh <- sqrt(nu / rchisq(n, df = nu))
+         data.frame(y1 = 0.5 + 0.8 * x + s1 * z1 * sh,
+                    y2 = -0.3 + 0.4 * x + s2 * z2 * sh, x = x)
        })
 )
 
