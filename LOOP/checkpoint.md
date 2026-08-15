@@ -84,3 +84,19 @@ NEW OWNER GATES from the A4 design pass:
 - MEASUREMENT: the ledger's 22-gap count MIXES missing capability with things that correctly live
   in R. Recommend a `deliberately-not-ported` class in tools/parity_ledger.py so the countdown
   measures what it claims.
+
+=== OWNER DECISIONS 2026-08-15 (both settled — no longer gates) ===
+- A4a -> #49 PARKED. `categorical` is an imputation family; NOT built as a response family.
+- A4b -> deliberately-not-ported. make_mesh/spatial_coords are R-side geospatial prep.
+Remaining arcs: A4c (drm_phylo_penalty, ~1 d, NOT STARTED) -> A4d-1 (corpair marker; grammar
+rail) -> A4d-2 (profile_targets, structured_effects, meta_vcov_bivariate).
+
+=== SAFE-TO-LEAVE STATE (as of this checkpoint) ===
+Everything is committed and PUSHED. Nothing exists only on local disk.
+- DRM.jl #412: OPEN, auto-merge ARMED; docs + test (1.10) PASS, test (1) still running.
+  It merges ITSELF when green. No action needed.
+- `claude/lane-catchup`: pushed, NO PR YET (stacked under #412). ONE ACTION OWED LATER:
+  open its PR with base `main` AFTER #412 merges. Until then the handover and A3c-2/A3c-3/
+  A-nb2/A-sigma/A4-design are reachable only from the lane branch, not from main.
+- drmTMB #1032: OPEN and must STAY open until the owner decides timing. NEVER merge.
+- A4c is NOT started -- deliberately not begun rather than left mid-flight.
