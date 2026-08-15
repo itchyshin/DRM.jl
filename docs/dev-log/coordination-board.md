@@ -23,31 +23,34 @@ that issue. D-111 Julia General still OFF. Durable decision file is on
 OPEN [#406](https://github.com/itchyshin/DRM.jl/pull/406) (BLOCKED on
 CI `test (1.10)` at last check) until that PR lands._
 
-## Active-Lane-Split (2026-08-14, updated — campaign ACTIVE)
+## Active-Lane-Split (2026-08-15 — arc-loop lane ACTIVE)
 
-_Owner named the G0 on 2026-08-14: **catch up with drmTMB's capability so
-`engine = "julia"` admits what an R user actually fits.** DRM.jl is no longer
-idle. Lane = `feat/drmtmb-catchup-ledger` (Claude). Anchor = drmTMB **0.7.0**
-`f5ec53634`. Countdown: `python3 tools/parity_ledger.py --drmtmb ../drmTMB --ref origin/main`.
-A0 (ledger) + A1 (vcov guard) landed; next A2a. Live pointer: `LOOP/GOAL.md`._
+_The `engine = "julia"` catch-up campaign runs as an **/arc-loop** in a bounded
+worktree at `~/local-scratch/lanes/DRM.jl-catchup` on `claude/lane-catchup` (off
+the Dropbox path). **START HERE:**
+`docs/dev-log/handover/2026-08-15-claude-handover.md`, then `LOOP/GOAL.md`._
 
-**drmTMB narrow lane claimed** (Claude, same campaign): `R/julia-bridge.R`,
-`tests/testthat/test-julia-*`, `vignettes/julia-engine.Rmd` **only** — nothing
-else in that repo. Its tree carries 9 live lanes, a foreign codex lane, and the
-open 0.7.0 release slice #959; the bridge PR is gated on owner timing. No drmTMB
-edits have been made yet.
+_Anchor: drmTMB **0.7.0 INSTALLED**. The twin moves fast — re-run
+`python3 tools/parity_ledger.py --drmtmb ../drmTMB --ref origin/main` before
+trusting any count. Landed via #408/#409/#410: A0, A1, A2a, A3a, A3b, A-fix.
+On the lane, unmerged: A3c-1/2/3, **A-nb2**, A-sigma, A4-design. Next: **A4c**._
+
+_**A-nb2 is worth knowing about across lanes:** DRM.jl's NB2 dispersion seed was
+on the size scale rather than log-σ (the `-0.5` was missing at 6 sites), so NB2
+fits could silently converge to the Poisson boundary. Fixed; it changes NB2
+starting values everywhere. Found only by a cross-implementation parity fixture._
 
 | Lane | Repo | State | Pointer |
 |---|---|---|---|
-| DRM.jl Julia | this repo | **ACTIVE — `engine="julia"` catch-up**; A0+A1 landed on `feat/drmtmb-catchup-ledger` | `LOOP/GOAL.md` · `LOOP/checkpoint.md` |
-| drmTMB bridge (narrow) | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **claimed, not yet edited** — `R/julia-bridge.R` + its tests/vignette only | `LOOP/arcs.md` A2b/A3 gates |
-| DRM.jl Julia (prior) | this repo | superseded — tip-idle handover of 2026-08-14 is now **historical** | `docs/dev-log/handover/2026-08-14-claude-handover-drm-idle.md` |
-| drmTMB `engine="julia"` Workflow G | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **sibling — possibly in progress** (unknown from this session) | that repo’s own handover; do not start from DRM.jl; do not claim finished |
-| #136 epic | DRM.jl | **OPEN** — 136e public Gamma report **DONE** on main; two-part / ZI×RE later | issue 136; `report/va-vs-laplace-bias.md` |
-| #49 | DRM.jl | **PARKED** | owner-named only |
+| DRM.jl catch-up (arc-loop) | this repo | **ACTIVE** — `claude/lane-catchup`; A4c next; two owner gates open (A4a→#49, A4b→not-ported) | `docs/dev-log/handover/2026-08-15-claude-handover.md` · `LOOP/GOAL.md` |
+| DRM.jl #412 | this repo | `docs/a3c-design` — auto-merge ARMED, CI running | PR #412 |
+| drmTMB bridge (narrow) | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **PR #1032 OPEN — NEVER MERGE** (9 live lanes + release slice #959). Evidence citations only, no status changed | drmTMB PR #1032 |
+| drmTMB `engine="julia"` Workflow G | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **sibling — status UNKNOWN from here**; do not claim finished, do not start from DRM.jl | that repo's own handover |
+| DRM.jl (prior, historical) | this repo | superseded — tip-idle handover of 2026-08-14 | `docs/dev-log/handover/2026-08-14-claude-handover-drm-idle.md` |
 
-Rehydrate must read **every** row. A single START HERE must not orphan the
-drmTMB sibling lane or the parked DRM epics.
+Rehydrate must read **every** row. A single pointer must not orphan the drmTMB
+sibling lane or the parked epics (#136 OPEN, #49 PARKED — which now also holds
+`categorical`, an imputation family, not a response family).
 
 ## Lane split — Claude ↔ Codex
 

@@ -160,7 +160,8 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
        reml_loglik, ml_loglik, estimation_method,
        drm_bridge, drm_bridge_inference,
        drm_listwise,
-       associate_pairs, latent_normal, association, PairAssociation
+       associate_pairs, latent_normal, association, PairAssociation,
+       integration_diagnostics
 
 # Public API — post-fit accessors for the cross-family bivariate fit
 # (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).

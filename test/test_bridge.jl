@@ -87,6 +87,31 @@ using Test, Random, LinearAlgebra
     # families with no binomial denominator must not carry the key at all
     @test !haskey(bridged, "trials")
 
+    # Meta-analysis: drmTMB's meta `sigma` dpar is the HETEROGENEITY tau, while
+    # `scales[:sigma]` holds the TOTAL sqrt(V + tau^2) that simulate() needs.
+    # Shipping the total as `sigma` AND a V_known would double-count the sampling
+    # variance. Both are recovered exactly, with no change to sigma()'s contract.
+    rngm = MersenneTwister(2)
+    nm = 60
+    xm = randn(rngm, nm)
+    vm = 0.05 .+ 0.4 .* rand(rngm, nm)
+    taum = 0.35
+    ym = 0.4 .+ 0.8 .* xm .+ sqrt.(vm .+ taum^2) .* randn(rngm, nm)
+    dm = (; y = ym, x = xm, v = vm)
+    meta = drm_bridge(; formula = Dict(:mu => "y ~ x + meta_V(v)", :sigma => "sigma ~ 1"),
+                      family = "gaussian", data = dm)
+    @test haskey(meta, "V_known")
+    @test length(meta["V_known"]) == nm
+    @test maximum(abs.(meta["V_known"] .- vm)) < 1e-10      # recovered EXACTLY
+    # the dpar is tau (constant here), NOT the per-row total
+    @test length(unique(round.(meta["dpars"]["sigma"], digits=10))) == 1
+    @test !(meta["dpars"]["sigma"] ≈ meta["sigma"])          # dpar != total SD
+    @test all(meta["dpars"]["sigma"] .< meta["sigma"])       # tau < sqrt(V + tau^2)
+    # sigma()'s public contract is untouched: still a bare vector
+    @test meta["sigma"] isa AbstractVector
+    # and a non-meta fit gains nothing
+    @test !haskey(bridged, "V_known")
+
     # Fresh-data dpars. `fitted_distribution(object, newdata = ...)` needs
     # `predict_parameters(..., type = "response")` for EVERY dpar; the
     # julia-engine vignette records the gap this closes ("fresh-data Julia

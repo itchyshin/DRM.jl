@@ -1,74 +1,94 @@
-# GOAL — DRM.jl catch-up so drmTMB can do `engine = "julia"` (IMMUTABLE — re-read every arc)
+# GOAL — DRM.jl ↔ drmTMB catch-up lane (IMMUTABLE — re-read at the top of EVERY arc)
 
 Read this first, every cycle. Auto-compact eats messages, not this file. Unsure
 after a compaction? Re-read THIS, then `checkpoint.md`, then continue.
 
 ## Mission
 
-**Solo platform:** Claude Code. **Lane:** DRM.jl (full) + drmTMB (**narrow**:
-`R/julia-bridge.R`, `tests/testthat/test-julia-*`, `vignettes/julia-engine.Rmd`
-only).
+Close the **measured** drmTMB parity gaps in DRM.jl, each backed by a
+native-vs-Julia parity fixture, **without ever claiming more than the twin does**.
 
-Close the capability gap so an R user can write `drmTMB(..., engine = "julia")`
-and have DRM.jl fit it, returning a drmTMB-shaped object. The unit of progress is
-a **bridge-admitted model cell**, not a Julia-facing export.
+## Definition of done
 
-**Bar:** [[DECISIONS#D-111]] readiness condition (1) — *"caught up with the R twin
-on the shared surface that matters for a public twin claim"*. Registration is
-**not** the goal; D-111 forbids pursuing Registrator at all.
+- [ ] All in-fence arcs landed on `main` with **green CI**
+- [ ] `tools/parity_ledger.py` re-run and the countdown recorded
+- [ ] Plan-vs-actual reconciled to `docs/dev-log/plan-actual/`
+
+## Headline
+
+The ledger countdown falls. Every capability shipped is parity-verified against
+**installed drmTMB 0.7.0**, and every boundary drmTMB declares is mirrored rather
+than quietly exceeded.
 
 ## Anchor
 
-**drmTMB 0.7.0 @ `origin/main` `f5ec53634`.** Refresh the countdown with:
+drmTMB **0.7.0**, installed. `origin/main` was `f5ec53634` at A0 and had already
+moved to `859c0f6e6` — **the twin moves fast**. Re-run before trusting any count:
 
 ```bash
 python3 tools/parity_ledger.py --drmtmb ../drmTMB --ref origin/main
 ```
 
-Measured 2026-08-14: **25 export gaps · 11 capability rows (6 partial, 4
-experimental, 1 unsupported) · 14 gates closed by intentional error.**
+At lane start: **22 export gaps · 11 capability rows · 14 closed gates · CLOSURE PASS**.
 
-## Headline
+## Invariants (never violate, even to finish faster)
 
-The **bivariate non-Gaussian cluster** new in drmTMB 0.7.0 — `biv_lognormal`,
-`biv_student`, `biv_associate`, `associate_pairs`, `association`,
-`latent_normal`, plus the `bivariate-nongaussian` vignette. DRM.jl has no twin
-for any of it. Prior research exists: deep-research notes **dr18** (bivariate
-lognormal contract) and **dr19** (exact bivariate Student-t) — read them before
-designing, do not re-derive.
+- Verification means reading the **LOG** and inspecting the **ARTEFACT**, never
+  the exit code.
+- A narrow or negative search is not proof. "No X exists" usually means the query
+  missed X.
+- Destructive or irreversible ⇒ **STOP and surface**, even if it feels urgent.
+- A genuine surprise that invalidates the plan ⇒ **STOP**, back to G0. Do not
+  patch around it mid-loop.
+- **Tolerances are MEASURED, never guessed.** Multi-seed spread first, then set
+  the bound. Arc A-fix exists because this was broken once: a tolerance fitted to
+  one Julia 1.10 run failed on 1.12, where `log(ν−2)` deviated **0.5198** against
+  a 0.25 bound. **Julia 1.12 is installed locally — reproduce version-specific
+  failures rather than guessing** (`julia +1.12`).
+- Close every arc by stating what it did **NOT** cover.
 
-> **Superseded 2026-08-14 by arc A0.** The original headline was "fixed-effect
-> non-Gaussian families cannot use `engine = "julia"`". That was read off a
-> drmTMB working checkout **987 commits stale**; PR #499 (2026-08-09) had already
-> moved that row to `experimental`/`partial` and deleted the `base_nonphylo_count`
-> gate. Read the twin via `git show <ref>:<path>`, never its working tree.
+## Gate policy
 
-## Invariants (fences)
+**DRM.jl (owner-approved this run):** push, open PR, **auto-merge on green CI**.
+Two structural rules, because the failure already happened twice — arming
+auto-merge, then pushing more onto that branch, so later work rode an earlier
+approval:
 
-- Issue **#136 stays OPEN** — never `close`/`fix`/`resolve` near that number.
-- **#49 / missing-data / the bridge `impute` payload: PARKED** — owner-named only.
-- `engine_control_surface` is **unsupported by design** — needs an R API design first.
-- **No Julia General / Registrator** (D-111). **No GPL vendoring** — DRM.jl is MIT;
-  parity uses generated outputs only.
-- Never regress the verified q=4 core (2.18×, logLik −256.51).
-- Never stage `.worktrees/` or `.codex/agents/shannon-coordinator.toml`; never `git add -A`.
-- In drmTMB: stay inside the narrow lane. Its tree is busy — 9 live lanes, a 0.7.0
-  release slice, and `docs/design/` numbering races (claim a number by committing).
-- `src/` authority is **full, incl. formula grammar**; the human gate is at **tag**.
-  Any arc touching `bf()`/`drm_formula()` must run `DRM_PARITY_TESTS=1` and attach
-  the result to its PR — that is the rail replacing human grammar review.
+- **One branch per arc.**
+- **Auto-merge is the LAST action on a branch**, after the final commit, and only
+  once the arc is complete.
 
-## Definition of done (per arc)
+**drmTMB — STOP GATE. Open a PR, never merge.** That repo has **9 live lanes**
+and an open 0.7.0 release slice (#959). Merging into another team's active
+release unattended is *not* covered by the DRM.jl approval. **Config cannot
+enforce this** — `gh pr merge` permission patterns are global, not per-repo. It
+is a discipline rule. Hold it.
 
-Impl + tests + docstrings + worked example + `docs/dev-log/check-log.d/` entry +
-after-task report + Rose audit. One issue → one branch → one PR.
+**Also STOP for:** `sigma()`'s public contract (arc A-sigma) before it lands.
 
-**A capability row is promoted ONLY on a native-vs-Julia same-target comparison**
-(matching coefficients and logLik within the row's declared tolerance). Direct
-DRM.jl evidence is **not** R-via-Julia bridge support. Export-name presence is
-**not** capability parity.
+## Out of scope (the fence — do NOT drift here)
 
-## Closure
+- Issue **#136** stays OPEN — never `close`/`fix`/`resolve` near that number.
+- **#49 / FIML / missing data** — PARKED.
+- **Registrator / Julia General** — D-111 forbids.
+- **GPL vendoring** from drmTMB — DRM.jl is MIT; parity uses generated outputs.
+- The verified **q=4 core** (2.18×, logLik −256.51) — never regress it.
+- drmTMB edits outside the narrow lane (`R/julia-bridge.R`,
+  `tests/testthat/test-julia-*`, `vignettes/julia-engine.Rmd`).
+- Staging `.worktrees/` or `.codex/agents/shannon-coordinator.toml`; unscoped
+  `git add -A`.
 
-Every registry row is either `supported` with a parity fixture, or carries an
-explicit written `claim_boundary` saying why it is not.
+## Per-arc verification (non-negotiable)
+
+- Targeted Julia suites during an arc (~2–5 min); **full suite at the PR boundary**
+  via CI (`test (1)` + `test (1.10)` + `docs`).
+- **`DRM_PARITY_TESTS=1` mandatory** on any arc touching `bf()` / formula grammar.
+- **Every new capability gets a `tools/parity_fixture.R` cell** (native-vs-Julia,
+  tol 1e-4) which must PASS before the arc closes.
+- AGENTS.md DoD: impl + tests + docstrings + worked example +
+  `docs/dev-log/check-log.d/` entry + after-task report + Rose claim-vs-evidence.
+
+## Authoritative WHAT
+
+`LOOP/ultra-plan.md` holds the binding detail. This file wins on "what must never
+be lost".

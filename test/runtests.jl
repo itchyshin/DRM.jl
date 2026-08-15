@@ -84,6 +84,7 @@ include("test_student.jl")
 include("test_skewnormal.jl")
 include("test_poisson.jl")
 include("test_nbinom2.jl")
+include("test_nb2_dispersion_seed.jl")
 include("test_beta.jl")
 include("test_gamma.jl")
 # eta-clamp twin parity (#324): the NB2/Gamma/Beta density guards now use the
