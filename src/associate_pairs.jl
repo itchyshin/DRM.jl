@@ -105,6 +105,8 @@ function associate_pairs(fit_1::DrmFit, fit_2::DrmFit; kernel = nothing,
             "`kernel = latent_normal()` declaration — there is no implicit " *
             "association kernel."))
     association === nothing || _assoc_intercept_only(association)
+    _assoc_require_converged(fit_1, "fit_1")
+    _assoc_require_converged(fit_2, "fit_2")
 
     pc, comps = _assoc_components(fit_1, fit_2)
     loglik, n = _assoc_loglik_for(pc, comps)
@@ -370,6 +372,25 @@ function _assoc_components(fit_1::DrmFit, fit_2::DrmFit)
            (gaussian_y = Vector{Float64}(gy), gaussian_mu = Vector{Float64}(gmu),
             gaussian_sigma = Vector{Float64}(gsd), binary_y = Vector{Float64}(by),
             binary_p = Vector{Float64}(bp))
+end
+
+# A staged estimator FREEZES its margins, so a margin that did not converge is
+# not a smaller problem than usual — it is silently load-bearing. Its fitted
+# values define the latent intervals, and a collapsed dispersion (say sigma driven
+# to the boundary) narrows those intervals and biases the association with no
+# visible failure anywhere downstream. Refuse rather than freeze it.
+#
+# Found by the A3c-3 parity harness: DRM.jl's NB2 fitter failed to converge on a
+# legitimately overdispersed sample (sigma-hat 5.6e-7, logLik -3200.8 vs drmTMB's
+# -2909.5), and the association came back attenuated -- 0.42 against drmTMB's
+# 0.58 -- with nothing in the result to indicate why.
+function _assoc_require_converged(f::DrmFit, name::AbstractString)
+    is_converged(f) && return nothing
+    throw(ArgumentError("associate_pairs: `$name` did not converge, so it cannot be " *
+        "frozen as a margin. A staged association conditions on the margin as if it " *
+        "were exact: a non-converged fit (e.g. a dispersion collapsed to its " *
+        "boundary) would bias the association with no visible failure. Refit the " *
+        "margin first, or use `engine = \"tmb\"` for that margin."))
 end
 
 # ── shared margin extractors ─────────────────────────────────────────────────
