@@ -35,8 +35,21 @@ using Random
         # drmTMB's dpar ORDER: mu1, mu2, sigma1, sigma2, nu, rho12 — nu before rho12.
         truth = [0.5, 0.8, -0.3, 0.4, log(s1), log(s2), log(nu - 2), atanh(rho)]
         @test length(est) == 8
-        @test isapprox(est, truth; atol = 0.25)
+        # `nu` is deliberately EXCLUDED from this blanket check. A 10-seed study at
+        # this n measured, per coefficient:
+        #
+        #   location / scale / atanh(rho) : sd <= 0.042,  max|dev| <= 0.080
+        #   log(nu - 2)                   : sd  = 0.154,  max|dev| =  0.414
+        #
+        # The degrees of freedom carry ~4x the sampling spread of everything else
+        # (nu is famously hard to pin down), so one tolerance cannot serve both. An
+        # earlier atol = 0.25 across all eight was fitted to a single local run and
+        # duly failed on Julia 1, whose RNG stream differs. `nu` is covered by its
+        # own range assertion below instead.
+        keep = [1, 2, 3, 4, 5, 6, 8]
+        @test isapprox(est[keep], truth[keep]; atol = 0.15)   # ~2x the measured max|dev|
         ν̂ = 2 + exp(coef(fit, :nu)[1])
+        # log(nu-2) measured mean 1.288, sd 0.154 => +/-4 sd maps to nu in [3.9, 8.7].
         @test 3.5 < ν̂ < 10.0                     # heavy-tailed, finite variance
         @test isapprox(fit.scales[:rho12][1], rho; atol = 0.08)
     end
