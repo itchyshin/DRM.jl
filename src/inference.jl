@@ -1307,7 +1307,14 @@ Returns a `NamedTuple` and logs a short report:
 - `min_eigval` / `cond` — smallest eigenvalue and condition number of the
   covariance; a near-zero `min_eigval` flags a singular / weakly identified
   direction (e.g. a variance pinned at the boundary).
+- `penalized_map` — whether this is a penalized (MAP) fit
+  (`penalty = drm_phylo_penalty(...)`). Such a fit reports standard errors from
+  the *penalized* curvature, which are credible-interval-shaped rather than
+  frequentist, and `loglik` is the *unpenalized* data log-likelihood.
 - `ok` — `true` when converged, the gradient is small, and the covariance is PD.
+  On a penalized fit the gradient criterion is **dropped**: the stored objective
+  is unpenalized, so its gradient is non-zero at the MAP optimum by construction
+  and scoring it would report a correct fit as broken.
 
 A non-`ok` result is informative, not an error: a model sitting on a variance
 boundary (Watanabe-singular) can be the data's MLE, with valid Wald SEs on the

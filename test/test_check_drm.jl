@@ -25,8 +25,14 @@ using Test, Random, LinearAlgebra
         fit = drm(bf(@formula(y ~ x), @formula(sigma ~ x)), Gaussian(); data = (; y, x))
         r = check_drm(fit)
         @test r isa NamedTuple
-        @test keys(r) == (:converged, :max_abs_grad, :vcov_posdef, :min_eigval, :cond, :ok)
+        # `penalized_map` added by A4c: a penalized (MAP) fit reports credible-
+        # interval-shaped SEs, and its stored UNPENALIZED gradient is non-zero at
+        # the optimum by construction, so `ok` is not scored against it.
+        @test keys(r) == (:converged, :max_abs_grad, :vcov_posdef, :min_eigval, :cond,
+                          :penalized_map, :ok)
         @test r.converged isa Bool
+        @test r.penalized_map isa Bool
+        @test !r.penalized_map          # an ordinary ML fit is not penalized
         @test r.vcov_posdef isa Bool
         @test r.ok isa Bool
         @test r.max_abs_grad isa Float64
