@@ -340,6 +340,10 @@ function _bridge_family(family::AbstractString)
     fam == "binomial" && return Binomial()
     fam == "gamma" && return Gamma()
     fam == "lognormal" && return LogNormal()
+    # drmTMB's `biv_lognormal()`. Bivariate-ness is a property of the FORMULA in
+    # DRM.jl (a `BivariateDrmFormula`), not of the family type — exactly as
+    # `biv_gaussian` maps to `Gaussian()` above.
+    fam in ("biv_lognormal", "lognormal_bivariate", "bivariate_lognormal") && return LogNormal()
     fam in ("zero_one_beta", "zeroonebeta") && return ZeroOneBeta()
     fam == "tweedie" && return Tweedie()
     fam in ("cumulative_logit", "ordinal") && return CumulativeLogit()

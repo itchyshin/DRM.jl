@@ -63,6 +63,26 @@ fe_cells <- list(
                             data.frame(y = rgamma(n, shape = 4, rate = 4 / exp(0.5 + 0.3 * x)), x = x) })
 )
 
+# Bivariate lognormal (drmTMB biv_lognormal). Compared native-TMB vs the DRM.jl
+# bridge payload: `engine = "julia"` does not route this family at the anchor, so
+# this is capability parity for the Julia implementation, NOT bridge admission.
+biv_cells <- list(
+  list(id = "biv_lognormal", label = "Bivariate lognormal, fixed effects",
+       jfam = "biv_lognormal",
+       family = function() biv_lognormal(),
+       formula = function() bf(mu1 = y1 ~ x, mu2 = y2 ~ x,
+                               sigma1 = ~ 1, sigma2 = ~ 1, rho12 = ~ 1),
+       jformula = list(mu1 = "y1 ~ x", mu2 = "y2 ~ x", sigma1 = "sigma1 ~ 1",
+                       sigma2 = "sigma2 ~ 1", rho12 = "rho12 ~ 1"),
+       build = function() {
+         set.seed(11); n <- 500; x <- rnorm(n)
+         s1 <- 0.5; s2 <- 0.8; rho <- 0.6
+         z1 <- rnorm(n); z2 <- rho * z1 + sqrt(1 - rho^2) * rnorm(n)
+         data.frame(y1 = exp(0.4 + 0.9 * x + s1 * z1),
+                    y2 = exp(-0.2 + 0.5 * x + s2 * z2), x = x)
+       })
+)
+
 rows <- list()
 for (cell in cells) {
   d <- cell$build()
@@ -111,6 +131,36 @@ for (cell in fe_cells) {
   )
   ft <- try(drmTMB(bf(y ~ x), family = cell$family(), data = d, engine = "tmb"), silent = TRUE)
   jb <- try(JuliaCall::julia_call("drmTMB_drm_bridge", "y ~ x", cell$jfam,
+                                  as.list(d), NULL, NULL), silent = TRUE)
+  if (inherits(ft, "try-error")) {
+    res$status <- "NATIVE_FAILED"
+  } else if (inherits(jb, "try-error")) {
+    res$status <- "JULIA_FAILED"
+  } else {
+    ct <- unlist(fixef(ft)); cj <- jb$coefficients
+    k <- min(length(ct), length(cj))
+    res$max_abs_coef_diff <- max(abs(ct[seq_len(k)] - cj[seq_len(k)]))
+    res$loglik_tmb <- as.numeric(logLik(ft)); res$loglik_julia <- jb$loglik
+    res$loglik_diff <- abs(res$loglik_tmb - res$loglik_julia)
+    res$status <- if (res$max_abs_coef_diff < tol && res$loglik_diff < tol)
+      "PARITY_PASS" else "PARITY_FAIL"
+  }
+  rows[[length(rows) + 1L]] <- as.data.frame(res, stringsAsFactors = FALSE)
+  cat(sprintf("%-32s %-14s coef_diff=%.3e  loglik_diff=%.3e\n",
+              res$capability_id, res$status, res$max_abs_coef_diff, res$loglik_diff))
+}
+
+for (cell in biv_cells) {
+  d <- cell$build()
+  res <- list(
+    capability_id = cell$id, label = cell$label,
+    status = NA_character_, max_abs_coef_diff = NA_real_,
+    loglik_tmb = NA_real_, loglik_julia = NA_real_, loglik_diff = NA_real_,
+    tolerance = tol, note = "capability parity vs DRM.jl bridge payload; not bridge admission"
+  )
+  ft <- try(drmTMB(cell$formula(), family = cell$family(), data = d, engine = "tmb"),
+            silent = TRUE)
+  jb <- try(JuliaCall::julia_call("drmTMB_drm_bridge", cell$jformula, cell$jfam,
                                   as.list(d), NULL, NULL), silent = TRUE)
   if (inherits(ft, "try-error")) {
     res$status <- "NATIVE_FAILED"
