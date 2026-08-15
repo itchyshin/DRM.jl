@@ -1,4 +1,4 @@
-GOAL: see GOAL.md.   STATE: lane repaired and healthy; starting A3c-2.
+GOAL: see GOAL.md.   STATE: A3c-2 DONE (all five pair classes). Next = A3c-3.
 
 ARCS DONE (verified):
 - A-fix — `biv_student` recovery tolerance. Verified by REPRODUCING the CI failure on Julia 1.12
@@ -11,15 +11,25 @@ ARCS DONE (verified):
   164, bivariate_lognormal.jl 129, vcov_guard.jl 69, QuadGK in [deps] and [compat], and 3 suites
   pass in the lane.
 
-ARC IN PROGRESS: **A3c-2** — four quadrature pair classes via QuadGK.
-  How to tell it landed: `test_associate_pairs.jl` covers gaussian_nbinom2, bernoulli_bernoulli,
-  bernoulli_nbinom2, nbinom2_nbinom2 with per-row integration-error diagnostics, AND
-  `tools/parity_fixture.R` gains passing cells for them vs installed drmTMB 0.7.0.
+- A3c-2 — all four remaining pair classes (commit 23eb10af). VERIFIED BY ARTEFACT: latent
+  intervals contain the generating latent 2000/2000; the likelihood with TRUE margins peaks
+  exactly at the true eta=0.55; margin fits clean (sigma-hat 0.6014 vs 0.6); 5-seed study at
+  n=2000 gives means 0.539-0.547 vs true 0.55, max|dev| <= 0.040; worst relative quadrature
+  error < 1e-6. Full test_associate_pairs.jl passes.
+  DESIGN CORRECTION recorded: gaussian_nbinom2 is CLOSED FORM, so only THREE classes need
+  quadrature, not the four the A3c design note assumed.
 
-NEXT AFTER: A3c-3 (associate_pairs parity fixture + diagnostic parity).
+ARC IN PROGRESS: none.
+NEXT: **A3c-3** — parity fixture for associate_pairs vs installed drmTMB 0.7.0 (now runnable
+  locally), plus diagnostic/warning parity. How to tell it landed: tools/parity_fixture.R gains
+  a passing staged-association cell comparing eta against drmTMB's own association().
 
 OPEN GATES (need human):
 - **A-sigma** — surface the `sigma()` public-contract design BEFORE landing.
+- **UNEXPLAINED, worth a look in A3c-3:** an early single run at n=1200 gave gaussian_nbinom2
+  eta ~0.395 where the 5-seed n=2000 study gives 0.539. Not reproduced since and all artefact
+  checks pass, so it is most likely that seed/n, but it is NOT fully explained. Do not treat
+  the estimator as validated at small n until A3c-3 checks it.
 - **A-drmtmb** — open the PR, NEVER merge (9 live lanes + open release slice #959 there).
 
 BRANCH/PR STATE (important — two unmerged PRs stack under this lane):
