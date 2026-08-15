@@ -32,6 +32,47 @@ ALIASES = {
 # Exports with no meaningful Julia counterpart -- R-idiom helpers, not capability.
 NOT_CAPABILITY = {"gr", "drm_control", "meta_known_V"}
 
+# A4e. The raw "exports with no twin" count MIXES three different things, and
+# reporting their sum as one countdown overstates the work: it counts a
+# capability DRM.jl already has under another spelling, and work that correctly
+# lives in R, as though both were missing engine features.
+#
+# Each name below therefore carries a WRITTEN REASON, and the countdown reports
+# the classes separately. Adding a name here is a claim -- it must be true, and
+# it must say why.
+DELIBERATELY_NOT_PORTED = {
+    # --- delivered, but spelled differently: a family plus a bivariate formula
+    "biv_lognormal": "delivered as LogNormal() with a bivariate formula (A3a, parity-verified)",
+    "biv_student": "delivered as Student() with a bivariate formula (A3b, parity-verified)",
+    "biv_associate": "delivered as associate_pairs() -- the staged frozen-margin route (A3c)",
+    # --- delivered through the BRIDGE PAYLOAD; the R function correctly stays in R.
+    #     A2a established that these five collapse to ONE contract: per-dpar
+    #     response-scale columns. They are R post-fit functions that CONSUME the
+    #     Julia payload, not engine features DRM.jl is missing.
+    "fitted_distribution": "R post-fit function fed by the drm_bridge dpars payload (A2a)",
+    "qq_plot": "R post-fit function fed by the drm_bridge dpars payload (A2a)",
+    "worm_plot": "R post-fit function fed by the drm_bridge dpars payload (A2a)",
+    "centile_chart": "R post-fit function fed by the drm_bridge dpars payload (A2a)",
+    "exceedance": "R post-fit function fed by the drm_bridge dpars payload (A2a)",
+    # --- delivered as a field/accessor rather than an export
+    "rho_latent": "delivered as fit.rho_latent, surfaced through mf_summary()",
+    # --- R-side preparation that never reaches the engine (owner-confirmed 2026-08-15)
+    "make_mesh": "R-side geospatial prep (sf, CRS validation) before any fit -- owner-confirmed",
+    "spatial_coords": "R-side geospatial prep before any fit -- owner-confirmed",
+    # --- parked behind an owner fence (#49 missing data)
+    "categorical": "an imputation family (drm_impute_family), not a response family -- #49 PARKED",
+    "mi": "missing-data surface -- #49 PARKED",
+    "impute_model": "missing-data surface -- #49 PARKED",
+    "imputed": "missing-data surface -- #49 PARKED",
+    "miss_control": "missing-data surface -- #49 PARKED",
+    # --- genuinely absent, and blocked for a stated structural reason (A4d)
+    "corpair": "BLOCKED: StatsModels' @formula cannot express keyword args or string "
+               "literals, so drmTMB's syntax is not representable; and the fitted route "
+               "needs the labelled covariance-block grammar (1|p|id), absent in DRM.jl",
+    "meta_vcov_bivariate": "BLOCKED: meta_V is diagonal-only and the bivariate route "
+                           "ignores metav, so the output would have no consumer",
+}
+
 
 def git_show(repo: Path, ref: str, path: str) -> str:
     out = subprocess.run(
@@ -93,7 +134,10 @@ def main() -> int:
         alias = ALIASES.get(name)
         return bool(alias and norm(alias) in j_norm)
 
-    missing = [x for x in r_exports if not has_twin(x) and x not in NOT_CAPABILITY]
+    unmatched = [x for x in r_exports if not has_twin(x) and x not in NOT_CAPABILITY]
+    # A4e: split the raw count into "actually owed" vs "accounted for in writing".
+    missing = [x for x in unmatched if x not in DELIBERATELY_NOT_PORTED]
+    accounted = [x for x in unmatched if x in DELIBERATELY_NOT_PORTED]
 
     caps = tsv_rows(args.drmtmb, args.ref, "inst/extdata/julia-capabilities.tsv")
     gates = tsv_rows(args.drmtmb, args.ref, "inst/extdata/julia-gates.tsv")
@@ -116,11 +160,17 @@ def main() -> int:
         print(f"  {g['gate_id']:<34} {g.get('syntax','')[:70]}")
     print()
 
-    print(f"drmTMB EXPORTS WITH NO DRM.jl TWIN ({len(missing)})")
+    print(f"ACCOUNTED FOR IN WRITING ({len(accounted)}) -- not owed, and why")
+    for name in accounted:
+        print(f"  {name:<22} {DELIBERATELY_NOT_PORTED[name]}")
+    print()
+
+    print(f"drmTMB EXPORTS WITH NO DRM.jl TWIN ({len(missing)}) -- genuinely owed")
     for name in missing:
         print(f"  {name}")
     print()
-    print(f"COUNTDOWN: {len(missing)} export gaps · "
+    print(f"COUNTDOWN: {len(missing)} export gaps ({len(unmatched)} raw, "
+          f"{len(accounted)} accounted for) · "
           f"{sum(1 for c in caps if c.get('claim_status') != 'supported')} unsupported capability rows · "
           f"{len(blocked)} closed gates")
 
