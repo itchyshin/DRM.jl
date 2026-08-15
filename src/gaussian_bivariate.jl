@@ -55,29 +55,42 @@ function _bivariate_response_sym(f::FormulaTerm, kw::Symbol)
 end
 
 """
-    bf(; mu1, mu2, sigma1=…, sigma2=…, rho12=…)
+    bf(; mu1, mu2, sigma1=…, sigma2=…, nu=…, rho12=…)
 
-Bivariate Gaussian formula bundle, mirroring drmTMB. `mu1 = y1 ~ …` and
+Bivariate formula bundle, mirroring drmTMB. `mu1 = y1 ~ …` and
 `mu2 = y2 ~ …` set the two responses and their mean predictors; `sigma1`,
 `sigma2` (log σ) and `rho12` (atanh ρ) default to `~ 1`. For one-sided
 predictors give the parameter name as a placeholder LHS, e.g.
 `sigma1 = @formula(sigma1 ~ x)`.
 
+`nu` is the shared degrees-of-freedom formula for the bivariate Student-t
+family (`drm(…, Student())`, drmTMB's `biv_student()`), on the `logm2` scale
+`ν = 2 + exp(η)`. It is **omitted entirely** unless supplied, so the Gaussian
+and lognormal bundles are unchanged. Under the exact bivariate-t density a
+single scalar mixing variable governs both margins, so `ν` is *structurally*
+shared — there is no per-margin `nu1`/`nu2`.
+
 Like the univariate form, `bf` rejects reserved / mis-typed syntax: a placeholder
 LHS that is not its own parameter name (e.g. `sigma1 = @formula(tau ~ x)` or a
 swapped `sigma1`/`sigma2`), and a two-column `cbind(…)` response on `mu1`/`mu2`.
 """
-function bf(; mu1::FormulaTerm, mu2::FormulaTerm, sigma1 = nothing, sigma2 = nothing, rho12 = nothing)
+function bf(; mu1::FormulaTerm, mu2::FormulaTerm, sigma1 = nothing, sigma2 = nothing,
+            nu = nothing, rho12 = nothing)
     _check_bivariate_lhs(sigma1, :sigma1)
     _check_bivariate_lhs(sigma2, :sigma2)
+    _check_bivariate_lhs(nu, :nu)
     _check_bivariate_lhs(rho12, :rho12)
     forms = Pair{Symbol,Any}[
         :mu1 => mu1.rhs,
         :mu2 => mu2.rhs,
         :sigma1 => _rhs_or_intercept(sigma1),
         :sigma2 => _rhs_or_intercept(sigma2),
-        :rho12 => _rhs_or_intercept(rho12),
     ]
+    # `nu` is Student-only: keep it out of the bundle unless asked for, so the
+    # Gaussian/lognormal `forms` (and everything that reads them, e.g.
+    # `_bivariate_q4_marker`) are byte-identical to before.
+    nu === nothing || push!(forms, :nu => _rhs_or_intercept(nu))
+    push!(forms, :rho12 => _rhs_or_intercept(rho12))
     return BivariateDrmFormula(_bivariate_response_sym(mu1, :mu1),
                                _bivariate_response_sym(mu2, :mu2), forms)
 end

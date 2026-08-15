@@ -84,6 +84,8 @@ include("betabinomial.jl")
 include("binomial.jl")
 include("gamma.jl")
 include("lognormal.jl")
+include("bivariate_student.jl")  # drmTMB `biv_student()`: exact bivariate-t density,
+                                 # ONE shared nu (logm2 link). Needs student.jl + gaussian_bivariate.jl.
 include("bivariate_lognormal.jl") # drmTMB `biv_lognormal()`: closed form — delegates to the
                                  # Gaussian bivariate kernel on log(y) plus a Jacobian.
                                  # Must follow lognormal.jl (defines LogNormal) and
