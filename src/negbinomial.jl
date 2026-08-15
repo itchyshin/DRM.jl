@@ -212,7 +212,7 @@ function _fit_negbin2_ranef(fam::NegBinomial2, y, Xμ, Xσ, gidx, G, nmμ, nmσ,
     m = sum(y) / n; v = sum(abs2, y .- m) / max(n - 1, 1)
     θ0 = zeros(pμ + pσ + 1)
     θ0[1] = log(m + eps())
-    θ0[pμ+1] = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    θ0[pμ+1] = -0.5 * log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
     θ0[pμ+pσ+1] = log(0.5)
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
@@ -266,7 +266,7 @@ function _fit_negbin2_corr_ranef(fam::NegBinomial2, y, Xμ, Xσ, xs, gidx, G, nm
     m = sum(y) / n; v = sum(abs2, y .- m) / max(n - 1, 1)
     θ0 = zeros(pμ + pσ + 3)
     θ0[1] = log(m + eps())
-    θ0[pμ+1] = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))   # MoM dispersion init (as in _fit_negbin2_ranef)
+    θ0[pμ+1] = -0.5 * log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))   # MoM dispersion init (as in _fit_negbin2_ranef)
     θ0[pμ+pσ+1] = log(0.4); θ0[pμ+pσ+2] = log(0.4); θ0[pμ+pσ+3] = 0.0
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
@@ -303,7 +303,7 @@ function _fit_negbin2_zi(fam::NegBinomial2, y, Xμ, Xσ, Xzi, nmμ, nmσ, nmzi, 
     v = sum(abs2, y .- sum(y) / n) / max(n - 1, 1)
     θ0 = zeros(pμ + pσ + pz)
     θ0[1] = log(m + eps())
-    θ0[pμ+1] = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    θ0[pμ+1] = -0.5 * log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :zi => (pμ+pσ+1):(pμ+pσ+pz)]
@@ -340,7 +340,7 @@ function _fit_negbin2_hu(fam::NegBinomial2, y, Xμ, Xσ, Xhu, nmμ, nmσ, nmhu, 
     v = sum(abs2, y .- sum(y) / n) / max(n - 1, 1)
     θ0 = zeros(pμ + pσ + ph)
     θ0[1] = log(m + eps())
-    θ0[pμ+1] = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    θ0[pμ+1] = -0.5 * log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :hu => (pμ+pσ+1):(pμ+pσ+ph)]
@@ -371,7 +371,7 @@ function _fit_negbin2(fam::NegBinomial2, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     m = sum(y) / n; v = sum(abs2, y .- m) / max(n - 1, 1)
     θ0 = zeros(pμ + pσ)
     θ0[1] = log(m + eps())                                  # log-mean intercept
-    θ0[pμ+1] = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))  # MoM dispersion init
+    θ0[pμ+1] = -0.5 * log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))  # MoM dispersion init
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ)]
@@ -433,7 +433,7 @@ function _fit_truncated_negbin2(fam::TruncatedNegBinomial2, y, Xμ, Xσ, nmμ, n
     m = sum(y) / n; v = sum(abs2, y .- m) / max(n - 1, 1)
     θ0 = zeros(pμ + pσ)
     θ0[1] = log(m + eps())
-    θ0[pμ+1] = log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
+    θ0[pμ+1] = -0.5 * log(max(m^2 / max(v - m, 0.1 * m + eps()), 0.5))
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ)]

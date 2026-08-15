@@ -55,6 +55,33 @@ non-converged margin is silently load-bearing. `_assoc_require_converged` now
 refuses both fits up front, naming the margin and saying why. `is_converged` was
 already returning `false` — the information was there and simply was not read.
 
+## RESOLVED — the seed was on the wrong scale
+
+The MoM initialiser computes the NB2 **size** `r = m²/(v − m)`, but the parameter
+it seeds is `eta_sigma = log(sigma)`, where `r = exp(-2·eta_sigma)`. The correct
+conversion is `eta_sigma = -0.5·log(r)`. **The `-0.5` was missing at six sites.**
+
+On the failing data (m = 4.235, v = 10.857 ⇒ r_MoM = 2.71):
+
+| | seed sigma | seed size r |
+|---|---|---|
+| correct (`-0.5·log r`) | 0.608 | 2.71 |
+| buggy (`log r`) | 2.71 | **0.136** |
+
+A 20× error in the wrong direction. LBFGS recovered on many datasets — which is
+exactly why the suite stayed green while a whole region of dispersion space
+converged to the Poisson boundary.
+
+After the fix, on the same data: `converged = true`, coef
+`[1.4214, -0.1868, -0.5507]` against drmTMB's `[1.4214, -0.1869, -0.5507]`, and
+logLik `-2909.5454` against `-2909.545`.
+
+**Staged parity is now 5/5 PASS** (max diff 4.4e-07), up from 2/5.
+
+Guarded by `test/test_nb2_dispersion_seed.jl`, which pins the seed SCALE with a
+dispersion sweep either side of `sigma = 1` — the bug is a scale error, so it
+worsens as dispersion moves away from 1.
+
 ## Status of the arc
 
 The staged association is **parity-verified for the two pair classes whose

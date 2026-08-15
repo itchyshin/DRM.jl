@@ -1,0 +1,3 @@
+| slice | date | change | check | result |
+|---|---|---|---|---|
+| A-nb2 dispersion seed | 2026-08-15 | `src/negbinomial.jl` — the MoM initialiser computes NB2 **size** `r` but seeds `eta_sigma = log(sigma)`, where `r = exp(-2*eta_sigma)`; the `-0.5` conversion was missing at **6 sites** | failing case + 13 NB2-touching suites + both parity harnesses + new `test_nb2_dispersion_seed.jl` | **FIXED** — failing fit now `converged=true`, coef `[1.4214,-0.1868,-0.5507]` vs drmTMB `[1.4214,-0.1869,-0.5507]`, logLik `-2909.5454` vs `-2909.545`; **staged parity 5/5 PASS** (was 2/5); main fixture 7/7 PASS; 13 suites pass |
