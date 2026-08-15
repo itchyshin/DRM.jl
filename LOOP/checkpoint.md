@@ -195,3 +195,27 @@ OPEN GATES (need human, loop is STOPPED at these):
   (3) A-tag release boundary — owner only.
   (4) NEW: the drmTMB `obj$report()` off-optimum defect (A4c finding) — patch upstream or not?
   (5) NEW: `corpair` — lift the block with a @drmformula macro (front-end slice), or leave blocked?
+
+=== UPSTREAM drmTMB FIX 2026-08-15 (owner-named; narrow-lane fence lifted for this) ===
+FILED: drmTMB issue #1036 (bare obj$report() read at last.par, not the optimum).
+FIXED: drmTMB PR #1038, branch claude/fix-report-at-optimum, base main.
+  - R/drmTMB.R: re-pin from `tmb_state` (captured at :621, BEFORE sdreport) before the report.
+    Chosen over obj$env$last.par.best because it does not assume last.par.best survives sdreport.
+    Same idiom profile.R already uses at 3 sites.
+  - R/check.R: same defect in check_logsigma_clamp_active (post-hoc, never re-pinned). Fixed.
+  - NOT changed: drm_warn_if_clamp_active (R/drmTMB.R:2928) is a bare report but runs BEFORE
+    sdreport, so it is correct today — safe by ordering, not by construction. Out of scope, noted.
+  - Tests: the old assertion built its "expected" penalty from the SAME bare report(), so both
+    sides moved together — it could never fail. Now derives log_sd from parList(opt$par), tol 1e-8.
+    New test: `se` must not move phylo_penalty or logLik.
+VERIFIED with a purpose-built temp library (installed drmTMB 0.7.0 left UNTOUCHED so the DRM.jl
+parity fixtures still work): penalty error 5.077e-04 -> 0.000e+00; se=TRUE == se=FALSE exactly;
+325 pass / 0 fail / 0 error / 0 skip across the 5 affected test files.
+One "error" seen en route was a HARNESS ARTIFACT of bare test_file() + library() calling an
+INTERNAL function unqualified — vanished when run in the package namespace. Not a regression.
+
+** GATE HELD: PR #1038 is OPEN and NOT merged, auto-merge OFF. ** GOAL.md makes drmTMB a STOP
+GATE (9 live lanes + release slice #959) and the owner lifted only the narrow-lane fence, not the
+merge gate. #1032 also still open and unmerged.
+WORKTREE (declared, not deleted): scratchpad/drmtmb-fix on claude/fix-report-at-optimum, pushed.
+NOT RUN: full R CMD check on drmTMB — flagged in the PR as worth doing before merge.
