@@ -1302,6 +1302,11 @@ Returns a `NamedTuple` and logs a short report:
 - `converged` — the optimiser's convergence flag.
 - `max_abs_grad` — `max|∇nll|` at the optimum (≈ 0 at a clean interior optimum;
   `NaN` if the objective was not stored on the fit).
+- `vcov_complete` — whether the stored covariance is finite throughout. Some
+  routes report a **partial** covariance by design: the sparse phylo fitter
+  computes the fixed-effect block and leaves the variance-component block `NaN`.
+  When this is `false` the three fields below cannot be computed and are reported
+  as `false` / `NaN` / `Inf` rather than raising.
 - `vcov_posdef` — whether the stored covariance is positive-definite (drmTMB's
   `sdreport` is all-`NaN` exactly when this fails).
 - `min_eigval` / `cond` — smallest eigenvalue and condition number of the
@@ -1323,11 +1328,23 @@ remaining directions — see [`confint`](@ref).
 function check_drm(fit::DrmFit; grad_tol::Real=1e-3)
     mag = _check_max_abs_grad(fit)
     V = fit.vcov
-    pd = isposdef(Symmetric(V))
-    ev = eigvals(Symmetric(V))
-    mineig = minimum(ev)
-    maxeig = maximum(ev)
-    cnd = mineig > 0 ? maxeig / mineig : Inf
+    # A diagnostic must REPORT trouble, not crash on it. Several routes return a
+    # deliberately PARTIAL covariance — the sparse phylo fitter
+    # (`_fit_structured_gaussian_sparse_lbfgs`) computes the β block and leaves the
+    # variance-component block as NaN — and `isposdef`/`eigvals` throw outright on a
+    # non-finite matrix. Running the documented health check on a perfectly good
+    # phylo fit then raised `ArgumentError: matrix contains Infs or NaNs` instead of
+    # returning a report, which is backwards. Report the incompleteness as a field.
+    vcov_complete = all(isfinite, V)
+    pd, mineig, cnd = if vcov_complete
+        _pd = isposdef(Symmetric(V))
+        ev = eigvals(Symmetric(V))
+        _mineig = minimum(ev)
+        _maxeig = maximum(ev)
+        (_pd, _mineig, _mineig > 0 ? _maxeig / _mineig : Inf)
+    else
+        (false, NaN, Inf)
+    end
     # A4c: on a penalized (MAP) fit the stored objective is the UNPENALIZED
     # likelihood, whose gradient is deliberately NON-ZERO at the MAP optimum — the
     # penalty's gradient is what cancels it. Scoring that as non-convergence would
@@ -1338,15 +1355,21 @@ function check_drm(fit::DrmFit; grad_tol::Real=1e-3)
     report = (
         converged=fit.converged,
         max_abs_grad=mag,
+        vcov_complete=vcov_complete,
         vcov_posdef=pd,
         min_eigval=mineig,
         cond=cnd,
         penalized_map=penalized,
         ok=ok,
     )
-    @info "check_drm" converged = report.converged max_abs_grad = report.max_abs_grad vcov_posdef =
-        report.vcov_posdef min_eigval = report.min_eigval cond = report.cond penalized_map =
-        report.penalized_map ok = report.ok
+    @info "check_drm" converged = report.converged max_abs_grad = report.max_abs_grad vcov_complete =
+        report.vcov_complete vcov_posdef = report.vcov_posdef min_eigval = report.min_eigval cond =
+        report.cond penalized_map = report.penalized_map ok = report.ok
+    vcov_complete || @warn "check_drm: the stored covariance has non-finite entries, so " *
+        "`vcov_posdef` / `min_eigval` / `cond` could not be computed and `ok` is false. This is " *
+        "EXPECTED on routes that report a partial covariance — the sparse phylo fitter computes " *
+        "the fixed-effect block only. Wald SEs on the finite directions are still usable; for the " *
+        "variance components use `profile_ci = true` or `profile_result`."
     # drmTMB emits the equivalent advisory from `check_penalized_fit()`.
     penalized && @warn "check_drm: penalized (MAP) fit — standard errors come from the penalized " *
         "curvature and are credible-interval-shaped, not frequentist. `loglik` is the UNPENALIZED " *

@@ -163,3 +163,35 @@ implying corpair is an accessor. It is a marker.
 NEXT: A4e (parity_ledger deliberately-not-ported class + name-alias map; the 22-gap headline
 decomposes as 9 already-implemented + 7 parked/not-ported + 6 genuinely owed, of which A4c
 closed 2 and A4d closed 2 more and blocked 2).
+
+=== A4e + check_drm fix DONE 2026-08-15 ===
+A4e: tools/parity_ledger.py gained DELIBERATELY_NOT_PORTED, every entry carrying a WRITTEN REASON,
+and the countdown now splits "genuinely owed" from "accounted for in writing".
+COUNTDOWN: 0 export gaps (18 raw, 18 accounted for), down from a 22 headline.
+CORRECTION recorded there: an earlier claim that 9 names were "already implemented in src/ under
+other export names" was right in COUNT and wrong in REASON — the evidence was a text grep matching
+STRING LITERALS AND COMMENTS, not definitions. None of the nine is a Julia symbol. True split:
+3 delivered under a different spelling (family + bivariate formula), 5 R post-fit functions fed by
+the bridge payload (A2a's one-contract finding), 1 a struct field, 5 PARKED (#49), 2 R-side prep,
+2 blocked structurally, 4 built by A4c/A4d.
+NOT a capability claim: 11 capability rows remain un-`supported`, and that bar still needs a
+native-vs-Julia comparison per GOAL.md.
+
+check_drm partial-vcov fix (owner-named arc): check_drm crashed on any NaN-containing vcov — the
+NORMAL state of the sparse phylo route. Now reports `vcov_complete=false` instead of raising.
+Rose sweep for the same class came back NEGATIVE and is recorded as such: location_only.jl:701 is
+already try/caught, gaussian_ranef.jl:397 already guards on isfinite, the coevolution/bivariate
+isposdef calls validate user input and SHOULD throw, and 8 other post-fit accessors were verified
+fine on such a fit. Isolated instance.
+
+PR STACK (each retargets as the one below merges):
+  #414 A4c  -> main                      auto-merge ARMED, test(1.10) PASS, test(1) pending
+  #415 A4d  -> feat/a4c-phylo-penalty    CLEAN
+  #416 A4e  -> feat/a4d-introspection    CLEAN
+  #417 check_drm -> feat/a4e-ledger-honesty
+OPEN GATES (need human, loop is STOPPED at these):
+  (1) drmTMB PR timing — #1032 OPEN and must NEVER be merged from this lane.
+  (2) A2b (result-shape contract, R side) is BLOCKED on that same gate.
+  (3) A-tag release boundary — owner only.
+  (4) NEW: the drmTMB `obj$report()` off-optimum defect (A4c finding) — patch upstream or not?
+  (5) NEW: `corpair` — lift the block with a @drmformula macro (front-end slice), or leave blocked?
