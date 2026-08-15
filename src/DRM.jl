@@ -111,6 +111,7 @@ include("locscale_frontend.jl")  # #202 slice 3b: drm() routing for (1|tag|group
 include("locscale_corr.jl")      # cluster ①: (1+x|g)/(0+x|g) reroute onto the q2 core
 include("locscale_sigma.jl")     # cluster ②: standalone sigma ~ 1+(1|g) RE onto the q2 core
 include("gaussian_locscale_phylo.jl")  # B1: Gaussian sigma~phylo(1|g) univariate route — separate/coupled/asymmetric + boundary CIs (Ayumi #2)
+include("phylo_penalty.jl")      # A4c: penalized-MAP phylo variance components — drmTMB's drm_phylo_penalty()
 include("inference.jl")
 include("bias_correct.jl")       # TMB-style epsilon-method bias correction (#227 B11)
 include("heritability.jl")       # comparative-biology derived ratios (h²/ICC) + CIs
@@ -161,7 +162,8 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
        drm_bridge, drm_bridge_inference,
        drm_listwise,
        associate_pairs, latent_normal, association, PairAssociation,
-       integration_diagnostics
+       integration_diagnostics,
+       drm_phylo_penalty, drm_phylo_penalty_sweep, PhyloPenalty, PhyloCorPenaltyNeedsTwoSD
 
 # Public API — post-fit accessors for the cross-family bivariate fit
 # (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).

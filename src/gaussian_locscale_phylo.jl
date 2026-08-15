@@ -602,10 +602,16 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
                                        se::Bool = true,
                                        profile_ci::Bool = false,
                                        reml::Bool = false,
-                                       g_tol::Real = 1e-6)
+                                       g_tol::Real = 1e-6,
+                                       penalty = nothing)
     kind = Val(:gaussian_mean)
     n = length(y)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
+    # A4c. `drm()` refuses this combination up front; repeat it here because this
+    # fitter is also reachable directly (the bridge and the penalty sweep call it).
+    (penalty === nothing || !reml) ||
+        error("penalty and REML cannot be combined — a penalized fit is a MAP estimator " *
+              "and REML is a restricted-likelihood estimator.")
 
     # ---- ASYMMETRIC: σ-phylo only ----------------------------------------
     if asymmetric
@@ -618,11 +624,27 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
             g .= _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
             g
         end
+        # A4c penalized-MAP: one σ-phylo SD, at index pμ+pψ+1 on the log scale.
+        # `asym_obj` is deliberately left UNPENALIZED so `ml_nll` below stays the
+        # data log-likelihood; only the optimiser, the Wald curvature and the
+        # profile root-find see the penalized versions.
+        _ipen = pμ + pψ + 1
+        _asym_grad_raw(θ) = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
+        pen_obj, pen_gradf = if penalty === nothing
+            asym_obj, _asym_grad_raw
+        else
+            (θ -> asym_obj(θ) + _phylo_pen_apply_single!(nothing, penalty, θ, _ipen)),
+            (θ -> (g = _asym_grad_raw(θ); _phylo_pen_apply_single!(g, penalty, θ, _ipen); g))
+        end
+        # A LOCAL BINDING, not `pen_grad!(g, θ) = ...`: the named form would define
+        # three methods of one module-level `pen_grad!` across the three blocks,
+        # which is method overwriting and fails precompilation.
+        pen_grad! = (g, θ) -> (g .= pen_gradf(θ); g)
         βμ0 = Xμ \ y
         βψ0 = zeros(pψ)
         logL22_0 = log(0.3)
         θ0 = vcat(βμ0, βψ0, logL22_0)
-        θ̂, conv = _glsp_optimise(asym_obj, asym_grad!, θ0; g_tol = g_tol)
+        θ̂, conv = _glsp_optimise(pen_obj, pen_grad!, θ0; g_tol = g_tol)
         ml_nll = asym_obj(θ̂); reml_nll = NaN
         if reml
             asym_grad_fn(θ) = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
@@ -648,13 +670,16 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
                 if reml
                     _glsp_reml_vcov(θ -> _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ), θ̂, pμ)
                 else
+                    # FD of the PENALIZED gradient when a penalty is in force, so the
+                    # reported curvature is the MAP curvature (drmTMB says the same:
+                    # penalized SEs are credible-interval-shaped, not frequentist).
                     h = 1e-4; np = length(θ̂)
                     H = zeros(np, np)
                     for j in 1:np
                         tp = copy(θ̂); tp[j] += h
                         tm = copy(θ̂); tm[j] -= h
-                        gp = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, tp, Zη, Zψ)
-                        gm = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, tm, Zη, Zψ)
+                        gp = pen_gradf(tp)
+                        gm = pen_gradf(tm)
                         H[:, j] .= (gp .- gm) ./ (2h)
                     end
                     # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
@@ -685,13 +710,17 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
         # cell: Ayumi's collapsing σ-SDs). Reports `[0, x]` honestly when the scale
         # signal is absent. Opt-in (profile_ci) — the root-find re-fits the route NLL.
         if profile_ci
-            asym_nll_θ(θ)  = _glsp_asym_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
-            asym_grad_θ(θ) = _glsp_asym_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
-            ci_s = _glsp_profile_ci(asym_nll_θ, asym_grad_θ, θ̂, pμ + pψ + 1)
+            # Profile off the PENALIZED objective under a penalty, so the interval and
+            # the point estimate come from the same surface.
+            ci_s = _glsp_profile_ci(pen_obj, pen_gradf, θ̂, pμ + pψ + 1)
             scales[:profile_ci_sd_sigma] = [ci_s.sd_lo, ci_s.sd_hi]
         end
         fit = DrmFit(fam, blocks, names, θ̂, V, -nll_val, n, conv, means, obs, scales)
-        return reml ? _withreml(fit, -reml_nll, -ml_nll) : fit
+        fit = reml ? _withreml(fit, -reml_nll, -ml_nll) : fit
+        if penalty !== nothing
+            fit = _withmap(fit, _phylo_pen_apply_single!(nothing, penalty, θ̂, _ipen), penalty)
+        end
+        return fit
     end
 
     # ---- BOTH-PHYLO: separate (MUST-HAVE) or coupled ----------------------
@@ -711,10 +740,27 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
             g .= _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
             g
         end
+        # A4c penalized-MAP: TWO independent phylo SDs at pμ+pψ+1 and pμ+pψ+2. This
+        # block constrains the mean↔σ phylo correlation to zero, so there is no
+        # correlation parameter here and `cor_sd` is REFUSED (not silently ignored)
+        # — see `_phylo_pen_apply_separate!`. `sep_obj` stays unpenalized so
+        # `ml_nll` remains the data log-likelihood.
+        _isd1 = pμ + pψ + 1; _isd2 = pμ + pψ + 2
+        _sep_grad_raw(θ) = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
+        pen_obj, pen_gradf = if penalty === nothing
+            sep_obj, _sep_grad_raw
+        else
+            (θ -> sep_obj(θ) + _phylo_pen_apply_separate!(nothing, penalty, θ, _isd1, _isd2)),
+            (θ -> (g = _sep_grad_raw(θ); _phylo_pen_apply_separate!(g, penalty, θ, _isd1, _isd2); g))
+        end
+        # A LOCAL BINDING, not `pen_grad!(g, θ) = ...`: the named form would define
+        # three methods of one module-level `pen_grad!` across the three blocks,
+        # which is method overwriting and fails precompilation.
+        pen_grad! = (g, θ) -> (g .= pen_gradf(θ); g)
         βμ0 = Xμ \ y
         βψ0 = zeros(pψ)
         θ0 = vcat(βμ0, βψ0, log(0.3), log(0.3))   # [βμ; βψ; logL11; logL22]
-        θ̂, conv = _glsp_optimise(sep_obj, sep_grad!, θ0; g_tol = g_tol)
+        θ̂, conv = _glsp_optimise(pen_obj, pen_grad!, θ0; g_tol = g_tol)
         ml_nll = sep_obj(θ̂); reml_nll = NaN
         if reml
             sep_grad_fn(θ) = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
@@ -745,8 +791,8 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
                     for j in 1:np
                         tp = copy(θ̂); tp[j] += h
                         tm = copy(θ̂); tm[j] -= h
-                        gp = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, tp, Zη, Zψ)
-                        gm = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, tm, Zη, Zψ)
+                        gp = pen_gradf(tp)
+                        gm = pen_gradf(tm)
                         H[:, j] .= (gp .- gm) ./ (2h)
                     end
                     # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
@@ -783,15 +829,19 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
         # `[0, x]` at the boundary, where the Wald V is singular). Opt-in
         # (profile_ci) — the root-find re-optimises the route's own NLL per endpoint.
         if profile_ci
-            sep_nll_θ(θ)  = _glsp_sep_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
-            sep_grad_θ(θ) = _glsp_sep_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
-            ci_s = _glsp_profile_ci(sep_nll_θ, sep_grad_θ, θ̂, pμ + pψ + 2)
-            ci_m = _glsp_profile_ci(sep_nll_θ, sep_grad_θ, θ̂, pμ + pψ + 1)
+            # Profile the PENALIZED surface under a penalty, so the interval and the
+            # point estimate come from the same objective.
+            ci_s = _glsp_profile_ci(pen_obj, pen_gradf, θ̂, pμ + pψ + 2)
+            ci_m = _glsp_profile_ci(pen_obj, pen_gradf, θ̂, pμ + pψ + 1)
             scales[:profile_ci_sd_sigma] = [ci_s.sd_lo, ci_s.sd_hi]
             scales[:profile_ci_sd_mu]    = [ci_m.sd_lo, ci_m.sd_hi]
         end
         fit = DrmFit(fam, blocks, names, θ̂, V, -nll_val, n, conv, means, obs, scales)
-        return reml ? _withreml(fit, -reml_nll, -ml_nll) : fit
+        fit = reml ? _withreml(fit, -reml_nll, -ml_nll) : fit
+        if penalty !== nothing
+            fit = _withmap(fit, _phylo_pen_apply_separate!(nothing, penalty, θ̂, _isd1, _isd2), penalty)
+        end
+        return fit
 
     else
         # COUPLED block: 3 free variance params [logL11, L21, logL22]
@@ -815,10 +865,28 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
             g .= _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
             g
         end
+        # A4c penalized-MAP: the ONLY block with a live phylo correlation. λ =
+        # [logL11, L21, logL22] is a Cholesky factor, so the SD penalty applies to
+        # log(L11) and log(sqrt(L21²+L22²)), and `cor_sd` — when asked for — applies
+        # to atanh(L21/sqrt(L21²+L22²)), which is drmTMB's `eta_cor_phylo`. Penalising
+        # L21 itself would be a different prior. `coup_obj` stays unpenalized so
+        # `nll_val` below remains the data log-likelihood.
+        _i0 = pμ + pψ + 1
+        _coup_grad_raw(θ) = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ)
+        pen_obj, pen_gradf = if penalty === nothing
+            coup_obj, _coup_grad_raw
+        else
+            (θ -> coup_obj(θ) + _phylo_pen_apply_coupled!(nothing, penalty, θ, _i0)),
+            (θ -> (g = _coup_grad_raw(θ); _phylo_pen_apply_coupled!(g, penalty, θ, _i0); g))
+        end
+        # A LOCAL BINDING, not `pen_grad!(g, θ) = ...`: the named form would define
+        # three methods of one module-level `pen_grad!` across the three blocks,
+        # which is method overwriting and fails precompilation.
+        pen_grad! = (g, θ) -> (g .= pen_gradf(θ); g)
         βμ0 = Xμ \ y
         βψ0 = zeros(pψ)
         θ0 = vcat(βμ0, βψ0, log(0.3), 0.0, log(0.3))
-        θ̂, conv = _glsp_optimise(coup_obj, coup_grad!, θ0; g_tol = g_tol)
+        θ̂, conv = _glsp_optimise(pen_obj, pen_grad!, θ0; g_tol = g_tol)
         nll_val = coup_obj(θ̂)
         βμ̂ = θ̂[1:pμ]; βψ̂ = θ̂[pμ+1:pμ+pψ]
         λ̂ = θ̂[pμ+pψ+1:pμ+pψ+3]
@@ -832,8 +900,8 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
                 for j in 1:np
                     tp = copy(θ̂); tp[j] += h
                     tm = copy(θ̂); tm[j] -= h
-                    gp = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, tp, Zη, Zψ)
-                    gm = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, tm, Zη, Zψ)
+                    gp = pen_gradf(tp)
+                    gm = pen_gradf(tm)
                     H[:, j] .= (gp .- gm) ./ (2h)
                 end
                 # PD-guard: at the variance boundary H is singular and `inv` returns GARBAGE
@@ -869,7 +937,11 @@ function _fit_gaussian_locscale_phylo(fam::Gaussian, y, Xμ, Xψ, gidx, G, Q,
         scales[:lambda_sd_mu]    = [comp.sd_mu]
         scales[:lambda_sd_sigma] = [comp.sd_psi]
         scales[:lambda_cor]      = [comp.cor_mu_psi]
-        return DrmFit(fam, blocks, names, theta_out, V_out, -nll_val, n, conv, means, obs, scales)
+        fit = DrmFit(fam, blocks, names, theta_out, V_out, -nll_val, n, conv, means, obs, scales)
+        if penalty !== nothing
+            fit = _withmap(fit, _phylo_pen_apply_coupled!(nothing, penalty, θ̂, _i0), penalty)
+        end
+        return fit
     end
 end
 
