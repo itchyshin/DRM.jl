@@ -86,7 +86,9 @@ include("gamma.jl")
 include("lognormal.jl")
 include("bivariate_student.jl")  # drmTMB `biv_student()`: exact bivariate-t density,
                                  # ONE shared nu (logm2 link). Needs student.jl + gaussian_bivariate.jl.
-include("bivariate_lognormal.jl") # drmTMB `biv_lognormal()`: closed form — delegates to the
+include("bivariate_lognormal.jl")
+include("associate_pairs.jl")    # drmTMB `associate_pairs()`: STAGED frozen-margin
+                                 # latent-normal association (two-stage, not a joint fit). # drmTMB `biv_lognormal()`: closed form — delegates to the
                                  # Gaussian bivariate kernel on log(y) plus a Jacobian.
                                  # Must follow lognormal.jl (defines LogNormal) and
                                  # gaussian_bivariate.jl (defines the kernel it reuses).
@@ -157,7 +159,8 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
        coevolution_cor, coevolution_vc, coevolution_summary,
        reml_loglik, ml_loglik, estimation_method,
        drm_bridge, drm_bridge_inference,
-       drm_listwise
+       drm_listwise,
+       associate_pairs, latent_normal, association, PairAssociation
 
 # Public API — post-fit accessors for the cross-family bivariate fit
 # (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).
