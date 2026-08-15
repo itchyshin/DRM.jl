@@ -135,3 +135,31 @@ normal state of the mean-only sparse phylo route. Reproduces on a plain ML fit o
 NEXT: A4d-1 (corpair marker — grammar, so DRM_PARITY_TESTS=1 is MANDATORY and its output must be
 attached to the PR) -> A4d-2 -> A4e (parity_ledger deliberately-not-ported class; the 22-gap
 count decomposes as 9 already-implemented + 7 parked/not-ported + 6 genuinely owed).
+
+=== A4d DONE 2026-08-15 (same branch feat/a4c-phylo-penalty) ===
+BUILT: src/introspection.jl — profile_targets(fit; ready_only) + structured_effects(fit).
+21 assertions. profile_targets mirrors profile_result's dispatch BRANCH FOR BRANCH so
+`profile_ready` tracks what the profiler actually does; pinned on 3 routes that differ
+(fixed-effect locscale ready; sigma-phylo NOT ready and profile_result really does throw;
+sigma-phylo + profile_ci=true flips ONLY the SD blocks). A readiness column that always says
+"ready" is worse than none — it turns a clear error into a broken promise.
+
+REFUSED, both with written claim_boundary — this is the RESULT, not a shortfall:
+ (1) A4d-1 `corpair` BLOCKED on two independent grounds. StatsModels' @formula rejects BOTH
+     keyword args (`ArgumentError: non-call expression encountered: Expr(:kw, ...)`) AND string
+     literals (`MethodError: no method matching parse!(::String, ::Bool)`) at MACRO-EXPANSION
+     time — so drmTMB's syntax is not expressible, the paste-and-run contract cannot be met,
+     and DRM.jl cannot even intercept the paste to give a better error. Second blocker: the
+     fitted drmTMB route needs the labelled covariance-block grammar (1|p|id), absent here.
+     Lifting it = an owner decision on a @drmformula macro, i.e. a front-end slice.
+ (2) `meta_vcov_bivariate` BLOCKED. meta_V is DIAGONAL-ONLY (gaussian_meta.jl:16 says so) and
+     the bivariate route ignores metav entirely, so the port would export a constructor whose
+     output nothing can consume — the exact export-name-without-capability antipattern A4e exists
+     to fix.
+
+DOC BUG, real, not fixed here: docs/src/rosetta.md:117 maps corpair(fit) -> corpairs(fit),
+implying corpair is an accessor. It is a marker.
+
+NEXT: A4e (parity_ledger deliberately-not-ported class + name-alias map; the 22-gap headline
+decomposes as 9 already-implemented + 7 parked/not-ported + 6 genuinely owed, of which A4c
+closed 2 and A4d closed 2 more and blocked 2).
