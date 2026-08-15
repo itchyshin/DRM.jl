@@ -1,24 +1,8 @@
-GOAL: see GOAL.md.   STATE: `engine="julia"` catch-up campaign. A0+A1 MERGED to main (#408). A2a MERGED (#409). A3 re-scoped; **A3a + A3b + A3c design + A3c-1 DONE** on `docs/a3-rescope-bivariate-nongaussian` (PR #410, auto-merge OFF — it touches src/). NEXT = A3b `biv_student`.
-ARCS DONE (verified): A0 parity ledger (`tools/parity_ledger.py`; anchor drmTMB 0.7.0 `f5ec53634`; 25 export gaps / 11 rows / 14 closed gates; corrected 3 stale premises from a 987-commit-behind drmTMB checkout); A1 vcov guard (`src/vcov_guard.jl`, 45 sites / 17 files, 18 suites pass, VA scaffold 15/15 — unblocks drmTMB #406).
-ARC DONE: **A2a result-shape contract (Julia side) COMPLETE.** The 5-function 'distributional outputs' gap is ONE contract: per-dpar response-scale columns. Shipped: `dpars` (in-sample), `trials` (own key — it is per-row context, not a dpar), `dpars_newdata` (fresh rows, closes the vignette's "location parameters only" gap). Fixed a real defect: for `zero_one_beta` drmTMB's `mu` dpar is the INTERIOR beta mean, not `fitted()` — shipping the wrong one is a silently wrong density. Audited every family against drmTMB's dpar table; all others agree.
-A2a REMAINDER — NOT implementable without an owner decision: **`V_known` / `meta_V`**. `gaussian_meta.jl` stores `scales[:sigma] = sqrt(v + sigma^2)` (TOTAL), but drmTMB's meta `sigma` dpar is the heterogeneity alone with `V_known` separate — shipping both double-counts. The obvious fix (extra `scales` keys) silently breaks `sigma()`, which returns a bare vector only when `scales` has exactly one key (`gaussian_core.jl:975`). **Decision needed on `sigma()`'s public contract. Until then the meta cell must not be admitted for post-fit.** Scale/variance Wald blocks are an R-side (A2b) item: the payload already carries full `vcov` + `vcov_names`.
-OPEN GATES (need human): (1) drmTMB PR timing — before or after 0.7.0 ships (its tree has 9 live lanes + release slice #959); (2) ~~A3 re-scope~~ **DONE** — split into A3a `biv_lognormal` (0.5–1 d, closed-form, recommended NEXT), A3b `biv_student` (1–1.5 d, shared ν), A3c staged `biv_associate` (2–3 d, needs its own design pass). See `docs/dev-log/design/2026-08-14-a3-rescope-bivariate-nongaussian.md`.
-TRUTH LIVES IN: branch `feat/drmtmb-catchup-ledger` (commits `7e04a424`, `e4c8931f`, `4bf5cd29`, `08bfcfc2`; PR #408); origin/main `d1da2fb9`; ledger `docs/dev-log/evidence/2026-08-14-drmtmb-parity-ledger.md`.
-RESUME: You are drm-claude-catchup. READ FIRST: LOOP/GOAL.md → LOOP/checkpoint.md → LOOP/arcs.md → AGENTS.md. WORKSPACE: `/Users/z3437171/Dropbox/Github Local/DRM.jl` on `feat/drmtmb-catchup-ledger`. Re-run `python3 tools/parity_ledger.py --drmtmb ../drmTMB --ref origin/main` before choosing work — the anchor moves. CONTINUE FROM: A2a remaining items (design note lists them). Pause at: the two open gates above; any drmTMB edit outside the narrow lane; #49; Registrator.
+# Checkpoint — OVERWRITTEN every arc (a pointer to truth, not a log)
 
-BLOCKER RESOLVED (2026-08-14): the GOAL's DEFER clause fences re-anchoring to 0.7.0, so the anchor in force is **drmTMB 0.6.0 — which IS installed**. The parity comparison ran. `tools/parity_fixture.R` now produces the promotion evidence: 5/5 cells PARITY_PASS (Gaussian loc-scale 4.56e-06; Gaussian intercept-only 2.49e-10; **fe_poisson 1.03e-12, fe_nbinom2 2.79e-08, fe_gamma 3.91e-06**), tol 1e-4. A0's 0.7.0 re-anchor is ahead of the goal — treat 0.6.0 as the anchor until the owner lifts the DEFER fence.
-HEADLINE RESOLVED — NO EDIT NEEDED: `drm_julia_family_tag()` on drmTMB `origin/main` routes nine Workflow G fixed-effect families UNCONDITIONALLY (gaussian, biv_gaussian, student, lognormal, poisson, nbinom2, gamma, beta, binomial) per PR #499 (2026-08-09). FE non-Gaussian already works through `engine="julia"` upstream; the refusal this session reproduced is the INSTALLED 0.6.0 build. Editing the gate would duplicate an existing fix. Evidence + resolution: `docs/dev-log/evidence/2026-08-14-fe-nongaussian-parity.md`.
-OWNER DECISION REQUIRED for the DELIVERABLE: the goal asks rows to reach `supported`, but **no row is `supported` on drmTMB origin/main** — all 11 are `partial`/`experimental`/`unsupported` by drmTMB's deliberate claim-demotion discipline. Promoting rows is a drmTMB CLAIM decision inside its own release process, not a DRM.jl change. Reconcile the campaign's target vocabulary with that discipline before any promotion.
-ALSO OWNER: install drmTMB 0.7.0 from origin/main? That is the only thing that changes what THIS machine can route (rebuilds TMB in the R library).
-
-AUTONOMOUS RUN (2026-08-15): owner asked for ~10h unattended work.
-DONE THIS RUN: A3b `biv_student` (PARITY_PASS coef 3.117e-06 / logLik 1.026e-09; merged into #410's branch via #411);
-A3c DESIGN PASS (`docs/dev-log/design/2026-08-15-a3c-design-staged-association.md`);
-A3c-1 `gaussian_bernoulli` staged association (8-seed bias check: eta mean 0.5433 vs true 0.55, sd 0.0108).
-BRANCH: `docs/a3c-design` (stacked on #410's branch). PR #410 carries re-scope + A3a + A3b, auto-merge armed, CI running.
-OWNER DECISIONS OUTSTANDING (do not self-approve):
- (1) **QuadGK.jl dependency** — blocks A3c-2 (the four quadrature pair classes). Without it drmTMB's integration-error diagnostics cannot be matched.
- (2) **`sigma()` public contract** — blocks `V_known`/meta post-fit (A2a remainder).
- (3) **install drmTMB 0.7.0** — the only thing that changes what this machine can route.
- (4) **drmTMB PR timing** — the narrow lane stays untouched until answered.
-FENCES HELD UNATTENDED: no drmTMB edits; no #49; no Registrator; no q4 core; nothing merged without green CI.
+- DONE:
+- IN PROGRESS:
+- NEXT:
+- OPEN GATE: none
+- WHERE TRUTH LIVES: this worktree's branch; artefacts under LOOP/
+- RESUME: read LOOP/GOAL.md → LOOP/checkpoint.md → LOOP/ultra-plan.md, then continue from NEXT.
