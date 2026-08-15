@@ -1,0 +1,3 @@
+| slice | date | change | check | result |
+|---|---|---|---|---|
+| A3c-2 pair classes | 2026-08-15 | `src/associate_pairs.jl` — all four remaining pair classes. **Design correction:** `gaussian_nbinom2` is CLOSED FORM (Gaussian latent observed ⇒ conditional interval probability), so only **three** classes need quadrature, not four. QuadGK rectangle probability + `integration_diagnostics()` retaining per-row `abs_error` | 5-seed recovery study at n=2000; likelihood-peak check with TRUE margins; full `test_associate_pairs.jl` | **ALL PASS** — all 5 classes recover (means 0.539–0.547 vs true 0.55, max\|dev\| ≤ 0.040); loglik peaks exactly at 0.55 with true margins; worst relative quadrature error < 1e-6 |

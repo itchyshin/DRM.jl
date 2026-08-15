@@ -20,7 +20,9 @@
 # deliberately deferred (design note
 # `docs/dev-log/design/2026-08-15-a3c-design-staged-association.md`).
 
-using Distributions: Normal, cdf, logcdf, logpdf, quantile
+using Distributions: Normal, cdf, logcdf, logccdf, logpdf, pdf, quantile
+import Distributions
+import QuadGK
 
 """
     LatentNormal
@@ -63,6 +65,7 @@ struct PairAssociation
     near_boundary::Bool
     multistart_disagreement::Bool
     nobs::Int
+    components::Any          # frozen margins, kept for integration diagnostics
 end
 
 const _ASSOC_ETA_GUARD = 0.999999
@@ -104,8 +107,7 @@ function associate_pairs(fit_1::DrmFit, fit_2::DrmFit; kernel = nothing,
     association === nothing || _assoc_intercept_only(association)
 
     pc, comps = _assoc_components(fit_1, fit_2)
-    n = length(comps.gaussian_y)
-    loglik = alpha -> _assoc_loglik_gaussian_bernoulli(alpha, comps)
+    loglik, n = _assoc_loglik_for(pc, comps)
 
     # Multistart on a bounded scalar: the profile is not assumed unimodal, and
     # drmTMB starts from -1, 0, 1 for the intercept-only case.
@@ -139,7 +141,18 @@ function associate_pairs(fit_1::DrmFit, fit_2::DrmFit; kernel = nothing,
     disagree = length(finite) < 2 || (maximum(finite) - minimum(finite)) > tol
 
     return PairAssociation(pc, [best_a], ["(Intercept)"], η, -best_o,
-                           [score], [curv], abs(η) >= 0.995, disagree, n)
+                           [score], [curv], abs(η) >= 0.995, disagree, n, comps)
+end
+
+# One dispatch point: two closed-form classes, three rectangle classes.
+function _assoc_loglik_for(pc::Symbol, c)
+    pc === :gaussian_bernoulli &&
+        return (alpha -> _assoc_loglik_gaussian_bernoulli(alpha, c)), length(c.gaussian_y)
+    pc === :gaussian_nbinom2 &&
+        return (alpha -> _assoc_loglik_gaussian_nbinom2(alpha, c)), length(c.gaussian_y)
+    pc in (:bernoulli_bernoulli, :bernoulli_nbinom2, :nbinom2_nbinom2) &&
+        return (alpha -> _assoc_loglik_rectangle(alpha, c)), length(c.e1.lower)
+    throw(ArgumentError("associate_pairs: no likelihood for pair class `$pc`."))
 end
 
 # Bounded scalar optimisation by golden-section on [-8, 8]: the association scale
@@ -182,16 +195,158 @@ function _assoc_intercept_only(association)
     return association
 end
 
+# ── Latent-interval machinery for DISCRETE margins ───────────────────────────
+#
+# A discrete margin does not pin its latent to a point; it censors it to an
+# interval. For a count `y` with CDF F, the latent normal lies in
+# `[Φ⁻¹(F(y−1)), Φ⁻¹(F(y))]` — the standard PIT representation. Everything is
+# carried in LOG space, and the tail is chosen per row, because
+# `log(exp(a) − exp(b))` loses all its digits when the two are close.
+
+"""
+    _assoc_logdiffexp(a, b)
+
+`log(exp(a) − exp(b))` for `a ≥ b`, computed without forming either exponential.
+Returns `-Inf` when the two are indistinguishable rather than a negative
+argument to `log`.
+"""
+function _assoc_logdiffexp(a::Real, b::Real)
+    (isfinite(a) && a > b) || return -Inf
+    d = b - a
+    d < -700 && return a                    # exp(d) underflows; the difference is a
+    e = -expm1(d)                           # 1 − exp(b−a), accurate as d → 0⁻
+    e > 0 || return -Inf
+    return a + log(e)
+end
+
+# Latent interval endpoints (z scale) for an NB2 count margin.
+# drmTMB's convention, shared with DRM.jl: size = 1/sigma^2.
+function _assoc_nb2_endpoints(y::AbstractVector, mu::AbstractVector,
+                              sigma::AbstractVector)
+    n = length(y)
+    lower = Vector{Float64}(undef, n)
+    upper = Vector{Float64}(undef, n)
+    Z = Normal()
+    @inbounds for i in 1:n
+        r = 1 / (sigma[i]^2)                       # NB2 size = 1/sigma^2
+        p = r / (r + mu[i])                        # Distributions' success prob
+        d = Distributions.NegativeBinomial(r, p)
+        yi = y[i]
+        upper[i] = quantile(Z, clamp(cdf(d, yi), 0.0, 1.0))
+        lower[i] = yi > 0 ? quantile(Z, clamp(cdf(d, yi - 1), 0.0, 1.0)) : -Inf
+    end
+    return (lower = lower, upper = upper)
+end
+
+# Latent interval endpoints for a literal Bernoulli margin: y = 1 ⇒ z above the
+# threshold, y = 0 ⇒ below it.
+function _assoc_bernoulli_endpoints(y::AbstractVector, p::AbstractVector)
+    n = length(y)
+    lower = Vector{Float64}(undef, n)
+    upper = Vector{Float64}(undef, n)
+    Z = Normal()
+    @inbounds for i in 1:n
+        thr = quantile(Z, 1 - p[i])                # qnorm(p, lower = FALSE)
+        if y[i] == 1
+            lower[i], upper[i] = thr, Inf
+        else
+            lower[i], upper[i] = -Inf, thr
+        end
+    end
+    return (lower = lower, upper = upper)
+end
+
+# log P(z2 ∈ [lo, hi] | z1) for a bivariate standard normal with correlation eta,
+# where z1 is OBSERVED. Closed form — a difference of conditional normal CDFs,
+# with the tail chosen to avoid catastrophic cancellation (drmTMB's branch rule).
+function _assoc_cond_interval_logprob(lo::Float64, hi::Float64, z1::Float64,
+                                      η::Float64, s::Float64)
+    a = (lo - η * z1) / s
+    b = (hi - η * z1) / s
+    Z = Normal()
+    if b <= 0                       # both in the left tail
+        return _assoc_logdiffexp(logcdf(Z, b), logcdf(Z, a))
+    elseif a >= 0                   # both in the right tail — use survival
+        return _assoc_logdiffexp(logccdf(Z, a), logccdf(Z, b))
+    else                            # straddles 0; plain lower tail is accurate
+        return _assoc_logdiffexp(logcdf(Z, b), logcdf(Z, a))
+    end
+end
+
+# Rectangle probability for the BOTH-CENSORED classes, reduced from a 2-D
+# integral to a 1-D adaptive one exactly as drmTMB does:
+#
+#     P = ∫ φ(z₁) · P(z₂ ∈ [lo₂, hi₂] | z₁) dz₁   over z₁ ∈ [lo₁, hi₁]
+#
+# QuadGK returns (value, abs_error); the error is KEPT so per-row integration
+# quality is reportable rather than assumed.
+function _assoc_rectangle_prob(lo1::Float64, hi1::Float64, lo2::Float64,
+                               hi2::Float64, η::Float64)
+    s = sqrt(1 - η * η)
+    s > 0 || return (value = 0.0, abs_error = Inf)
+    Z = Normal()
+    f = z1 -> pdf(Z, z1) * exp(_assoc_cond_interval_logprob(lo2, hi2, z1, η, s))
+    val, err = QuadGK.quadgk(f, lo1, hi1; rtol = 1e-10, maxevals = 10^5)
+    return (value = val, abs_error = err)
+end
+
 # Freeze the margins and pull out exactly what the pair likelihood consumes.
 function _assoc_components(fit_1::DrmFit, fit_2::DrmFit)
     g_idx = fit_1.family isa Gaussian ? 1 : (fit_2.family isa Gaussian ? 2 : 0)
     b_idx = fit_1.family isa Binomial ? 1 : (fit_2.family isa Binomial ? 2 : 0)
+    n_idx = fit_1.family isa NegBinomial2 ? 1 : (fit_2.family isa NegBinomial2 ? 2 : 0)
+
+    # gaussian × nbinom2 — closed form, like gaussian_bernoulli: the Gaussian
+    # latent is observed, so the count's contribution is a conditional interval
+    # probability, NOT a rectangle.
+    if g_idx != 0 && n_idx != 0 && g_idx != n_idx
+        gfit = g_idx == 1 ? fit_1 : fit_2
+        nfit = n_idx == 1 ? fit_1 : fit_2
+        gy, gmu, gsd = _assoc_gaussian_parts(gfit)
+        ny, nmu, nsig = _assoc_nb2_parts(nfit)
+        _assoc_same_rows(length(gy), length(ny))
+        return :gaussian_nbinom2,
+               (gaussian_y = gy, gaussian_mu = gmu, gaussian_sigma = gsd,
+                nb_endpoints = _assoc_nb2_endpoints(ny, nmu, nsig))
+    end
+
+    # bernoulli × nbinom2 — BOTH censored ⇒ rectangle.
+    if b_idx != 0 && n_idx != 0 && b_idx != n_idx
+        bfit = b_idx == 1 ? fit_1 : fit_2
+        nfit = n_idx == 1 ? fit_1 : fit_2
+        by, bp = _assoc_bernoulli_parts(bfit)
+        ny, nmu, nsig = _assoc_nb2_parts(nfit)
+        _assoc_same_rows(length(by), length(ny))
+        return :bernoulli_nbinom2,
+               (e1 = _assoc_bernoulli_endpoints(by, bp),
+                e2 = _assoc_nb2_endpoints(ny, nmu, nsig))
+    end
+
+    # nbinom2 × nbinom2 — BOTH censored ⇒ rectangle.
+    if fit_1.family isa NegBinomial2 && fit_2.family isa NegBinomial2
+        y1, mu1, s1 = _assoc_nb2_parts(fit_1)
+        y2, mu2, s2 = _assoc_nb2_parts(fit_2)
+        _assoc_same_rows(length(y1), length(y2))
+        return :nbinom2_nbinom2,
+               (e1 = _assoc_nb2_endpoints(y1, mu1, s1),
+                e2 = _assoc_nb2_endpoints(y2, mu2, s2))
+    end
+
+    # bernoulli × bernoulli — BOTH censored ⇒ rectangle.
+    if fit_1.family isa Binomial && fit_2.family isa Binomial
+        by1, bp1 = _assoc_bernoulli_parts(fit_1)
+        by2, bp2 = _assoc_bernoulli_parts(fit_2)
+        _assoc_same_rows(length(by1), length(by2))
+        return :bernoulli_bernoulli,
+               (e1 = _assoc_bernoulli_endpoints(by1, bp1),
+                e2 = _assoc_bernoulli_endpoints(by2, bp2))
+    end
+
     (g_idx != 0 && b_idx != 0 && g_idx != b_idx) ||
-        throw(ArgumentError("associate_pairs: this slice implements the " *
-            "`gaussian_bernoulli` pair class (one `Gaussian` fit and one `Binomial` " *
-            "fit). drmTMB also reviews gaussian×nbinom2, bernoulli×nbinom2, " *
-            "bernoulli×bernoulli and nbinom2×nbinom2; those censor BOTH latents and " *
-            "need a rectangle probability, which is not ported yet."))
+        throw(ArgumentError("associate_pairs: unreviewed pair class. drmTMB admits " *
+            "exactly five: gaussian×binomial, gaussian×nbinom2, binomial×nbinom2, " *
+            "binomial×binomial and nbinom2×nbinom2. Anything else needs its own " *
+            "Arc 6 review upstream before it can be ported."))
 
     gfit = g_idx == 1 ? fit_1 : fit_2
     bfit = b_idx == 1 ? fit_1 : fit_2
@@ -217,6 +372,44 @@ function _assoc_components(fit_1::DrmFit, fit_2::DrmFit)
             binary_p = Vector{Float64}(bp))
 end
 
+# ── shared margin extractors ─────────────────────────────────────────────────
+
+function _assoc_same_rows(n1::Int, n2::Int)
+    n1 == n2 || throw(ArgumentError("associate_pairs: the two fits must share the " *
+        "same rows (got $n1 and $n2)."))
+    return nothing
+end
+
+function _assoc_gaussian_parts(f::DrmFit)
+    y = Vector{Float64}(f.obs[:mu])
+    mu = Vector{Float64}(f.means[:mu])
+    sd = f.scales[:sigma]
+    sd = length(sd) == 1 ? fill(Float64(sd[1]), length(y)) : Vector{Float64}(sd)
+    return y, mu, sd
+end
+
+function _assoc_bernoulli_parts(f::DrmFit)
+    p = Vector{Float64}(f.means[:mu])
+    y = Vector{Float64}(f.obs[:mu])
+    all(v -> v == 0 || v == 1, y) ||
+        throw(ArgumentError("associate_pairs: a binomial margin must be literal " *
+            "Bernoulli (0/1 responses, one trial per row) for the staged classes."))
+    return y, p
+end
+
+function _assoc_nb2_parts(f::DrmFit)
+    y = Vector{Float64}(f.obs[:mu])
+    mu = Vector{Float64}(f.means[:mu])
+    sg = f.scales[:sigma]
+    sg = length(sg) == 1 ? fill(Float64(sg[1]), length(y)) : Vector{Float64}(sg)
+    all(v -> v >= 0 && v == floor(v), y) ||
+        throw(ArgumentError("associate_pairs: an nbinom2 margin must be ordinary " *
+            "non-negative integer counts."))
+    return y, mu, sg
+end
+
+# ── pair likelihoods ─────────────────────────────────────────────────────────
+
 # Closed form. The Gaussian latent is OBSERVED (z), so the Bernoulli's
 # contribution is the conditional normal CDF at the shifted threshold — no
 # bivariate CDF and no quadrature is required for this pair class.
@@ -234,6 +427,72 @@ function _assoc_loglik_gaussian_bernoulli(alpha, c)
         total += logpdf(Normal(c.gaussian_mu[i], c.gaussian_sigma[i]), c.gaussian_y[i]) + lb
     end
     return total
+end
+
+# Closed form too — and this one corrects the A3c design note, which assumed all
+# four remaining classes needed quadrature. The Gaussian latent is observed, so
+# the count's censored latent contributes a conditional INTERVAL probability: a
+# difference of conditional normal CDFs, tail chosen per row.
+function _assoc_loglik_gaussian_nbinom2(alpha, c)
+    η = _assoc_eta(alpha)
+    s = sqrt(1 - η * η)
+    s > 0 || return -Inf
+    total = 0.0
+    lo, hi = c.nb_endpoints.lower, c.nb_endpoints.upper
+    @inbounds for i in eachindex(c.gaussian_y)
+        z = (c.gaussian_y[i] - c.gaussian_mu[i]) / c.gaussian_sigma[i]
+        lp = _assoc_cond_interval_logprob(lo[i], hi[i], z, η, s)
+        isfinite(lp) || return -Inf
+        total += logpdf(Normal(c.gaussian_mu[i], c.gaussian_sigma[i]), c.gaussian_y[i]) + lp
+    end
+    return total
+end
+
+# The three BOTH-CENSORED classes share one likelihood: a rectangle probability
+# per row, via the 1-D adaptive integral. Identical code for
+# bernoulli×bernoulli, bernoulli×nbinom2 and nbinom2×nbinom2 — only the endpoint
+# construction differs, and that already happened in `_assoc_components`.
+function _assoc_loglik_rectangle(alpha, c)
+    η = _assoc_eta(alpha)
+    abs(η) < 1 || return -Inf
+    total = 0.0
+    l1, u1 = c.e1.lower, c.e1.upper
+    l2, u2 = c.e2.lower, c.e2.upper
+    @inbounds for i in eachindex(l1)
+        r = _assoc_rectangle_prob(l1[i], u1[i], l2[i], u2[i], η)
+        (isfinite(r.value) && r.value > 0) || return -Inf
+        total += log(r.value)
+    end
+    return total
+end
+
+"""
+    integration_diagnostics(a::PairAssociation)
+
+Per-row quadrature quality for a both-censored staged fit, or `nothing` for the
+closed-form classes.
+
+Returns the rectangle probability and QuadGK's absolute error estimate per row,
+plus the worst relative error. drmTMB retains `abs.error` from its own adaptive
+integration for exactly this reason: a rectangle probability that silently lost
+precision would corrupt the association without any visible failure.
+"""
+function integration_diagnostics(a::PairAssociation)
+    a.components === nothing && return nothing
+    c = a.components
+    (haskey(c, :e1) && haskey(c, :e2)) || return nothing
+    η = a.eta
+    n = length(c.e1.lower)
+    val = Vector{Float64}(undef, n)
+    err = Vector{Float64}(undef, n)
+    @inbounds for i in 1:n
+        r = _assoc_rectangle_prob(c.e1.lower[i], c.e1.upper[i],
+                                  c.e2.lower[i], c.e2.upper[i], η)
+        val[i], err[i] = r.value, r.abs_error
+    end
+    rel = [v > 0 ? e / v : Inf for (v, e) in zip(val, err)]
+    return (probability = val, abs_error = err, relative_error = rel,
+            worst_relative_error = maximum(rel))
 end
 
 """
