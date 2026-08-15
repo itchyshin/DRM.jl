@@ -4,3 +4,5 @@ base_gaussian_intercept_only	Gaussian, intercept-only sigma	PARITY_PASS	2.491600
 fe_poisson	Poisson, fixed effects	PARITY_PASS	1.02884367692013e-12	-244.763152612771	-244.763152612771	1.70530256582424e-13	1e-04	gate REFUSES engine='julia'; compared vs DRM.jl bridge payload
 fe_nbinom2	NegBinomial2, fixed effects	PARITY_PASS	2.78719519686277e-08	-259.886625779688	-259.886625779688	2.27373675443232e-13	1e-04	gate REFUSES engine='julia'; compared vs DRM.jl bridge payload
 fe_gamma	Gamma (log link), fixed effects	PARITY_PASS	3.91165791746584e-06	-172.781768721901	-172.781768719151	2.74985723081045e-09	1e-04	gate REFUSES engine='julia'; compared vs DRM.jl bridge payload
+biv_lognormal	Bivariate lognormal, fixed effects	PARITY_PASS	9.1493284359867e-07	-963.280401630484	-963.280401630477	7.38964445190504e-12	1e-04	capability parity vs DRM.jl bridge payload; not bridge admission
+biv_student	Bivariate Student-t, fixed effects	PARITY_PASS	3.11693139554148e-06	-2239.20897620934	-2239.20897620831	1.02591002359986e-09	1e-04	capability parity vs DRM.jl bridge payload; not bridge admission

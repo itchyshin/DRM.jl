@@ -4,7 +4,7 @@
 # side deliberately boring for JuliaCall: strings, column tables, plain arrays,
 # and dictionaries cross the boundary; DRM.jl objects stay on the Julia side.
 
-const _BRIDGE_BIVARIATE_KEYS = Set((:mu1, :mu2, :sigma1, :sigma2, :rho12))
+const _BRIDGE_BIVARIATE_KEYS = Set((:mu1, :mu2, :sigma1, :sigma2, :nu, :rho12))
 const _BRIDGE_TREE_CACHE = Dict{UInt64,Tuple{String,Any}}()
 const _BRIDGE_TREE_CACHE_MAX = 4
 
@@ -332,6 +332,8 @@ function _bridge_family(family::AbstractString)
     fam in ("gaussian", "normal") && return Gaussian()
     fam in ("biv_gaussian", "gaussian_bivariate", "bivariate_gaussian") && return Gaussian()
     fam in ("student", "student_t", "student-t") && return Student()
+    # drmTMB's `biv_student()` — bivariate-ness is a FORMULA property here.
+    fam in ("biv_student", "student_bivariate", "bivariate_student") && return Student()
     fam == "poisson" && return Poisson()
     fam in ("nbinom2", "negbinomial2", "negative_binomial_2") && return NegBinomial2()
     fam in ("truncated_nbinom2", "truncated_negbinomial2") && return TruncatedNegBinomial2()
@@ -340,6 +342,10 @@ function _bridge_family(family::AbstractString)
     fam == "binomial" && return Binomial()
     fam == "gamma" && return Gamma()
     fam == "lognormal" && return LogNormal()
+    # drmTMB's `biv_lognormal()`. Bivariate-ness is a property of the FORMULA in
+    # DRM.jl (a `BivariateDrmFormula`), not of the family type — exactly as
+    # `biv_gaussian` maps to `Gaussian()` above.
+    fam in ("biv_lognormal", "lognormal_bivariate", "bivariate_lognormal") && return LogNormal()
     fam in ("zero_one_beta", "zeroonebeta") && return ZeroOneBeta()
     fam == "tweedie" && return Tweedie()
     fam in ("cumulative_logit", "ordinal") && return CumulativeLogit()
@@ -366,10 +372,13 @@ function _bridge_formula(formula, family::AbstractString)
     if any(k -> k in _BRIDGE_BIVARIATE_KEYS, keys(keyed))
         (isempty(positional) && haskey(keyed, :mu1) && haskey(keyed, :mu2)) ||
             throw(ArgumentError("drm_bridge: bivariate formulas need keyed `mu1` and `mu2` entries"))
+        # `nu` is threaded through for `biv_student`; omitted (not defaulted) for
+        # every other bivariate family so their bundles stay unchanged.
         return bf(; mu1 = keyed[:mu1],
                     mu2 = keyed[:mu2],
                     sigma1 = get(keyed, :sigma1, nothing),
                     sigma2 = get(keyed, :sigma2, nothing),
+                    nu = get(keyed, :nu, nothing),
                     rho12 = get(keyed, :rho12, nothing))
     end
 
