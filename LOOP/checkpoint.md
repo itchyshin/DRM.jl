@@ -100,3 +100,38 @@ Everything is committed and PUSHED. Nothing exists only on local disk.
   A-nb2/A-sigma/A4-design are reachable only from the lane branch, not from main.
 - drmTMB #1032: OPEN and must STAY open until the owner decides timing. NEVER merge.
 - A4c is NOT started -- deliberately not begun rather than left mid-flight.
+
+=== A4c DONE 2026-08-15 (branch feat/a4c-phylo-penalty, cut from the lane tip) ===
+`src/phylo_penalty.jl` — drm_phylo_penalty() + drm_phylo_penalty_sweep(), wired into the
+objective AND the analytic gradient of all four phylo blocks (mean-only sparse, asymmetric,
+separate, coupled). New `penalty=` kwarg on drm(); `:MAP` estimator tag; phylo_penalty/penalty
+fields on DrmFit (via a 19-arg compat constructor, so none of the ~70 existing call sites moved).
+PARITY 3/3 PASS vs native drmTMB 0.7.0 (ML baseline 9.66e-09, sd_u=0.5 7.46e-07, sd_u=0.25
+9.06e-08; tol 1e-4). test_phylo_penalty.jl = 73 assertions, all pass.
+
+TWO DECISIONS worth not re-litigating:
+ (1) `cor_sd` penalises atanh(cor) recovered from the Cholesky, NOT L21 itself. Penalising L21
+     would be a DIFFERENT PRIOR wearing drmTMB's name. Chain rule is closed form
+     (dz/dL21 = 1/r, dz/dlogL22 = -L21/r) so the analytic gradients survive; FD-verified 1e-9.
+ (2) The penalty value lives in a REAL DrmFit field, not a `scales` key. A scales key would have
+     re-broken sigma() exactly as A-sigma documented (gaussian_core.jl:975).
+
+TWO FINDINGS (evidence: docs/dev-log/evidence/2026-08-15-a4c-phylo-penalty-parity.md):
+ (1) TREE SCALE. drmTMB standardises via ape::vcv(tree, corr=TRUE); DRM.jl uses the branch
+     lengths as given. sd_drmTMB = sd_DRM * sqrt(tree height) — so the SAME sd_u is a DIFFERENT
+     prior unless the tree has unit height. Documented + warned in the docstring. The unpenalized
+     ML baseline cell is what caught it; without that cell it would have been debugged as a
+     penalty bug in the wrong file.
+ (2) UPSTREAM DEFECT IN drmTMB. It reads the penalty from fit$obj$report() with NO argument, so
+     TMB reports at last.par — a finite-difference perturbation 1e-3 off the optimum. Since
+     logLik <- -opt$objective + phylo_penalty, EVERY penalized drmTMB fit reports a slightly
+     wrong penalty and logLik (0.0033 at sd_u=0.5, 0.0094 at sd_u=0.25). DRM.jl matches drmTMB's
+     documented formula to 15 digits; the R value is the outlier. FILED, NOT PATCHED —
+     R/drmTMB.R is outside the narrow lane and #1032 must not be merged. OWNER DECISION.
+
+ALSO FOUND, PRE-EXISTING, NOT FIXED: check_drm throws on any fit whose vcov contains NaN — the
+normal state of the mean-only sparse phylo route. Reproduces on a plain ML fit on main.
+
+NEXT: A4d-1 (corpair marker — grammar, so DRM_PARITY_TESTS=1 is MANDATORY and its output must be
+attached to the PR) -> A4d-2 -> A4e (parity_ledger deliberately-not-ported class; the 22-gap
+count decomposes as 9 already-implemented + 7 parked/not-ported + 6 genuinely owed).

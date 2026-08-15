@@ -1321,16 +1321,29 @@ function check_drm(fit::DrmFit; grad_tol::Real=1e-3)
     mineig = minimum(ev)
     maxeig = maximum(ev)
     cnd = mineig > 0 ? maxeig / mineig : Inf
-    ok = fit.converged && (isnan(mag) || mag <= grad_tol) && pd
+    # A4c: on a penalized (MAP) fit the stored objective is the UNPENALIZED
+    # likelihood, whose gradient is deliberately NON-ZERO at the MAP optimum — the
+    # penalty's gradient is what cancels it. Scoring that as non-convergence would
+    # report a correct fit as broken, so the gradient criterion is dropped for MAP
+    # fits and `max_abs_grad` is reported for information only.
+    penalized = fit.estim_method === :MAP
+    ok = fit.converged && (penalized || isnan(mag) || mag <= grad_tol) && pd
     report = (
         converged=fit.converged,
         max_abs_grad=mag,
         vcov_posdef=pd,
         min_eigval=mineig,
         cond=cnd,
+        penalized_map=penalized,
         ok=ok,
     )
     @info "check_drm" converged = report.converged max_abs_grad = report.max_abs_grad vcov_posdef =
-        report.vcov_posdef min_eigval = report.min_eigval cond = report.cond ok = report.ok
+        report.vcov_posdef min_eigval = report.min_eigval cond = report.cond penalized_map =
+        report.penalized_map ok = report.ok
+    # drmTMB emits the equivalent advisory from `check_penalized_fit()`.
+    penalized && @warn "check_drm: penalized (MAP) fit — standard errors come from the penalized " *
+        "curvature and are credible-interval-shaped, not frequentist. `loglik` is the UNPENALIZED " *
+        "data log-likelihood; the penalty is `fit.phylo_penalty`. `lrtest`/`anova` across " *
+        "penalized fits are refused."
     return report
 end

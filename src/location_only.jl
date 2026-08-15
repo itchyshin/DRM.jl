@@ -3296,7 +3296,8 @@ function _fit_structured_gaussian_em(
 end
 
 function _fit_structured_gaussian_sparse_lbfgs(
-    fam::Gaussian, y, Xμ, Xσ, gidx, G, phy::AugmentedPhy, nmμ, nmσ, grp, g_tol
+    fam::Gaussian, y, Xμ, Xσ, gidx, G, phy::AugmentedPhy, nmμ, nmσ, grp, g_tol;
+    penalty = nothing
 )
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     pσ == 1 || error(
@@ -3319,8 +3320,17 @@ function _fit_structured_gaussian_sparse_lbfgs(
         [log(s0 / 2 + eps()), log(s0 + eps())],
     ]
 
+    # v = [log sd_residual, log sd_phylo]; the penalty is on the PHYLO SD, v[2].
+    # It is added AFTER beta is profiled out, which is exact: the penalty does not
+    # depend on beta, so the profiled beta-hat at fixed (v1, v2) is unchanged.
+    # On a failed inner solve `_loconly_profile_fg` returns a sentinel with a zero
+    # gradient — leave that alone rather than penalising a non-solution.
     function fg!(F, G, v)
-        val, grad, _, _ = _loconly_profile_fg(prob, v[1], v[2])
+        val, grad, β, _ = _loconly_profile_fg(prob, v[1], v[2])
+        if penalty !== nothing && β !== nothing
+            grad = copy(grad)
+            val += _phylo_pen_apply_single!(grad, penalty, v, 2)
+        end
         G !== nothing && copyto!(G, grad)
         return F === nothing ? nothing : val
     end
@@ -3366,10 +3376,18 @@ function _fit_structured_gaussian_sparse_lbfgs(
     means = Dict(:mu => Xμ * β̂ + prob.S * u_post)
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => fill(exp(θ̂[pμ + 1]), n))
+    # `nllhat` comes from `_loconly_profile_beta`, which never sees the penalty, so
+    # `-nllhat` is the UNPENALIZED data log-likelihood — exactly what drmTMB keeps
+    # in `fit$logLik`. The penalty at the optimum is recorded separately, giving
+    # the drmTMB identity  -objective == loglik - phylo_penalty.
     fit = DrmFit(
         fam, blocks, names, θ̂, V, -nllhat, n, Optim.converged(best_res), means, obs, scales
     )
-    return _withranef(
+    fit = _withranef(
         _withnll(fit, loc_obj, nllgrad!), Dict(Symbol(grp) => u_post[prob.leaf_pos])
     )
+    if penalty !== nothing
+        fit = _withmap(fit, _phylo_pen_apply_single!(nothing, penalty, v̂, 2), penalty)
+    end
+    return fit
 end

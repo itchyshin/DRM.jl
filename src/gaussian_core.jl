@@ -132,10 +132,12 @@ struct DrmFit{F}
     nll::Any                               # objective θ ↦ nll(θ) (for profile intervals)
     nllgrad::Any                           # optional gradient callback (g, θ) -> g
     ranef::Any                             # per-group conditional RE estimates (BLUPs); nothing if no RE
-    estim_method::Symbol                   # :ML (default) or :REML — the estimator used
+    estim_method::Symbol                   # :ML (default), :REML, or :MAP (penalized) — the estimator used
     reml_loglik::Float64                   # REML log-likelihood (NaN unless estim_method == :REML)
     ml_loglik::Float64                     # ML log-likelihood (always set; for cross-structure comparison)
     marginal::Symbol                       # :LA (default Laplace) or :VA (ELBO; #136)
+    phylo_penalty::Float64                 # penalty at the optimum (NaN unless estim_method == :MAP)
+    penalty::Any                           # the PhyloPenalty spec that produced it; nothing for ML/REML
 end
 
 # 11-arg outer constructor: formula + nll + nllgrad + ranef default to nothing;
@@ -147,34 +149,50 @@ DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, o
     DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales,
            nothing, nothing, nothing, nothing, :ML, NaN, loglik, :LA)
 
+# 19-arg compatibility constructor: the penalized-MAP slots default to "absent".
+# Every pre-existing fitter builds a fit with 11 or 19 positional arguments, so
+# adding `phylo_penalty` / `penalty` to the struct must not force ~70 call sites
+# across 20 family files to change. `_withmap` is the only way to set them.
+DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales,
+       formula, nll, nllgrad, ranef, estim_method, reml_loglik, ml_loglik, marginal) =
+    DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales,
+           formula, nll, nllgrad, ranef, estim_method, reml_loglik, ml_loglik, marginal, NaN, nothing)
+
 _withformula(fit::DrmFit, f) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, f, fit.nll, fit.nllgrad, fit.ranef,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty)
 
 # Attach the (negative) log-likelihood closure so profile intervals can re-optimise
 # the nuisance parameters at each fixed value. nll(θ) must accept the full θ vector.
 _withnll(fit::DrmFit, nll, nllgrad = nothing) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, nll, nllgrad, fit.ranef,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty)
 
 # Attach per-group conditional random-effect estimates (BLUPs). `re` is a
 # Dict{Symbol,...} keyed by grouping factor; see ranef(fit) for the public accessor.
 _withranef(fit::DrmFit, re) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, re,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty)
 
 # Mark the fit as REML-estimated, recording both the REML and ML log-likelihoods.
 # The public `loglik` slot is set to the REML value (with the documented
 # cross-structure caveat); `ml_loglik` stays available for ML-style comparison.
 _withreml(fit::DrmFit, reml_ll::Real, ml_ll::Real) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, Float64(reml_ll), fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
-    :REML, Float64(reml_ll), Float64(ml_ll), fit.marginal)
+    :REML, Float64(reml_ll), Float64(ml_ll), fit.marginal, fit.phylo_penalty, fit.penalty)
+
+# Mark the fit as penalized-MAP. `loglik` is left as the UNPENALIZED data
+# log-likelihood (drmTMB keeps `fit$logLik` unpenalized too) and the penalty at
+# the optimum is recorded separately, so `-objective == loglik - phylo_penalty`.
+_withmap(fit::DrmFit, pen_value::Real, spec) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
+    :MAP, fit.reml_loglik, fit.ml_loglik, fit.marginal, Float64(pen_value), spec)
 
 # Tag the integral approximation (`:LA` Laplace default, `:VA` ELBO). Does not
 # change `loglik`; the caller is responsible for putting an ELBO in that slot.
 _withmarginal(fit::DrmFit, m::Symbol) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik, m)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, m, fit.phylo_penalty, fit.penalty)
 
 # Response-missing helpers. R's `NA_real_` may reach Julia as either `missing`
 # or `NaN`, so the Gaussian response path treats both as absent observations.
@@ -295,7 +313,7 @@ marker they fit the residual `rho12` model, and with shared `phylo(1 | group)`
 markers on `mu1`, `mu2`, `sigma1`, and `sigma2` they route to the verified q=4
 phylogenetic engine.
 """
-function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false, phylo_coupled::Bool = false)
+function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false, phylo_coupled::Bool = false, penalty = nothing)
     algorithm in (:auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs) ||
         throw(ArgumentError("drm: `algorithm` must be one of :auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs (got :$algorithm)"))
     method in (:ML, :REML) ||
@@ -303,6 +321,22 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     rhs = Dict(f.forms)
     fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat/animal/phylo/spatial(1|g)
     fixed_sigma, sigma_re, _, structured_sigma = _split_ranef(rhs[:sigma])  # (1|g)→GHQ; structured_sigma = phylo(1|g) on σ
+    # Penalized MAP (A4c). Validated here, once, so that a `penalty` handed to a
+    # route that cannot honour it ERRORS instead of being silently dropped —
+    # a dropped penalty would return an ML fit wearing a MAP label.
+    if penalty !== nothing
+        penalty isa PhyloPenalty ||
+            throw(ArgumentError("drm: `penalty` must be a `drm_phylo_penalty(...)` specification (got $(typeof(penalty)))"))
+        _has_phylo = (structured !== nothing && structured[1] === :phylo) ||
+                     (structured_sigma !== nothing && structured_sigma[1] === :phylo)
+        _has_phylo ||
+            throw(ArgumentError("drm: `penalty` requires a phylogenetic term in the model " *
+                                "(a `phylo(1 | g)` marker on `mu` and/or `sigma`)."))
+        method === :REML &&
+            throw(ArgumentError("drm: `penalty` and `method = :REML` cannot be combined — a penalized " *
+                                "fit is a maximum-a-posteriori (MAP) estimator and REML is a " *
+                                "restricted-likelihood estimator. Use `method = :ML` (the default)."))
+    end
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, fixed_sigma, data)
     response_observed = _observed_response_mask(y)
@@ -391,7 +425,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                                                nmμ, nmσ, String(sigma_grp);
                                                coupled = phylo_coupled, asymmetric = false,
                                                se = true, profile_ci = profile_ci,
-                                               reml = reml, g_tol = g_tol)
+                                               reml = reml, g_tol = g_tol, penalty = penalty)
             return _withformula(fit, f)
         end
 
@@ -405,7 +439,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                                            nmμ, nmσ, String(sigma_grp);
                                            coupled = false, asymmetric = true,
                                            se = true, profile_ci = profile_ci,
-                                           reml = reml, g_tol = g_tol)
+                                           reml = reml, g_tol = g_tol, penalty = penalty)
         return _withformula(fit, f)
     end
     phylo_coupled &&
@@ -508,10 +542,21 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             if use_sparse_phylo
                 phy = tree isa AbstractString ? augmented_phy(tree) : tree
                 algorithm in (:auto, :sparse_lbfgs) && return _withformula(
-                    _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol), f)
+                    _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol;
+                                                          penalty = penalty), f)
+                # The conjugate-EM variant maximises a different surrogate; adding a
+                # prior to it is a separate derivation, not a wiring change.
+                penalty === nothing ||
+                    throw(ArgumentError("drm: `penalty` is not wired for `algorithm = :$(algorithm)` " *
+                                        "(the conjugate-EM phylo variant). Use `algorithm = :auto` or " *
+                                        "`:sparse_lbfgs` for a penalized phylo fit."))
                 return _withformula(
                     _fit_structured_gaussian_em(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol), f)
             end
+            penalty === nothing ||
+                throw(ArgumentError("drm: `penalty` is only wired for the sparse phylo route. This model " *
+                                    "fell back to the dense structured fitter (extra random effects, " *
+                                    "`meta_V`, or a non-constant `sigma` design alongside `phylo(1 | $grp)`)."))
             _phylo_correlation(tree)
         end
         size(Kmat) == (G, G) || error("structured matrix must be $(G)×$(G) (the number of `$grp` levels)")
