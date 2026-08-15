@@ -125,6 +125,7 @@ include("plotting_ext.jl")   # #336: method-less drm_figure stub + thin plot_* (
 include("comparison.jl")
 include("chibar.jl")             # chi-bar-square boundary p-values for variance-component LRTs
 include("bridge.jl")
+include("introspection.jl")     # A4d-2: profile_targets + structured_effects (drmTMB post-fit inventories)
 include("missing_data.jl")       # #49: documented listwise-deletion preprocessing (no engine change)
 
 # Public API — the verified single-fit + scaling engine.
@@ -163,7 +164,8 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
        drm_listwise,
        associate_pairs, latent_normal, association, PairAssociation,
        integration_diagnostics,
-       drm_phylo_penalty, drm_phylo_penalty_sweep, PhyloPenalty, PhyloCorPenaltyNeedsTwoSD
+       drm_phylo_penalty, drm_phylo_penalty_sweep, PhyloPenalty, PhyloCorPenaltyNeedsTwoSD,
+       profile_targets, structured_effects
 
 # Public API — post-fit accessors for the cross-family bivariate fit
 # (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).
