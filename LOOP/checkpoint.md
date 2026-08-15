@@ -219,3 +219,22 @@ GATE (9 live lanes + release slice #959) and the owner lifted only the narrow-la
 merge gate. #1032 also still open and unmerged.
 WORKTREE (declared, not deleted): scratchpad/drmtmb-fix on claude/fix-report-at-optimum, pushed.
 NOT RUN: full R CMD check on drmTMB — flagged in the PR as worth doing before merge.
+
+=== drmTMB #1038 MERGED 2026-08-15T19:47:48Z (owner lifted the merge gate) ===
+main = 874f5eaa1. Verified ON MAIN: obj$report(tmb_state$last.par.best) present in R/drmTMB.R,
+the check.R twin present, and the bare `objective_report <- obj$report()` GONE. Issue #1036
+auto-closed COMPLETED. CI green (ubuntu-latest release, 46m47s).
+
+WHAT THE FIRST ATTEMPT GOT WRONG (kept as the lesson): the initial commit used
+drm_pin_tmb_object_to_optimum(), which MUTATES obj$env$last.par — that mutation persisted into
+the returned fit and moved conditional modes by ~3e-05. A full R CMD check against a CONCURRENT
+unfixed baseline caught it: FAIL 3 vs FAIL 0 on the same commit. Reporting is a READ; the landed
+fix passes the parameter vector instead, and `max|last.par - tmb_state$last.par.best|` is still
+1e-3 after a fit, which is the positive proof of no mutation.
+
+RECEIPT: editing R/drmTMB.R (first entry in C17_C14_SOURCE_FILES) staled drmTMB's capability-claim
+receipt. Refreshed by re-running the committed runner; the re-measurement came back BIT-IDENTICAL
+(mc-0568/0569/0576, 4/4, same digits), which is the evidence that nothing certified moved.
+source_fingerprint LEFT ALONE and asserted unchanged before/after — the claim was not widened.
+
+** #1032 REMAINS OPEN AND UNMERGED — that fence was NOT lifted. **
