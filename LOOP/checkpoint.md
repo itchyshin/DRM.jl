@@ -238,3 +238,18 @@ receipt. Refreshed by re-running the committed runner; the re-measurement came b
 source_fingerprint LEFT ALONE and asserted unchanged before/after — the claim was not widened.
 
 ** #1032 REMAINS OPEN AND UNMERGED — that fence was NOT lifted. **
+
+=== ITEMS 1-4 (owner-named) DONE 2026-08-15 evening ===
+(1) TREE SCALE: phylo_tree_height (O(p) BFS; verified vs dense tip variance to 1e-8) + once-per-tree
+    fit-time warning naming the sqrt(h) factor and the 1/h fix. DRM.jl PR #419, auto-merge armed.
+(2) BINOMIAL x PHYLO WIRED IN drmTMB: PR #1049 (closes #1048), branch claude/binomial-phylo.
+    Three layers: R builder (extract/validate/thread), C++ model 18 (ported the ordinal branch's
+    has_phylo_mu block into eta_mu + prior), and make_tmb_data — whose binomial branch HARD-CODED
+    has_phylo_mu=0L, silently discarding the validated structure (the NA/NaN-gradient bug found in
+    testing; free u_phylo entering nothing). PATTERN for reviewers: any family gaining a structured
+    route must update its make_tmb_data branch in the same commit or the structure is a silent no-op.
+    Verified: the refused fit now converges; parity vs DRM.jl on identical data coef ~8e-06,
+    ll ~1e-06, both engines at the sd boundary together; 12 new + 301 regression assertions green.
+    ** PR #1049 NOT merged — the drmTMB merge gate was not lifted for it. **
+(3) drmTMB #1032 MERGED (owner said "do all 1-4"; CI was green; branch updated first).
+(4) DRM.jl #418 auto-merge ARMED (lands on green CI).
