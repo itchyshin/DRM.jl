@@ -1,43 +1,17 @@
-# Arcs — from the approved G0 ultra-plan
+# Arcs — docs-arc1-inventory
 
-Status: todo / doing / done / blocked. Gate = needs a human before it proceeds.
+| ID | Status | Gate | What |
+|---|---|---|---|
+| SCAFFOLD | done | — | LOOP kit + plan pointer on `docs/arc1-inventory` |
+| S1 | done | — | Rows 1–3 Phase 1.5 admitted trio |
+| S2 | done | — | Rows 4–6 remaining partials |
+| S3 | done | — | Rows 7–9 experimentals minus `#428` |
+| S4 | done | — | Rows 10–11 owned + fence |
+| S5 | done | — | Ada ordered backlog + recommended later slice |
+| S6 | done | — | Rose pass (no parity complete) |
+| S7 | done | — | Count check: 11 unique IDs |
+| PR | in-progress | OPEN GATE if `src/` touched (must not) | Docs-only PR; auto-merge if green |
+| STOP | next | implement = new G0 | Do not start any row |
 
-Refresh the countdown before picking an arc — the twin moves:
-`python3 tools/parity_ledger.py --drmtmb ../drmTMB --ref origin/main`
-
-| # | arc | status | est | gate? |
-|---|-----|--------|-----|-------|
-| A-fix | `biv_student` recovery tolerance — exclude `log(ν−2)` from the blanket check (~4× the spread of every other coef); ν covered by its own `3.5 < ν̂ < 10` range. Unblocks **#410** | **done** (landed on #410's branch before the lane opened; reproduced on Julia 1.12: old \|dev\| 0.5198 vs atol 0.25) | 0.5 h | — |
-| A3c-2 | Four quadrature pair classes — `gaussian_nbinom2`, `bernoulli_bernoulli`, `bernoulli_nbinom2`, `nbinom2_nbinom2` — via **QuadGK** (already a dep), with per-row integration-error diagnostics. drmTMB reduces the 2-D rectangle to a **1-D adaptive integral**: `∫ φ(z₁)·Φ(cond z₂) dz₁`, `rel.tol = 1e-10`, and it KEEPS `abs.error` | **done** (23eb10af) — all 4 classes; gaussian_nbinom2 is CLOSED FORM so only 3 need quadrature | 1.5–2 d | — |
-| A3c-3 | `associate_pairs` parity fixture vs drmTMB 0.7.0 (now runnable locally — 0.7.0 is installed) + diagnostic/warning parity (multistart disagreement, experimental-interval warning, refusal surface) | **done** (a5c56807) — 2/5 parity PASS then 5/5 after the NB2 fix; found a real DRM.jl bug | 0.5–1 d | — |
-| A-sigma | `sigma()` contract → unblock `V_known` / meta post-fit (the A2a remainder). `gaussian_meta.jl` stores `scales[:sigma] = sqrt(v + σ²)` (TOTAL) while drmTMB's meta `sigma` dpar is the heterogeneity alone with `V_known` separate — shipping both **double-counts**. Adding `scales` keys silently breaks `sigma()` (`gaussian_core.jl:975` returns a bare vector only when `scales` has exactly one key) | **done** (6b7caf6c) — GATE DISSOLVED: no API change needed, V_known recoverable to 1.1e-16 | 0.5–1 d | **[GATE]** surface the design before landing |
-| A-drmtmb | drmTMB **narrow-lane** registry extension. The content is already written: `docs/dev-log/evidence/2026-08-14-proposed-registry-extension.md`. Apply via a temp `git worktree` off drmTMB `origin/main` — **never** `git checkout` in that shared tree | **done** — drmTMB PR #1032 OPEN, NOT merged (gate held) | 0.5 d | **[GATE]** open PR, **NEVER merge** |
-| ~~A4a~~ | `categorical` is **NOT a response family** — it returns a `drm_impute_family` (imputation, link `baseline_softmax`); belongs to the missing-data cluster | **CONFIRMED by owner 2026-08-15 → #49 PARKED** | — | resolved |
-| ~~A4b~~ | `make_mesh`/`spatial_coords` are R-side geospatial prep (`sf`, CRS validation, lon/lat projection) running BEFORE the model | **CONFIRMED by owner 2026-08-15 → deliberately-not-ported** | — | resolved |
-| A4c | Phylo penalty — `drm_phylo_penalty(sd_u, sd_alpha, cor_sd)` + `_sweep`. A PC-prior-style penalty spec that **changes the objective** ⇒ genuine engine capability | **done** — `src/phylo_penalty.jl`, wired into all 4 phylo blocks incl. their analytic gradients; parity **3/3 PASS** (9.7e-09 / 7.5e-07 / 9.1e-08). `cor_sd` penalises `atanh(cor)`, NOT the Cholesky `L21` — that would be a different prior. Two findings: the tree-scale convention changes what `sd_u` MEANS across the two implementations, and drmTMB reports `phylo_penalty`/`logLik` **off-optimum** (upstream defect, filed not patched) | ~1 d | — |
-| A4d-1 | `corpair` **formula MARKER** (`invisible(NULL)`, parsed) — NOT the post-fit `corpairs` DRM.jl already exports | **BLOCKED (claim_boundary written)** — StatsModels' `@formula` rejects BOTH keyword args and string literals at macro-expansion, so drmTMB's `corpair(g, level = "…", block = "…")` is not expressible AND DRM.jl cannot intercept the paste to explain itself. Second, independent blocker: the fitted drmTMB route needs the labelled covariance-block grammar `(1\|p\|id)`, which DRM.jl does not have. A divergent positional marker would be worse than absence. Owner decision: a `@drmformula` macro is a front-end slice, not a marker port | 0.5 d | **[GATE]** owner |
-| A4d-2 | `profile_targets`, `structured_effects`, `meta_vcov_bivariate` — assess each; port only what is engine capability | **done** — `src/introspection.jl`: `profile_targets` (readiness mirrors `profile_result`'s dispatch exactly; pinned on 3 routes) + `structured_effects`. **`meta_vcov_bivariate` NOT built**: `meta_V` is diagonal-only and the bivariate route ignores it, so the port would export a constructor nothing can consume — blocked with a written claim_boundary | 0.5–1 d | — |
-
-**A4 design pass DONE** (`docs/dev-log/design/2026-08-15-a4-rescope.md`) — it re-scoped THREE of the four clusters; revised total ~2–2.5 d, down from ~4–4.5, and none of the removed work was real.
-
-_Original rationale:_ The A3c design pass paid for
-itself twice over — it found the QuadGK dependency and the frozen-margin
-uncertainty trap before a line was written.
-
-## Reference — what A3c-1 already established (build ON it, don't refork)
-
-`src/associate_pairs.jl` holds the staged architecture: `LatentNormal`,
-`PairAssociation`, `_assoc_components` (freeze), `_assoc_optimise_scalar`
-(bounded golden-section, multistart), FD score/curvature, `near_boundary`,
-`multistart_disagreement`, and `association()`. A3c-2 adds pair classes to
-`_assoc_components` + a rectangle-probability likelihood — it does **not** need a
-new estimator.
-
-**Sign convention:** drmTMB's `curvature` negates the objective's second
-difference, so it is the **loglik** curvature and is **negative** at a maximum.
-A test pins this.
-
-## Total
-
-Well beyond one session. The loop runs the list in order and stops where it
-stops — that is expected, not a failure. Land the checkpoint before stopping.
+S1–S4 ran as conductor recon on Cursor Grok (no Task children available in this
+subagent). Same model; no Opus/Sol/Other Models.

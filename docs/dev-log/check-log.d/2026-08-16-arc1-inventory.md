@@ -1,0 +1,1 @@
+| 2026-08-16 | **Arc 1 inventory** (11 unsigned ledger rows; docs only) | path grep + `git show` TSV + `gh pr list` + 11-ID count | ✅ backlog written; 11 IDs once; recommended later = `biv_q4_phylo_reml`; no src/; no TSV flip; `#428` skip | Shannon |
