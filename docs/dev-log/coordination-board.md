@@ -23,6 +23,51 @@ that issue. D-111 Julia General still OFF. Durable decision file is on
 OPEN [#406](https://github.com/itchyshin/DRM.jl/pull/406) (BLOCKED on
 CI `test (1.10)` at last check) until that PR lands._
 
+## Active-Lane-Split (2026-08-16 — Claude lane HANDED OVER to Cursor)
+
+_**START HERE:** `docs/dev-log/handover/2026-08-16-cursor-handover.md`, then
+`LOOP/GOAL.md`. Working tree stays `~/local-scratch/lanes/DRM.jl-catchup`._
+
+_**The ledger countdown reached 0 export gaps** (17 raw, 17 accounted for) —
+`CLOSURE: PASS`. Read that as "no drmTMB export lacks a DRM.jl twin", **not** as
+parity complete: 11 unsupported capability rows remain, each with a written
+`claim_boundary`. Re-measure before trusting it._
+
+_Landed 2026-08-15/16: #414 (A4c penalized-MAP phylo), #415 (A4d), #416 (A4e
+ledger honesty), #417 (`check_drm` NaN vcov), #418 (A5), #419 (A6 tree scale).
+`origin/main` = `0a4c2dc9`._
+
+_**CARRIED-OVER — nine PRs open, #420–#429.** An earlier note here called the
+`BLOCKED` PRs pure queue saturation "with nothing wrong". That was wrong. **#423
+had a real defect**: `meta-analysis.md` linked to `` [`meta_vcov_bivariate`](@ref) ``
+while that function sat in no `@docs` block, so under `warnonly = true`
+Documenter warned instead of failing, wrote a literal `./@ref` into the built
+page, and **VitePress** died on the dead link — an npm-shaped error two stages
+from its cause. Fixed in `docs/src/reference/structured-effect-markers.md`.
+**#420 and #425** failed separately on `git push upstream HEAD:gh-pages` —
+concurrent preview deploys racing on that branch; both re-run._
+
+_**#428 (A11) is deliberately unarmed — it touches `src/`; owner call.** #429 is
+**stacked on #423** and retargets to `main` when that merges; do not rebase it by
+hand. #406 is a **foreign** PR — untouched._
+
+_**Lesson for every lane here:** a red Documenter job is not self-evidently a
+prose problem, and "the queue is busy" is not a diagnosis. `warnonly = true`
+means a broken `@ref` never fails Documenter — it fails VitePress later, naming
+npm. Read `gh run view <id> --log-failed` down to the failing process._
+
+_**Tree-scale trap, worth knowing across lanes:** `ape::vcv(corr=TRUE)` gives
+unit tip variance; raw Newick branch lengths give tip variance = tree height `h`.
+A DGP that ignores this manufactures a convincing ~30% phylo variance-component
+"bias" that is entirely the simulator's error (predicted −29.3%, observed
+−29.4%). Suspect the DGP before the engine._
+
+| Lane | Repo | State | Pointer |
+|---|---|---|---|
+| DRM.jl catch-up | this repo | **HANDED OVER** to Cursor; ledger at 0; 5 PRs blocked on CI, 3 branches unPR'd | `docs/dev-log/handover/2026-08-16-cursor-handover.md` · `LOOP/GOAL.md` |
+| drmTMB bridge (narrow) | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **#1049 + #1050 OPEN — NEVER MERGE UNATTENDED** (9 live lanes + release slice #959). #1032 and #1038 landed | drmTMB PRs #1049, #1050 |
+| drmTMB `engine="julia"` Workflow G | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **sibling — status UNKNOWN from here**; do not claim finished, do not start from DRM.jl | that repo's own handover |
+
 ## Active-Lane-Split (2026-08-15 — arc-loop lane ACTIVE)
 
 _The `engine = "julia"` catch-up campaign runs as an **/arc-loop** in a bounded
