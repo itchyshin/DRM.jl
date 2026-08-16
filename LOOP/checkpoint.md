@@ -1,16 +1,15 @@
 # checkpoint — docs-arc1-inventory
 
-GOAL: see GOAL.md.   STATE: inventory written; PR next; implement STOP.
-ARCS DONE (verified): SCAFFOLD (LOOP files on disk); S1–S4 batch notes exist;
-  S5 ordered backlog; S6 Rose section; S7 count 11 unique IDs.
-ARC IN PROGRESS: PR — docs-only PR for backlog + LOOP + evidence.
-NEXT: STOP after PR open. Implement of any row = new G0. Do not start a row.
-OPEN GATES (need human): none unless the PR touches `src/` (must not) or
-  merge conflicts with live LOOP PRs (#420/#423/#428/#429).
-TRUTH LIVES IN: branch `docs/arc1-inventory` in
-  `~/local-scratch/lanes/DRM.jl-catchup`;
-  `docs/dev-log/evidence/2026-08-16-arc1-ordered-backlog.md`;
-  drmTMB TSV via `git show origin/main:inst/extdata/julia-capabilities.tsv`
-  (tip `d9fddfa28`; TSV unchanged vs eleven-rows `097bed1e2`).
+GOAL: see GOAL.md.   STATE: inventory DONE; PR #432 open; implement STOP.
+ARCS DONE (verified): SCAFFOLD + S1–S7 + PR open.
+  Backlog: docs/dev-log/evidence/2026-08-16-arc1-ordered-backlog.md
+  S7: 11 unique IDs once each. Recommended later = biv_q4_phylo_reml.
+ARC IN PROGRESS: none.
+NEXT: STOP. Implement of any row = new G0. Do not start a row.
+OPEN GATES (need human): none for src/ (untouched). Merge of #432 may
+  conflict on LOOP/ with live PRs #420/#423/#428/#429 — that is a merge
+  conflict, not an implement gate.
+TRUTH LIVES IN: docs/arc1-inventory @ 3c4a4f72 (+ this checkpoint);
+  https://github.com/itchyshin/DRM.jl/pull/432
 RESUME: You are docs-arc1-inventory. READ FIRST: LOOP/GOAL.md →
-  LOOP/checkpoint.md → LOOP/ultra-plan.md. NEXT = STOP. Do not implement.
+  LOOP/checkpoint.md. NEXT = STOP. Do not implement any ledger row.
