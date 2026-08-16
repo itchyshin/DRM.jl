@@ -14,7 +14,7 @@ Gate = needs a human before it can proceed.
 | S6 | done | — | check-log + after-task + worked example |
 | S7 | done | — | no src/; no runtests.jl; no TSV; meta 0.7.0 |
 | S8 | done | — | plan-actual: REML restriction drift recorded |
-| PR | doing | **OPEN GATE** | Open PR `closes #433`. Leave auto-merge unarmed. |
+| PR | done | unarmed | https://github.com/itchyshin/DRM.jl/pull/434 `closes #433`. Do not merge from this lane. |
 
 **PARALLEL:** S1 first; S2 after S1. S3–S8 sequential.
 **FENCE:** no `src/`; no TSV `supported`; no `runtests.jl`; no Workflow G glob.
