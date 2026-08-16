@@ -94,3 +94,29 @@ end
         @test is_converged(fit)
     end
 end
+
+@testset "Binomial refuses unsupported structured markers with a MESSAGE (A9)" begin
+    # Found during the A9 general-covariance audit: `relmat(1|g)` with `K = K`
+    # produced a bare `MethodError: no method matching drm(::DrmFormula,
+    # ::Binomial; K=…)` — a DISPATCH failure, so the explanation this method
+    # already carried was unreachable. A refusal should say what is supported.
+    rng = MersenneTwister(5); G = 14; m = 6
+    K = [i == j ? 1.0 : 0.3 for i in 1:G, j in 1:G]
+    n = G * m; g = repeat(1:G, inner = m); x = randn(rng, n)
+    y = Float64.(rand(rng, n) .< 0.5)
+
+    err = try
+        drm(bf(@formula(y ~ x + relmat(1 | g))), Binomial(); data = (; y, x, g), K = K)
+        nothing
+    catch e
+        e
+    end
+    @test err !== nothing
+    @test !(err isa MethodError)                     # the actual regression
+    @test occursin("phylo", sprint(showerror, err))  # and it names what IS supported
+
+    # the supported provider still fits
+    phy = random_balanced_tree(G; branch_length = 0.25)
+    fit = drm(bf(@formula(y ~ x + phylo(1 | g))), Binomial(); data = (; y, x, g), tree = phy)
+    @test is_converged(fit)
+end
