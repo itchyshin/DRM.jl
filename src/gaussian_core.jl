@@ -356,6 +356,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         end
         tree === nothing && error("phylo(1 | $(sigma_grp)) on sigma needs `tree = …`")
         phy = tree isa AbstractString ? augmented_phy(tree) : tree
+        _warn_if_tree_not_unit_height(phy)
         labels_sigma = getproperty(data, sigma_grp)
         Q_sigma, gidx_sigma, G_sigma = _locscale_phylo_setup(phy, labels_sigma)
 
@@ -541,6 +542,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                 isempty(sigma_re) && size(Xσ, 2) == 1
             if use_sparse_phylo
                 phy = tree isa AbstractString ? augmented_phy(tree) : tree
+        _warn_if_tree_not_unit_height(phy)
                 algorithm in (:auto, :sparse_lbfgs) && return _withformula(
                     _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol;
                                                           penalty = penalty), f)
