@@ -23,6 +23,38 @@ that issue. D-111 Julia General still OFF. Durable decision file is on
 OPEN [#406](https://github.com/itchyshin/DRM.jl/pull/406) (BLOCKED on
 CI `test (1.10)` at last check) until that PR lands._
 
+## Active-Lane-Split (2026-08-16 — Claude lane HANDED OVER to Cursor)
+
+_**START HERE:** `docs/dev-log/handover/2026-08-16-cursor-handover.md`, then
+`LOOP/GOAL.md`. Working tree stays `~/local-scratch/lanes/DRM.jl-catchup`._
+
+_**The ledger countdown reached 0 export gaps** (17 raw, 17 accounted for) —
+`CLOSURE: PASS`. Read that as "no drmTMB export lacks a DRM.jl twin", **not** as
+parity complete: 11 unsupported capability rows remain, each with a written
+`claim_boundary`. Re-measure before trusting it._
+
+_Landed 2026-08-15/16: #414 (A4c penalized-MAP phylo), #415 (A4d), #416 (A4e
+ledger honesty), #417 (`check_drm` NaN vcov), #418 (A5), #419 (A6 tree scale).
+`origin/main` = `0a4c2dc9`._
+
+_**CARRIED-OVER — the CI queue is the binding constraint, not correctness.**
+Five PRs open and `BLOCKED`: #420, #421, #423, #424, #425. Three branches pushed
+with **no PR opened on purpose** (CI is PR-triggered, so a branch costs zero
+queue): `docs/overnight-close-out`, `feat/a11-cross-family-formula`,
+`feat/a12-biv-meta-recovery`. #406 is a **foreign** PR — untouched._
+
+_**Tree-scale trap, worth knowing across lanes:** `ape::vcv(corr=TRUE)` gives
+unit tip variance; raw Newick branch lengths give tip variance = tree height `h`.
+A DGP that ignores this manufactures a convincing ~30% phylo variance-component
+"bias" that is entirely the simulator's error (predicted −29.3%, observed
+−29.4%). Suspect the DGP before the engine._
+
+| Lane | Repo | State | Pointer |
+|---|---|---|---|
+| DRM.jl catch-up | this repo | **HANDED OVER** to Cursor; ledger at 0; 5 PRs blocked on CI, 3 branches unPR'd | `docs/dev-log/handover/2026-08-16-cursor-handover.md` · `LOOP/GOAL.md` |
+| drmTMB bridge (narrow) | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **#1049 + #1050 OPEN — NEVER MERGE UNATTENDED** (9 live lanes + release slice #959). #1032 and #1038 landed | drmTMB PRs #1049, #1050 |
+| drmTMB `engine="julia"` Workflow G | `/Users/z3437171/Dropbox/Github Local/drmTMB` | **sibling — status UNKNOWN from here**; do not claim finished, do not start from DRM.jl | that repo's own handover |
+
 ## Active-Lane-Split (2026-08-15 — arc-loop lane ACTIVE)
 
 _The `engine = "julia"` catch-up campaign runs as an **/arc-loop** in a bounded
