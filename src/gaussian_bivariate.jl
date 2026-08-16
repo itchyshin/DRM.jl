@@ -139,11 +139,19 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
              spatial_range = nothing,
              g_tol::Real = 1e-8, q4_g_tol::Real = 1e-3,
              q4_iterations::Int = 300, q4_n_newton::Int = 40,
-             q4_vcov::Bool = true, method::Symbol = :ML)
+             q4_vcov::Bool = true, method::Symbol = :ML, V = nothing)
     method in (:ML, :REML) ||
         throw(ArgumentError("drm: `method` must be :ML (default) or :REML (got :$method)"))
     rhs = Dict(f.forms)
     fixed, structured_marker = _bivariate_q4_marker(rhs)
+    # A8: known bivariate sampling covariance (drmTMB's meta_vcov_bivariate) is
+    # consumed by the residual route only in this slice.
+    V !== nothing && structured_marker !== nothing &&
+        throw(ArgumentError("drm: known sampling covariance `V` is implemented for the " *
+            "residual bivariate route only; combining it with structured " *
+            "phylo/relmat/animal/spatial markers is a later slice."))
+    V !== nothing && method === :REML &&
+        throw(ArgumentError("drm: `V` (known sampling covariance) is ML-only in this slice."))
     if structured_marker !== nothing && structured_marker[1] === :phylo_q4
         return _fit_bivariate_q4_phylo(
             f, fam, data, fixed, structured_marker, tree;
@@ -182,7 +190,7 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
             "location–scale engine (shared `phylo`/`relmat`/`animal`/`spatial` on mu1, mu2, " *
             "sigma1, sigma2). The residual-only bivariate Gaussian model has no random " *
             "effects; use method = :ML (the default)."))
-    return _fit_bivariate_residual(f, fam, data, rhs, g_tol)
+    return _fit_bivariate_residual(f, fam, data, rhs, g_tol; V = V)
 end
 
 # Finite, data-scaled log-σ seed for a residual-σ intercept. `resid` is the OLS
@@ -197,7 +205,7 @@ function _seed_ls(resid::AbstractVector, yobs::AbstractVector)
     return 0.5 * log(max(v_resid, v_floor))
 end
 
-function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rhs, g_tol::Real)
+function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rhs, g_tol::Real; V = nothing)
     y1, X1, nm1 = _design(f.response1, rhs[:mu1], data)
     y2, X2, nm2 = _design(f.response2, rhs[:mu2], data)
     _, Xs1, nms1 = _design(f.response1, rhs[:sigma1], data)   # reuse a real LHS;
@@ -221,26 +229,62 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
     offs = cumsum([0, ps...])
     rng(k) = (offs[k]+1):offs[k+1]
 
+    # A8: known per-row 2x2 sampling covariance (bivariate meta-analysis).
+    # `nothing` keeps the original per-row expressions byte-identical below; a
+    # resolved V routes every row through the general 2x2 form
+    #   S = V_i + Sigma_het,i,  Sigma_het = [[s1^2, rho*s1*s2], [., s2^2]]
+    # with a positive-definiteness sentinel where the guarded rho cannot save us
+    # (V's own correlation plus the heterogeneity correlation can exceed 1).
+    meta_v = _resolve_biv_meta_v(V, n)
+
     function nll(θ)
         b1 = θ[rng(1)]; b2 = θ[rng(2)]; bs1 = θ[rng(3)]; bs2 = θ[rng(4)]; br = θ[rng(5)]
         η1 = X1 * b1; η2 = X2 * b2; ls1 = Xs1 * bs1; ls2 = Xs2 * bs2; ηr = Xr * br
         s = zero(eltype(θ))
-        @inbounds for i in 1:n
-            if obs1[i] && obs2[i]
-                ρ = RHO_GUARD * tanh(ηr[i])    # guard ρ off ±1 (tanh saturates to ±1.0 in
-                om = 1 - ρ * ρ                 # Float64 for large η → om=0 → NaN); matches the
-                                               # q4 engine's RHO_GUARD + drmTMB's guarded link
-                z1 = (y1[i] - η1[i]) * exp(-ls1[i])     # standardised residuals
-                z2 = (y2[i] - η2[i]) * exp(-ls2[i])
-                # −log φ₂ = log(2π) + (½ log|Σ|) + (½ rᵀΣ⁻¹r)
-                s += log(2π) + ls1[i] + ls2[i] + 0.5 * log(om) +
-                     0.5 * (z1 * z1 - 2ρ * z1 * z2 + z2 * z2) / om
-            elseif obs1[i]
-                z1 = (y1[i] - η1[i]) * exp(-ls1[i])
-                s += 0.5 * log(2π) + ls1[i] + 0.5 * z1 * z1
-            elseif obs2[i]
-                z2 = (y2[i] - η2[i]) * exp(-ls2[i])
-                s += 0.5 * log(2π) + ls2[i] + 0.5 * z2 * z2
+        if meta_v === nothing
+            @inbounds for i in 1:n
+                if obs1[i] && obs2[i]
+                    ρ = RHO_GUARD * tanh(ηr[i])    # guard ρ off ±1 (tanh saturates to ±1.0 in
+                    om = 1 - ρ * ρ                 # Float64 for large η → om=0 → NaN); matches the
+                                                   # q4 engine's RHO_GUARD + drmTMB's guarded link
+                    z1 = (y1[i] - η1[i]) * exp(-ls1[i])     # standardised residuals
+                    z2 = (y2[i] - η2[i]) * exp(-ls2[i])
+                    # −log φ₂ = log(2π) + (½ log|Σ|) + (½ rᵀΣ⁻¹r)
+                    s += log(2π) + ls1[i] + ls2[i] + 0.5 * log(om) +
+                         0.5 * (z1 * z1 - 2ρ * z1 * z2 + z2 * z2) / om
+                elseif obs1[i]
+                    z1 = (y1[i] - η1[i]) * exp(-ls1[i])
+                    s += 0.5 * log(2π) + ls1[i] + 0.5 * z1 * z1
+                elseif obs2[i]
+                    z2 = (y2[i] - η2[i]) * exp(-ls2[i])
+                    s += 0.5 * log(2π) + ls2[i] + 0.5 * z2 * z2
+                end
+            end
+        else
+            @inbounds for i in 1:n
+                if obs1[i] && obs2[i]
+                    ρ = RHO_GUARD * tanh(ηr[i])
+                    σ1 = exp(ls1[i]); σ2 = exp(ls2[i])
+                    S11 = meta_v.v1[i] + σ1 * σ1
+                    S22 = meta_v.v2[i] + σ2 * σ2
+                    S12 = meta_v.cov12[i] + ρ * σ1 * σ2
+                    det = S11 * S22 - S12 * S12
+                    # V's correlation and rho can conspire past PD; the RHO_GUARD
+                    # alone cannot prevent it here. Sentinel, matching the coupled
+                    # phylo block's house style.
+                    det > 0 || return oftype(s, 1e18)
+                    r1 = y1[i] - η1[i]; r2 = y2[i] - η2[i]
+                    s += log(2π) + 0.5 * log(det) +
+                         0.5 * (S22 * r1 * r1 - 2 * S12 * r1 * r2 + S11 * r2 * r2) / det
+                elseif obs1[i]
+                    var1 = meta_v.v1[i] + exp(2 * ls1[i])
+                    r1 = y1[i] - η1[i]
+                    s += 0.5 * (log(2π) + log(var1) + r1 * r1 / var1)
+                elseif obs2[i]
+                    var2 = meta_v.v2[i] + exp(2 * ls2[i])
+                    r2 = y2[i] - η2[i]
+                    s += 0.5 * (log(2π) + log(var2) + r2 * r2 / var2)
+                end
             end
         end
         return s
