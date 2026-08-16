@@ -273,3 +273,36 @@ ROOT-CAUSED + FILED: DRM.jl #422 — the seed-411 gamma ~1e-4 from A5 is NOT a l
   digits) and ALL the deficit sits in the beta coordinates. Outer optimiser under-converges beta
   when the phylo SD collapses. Fix proposed (floor log_sd / boundary polish), NOT implemented —
   an engine change deserves daytime review.
+
+=== A12 — recovery + cor12 sensitivity for the bivariate meta path ===
+Branch feat/a12-biv-meta-recovery (stacked on A8's branch), PUSHED, NO PR (queue saturated).
+A8 shipped with parity + an MVN anchor; neither asks whether the estimator RECOVERS anything.
+
+WITH V, 50 reps x 3 cells (heterogeneity rho of both signs vs an opposite-signed sampling cor):
+  rho12 bias -0.0045 / +0.0023 / -0.0033  — under 0.4 MCSE in EVERY cell.
+  sigma1/sigma2 1-2 MCSE low at n=120, shrinking by n=300 = ordinary ML attenuation.
+
+THE CONTROL IS THE FINDING. Fitting each replicate WITHOUT V:
+  sampling +0.6 -> rho12 pulled +0.0909;  sampling -0.4 -> pulled -0.0635.
+  It does NOT shrink with n (+0.0909 at n=120 vs +0.0901 at n=300): BIAS, not noise, so more
+  studies make the wrong answer more precise. 50/50 converge; no diagnostic fires. That converts
+  the guide's "silent failure" warning from structure into a measured magnitude.
+
+FOLLOW-UP (the likelier hazard — analysts GUESS cor12):
+  bias in rho12 ~ -0.10 x (assumed cor12 - true cor12)  — LINEAR, 10:1 attenuated.
+  Off by 0.3 costs only ~0.03. A plausible-but-imperfect cor12 is far better than none.
+  Now in docs/src/model-guides/meta-analysis.md as user guidance.
+
+CORRECTION MADE: I had conflated two failures. assumed cor12 = 0 (bias +0.062) is NOT omitting V
+(+0.091) — supplying V with cor12 = 0 still supplies the sampling VARIANCES. So an analyst with
+v1/v2 but no idea about the correlation should STILL pass V. Opposite of the natural intuition.
+The evidence note's own limits section had claimed misspecification was uncovered; corrected.
+
+ALSO: a backtick in a commit message was executed by the shell and silently deleted a clause.
+Caught by re-reading the committed message; amended with a quoted heredoc. Branch has no PR, so
+--force-with-lease disturbed nothing.
+
+QUEUE UNCHANGED: #420/#421/#423/#424/#425 BLOCKED on CI (docs/loop-items-1-4 currently running).
+HELD: drmTMB #1049 open, green, unmerged.
+BRANCHES READY, NO PR: docs/overnight-close-out, feat/a11-cross-family-formula,
+  feat/a12-biv-meta-recovery.
