@@ -5,16 +5,16 @@ Gate = needs a human before it can proceed.
 
 | ID | Status | Gate | What |
 |---|---|---|---|
-| SCAFFOLD | doing | — | New LOOP kit on `claude/lane-biv-q4-phylo-reml`; open GitHub issue |
-| S1 | todo | — | Hopper recon: drmTMB outputs + exact Julia `drm(..., method=:REML, tree=)` call |
-| S2 | todo | — | Boole+Hopper schema: `test/parity/q4-reml/biv-q4-phylo-reml/{data,tree,expected,meta}` |
-| S3 | todo | HANDS TO Codex if R/Julia toolchain stalls | Generator + generate numbers + standalone Julia test |
-| S4 | todo | — | Curie smoke: both sides converge; coef+logLik within [tol]; status finite |
-| S5 | todo | — | Rose claim-vs-evidence (no parity complete / TSV / coverage / AI-REML) |
-| S6 | todo | — | DoD: check-log + after-task + worked-example snippet |
-| S7 | todo | — | Mechanical verify: fixtures, meta 0.7.0, no src/, no runtests, no TSV |
-| S8 | todo | — | Melissa plan-vs-actual |
-| PR | todo | **OPEN GATE** | Open PR `closes #NN`. Auto-merge last or leave unarmed. TSV flip is NOT this PR. |
+| SCAFFOLD | done | — | LOOP kit @ `8b0aa5e3`; issue #433 |
+| S1 | done | — | Hopper recon: native TMB REML + four-axis phylo; Julia `method=:REML` |
+| S2 | done | — | Schema outside `fixtures/` glob; 0.7.0 meta; `[status]` reserved |
+| S3 | done | — | Generator + seed 20260822 fixture + standalone test (no Codex handoff) |
+| S4 | done | — | Curie: TMB conv=0; Julia 33/33 within measured [tol] |
+| S5 | done | — | Rose fence in `2026-08-16-biv-q4-s5-rose-fence.md` |
+| S6 | done | — | check-log + after-task + worked example |
+| S7 | done | — | no src/; no runtests.jl; no TSV; meta 0.7.0 |
+| S8 | done | — | plan-actual: REML restriction drift recorded |
+| PR | doing | **OPEN GATE** | Open PR `closes #433`. Leave auto-merge unarmed. |
 
 **PARALLEL:** S1 first; S2 after S1. S3–S8 sequential.
 **FENCE:** no `src/`; no TSV `supported`; no `runtests.jl`; no Workflow G glob.

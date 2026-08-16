@@ -1,0 +1,8 @@
+drmtmb_version = "0.7.0"
+generated_on = "2026-08-16"
+r_call = "drmTMB(bf(mu1 = y1 ~ x + phylo(1 | p | species, tree = tree), mu2 = y2 ~ x + phylo(1 | p | species, tree = tree), sigma1 = sigma1 ~ 1 + phylo(1 | p | species, tree = tree), sigma2 = sigma2 ~ 1 + phylo(1 | p | species, tree = tree), rho12 = rho12 ~ 1), family = biv_gaussian(), data = dat, REML = TRUE, engine = \"tmb\", control = drm_control(optimizer_preset = \"robust\"))"
+seed = 20260822
+n_tip = 16
+n_each = 8
+with_x = true
+note = "Generated outputs only; no drmTMB source vendored. Workflow G fixtures remain 0.6.0 / ML / no tree. This cell is 0.7.0 REML + tree, outside the fixtures/ glob. Not a TSV supported flip. Not interval coverage or AI-REML. n_each=8 (reseed from n_each=5; first five Mac-small seeds were TMB conv=1). Declared [tol] is the measured same-data gap (TMB mean-only REML vs Julia mean+scale REML), not a 1e-3 Workflow G twin."
