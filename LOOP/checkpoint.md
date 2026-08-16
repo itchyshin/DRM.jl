@@ -1,15 +1,28 @@
-# checkpoint — docs-arc1-inventory
+# Checkpoint — OVERWRITTEN every arc (a pointer to truth, not a log)
 
-GOAL: see GOAL.md.   STATE: inventory DONE; PR #432 open; implement STOP.
-ARCS DONE (verified): SCAFFOLD + S1–S7 + PR open.
-  Backlog: docs/dev-log/evidence/2026-08-16-arc1-ordered-backlog.md
-  S7: 11 unique IDs once each. Recommended later = biv_q4_phylo_reml.
-ARC IN PROGRESS: none.
-NEXT: STOP. Implement of any row = new G0. Do not start a row.
-OPEN GATES (need human): none for src/ (untouched). Merge of #432 may
-  conflict on LOOP/ with live PRs #420/#423/#428/#429 — that is a merge
-  conflict, not an implement gate.
-TRUTH LIVES IN: docs/arc1-inventory @ 3c4a4f72 (+ this checkpoint);
-  https://github.com/itchyshin/DRM.jl/pull/432
-RESUME: You are docs-arc1-inventory. READ FIRST: LOOP/GOAL.md →
-  LOOP/checkpoint.md. NEXT = STOP. Do not implement any ledger row.
+GOAL: see GOAL.md.   STATE: scaffolding the new scratch lane.
+
+ARCS DONE (verified): none yet (inventory #432 is on origin/main; do not redo)
+
+ARC IN PROGRESS: SCAFFOLD — LOOP kit rewrite + GitHub issue
+
+NEXT: S1 Hopper recon (drmTMB outputs + Julia REML path)
+
+OPEN GATES (need human): none yet. Next irreversible gate = opening the PR.
+
+TRUTH LIVES IN: `~/local-scratch/lanes/DRM.jl-biv-q4-phylo-reml` on
+`claude/lane-biv-q4-phylo-reml` @ origin/main `2209ecd8` (PR #432 merged).
+Approved plan: Dropbox
+`docs/dev-log/after-task/2026-08-16-ultra-plan-biv-q4-phylo-reml-fixture.md`
+(copied to LOOP/ultra-plan.md). Sibling evidence in
+`~/local-scratch/lanes/DRM.jl-catchup/docs/dev-log/evidence/2026-08-16-biv-q4-*.md`
+and (now on main) `docs/dev-log/evidence/2026-08-16-arc1-*.md`.
+
+RESUME: You are feat-biv-q4-phylo-reml-fixture — running the approved G0 fixture
+plan. RESUME. READ FIRST: LOOP/GOAL.md -> LOOP/checkpoint.md -> LOOP/ultra-plan.md
+-> ./AGENTS.md. WORKSPACE: `~/local-scratch/lanes/DRM.jl-biv-q4-phylo-reml` on
+`claude/lane-biv-q4-phylo-reml` (reattach; do NOT recreate; do NOT use Dropbox
+or DRM.jl-catchup). RUN goal skill: re-read GOAL each arc; verify by LOG not
+exit code; pause at OPEN GATE; overwrite checkpoint each arc. CONTINUE FROM:
+S1 recon. Pause at: opening the PR. Grok only. No src/. No TSV supported.
+No runtests.jl.
