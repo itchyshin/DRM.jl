@@ -465,3 +465,78 @@ function augmented_tree_precision(phy::AugmentedPhy)
     leaf_pos = [pos[phy.leaf_indices[t]] for t in 1:phy.n_leaves]
     return Q, leaf_pos, q
 end
+
+"""
+    phylo_tree_height(phy::AugmentedPhy) -> Float64
+
+Maximum root-to-tip path length of `phy` — the **tip variance** its covariance
+implies when `σ²_phy = 1`.
+
+O(p): a breadth-first walk over the sparse topology, where an edge's length is
+recovered as `-1/Q_topology[i, j]`. `sigma_phy_dense` would give the same number
+but inverts a dense matrix, so it is unusable as a routine check.
+
+**Why this matters.** DRM.jl builds its phylogenetic covariance from the branch
+lengths **as supplied**, so a tree of height `h` implies tip variance `h` and the
+fitted `sd_phylo` carries a factor `sqrt(h)`. R's drmTMB instead standardises via
+`ape::vcv(tree, corr = TRUE)`, whose tips always have variance 1. The two agree
+only when `h == 1`. See [`drm_phylo_penalty`](@ref), where the same factor
+changes what `sd_u` *means*.
+
+To compare against drmTMB, or to read `sd_phylo` on the correlation scale, scale
+the branch lengths by `1/h` before fitting.
+"""
+function phylo_tree_height(phy::AugmentedPhy)
+    Q = phy.Q_topology
+    n = phy.n_total
+    depth = fill(-1.0, n)
+    depth[phy.root_index] = 0.0
+    queue = [phy.root_index]
+    @inbounds while !isempty(queue)
+        i = popfirst!(queue)
+        for k in nzrange(Q, i)
+            j = rowvals(Q)[k]
+            j == i && continue
+            qij = nonzeros(Q)[k]
+            qij == 0 && continue
+            len = -1.0 / qij            # off-diagonal is -1/branch_length
+            len > 0 || continue
+            if depth[j] < 0
+                depth[j] = depth[i] + len
+                push!(queue, j)
+            end
+        end
+    end
+    h = 0.0
+    @inbounds for t in 1:phy.n_leaves
+        d = depth[phy.leaf_indices[t]]
+        d > h && (h = d)
+    end
+    return h
+end
+
+# One warning per tree per session: the scale is a REPORTING convention, not an
+# error, so it must not shout on every fit in a loop.
+const _PHYLO_HEIGHT_WARNED = Set{UInt64}()
+
+function _warn_if_tree_not_unit_height(phy::AugmentedPhy)
+    h = try
+        phylo_tree_height(phy)
+    catch
+        return nothing       # a diagnostic must never break a fit
+    end
+    (isfinite(h) && h > 0) || return nothing
+    isapprox(h, 1.0; rtol = 1e-6) && return nothing
+    key = hash((phy.n_leaves, round(h; digits = 12)))
+    key in _PHYLO_HEIGHT_WARNED && return nothing
+    push!(_PHYLO_HEIGHT_WARNED, key)
+    @warn "drm: this tree has height $(round(h; digits = 6)), not 1, so the reported " *
+          "`sd_phylo` is on the RAW branch-length scale and is a factor " *
+          "$(round(sqrt(h); digits = 6)) = sqrt($(round(h; digits = 6))) away from the " *
+          "correlation scale R's drmTMB reports (it standardises via " *
+          "`ape::vcv(tree, corr = TRUE)`). Comparing the two, or reading a `sd_u` " *
+          "threshold copied from an R script, needs the same scale on both sides — " *
+          "rescale the branch lengths by 1/$(round(h; digits = 6)) to match. " *
+          "`phylo_tree_height(tree)` reports this."
+    return nothing
+end
