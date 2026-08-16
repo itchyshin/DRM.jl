@@ -221,14 +221,46 @@ drmTMB (narrow lane): `R/drmTMB.R:634` (#1038 — `report(last.par.best)`) and
    gh run list --workflow=Documenter --limit 10
    ```
 
-   Seven of the nine PRs carry auto-merge and land themselves on green. If a
-   Documenter job is red, `gh run view <id> --log-failed` down to the *failing
-   process* — this session had one dead-`@ref` defect and two `gh-pages` push
-   races that looked identical from the PR list.
+   If a Documenter job is red, `gh run view <id> --log-failed` down to the
+   *failing process* — this session had one dead-`@ref` defect and two
+   `gh-pages` push races that looked identical from the PR list.
 
-3. **#428 needs an owner decision.** It touches `src/` (the A11 cross-family
-   formula front end), so auto-merge is deliberately unarmed. Do not arm it
-   yourself.
+   **⚠ Auto-merge is armed on these PRs but CANNOT fire on its own. Do not wait
+   for them.** This session assumed it would and was wrong. The repository is
+   configured with:
+
+   | setting | value | consequence |
+   |---|---|---|
+   | branch protection `strict` | `true` | a PR must be up to date with `main` to merge |
+   | repo `allow_update_branch` | **`false`** | GitHub may not update it for you |
+
+   Together those mean every armed PR flips to `BEHIND` the instant anything
+   else merges, and auto-merge has no way to recover. They sit indefinitely
+   looking healthy. The manual loop is:
+
+   ```bash
+   gh pr update-branch <N>     # BEHIND -> BLOCKED, CI re-runs
+   # wait for green; auto-merge then fires and it merges
+   # every other open PR is now BEHIND again -- repeat for the next one
+   ```
+
+   Only **one PR can land per CI cycle**, so the queue is inherently serial.
+
+   **The structural fix is one command, and it is the owner's call** — it
+   changes a repository setting:
+
+   ```bash
+   gh api -X PATCH repos/itchyshin/DRM.jl --field allow_update_branch=true
+   ```
+
+   With that enabled, GitHub performs the update loop itself and the armed PRs
+   really do land unattended. Until then, budget roughly one CI cycle per PR.
+
+3. **#428 was armed at the owner's explicit instruction** (2026-08-16), after
+   being flagged as an engine change. It touches `src/` (the A11 cross-family
+   formula front end); all its checks were green at arming time. Recorded so the
+   `src/` auto-merge pause is not read as having been ignored. Do not arm further
+   `src/` PRs yourself.
 
 4. **#429 is stacked on #423.** It retargets to `main` automatically once #423
    merges. Do not rebase it onto `main` by hand — that would duplicate A8.
