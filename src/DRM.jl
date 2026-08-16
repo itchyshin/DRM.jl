@@ -137,7 +137,7 @@ export AugProblem, make_problem,
        fz_phi_to_lc, fz_init_from_Sigma,
        estep_mode, prior_precision, build_Huu, joint_grad, joint_nll, aug_prior_grad!,
        pack_theta, unpack_theta, lc_to_Λ, Λ_to_lc,
-       augmented_phy, random_balanced_tree, random_caterpillar_tree,
+       augmented_phy, random_balanced_tree, random_caterpillar_tree, phylo_tree_height,
        augmented_tree_precision, sigma_phy_dense, takahashi_selinv,
        fit_phylo_interaction, phylo_interaction_nll, phylo_correlation,
        # general-q coevolution block (#188)
