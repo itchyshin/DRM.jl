@@ -122,6 +122,35 @@ and `A` — the other "structure supplied alongside the data" arguments. Writing
 (stacking order ``y_1[1], y_2[1], y_1[2], \dots``), and that matrix is accepted
 back directly, so a `V` built in R can be handed over unchanged.
 
+### How wrong can your `cor12` guess be?
+
+Often you know `v1` and `v2` exactly but must *estimate* the sampling
+correlation. Measured (true sampling correlation 0.6, true heterogeneity
+ρ = −0.35, 40 replicates):
+
+| assumed `cor12` | bias in `rho12` |
+|---|---|
+| 0.0 | +0.062 |
+| 0.3 | +0.030 |
+| **0.6** (correct) | −0.003 |
+| 0.9 | −0.035 |
+
+The bias is linear in the error of the guess, at roughly
+
+```
+bias in rho12  ≈  -0.10 × (assumed cor12 − true cor12)
+```
+
+— a **10:1 attenuation**. Being wrong by 0.3 costs about 0.03. So a
+plausible-but-imperfect `cor12` is far better than none, and it is worth
+reporting which value you assumed.
+
+**And if you have no idea at all, still pass `V` with `cor12 = 0`** rather than
+omitting `V`: supplying the sampling *variances* matters separately from the
+correlation, and omitting `V` entirely was measurably worse (+0.091) than
+assuming independence (+0.062). Evidence:
+`docs/dev-log/evidence/2026-08-16-a12-biv-meta-recovery.md`.
+
 ## 4. What is *not* covered
 
 - **Known covariance with structured effects.** `V` combined with
