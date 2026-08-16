@@ -238,3 +238,38 @@ receipt. Refreshed by re-running the committed runner; the re-measurement came b
 source_fingerprint LEFT ALONE and asserted unchanged before/after — the claim was not widened.
 
 ** #1032 REMAINS OPEN AND UNMERGED — that fence was NOT lifted. **
+
+=== OVERNIGHT RUN 2026-08-15/16 (owner: "as much as possible till 5am") ===
+STANDING GATE DECISION, made explicitly and NOT overridden unattended:
+  drmTMB #1049 (binomial x phylo) is left OPEN and green for daytime review. It changes the
+  structured-effect gate in a release-candidate repo with 9 live lanes — precisely what the STOP
+  gate protects. Merging it at 3am would be the one irreversible act of the night.
+
+SHIPPED (DRM.jl, all armed to land on green CI):
+  #421 rosetta corpair fix (marker != accessor; flagged 3x during A4d, finally done)
+  #419 A6 tree-scale: phylo_tree_height (O(p) BFS, verified vs dense to 1e-8) + fit-time warning
+  #420 loop checkpoint for items 1-4
+  #423 A8 bivariate meta V_known: meta_vcov_bivariate PORTED WITH ITS CONSUMER
+       (per-row S_i = V_i + Sigma_het in _fit_bivariate_residual, drm(...; V=) kwarg)
+       + docs/src/model-guides/meta-analysis.md
+  MERGED during the run: #418 (A5 non-Gaussian phylo parity)
+
+A8 EVIDENCE (two independent routes, deliberately):
+  (a) loglik vs a from-scratch dense-MVN over the stacked 2n response — ported from drmTMB's own
+      test, shares NOTHING with the fitter's per-row expressions, so it cannot pass by shared bug;
+  (b) parity vs installed drmTMB 0.7.0, 3/3 PASS: coef <=2.6e-06, ll <=2.7e-09, heterogeneity
+      components <=2.7e-06 across sampling-cor 0.0 / +0.6 / -0.4.
+  The rho-separation test bakes BOTH correlations into the DGP and fails if V is ignored.
+  Ledger: meta_vcov_bivariate's DELIBERATELY_NOT_PORTED entry removed (raw 18->17, still 0 owed).
+
+UPSTREAM (drmTMB):
+  #1049 open, 4-cell parity posted incl. an INTERIOR sd cell (seed 777: coef 2.7e-09, ll 5.1e-10,
+        sd_phylo 0.724625 both sides) — the boundary cells alone would not have been a demanding test.
+  NOT merged. Gate held.
+
+ROOT-CAUSED + FILED: DRM.jl #422 — the seed-411 gamma ~1e-4 from A5 is NOT a likelihood
+  difference. DRM.jl's OWN objective is lower at drmTMB's optimum by 7.3e-05, and mixed-vector
+  attribution is exact: log_sd is flat below the boundary shelf (-12 vs -81 identical to 12
+  digits) and ALL the deficit sits in the beta coordinates. Outer optimiser under-converges beta
+  when the phylo SD collapses. Fix proposed (floor log_sd / boundary polish), NOT implemented —
+  an engine change deserves daytime review.
