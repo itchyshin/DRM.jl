@@ -114,7 +114,7 @@ bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
 | random-effect SDs | `re_sd(fit)` / `vc(fit)` |
 | `sigma(fit)` | `sigma(fit)` |
 | `rho12(fit)` | planned (parity gap) |
-| `corpair(fit)` / `corpairs(fit)` | `corpairs(fit)` / `corpairs_data(fit)` |
+| `corpairs(fit)` | `corpairs(fit)` / `corpairs_data(fit)` |
 | `fitted(fit)` / `residuals(fit)` | `fitted(fit)` / `residuals(fit)` |
 | `predict(fit, newdata)` (response mean) | `predict(fit, newdata; type = :response)` |
 | predict **every** distributional parameter at new data | `predict_parameters(fit, newdata; type = :response)` |
