@@ -9,7 +9,7 @@ Zero rows are `supported`. Split: 6 `partial` · 4 `experimental` · 1 `unsuppor
 drmTMB TSV tip this pass: `origin/main` `d9fddfa28`. Unchanged vs eleven-rows
 `097bed1e2` (empty TSV diff). DRM.jl exports 154. COUNTDOWN 0 ≠ parity complete.
 
-Sources: S1–S4 batch notes plus parallel recon `2026-08-16-arc1-recon-s{1,3,4}.md` (no s2 — covered by `batch-partials-rest`); eleven-rows; Rose fence; Hopper
+Sources: S1–S4 batch notes plus parallel recon `2026-08-16-arc1-recon-s{1,2,3,4}.md`; eleven-rows; Rose fence; Hopper
 twin-map; Shannon collisions. Class vocabulary from the approved ultra-plan.
 
 ---
@@ -44,7 +44,7 @@ any row is `supported`.
 | 2 | `phylo_gamma_beta_binomial` | experimental | **smoke-only** (S3 recon also: **TSV-claim** — comparator already exists) | YES/NO | `docs/dev-log/evidence/parity-phylo-nongaussian.tsv` (gamma FAIL · beta PASS · binomial NO_NATIVE_COMPARATOR) | Add comparator — **evidence-complete**; promotion is a drmTMB claim | Not an implement slice. Do not re-open “add comparator”. Do not invent binomial-phylo. |
 | 3 | `phylo_count_large_p` | experimental | **smoke-only** | YES | Julia smoke `test/test_poisson_phylo_laplace.jl` / `test/test_nb2_phylo_laplace.jl`; FE Workflow G `test/parity/fixtures/count-{poisson,nbinom2}/expected.toml`; **NONE** large-p same-target | Keep smoke + FE; do not promote | Smoke exists; large-p is evidence, not a missing family. |
 | 4 | `general_covariance_structured` | experimental | **smoke-only** (S3 recon also: **TSV-claim** — gate-compare done) | YES | Audit `docs/dev-log/evidence/2026-08-16-a9-general-covariance-audit.md`; **NONE** Workflow G `relmat` expected.toml | Compare families vs R gate — **done**; do not widen | `next_action` already answered. Do not invent beta+`relmat` Δ. |
-| 5 | `gaussian_response_mask` | partial | **parked-adjacent** | YES | Julia `test/test_missing_listwise.jl` (cites `#49`); **NONE** Workflow G `miss_control` expected.toml | Keep mask tests Gaussian-only | Fixture/audit gap, but `#49` PARKED — do not unpark. |
+| 5 | `gaussian_response_mask` | partial | **parked-adjacent** (S2 recon also: **fixture-gap**; do not unpark `#49`) | YES | Julia `test/test_missing_listwise.jl` (cites `#49`); **NONE** Workflow G `miss_control` expected.toml | Keep mask tests Gaussian-only | Fixture/audit gap, but `#49` PARKED — do not unpark. |
 | 6 | `base_gaussian_location_scale` | partial | **TSV-claim** | YES | `test/parity/fixtures/gaussian-locscale/expected.toml`; `docs/dev-log/evidence/parity-fixtures.tsv` PARITY_PASS | Keep coef/logLik on exact payloads | Phase 1.5 admitted. Promotion = drmTMB TSV claim. |
 | 7 | `biv_gaussian_residual` | partial | **TSV-claim** | YES | `test/parity/fixtures/gaussian-bivariate-rho12/expected.toml` | Keep rho12 result-shape; do not promote | Phase 1.5 admitted. Not cross-family. |
 | 8 | `gaussian_phylo_mean` | partial | **TSV-claim** | YES | `test/test_bridge.jl` result-shape; **no** Workflow G phylo `expected.toml` | Keep first phylo-mean; do not widen to sigma-phylo | Phase 1.5 admitted. Widening invents a different row. |
