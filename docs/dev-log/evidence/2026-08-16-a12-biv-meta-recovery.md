@@ -59,15 +59,48 @@ failure is silent."* Until now that was a statement from the model's structure.
 It is now a measurement, with a magnitude (≈0.09 on a 0.6 sampling correlation)
 and the crucial detail that **more data does not rescue it**.
 
+## Follow-up run: a *misspecified* `cor12` (the likelier hazard)
+
+Omitting `V` is the clean failure; the common one is **guessing** the sampling
+correlation. Same DGP (true sampling correlation 0.6, true heterogeneity
+ρ = −0.35, n = 150, 40 reps), varying only what the analyst *assumes*:
+
+| assumed `cor12` | error in the guess | mean `rho12` | bias |
+|---|---|---|---|
+| 0.0 | −0.6 | −0.2878 | **+0.0622** |
+| 0.3 | −0.3 | −0.3204 | **+0.0296** |
+| **0.6** | **0 (correct)** | −0.3528 | **−0.0028** |
+| 0.9 | +0.3 | −0.3851 | **−0.0351** |
+
+MCSE 0.0120 throughout. The bias is **linear in the misspecification**, with
+slope ≈ **−0.10**:
+
+```
+bias in rho12  ≈  -0.10 × (assumed cor12 − true cor12)
+```
+
+That is a **10:1 attenuation**, and it is the reassuring half of this study: a
+guess wrong by 0.3 costs about 0.03 in the heterogeneity correlation — real, but
+small against an MCSE of 0.012 and against most effect sizes of interest. A
+plausible-but-imperfect `cor12` is much better than none.
+
+### Two different failures, previously conflated
+
+The `assumed = 0.0` row (bias +0.062) is **not** the same as omitting `V`
+(+0.091 in the control above). Supplying `V` with `cor12 = 0` still supplies the
+sampling **variances** `v1`, `v2`; omitting `V` drops those too. So most of the
+damage is the correlation, and dropping the variances adds roughly half as much
+again. Worth separating: an analyst who has `v1`/`v2` but no idea about the
+correlation should still pass `V` with `cor12 = 0` rather than skip it.
+
 ## Scope and limits
 
 - **50 replicates**, three cells. Enough to resolve a ~0.09 bias against MCSE
   ≈0.012; not a coverage study.
 - **Point recovery only.** No interval coverage for `rho12` or the variance
   components — that is a separate and larger piece of work.
-- **Correctly-specified `V`.** This says nothing about a *misspecified* sampling
-  correlation, which is the more common practical hazard (analysts often guess
-  `cor12`). A sensitivity sweep over an assumed `cor12` is the natural follow-up.
+- **Misspecification covered only for `cor12`**, on one true value (0.6) at one
+  n. Misspecified sampling *variances* were not studied.
 - **Gaussian both axes, intercept-only heterogeneity**, matching the A8 slice.
 - No claim about drmTMB's estimator: both engines were shown to agree in A8, but
   this study is DRM.jl only.
