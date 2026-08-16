@@ -1,0 +1,22 @@
+capability_id	cell_id	label	status	max_abs_coef_diff	loglik_tmb	loglik_julia	loglik_diff	tolerance	note
+phylo_gamma_beta_binomial	phylo_gamma	Gamma() with phylo(1 | species)	PARITY_FAIL	6.82521422897819e-05	-72.6302498848915	-72.6303515011311	0.000101616239660984	1e-04	
+phylo_gamma_beta_binomial	phylo_binomial	binomial() with phylo(1 | species)	NO_NATIVE_COMPARATOR	NA	NA	NA	NA	1e-04	native: Structured-effect syntax is planned, not implemented.
+✖ The `mu` formula contains structured marker: "phylo".
+ℹ Implemented structured paths cover the fitted Gaussian `phylo()`,
+  `spatial()`, `animal()`, and `relmat()` slices, ordinary Poisson/NB2 q=1 `mu`
+  intercept slices for `phylo()`, `phylo_interaction()`, `spatial()`,
+  `animal()`, and `relmat()`, ordinary Poisson/NB2 q=1 `mu` unlabelled
+  one-slope slices for `phylo()`, `spatial()`, `animal()`, and `relmat()`,
+  ordinary NB2 q=1 `sigma` unlabelled one-slope slices for `phylo()`,
+  `spatial()`, `animal()`, and `relmat()`, and zero-one-beta q=1 unlabelled
+  intercept slices on exactly one of `mu`, `sigma`, `zoi`, or `coi` for
+  `phylo()`, `animal()`, `relmat()`, and `phylo_interaction()` (the `spatial()`
+  provider is deferred for the `zoi`/`coi` atoms pending the mesh/SPDE lane).
+ℹ Structured non-Gaussian paths beyond those gates, including ordinal, shape,
+  hurdle, labelled count covariance, structured count slope-only routes outside
+  the admitted Poisson fixed-covariance spatial slope-only gate, multiple
+  structured count slopes, structured count scale routes outside the NB2
+  one-slope gate, and zero-one-beta structured slopes, labels, q>=2 fields, or
+  simultaneous endpoints, remain deferred until family-specific recovery
+  evidence is stable.
+phylo_gamma_beta_binomial	phylo_beta	beta() with phylo(1 | species)	PARITY_PASS	5.01915532025166e-07	138.720271450997	138.720271451386	3.89178467230522e-10	1e-04	
