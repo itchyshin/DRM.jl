@@ -236,10 +236,53 @@ drmTMB (narrow lane): `R/drmTMB.R:634` (#1038 — `report(last.par.best)`) and
 5. **Re-run the ledger** after each merge and record the countdown. It is the
    lane's scoreboard; a merge that moves it silently is a merge nobody can audit.
 
-6. **Then, and only then**, pick up the 11 unsupported capability rows — that is
+6. **Close the undocumented-export gap — 16 exported symbols are cross-referenced
+   but appear in no `@docs` block.** This is the same defect that broke #423 and
+   #428, still latent everywhere else. It stays dormant only while the containing
+   docstring is not rendered into the manual; the moment it is, VitePress fails
+   with an npm-shaped error. Run the detector:
+
+   ```bash
+   python3 - <<'PY'
+   import re, pathlib
+   root = pathlib.Path(".")
+   documented = set()
+   for md in root.glob("docs/src/**/*.md"):
+       for blk in re.findall(r"```@docs\n(.*?)```", md.read_text(errors="ignore"), re.S):
+           for line in blk.splitlines():
+               if line.strip():
+                   documented.add(line.strip().split("(")[0].replace("DRM.", ""))
+   refs = {}
+   for f in list(root.glob("docs/src/**/*.md")) + list(root.glob("src/**/*.jl")):
+       for i, line in enumerate(f.read_text(errors="ignore").splitlines(), 1):
+           for m in re.findall(r"\[`([^`]+)`\]\(@ref\)", line):
+               refs.setdefault(m.split("(")[0].replace("DRM.", "").strip(), []).append(f"{f}:{i}")
+   for k, v in sorted(refs.items()):
+       if k not in documented:
+           print(f"{k:38s} <- {v[0]}")
+   PY
+   ```
+
+   As of this handover it prints 23 targets, of which **16 are exported**:
+   `drm_phylo_penalty`, `drm_phylo_penalty_sweep`, `associate_pairs`,
+   `association`, `latent_normal`, `heritability`, `icc`, `bias_correct`,
+   `chibar_pvalue`, `fit_q4_sparse_tmb`, `make_problem`, `marginal_nll`,
+   `lc_to_cov`, `AugProblem`, `CoevoProblem`, `PhyloCorPenaltyNeedsTwoSD`.
+
+   **Two different fixes, do not apply one blanket rule.** Exported public API
+   belongs in a reference `@docs` block. The `_`-prefixed internals
+   (`_group_index`, `_general_cov_setup`, …) should instead lose the `@ref` and
+   become plain code spans — documenting them would publish internals.
+
+   Note that `drm_phylo_penalty` shipped in **#414**, already merged, without a
+   reference entry. The Definition of Done asks for docstrings, and they exist —
+   but "has a docstring" and "is rendered in the manual" are different things,
+   and only the second makes `@ref` work.
+
+7. **Then, and only then**, pick up the 11 unsupported capability rows — that is
    the next real frontier.
 
-Do **not** start new engine work before 1–5 are clear.
+Do **not** start new engine work before 1–6 are clear.
 
 ---
 
