@@ -1,0 +1,3 @@
+| slice | date | change | check | result |
+|---|---|---|---|---|
+| Undocumented `@ref` gap | 2026-08-16 | Add the 16 exported symbols that `[\`…\`](@ref)` pointed at but no `@docs` block rendered (same defect that broke #423/#428 Documenter→VitePress). Internals: strip `@ref` on unexported `Laplace`/`Variational`; park `_`-prefixed refs in `sparse_laplace_glmm.jl` (#425) and unexported `make_problem_from_Q` in fenced `gaussian_bivariate.jl` | detector re-run on this branch; no full `Pkg.test` (docs slice, CPU-light) | **PARTIAL PASS**. Exported `@ref` targets now have a `@docs` home on `docs/src/reference/model-fitting-and-postfit.md`. Remaining undocumented `@ref`s are fenced-file internals (parked, named in the after-task) |
