@@ -1,5 +1,5 @@
 capability_id	cell_id	label	status	max_abs_coef_diff	loglik_tmb	loglik_julia	loglik_diff	tolerance	note
-phylo_gamma_beta_binomial	phylo_gamma	Gamma() with phylo(1 | species)	PARITY_FAIL	6.82521422897819e-05	-72.6302498848915	-72.6303515011311	0.000101616239660984	1e-04	
+phylo_gamma_beta_binomial	phylo_gamma	Gamma() with phylo(1 | species)	PARITY_PASS	6.32151750945553e-08	-72.6302498848915	-72.6302788708556	2.89859641071644e-05	1e-04	
 phylo_gamma_beta_binomial	phylo_binomial	binomial() with phylo(1 | species)	NO_NATIVE_COMPARATOR	NA	NA	NA	NA	1e-04	native: Structured-effect syntax is planned, not implemented.
 ✖ The `mu` formula contains structured marker: "phylo".
 ℹ Implemented structured paths cover the fitted Gaussian `phylo()`,

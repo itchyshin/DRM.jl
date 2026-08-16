@@ -265,6 +265,8 @@ include("test_gaussian_locscale_phylo.jl")
 include("test_gaussian_locscale_phylo_boundary.jl")
 # A4c: penalized-MAP phylo variance components (drmTMB's drm_phylo_penalty + sweep).
 include("test_phylo_penalty.jl")
+# #422: boundary polish when a variance component collapses onto the flat shelf.
+include("test_boundary_polish.jl")
 # A4d-2: post-fit inventories (profile_targets, structured_effects).
 include("test_introspection.jl")
 # Profile-likelihood CIs for the bivariate q4 among-axis SDs (Ayumi #2): the calibrated,
