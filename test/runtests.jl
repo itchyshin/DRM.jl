@@ -267,6 +267,8 @@ include("test_gaussian_locscale_phylo_boundary.jl")
 include("test_phylo_penalty.jl")
 # #422: boundary polish when a variance component collapses onto the flat shelf.
 include("test_boundary_polish.jl")
+# Tree-scale convention: O(p) height + the sqrt(h) reporting warning.
+include("test_phylo_tree_height.jl")
 # A4d-2: post-fit inventories (profile_targets, structured_effects).
 include("test_introspection.jl")
 # Profile-likelihood CIs for the bivariate q4 among-axis SDs (Ayumi #2): the calibrated,
