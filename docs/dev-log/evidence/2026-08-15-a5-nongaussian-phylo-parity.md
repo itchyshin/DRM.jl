@@ -37,6 +37,16 @@ Structured-effect syntax is planned, not implemented.
 Gamma and beta fit natively with the identical `phylo(1 | species, tree = tree)`
 term, so this is binomial-specific, not a fixture error.
 
+**FILED UPSTREAM: [drmTMB#1048](https://github.com/itchyshin/drmTMB/issues/1048).**
+A follow-up sweep established the gap precisely: `binomial` is the **only** common
+family that cannot take a structured random effect. `gaussian`, `poisson`,
+`nbinom2`, `Gamma` and `beta` all fit with the identical `phylo()` term; binomial
+is refused in the Bernoulli form, the two-column `cbind()` form, with `relmat()`,
+and as `beta_binomial` — yet it accepts an ORDINARY `(1 | species)` random
+intercept. So the gap is `binomial` × structured markers specifically. The issue
+also notes that the refusal message enumerates admitted paths that omit `Gamma`
+and `beta`, both of which fit — so the message is stale as documentation.
+
 That is not a parity failure — it is the **absence of a comparator**, and the
 harness reports it as `NO_NATIVE_COMPARATOR` rather than `NATIVE_FAILED`. The two
 must not be collapsed: one says "the engines disagree", the other says "there is
