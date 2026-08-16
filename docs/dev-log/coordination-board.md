@@ -37,11 +37,24 @@ _Landed 2026-08-15/16: #414 (A4c penalized-MAP phylo), #415 (A4d), #416 (A4e
 ledger honesty), #417 (`check_drm` NaN vcov), #418 (A5), #419 (A6 tree scale).
 `origin/main` = `0a4c2dc9`._
 
-_**CARRIED-OVER — the CI queue is the binding constraint, not correctness.**
-Five PRs open and `BLOCKED`: #420, #421, #423, #424, #425. Three branches pushed
-with **no PR opened on purpose** (CI is PR-triggered, so a branch costs zero
-queue): `docs/overnight-close-out`, `feat/a11-cross-family-formula`,
-`feat/a12-biv-meta-recovery`. #406 is a **foreign** PR — untouched._
+_**CARRIED-OVER — nine PRs open, #420–#429.** An earlier note here called the
+`BLOCKED` PRs pure queue saturation "with nothing wrong". That was wrong. **#423
+had a real defect**: `meta-analysis.md` linked to `` [`meta_vcov_bivariate`](@ref) ``
+while that function sat in no `@docs` block, so under `warnonly = true`
+Documenter warned instead of failing, wrote a literal `./@ref` into the built
+page, and **VitePress** died on the dead link — an npm-shaped error two stages
+from its cause. Fixed in `docs/src/reference/structured-effect-markers.md`.
+**#420 and #425** failed separately on `git push upstream HEAD:gh-pages` —
+concurrent preview deploys racing on that branch; both re-run._
+
+_**#428 (A11) is deliberately unarmed — it touches `src/`; owner call.** #429 is
+**stacked on #423** and retargets to `main` when that merges; do not rebase it by
+hand. #406 is a **foreign** PR — untouched._
+
+_**Lesson for every lane here:** a red Documenter job is not self-evidently a
+prose problem, and "the queue is busy" is not a diagnosis. `warnonly = true`
+means a broken `@ref` never fails Documenter — it fails VitePress later, naming
+npm. Read `gh run view <id> --log-failed` down to the failing process._
 
 _**Tree-scale trap, worth knowing across lanes:** `ape::vcv(corr=TRUE)` gives
 unit tip variance; raw Newick branch lengths give tip variance = tree height `h`.

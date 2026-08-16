@@ -55,9 +55,9 @@ DRM.jl twin*. The 11 unsupported capability rows remain, each carrying a written
 
 | Repo | Branch / state | CI | What shipped | Next by leverage |
 |---|---|---|---|---|
-| **DRM.jl** | `main` @ `0a4c2dc9` | green | A4c…A6 merged (#414–#419); ledger at 0 | Open PRs for the 3 pushed branches once the CI queue drains |
-| **DRM.jl** | 5 PRs open, all `BLOCKED` | **queue-saturated** | A8, A9, A10, rosetta fix, loop items | Wait for the queue, then merge in the order below |
-| **DRM.jl** | 3 branches pushed, **no PR** | n/a | close-out docs, A11, A12 | Open PRs — deliberately deferred to spare the queue |
+| **DRM.jl** | `main` @ `0a4c2dc9` | green | A4c…A6 merged (#414–#419); ledger at 0 | Watch the 9 open PRs land |
+| **DRM.jl** | #420–#429, nine PRs open | **two real failures fixed** | A8–A12, rosetta fix, loop items, handover | #423's dead-`@ref` fixed; #420/#425 `gh-pages` race re-run |
+| **DRM.jl** | `src/`-touching work | — | A11 cross-family formula (#428) | **Owner call — auto-merge deliberately unarmed** |
 | **drmTMB** | narrow 3-file lane | — | #1032, #1038 merged | **#1049, #1050 open — STOP GATE, never merge unattended** |
 
 ---
@@ -93,27 +93,30 @@ Upstream in drmTMB (narrow lane — `R/julia-bridge.R`, `tests/testthat/test-jul
 
 Everything through #419. `main` is green.
 
-### In progress — CARRIED-OVER (pushed, no PR yet)
+### CARRIED-OVER — every branch now has a PR
 
-All three are **pushed and in sync with origin**; none is at risk of loss. PRs
-were deliberately *not* opened because CI is PR-triggered and the queue is
-saturated — opening them would have added five more blocked runs.
+All nine PRs are open and pushed; nothing is at risk of loss.
 
-| Branch | Contents | Resume |
-|---|---|---|
-| `docs/overnight-close-out` | session close-out documentation | `gh pr create --base main --head docs/overnight-close-out` |
-| `feat/a11-cross-family-formula` | `drm(f::BivariateDrmFormula, fams::Tuple; …)` — mixed-family bivariate | `gh pr create --base main --head feat/a11-cross-family-formula` |
-| `feat/a12-biv-meta-recovery` | recovery evidence for the known-`V` meta path + `cor12` sweep | `gh pr create --base main --head feat/a12-biv-meta-recovery` |
+| PR | Branch | What | Auto-merge |
+|---|---|---|---|
+| #429 | `feat/a12-biv-meta-recovery` | recovery for the known-`V` meta path + `cor12` sweep — **stacked on #423**, retargets to `main` when it merges | no |
+| #428 | `feat/a11-cross-family-formula` | `drm(f::BivariateDrmFormula, fams::Tuple; …)` — mixed-family bivariate | **no — touches `src/`** |
+| #427 | `docs/overnight-close-out` | plan-vs-actual for the overnight run | no |
+| #426 | `handover/2026-08-16-cursor` | this document | armed |
+| #425 | `fix/a10-boundary-polish` | boundary polish for a collapsed variance component (#422) + Binomial structured-marker refusal | armed |
+| #424 | `docs/a9-covariance-audit` | `general_covariance_structured` — the family comparison the row asks for | armed |
+| #423 | `feat/a8-biv-meta-vknown` | bivariate meta-analysis with known sampling covariance | armed |
+| #421 | `fix/rosetta-corpair` | `corpair` is a formula *marker*, not a post-fit accessor | armed |
+| #420 | `docs/loop-items-1-4` | tree scale surfaced; binomial × phylo wired upstream | armed |
 
-### Blocked — CARRIED-OVER (PR open, CI queue saturated)
+**#428 is deliberately unarmed** — it touches `src/`, and the coordination board
+pauses auto-merge on engine changes. That one is the owner's call.
 
-| PR | Branch | What |
-|---|---|---|
-| #425 | `fix/a10-boundary-polish` | boundary polish for a collapsed variance component (#422) + Binomial structured-marker refusal |
-| #424 | `docs/a9-covariance-audit` | `general_covariance_structured` — the family comparison the row asks for |
-| #423 | `feat/a8-biv-meta-vknown` | bivariate meta-analysis with known sampling covariance |
-| #421 | `fix/rosetta-corpair` | `corpair` is a formula *marker*, not a post-fit accessor |
-| #420 | `docs/loop-items-1-4` | tree scale surfaced; binomial × phylo wired upstream |
+**#423 was pushed to after auto-merge was already armed** — the exact
+anti-pattern this document warns about below. It is recorded rather than hidden:
+the PR was red and could not merge without the fix, so the push was mandatory
+rather than a silent amendment. If a PR must change after arming, say so on the
+PR.
 
 **#406 (`docs/github-auto-merge`, `DIRTY`) is a pre-existing FOREIGN PR.** It was
 not touched this session and must not be. It carries the durable auto-merge
@@ -149,8 +152,12 @@ asking the owner; several belong to other lanes.
    absence.
 5. **Cross-family bivariate refuses `rho12 ~ …`** (A11) — cross-family ρ is a
    latent scalar, not a linear-predictor target.
-6. **Stopped opening PRs when the CI queue saturated.** Finished work was pushed
-   as branches without PRs: CI is PR-triggered, so this costs zero queue.
+6. **Deferring PRs to spare the CI queue was the wrong call, and it hid a real
+   bug.** Finished work was pushed as bare branches on the reasoning that CI is
+   PR-triggered, so a branch costs zero queue. That is true and it was still
+   wrong: a red build is *information*, and declining to trigger it meant #423's
+   dead-`@ref` sat undiagnosed while the session concluded "nothing is wrong
+   with them." Cheap CI is not a reason to avoid CI.
 
 ---
 
@@ -207,25 +214,57 @@ drmTMB (narrow lane): `R/drmTMB.R:634` (#1038 — `report(last.par.best)`) and
    `bash ~/shinichi-brain/tools/lane_preflight.sh DRM.jl`. Do what it prints.
    The last census saw **8 live lanes plus a foreign direct-to-main lane** in
    this repo. Name the one you take.
-2. **Check the CI queue.** `gh pr list --state open --json number,mergeStateStatus`.
-   If the five PRs above have cleared to `CLEAN`, merge them in ascending order
-   (#420, #421, #423, #424, #425) — lowest-risk docs first.
-3. **Open PRs for the three pushed branches**, one at a time, only once the queue
-   has room: `docs/overnight-close-out`, then `feat/a11-cross-family-formula`,
-   then `feat/a12-biv-meta-recovery`.
-4. **Re-run the ledger** after each merge and record the countdown. It is the
-   lane's scoreboard; a merge that moves it silently is a merge nobody can audit.
-5. **Then, and only then**, pick up the 11 unsupported capability rows — that is
-   the next real frontier. Do not start it while the queue is backed up.
+2. **Check what is actually red, and read the log before classifying it.**
 
-Do **not** start new engine work before 1–4 are clear.
+   ```bash
+   gh pr list --state open --json number,mergeStateStatus
+   gh run list --workflow=Documenter --limit 10
+   ```
+
+   Seven of the nine PRs carry auto-merge and land themselves on green. If a
+   Documenter job is red, `gh run view <id> --log-failed` down to the *failing
+   process* — this session had one dead-`@ref` defect and two `gh-pages` push
+   races that looked identical from the PR list.
+
+3. **#428 needs an owner decision.** It touches `src/` (the A11 cross-family
+   formula front end), so auto-merge is deliberately unarmed. Do not arm it
+   yourself.
+
+4. **#429 is stacked on #423.** It retargets to `main` automatically once #423
+   merges. Do not rebase it onto `main` by hand — that would duplicate A8.
+
+5. **Re-run the ledger** after each merge and record the countdown. It is the
+   lane's scoreboard; a merge that moves it silently is a merge nobody can audit.
+
+6. **Then, and only then**, pick up the 11 unsupported capability rows — that is
+   the next real frontier.
+
+Do **not** start new engine work before 1–5 are clear.
 
 ---
 
 ## Blockers / open questions
 
-- **CI queue saturation is the binding constraint**, not correctness. Five PRs
-  sit `BLOCKED`. Nothing is wrong with them.
+- **The `BLOCKED` PRs had two different causes, and the first reading of them was
+  wrong.** They were initially written up as queue saturation with nothing
+  actually broken. The Documenter logs said otherwise:
+  - **#423 had a real defect.** `docs/src/model-guides/meta-analysis.md` linked
+    to `` [`meta_vcov_bivariate`](@ref) ``, but that function appeared in no
+    `@docs` block anywhere in the manual. Documenter runs `warnonly = true`, so
+    the unresolved cross-reference was demoted to a warning and a literal
+    `./@ref` went into the built page; VitePress then found a dead link and
+    exited 1. A missing reference entry surfaced as an opaque npm process
+    failure two stages downstream. **Fixed** — `meta_vcov_bivariate` and
+    `MetaVcovBivariate` added to
+    `docs/src/reference/structured-effect-markers.md`, beside `meta_V`.
+  - **#420 and #425 failed on `git push upstream HEAD:gh-pages` exiting 1** —
+    concurrent PR-preview deploys racing on `gh-pages`. Infrastructure, not
+    code. Both re-run.
+
+  **Carry this forward:** "the queue is busy" is not a diagnosis. `warnonly =
+  true` means Documenter will **not** fail on a broken `@ref` — VitePress fails
+  later, with a message naming npm rather than the link. Read the log down to
+  the actually-failing process before classifying a red docs job.
 - **drmTMB #1049 and #1050 are open and deliberately unmerged.** That tree
   carries 9 live lanes, a foreign codex lane, and the open 0.7.0 release slice
   #959. Merging there is **owner-gated**.
