@@ -1,0 +1,22 @@
+[fit]
+family = "gaussian"
+formula = "y ~ x + phylo(1 | species); sigma ~ 1"
+method = "ML"
+engine = "tmb"
+loglik = -1.3268281548905353e+01
+n = 18
+
+[coef]
+"mu_(Intercept)" = 2.8404228592503949e-01
+"mu_x" = 3.1894321052325258e-01
+"sigma_(Intercept)" = -6.8181178054622016e-01
+
+[status]
+converged = true
+pdHess = true
+interval_status = "wald_unavailable"
+
+[tol]
+atol_loglik = 1e-6
+atol_coef = 1e-5
+rtol_coef = 1e-5

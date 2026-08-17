@@ -1,0 +1,1 @@
+| 2026-08-17 | **gaussian_phylo_mean same-target fixture** (#437) | standalone `julia --project=. -e 'using DRM, Test; include("test/test_parity_gaussian_phylo_mean.jl")'` + R generator log | ✅ 27/27; Route A clone seed 111 / n_tip=18 / ML; d_loglik ≈ −2.7e-9; max \|d_coef\| ≈ 8.5e-9; tight ML tols (1e-6 / 1e-5); no src/; no runtests.jl; no TSV flip | Shannon |
