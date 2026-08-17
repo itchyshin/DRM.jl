@@ -3,7 +3,8 @@
 **Lane:** `docs-arc1-backlog-after-434` on `claude/lane-arc1-backlog-after-434`
 in `~/local-scratch/lanes/DRM.jl-arc1-backlog-after-434`.
 **Personas:** Shannon (conductor) · Ada · Rose · Hopper (mechanical count).
-**Nested Task subagents:** none (conductor on Cursor Grok).
+**Nested Task subagents:** [Rose](f3b00b68-52a2-4bd1-af25-53f01aa0c05c)
+(morning ship-gate on PR #436).
 **closes:** #435
 
 Phrase: *refresh the Arc 1 backlog after #434; fixture banked; 11 rows
@@ -39,11 +40,13 @@ mean-only REML vs Julia mean+scale). Cite
 planning-pass note `2026-08-16-next-after-biv-rose.md` and in-PR S5
 `2026-08-16-biv-q4-s5-rose-fence.md`.
 
-Sweep (this pass): stale **NONE** gone; 11 IDs once; `claim_status`
-still `partial` in prose; no new recommended implement; no
-"parity complete"; no TSV / `src/` / `runtests.jl` /
-`capability-status.md` edit; `#136` not closed; `#49` not unparked;
-`#428` not stolen; `atol_loglik=6.0` not treated as a `src/` defect.
+Sweep (this pass + morning [Rose](f3b00b68-52a2-4bd1-af25-53f01aa0c05c)):
+stale **NONE** gone; 11 IDs once; `claim_status` still `partial` in
+prose; no new recommended implement; no "parity complete"; no TSV /
+`src/` / `runtests.jl` / `capability-status.md` edit; `#136` not
+closed; `#49` not unparked; `#428` not stolen; `atol_loglik=6.0` not
+treated as a `src/` defect. Honesty fix: wait-gate is `#423`+`#428`
+(`#425` merged).
 
 Limitation: no `parity_ledger.py` re-run; no `Pkg.test`. COUNTDOWN 0
 is **UNVERIFIED** as a fresh script after `b73d9241`.
@@ -56,7 +59,7 @@ check-log row.
 ## What this did NOT cover
 
 The other 10 unsigned rows as implement cells. TSV `supported`.
-`runtests.jl` include (WAIT `#423` `#425` `#428`). `src/`. Workflow G
+`runtests.jl` include (WAIT `#423` `#428`; `#425` merged). `src/`. Workflow G
 harness. Interval coverage / reliability. AI-REML. R-via-Julia bridge
 admission. `#428` / `#136` / `#49`. A new recommended implement.
 D-111 / Registrator. drmTMB checkout.

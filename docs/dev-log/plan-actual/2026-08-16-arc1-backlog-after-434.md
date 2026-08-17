@@ -17,8 +17,13 @@
 
 ## Drift / honesty
 
-None vs G0. Overnight authority allowed `gh pr merge --merge` if CI
-green and docs-only; that is a gate, not a scope change.
+Morning restart (2026-08-17): leftover scratch was dirty/behind; used
+the already-opened PR #436 rather than a second `lane_launch.sh`.
+Wait-gate prose still listed `#425` as a live `runtests.jl` owner;
+corrected to `#423`+`#428` (`#425` merged). No new recommended
+implement named (`gaussian_phylo_mean` stays an unsigned TSV-claim
+row only). Overnight/morning authority: `gh pr merge --merge` if CI
+green and docs-only.
 
 ## Not done (fence held)
 

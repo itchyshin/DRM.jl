@@ -7,7 +7,7 @@
 | S2 | New after-task + check-log (do not edit #432 after-task in place) | done | — |
 | S3 | Rose claim-vs-evidence on the refreshed backlog | done | — |
 | S4 | Mechanical verify: 11 IDs once; stale NONE gone; fence clean | done | — |
-| S5 | One issue → one unarmed PR (`closes #435`) | doing | **OPEN GATE: PR** (overnight: merge OK if CI green + docs-only) |
+| S5 | One issue → one unarmed PR (`closes #435`) | doing | PR #436 open; merge OK if CI green + docs-only |
 | S6 | plan-actual if this `/goal` stays one session | done | — |
 
 Status: todo / doing / done / blocked. Gate = needs a human before it can proceed.

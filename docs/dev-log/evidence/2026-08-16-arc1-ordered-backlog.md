@@ -30,7 +30,7 @@ fixture-gap on an already-implemented engine (`biv_q4_phylo_reml`).
 Fixture lives at `test/parity/q4-reml/biv-q4-phylo-reml/` (outside the
 Workflow G `fixtures/` glob). Standalone test
 `test/test_parity_biv_q4_phylo_reml.jl` is **not** in `test/runtests.jl`
-(WAIT: `#423` + `#425` + `#428` own that file).
+(WAIT: `#423` + `#428` own that file; `#425` merged 2026-08-16).
 
 `claim_status` stays **`partial`**. `r_bridge_status` stays
 **`experimental`**. The logLik gap is a declared `[tol]`
@@ -67,7 +67,7 @@ after #434.
 | 6 | `base_gaussian_location_scale` | partial | **TSV-claim** | YES | `test/parity/fixtures/gaussian-locscale/expected.toml`; `docs/dev-log/evidence/parity-fixtures.tsv` PARITY_PASS | Keep coef/logLik on exact payloads | Phase 1.5 admitted. Promotion = drmTMB TSV claim. |
 | 7 | `biv_gaussian_residual` | partial | **TSV-claim** | YES | `test/parity/fixtures/gaussian-bivariate-rho12/expected.toml` | Keep rho12 result-shape; do not promote | Phase 1.5 admitted. Not cross-family. |
 | 8 | `gaussian_phylo_mean` | partial | **TSV-claim** | YES | `test/test_bridge.jl` result-shape; **no** Workflow G phylo `expected.toml` | Keep first phylo-mean; do not widen to sigma-phylo | Phase 1.5 admitted. Widening invents a different row. |
-| 9 | `plain_binomial_nonphylo` | partial | **TSV-claim** | YES | `test/parity/fixtures/binomial-trials/expected.toml` | Keep Workflow G live R gate green | Fixture exists; not CRAN-default. Soft collision `#425`. |
+| 9 | `plain_binomial_nonphylo` | partial | **TSV-claim** | YES | `test/parity/fixtures/binomial-trials/expected.toml` | Keep Workflow G live R gate green | Fixture exists; not CRAN-default. `#425` merged (binomial structured-marker refusal); not a collision on this docs path. |
 | 10 | `cross_family_latent` | experimental | **owned** | UNKNOWN | **NONE** on this branch; live `#428` | Resolve mixed-family API mismatch | **OWNED SKIP `#428`.** Do not steal. |
 | 11 | `engine_control_surface` | unsupported | **fence** | NO | **NONE** | Design `engine_control` before relaxing | Leave `unsupported`. Not a port. |
 
