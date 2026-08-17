@@ -126,6 +126,53 @@ function _finite_hessian(f, x; h::Real = 1e-4)
     return H
 end
 
+# ---------------------------------------------------------------------------
+# Boundary polish for a collapsed variance component (issue #422).
+#
+# When the structured SD collapses, the outer objective goes FLAT in `log_sd`:
+# measured on the issue's fixture, nll at log_sd = -12.3 and at -81.6 are
+# identical to TWELVE DIGITS. LBFGS chases that flat direction to -81 and stops
+# there on the gradient norm, leaving the REMAINING coordinates (chiefly the
+# scale intercept) short of their conditional optimum -- ~7e-05 of nll on the
+# recorded case, which is what a parity harness sees as a near-tolerance failure
+# against native drmTMB.
+#
+# The fix is to stop chasing the flat direction: freeze `log_sd` at a floor where
+# the objective is already indistinguishable, then re-optimise the rest
+# conditionally. Adopted ONLY if it strictly lowers the objective, so it can
+# never make a fit worse; ties keep the original so behaviour stays stable.
+#
+# PRECONDITION: `log_sd` is the LAST coordinate. Only applied at the routes whose
+# trailing `:resd` block is a single coordinate -- several routes in this file
+# carry q>=2 variance blocks where that is false, and they are deliberately left
+# alone.
+const _LAPLACE_LOG_SD_FLOOR = log(1e-6)
+
+function _laplace_boundary_polish(nll, grad!, θ̂, nllhat; iterations::Int = 100)
+    length(θ̂) >= 2 || return (θ̂, nllhat)
+    θ̂[end] < _LAPLACE_LOG_SD_FLOOR || return (θ̂, nllhat)
+    k = length(θ̂) - 1
+    floor_sd = _LAPLACE_LOG_SD_FLOOR
+    sub_nll(v) = nll(vcat(v, floor_sd))
+    function sub_grad!(Gout, v)
+        gfull = zeros(eltype(Gout), k + 1)
+        grad!(gfull, vcat(v, floor_sd))
+        Gout .= @view gfull[1:k]
+        return Gout
+    end
+    return try
+        v0 = θ̂[1:k]
+        odv = Optim.OnceDifferentiable(sub_nll, sub_grad!, v0)
+        resv = Optim.optimize(odv, v0, Optim.LBFGS(),
+                              Optim.Options(iterations = iterations))
+        θnew = vcat(Optim.minimizer(resv), floor_sd)
+        nnew = nll(θnew)
+        (isfinite(nnew) && nnew < nllhat) ? (θnew, nnew) : (θ̂, nllhat)
+    catch
+        (θ̂, nllhat)
+    end
+end
+
 function _laplace_outer_converged(res, nllhat, gfinal, θ, n::Int, g_tol)
     isfinite(nllhat) && nllhat < 1e17 || return false
     Optim.converged(res) && return true
@@ -484,9 +531,10 @@ function _fit_poisson_general_laplace(fam::Poisson, y, Xμ, Q, leaf_node, nmμ, 
         res_fast
     end
     θ̂ = Optim.minimizer(res)
+    nllhat = nll(θ̂)
+    θ̂, nllhat = _laplace_boundary_polish(nll, grad!, θ̂, nllhat)   # issue #422
     gfinal = zeros(length(θ̂))
     grad!(gfinal, θ̂)
-    nllhat = nll(θ̂)
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
@@ -749,9 +797,10 @@ function _fit_general_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, Q,
         res_fast
     end
     θ̂ = Optim.minimizer(res)
+    nllhat = nll(θ̂)
+    θ̂, nllhat = _laplace_boundary_polish(nll, grad!, θ̂, nllhat)   # issue #422
     gfinal = zeros(length(θ̂))
     grad!(gfinal, θ̂)
-    nllhat = nll(θ̂)
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
@@ -944,9 +993,10 @@ function _fit_phylo_mean_laplace_hetero(fam, kind, aux_from, n::Int, Xμ, Xσ,
         res_fast
     end
     θ̂ = Optim.minimizer(res)
+    nllhat = nll(θ̂)
+    θ̂, nllhat = _laplace_boundary_polish(nll, grad!, θ̂, nllhat)   # issue #422
     gfinal = zeros(length(θ̂))
     grad!(gfinal, θ̂)
-    nllhat = nll(θ̂)
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
@@ -1098,9 +1148,10 @@ function _fit_phylo_mean_laplace(fam, kind, aux, n::Int, Xμ, labels, tree, nmμ
         res_fast
     end
     θ̂ = Optim.minimizer(res)
+    nllhat = nll(θ̂)
+    θ̂, nllhat = _laplace_boundary_polish(nll, grad!, θ̂, nllhat)   # issue #422
     gfinal = zeros(length(θ̂))
     grad!(gfinal, θ̂)
-    nllhat = nll(θ̂)
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
