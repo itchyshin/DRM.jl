@@ -1,46 +1,65 @@
-# Arc 1 ordered backlog — 11 unsigned ledger rows (2026-08-16)
+# Arc 1 ordered backlog — refresh after #434 (2026-08-16)
 
-**Lane:** `docs-arc1-inventory` · Ada consolidate (S5) + Rose (S6) + count (S7).
-**Platform:** Cursor Grok. No Opus/Sol/Other Models. No Task children (conductor recon).
-**Inventory only.** No `src/`. No TSV `supported` flip. Implement of any row = **new G0**.
+**Lane:** `docs-arc1-backlog-after-434` · Ada refresh (S1) + Rose (S3) +
+count (S4).
+**Platform:** Cursor Grok. No Opus/Sol/Other Models. No Task children.
+**Docs-only refresh.** No `src/`. No TSV `supported` flip. No new
+recommended implement. Implement of any row = **new G0**.
 
-Phrase: *export-gap countdown at 0; 11 rows still unsigned.*
-Zero rows are `supported`. Split: 6 `partial` · 4 `experimental` · 1 `unsupported`.
-drmTMB TSV tip this pass: `origin/main` `d9fddfa28`. Unchanged vs eleven-rows
-`097bed1e2` (empty TSV diff). DRM.jl exports 154. COUNTDOWN 0 ≠ parity complete.
+Phrase: *refresh the Arc 1 backlog after #434; fixture banked; 11 rows
+still unsigned.* Also still true: *export-gap countdown at 0; 11 rows
+still unsigned.* Zero rows are `supported`. Split: 6 `partial` · 4
+`experimental` · 1 `unsupported`.
+drmTMB TSV tip this pass: `origin/main` `d9fddfa28` (cited; not re-run
+`parity_ledger.py` after `b73d9241` — COUNTDOWN 0 is **UNVERIFIED** as a
+fresh script). DRM.jl exports 154. COUNTDOWN 0 ≠ parity complete.
 
-Sources: S1–S4 batch notes plus parallel recon `2026-08-16-arc1-recon-s{1,2,3,4}.md`; eleven-rows; Rose fence; Hopper
-twin-map; Shannon collisions. Class vocabulary from the approved ultra-plan.
-
----
-
-## Recommended first *later* implement slice
-
-**`biv_q4_phylo_reml`** — class `fixture-gap`.
-
-**Why:** the q4 REML engine is already implemented (Scoreboard B;
-`test/test_reml_q4_allaxes.jl`). The ledger row is `partial` because there is
-**no native-vs-Julia same-target bridge fixture** (coef + logLik +
-fit-specific CI/status). `test/test_bridge_q4_direct_export.jl` currently
-asserts `"no R-via-Julia q4 bridge parity"`. That is a DRM.jl cell, not a
-drmTMB TSV flip.
-
-**Not this slice:** `#428` / `cross_family_latent` (owned skip) · `#136` VA
-(OPEN) · `#49` (PARKED) · `engine_control_surface` (fence) · rows 1–3 or 6
-(TSV-claim) · a TSV `supported` flip.
-
-**Requires a new G0.** This inventory does not implement it.
+This file **replaces** the #432 inventory text on the same path. It does
+**not** re-hunt the 11 rows. Sources: #432 backlog + #434 after-task
+`2026-08-16-biv-q4-phylo-reml-fixture.md` + Rose fence
+`2026-08-16-next-after-biv-rose.md` (planning pass) +
+`2026-08-16-biv-q4-s5-rose-fence.md`. Class vocabulary from the #432
+ultra-plan.
 
 ---
 
-## Ordered list (cheapest honest next cell first; owned/fence last)
+## After #434 — no remaining fixture-gap implement
 
-Order is *what a later implement G0 should look at first*, not a claim that
-any row is `supported`.
+**#434** (`b73d9241`, closes #433) banked the **only** same-target
+fixture-gap on an already-implemented engine (`biv_q4_phylo_reml`).
+Fixture lives at `test/parity/q4-reml/biv-q4-phylo-reml/` (outside the
+Workflow G `fixtures/` glob). Standalone test
+`test/test_parity_biv_q4_phylo_reml.jl` is **not** in `test/runtests.jl`
+(WAIT: `#423` + `#425` + `#428` own that file).
+
+`claim_status` stays **`partial`**. `r_bridge_status` stays
+**`experimental`**. The logLik gap is a declared `[tol]`
+(`atol_loglik=6.0`, `d≈−5.63`) because native TMB REML restricts **mean**
+fixed effects while Julia `reml_q4` profiles **mean and scale**. Not a
+1e-3 Workflow G twin. No TSV `supported` flip.
+
+**This refresh does not name a new recommended implement.** Remaining
+unsigned rows are TSV-claim, smoke-only with `next_action` already
+answered, parked (`#49`), owned (`#428`), or a design fence. Forcing
+`phylo_gamma_beta_binomial` (or large-p / relmat) invents work the
+ledger does not ask for. Next implement G0 only when (a) the
+`runtests.jl` wait clears, or (b) the owner names a new same-target gap.
+
+**Not this slice:** `#428` / `cross_family_latent` (owned skip) · `#136`
+VA (OPEN) · `#49` (PARKED) · `engine_control_surface` (fence) · a TSV
+`supported` flip · include-in-`runtests.jl`.
+
+---
+
+## Ordered list (same 11 IDs as #432; ord 1 no longer a fixture-gap)
+
+Order is *what a later implement G0 should look at*, not a claim that
+any row is `supported`, and **not** a recommended-implement ranking
+after #434.
 
 | ord | capability_id | claim_status | class | twin | fixture | next_action (abbrev.) | why this rank |
 |---|---|---|---|---|---|---|---|
-| 1 | `biv_q4_phylo_reml` | partial | **fixture-gap** | YES | **NONE** same-target; Julia REML exists (`test/test_reml_q4_allaxes.jl`); bridge export refuses parity (`test/test_bridge_q4_direct_export.jl`) | Bank fit-specific CI/status parity before release language | Already-implemented engine; missing same-target fixture. Recommended later slice. |
+| 1 | `biv_q4_phylo_reml` | partial | **fixture-banked** (still TSV-claim) | YES | **banked** `test/parity/q4-reml/biv-q4-phylo-reml/` (#434); `[tol]` = measured mean-vs-mean+scale gap (`atol_loglik=6.0`, `d≈−5.63`); Julia REML exists (`test/test_reml_q4_allaxes.jl`); bridge export still refuses parity (`test/test_bridge_q4_direct_export.jl`) | Bank fit-specific CI/status parity before release language — **cell banked**; promotion is a drmTMB TSV claim | Same-target fixture shipped. `claim_status` still `partial`. Not a recommended implement. |
 | 2 | `phylo_gamma_beta_binomial` | experimental | **smoke-only** (S3 recon also: **TSV-claim** — comparator already exists) | YES/NO | `docs/dev-log/evidence/parity-phylo-nongaussian.tsv` (gamma FAIL · beta PASS · binomial NO_NATIVE_COMPARATOR) | Add comparator — **evidence-complete**; promotion is a drmTMB claim | Not an implement slice. Do not re-open “add comparator”. Do not invent binomial-phylo. |
 | 3 | `phylo_count_large_p` | experimental | **smoke-only** | YES | Julia smoke `test/test_poisson_phylo_laplace.jl` / `test/test_nb2_phylo_laplace.jl`; FE Workflow G `test/parity/fixtures/count-{poisson,nbinom2}/expected.toml`; **NONE** large-p same-target | Keep smoke + FE; do not promote | Smoke exists; large-p is evidence, not a missing family. |
 | 4 | `general_covariance_structured` | experimental | **smoke-only** (S3 recon also: **TSV-claim** — gate-compare done) | YES | Audit `docs/dev-log/evidence/2026-08-16-a9-general-covariance-audit.md`; **NONE** Workflow G `relmat` expected.toml | Compare families vs R gate — **done**; do not widen | `next_action` already answered. Do not invent beta+`relmat` Δ. |
@@ -68,39 +87,53 @@ any row is `supported`.
 
 ---
 
-## S6 — Rose pass (claim-vs-evidence; not a ship)
+## S3 — Rose pass (claim-vs-evidence; not a ship)
 
-**Verdict:** **clean-with-limitations.** This note is an inventory backlog, not
-a parity claim and not an implement approval.
+**Verdict:** **clean-with-limitations.** This note is a backlog *refresh*,
+not a parity claim and not an implement approval.
 
 **Accepts**
 
+- Phrase *refresh the Arc 1 backlog after #434; fixture banked; 11 rows
+  still unsigned.*
 - Phrase *export-gap countdown at 0; 11 rows still unsigned.*
-- Per-row `claim_boundary` quoted, not rewritten as a tighter/looser public claim.
-- Recommended later slice = `biv_q4_phylo_reml` fixture, not a TSV flip.
+- Per-row `claim_boundary` quoted, not rewritten as a tighter/looser
+  public claim.
+- Ord 1 fixture line is **banked**, not **NONE**. `claim_status` still
+  `partial`.
+- **No** new recommended implement named.
 - `#428` classified owned-skip. `#136` not closed. `#49` not unparked.
 - `engine_control_surface` left `unsupported`.
 - Two scoreboards not merged: A = TSV/ledger; B = `capability-status.md`.
-- Sweep receipt non-vacuous (TSV `git show`, empty diff vs `097bed1e2`,
-  fixture path grep, `gh pr list`, twin-map, collisions).
+- `#434` cell: logLik gap is a declared `[tol]` (TMB mean-only REML vs
+  Julia mean+scale), not a 1e-3 Workflow G twin.
 
 **Would block (none present in this note)**
 
 - "R–Julia parity complete" / "caught up" / "D-111 ready"
 - One PR that "clears the 11 rows"
 - A TSV `supported` flip from this tree
+- Naming a new recommended implement (`phylo_gamma_beta_binomial`, etc.)
 - Stealing `#428` or closing `#136`
 - Invented twin Δ (beta+`relmat`, binomial+`phylo`)
+- Treating `atol_loglik=6.0` as a defect to fix in `src/`
+- Wiring the #434 test into `runtests.jl` under a docs title
 - Ordinary-RE REML / `:natgrad` / VA / AGHQ as Arc 1
 
 **Limitation:** this pass does not re-run `parity_ledger.py` or `Pkg.test`.
-It classifies from cited TSV + on-disk fixture paths. Workflow G metas still
-record drmTMB **0.6.0**; campaign anchor is **0.7.0** — say the split; do not
-silently re-anchor.
+It classifies from cited TSV + on-disk fixture paths + the #434 after-task.
+Workflow G metas still record drmTMB **0.6.0**; this cell is **0.7.0**
+REML + tree — say the split; do not silently re-anchor. COUNTDOWN 0 is
+**UNVERIFIED** as a fresh script after `b73d9241`.
+
+Fence copied from the planning-pass Rose note
+`docs/dev-log/evidence/2026-08-16-next-after-biv-rose.md` (Dropbox leftover;
+not rewritten here) and the in-PR S5
+`docs/dev-log/evidence/2026-08-16-biv-q4-s5-rose-fence.md`.
 
 ---
 
-## S7 — count check
+## S4 — count check
 
 | Check | Result |
 |---|---|
@@ -108,8 +141,9 @@ silently re-anchor.
 | Each ID once in the ordered table | **yes** (ords 1–11) |
 | Each ID once in claim_boundary list | **yes** (1–11) |
 | Every row has class + citation | **yes** (class column + fixture path or NONE) |
-| Recommended slice | `biv_q4_phylo_reml` |
-| Recommended ≠ `#428` / `#136` / `#49` / `engine_control_surface` / TSV flip | **yes** |
+| Stale **NONE** same-target on `biv_q4_phylo_reml` | **gone** — fixture **banked** |
+| New recommended implement named | **no** |
+| Recommended ≠ `#428` / `#136` / `#49` / `engine_control_surface` / TSV flip | **n/a** (no recommended implement) |
 
 IDs (sorted, for mechanical verify):
 
@@ -129,8 +163,12 @@ plain_binomial_nonphylo
 
 ---
 
-## What this inventory did NOT do
+## What this refresh did NOT do
 
-- Implement any row. Flip any `claim_status`. Edit `src/` or `capability-status.md`.
+- Implement any row. Flip any `claim_status`. Edit `src/` or
+  `capability-status.md`.
+- Name a new recommended implement.
 - Steal `#428`. Unpark `#49`. Close `#136`. Design `engine_control`.
-- Checkout drmTMB. Stage `shannon-coordinator.toml`. Run `Pkg.test` / recovery.
+- Include `test/test_parity_biv_q4_phylo_reml.jl` in `test/runtests.jl`.
+- Checkout drmTMB. Stage `shannon-coordinator.toml`. Run `Pkg.test` /
+  recovery.
