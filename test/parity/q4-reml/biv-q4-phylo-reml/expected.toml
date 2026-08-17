@@ -1,0 +1,29 @@
+[fit]
+family = "biv_gaussian"
+formula = "mu1 = y1 ~ x + phylo(1 | species); mu2 = y2 ~ x + phylo(1 | species); sigma1 = sigma1 ~ 1 + phylo(1 | species); sigma2 = sigma2 ~ 1 + phylo(1 | species); rho12 = rho12 ~ 1"
+method = "REML"
+engine = "tmb"
+estimator = "REML"
+loglik = -2.196139863046289e+02
+n = 128
+
+[coef]
+"mu1_(Intercept)" = 7.2825687163642316e-01
+"mu1_x" = 3.4026699506291685e-01
+"mu2_(Intercept)" = 2.3948869641947232e-01
+"mu2_x" = 4.7229338836749485e-01
+"rho12_(Intercept)" = 6.5606409403543092e-02
+"sigma1_(Intercept)" = -1.2949619116113107e+00
+"sigma2_(Intercept)" = -4.4119611042708934e-01
+
+[status]
+converged = true
+pdHess = true
+interval_status = "wald_unavailable"
+julia_converged = false
+reml_restriction_note = "drmTMB native TMB REML restricts mean fixed effects; DRM.jl reml_q4 profiles mean and scale. logLik is not a 1e-3 twin. Measured 2026-08-16: d_loglik ≈ -5.63; max |d_coef| ≈ 0.032. Not coverage, not AI-REML."
+
+[tol]
+atol_loglik = 6.0
+atol_coef = 0.05
+rtol_coef = 0.05

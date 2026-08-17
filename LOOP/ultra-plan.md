@@ -1,20 +1,14 @@
-# LOOP/ultra-plan.md — Arc 1 inventory (FROZEN at G0)
+# 2026-08-16 — Ada Phase 0–2: ultra-plan for `biv_q4_phylo_reml` same-target fixture
 
-Binding copy of the approved plan. Do not re-plan mid-loop.
-
-**Source:** `docs/dev-log/after-task/2026-08-16-ultra-plan-arc1.md`
-**G0:** Shinichi approved with defaults — new G0 before any implement;
-later fixture prefer `biv_q4_phylo_reml` not TSV flip; skip `#428`.
-
----
-
-# 2026-08-16 — Ada Phase 0–2: ultra-plan for Arc 1 (inventory only)
-
-**Lane:** plan Arc 1 inventory (read-only through Phase 2).
+**Lane:** plan the first *implement* G0 under the 2026-08-14 campaign
+(admit what an R user actually fits). **Not** a replacement of that campaign G0.
 **Author:** Ada (Shannon speaking). **No nested Task subagents ran.**
 **Platform:** Cursor. **Cursor cannot EnterPlanMode** — this session stayed
 strictly read-only except this note. **No Phase 3. No `/goal`. No `/arc-loop`.
 No merges. No `src/` edits.** Still unexecuted.
+
+Arc 1 inventory is **DONE / in #432**. This plan implements the backlog's
+recommended later slice only.
 
 ---
 
@@ -23,35 +17,35 @@ No merges. No `src/` edits.** Still unexecuted.
 ```
 🎯 GOAL
 Solo platform: Cursor (this planning session) → /goal only after Shinichi
-  approves G0 (fresh chat in ~/local-scratch/lanes/DRM.jl-catchup, not this
-  Dropbox leftover checkout)
-Deliverable: ordered, claim-fenced backlog of the 11 parity-ledger rows
-  with claim_status ≠ supported, plus one recommended first *later*
-  implement slice — not implementing any of the 11 in this arc
-HEADLINE: Arc 1 inventory — ordered backlog of 11 unsupported rows
-IN PARALLEL: 4 Grok recon batches (Phase 1.5 admitted trio · remaining
-  partials · experimentals minus #428 · owned+fence), then Ada consolidate
+  approves G0 (fresh chat in a NEW scratch lane, not Dropbox leftover
+  docs/a3c-design and not the #432 catchup worktree)
+Deliverable: measured same-target DRM.jl↔drmTMB fixture for the
+  biv_q4_phylo_reml cell + standalone tests + check-log + after-task
+  + Rose claim fence. One issue → one branch → one PR.
+HEADLINE: one same-target fixture for biv_q4_phylo_reml
+  (coef + logLik + fit-specific CI/status)
+IN PARALLEL: Grok recon (what drmTMB outputs exist / Julia path) +
+  Boole/Hopper fixture-schema design
 DEFER:
-  - implementation PRs / src/ edits / flipping TSV to supported
-  - Arc 1′ (ordinary-RE REML, :natgrad, VA/#136, AGHQ, #49) — no ledger
-    row maps to those chips
-  - stealing #428 cross_family_latent
-  - inventing twin Δ / “parity complete” / “become GLLVM”
-  - Totoro/DRAC recovery unless owner asks
-  - full Pkg.test
+  - TSV claim_status flip to supported (drmTMB STOP GATE)
+  - the other 10 unsigned ledger rows
+  - VA / #136 · :natgrad · ordinary-RE REML · AGHQ
+  - #428 A11 / cross_family_latent
+  - #49 PARKED · D-111 OFF
+  - HSquared AI-REML · interval coverage / reliability claims
+  - editing Workflow G glob harness (runparity.jl / gen_fixtures.R)
+  - editing test/runtests.jl while #425/#428 own it
   - leftover Dropbox docs/a3c-design commits
-  - leftover scratch docs/arc0-after-task (ahead 1 / behind 4)
-  - #136 OPEN · #49 PARKED · D-111 OFF
-  - drmTMB #1049/#1050 STOP GATE · GPL vendoring
+  - leftover scratch DRM.jl-catchup LOOP/ (#432)
+  - drmTMB #1049/#1050 · GPL vendoring · shared drmTMB checkout
   - staging .codex/agents/shannon-coordinator.toml
-  - checkout of the shared drmTMB tree
-  - feat/a11, feat/a8, feat/a12, fix/a10, #406, #423, #429
-DISCIPLINE: verify=each row classified from cited TSV claim_boundary +
-  next_action + existing fixture path (or explicit NONE) · compute=n/a
-  (easy on this Mac; no recovery) · closure=Shinichi approves G0
+DISCIPLINE: verify=Julia and drmTMB numbers on the SAME data/tree/formula
+  within declared [tol]; CI/status fields recorded, not coverage ·
+  compute=Mac-easy small cell (ask Totoro/DRAC at G0 if recovery-grade) ·
+  closure=Shinichi approves G0, then /goal ships the one fixture
 ```
 
-**Lane claimed:** `PLATFORM: cursor | ON BRANCH: docs/a3c-design (leftover; do not build here) | LANE: plan Arc 1 inventory | OTHER LANES: 9 live — do not steal feat/a11 (#428), feat/a8 (#423), feat/a12 (#429), fix/a10, #406, main-direct`
+**Lane claimed:** `PLATFORM: cursor | ON BRANCH: docs/a3c-design (leftover; do not build here) | LANE: plan biv_q4_phylo_reml fixture | OTHER LANES: #432 inventory · #429 A12 · #428 A11 · #425 A10 · #423 A8 · #421 · #420 · #406 · main-direct`
 
 ---
 
@@ -59,22 +53,25 @@ DISCIPLINE: verify=each row classified from cited TSV claim_boundary +
 
 Cursor cannot flip Plan mode from here. Phases 0–2 ran read-only. Execution
 waits for explicit G0. After approval, **do not continue in this chat** —
-paste the `/goal` prompt below into a **fresh** Cursor chat opened on the
-scratch worktree.
+paste the `/goal` prompt below into a **fresh** Cursor chat opened on a
+**new** scratch worktree (not `#432`'s `DRM.jl-catchup`).
 
 ---
 
 ## Decision LOCK (recommend — he approves at G0)
 
-**Arc 1 = inventory-first capability backlog** under the **2026-08-14
-campaign G0** (admit what an R user actually fits). It does **not** replace
-that G0. It does **not** implement the 11 rows. It produces an ordered
-backlog plus one recommended first implement slice for a *later* G0.
+**This G0 = one DRM.jl same-target fixture** for `biv_q4_phylo_reml`.
+Campaign G0 stays **2026-08-14 admit-what-R-fits**. This does not replace it.
 
-**"11 unsupported" means `claim_status ≠ supported`**, not 11 rows with
-status `unsupported`. Split: **6 partial · 4 experimental · 1 unsupported**.
-Zero rows are `supported`. The sole literal-`unsupported` row is
-`engine_control_surface` (design fence, not a port).
+The q4 REML engine is already public (`src/reml_q4.jl`, `drm(method = :REML)`;
+Scoreboard B; `test/test_reml_q4_allaxes.jl`). The ledger row is `partial`
+because there is **no native-vs-Julia same-target cell** (coef + logLik +
+fit-specific CI/status). `test/test_bridge_q4_direct_export.jl` still asserts
+`"no R-via-Julia q4 bridge parity"`. That is a DRM.jl cell, not a drmTMB TSV
+flip.
+
+**Not this slice:** TSV `supported` · other 10 rows · `#428` · `#136` · `#49`
+· VA/natgrad · AI-REML · interval *coverage*.
 
 ---
 
@@ -87,32 +84,44 @@ bash ~/shinichi-brain/tools/lane_preflight.sh "/Users/z3437171/Dropbox/Github Lo
 **VERDICT:** `FOREIGN LANE ACTIVE (direct-to-main)`. Concurrency allowed;
 bleed-through is not (D-88). This lane writes **only this untracked plan
 note** on leftover `docs/a3c-design`. It does not claim `src/`, live PR
-files, or `origin/main`.
+files, `#432` LOOP/, or `origin/main`.
 
-**9 LANES LIVE** (do not claim their files): `#429` A12 · `#428` A11 ·
-`#425` A10 · `#423` A8 · `#421` rosetta · `#420` loop items · `#406`
-github-auto-merge · `main-direct` · leftover `docs/a3c-design`.
+**10 LANES LIVE** (do not claim their files): `#432` Arc 1 inventory ·
+`#429` A12 · `#428` A11 · `#425` A10 · `#423` A8 · `#421` rosetta ·
+`#420` loop items · `#406` github-auto-merge · `main-direct` · leftover
+`docs/a3c-design`.
 
 **COORD BOARD:** committed to `origin/main` (reaches other lanes). This
 plan does **not** edit it.
 
 **SESSION OWNERSHIP:** `PLATFORM: Cursor`. Dropbox dirty = prior-session
-untracked notes (this file + Arc 0 plan + Hopper remasure + Pólya +
-ultra-vs-loop + never-stage `shannon-coordinator.toml`). Not a concurrent
-editor.
+untracked notes (Arc 0/1 plans + remasure + Pólya + ultra-vs-loop +
+never-stage `shannon-coordinator.toml`). Not a concurrent editor.
+
+**#432 collision (new vs Arc 1 plan):** inventory PR owns
+`LOOP/{GOAL,arcs,checkpoint,ultra-plan}.md` and
+`docs/dev-log/evidence/2026-08-16-arc1-*.md` on scratch
+`~/local-scratch/lanes/DRM.jl-catchup` (`docs/arc1-inventory`).
+**Do not reuse that worktree or refresh that LOOP kit.**
 
 ---
 
-## Phase 0.3b — two-bar
+## Phase 0.3 / 0.3b — roster + two-bar
 
-Owner note this invocation: prefer **Cursor Models / Grok 4.6 high-fast**
-(Other Models historically ahead, ~66% vs ~51%). On-demand **disabled**.
-Grok Bot unused — leave unused.
+Live session model: **Cursor Grok 4.6** (this chat). Owner instruction this
+invocation: **Grok only — no Opus/Sol**. Grok Bot unused. On-demand
+**disabled**.
+
+Dated bar prior (`memory/MODEL-ROUTING.md`, 2026-08-16 morning): Cursor
+Models **51%** · Other Models **66%** · Grok Bot **4%**. Other Models still
+ahead → stay on Cursor Models / Grok. This plan does **not** burn Other
+Models to even the meters.
 
 | Bar | Route this plan |
 |---|---|
-| Cursor Models | **All recon + consolidate + Rose** — Grok 4.6 high-fast |
-| Other Models | Do not burn on recon to even the meters |
+| Cursor Models | **All recon + design + Rose + verify** — Grok 4.6 high-fast |
+| Other Models | Do not burn |
+| Hand off | **Codex** only if live Rscript / Julia REML fit needs the toolchain (named `HANDS TO` below). Not a Cursor parent for HPC. |
 | Grok Bot | unused |
 | On-demand | disabled |
 
@@ -122,44 +131,53 @@ Grok Bot unused — leave unused.
 
 | File | Role | Present? |
 |---|---|---|
-| scratch `docs/dev-log/evidence/2026-08-16-arc1-eleven-rows.md` | 11 rows + claim_boundary; drmTMB `097bed1e2` | **yes** |
-| scratch `docs/dev-log/evidence/2026-08-16-arc1-rose-fence.md` | allowed/forbidden claims; two scoreboards | **yes** |
-| Dropbox `docs/dev-log/after-task/2026-08-16-ultra-plan-next-arc.md` | Arc 0 plan; deferred Arc 1 here | **yes** |
-| Dropbox `docs/dev-log/evidence/2026-08-16-parity-ledger-remeasure.md` | Hopper remasure (older tip `9e42d2c94`; same 11 IDs) | **yes** |
-| scratch `docs/dev-log/evidence/2026-08-16-arc1-lane-collisions.md` | Shannon | **absent** — census from `lane_preflight` above |
-| scratch `docs/dev-log/evidence/2026-08-16-arc1-hopper-twin-map.md` | Hopper twin map | **absent** — TSV `next_action` read via `git show` below |
+| scratch `docs/dev-log/evidence/2026-08-16-arc1-ordered-backlog.md` | Recommended first implement = this cell; class `fixture-gap` | **yes** |
+| scratch `docs/dev-log/evidence/2026-08-16-arc1-recon-s2.md` | Row 5: NONE same-target; engine on Scoreboard B | **yes** |
+| scratch `docs/dev-log/evidence/2026-08-16-arc1-hopper-twin-map.md` | Twin **YES**: `drmTMB(..., REML = TRUE)` + four-axis `phylo()` + `biv_gaussian()` | **yes** |
+| scratch `docs/dev-log/evidence/2026-08-16-arc1-rose-fence.md` | Cell evidence ≠ TSV flip; allowed claim #4 | **yes** |
+| Dropbox `docs/dev-log/after-task/2026-08-16-ultra-plan-arc1.md` | Inventory G0; this implement = later G0 | **yes** |
+| Dropbox `test/test_reml_q4_allaxes.jl` | Julia REML property test (p=16, no R numbers) | **yes** |
+| Dropbox `test/test_bridge_q4_direct_export.jl` | Still: "no R-via-Julia q4 bridge parity" | **yes** |
+| Dropbox `test/parity/README.md` + `GENERATING.md` | Workflow G format; runner fits **ML**, **no tree** | **yes** |
+| drmTMB TSV via `git show origin/main:inst/extdata/julia-capabilities.tsv` | `partial`; next_action = bank CI/status parity; issue drmTMB#544 | **yes** (tip `d9fddfa28`) |
 
-**Arc 0 status (do not redo):** `#430` `@ref` and `#431` after-task are on
-`origin/main`. Scratch `docs/arc0-after-task` @ `659e0824` says Arc 0 DONE,
-Arc 1 DEFER — **ahead 1 / behind 4**. Do not inventory on that leftover
-branch.
+**Arc 1 status (do not redo):** inventory in **#432**
+(https://github.com/itchyshin/DRM.jl/pull/432). Cite it; do not edit its
+files until landed.
 
 ---
 
-## The 11 rows (from eleven-rows + live TSV `next_action`)
+## What already exists vs the gap
 
-`claim_boundary` from eleven-rows (drmTMB `origin/main` `097bed1e2`).
-`next_action` from this session:
+### Julia path (do not re-port)
 
-```
-git -C "/Users/z3437171/Dropbox/Github Local/drmTMB" show origin/main:inst/extdata/julia-capabilities.tsv
-```
+- Public REML: `src/reml_q4.jl` included from `src/DRM.jl`
+  (`drm(method = :REML)`). Four-axis bordered correction. HANDOVER: no
+  `experimental/reml_q4.jl` on tip.
+- Property test: `test/test_reml_q4_allaxes.jl` — synthetic p=16, m=5,
+  `bf(mu1/mu2/sigma1/sigma2 + phylo, rho12 ~ 1)`, ML vs REML
+  `diag(Σ_a)_REML ≥ diag(Σ_a)_ML`. **No drmTMB numbers.**
+- Bridge export: `src/bridge.jl` `_bridge_q4_*` +
+  `test/test_bridge_q4_direct_export.jl` — ML point targets;
+  `claim_boundary` still says no R-via-Julia q4 bridge parity.
+- Verified ML core stays frozen: logLik **−256.51** / **2.18×**.
 
-No drmTMB checkout. Status unchanged vs remasure (`9e42d2c94` → `097bed1e2`).
+### drmTMB outputs (read-only `git show`; no checkout)
 
-| # | capability_id | status | next_action (abbrev.) | Working classification (Ada prior — inventory confirms) |
-|---|---|---|---|---|
-| 1 | `base_gaussian_location_scale` | partial | Keep coef/logLik parity on exact bridge payloads (remeasured 2026-08-15) | Phase 1.5 admitted — **drmTMB TSV claim**, not a missing engine |
-| 2 | `biv_gaussian_residual` | partial | Keep rho12 result-shape; do not promote beyond experimental | Phase 1.5 admitted — TSV claim |
-| 3 | `gaussian_phylo_mean` | partial | Keep first phylo-mean; do not widen to sigma-phylo | Phase 1.5 admitted — TSV claim |
-| 4 | `gaussian_response_mask` | partial | Keep mask tests Gaussian-only | Fixture/audit gap; **#49** adjacent — do not unpark |
-| 5 | `biv_q4_phylo_reml` | partial | Bank fit-specific CI/status parity before release language | **Same-target bridge-parity gap** on an already-implemented q4 REML path (Scoreboard B). Ada's default first *later* implement look |
-| 6 | `plain_binomial_nonphylo` | partial | Keep Workflow G live R gate green; not CRAN-default | Fixture exists (`expected.toml`); promotion is a claim, not a port |
-| 7 | `phylo_count_large_p` | experimental | Keep phylo-count smoke + Workflow G FE; do not promote | Smoke-only; large-p evidence, not a new family |
-| 8 | `phylo_gamma_beta_binomial` | experimental | **Add comparator or parity evidence** before promoting | Missing comparator — candidate #2 after inventory |
-| 9 | `general_covariance_structured` | experimental | Compare accepted families with the R gate (comparison now exists) | Gate-compare exists; widening is a claim |
-| 10 | `cross_family_latent` | experimental | Resolve mixed-family API mismatch before any public promotion | **#428 A11 owns this. Inventory only. Do not steal.** |
-| 11 | `engine_control_surface` | unsupported | Design `engine_control` before relaxing the gate | Design fence. Leave `unsupported`. |
+- Public twin: `drmTMB(..., REML = TRUE)` + four-axis `phylo()` +
+  `biv_gaussian()`. TSV `r_bridge_status=experimental`,
+  `claim_status=partial`, `issue=drmTMB#544`.
+- Native TMB has **separate** q4 recovery evidence (NEWS: dense q4 REML
+  recovery wants roughly `n_tip >= 200`, `n_each >= 10`). That is
+  **not** this cell. Do not invent AI-REML or coverage as the twin.
+- Hopper: NEWS 0.7.0 records Julia `REML=TRUE` forwarding for one q4
+  cell. Confirm the exact R call in S1; do not vendor `.R`/`.cpp`.
+
+### Why Workflow G cannot swallow this cell
+
+`test/parity/runparity.jl` globs `fixtures/*/expected.toml` and fits
+`drm(bundle, fam; data = data)` — **ML, no `tree=`**. Dropping this
+fixture into that glob would skip or fail. **New path, new runner.**
 
 ---
 
@@ -167,16 +185,16 @@ No drmTMB checkout. Status unchanged vs remasure (`9e42d2c94` → `097bed1e2`).
 
 | Surface | Evidence (command / query) | Finding | Call |
 |---|---|---|---|
-| **lane** | `~/shinichi-brain/tools/lane_preflight.sh` on Dropbox DRM.jl | FOREIGN LANE ACTIVE (direct-to-main); 9 live; board committed | Take **plan Arc 1 inventory** only |
-| **repo git** | `git status -sb`; `session_ownership.sh`; `branch_drift_check.sh`; `git worktree list`; `git stash list`; `git log --oneline -12`; `git log origin/main -8` | Dropbox: `docs/a3c-design`, **0 ahead / 57 behind** `origin/main`. Untracked prior notes + this file. `origin/main` has `#430`/`#431` (Arc 0 landed). Scratch: `docs/arc0-after-task` **ahead 1 / behind 4**, untracked eleven-rows + rose-fence | **Do not build on Dropbox or leftover Arc 0 branch.** New docs branch from `origin/main` in scratch |
-| **siblings** | `ls …/evidence/2026-08-16-arc1-*` | eleven-rows + rose-fence present; Shannon collisions + Hopper twin-map **absent** | Cite present files; TSV `next_action` substitutes for twin-map |
-| **ledger / TSV** | eleven-rows; `git show origin/main:inst/extdata/julia-capabilities.tsv` (drmTMB, no checkout) | COUNTDOWN 0 · 18/18 · 11 rows · CLOSURE PASS · none `supported` · tip `097bed1e2` | Cite 18/18; do not ship "parity complete" |
-| **twin drmTMB** | `git -C drmTMB log origin/main -1 --oneline` | `097bed1e2` (#1055 winbuilder). Dirty leftover twin checkout **not** used | Read-only `git show`; never checkout; STOP GATE `#1049`/`#1050` |
-| **brain** | MCP `search_notes` `DRM.jl Arc 1 inventory 11 unsigned capability rows 2026-08-14 G0 engine=julia` (`search_all_projects: true`) | No vault page holds this Arc 1 decision. Campaign G0 is **repo-local** | Reuse 2026-08-14 G0; do not invent a ship G0 |
-| **deterministic grep** | `grep -in "Arc 1 inventory\\|11 unsigned\\|engine_control_surface" memory/AGENT_LOG.md` → none. `grep -in "D-111\\|D-94\\|D-34" memory/DECISIONS.md` → live. `grep` `OPEN_QUESTIONS.md` → none for this inventory. `grep` `journal/` → no 2026-08-16 Arc 1 line. `grep` `projects/deep-research/README.md` → dr18/dr19 are **biv lognormal/Student** (already accounted exports), not this 11-row inventory | No vault decision says "implement the 11 next" | **reuse** G0 + Rose fence; **resume** after Arc 0; **build-the-gap** = inventory backlog only |
-| **PRs** | preflight open-PR list | `#428` A11 `src/` live; `#423` A8; `#429` stacked | Do not steal; inventory `#428` as owned |
-| **two-bar** | this invocation | Other Models historically ahead (~66% vs ~51%) | Scout/recon on **Cursor Models · Grok 4.6 high-fast** |
-| **Verdict** | — | Genuinely new work this lane can own: **the inventory backlog on a new docs branch**. Implementation of any row is a later G0 | **reuse G0 / resume after Arc 0 / build-the-gap = inventory** |
+| **lane** | `~/shinichi-brain/tools/lane_preflight.sh` on Dropbox DRM.jl | FOREIGN LANE ACTIVE (direct-to-main); 10 live; board committed; `#432` now open | Take **plan biv_q4_phylo_reml fixture** only; new scratch lane after G0 |
+| **repo git** | `git status -sb`; `session_ownership.sh`; `branch_drift_check.sh`; `git worktree list`; `git stash list`; `git log --oneline -20` | Dropbox: `docs/a3c-design`, **0 ahead / 57 behind** `origin/main`. Untracked prior notes + this file. Scratch catchup = `#432` | **Do not build on Dropbox or `#432` worktree.** New feat branch from `origin/main` in a **new** scratch lane |
+| **siblings** | `ls` scratch `2026-08-16-arc1-*`; Dropbox reml/q4 tests; `test/parity/fixtures/` | Inventory + Rose fence + twin-map present. Julia REML tests exist. **NONE** `*q4*` / `*reml*` under Workflow G fixtures | **reuse** engine + inventory; **build-the-gap** = same-target fixture |
+| **ledger / TSV** | `git show origin/main:inst/extdata/julia-capabilities.tsv` (drmTMB, no checkout) | Row `biv_q4_phylo_reml` `partial`; next_action CI/status; tip `d9fddfa28` | Cite; do not flip `supported` |
+| **twin drmTMB** | `git -C drmTMB log origin/main -1 --oneline`; NEWS via `git show` | `d9fddfa28`. Dirty leftover twin checkout **not** used | Read-only `git show`; never checkout; STOP GATE `#1049`/`#1050` |
+| **brain** | MCP `search_notes` `biv_q4_phylo_reml same-target fixture DRM.jl drmTMB` + `biv_q4_phylo_reml` (`search_all_projects: true`) | No vault page holds an implement decision. Hits are older q4 export / bridge notes, not this G0 | Reuse 2026-08-14 G0 + Arc 1 backlog; do not invent a ship G0 |
+| **deterministic grep** | `grep -in "biv_q4_phylo_reml" memory/AGENT_LOG.md` → none. `AGENT_LOG-archive.md` has one 2026-06 "defended partial" line. `grep` `DECISIONS.md` → D-111 / D-94 / D-34 live; no fixture decision. `OPEN_QUESTIONS.md` → none. `journal/` → none. `projects/deep-research/README.md` → no q4-REML fixture note | No vault decision says "flip TSV" or "port the engine" | **reuse** engine + fence; **build-the-gap** = fixture |
+| **PRs** | preflight + `gh pr view 432 --json files` | `#432` owns LOOP/ + arc1 evidence. `#425`/`#428` own `test/runtests.jl`. `#423` owns `tools/parity_ledger.py` / `src/DRM.jl` | New fixture paths; no `runtests.jl`; no `src/`; no ledger.py |
+| **two-bar** | MODEL-ROUTING 2026-08-16 morning + owner "Grok only" | Other Models ahead (~66% vs ~51%) | All plan slices on **Cursor Models · Grok**. Codex only for live toolchain |
+| **Verdict** | — | Genuinely new: **one same-target fixture + standalone test** on a new feat branch. Engine exists. TSV flip is not this repo | **reuse engine / resume after Arc 1 inventory / build-the-gap = fixture** |
 
 ---
 
@@ -184,242 +202,279 @@ No drmTMB checkout. Status unchanged vs remasure (`9e42d2c94` → `097bed1e2`).
 
 | Claim | Source | Status |
 |---|---|---|
-| Campaign G0 (2026-08-14): catch up so `engine="julia"` admits what an R user actually fits. Anchor drmTMB **0.7.0** | catch-up `LOOP/GOAL.md` · handover | live — **keep; this arc is a slice under it** |
-| D-111: stay off Julia General | [[DECISIONS#D-111]] | accepted |
-| D-94: DRM.jl behind **drmTMB**, not GLLVM.jl | [[DECISIONS#D-94]] · Pólya 2026-08-16 | accepted |
-| Export-name presence ≠ capability parity. No ledger row is `supported` | A0 + Hopper remasure + eleven-rows | live |
-| `#136` OPEN · `#49` PARKED · `#13` natgrad FAIL | LOOP + Rose fence + capability-status | **PROTECTED** |
-| Arc 0 `@ref` landed (`#430`/`#431`) | `origin/main` | **done — do not redo** |
-| Ultra-plan Phases 0–2 on Cursor; Phase 3 = `/goal` in a fresh chat | Cursor ultra-plan / goal adapters | doctrine |
+| Campaign G0 (2026-08-14): `engine="julia"` admits what an R user actually fits. Anchor drmTMB **0.7.0** | catch-up `LOOP/GOAL.md` | live — **keep; this is a slice under it** |
+| Promote a cell only on native-vs-Julia same-target (coef + logLik). Direct DRM.jl ≠ R-via-Julia bridge. Export-name ≠ parity | LOOP DoD · Rose fence | live |
+| D-111 OFF · D-94 behind drmTMB not GLLVM | [[DECISIONS#D-111]] · [[DECISIONS#D-94]] | accepted |
+| `#136` OPEN · `#49` PARKED · `#13` natgrad FAIL | LOOP + Rose fence | **PROTECTED** |
+| Arc 1 inventory recommended this cell; implement = **new G0** | ordered-backlog · #432 | **done inventory — do not redo** |
+| Ultra-plan Phases 0–2 on Cursor; Phase 3 = `/goal` in a fresh chat | Cursor adapters | doctrine |
 
 ---
 
 ## WHAT SHINICHI TOLD US (this invocation)
 
-- Decide on Arc 1, then `/ultra-plan` it for approval.
-- Arc 1 = inventory-first backlog under the 2026-08-14 G0.
-- Deliverable after G0: ordered claim-fenced backlog + recommended first
-  implement slice — **not** implementing all 11.
-- Explicitly NOT: “parity complete”; Arc 1′ chips unless a ledger row maps
-  (none do); stealing `#428`; inventing twin Δ; flipping TSV to `supported`.
-- Stay read-only through Phase 2. Cursor cannot EnterPlanMode — say so once.
-- Prefer Cursor Models / Grok (Other Models ahead).
+- Next arc ultra-plan = **`biv_q4_phylo_reml` same-target fixture** (Arc 1 backlog).
+- Campaign G0 still 2026-08-14; this is a **new implement G0** under it.
+- Skip `#428`. `#49` PARKED. `#136` OPEN. D-111 OFF. No GPL. Never checkout
+  shared drmTMB for writes.
+- Avoid `#423/#429/#425/#420/#406` files until landed; prefer new
+  test/parity fixture paths.
+- Read-only through Phase 2. Cursor cannot EnterPlanMode — say once.
+- Grok only — no Opus/Sol. Easy on Mac; Totoro/DRAC if recovery needed,
+  ask at G0.
+- Do not execute. Owner questions ≤3 + paste-ready `/goal`.
 
 ---
 
 ## TEAM RAISED
 
-Shannon collisions + Hopper twin-map files were **absent**. Lines use
-charters + eleven-rows + Rose fence + live TSV `next_action`.
-
 ```
 TEAM RAISED
-  Hopper — noticed: next_action on the 6 partials is mostly “keep tests,
-    do not promote”; only phylo_gamma_beta_binomial says “add comparator”;
-    biv_q4_phylo_reml says “bank CI/status parity”; cross_family says
-    “resolve mixed-family API” (= #428).
-    why it matters: treating all 11 as missing engines would start the
-    wrong work.
-    recommendation: classify each row as TSV-claim / fixture-gap /
-    owned / fence; do not promote a TSV row from DRM.jl.
-    question: none the inventory cannot answer.
-    default: first later implement look = biv_q4_phylo_reml fixture,
-    not a Phase 1.5 TSV flip.
+  Hopper — noticed: twin YES (REML=TRUE + four-axis phylo + biv_gaussian);
+    Workflow G runner is ML / no tree; existing expected.toml cells record
+    0.6.0 while campaign anchor is 0.7.0.
+    why it matters: globbing this cell into fixtures/ would break or skip
+    under DRM_PARITY_TESTS=1.
+    recommendation: new path outside the glob; new generator; record 0.7.0
+    and say the split.
+    question: Q3 (payload: coef+logLik vs also CI/status).
+    default: new path + 0.7.0 meta + CI/status fields without coverage claim.
 
-  Rose — noticed: COUNTDOWN 0 + CLOSURE PASS is not a public-parity
-    claim; Arc 1′ orange chips are not ledger rows; #428 is live src/.
-    why it matters: one PR that “clears the 11” or a TSV flip is a
-    claim lie.
-    recommendation: inventory prose quotes claim_boundary; one-issue
-    PRs later; never “R–Julia parity complete.”
-    question: Q1 (separate G0 for implement) and Q2 (fixture vs TSV).
-    default: hold the fence in rose-fence.md §2–3.
+  Boole — noticed: formula is already the four-axis bf() + phylo() grammar
+    used in test_reml_q4_allaxes.jl; reserved labels must stay reserved.
+    why it matters: a new fixture that invents rho12-as-phylo or tau
+    spelling is a grammar regression.
+    recommendation: paste the same bf() keys; tree as Newick sidecar, not
+    a formula rewrite.
+    question: none the design cannot answer.
+    default: mirror test_reml_q4_allaxes.jl grammar.
 
-  Shannon — noticed: 9 live lanes; Dropbox 57 behind; scratch Arc 0
-    branch drifted (ahead 1 / behind 4); foreign main-direct.
-    why it matters: bleed-through, not concurrency.
-    recommendation: new docs branch from origin/main in scratch;
-    never stage shannon-coordinator.toml; never checkout drmTMB.
-    question: none — D-87, owner decides overlap.
-    default: this lane stays plan → then inventory docs only.
-
-  Noether — noticed: q4 REML is already implemented; the ledger gap
-    is same-target bridge parity, not a missing Laplace path.
-    why it matters: “implement biv_q4_phylo_reml” as an engine port
-    would regress the verified core for no reason.
-    recommendation: src/ frozen this /goal; later fixture work must
-    not touch the verified q=4 path (logLik −256.51 / 2.18×).
+  Noether — noticed: reml_q4.jl is public and additive; verified ML core
+    is −256.51 / 2.18×.
+    why it matters: "implement REML" as an engine port would touch src/.
+    recommendation: src/ frozen. Fixture calls drm(method=:REML) only.
     question: none today.
-    default: src/ frozen.
+    default: src/ frozen. HANDS TO Codex if the live fit needs the
+    toolchain; HANDS TO Claude only if an unexpected src/ bug appears
+    (then STOP — new G0).
 
-  Pat — noticed: reader pages still Experimental; inventory must not
-    rewrite “what can I fit today?”
-    why it matters: a backlog that sounds like a ship list over-promises.
-    recommendation: backlog is an internal ordered list, not a reader
-    page rewrite.
-    question: none today.
-    default: no Documenter rebuild.
+  Curie — noticed: #291 reml ladder at p=16 can be diagnostic_only
+    (nonconvergence); drmTMB NEWS recovery-grade q4 REML wants p≳200.
+    why it matters: a non-converged cell is not same-target evidence.
+    recommendation: Mac smoke first (p≈16, nrep≈5). If either side fails
+    to converge, shrink or reseed — do not silently jump to Totoro
+    recovery-grade (that is a different estimand).
+    question: Q1 (Mac vs Totoro).
+    default: Mac-only small cell. Ask before Totoro/DRAC.
 
-  Pólya — noticed: D-94 + transferable three already bind (Rose fence,
-    no invented Δ, leftover discipline). VA/natgrad/GLLVM stay DEFER.
-    recommendation: constraints, not slices.
-    question: none.
-    default: do not implement from the scout.
+  Rose — noticed: next_action says bank CI/status; claim_boundary says
+    this row does not establish interval reliability or AI-REML;
+    COUNTDOWN 0 ≠ parity complete.
+    why it matters: a PR titled "q4 REML parity complete" is a claim lie.
+    recommendation: allowed sentence = "this PR adds a native-vs-Julia
+    same-target fixture for biv_q4_phylo_reml within the row's declared
+    tolerance." Leave claim_status untouched. Do not rewrite
+    test_bridge_q4_direct_export.jl's "no R-via-Julia q4 bridge parity"
+    unless the *bridge* path is also measured (it is not this slice).
+    question: Q3.
+    default: record CI/status; forbid coverage / supported / bridge-admitted.
 
-  Ada — synthesis: keep the 2026-08-14 G0. NEXT = Arc 1 inventory
-    only. Recommended first *later* implement look:
-    biv_q4_phylo_reml (bridge-parity fixture). Confirm in S5.
+  Shannon — noticed: #432 owns scratch LOOP/; #425/#428 own runtests.jl;
+    #423 owns parity_ledger.py + src/DRM.jl.
+    why it matters: reusing DRM.jl-catchup or editing runtests.jl is bleed.
+    recommendation: new scratch lane; standalone test file; no src/;
+    no LOOP refresh on #432.
+    question: Q2.
+    default: standalone test; wire runtests.jl only after those PRs land
+    (follow-up, not this PR).
+
+  Pat — noticed: reader pages stay Experimental; this is not "what can
+    I fit today?"
+    recommendation: worked example = runnable snippet in after-task / test
+    header, not a Documenter rewrite.
+    default: no docs/src/ edit.
+
+  Ada — synthesis: one fixture, new paths, src/ frozen, new scratch lane.
+    HANDS TO Codex for live R + Julia fit if Grok cannot run the toolchain.
+    Recommended defaults on Q1–Q3 below.
 ```
 
 ---
 
 ## ADA'S RECOMMENDATION
 
-**This `/goal` = inventory only.** Four Grok batches classify the 11 rows;
-Ada writes one ordered backlog; Rose checks the claim fence. **No `src/`.
-No TSV flip. No implement PR.**
+**Approve this G0 for one same-target fixture.** Keep the 2026-08-14
+campaign G0. Do not flip TSV. Do not touch `src/`.
 
-**Recommended first *later* implement slice** (inventory may override with
-cited evidence): **`biv_q4_phylo_reml`** — bank same-target CI/status
-parity. Why not the others: rows 1–3 are already Phase 1.5 admitted (drmTMB
-claim); `#428` owns row 10; row 11 is a design fence; row 8 is the runner-up
-(missing comparator).
+**IF YOU DO NOT MIND:**
 
-**IF YOU DO NOT MIND:** approve G0 for inventory only; keep 2026-08-14 G0;
-require a **new** G0 before any implement PR; default first-look
-`biv_q4_phylo_reml` unless inventory cites a cheaper fixture.
+1. **Mac-only small cell** (p≈16, nrep≈5, seed recorded). Totoro/DRAC
+   only if you answer Q1 that way.
+2. **Standalone test file** — do not edit `test/runtests.jl` while
+   `#425`/`#428` own it.
+3. **Payload = coef + logLik + fit-specific CI/status** (finite /
+   `pdHess` / interval_status). Not coverage. Not AI-REML. Record
+   drmTMB **0.7.0** in `expected.meta.toml` and say the 0.6.0 split.
 
-**WHAT CONTINUES unattended:** already-armed PRs; `#429` stays stacked;
-no new auto-merge from this lane; no `Pkg.test`; no recovery; no drmTMB
-checkout.
+**WHAT CONTINUES unattended:** already-armed PRs; `#432` inventory;
+`#429` stays stacked; no drmTMB checkout; no `Pkg.test` in *this*
+planning chat.
 
 ---
 
 ## DECISIONS LOCKED (pending G0)
 
-1. Mission stays the 2026-08-14 G0.
-2. This `/goal` inventories **only**. It does not implement.
-3. Workspace = scratch worktree, **new docs branch from `origin/main`**.
+1. Mission stays the 2026-08-14 G0. This is a **new implement G0** under it.
+2. One cell: `biv_q4_phylo_reml`. One issue → one branch → one PR.
+3. Workspace = **new** scratch lane from `origin/main` (not Dropbox
+   `docs/a3c-design`, not `#432` catchup).
 4. `src/` frozen. `#136` open. `#49` parked. D-111 off. `#428` not stolen.
-5. Verify = every row has a class + cited `claim_boundary` / `next_action`
-   / fixture path (or NONE). No full `Pkg.test`. No Totoro/DRAC.
-6. D-94: behind drmTMB, not GLLVM. Rose fence binds all prose.
+5. New fixture path **outside** `test/parity/fixtures/` glob.
+6. License: generated outputs only. Never vendor drmTMB source.
+7. Rose sentence only; no "parity complete"; no TSV `supported`.
+8. Verify = measured same-target numbers + Curie smoke + Rose section.
+   Full `Pkg.test` only if it does not require editing `runtests.jl`.
+9. D-94: behind drmTMB, not GLLVM.
 
 ---
 
 ## QUESTIONS STILL OPEN (max 3)
 
-**Q1 — After this inventory, does implementation need a new G0?**
-**WHY NOW:** a helpful `/goal` will “just start the first slice.”
-**TEAM VIEW:** Rose/Ada — inventory and implement are different
-irreversibility classes (docs vs `src/` / fixtures / claims).
-**RECOMMENDATION:** **yes — new G0 before any implement PR.**
-**IF YOU DO NOT MIND:** new G0.
-**WHAT CONTINUES:** inventory `/goal` regardless.
+**Q1 — Compute / cell size: Mac-only small same-target, or Totoro
+recovery-grade (p≳200)?**
+**WHY NOW:** skill requires Totoro/DRAC at scope time. drmTMB NEWS
+recovery-grade q4 REML is a different estimand than same-target
+coef/logLik. `#291` p=16 can be `diagnostic_only`.
+**TEAM VIEW:** Curie/Ada — Mac smoke first; recovery-grade is DEFER.
+**RECOMMENDATION:** **Mac-only small cell.** If either engine fails to
+converge, shrink/reseed and record it — do not silently escalate.
+**IF YOU DO NOT MIND:** Mac-only. Say "Totoro" or "DRAC" to override.
+**WHAT CONTINUES:** recon + schema design either way.
 
-**Q2 — May the recommended first implement slice be a drmTMB TSV
-promotion of an already-admitted Phase 1.5 cell (rows 1–3)?**
-**WHY NOW:** those rows look “closest to `supported`.” Promoting them
-is a drmTMB claim (STOP GATE `#1049`/`#1050`), not a DRM.jl cell.
-**TEAM VIEW:** Hopper/Rose — first implement = DRM.jl same-target
-fixture only.
-**RECOMMENDATION:** **fixture only.** TSV flips stay on drmTMB, owner-named.
-**IF YOU DO NOT MIND:** fixture only; Ada’s prior = `biv_q4_phylo_reml`.
-**WHAT CONTINUES:** inventory classifies rows 1–3 as TSV-claim either way.
+**Q2 — Wire `test/runtests.jl` in this PR?**
+**WHY NOW:** `#425` and `#428` own that file. A helpful include is bleed.
+**TEAM VIEW:** Shannon — standalone file now; include later.
+**RECOMMENDATION:** **standalone** `test/test_parity_biv_q4_phylo_reml.jl`,
+run via `julia --project=. -e 'using DRM, Test; include(...)'`. After
+`#425`/`#428` land, a tiny follow-up include (not this G0).
+**IF YOU DO NOT MIND:** standalone.
+**WHAT CONTINUES:** fixture + test file either way.
 
-**Q3 — `#428` / `cross_family_latent`.** Inventory as **owned — skip**.
-Still do not unarm/re-arm from this lane (owner call, already live).
-**WHY NOW:** it is the only open `src/` PR whose `next_action` is an
-API mismatch.
-**TEAM VIEW:** Shannon — classify and walk around.
-**RECOMMENDATION:** **owned, skip.** Do not propose a competing slice.
-**IF YOU DO NOT MIND:** same.
-**WHAT CONTINUES:** inventory writes one “owned by #428” row and stops.
+**Q3 — Same-target payload: coef+logLik only, or also fit-specific
+CI/status?**
+**WHY NOW:** Rose allowed claim #4 is coef+logLik. TSV `next_action` is
+"Bank fit-specific CI/status parity." `claim_boundary` forbids interval
+*reliability* and AI-REML.
+**TEAM VIEW:** Hopper/Rose — record CI/status fields; do not claim
+coverage or reliability.
+**RECOMMENDATION:** **both** — coef + logLik + CI/status
+(`converged`, `pdHess` / Julia equivalent, `interval_status`). Forbid
+coverage numbers and `supported`.
+**IF YOU DO NOT MIND:** both, no coverage.
+**WHAT CONTINUES:** schema design can reserve `[status]` either way.
 
 ---
 
 ## SEARCH
 
-`none` for execution (no novelty claim). NotebookLM **not** required.
-dr18/dr19 are already-accounted bivariate exports, not this backlog.
+`none` for execution (no novelty / "first to" claim). NotebookLM **not**
+required. External prior art is drmTMB's own NEWS + TSV, already cited.
 
 ---
 
-## SLICE TABLE (inventory only — colleague-runnable)
+## SLICE TABLE (colleague-runnable)
 
-`SCOUT SUITABILITY: yes` — TSV + fixture-path grep + PR ownership.
+`SCOUT SUITABILITY: yes` — S1 is bounded read-only recon.
 
-Each recon agent writes **one** evidence file and returns path + 3–6
-class lines. Class vocabulary (pick one per row):
-
-`TSV-claim` · `fixture-gap` · `smoke-only` · `owned` · `fence` · `parked-adjacent`
-
-Do **not** invent a 12th row. Do **not** edit `src/`. Do **not** flip
-`capability-status.md`.
+Do **not** edit `src/`. Do **not** flip TSV. Do **not** glob into
+`test/parity/fixtures/`.
 
 | ID | Member | model+effort | Bar | time | files / detail | dep |
 |---|---|---|---|---|---|---|
-| S1 RECON | Hopper | **Grok 4.6 high-fast** · low | **Cursor Models** | 20 min | Rows **1–3** (Phase 1.5 admitted). Cite `claim_boundary` + `next_action` + existing Route A/B/C fixture paths. Output: `docs/dev-log/evidence/2026-08-16-arc1-batch-partials-admitted.md` (scratch, new branch) | — |
-| S2 RECON | Hopper | Grok 4.6 high-fast · low | **Cursor Models** | 20 min | Rows **4–6** (`gaussian_response_mask`, `biv_q4_phylo_reml`, `plain_binomial_nonphylo`). Find same-target fixture or write NONE. Fence `#49` on row 4. Output: `…/2026-08-16-arc1-batch-partials-rest.md` | — |
-| S3 RECON | Hopper | Grok 4.6 high-fast · low | **Cursor Models** | 20 min | Rows **7–9** (experimentals minus `#428`). Output: `…/2026-08-16-arc1-batch-experimental.md` | — |
-| S4 RECON | Shannon/Hopper | Grok 4.6 high-fast · low | **Cursor Models** | 10 min | Rows **10–11** only. Row 10 = owned by `#428` (cite live PR; do not steal). Row 11 = fence. Output: `…/2026-08-16-arc1-batch-owned-fence.md` | — |
-| S5 | Ada | Grok 4.6 high-fast · med | **Cursor Models** | 25 min | Merge S1–S4 into **one ordered backlog** (cheapest honest next cell first; owned/fence last). Name **one** recommended first implement slice with a one-sentence why. Output: `docs/dev-log/after-task/2026-08-16-arc1-backlog.md` | S1–S4 |
-| S6 Rose | Rose | Grok 4.6 high-fast · med | **Cursor Models** | 15 min | Claim-vs-evidence on the backlog: no “parity complete”; no TSV flip; no `#136`/`#49`; `#428` not stolen; sweep receipt non-vacuous. Output: short section in the backlog (or `…/2026-08-16-arc1-rose-review.md`) | S5 |
-| S7 MECHANICAL-VERIFY | Hopper | Grok 4.6 high-fast · low | **Cursor Models** | 10 min | Count = 11; every ID present once; every row has a class + citation; recommended slice is not `#428` / `#136` / `#49` / `engine_control_surface` / a TSV flip. **No** `Pkg.test`. **No** recovery | S5+S6 |
-| S8 RECONCILE | Melissa | — | skip | 5 min | `N/A — docs-only inventory; record in after-task if `/goal` stays one session` | S7 |
+| S1 RECON | Hopper | **Grok 4.6 high-fast** · low | **Cursor Models** | 25 min | What drmTMB outputs exist (`git show` NEWS / man / tests mentioning q4 REML + Julia `REML=TRUE` forwarding) and the exact Julia call (`drm(..., method=:REML, tree=)`). Output: `docs/dev-log/evidence/2026-08-16-biv-q4-phylo-reml-recon.md` | — |
+| S2 DESIGN | Boole + Hopper | Grok 4.6 high-fast · med | **Cursor Models** | 30 min | Fixture schema: `test/parity/q4-reml/biv-q4-phylo-reml/{data.csv,tree.newick,expected.toml,expected.meta.toml}`. Keys: `[fit]` (family, formula, method=REML, loglik, n) · `[coef]` · optional `[vcov]` · `[status]` (converged, pdHess/Julia equiv, interval_status) · `[tol]`. Provenance records **0.7.0**. Output: `docs/dev-log/evidence/2026-08-16-biv-q4-phylo-reml-schema.md` | S1 |
+| S3 IMPLEMENT | Hopper / Noether-adjacent | Grok 4.6 high-fast · med | **Cursor Models** | 60–90 min | New generator `test/parity/gen_biv_q4_phylo_reml.R` (do **not** edit `gen_fixtures.R`). Generate numbers via local R + installed drmTMB **without writing the shared drmTMB tree**. New Julia test `test/test_parity_biv_q4_phylo_reml.jl` (self-contained; no `runtests.jl`). **HANDS TO: Codex** if live `Rscript` / Julia REML fit fails in Cursor (toolchain). **HANDS TO: Claude** only if an unexpected `src/` bug appears — then STOP, new G0. | S2 |
+| S4 SMOKE | Curie | Grok 4.6 high-fast · low | **Cursor Models** | 20 min | One-cell smoke: both sides converge, non-empty expected.toml, name-matched coef + logLik within `[tol]`, status fields finite. Read the log, not the exit code. Output: short section in after-task | S3 |
+| S5 Rose | Rose | Grok 4.6 high-fast · med | **Cursor Models** | 15 min | Claim-vs-evidence: no "parity complete"; no TSV flip; no coverage; no AI-REML; no bridge-admitted rewrite of `test_bridge_q4_direct_export.jl`; GPL = generated outputs only; sweep receipt non-vacuous. Output: Rose section in after-task | S4 |
+| S6 DoD | Ada | Grok 4.6 high-fast · low | **Cursor Models** | 20 min | New issue; check-log `docs/dev-log/check-log.d/2026-08-16-biv-q4-phylo-reml-fixture.md`; after-task `docs/dev-log/after-task/2026-08-16-biv-q4-phylo-reml-fixture.md`; worked example = test header + after-task snippet (no `docs/src/`). PR `closes #NN` | S5 |
+| S7 MECHANICAL-VERIFY | Hopper | Grok 4.6 high-fast · low | **Cursor Models** | 10 min | Fixture dir exists; meta has 0.7.0 + r_call + seed; test file exists and was run; no `src/` diff; no TSV; no `runtests.jl`; no `#432` LOOP/; no drmTMB checkout. **No** full `Pkg.test` required | S6 |
+| S8 RECONCILE | Melissa | Grok 4.6 high-fast · low | **Cursor Models** | 10 min | Plan vs actual → `docs/dev-log/plan-actual/2026-08-16-biv-q4-phylo-reml-fixture.md` | S7 |
 
-**PARALLEL:** {S1, S2, S3, S4} in **one** dispatch message.
-**SEQUENTIAL:** S1–S4 → S5 → S6 → S7.
-
-**FAN-OUT:** 0 in this planning chat. After G0, `/goal` uses **4** Grok
-recon children + conductor consolidate. **FAN-OUT BUDGET:**
-checkpoint=`arc1-inventory` · new children≤5/6 · scout=4 · build=0 ·
-ceiling=0.
+**PARALLEL:** {S1} first; S2 after S1. S3–S8 sequential.
+**FAN-OUT:** 0 in this planning chat. After G0, `/goal` may use **1** Grok
+recon child (S1) then conductor. **FAN-OUT BUDGET:**
+checkpoint=`biv-q4-phylo-reml-fixture` · new children≤2/6 · scout=1 ·
+build=1 · ceiling=0.
 
 **ULTRA EFFORT:** no.
 **CONTEXT BRAKE:** parent input=unknown · fresh-task trigger=**START A
 FRESH TASK** after G0.
 **COMPACTIONS:** n/a (planning only).
 **LANE RECEIPT:** `START A FRESH TASK` · reason=G0 handoff to `/goal` in
-scratch · next-task prompt=block below.
+a **new** scratch lane · next-task prompt=block below.
 **AUTO-REVIEW:** unknown · action=none.
 **D-43 PANEL:** not a milestone.
-**MODELS:** all slices on **Cursor Models · Grok 4.6 high-fast** until
-bars are closer. No Grok Bot. No Claude/Codex parent unless reassigned.
-**ESTIMATE:** ~1–2 h wall-clock · 1 `/goal` session · no HPC.
+**MODELS:** all slices on **Cursor Models · Grok 4.6 high-fast** unless
+S3 `HANDS TO: Codex`. No Opus/Sol. No Grok Bot.
+**ESTIMATE:** ~2–4 h wall-clock on Mac · 1 `/goal` session · no HPC
+unless Q1 overrides.
 **ARC PROGRAM:** N/A (no Arc Card).
 **PREFLIGHT:** pasted above.
-**REVIEW:** Rose S6 (plan critique also below).
-**VERIFY:** 11-row count + class + citation + fence.
-**CONSOLIDATE:** backlog after-task on the **new** docs branch (not this
-Dropbox leftover).
+**REVIEW:** Rose S5 (plan critique also below).
+**VERIFY:** S4 smoke + S7 mechanical + S5 claim fence.
+**CONSOLIDATE:** after-task + check-log on the **new** feat branch.
 
 ### File fence (must not include)
 
-- `src/**`
-- `test/runtests.jl`
-- `docs/src/cross-family.md` (#428)
-- `docs/src/reference/structured-effect-markers.md` (#423)
-- `docs/make.jl`
-- `docs/design/capability-status.md` (do not flip chips)
-- `docs/dev-log/coordination-board.md`
-- leftover `LOOP/checkpoint.md` from the export-gap / Arc 0 kits
+- `src/**` (Noether; verified engine)
+- `test/runtests.jl` (`#425` / `#428`)
+- `test/parity/runparity.jl` · `test/parity/gen_fixtures.R` ·
+  `test/parity/runparity_bridge.jl` (do not glob this cell)
+- `tools/parity_ledger.py` · `src/DRM.jl` (`#423`)
+- `docs/src/cross-family.md` (`#428`)
+- `docs/src/reference/structured-effect-markers.md` (`#423`)
+- `docs/make.jl` · `docs/design/capability-status.md`
+- `docs/dev-log/coordination-board.md` (`#406`)
+- `#432` `LOOP/**` and `docs/dev-log/evidence/2026-08-16-arc1-*.md`
+- leftover `LOOP/checkpoint.md` from catch-up / Arc 0 / `#420`
 - `.codex/agents/shannon-coordinator.toml`
+
+### Allowed new paths
+
+```
+test/parity/q4-reml/biv-q4-phylo-reml/data.csv
+test/parity/q4-reml/biv-q4-phylo-reml/tree.newick
+test/parity/q4-reml/biv-q4-phylo-reml/expected.toml
+test/parity/q4-reml/biv-q4-phylo-reml/expected.meta.toml
+test/parity/gen_biv_q4_phylo_reml.R
+test/test_parity_biv_q4_phylo_reml.jl
+docs/dev-log/evidence/2026-08-16-biv-q4-phylo-reml-*.md
+docs/dev-log/check-log.d/2026-08-16-biv-q4-phylo-reml-fixture.md
+docs/dev-log/after-task/2026-08-16-biv-q4-phylo-reml-fixture.md
+docs/dev-log/plan-actual/2026-08-16-biv-q4-phylo-reml-fixture.md
+```
 
 ### How to cut the branch (execution, after G0)
 
+Prefer `~/shinichi-brain/tools/lane_launch.sh DRM.jl biv-q4-phylo-reml`
+(new worktree, new LOOP kit, committed). Do **not** launch inside
+`DRM.jl-catchup`.
+
+If launching by hand:
+
 ```bash
-cd /Users/z3437171/local-scratch/lanes/DRM.jl-catchup
 git fetch origin
-git checkout -B docs/arc1-inventory origin/main
+# new worktree, not the Dropbox leftover, not DRM.jl-catchup
+git worktree add -b feat/biv-q4-phylo-reml-fixture \
+  ~/local-scratch/lanes/DRM.jl-biv-q4-phylo-reml origin/main
+cd ~/local-scratch/lanes/DRM.jl-biv-q4-phylo-reml
 # confirm: git rev-parse HEAD == origin/main; git status -sb clean
+# open a NEW GitHub issue for this fixture; PR closes it
 ```
 
-Do **not** stay on `docs/arc0-after-task`. Do **not** `git checkout` the
-Dropbox tree. Do **not** start from `handover/2026-08-16-cursor`.
-
-Copy (do not rewrite) eleven-rows + rose-fence onto the new branch if they
-are not already in `origin/main`. Then run S1–S7.
+R generation (S3) must use the **installed** drmTMB library and write
+**only** into the DRM.jl fixture dir. Never `git checkout` / commit on
+the shared drmTMB tree.
 
 ---
 
@@ -427,87 +482,97 @@ are not already in `origin/main`. Then run S1–S7.
 
 **Sweep receipt:** present and non-vacuous. Each surface cites a command
 or query (lane_preflight, git + drift, `ls` siblings, `git show` TSV,
-MCP `search_notes` query string, deterministic greps on AGENT_LOG /
-DECISIONS / OPEN_QUESTIONS / journal / deep-research README).
+MCP `search_notes` query strings, deterministic greps on AGENT_LOG /
+DECISIONS / OPEN_QUESTIONS / journal / deep-research README, `gh pr view 432`).
 
 **What Rose would block**
 
-- Calling COUNTDOWN 0 “parity complete.”
-- Merging inventory + implement into one `/goal`.
-- A TSV `supported` flip from this tree.
-- Stealing `#428` or closing `#136`.
-- Planning ordinary-RE REML / `:natgrad` / VA / AGHQ / `#49` as Arc 1
-  (no ledger row maps).
-- Inventory on leftover `docs/a3c-design` or drifted `docs/arc0-after-task`.
+- Calling this "R–Julia parity complete" or flipping TSV `supported`.
+- Bundling the other 10 rows, `#428`, VA/`#136`, `:natgrad`, or `#49`.
+- Claiming interval *coverage* / *reliability* or HSquared AI-REML.
+- Rewriting `test_bridge_q4_direct_export.jl` to drop "no R-via-Julia
+  q4 bridge parity" (this slice is native `drm()`, not the bridge).
+- Vendoring drmTMB GPL source; editing the shared drmTMB checkout.
+- Building on leftover `docs/a3c-design` or `#432` LOOP/.
+- Editing `src/` "to make REML work."
 
 **What Rose accepts**
 
-- Arc 1 as inventory under the existing 2026-08-14 G0.
-- Four Grok batches by row group (admitted / rest-partial / experimental /
-  owned+fence).
-- Ada prior `biv_q4_phylo_reml` as a *later* fixture look, overridable.
-- Phrase: *export-gap countdown at 0; 11 rows still unsigned.*
+- One-issue PR that adds a same-target fixture and leaves
+  `claim_status` untouched.
+- Phrase: *this PR adds a native-vs-Julia same-target fixture for
+  `biv_q4_phylo_reml` within the row's declared tolerance.*
+- *Export-gap countdown at 0; 11 rows still unsigned.*
+- Recording 0.7.0 on this new cell while Workflow G metas stay 0.6.0
+  (say the split).
 
 ---
 
 ## DEFER (fenced — not in the `/goal`)
 
-- Implementation PRs for any of the 11 rows
-- Flipping `claim_status` to `supported`
-- Arc 1′: ordinary-RE REML, `:natgrad`, VA/ELBO (`#136`), AGHQ, `#49`
-- Stealing `#428` `cross_family_latent`
-- Invented twin Δ; “parity complete”; “become GLLVM” (D-94)
-- Totoro/DRAC recovery unless owner asks
-- Full `Pkg.test`
-- `#423` / `#429` / `#425` / `#406` / `#421` / `#420`
+- TSV `claim_status` → `supported`
+- The other 10 unsigned ledger rows
+- `#428` / `cross_family_latent`
+- `#136` VA · `:natgrad` · ordinary-RE REML · AGHQ · `#49`
+- HSquared AI-REML · interval coverage
+- Workflow G harness edits / `runtests.jl` include
+- `#423` / `#429` / `#425` / `#420` / `#406` / `#421` / `#432` files
 - Leftover Dropbox `docs/a3c-design` commits
-- Leftover scratch `docs/arc0-after-task`
 - D-111 / Registrator; GPL vendoring; drmTMB checkout
 - Staging `.codex/agents/shannon-coordinator.toml`
+- Totoro/DRAC unless Q1 says so
 
 ---
 
 ## Paste-ready `/goal` prompt (UNEXECUTED)
 
-After Shinichi approves G0, paste this into a **fresh** Cursor chat whose
-workspace is `~/local-scratch/lanes/DRM.jl-catchup` (not the Dropbox
-checkout):
+After Shinichi approves G0 (and answers Q1–Q3 or "use your judgment"),
+paste this into a **fresh** Cursor chat whose workspace is the **new**
+scratch lane (not Dropbox, not `DRM.jl-catchup`):
 
 ```
 /goal
 
 Ultra-plan G0 approved. Run this plan to completion via LOOP/.
 
-LANE: docs-arc1-inventory
-REPO: /Users/z3437171/local-scratch/lanes/DRM.jl-catchup
-PLAN: /Users/z3437171/Dropbox/Github Local/DRM.jl/docs/dev-log/after-task/2026-08-16-ultra-plan-arc1.md
+LANE: feat-biv-q4-phylo-reml-fixture
+REPO: /Users/z3437171/local-scratch/lanes/DRM.jl-biv-q4-phylo-reml
+PLAN: /Users/z3437171/Dropbox/Github Local/DRM.jl/docs/dev-log/after-task/2026-08-16-ultra-plan-biv-q4-phylo-reml-fixture.md
 
 READ FIRST: the approved plan → repo AGENTS.md →
-  docs/dev-log/evidence/2026-08-16-arc1-eleven-rows.md →
-  docs/dev-log/evidence/2026-08-16-arc1-rose-fence.md.
-SCAFFOLD: in THIS scratch worktree, `git fetch origin` then
-  `git checkout -B docs/arc1-inventory origin/main`.
-  Do NOT stay on docs/arc0-after-task. Do NOT use the Dropbox leftover.
-  Write a *new* LOOP/ kit for Arc 1 inventory only from the plan;
-  do not revive the stale export-gap or Arc 0 checkpoint.
+  scratch docs/dev-log/evidence/2026-08-16-arc1-ordered-backlog.md →
+  scratch docs/dev-log/evidence/2026-08-16-arc1-recon-s2.md →
+  scratch docs/dev-log/evidence/2026-08-16-arc1-hopper-twin-map.md →
+  scratch docs/dev-log/evidence/2026-08-16-arc1-rose-fence.md.
+SCAFFOLD: NEW scratch lane (lane_launch.sh DRM.jl biv-q4-phylo-reml
+  or worktree at REPO above from origin/main).
+  Do NOT use Dropbox leftover docs/a3c-design.
+  Do NOT reuse ~/local-scratch/lanes/DRM.jl-catchup (#432 owns LOOP/).
+  Write a *new* LOOP/ kit for this fixture only.
+  Open one GitHub issue; PR closes it.
 RUN: goal skill — re-read GOAL each arc; verify by LOG not exit code;
   pause at OPEN GATE; overwrite checkpoint each arc.
-START ARC: S1–S4 Grok recon in one dispatch (rows 1–3 / 4–6 / 7–9 / 10–11),
-  then S5 ordered backlog + recommended first later implement slice,
-  then S6 Rose + S7 count check.
-NEXT GATE: opening a PR for the backlog (docs only). Auto-merge last
-  or leave unarmed. Implementation of any row is a NEW G0 — STOP.
-VERIFY: 11 IDs once each; every row has class + citation; recommended
-  slice is not #428 / #136 / #49 / engine_control_surface / a TSV flip.
-COMPUTE: n/a — no Pkg.test, no recovery, no Totoro/DRAC.
+START ARC: S1 Grok recon (drmTMB outputs + Julia path), then S2 schema,
+  then S3 generate+test, S4 Curie smoke, S5 Rose, S6 DoD, S7 verify.
+NEXT GATE: opening the PR. Auto-merge last or leave unarmed.
+  TSV supported flip is NOT this PR — STOP if anyone starts it.
+VERIFY: fixture numbers exist; Julia re-fit matches within [tol];
+  status fields recorded; no src/ diff; no runtests.jl; no TSV flip.
+COMPUTE: Mac-only small cell unless G0 answered Totoro/DRAC.
+  If either side does not converge, shrink/reseed and record — do not
+  silently escalate compute.
+HANDS TO: Codex if live Rscript / Julia REML fit needs the toolchain.
+  HANDS TO Claude only if an unexpected src/ bug appears — then STOP.
 FENCE: no src/; no capability-status flip; no TSV supported; no
-  cross-family.md; no coordination-board; no #423/#428/#429/#406;
-  #136 stays OPEN; #49 PARKED; D-111 OFF; never stage
-  shannon-coordinator.toml; never checkout drmTMB.
-CLAIM FENCE: do not write "R–Julia parity complete." Quote claim_boundary.
-  Rose fence + no invented twin Δ (D-94 = behind drmTMB not GLLVM).
-  Do not become GLLVM; do not implement VA/natgrad/AGHQ.
-BARS: Cursor Models / Grok 4.6 high-fast for all recon (Other Models ahead).
+  runparity.jl / gen_fixtures.R / runtests.jl; no #423/#428/#429/#425/
+  #420/#406/#432 files; #136 stays OPEN; #49 PARKED; D-111 OFF;
+  never stage shannon-coordinator.toml; never checkout drmTMB.
+CLAIM FENCE: "this PR adds a native-vs-Julia same-target fixture for
+  biv_q4_phylo_reml within the row's declared tolerance."
+  Do not write "R–Julia parity complete." Do not claim interval
+  reliability, coverage, AI-REML, or R-via-Julia bridge admission.
+  Quote claim_boundary. D-94 = behind drmTMB not GLLVM.
+BARS: Cursor Models / Grok 4.6 high-fast (Grok only; no Opus/Sol).
 ```
 
 ---
@@ -518,7 +583,7 @@ BARS: Cursor Models / Grok 4.6 high-fast for all recon (Other Models ahead).
 |---|---|
 | PLATFORM | Cursor (read from `session_ownership.sh`) |
 | Session model | Cursor Grok 4.6 (this chat) |
-| bars | prefer Cursor Models / Grok (Other Models historically ahead ~66% vs ~51%); Grok Bot unused; on-demand disabled |
+| bars | prefer Cursor Models / Grok (Other Models historically ahead ~66% vs ~51%); owner: Grok only; Grok Bot unused; on-demand disabled |
 | Nested Task subagents | **none** |
 | Phase 3 | **not started** |
 | git add / commit | **not done** (untracked on leftover `docs/a3c-design`; owner did not ask) |

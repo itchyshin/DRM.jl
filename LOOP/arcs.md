@@ -1,17 +1,20 @@
-# Arcs — docs-arc1-inventory
+# Arcs — feat-biv-q4-phylo-reml-fixture
+
+From approved ultra-plan. Status: todo / doing / done / blocked.
+Gate = needs a human before it can proceed.
 
 | ID | Status | Gate | What |
 |---|---|---|---|
-| SCAFFOLD | done | — | LOOP kit + plan pointer on `docs/arc1-inventory` |
-| S1 | done | — | Rows 1–3 Phase 1.5 admitted trio |
-| S2 | done | — | Rows 4–6 remaining partials |
-| S3 | done | — | Rows 7–9 experimentals minus `#428` |
-| S4 | done | — | Rows 10–11 owned + fence |
-| S5 | done | — | Ada ordered backlog + recommended later slice |
-| S6 | done | — | Rose pass (no parity complete) |
-| S7 | done | — | Count check: 11 unique IDs |
-| PR | in-progress | OPEN GATE if `src/` touched (must not) | Docs-only PR; auto-merge if green |
-| STOP | next | implement = new G0 | Do not start any row |
+| SCAFFOLD | done | — | LOOP kit @ `8b0aa5e3`; issue #433 |
+| S1 | done | — | Hopper recon: native TMB REML + four-axis phylo; Julia `method=:REML` |
+| S2 | done | — | Schema outside `fixtures/` glob; 0.7.0 meta; `[status]` reserved |
+| S3 | done | — | Generator + seed 20260822 fixture + standalone test (no Codex handoff) |
+| S4 | done | — | Curie: TMB conv=0; Julia 33/33 within measured [tol] |
+| S5 | done | — | Rose fence in `2026-08-16-biv-q4-s5-rose-fence.md` |
+| S6 | done | — | check-log + after-task + worked example |
+| S7 | done | — | no src/; no runtests.jl; no TSV; meta 0.7.0 |
+| S8 | done | — | plan-actual: REML restriction drift recorded |
+| PR | done | unarmed | https://github.com/itchyshin/DRM.jl/pull/434 `closes #433`. Do not merge from this lane. |
 
-S1–S4 ran as conductor recon on Cursor Grok (no Task children available in this
-subagent). Same model; no Opus/Sol/Other Models.
+**PARALLEL:** S1 first; S2 after S1. S3–S8 sequential.
+**FENCE:** no `src/`; no TSV `supported`; no `runtests.jl`; no Workflow G glob.
