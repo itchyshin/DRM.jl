@@ -129,3 +129,72 @@ is_converged
 deviance
 dof_residual
 ```
+
+## Phylogenetic penalty (MAP)
+
+[`drm_phylo_penalty`](@ref) is the Julia twin of drmTMB's `drm_phylo_penalty()`:
+pass `penalty = drm_phylo_penalty(...)` to [`drm`](@ref) to turn a phylogenetic
+variance-component fit into a **MAP** estimate. [`drm_phylo_penalty_sweep`](@ref)
+refits across a grid of correlation-penalty scales so you can see whether a
+conclusion moves with the prior. [`PhyloCorPenaltyNeedsTwoSD`](@ref) is the
+typed refusal when `cor_sd` is asked of a model that has no phylogenetic
+correlation to penalize.
+
+```@docs
+drm_phylo_penalty
+drm_phylo_penalty_sweep
+PhyloPenalty
+PhyloCorPenaltyNeedsTwoSD
+```
+
+## Staged pair association
+
+[`associate_pairs`](@ref) estimates a latent-normal association between two
+already-fitted univariate models (drmTMB's staged, frozen-margin route). The
+kernel must be given explicitly as [`latent_normal`](@ref); [`association`](@ref)
+is the post-fit summary.
+
+```@docs
+associate_pairs
+latent_normal
+association
+```
+
+## Heritability, ICC, and derived quantities
+
+```@docs
+heritability
+icc
+bias_correct
+```
+
+## Boundary inference
+
+```@docs
+chibar_pvalue
+```
+
+## Cross-family post-fit
+
+Accessors for a `fit_mixed_family` result. [`mf_coef`](@ref) is the tidy
+coefficient table; the other `mf_*` helpers live beside it in the module.
+
+```@docs
+mf_coef
+```
+
+## Engine constructors (q=4 and coevolution)
+
+These are the exported constructors and types behind the verified q=4 PLSM
+engine and the general-q coevolution block. They are public because the
+engine is the package's selling point, not because a typical `drm()` user
+needs to call them.
+
+```@docs
+AugProblem
+make_problem
+fit_q4_sparse_tmb
+marginal_nll
+CoevoProblem
+lc_to_cov
+```
