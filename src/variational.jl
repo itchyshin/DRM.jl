@@ -7,8 +7,8 @@
 """
     MarginalMethod
 
-How a model's random-effect integral is approximated. Subtypes: [`Laplace`](@ref)
-(mode + curvature; the default, what drmTMB/TMB use) and [`Variational`](@ref)
+How a model's random-effect integral is approximated. Subtypes: `Laplace`
+(mode + curvature; the default, what drmTMB/TMB use) and `Variational`
 (maximize an ELBO over a Gaussian q; opt-in, steadier on dispersion/shape — #136).
 """
 abstract type MarginalMethod end
@@ -20,7 +20,7 @@ struct Laplace <: MarginalMethod end
 
 """    Variational <: MarginalMethod
 
-Gaussian-variational (VA/ELBO) marginal — opt-in alternative to [`Laplace`](@ref)
+Gaussian-variational (VA/ELBO) marginal — opt-in alternative to `Laplace`
 for bias-sensitive random-effect models (#136). Public `drm` path (Experimental):
 Poisson / Binomial / NegBinomial2 / Gamma / Beta random intercept `(1 | g)` via
 `marginal = :VA` (scale families need `sigma ~ 1`). Phylo, crossed, correlated
