@@ -25,7 +25,7 @@ Workflow G metas stay drmTMB **0.6.0**; this cell records **0.7.0**.
 - Generator `test/parity/gen_gaussian_phylo_mean.R` (does not edit `gen_fixtures.R`)
 - Fixture `test/parity/phylo-mean/gaussian-phylo-mean/` (outside the Workflow G glob)
 - Standalone `test/test_parity_gaussian_phylo_mean.jl` (does not touch `runtests.jl`)
-- Evidence: sibling S1 recon, S2 schema, sibling S5 Rose fence, morning Rose fence
+- Evidence: sibling S1 recon, S2 schema, sibling S5 Rose fence (morning catchup fence consumed, not staged)
 
 ## Worked example
 
@@ -77,8 +77,8 @@ differs from drmTMB's `ape::vcv(..., corr=TRUE)`). This cell compares
 
 ## S5 Rose
 
-Consumed sibling `docs/dev-log/evidence/2026-08-17-gaussian-phylo-mean-s5-rose.md`
-and morning `2026-08-17-morning-rose-fence.md`.
+Consumed sibling `docs/dev-log/evidence/2026-08-17-gaussian-phylo-mean-s5-rose.md`.
+Morning `2026-08-17-morning-rose-fence.md` is a catchup copy — not staged in this PR.
 
 Sweep: no "parity complete"; no "last fixture-gap"; no TSV flip; no
 sigma-phylo widen; GPL = generated outputs only; taxonomy split stated;

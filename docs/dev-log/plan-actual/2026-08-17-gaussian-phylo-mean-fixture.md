@@ -24,3 +24,7 @@ comparison does not use that scale.
 TSV `supported`. `runtests.jl`. `src/`. `sigma ~ phylo`. `#136` close.
 `#49` unpark. D-111. drmTMB checkout. "parity complete." "last fixture-gap."
 `#432` taxonomy rewrite.
+
+## Fence correction
+
+First commit accidentally included catchup `2026-08-17-morning-rose-fence.md`. Removed in a follow-up commit so the PR stays on the allowed path list.
