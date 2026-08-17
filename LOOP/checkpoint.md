@@ -1,26 +1,19 @@
 # Checkpoint — OVERWRITTEN every arc (a pointer to truth, not a log)
 
-GOAL: see GOAL.md.   STATE: done-pending-CI.
-
+GOAL: see GOAL.md.   STATE: S0–S6 landed; PR #436 open; wait-gate honesty fix pending push; then CI + merge if green.
 ARCS DONE (verified):
-- SCAFFOLD — LOOP kit @ `8b0aa5e3`; issue #433
-- S1–S8 — fixture + standalone test + Rose fence (33/33; no src/; no TSV)
-- PR — https://github.com/itchyshin/DRM.jl/pull/434 (`closes #433`); auto-merge unarmed
-
-ARC IN PROGRESS: none
-
-NEXT: STOP. Wait for CI on #434. Human merge only. Do not flip TSV.
-
-OPEN GATES (need human): merge / auto-merge / TSV `supported` (not this PR)
-
-TRUTH LIVES IN:
-- branch `claude/lane-biv-q4-phylo-reml` @ `29f35cf5` (prior checkpoint) / fixture `@ 0578782b`
-- PR https://github.com/itchyshin/DRM.jl/pull/434
-- issue https://github.com/itchyshin/DRM.jl/issues/433
-- worktree `~/local-scratch/lanes/DRM.jl-biv-q4-phylo-reml`
-- Fixture: `test/parity/q4-reml/biv-q4-phylo-reml/`
-- Test log: 33 passed (2026-08-16)
-
-RESUME: You are feat-biv-q4-phylo-reml-fixture. RESUME. READ FIRST: LOOP/GOAL.md
--> LOOP/checkpoint.md. CONTINUE FROM: STOP. PR #434 is open; CI pending; auto-merge
-unarmed. Do not redo S1–S8. Do not flip TSV. Do not merge unless Shinichi asks.
+- S0 leftover scratch reset onto `origin/main` `5ddaffa9`; issue #435 already open
+- S1 backlog rewrite (ord 1 fixture banked; no recommended implement; 11 IDs once)
+- S2 after-task + check-log
+- S3 Rose clean-with-limitations (in-PR + morning [Rose](f3b00b68-52a2-4bd1-af25-53f01aa0c05c))
+- S4 mechanical: 11 unique IDs; stale NONE gone; fence paths empty
+- S5 unarmed PR #436 `closes #435` @ `8b241b8e` plus wait-gate honesty fix
+- S6 plan-actual written
+ARC IN PROGRESS: S5 — push honesty fix; wait CI; merge if green + docs-only
+NEXT: commit + push wait-gate fix; `gh pr checks 436`; merge if green
+OPEN GATES (need human): none if CI green + docs-only (owner: merge OK)
+TRUTH LIVES IN: `claude/lane-arc1-backlog-after-434` @
+  `~/local-scratch/lanes/DRM.jl-arc1-backlog-after-434` · PR #436
+RESUME: read LOOP/GOAL.md → LOOP/checkpoint.md → LOOP/ultra-plan.md, then
+  continue from NEXT. Do not use catchup / biv-q4 leftover / Dropbox leftover.
+  Do not start an implement row.

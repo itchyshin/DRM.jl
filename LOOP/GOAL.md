@@ -1,62 +1,50 @@
-# GOAL — feat-biv-q4-phylo-reml-fixture (IMMUTABLE — re-read at the top of EVERY arc)
-
-Read this first, every cycle. Auto-compact eats messages, not this file.
+# GOAL — docs-arc1-backlog-after-434 (IMMUTABLE — re-read at the top of EVERY arc)
 
 ## Mission
 
-Add one measured same-target DRM.jl↔drmTMB fixture for the `biv_q4_phylo_reml`
-cell (coef + logLik + fit-specific CI/status), plus a standalone Julia test,
-check-log, after-task, and Rose claim fence. One issue → one branch → one PR.
+Refresh the Arc 1 ordered backlog on a new scratch branch from `origin/main`
+after #434: fixture **banked**; `claim_status` still **partial**; stale
+**NONE** line gone; 11 IDs once; no new recommended implement. Land
+after-task + check-log + Rose. One issue → one unarmed PR that closes it.
 
 ## Headline
 
-One same-target fixture for `biv_q4_phylo_reml` within the row's declared
-tolerance. Not "R–Julia parity complete."
+Docs-only — re-rank the 11 unsigned rows now that #434 shipped. Do not
+implement a ledger row.
 
 ## Invariants
 
-- One lane: `feat-biv-q4-phylo-reml-fixture` on `claude/lane-biv-q4-phylo-reml`
-  in `~/local-scratch/lanes/DRM.jl-biv-q4-phylo-reml`. Not Dropbox leftover
-  `docs/a3c-design`. Not `#432` catchup worktree.
-- Mac-only small cell (p≈16, nrep≈5, seed recorded). Do not silently escalate
-  to Totoro/DRAC. If either side fails to converge, shrink/reseed and record.
-- Standalone `test/test_parity_biv_q4_phylo_reml.jl`. Do **not** touch
-  `test/runtests.jl`.
-- Payload: coef + logLik + fit-specific CI/status (`converged`, `pdHess` /
-  Julia equivalent, `interval_status`). No coverage, reliability, or AI-REML
-  claims.
-- `src/` frozen. No TSV `claim_status` → `supported`. No capability-status flip.
-- Do not edit `test/parity/runparity.jl`, `gen_fixtures.R`, `runparity_bridge.jl`.
-- Do not touch `#423/#428/#429/#425/#420/#406` files. `#136` stays OPEN.
-  `#49` PARKED. D-111 OFF.
-- Never stage `.codex/agents/shannon-coordinator.toml`. Never `git add -A`.
-- Never checkout the shared drmTMB tree (read-only `git show` / generated
-  outputs only). License: generated outputs, not GPL source.
-- Claim sentence only: *this PR adds a native-vs-Julia same-target fixture for
-  `biv_q4_phylo_reml` within the row's declared tolerance.*
-- Do not rewrite `test_bridge_q4_direct_export.jl`'s "no R-via-Julia q4 bridge
-  parity" (this slice is native `drm()`, not the bridge).
-- Never push, merge, or publish without an OPEN GATE. Auto-merge last or leave
-  unarmed (owner default unarmed).
-- HANDS TO Codex if live `Rscript` / Julia REML fit needs the toolchain; STOP
-  at that gate. HANDS TO Claude only if an unexpected `src/` bug appears —
-  then STOP, new G0.
-- Easy on Mac CPU — no full `Pkg.test`.
+- One lane: `docs-arc1-backlog-after-434` @
+  `~/local-scratch/lanes/DRM.jl-arc1-backlog-after-434`.
+- Do **not** use Dropbox leftover `docs/a3c-design`,
+  `~/local-scratch/lanes/DRM.jl-catchup`, or
+  `~/local-scratch/lanes/DRM.jl-biv-q4-phylo-reml`.
+- New LOOP kit only (this directory). Do not reuse #432 / #434 / catchup kits.
+- `src/` frozen. No `test/runtests.jl`. No TSV `supported` flip.
+- Do not touch `#423` / `#425` / `#428` / `#429` / `#420` / `#406` / `#421` files.
+- `#136` stays OPEN. `#49` PARKED. D-111 OFF. Never checkout drmTMB.
+- Never stage `.codex/agents/shannon-coordinator.toml`.
+- Phrase: *refresh the Arc 1 backlog after #434; fixture banked; 11 rows
+  still unsigned.* Do not write "R–Julia parity complete." Do not name a
+  new recommended implement.
+- Quote `claim_boundary`. D-94 = behind drmTMB, not GLLVM.
+- Grok only. No auto-start implement after this PR.
 
 ## Authoritative WHAT
 
 `LOOP/ultra-plan.md` (copy of
-`docs/dev-log/after-task/2026-08-16-ultra-plan-biv-q4-phylo-reml-fixture.md`).
-G0 approved 2026-08-16 with Q1–Q3 defaults: Mac-only; standalone test; coef +
-logLik + CI/status, no coverage.
+`docs/dev-log/after-task/2026-08-16-ultra-plan-next-after-biv-q4.md`).
+G0 approved defaults: docs-only; defer `runtests.jl` include; stop after
+this PR.
 
 ## Definition of done
 
-- [ ] Fixture dir exists with data + tree + expected.toml + expected.meta.toml
-      (drmTMB **0.7.0**, r_call, seed)
-- [ ] Standalone test exists and was run; Julia re-fit matches within `[tol]`
-- [ ] Status fields recorded (converged / pdHess-or-equiv / interval_status)
-- [ ] No `src/` diff; no `runtests.jl`; no TSV `supported` flip
-- [ ] Check-log + after-task + Rose section + plan-actual
-- [ ] One GitHub issue; PR `closes #NN`
-- [ ] Claim fence held
+- [ ] `docs/dev-log/evidence/2026-08-16-arc1-ordered-backlog.md` no longer
+      says fixture **NONE** for `biv_q4_phylo_reml`; `claim_status` still
+      `partial`; no new recommended implement named
+- [ ] 11 unique `capability_id`s, each once
+- [ ] after-task + check-log + Rose verdict on this refresh
+- [ ] one GitHub issue; one unarmed PR that `closes #NN`
+- [ ] `git diff origin/main` has no `src/`, no `runtests.jl`, no TSV,
+      no `capability-status.md`
+- [ ] STOP after the docs PR — do not start an implement row

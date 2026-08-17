@@ -1,20 +1,18 @@
-# Arcs — feat-biv-q4-phylo-reml-fixture
+# Arcs — from the approved ultra-plan (G0 docs-only)
 
-From approved ultra-plan. Status: todo / doing / done / blocked.
-Gate = needs a human before it can proceed.
+| # | arc | status | gate? |
+|---|-----|--------|-------|
+| S0 | Scaffold new scratch + LOOP kit + one GitHub issue | done | — |
+| S1 | Rewrite `2026-08-16-arc1-ordered-backlog.md` (fixture banked; still partial; drop recommended implement) | done | — |
+| S2 | New after-task + check-log (do not edit #432 after-task in place) | done | — |
+| S3 | Rose claim-vs-evidence on the refreshed backlog | done | — |
+| S4 | Mechanical verify: 11 IDs once; stale NONE gone; fence clean | done | — |
+| S5 | One issue → one unarmed PR (`closes #435`) | doing | PR #436 open; merge OK if CI green + docs-only |
+| S6 | plan-actual if this `/goal` stays one session | done | — |
 
-| ID | Status | Gate | What |
-|---|---|---|---|
-| SCAFFOLD | done | — | LOOP kit @ `8b0aa5e3`; issue #433 |
-| S1 | done | — | Hopper recon: native TMB REML + four-axis phylo; Julia `method=:REML` |
-| S2 | done | — | Schema outside `fixtures/` glob; 0.7.0 meta; `[status]` reserved |
-| S3 | done | — | Generator + seed 20260822 fixture + standalone test (no Codex handoff) |
-| S4 | done | — | Curie: TMB conv=0; Julia 33/33 within measured [tol] |
-| S5 | done | — | Rose fence in `2026-08-16-biv-q4-s5-rose-fence.md` |
-| S6 | done | — | check-log + after-task + worked example |
-| S7 | done | — | no src/; no runtests.jl; no TSV; meta 0.7.0 |
-| S8 | done | — | plan-actual: REML restriction drift recorded |
-| PR | done | unarmed | https://github.com/itchyshin/DRM.jl/pull/434 `closes #433`. Do not merge from this lane. |
+Status: todo / doing / done / blocked. Gate = needs a human before it can proceed.
 
-**PARALLEL:** S1 first; S2 after S1. S3–S8 sequential.
-**FENCE:** no `src/`; no TSV `supported`; no `runtests.jl`; no Workflow G glob.
+G0 defaults (owner use-judgment): docs-only; defer `runtests.jl` include;
+stop after this PR — no auto-start implement.
+
+Issue: https://github.com/itchyshin/DRM.jl/issues/435
