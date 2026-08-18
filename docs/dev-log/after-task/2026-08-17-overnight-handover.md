@@ -159,3 +159,19 @@ Conflicts with overnight Ada lock (Option B OFF / docs-only / no remaining fixtu
 Morning Shinichi chooses: (1) docs backlog refresh G0, (2) `gaussian_phylo_mean` fixture ultra-plan G0, or (3) wait #423+#428 for runtests include.
 
 Do not auto-start.
+
+---
+
+## Late wake 06:43 MDT (after hard stop)
+
+Preflight finished 00:45Z: Claude holds direct-to-main. This lane stayed
+overnight-conductor. **No include PR.** No TSV flip. No #428 merge.
+
+**#436** is the overnight docs PR the 04:48 note missed:
+https://github.com/itchyshin/DRM.jl/pull/436 — OPEN, MERGEABLE, owner-armed
+06:07 MDT, `test (1.10)` + Documenter green, **`test (1)` still IN_PROGRESS**
+at 06:43. Leave it to GitHub auto-merge. Do not steal
+`claude/lane-arc1-backlog-after-434`.
+
+`origin/main` still `5ddaffa9` (#425). Wait-gate for the runtests include
+remains **#423 + #428**.
