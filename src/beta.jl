@@ -50,6 +50,7 @@ function drm(f::DrmFormula, fam::Beta; data, tree = nothing, K = nothing,
     missing_fit !== nothing && return missing_fit
 
     marg = _marginal_method(marginal)                     # :LA (default) or :VA (#136)
+    marg isa AGHQ && _aghq_reject(fam, "this family")
     isva = marg isa Variational
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])

@@ -174,6 +174,7 @@ include("test_va_frontend_families.jl")
 include("test_variational_binomial.jl")
 include("test_variational_nb2.jl")
 include("test_variational_gamma.jl")
+include("test_aghq_1d.jl")                  # #448: 1-D Liu–Pierce AGHQ (lever 2)
 # Numerical-stability guards from the twin code-review pass (#303/#308/#311/#312/
 # #319/#321/#324.6/#324.7): SD-collapse, coincident coords, VA inner damping,
 # scale-aware FD Hessian, and PD-prior Cholesky barriers.

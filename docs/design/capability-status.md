@@ -149,10 +149,11 @@ included (`src/DRM.jl:99`), exports `chibar_pvalue`/`lrt_boundary`
 which lists chi-bar-square boundary inference as "Absent -- no
 implementation."
 
-`AGHQ adaptive-quadrature marginal estimator` is `missing`: the "Marginal
-method selection" table in `docs/src/capabilities.md` lists only `:LA`
-(implemented) and `:VA` (stub); no AGHQ symbol appears in `src/DRM.jl`'s
-export list, `ROADMAP.md`, `HANDOVER.md`, or `README.md`.
+`AGHQ adaptive-quadrature marginal estimator` is `missing`: the table cell is
+not flipped. #448 landed 1-D Liu–Pierce **plumbing** (`marginal = :AGHQ` on
+Poisson `(1 | g)` only); that is not ADEMP-certified and is not a capability
+claim. Public `:LA` on `(1 | g)` remains GHQ-32. `ROADMAP.md` / `HANDOVER.md` /
+`README.md` stay silent on a chip.
 `Variational (VA/ELBO) marginal estimator` is `planned`: `src/variational.jl`
 exists, `_fit_va` deliberately `error`s and points at issue #136, and
 `test/test_variational.jl` asserts only the method-selection plumbing, not a

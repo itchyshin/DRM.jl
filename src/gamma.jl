@@ -47,6 +47,7 @@ function drm(f::DrmFormula, fam::Gamma; data, tree = nothing, K = nothing,
     missing_fit !== nothing && return missing_fit
 
     marg = _marginal_method(marginal)                     # :LA (default) or :VA (#136)
+    marg isa AGHQ && _aghq_reject(fam, "this family")
     isva = marg isa Variational
     rhs = Dict(f.forms)
     # Location–scale: a coupled `(1 | tag | group)` shared by the mean and sigma
