@@ -13,7 +13,14 @@
 | 7 | Standalone characterization test documenting current ML behaviour (NOT wired into `test/runtests.jl`) | done | — |
 | 8 | Design note: hook points, cost model, risks, fences, explicit go/no-go for the implement-G0 | done | — |
 | 9 | After-task + check-log entry; name the next G0s in order | done | — |
-| 10 | Open the PR against `main`; merge if CI green and Rose-clean | todo — Shannon | **gate: owner pre-approved for this lane** |
+| 10 | PR #442 against `main`; merge if CI green and Rose-clean | done — Shannon | owner pre-approved |
+
+**G0 CLOSED.** Verdict: **GO** for a later implement-G0, as a *wiring* job — not implemented
+here. Arc 7 verified by artefact: `test/test_cox_reid_characterization.jl` ran **12/12 in
+15 s**, standalone, not registered in `runtests.jl`.
+
+Next G0 = Cox–Reid **implement** (first cell Poisson `(1|g)` GHQ; narrow
+`_reject_method_as_marginal`), then the **AGHQ port**. Neither starts in this lane.
 
 Status: todo / doing / done / blocked. Gate = needs a human before it can proceed.
 
