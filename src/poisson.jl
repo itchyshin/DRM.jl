@@ -24,7 +24,32 @@ fit_phy = drm(bf(@formula(y ~ x + phylo(1 | species))), Poisson();
 # Experimental (#136 Arc 0): Poisson random-intercept variational (ELBO) marginal.
 # Default remains Laplace (`marginal = :LA`). `loglik` on a VA fit is an ELBO.
 fit_va = drm(bf(@formula(y ~ x + (1 | g))), Poisson(); data = dat, marginal = :VA)
+
+# Opt-in Cox–Reid restricted estimation for `(1 | g)` (#443). ML is the default.
+fit_reml = drm(bf(@formula(y ~ x + (1 | g))), Poisson(); data = dat, method = :REML)
+estimation_method(fit_reml)   # :REML
 ```
+
+# Restricted (Cox–Reid) estimation
+
+`method = :REML` is available for a **single scalar random intercept `(1 | g)`** only,
+and is **opt-in — ML remains the default**. It maximises the Cox–Reid adjusted profile
+likelihood `ℓ_ML − ½·log|I_ββ|`, which reduces the ML downward bias in `σ̂_b` when
+clusters are few. On the Gaussian route this correction is exactly Patterson–Thompson
+REML, so it is anchored rather than ad hoc.
+
+!!! warning "It over-corrects when clusters are plentiful"
+    On a Poisson `(1 | g)` cell with true `σ_b = 0.6` and 6 observations per cluster,
+    ML was **−12.4%** at `G = 10` where Cox–Reid was **−1.8%** — but by `G = 40` ML was
+    **+1.4%** and Cox–Reid **+4.4%**. Reach for it when clusters are few, not by habit.
+    That asymmetry is why ML is the default. Evidence:
+    `docs/dev-log/evidence/2026-08-18-cox-reid-scoping-probe.md`.
+
+Every other Poisson route (phylogenetic/structured effects, crossed intercepts,
+correlated slopes `(1 + x | g)`, fixed-effects-only, `zi`/`hu`, `marginal = :VA`) errors
+on `method = :REML` rather than silently returning an ML fit. REML log-likelihoods are
+not comparable across different fixed-effect structures, so do not use them for
+model selection over `μ`.
 """
 struct Poisson end
 
@@ -33,8 +58,12 @@ _logfactorial(k::Integer) = sum(log, 2:k; init = 0.0)   # log k!  (0 for k = 0, 
 function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
              A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true,
              marginal::Symbol = :LA, method = nothing)
-    # `method` is the Gaussian ML/REML selector. LA/VA is `marginal` (Q1 / #136).
-    _reject_method_as_marginal(fam, method)
+    # `method` is the ML/REML selector. LA/VA is `marginal` (Q1 / #136). `:REML` is the
+    # opt-in Cox–Reid restricted objective and is admitted on ONE route — the scalar
+    # random intercept `(1 | g)` (#443). Every other route calls `_reject_reml_route`
+    # below rather than ignoring the request.
+    meth = _reject_method_as_marginal(fam, method; allow_reml = true)
+    reml = meth === :REML
 
     missing_fit = _fit_observed_response_rows(f, data) do data_observed
         drm(f, fam; data = data_observed, tree = tree, K = K, A = A,
@@ -53,6 +82,10 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
         error("Poisson() requires non-negative integer counts as the response")
     if st !== nothing
         isva && _va_reject(fam, "a phylogenetic/structured random effect")
+        # The sparse-Laplace hook itself is proven on these routes (probe #441 Cell C),
+        # but their variance-component bias is NOT characterised — Cell D was
+        # underpowered for even a sign claim. Follow-up cell, not this one.
+        reml && _reject_reml_route(fam, "a phylogenetic/structured random effect")
         isempty(re) ||
             error("Poisson() structured effects cannot be combined with ordinary random effects yet")
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
@@ -86,6 +119,7 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
             error("Poisson() random effects cannot be combined with `zi`/`hu` yet")
         if length(re) > 1                                 # (1|g)+(1|h)+… crossed/multiple intercepts → sparse Laplace
             isva && _va_reject(fam, "crossed/multiple random intercepts")
+            reml && _reject_reml_route(fam, "crossed/multiple random intercepts")
             all(_re_kind(r[1])[1] === :intercept for r in re) ||
                 error("Poisson() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
             comps = map(re) do r
@@ -96,11 +130,17 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
         end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
         if rk === :intercept                              # (1 | g) → 1-D GHQ (Laplace) or VA (#136)
+            # The one route where `method = :REML` punches through (#443). VA is an ELBO,
+            # not a likelihood, so a restricted correction of it is not defined.
+            reml && isva && _reject_reml_route(fam, "`marginal = :VA` (the ELBO is not a likelihood)")
             isva && return _withformula(_withmarginal(
                 _fit_poisson_ranef_va(fam, y, Xμ, gidx, G, nmμ, grp, g_tol), :VA), f)
-            return _withformula(_fit_poisson_ranef(fam, y, Xμ, gidx, G, nmμ, grp, g_tol), f)
+            return _withformula(
+                _fit_poisson_ranef(fam, y, Xμ, gidx, G, nmμ, grp, g_tol; reml = reml), f)
         elseif rk === :corr                               # (1 + x | g) → 2-D GHQ
             isva && _va_reject(fam, "a correlated random slope `(1 + x | g)`")
+            # A 2-D per-cluster effect is not scalar-per-cluster: out of the certified cell.
+            reml && _reject_reml_route(fam, "a correlated random slope `(1 + x | g)`")
             xs = Float64.(getproperty(data, var))
             return _withformula(_fit_poisson_corr_ranef(fam, y, Xμ, xs, gidx, G, nmμ, grp, g_tol), f)
         else
@@ -108,6 +148,8 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
         end
     end
     isva && _va_reject(fam, "no random intercept (fixed-effects-only / zi / hu)")
+    # No variance component ⇒ nothing for a restricted objective to correct.
+    reml && _reject_reml_route(fam, "no random effect (fixed-effects-only / `zi` / `hu`)")
     haskey(rhs, :zi) && haskey(rhs, :hu) &&
         error("`zi` and `hu` cannot both be specified (zero-inflation vs hurdle)")
     if haskey(rhs, :zi)                                   # zero-inflated Poisson
@@ -146,7 +188,23 @@ end
 # Poisson count GLMM with a random intercept (1|g) on log λ. b_g ~ N(0,σ_b²) is
 # integrated out per group by K-node Gauss–Hermite quadrature (b = √2 σ_b z), the
 # same scheme as the Gaussian σ-RE. O(n·K) per evaluation, fully differentiable.
-function _fit_poisson_ranef(fam::Poisson, y, Xμ, gidx, G, nmμ, grp, g_tol)
+#
+# `reml = true` (public `method = :REML`, #443) switches to the opt-in Cox–Reid adjusted
+# profile likelihood ℓ_CR = ℓ_ML − ½·log|I_ββ|, which reduces the ML finite-cluster
+# downward bias in σ̂_b. The 32-node quadrature means the integral error is already paid,
+# so σ̂_b's residual bias is the ML variance-component bias and nothing else — which is
+# what makes this the clean first cell.
+#
+# Two things are deliberately reused rather than re-derived: `_glsp_reml_penalty` forms
+# I_ββ (its FD-of-analytic-gradient construction reduces EXACTLY to Patterson–Thompson
+# REML on the Gaussian route — probe Cell B matched the #440 Woodbury path to 2.9e-06),
+# and `_glsp_reml_refit_clean` carries the guards production needs: the non-PD-I_ββ
+# sentinel (2/60 seeds hit it at G=10) and the line-search fallback. This route has no
+# analytic gradient closure, so the exact ForwardDiff gradient supplies `grad_fn`.
+#
+# ML stays the default: Cox–Reid OVER-corrects once clusters are plentiful (+4.38% at
+# G=40 against −12.37% for ML at G=10).
+function _fit_poisson_ranef(fam::Poisson, y, Xμ, gidx, G, nmμ, grp, g_tol; reml::Bool = false)
     n = length(y); pμ = size(Xμ, 2)
     members = [Int[] for _ in 1:G]
     for i in 1:n
@@ -179,12 +237,25 @@ function _fit_poisson_ranef(fam::Poisson, y, Xμ, gidx, G, nmμ, grp, g_tol)
     θ0[1] = log(sum(y) / n + eps())
     θ0[pμ+1] = log(0.5)
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
+    θ̂ = Optim.minimizer(res); conv = Optim.converged(res)
     blocks = [:mu => 1:pμ, :resd => (pμ+1):(pμ+1)]
     names = [:mu => nmμ, :resd => [String(grp)]]
-    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # population λ (b=0)
     scales = Dict{Symbol,Vector{Float64}}()
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    if reml
+        grad_fn = θ -> ForwardDiff.gradient(nll, θ)
+        ml_nll = nll(θ̂)
+        θ̂, conv, ml_nll, reml_nll, _ =
+            _glsp_reml_refit_clean(nll, grad_fn, θ̂, pμ; ml_converged = conv)
+        # Wald vcov under a restricted objective must be the inverse Hessian OF THAT
+        # objective (#310), not the ML observed information.
+        V = _glsp_reml_vcov(grad_fn, θ̂, pμ)
+        means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
+        fit = _withnll(DrmFit(fam, blocks, names, θ̂, V, -ml_nll, n, conv, means, obs, scales), nll)
+        return _withreml(fit, -reml_nll, -ml_nll)
+    end
+    V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # population λ (b=0)
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, conv, means, obs, scales), nll)
 end
 
 # Poisson count GLMM with a correlated random intercept+slope (1 + x | g) on log λ.
