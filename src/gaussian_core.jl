@@ -312,6 +312,14 @@ Bivariate Gaussian fits use [`BivariateDrmFormula`](@ref); with no structured
 marker they fit the residual `rho12` model, and with shared `phylo(1 | group)`
 markers on `mu1`, `mu2`, `sigma1`, and `sigma2` they route to the verified q=4
 phylogenetic engine.
+
+## `method` — ML (default) or REML
+
+`method` (default `:ML`) selects the estimator. `:REML` is opt-in and is
+implemented for (a) the fixed-effect Gaussian location–scale cell and (b) a
+single Gaussian mean random intercept `(1 | g)` on the Woodbury spine (#439).
+σ-RE, random slopes, multi-ranef, structured / phylo / meta, and non-Gaussian
+REML stay rejected. REML likelihoods are not comparable across mean structures.
 """
 function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false, phylo_coupled::Bool = false, penalty = nothing)
     algorithm in (:auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs) ||

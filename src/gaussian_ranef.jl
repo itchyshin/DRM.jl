@@ -94,6 +94,16 @@ end
 # `reml=true` (#439) keeps β_μ in θ and adds the Patterson–Thompson term
 # ½ logdet(Xμ′ V⁻¹ Xμ) to the Woodbury nll. ML (`reml=false`) is the default
 # and uses the historical nll byte-for-byte.
+"""
+    _fit_ranef_gaussian(..., reml=false) -> DrmFit
+
+Gaussian location–scale with one mean random intercept `(1 | g)` on the
+Woodbury spine. `reml=false` (default) is ML, byte-for-byte with the
+historical nll. `reml=true` (#439) adds `½ logdet(Xμ′ V⁻¹ Xμ) − ½ pμ log(2π)`
+to that nll (Patterson–Thompson). Reached via `drm(...; method = :REML)` for
+a single intercept only — σ-RE, slopes, and multi-ranef stay rejected.
+Worked example: `test/test_reml_ordinary_ranef.jl` (not in the default suite yet).
+"""
 function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol;
                              reml::Bool = false)
     n = length(y)

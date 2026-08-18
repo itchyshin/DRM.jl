@@ -15,7 +15,8 @@
 # Fence: σ-RE, random slopes, multi-ranef, non-Gaussian REML, q4 are out of scope.
 # ML remains the default. Not a drmTMB numeric-parity fixture.
 using DRM
-using Test, Random
+using Test, Random, LinearAlgebra
+import ForwardDiff
 
 @testset "REML ordinary Gaussian mean (1 | g) — #439" begin
     Random.seed!(20260817)
@@ -76,10 +77,71 @@ using Test, Random
         end
     end
 
+    @testset "FD ≤ 1e-6 on the restricted Woodbury objective" begin
+        freml === nothing && return
+        Xμ = hcat(ones(n), x)
+        Xσ = reshape(ones(n), n, 1)
+        gidx = Int.(g)
+        pμ = size(Xμ, 2)
+        const_2pi = 0.5 * n * log(2π)
+        const_pμ = 0.5 * pμ * log(2π)
+        function nll_reml(θ)
+            βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+1]; lσb = θ[pμ+2]
+            ημ = Xμ * βμ; ησ = Xσ * βσ
+            σb² = exp(2lσb)
+            T = eltype(θ)
+            S = zeros(T, G); C = zeros(T, G)
+            ZtDinvX = zeros(T, G, pμ)
+            XtDinvX = zeros(T, pμ, pμ)
+            q1 = zero(T); logdetD = zero(T)
+            @inbounds for i in 1:n
+                invD = exp(-2 * ησ[i])
+                r = y[i] - ημ[i]
+                a = r * invD
+                k = gidx[i]
+                S[k] += invD
+                C[k] += a
+                q1 += r * a
+                logdetD += 2 * ησ[i]
+                @inbounds for j in 1:pμ
+                    xj = Xμ[i, j]
+                    ZtDinvX[k, j] += invD * xj
+                    @inbounds for l in 1:pμ
+                        XtDinvX[j, l] += invD * xj * Xμ[i, l]
+                    end
+                end
+            end
+            q2 = zero(T); logdetCap = zero(T)
+            XtVinvX = copy(XtDinvX)
+            @inbounds for k in 1:G
+                invMk = 1 / (1 / σb² + S[k])
+                q2 += C[k]^2 * invMk
+                logdetCap += log(1 + σb² * S[k])
+                @inbounds for j in 1:pμ
+                    zj = ZtDinvX[k, j]
+                    @inbounds for l in 1:pμ
+                        XtVinvX[j, l] -= zj * invMk * ZtDinvX[k, l]
+                    end
+                end
+            end
+            return 0.5 * (logdetD + logdetCap + q1 - q2) + const_2pi +
+                   0.5 * logdet(Symmetric(XtVinvX)) - const_pμ
+        end
+        gθ = ForwardDiff.gradient(nll_reml, freml.theta)
+        @test maximum(abs, gθ) ≤ 1e-6
+    end
+
     @testset "σ-RE and random slopes still rejected under REML" begin
         @test_throws ArgumentError drm(bf(@formula(y ~ 1 + x), @formula(sigma ~ 1 + (1 | g))),
                                        Gaussian(); data, method = :REML)
         @test_throws ArgumentError drm(bf(@formula(y ~ 1 + x + (0 + x | g)), @formula(sigma ~ 1)),
                                        Gaussian(); data, method = :REML)
+    end
+
+    @testset "model-selection guard still refuses different mean structures" begin
+        full = drm(bf(fμ, fσ), Gaussian(); data, method = :REML)
+        red  = drm(bf(@formula(y ~ 1 + (1 | g)), fσ), Gaussian(); data, method = :REML)
+        @test_throws ArgumentError lrtest(red, full)
+        @test isfinite(aic(full))
     end
 end
