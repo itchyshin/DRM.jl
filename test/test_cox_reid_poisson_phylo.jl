@@ -46,7 +46,7 @@ function _cr_phylo_draw(seed::Int; ntip::Int = 12, per::Int = 4, σphy::Float64 
     u = cholesky(Symmetric(C)).L * randn(rng, ntip)
     y = Float64.([rand(rng, Distributions.Poisson(exp(0.25 + 0.2 * x[i] + u[species[i]])))
                   for i in 1:n])
-    return (; y, x, species, tree)
+    return (; data = (; y, x, species), tree)
 end
 
 function _cr_relmat_draw(seed::Int; G::Int = 16, m::Int = 4, σb::Float64 = 0.50)
@@ -62,7 +62,7 @@ function _cr_relmat_draw(seed::Int; G::Int = 16, m::Int = 4, σb::Float64 = 0.50
     u = σb .* (cholesky(K).L * randn(rng, G))
     y = Float64.([rand(rng, Distributions.Poisson(exp(0.20 + 0.3 * x[i] + u[id[i]])))
                   for i in 1:n])
-    return (; y, x, id, K = Matrix(K))
+    return (; data = (; y, x, id), K = Matrix(K))
 end
 
 _sigma(fit) = exp(D.coef(fit)[end])
@@ -72,8 +72,8 @@ _sigma(fit) = exp(D.coef(fit)[end])
     form_rel = D.bf(D.@formula(y ~ x + relmat(1 | id)))
 
     @testset "opt-in :REML is admitted and tagged on phylo Laplace" begin
-        data = _cr_phylo_draw(450)
-        fit = D.drm(form_phy, D.Poisson(); data = data, tree = data.tree,
+        draw = _cr_phylo_draw(450)
+        fit = D.drm(form_phy, D.Poisson(); data = draw.data, tree = draw.tree,
                     se = false, method = :REML)
         @test D.estimation_method(fit) === :REML
         @test D.is_converged(fit)
@@ -84,9 +84,9 @@ _sigma(fit) = exp(D.coef(fit)[end])
     end
 
     @testset "ML stays the default on phylo Laplace" begin
-        data = _cr_phylo_draw(450)
-        fit_default = D.drm(form_phy, D.Poisson(); data = data, tree = data.tree, se = false)
-        fit_ml = D.drm(form_phy, D.Poisson(); data = data, tree = data.tree,
+        draw = _cr_phylo_draw(450)
+        fit_default = D.drm(form_phy, D.Poisson(); data = draw.data, tree = draw.tree, se = false)
+        fit_ml = D.drm(form_phy, D.Poisson(); data = draw.data, tree = draw.tree,
                        se = false, method = :ML)
         @test D.estimation_method(fit_default) === :ML
         @test D.estimation_method(fit_ml) === :ML
@@ -99,24 +99,24 @@ _sigma(fit) = exp(D.coef(fit)[end])
         # optimum sits at a LARGER σ̂ than ML. Per-seed, not averaged. Cell D is
         # not a recovery target and is not asserted here.
         for seed in (450, 4501, 4502)
-            data = _cr_phylo_draw(seed)
-            fit_ml = D.drm(form_phy, D.Poisson(); data = data, tree = data.tree, se = false)
-            fit_reml = D.drm(form_phy, D.Poisson(); data = data, tree = data.tree,
+            draw = _cr_phylo_draw(seed)
+            fit_ml = D.drm(form_phy, D.Poisson(); data = draw.data, tree = draw.tree, se = false)
+            fit_reml = D.drm(form_phy, D.Poisson(); data = draw.data, tree = draw.tree,
                              se = false, method = :REML)
             @test _sigma(fit_reml) > _sigma(fit_ml)
         end
     end
 
     @testset "relmat/animal share the same spine" begin
-        data = _cr_relmat_draw(4503)
-        fit_rel = D.drm(form_rel, D.Poisson(); data = data, K = data.K,
+        draw = _cr_relmat_draw(4503)
+        fit_rel = D.drm(form_rel, D.Poisson(); data = draw.data, K = draw.K,
                         se = false, method = :REML)
         @test D.estimation_method(fit_rel) === :REML
         @test fit_rel.reml_loglik != fit_rel.ml_loglik
         fit_an = D.drm(D.bf(D.@formula(y ~ x + animal(1 | id))), D.Poisson();
-                       data = data, A = data.K, se = false, method = :REML)
+                       data = draw.data, A = draw.K, se = false, method = :REML)
         @test D.estimation_method(fit_an) === :REML
-        fit_ml = D.drm(form_rel, D.Poisson(); data = data, K = data.K, se = false)
+        fit_ml = D.drm(form_rel, D.Poisson(); data = draw.data, K = draw.K, se = false)
         @test _sigma(fit_rel) > _sigma(fit_ml)
     end
 
@@ -181,10 +181,10 @@ _sigma(fit) = exp(D.coef(fit)[end])
     end
 
     @testset "Binomial still rejects :REML" begin
-        data = _cr_phylo_draw(4505)
-        nt = (; y = Float64.(data.y .> 0), x = data.x, species = data.species)
+        draw = _cr_phylo_draw(4505)
+        nt = (; y = Float64.(draw.data.y .> 0), x = draw.data.x, species = draw.data.species)
         err = try
-            D.drm(form_phy, D.Binomial(); data = nt, tree = data.tree, method = :REML)
+            D.drm(form_phy, D.Binomial(); data = nt, tree = draw.tree, method = :REML)
             nothing
         catch e
             e
