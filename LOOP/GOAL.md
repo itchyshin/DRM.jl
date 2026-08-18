@@ -1,52 +1,43 @@
-# GOAL — ship opt-in Cox–Reid `method = :REML` on Poisson `(1 | g)`, one cell, ML still default
+# GOAL — aghq-lever-2 (IMMUTABLE — re-read at the top of EVERY arc)
 
 **IMMUTABLE for this run.** Re-read this file at the top of EVERY arc, before anything else.
 
-Issue: https://github.com/itchyshin/DRM.jl/issues/443
-Base: `origin/main` @ `e161c165` (probe PR #442 merged; REML #440 merged).
-This is the **wiring** G0. The scoping probe is DONE — do not re-run it, do not reopen it.
+## Mission
+
+Land **one** GitHub issue, **one** scratch worktree off `origin/main` (`d04ba994` or newer), and **one** PR that ships a **DRM-native 1-D Liu–Pierce AGHQ kernel** around existing `_gauss_hermite`, plus a Poisson `(1|g)` opt-in path: `marginal=:AGHQ`, `nAGQ=5`. Default `:LA` stays today's GHQ-32. The capability row stays **missing**. Finish line: a mergeable PR with AGENTS.md Definition of Done; merge itself is a **human gate**.
+
+## Headline
+
+A. AGHQ port (lever 2) — 1-D adaptive Gauss–Hermite around `_gauss_hermite`. Not a GLLVM quadrature-claim copy. Not a tensor port onto phylo Laplace. k=1 ≡ 1-point Laplace is **plumbing**, not a quadrature or recovery headline.
+
+## Invariants
+
+- One lane: `aghq-lever-2` on `claude/lane-aghq-lever-2` at `~/local-scratch/lanes/DRM.jl-aghq-lever-2`. Do not touch leftover trees (`docs/a3c-design`, `docs/arc1-inventory`, cox-reid-*, `handover/2026-08-18-cursor`) or dirty PRs #420 / #406.
+- Never push, merge, or publish from the loop — those are HUMAN GATES (`src/` + public `marginal` = Noether + maintainer; PR merge).
+- Verification means reading the **LOG** and inspecting the **artefact**, never the exit code.
+- Q1/Q2 defaults (G0): Poisson `(1|g)` opt-in 1-D AGHQ; public `marginal=:AGHQ` + `nAGQ=5`; chip stays missing.
+- Twin = drmTMB. Cite −7.3/−5.0/−0.9 as **drmTMB's**. Never headline GLLVM Λ. Never vendor drmTMB GPL (`R/aghq-coxreid.R`) or GLLVM `aghq_grid.jl`.
+- ML stays default. `:REML` stays opt-in and is **not** wired to `:AGHQ` this slice.
+- Do not relabel GHQ-32 `:LA` as AGHQ. Do not treat QuadGK / VA 12-node / `(1+x|g)` 12² as AGHQ.
+- k=1 agreement ≠ quadrature. Never summarise a mixture with a median. Never cite a reference fitter as engine evidence.
+- Never `git add -A`. Never stage `.codex/agents/shannon-coordinator.toml`. Never mutate GLLVM `LOOP/GOAL.md`.
+- D-111 Julia General OFF. #49 PARKED. No q4 / `reml_q4.jl`. No Cell D / Totoro ADEMP.
+
+## Authoritative WHAT
+
+`LOOP/ultra-plan.md` (approved G0). This file wins on "what must never be lost"; the plan wins on slice detail.
 
 ## Definition of done
 
-- [x] `drm(bf(@formula(y ~ x + (1 | g))), Poisson(); data, method = :REML)` returns a fit
-      with `estimation_method(fit) === :REML`, and ML is byte-identical to before.
-- [x] Failing test written first, then the implementation (TDD red → green).
-- [x] Standalone `test/test_cox_reid_poisson_ranef.jl`, **not** registered in `runtests.jl`.
-- [x] Every other Poisson route errors on `:REML` naming `(1 | g)` — never a silent ML fit.
-- [x] Docstring: opt-in, the over-correction caveat, ML-default.
-- [x] Worked example (docstring + test-file header).
-- [x] Check-log entry in `docs/dev-log/check-log.d/`.
-- [ ] After-task report.
-- [ ] PR open, `closes #443`.
+- [ ] One new issue (AGHQ 1-D Liu–Pierce / lever 2); one branch; one PR `closes #NN`
+- [ ] `src/aghq_1d.jl` (name flexible): 1-D Liu–Pierce wrapper; fail-loud if dim ≠ 1; k=1 identity test
+- [ ] TDD: `test/test_aghq_1d.jl` (red then green); smoke: adaptive k≈5 nll **agrees** with GHQ-32 on a tiny Poisson `(1|g)` fixture — agreement, not recovery
+- [ ] `marginal=:AGHQ` + `nAGQ=5` on Poisson `(1|g)` only; default `:LA` unchanged; fail-loud elsewhere listed in the plan
+- [ ] Mac-local `Pkg.test` log read; numbers recorded
+- [ ] Docstrings + worked example; capability row **still missing**; check-log.d + after-task + Rose claim-vs-evidence
+- [ ] DoD (AGENTS.md); no `_fit_poisson_general_laplace` REML/tensor hunk; no capability-chip flip
 
-## The one correction this lane made to its brief
+## Out of scope (the fence — DEFER B)
 
-The brief named the hook `sparse_laplace_glmm.jl:555`. That is
-`_fit_poisson_general_laplace` — the **phylo/relmat Laplace** spine (probe Cell C, Go
-item **#2**). The certified first cell, Poisson `(1 | g)` GHQ-32, is
-`_fit_poisson_ranef` in `src/poisson.jl`; the probe note says in as many words that
-public `(1 | g)` is *not* the `:555` spine. The brief also said "the Poisson `(1|g)`
-hole only", which is the constraint that decides it. `(1|g)` carries no analytic
-gradient closure, so `grad_fn = θ -> ForwardDiff.gradient(nll, θ)` feeds the generic
-helpers — the same quantity probe Cell A used.
-
-## Invariants (never violate, even to finish faster)
-
-- **ML stays the default.** Cox–Reid over-corrects at larger G (+4.38% at G=40 vs
-  −12.37% ML at G=10). Opt-in forever; no default flip.
-- **Scalar-per-cluster only.**
-- Reuse `_glsp_reml_penalty` / `_glsp_reml_refit_clean` / `_withreml` — a wiring job,
-  not a derivation. `_withreml` is a TAG; it computes nothing.
-- Cite −7.3 / −5.0 / −0.9 as **drmTMB's** (`cumulative_logit`), never as DRM.jl recovery.
-- Verification means reading the LOG and inspecting the ARTEFACT, never the exit code.
-- A narrow or negative search is not proof.
-
-## Out of scope (the fence — do NOT drift here)
-
-- **No AGHQ.** Lever 2, and it waits on GLLVM honesty. Nodes plateau at the VC-bias floor.
-- **No q4 / `src/reml_q4.jl`.** No `src/gaussian_ranef.jl` edit. No REML #440 redo.
-- **No bivariate.** No `test/runtests.jl` registration (waits on the Option A sibling).
-- No TSV, no capability chip, no "has non-Gaussian REML" sentence.
-- No GLLVM Λ / loading-matrix numbers as DRM.jl recovery. No GPL vendoring.
-- Does **not** close #136 / #11 / #49 / #441.
-- Leftover `docs/a3c-design` is a different subject — do not touch it.
+- Do **not** edit `_fit_poisson_general_laplace` for Cox–Reid or tensor AGHQ
+- No q4, no #49, no #420/#406 steal, no GLLVM LOOP/GOAL.md, no GPL vendoring, no capability-chip flip, no GLLVM Λ numbers

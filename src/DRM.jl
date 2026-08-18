@@ -71,6 +71,7 @@ include("gaussian_core.jl")
 include("meta_vcov_bivariate.jl")  # A8: known bivariate sampling covariance (drmTMB meta_vcov_bivariate)
 include("gaussian_bivariate.jl")
 include("gaussian_ranef.jl")
+include("aghq_1d.jl")            # #448: 1-D Liu–Pierce AGHQ around `_gauss_hermite`
 include("gaussian_meta.jl")
 include("gaussian_structured.jl")
 include("phylo_interaction.jl")  # bipartite two-tree interaction RE: V = σ²(C_A⊗C_B) + σ_e²I

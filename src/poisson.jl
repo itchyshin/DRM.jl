@@ -28,6 +28,13 @@ fit_va = drm(bf(@formula(y ~ x + (1 | g))), Poisson(); data = dat, marginal = :V
 # Opt-in Cox–Reid restricted estimation for `(1 | g)` (#443). ML is the default.
 fit_reml = drm(bf(@formula(y ~ x + (1 | g))), Poisson(); data = dat, method = :REML)
 estimation_method(fit_reml)   # :REML
+
+# Opt-in 1-D Liu–Pierce AGHQ for `(1 | g)` only (#448). Default `:LA` stays
+# today's non-adaptive GHQ-32. k=1 ≡ 1-point Laplace plumbing, not a recovery
+# headline. Capability row stays missing. `:REML` is not wired to `:AGHQ`.
+fit_aghq = drm(bf(@formula(y ~ x + (1 | g))), Poisson();
+               data = dat, marginal = :AGHQ, nAGQ = 5)
+fit_aghq.marginal   # :AGHQ
 ```
 
 # Restricted (Cox–Reid) estimation
@@ -57,22 +64,25 @@ _logfactorial(k::Integer) = sum(log, 2:k; init = 0.0)   # log k!  (0 for k = 0, 
 
 function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
              A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true,
-             marginal::Symbol = :LA, method = nothing)
-    # `method` is the ML/REML selector. LA/VA is `marginal` (Q1 / #136). `:REML` is the
-    # opt-in Cox–Reid restricted objective and is admitted on ONE route — the scalar
-    # random intercept `(1 | g)` (#443). Every other route calls `_reject_reml_route`
-    # below rather than ignoring the request.
+             marginal::Symbol = :LA, method = nothing, nAGQ::Int = 5)
+    # `method` is the ML/REML selector. LA/VA/AGHQ is `marginal` (Q1 / #136 / #448).
+    # `:REML` is the opt-in Cox–Reid restricted objective and is admitted on ONE
+    # route — the scalar random intercept `(1 | g)` under `:LA` (#443). `:REML` ×
+    # `:AGHQ` is not wired. Every other route calls `_reject_reml_route` rather
+    # than ignoring the request.
     meth = _reject_method_as_marginal(fam, method; allow_reml = true)
     reml = meth === :REML
 
     missing_fit = _fit_observed_response_rows(f, data) do data_observed
         drm(f, fam; data = data_observed, tree = tree, K = K, A = A,
-            coords = coords, g_tol = g_tol, se = se, marginal = marginal, method = method)
+            coords = coords, g_tol = g_tol, se = se, marginal = marginal,
+            method = method, nAGQ = nAGQ)
     end
     missing_fit !== nothing && return missing_fit
 
-    marg = _marginal_method(marginal)                     # :LA (default) or :VA (#136)
+    marg = _marginal_method(marginal)                     # :LA (default), :VA (#136), :AGHQ (#448)
     isva = marg isa Variational
+    isaghq = marg isa AGHQ
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
@@ -82,6 +92,7 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
         error("Poisson() requires non-negative integer counts as the response")
     if st !== nothing
         isva && _va_reject(fam, "a phylogenetic/structured random effect")
+        isaghq && _aghq_reject(fam, "a phylogenetic/structured random effect")
         # The sparse-Laplace hook itself is proven on these routes (probe #441 Cell C),
         # but their variance-component bias is NOT characterised — Cell D was
         # underpowered for even a sign claim. Follow-up cell, not this one.
@@ -119,6 +130,7 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
             error("Poisson() random effects cannot be combined with `zi`/`hu` yet")
         if length(re) > 1                                 # (1|g)+(1|h)+… crossed/multiple intercepts → sparse Laplace
             isva && _va_reject(fam, "crossed/multiple random intercepts")
+            isaghq && _aghq_reject(fam, "crossed/multiple random intercepts")
             reml && _reject_reml_route(fam, "crossed/multiple random intercepts")
             all(_re_kind(r[1])[1] === :intercept for r in re) ||
                 error("Poisson() supports multiple random effects only as crossed/nested intercepts, e.g. `(1 | g) + (1 | h)`")
@@ -129,16 +141,25 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
             return _withformula(_fit_poisson_crossed_laplace(fam, y, Xμ, comps, nmμ, g_tol; se = se), f)
         end
         (rk, var) = _re_kind(re[1][1]); grp = re[1][2]; gidx, G = _group_index(getproperty(data, grp))
-        if rk === :intercept                              # (1 | g) → 1-D GHQ (Laplace) or VA (#136)
+        if rk === :intercept                              # (1 | g) → GHQ-32 :LA, VA (#136), or 1-D AGHQ (#448)
             # The one route where `method = :REML` punches through (#443). VA is an ELBO,
             # not a likelihood, so a restricted correction of it is not defined.
+            # `:REML` × `:AGHQ` is not wired this slice (Cox–Reid on the AGHQ
+            # marginal is deferred B).
             reml && isva && _reject_reml_route(fam, "`marginal = :VA` (the ELBO is not a likelihood)")
+            reml && isaghq && throw(ArgumentError(
+                "drm (Poisson): `method = :REML` is not available with `marginal = :AGHQ` (#448). " *
+                "The restricted (Cox–Reid) correction is not wired to the AGHQ marginal this slice. " *
+                "Use `method = :ML` (the default) with `marginal = :AGHQ`, or `method = :REML` with `marginal = :LA`."))
             isva && return _withformula(_withmarginal(
                 _fit_poisson_ranef_va(fam, y, Xμ, gidx, G, nmμ, grp, g_tol), :VA), f)
+            isaghq && return _withformula(_withmarginal(
+                _fit_poisson_ranef_aghq(fam, y, Xμ, gidx, G, nmμ, grp, g_tol; nAGQ = nAGQ), :AGHQ), f)
             return _withformula(
                 _fit_poisson_ranef(fam, y, Xμ, gidx, G, nmμ, grp, g_tol; reml = reml), f)
-        elseif rk === :corr                               # (1 + x | g) → 2-D GHQ
+        elseif rk === :corr                               # (1 + x | g) → 2-D GHQ (NOT AGHQ)
             isva && _va_reject(fam, "a correlated random slope `(1 + x | g)`")
+            isaghq && _aghq_reject(fam, "a correlated random slope `(1 + x | g)` (12² tensor GHQ is not AGHQ)")
             # A 2-D per-cluster effect is not scalar-per-cluster: out of the certified cell.
             reml && _reject_reml_route(fam, "a correlated random slope `(1 + x | g)`")
             xs = Float64.(getproperty(data, var))
@@ -148,6 +169,7 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
         end
     end
     isva && _va_reject(fam, "no random intercept (fixed-effects-only / zi / hu)")
+    isaghq && _aghq_reject(fam, "no random intercept (fixed-effects-only / zi / hu)")
     # No variance component ⇒ nothing for a restricted objective to correct.
     reml && _reject_reml_route(fam, "no random effect (fixed-effects-only / `zi` / `hu`)")
     haskey(rhs, :zi) && haskey(rhs, :hu) &&
@@ -255,6 +277,42 @@ function _fit_poisson_ranef(fam::Poisson, y, Xμ, gidx, G, nmμ, grp, g_tol; rem
     end
     V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))   # population λ (b=0)
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, conv, means, obs, scales), nll)
+end
+
+# Opt-in 1-D Liu–Pierce AGHQ for Poisson `(1 | g)` (#448). Same model as
+# `_fit_poisson_ranef`, but each group's integral uses the adaptive map around
+# the group posterior mode (`_poisson_group_aghq_logint`) instead of
+# prior-scaled GHQ-32. Default `:LA` is unchanged. `nAGQ=1` is 1-point Laplace
+# plumbing, not a recovery claim. `:REML` is rejected upstream.
+function _fit_poisson_ranef_aghq(fam::Poisson, y, Xμ, gidx, G, nmμ, grp, g_tol; nAGQ::Int = 5)
+    nAGQ >= 1 || throw(ArgumentError("nAGQ must be ≥ 1; got $nAGQ (#448)"))
+    n = length(y); pμ = size(Xμ, 2)
+    members = [Int[] for _ in 1:G]
+    for i in 1:n
+        push!(members[gidx[i]], i)
+    end
+    lf = [_logfactorial(round(Int, yi)) for yi in y]
+    function nll(θ)
+        βμ = θ[1:pμ]; σb = exp(θ[pμ+1])
+        η0 = Xμ * βμ
+        s = zero(eltype(θ))
+        for idx in members
+            isempty(idx) && continue
+            s -= _poisson_group_aghq_logint(y, η0, lf, idx, σb, nAGQ)
+        end
+        return s
+    end
+    θ0 = zeros(pμ + 1)
+    θ0[1] = log(sum(y) / n + eps())
+    θ0[pμ+1] = log(0.5)
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); conv = Optim.converged(res)
+    blocks = [:mu => 1:pμ, :resd => (pμ+1):(pμ+1)]
+    names = [:mu => nmμ, :resd => [String(grp)]]
+    scales = Dict{Symbol,Vector{Float64}}()
+    V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, conv, means, obs, scales), nll)
 end
 
