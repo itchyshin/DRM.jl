@@ -1,7 +1,7 @@
 # test_parity_biv_q4_phylo_reml.jl — standalone same-target fixture for
 # biv_q4_phylo_reml (issue #433).
 #
-# Worked example (do not wire into test/runtests.jl while #425/#428 own it):
+# Wired into test/runtests.jl by Option A (#445) after #423+#428 landed.
 #
 #   julia --project=. -e 'using DRM, Test; include("test/test_parity_biv_q4_phylo_reml.jl")'
 #

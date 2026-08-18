@@ -1,7 +1,7 @@
 # test_parity_gaussian_phylo_mean.jl — standalone same-target fixture for
 # gaussian_phylo_mean (Route A: ML, univariate, sigma ~ 1).
 #
-# Worked example (do not wire into test/runtests.jl while #423/#428 own it):
+# Wired into test/runtests.jl by Option A (#445) after #423+#428 landed.
 #
 #   julia --project=. -e 'using DRM, Test; include("test/test_parity_gaussian_phylo_mean.jl")'
 #

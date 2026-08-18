@@ -1,6 +1,6 @@
 # test_reml_ordinary_ranef.jl — TDD S1 for #439 (ordinary Gaussian mean (1 | g) REML).
 #
-# Standalone; not in test/runtests.jl this PR (Option A include waits on #423+#428).
+# Wired into test/runtests.jl by Option A (#445) after #423+#428 landed.
 # Worked example (after S2 lands):
 #
 #   using DRM
