@@ -43,8 +43,9 @@ S2 writer (05b28cf8) reported on `fab5e00e`:
 | `test/test_reml.jl` | 23/23 |
 | `test/test_gaussian_ranef.jl` | 9/9 |
 
-This close adds FD ≤ 1e-6 and the REML `lrtest` mean-structure guard to the
-standalone file. Re-run those three files before merge.
+S2 numbers above are the src+test commit `fab5e00e`. An FD ≤ 1e-6 +
+`lrtest` mean-structure guard is drafted in the worktree and is **not**
+in this docs commit. Re-run those three files before merge.
 
 ## Rose
 
