@@ -11,9 +11,9 @@ Fan-out: recon only (S1 recon already ran in planning). One builder at a time on
 | S3 | Thread `marginal=:AGHQ` + `nAGQ=5` through `_marginal_method` + Poisson `(1|g)`. Default `:LA` unchanged. Fail-loud phylo / crossed / relmat / `(1+x|g)` / associate_pairs. Do not edit `_fit_poisson_general_laplace`. No `:REML`×`:AGHQ` | Noether | done | OPEN: public `marginal` = Noether+maintainer |
 | S4 | Mac-local `Pkg.test` for new file + Poisson AGHQ smoke. Log the numbers. No Totoro. No Cell D | Curie/Noether | done | — |
 | S5 | Docstrings + worked example. Capability row stays missing. check-log.d + after-task + Rose claim-vs-evidence (no −7.3/−5.0 as DRM, no GLLVM 1.0021, no chip flip) | Pat + Rose | done | — |
-| S6 | One PR `closes #448` from this worktree. DoD. Do not merge | Shannon | doing | OPEN: PR merge = human |
-| S7 | MECHANICAL-VERIFY: issue exists; worktree ≠ handover branch; no phylo-Laplace REML hunk; no q4; no chip flip; no GLLVM LOOP; no #420/#406; tests actually ran (read the log) | scout | todo | — |
-| S8 | REVIEW: Rose + Noether plan + PR claim audit (skip Other Models if bar exhausted; Rose note in after-task) | Rose + Noether | todo | — |
+| S6 | One PR `closes #448` from this worktree. DoD. Do not merge | Shannon | done | OPEN: PR merge = human (PR #449) |
+| S7 | MECHANICAL-VERIFY: issue exists; worktree ≠ handover branch; no phylo-Laplace REML hunk; no q4; no chip flip; no GLLVM LOOP; no #420/#406; tests actually ran (read the log) | scout | done | — |
+| S8 | REVIEW: Rose + Noether plan + PR claim audit (skip Other Models if bar exhausted; Rose note in after-task) | Rose + Noether | done | — |
 | S9 | RECONCILE: `docs/dev-log/plan-actual/2026-08-18-aghq-lever-2.md` | Melissa | done | — |
 
 Status: todo / doing / done / blocked. Gate = needs a human before it can proceed.
