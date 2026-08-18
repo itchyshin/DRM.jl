@@ -142,6 +142,53 @@ LOOP/{GOAL,arcs,checkpoint,ultra-plan}.md
 
 ---
 
+## HOPPER FENCE (ingested 2026-08-18 — binding on this lane and the implement-G0)
+
+Full note: `docs/dev-log/evidence/2026-08-18-hopper-cox-reid-gllvm-fence.md` (committed).
+Hopper's one line: **DRM.jl random effects are scalar-per-cluster, so the drmTMB two-lever
+diagnosis transfers and the GLLVM numbers do not.**
+
+The fence's five binding items:
+
+1. **Scalar-per-cluster only.** drmTMB's lever *order* transfers. GLLVM loading-matrix
+   numbers do not — variance there lives in Λ with LVs fixed `N(0,I)`, a different estimand.
+2. **Cite −7.3% / −5.0% / −0.9% as drmTMB `cumulative_logit`**, never as a DRM.jl recovery.
+3. **Cox–Reid first; do not start AGHQ.** A later GLLVM.jl kernel port is lever 2 and waits
+   on `GLLVM.jl-a43-honesty`. D-94: behind drmTMB, not GLLVM.
+4. **ML stays the default.** Cox–Reid over-corrects at large M (drmTMB +2.1% at M=160; **this
+   probe +4.38% at G=40**). No default flip, no capability chip, no TSV, no "has non-Gaussian
+   REML" sentence.
+5. **Carry GLLVM *method* lessons only.** Never summarise a mixture with a median; k=1
+   agreement proves plumbing, not quadrature; never cite a separate reference fitter as engine
+   evidence.
+
+**Three things the fence adds that this plan did not have:**
+
+- **GLLVM is a genuine counter-example, not just an inapplicable case.** Cox–Reid there moved
+  the estimate ~1% *in the wrong direction* because it integrates trait intercepts and never
+  touches Λ. Our Cell B anchor is what distinguishes our situation from theirs: the penalty is
+  acting on the same β block that carries the finite-cluster bias.
+- **drmTMB design 224 splits O2 from O3.** O2 (a joint-Laplace fold of β) ≡ glmmTMB REML and
+  is *not* the target; O3 is a **nested** construction — AGHQ over `u`, then `½log|I|` on the
+  AGHQ-marginal. **Do not fold the β integration into TMB-style `random=`.** The implement-G0
+  must pick its object deliberately.
+- **A proof gate on this lane:** §6 said the hook is not proven until
+  `bench/out/cox_reid_probe.txt` records Cell C. **That gate is now closed** — the artifact is
+  committed at `4b3e53ec` and Cell C is recorded.
+
+## LANE OWNERSHIP (revised 2026-08-18)
+
+| Artefact | Owner | Note |
+|---|---|---|
+| `LOOP/**`, lane coordination, fence ingestion, PR | **Shannon** (this session) | — |
+| `docs/dev-log/evidence/2026-08-18-hopper-cox-reid-gllvm-fence.md` | Hopper | landed; read-only here |
+| Probe `src`/design note (`bench/**`, the probe note, characterization test) | **Grok Noether `aa167761`** | Shannon hands off; **do not fork these** |
+
+Shannon landed `bench/cox_reid_probe.jl` + `bench/out/cox_reid_probe.txt` before the handoff
+because Hopper's §6 gate required the recorded artifact. **Noether builds ON commit `4b3e53ec`;
+Shannon writes no further probe source and no design note.** Two correct implementations of one
+probe in one lane is worse than either alone.
+
 ## ROSE PLAN-REVIEW
 
 **What Rose blocks**
