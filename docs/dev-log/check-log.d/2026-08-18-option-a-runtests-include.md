@@ -1,0 +1,1 @@
+| 2026-08-18 | **Option A runtests include** (#445) | `test/runtests.jl` wires `test_reml_ordinary_ranef.jl` + `test_parity_biv_q4_phylo_reml.jl` + `test_parity_gaussian_phylo_mean.jl` after #423+#428 | wait-gate closed (`7dcaa41e`, `d40552ae`); claim stays partial; no TSV / Cox–Reid `src/` / GLLVM | Shannon |

@@ -37,6 +37,7 @@ include("test_gaussian_core.jl")
 # model-selection guard for the classic REML trap (issue #11). Placed early so it
 # runs near the core Gaussian tests.
 include("test_reml.jl")
+include("test_reml_ordinary_ranef.jl")  # #445 Option A: #439/#440 Gaussian mean (1 | g) REML
 include("test_bf_grammar.jl")
 include("test_gaussian_bivariate.jl")
 include("test_bivariate_lognormal.jl")
@@ -211,6 +212,8 @@ include("test_bridge_bivariate_inference.jl")
 # Always-on R-parity HARNESS smoke test (machinery only, no R, no fixtures).
 # Placed at the END to avoid colliding with other in-flight branches' includes.
 include("test_parity_harness.jl")
+include("test_parity_biv_q4_phylo_reml.jl")       # #445 Option A: #433/#434 same-target fixture
+include("test_parity_gaussian_phylo_mean.jl")     # #445 Option A: #437/#438 Route A fixture
 
 # Delta-method prediction standard errors (feat-predict-se).
 include("test_predict_se.jl")
