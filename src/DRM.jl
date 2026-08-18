@@ -68,6 +68,7 @@ include("coevolution_q.jl")
 
 # Gaussian location–scale front end (public bf()/drm() API).
 include("gaussian_core.jl")
+include("meta_vcov_bivariate.jl")  # A8: known bivariate sampling covariance (drmTMB meta_vcov_bivariate)
 include("gaussian_bivariate.jl")
 include("gaussian_ranef.jl")
 include("gaussian_meta.jl")
@@ -165,7 +166,8 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
        associate_pairs, latent_normal, association, PairAssociation,
        integration_diagnostics,
        drm_phylo_penalty, drm_phylo_penalty_sweep, PhyloPenalty, PhyloCorPenaltyNeedsTwoSD,
-       profile_targets, structured_effects
+       profile_targets, structured_effects,
+       meta_vcov_bivariate, MetaVcovBivariate
 
 # Public API — post-fit accessors for the cross-family bivariate fit
 # (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).
