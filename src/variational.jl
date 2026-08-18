@@ -132,9 +132,9 @@ function _reject_reml_route(fam, what)
     throw(ArgumentError(
         "drm ($famname): `method = :REML` is not available with $what. " *
         "Restricted (Cox–Reid) estimation on non-Gaussian families is currently wired " *
-        "for a single scalar random intercept `(1 | g)` only (#443) — the one cell the " *
-        "scoping probe characterised. ML is the default and is available here: omit " *
-        "`method` or pass `method = :ML`."))
+        "for Poisson scalar `(1 | g)` (#443) and Poisson phylo/relmat/animal Laplace " *
+        "(#450). ML is the default and is available here: omit `method` or pass " *
+        "`method = :ML`."))
 end
 
 # ──────────────────────────────────────────────────────────────────────────────
