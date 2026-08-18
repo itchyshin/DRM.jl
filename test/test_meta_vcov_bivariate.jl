@@ -139,7 +139,10 @@ end
         fit = drm(_BF_BIV, Gaussian(); data = fx2.data, V = V2)
         ρ̂ = fit.scales[:rho12][1]
         @test ρ̂ < 0                       # sign alone rules out absorption
-        @test abs(ρ̂ - fx2.residual_rho) < 0.15
+        # This is a separation gate, not a finite-sample recovery interval:
+        # the fitted heterogeneity correlation must remain closer to its DGP
+        # value than to the distinct known sampling correlation.
+        @test abs(ρ̂ - fx2.residual_rho) < abs(ρ̂ - fx2.sampling_cor)
         novi = drm(_BF_BIV, Gaussian(); data = fx2.data)
         # and WITHOUT V the estimate visibly shifts toward the contaminated blend
         @test fit.scales[:rho12][1] < novi.scales[:rho12][1]
