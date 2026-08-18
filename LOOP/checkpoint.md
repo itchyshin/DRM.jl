@@ -7,9 +7,14 @@
   **Arcs 4–6 (cells B, A and C all measured and committed).** Hopper's GLLVM fence
   ingested into `LOOP/ultra-plan.md`.
 - **IN PROGRESS:** nothing owned by Shannon. **Handed off** — see ownership below.
-- **NEXT (Noether `aa167761`):** the probe design note and, if wanted, a standalone
-  characterization test. Then Rose after-task + check-log, then the PR.
-- **OPEN GATE:** none. Owner gave full pre-approval for this lane including the PR.
+  **PR #442 opened as a DRAFT** (https://github.com/itchyshin/DRM.jl/pull/442) — claimed
+  early and deliberately, so Noether's note lands into the existing PR instead of racing a
+  second one for the same issue.
+- **NEXT (Noether `aa167761`):** the probe design note with the explicit go/no-go, and a
+  standalone characterization test. Then Rose after-task + check-log. Then Shannon marks
+  #442 ready and merges if CI is green and Rose is clean.
+- **OPEN GATE:** none blocking. Owner gave full pre-approval for this lane including the PR.
+  **Merge is held** only because the note and the Rose pass are not in yet — not by a gate.
 - **WHERE TRUTH LIVES:** `cursor/lane-cox-reid-probe`. Measured output is
   `bench/out/cox_reid_probe.txt` @ `4b3e53ec`; the probe is `bench/cox_reid_probe.jl`;
   the fence is `docs/dev-log/evidence/2026-08-18-hopper-cox-reid-gllvm-fence.md`.
