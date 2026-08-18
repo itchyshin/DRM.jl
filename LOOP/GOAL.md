@@ -1,92 +1,52 @@
-# GOAL — decide, on measured DRM.jl evidence, whether Cox–Reid for non-Gaussian variance components is a small patch or a real build
+# GOAL — ship opt-in Cox–Reid `method = :REML` on Poisson `(1 | g)`, one cell, ML still default
 
 **IMMUTABLE for this run.** Re-read this file at the top of EVERY arc, before anything else.
 
-**Issue:** https://github.com/itchyshin/DRM.jl/issues/441
-**Lane:** `cursor/lane-cox-reid-probe` @ `~/local-scratch/lanes/DRM.jl-cox-reid-probe`, from `origin/main` (post-#440).
-**This is a SCOPING PROBE (≤1 day, Mac).** It is *not* the estimator ship.
-
----
-
-## Why this G0 exists
-
-Vault evidence — MEASURED on drmTMB `cumulative_logit` (mc-0227), 40 seeds, validated
-against glmmTMB / glmer / lme4 oracles, 2026-07-18 — says a small-cluster random-effect SD
-under ML-Laplace is biased low by **two stacked, orthogonal** effects:
-
-1. **Laplace integral error** — the 1-point-at-the-mode Gaussian approximation. Fixed by
-   **AGHQ**. *Shrinks with per-group n.*
-2. **ML finite-cluster variance-component bias** — present even under *exact* integration.
-   Fixed by a restricted likelihood: exact REML (Gaussian) or the **Cox–Reid adjusted
-   profile likelihood** (non-Gaussian) = integrate the fixed effects out under a flat prior,
-   subtract `½·log|I_ββ|`. *Shrinks with number of clusters M.*
-
-Worked numbers (`cumulative_logit`, M=40, n_each=15, true slope-SD 0.5):
-Laplace **−7.3%** → +AGHQ **−5.0%** → +Cox–Reid **−0.9%**.
-**Cox–Reid is the bigger lever (~1.7×).** The AGHQ node sweep converges by `nq≈5` then
-plateaus dead flat — nodes cannot cross the variance-bias floor. Hence Cox–Reid FIRST.
-
-Source: `memory/Two-lever fix for small-cluster non-Gaussian variance-component bias
-(AGHQ + Cox-Reid REML) — cross-repo map` (shinichi-brain).
-
----
+Issue: https://github.com/itchyshin/DRM.jl/issues/443
+Base: `origin/main` @ `e161c165` (probe PR #442 merged; REML #440 merged).
+This is the **wiring** G0. The scoping probe is DONE — do not re-run it, do not reopen it.
 
 ## Definition of done
 
-- [x] Issue #441 opened; scratch lane scaffolded from `origin/main`
-- [x] `src/sparse_laplace_glmm.jl` mapped; the hook point named
-- [x] Answered: can the Gaussian REML machinery (`_glsp_reml_penalty` /
-      `_glsp_reml_refit_clean` / `_withreml`) punch through to non-Gaussian routes?
-- [x] **Measured on THIS engine** (no imported drmTMB numbers): the current ML
-      variance-component bias, and whether a generic Cox–Reid penalty removes it
-- [x] **Gaussian reduction anchor:** the generic penalty reproduces the independently
-      validated exact Gaussian REML (#440 Woodbury `(1|g)`) to tight tolerance
-- [x] Design note committed: hook points, cost model, fences, risks, and an explicit
-      **go / no-go** for the implement-G0
-- [x] Standalone characterization test that documents current behaviour and fails when
-      the estimator lands (NOT registered in `test/runtests.jl`)
-- [ ] PR against `main`; after-task naming the next G0s in order
+- [x] `drm(bf(@formula(y ~ x + (1 | g))), Poisson(); data, method = :REML)` returns a fit
+      with `estimation_method(fit) === :REML`, and ML is byte-identical to before.
+- [x] Failing test written first, then the implementation (TDD red → green).
+- [x] Standalone `test/test_cox_reid_poisson_ranef.jl`, **not** registered in `runtests.jl`.
+- [x] Every other Poisson route errors on `:REML` naming `(1 | g)` — never a silent ML fit.
+- [x] Docstring: opt-in, the over-correction caveat, ML-default.
+- [x] Worked example (docstring + test-file header).
+- [x] Check-log entry in `docs/dev-log/check-log.d/`.
+- [ ] After-task report.
+- [ ] PR open, `closes #443`.
 
-**Done means the NEXT session can decide the implement-G0 without re-deriving anything.**
+## The one correction this lane made to its brief
 
----
+The brief named the hook `sparse_laplace_glmm.jl:555`. That is
+`_fit_poisson_general_laplace` — the **phylo/relmat Laplace** spine (probe Cell C, Go
+item **#2**). The certified first cell, Poisson `(1 | g)` GHQ-32, is
+`_fit_poisson_ranef` in `src/poisson.jl`; the probe note says in as many words that
+public `(1 | g)` is *not* the `:555` spine. The brief also said "the Poisson `(1|g)`
+hole only", which is the constraint that decides it. `(1|g)` carries no analytic
+gradient closure, so `grad_fn = θ -> ForwardDiff.gradient(nll, θ)` feeds the generic
+helpers — the same quantity probe Cell A used.
 
 ## Invariants (never violate, even to finish faster)
 
-- **ML stays the default.** Cox–Reid is opt-in, later. Nothing in this lane changes a default.
-- **Scalar-per-cluster random effects only.**
+- **ML stays the default.** Cox–Reid over-corrects at larger G (+4.38% at G=40 vs
+  −12.37% ML at G=10). Opt-in forever; no default flip.
+- **Scalar-per-cluster only.**
+- Reuse `_glsp_reml_penalty` / `_glsp_reml_refit_clean` / `_withreml` — a wiring job,
+  not a derivation. `_withreml` is a TAG; it computes nothing.
+- Cite −7.3 / −5.0 / −0.9 as **drmTMB's** (`cumulative_logit`), never as DRM.jl recovery.
 - Verification means reading the LOG and inspecting the ARTEFACT, never the exit code.
-- Every number in the design note is reproduced by a run in this lane. **No extrapolated or
-  imported figure is promoted to a measured result** — cite drmTMB's numbers as drmTMB's.
-- A narrow or negative search is not proof. "No X exists" usually means the query missed X.
-- Twin is **drmTMB**, not GLLVM. No GPL vendoring; parity uses generated outputs only.
-- Destructive or irreversible ⇒ STOP and surface.
-- Owner granted **full pre-approval for this lane** (arm + execute, including the PR).
-  Everything outside the fence below still stops.
-
----
+- A narrow or negative search is not proof.
 
 ## Out of scope (the fence — do NOT drift here)
 
-**Files owned by other lanes — never touch:**
-
-- `test/runtests.jl` — owned by #423 / #428 / #429 (sibling ops lane, not this `/goal`)
-- `src/reml_q4.jl`, the bivariate q4 path, `test/parity/**`, any parity TSV
-- `src/gaussian_ranef.jl` and the #440 Woodbury REML (read as an ORACLE only, never edit)
-- `docs/dev-log/coordination-board.md` (#406)
-- Leftover Dropbox `docs/a3c-design`; do not build in the Dropbox checkout at all
-
-**Work that is a LATER G0, not this one:**
-
-- Implementing the production Cox–Reid estimator and wiring it to `drm(...; method = …)`
-- **AGHQ** — vault evidence says it plateaus and is the smaller lever. Do not start it.
-- Any coverage / recovery certification campaign; any Totoro or DRAC run
-- Porting the HSquared.jl `fit_laplace_reml` kernel
-- Reopening `#136` (VA/ELBO), `#49` (PARKED), `#11`, `#439` — do not close any of them
-- D-111 (Julia General registration) stays **OFF**
-
-**Claim fence (Rose):** this lane may say *"a scoping probe measured the ML
-variance-component bias on DRM.jl's scalar-RE routes and showed a generic Cox–Reid penalty
-reduces to validated Gaussian REML."* It may **not** say the estimator ships, that coverage
-is nominal, that DRM.jl has non-Gaussian REML, or that drmTMB's measured figures were
-reproduced here (different package, different cell).
+- **No AGHQ.** Lever 2, and it waits on GLLVM honesty. Nodes plateau at the VC-bias floor.
+- **No q4 / `src/reml_q4.jl`.** No `src/gaussian_ranef.jl` edit. No REML #440 redo.
+- **No bivariate.** No `test/runtests.jl` registration (waits on the Option A sibling).
+- No TSV, no capability chip, no "has non-Gaussian REML" sentence.
+- No GLLVM Λ / loading-matrix numbers as DRM.jl recovery. No GPL vendoring.
+- Does **not** close #136 / #11 / #49 / #441.
+- Leftover `docs/a3c-design` is a different subject — do not touch it.

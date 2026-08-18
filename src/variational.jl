@@ -66,10 +66,15 @@ function _va_reject(fam, what)
         "Use marginal = :LA (Laplace, the default) for this model."))
 end
 
-# `method` is the Gaussian ML/REML selector. LA/VA is `marginal` (Q1 / #136).
+# `method` is the ML/REML selector. LA/VA is `marginal` (Q1 / #136).
 # Non-Gaussian `drm()` accepts `method = :ML` as a no-op and rejects `:VA`/`:LA`
 # with a pointer to `marginal`, matching the Poisson Arc 0 message.
-function _reject_method_as_marginal(fam, method)
+#
+# `allow_reml` opens the opt-in Cox–Reid restricted route (#443). A family only sets it
+# when at least one of its routes can honour `:REML`; the family's route dispatch is then
+# responsible for calling `_reject_reml_route` on the routes that cannot. Returns the
+# normalised selector (`nothing` / `:ML` / `:REML`) so the caller can branch on it.
+function _reject_method_as_marginal(fam, method; allow_reml::Bool = false)
     method === nothing && return nothing
     ms = Symbol(uppercase(String(method)))
     famname = nameof(typeof(fam))
@@ -79,10 +84,31 @@ function _reject_method_as_marginal(fam, method)
             "Use `marginal = :$ms` (`:LA` default Laplace; `:VA` opt-in ELBO, #136). " *
             "`method` is reserved for `:ML`/`:REML` on Gaussian models."))
     end
-    ms === :ML && return nothing
+    ms === :ML && return :ML
+    if ms === :REML
+        allow_reml && return :REML
+        throw(ArgumentError(
+            "drm ($famname): unknown `method = :$method`. $famname is ML-only; " *
+            "for Laplace vs variational use `marginal = :LA` or `marginal = :VA` (#136)."))
+    end
     throw(ArgumentError(
         "drm ($famname): unknown `method = :$method`. $famname is ML-only; " *
         "for Laplace vs variational use `marginal = :LA` or `marginal = :VA` (#136)."))
+end
+
+# `method = :REML` reached a route the restricted (Cox–Reid) objective is not certified
+# on. Erroring is the honest answer: silently falling back to ML would report
+# `estimation_method(fit) === :ML` for a caller who asked for REML, and silently applying
+# the penalty would ship an uncharacterised estimator. `what` names the offending
+# structure. Scope and evidence: #443, probe #441.
+function _reject_reml_route(fam, what)
+    famname = nameof(typeof(fam))
+    throw(ArgumentError(
+        "drm ($famname): `method = :REML` is not available with $what. " *
+        "Restricted (Cox–Reid) estimation on non-Gaussian families is currently wired " *
+        "for a single scalar random intercept `(1 | g)` only (#443) — the one cell the " *
+        "scoping probe characterised. ML is the default and is available here: omit " *
+        "`method` or pass `method = :ML`."))
 end
 
 # ──────────────────────────────────────────────────────────────────────────────

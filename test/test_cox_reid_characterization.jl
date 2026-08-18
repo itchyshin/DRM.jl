@@ -1,13 +1,19 @@
 # test_cox_reid_characterization.jl — standalone #441 probe tripwire.
 #
-# NOT registered in test/runtests.jl. Documents current ML-only behaviour
-# and the punch-through hook. When a later implement-G0 admits
-# `drm(::Poisson; method = :REML)`, the reject test below should fail first
-# (TDD). Not a recovery campaign. Not a drmTMB / GLLVM numeric import.
+# NOT registered in test/runtests.jl. Documents the punch-through hook and the
+# routes that remain ML-only.
+#
+# The tripwire FIRED as designed: this file used to assert that
+# `drm(::Poisson; method = :REML)` was rejected family-wide, and #443 admitted it on the
+# scalar `(1 | g)` GHQ route. That assertion has moved to
+# `test/test_cox_reid_poisson_ranef.jl`, which owns the shipped cell; what stays here is
+# the ML default and the routes still awaiting certification.
+#
+# Not a recovery campaign. Not a drmTMB / GLLVM numeric import.
 #
 # Run:  julia --project=. -e 'include("test/test_cox_reid_characterization.jl")'
 #
-# Worked example (today — ML only):
+# Worked example (ML is still the default):
 #
 #   using DRM
 #   G, m = 8, 4
@@ -23,8 +29,8 @@ import Distributions
 
 const D = DRM
 
-@testset "Cox–Reid characterization (#441) — not shipped" begin
-    @testset "Poisson public API is ML-only" begin
+@testset "Cox–Reid characterization (#441) — hook + uncertified routes" begin
+    @testset "ML is still the Poisson default; (1|g) REML is opt-in (#443)" begin
         rng = MersenneTwister(441)
         G, m = 8, 4
         n = G * m
@@ -35,14 +41,31 @@ const D = DRM
         form = D.bf(D.@formula(y ~ x + (1 | g)))
         fit = D.drm(form, D.Poisson(); data = data)
         @test D.estimation_method(fit) === :ML
+        # #443 admitted `:REML` HERE and only here. Asking for it must not silently
+        # return an ML fit — the tag has to follow the request.
+        fit_reml = D.drm(form, D.Poisson(); data = data, method = :REML)
+        @test D.estimation_method(fit_reml) === :REML
+    end
+
+    @testset "the uncertified Poisson routes still refuse :REML" begin
+        rng = MersenneTwister(4412)
+        G, m = 8, 4
+        n = G * m
+        g = repeat(1:G, inner = m)
+        x = randn(rng, n)
+        y = Float64.([rand(rng, Distributions.Poisson(exp(0.3 + 0.2 * xi))) for xi in x])
+        data = (; y, x, g)
+        # Crossed intercepts: the hook exists, the bias is uncharacterised.
+        h = repeat(1:4, outer = div(n, 4))
         err = try
-            D.drm(form, D.Poisson(); data = data, method = :REML)
+            D.drm(D.bf(D.@formula(y ~ x + (1 | g) + (1 | h))), D.Poisson();
+                  data = (; y, x, g, h), method = :REML)
             nothing
         catch e
             e
         end
         @test err isa ArgumentError
-        @test occursin("ML-only", sprint(showerror, err))
+        @test occursin("(1 | g)", sprint(showerror, err))
     end
 
     @testset "sparse-Laplace hook: nllgrad + generic penalty" begin
