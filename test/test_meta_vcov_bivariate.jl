@@ -139,10 +139,15 @@ end
         fit = drm(_BF_BIV, Gaussian(); data = fx2.data, V = V2)
         ρ̂ = fit.scales[:rho12][1]
         @test ρ̂ < 0                       # sign alone rules out absorption
-        # This is a separation gate, not a finite-sample recovery interval:
-        # the fitted heterogeneity correlation must remain closer to its DGP
-        # value than to the distinct known sampling correlation.
-        @test abs(ρ̂ - fx2.residual_rho) < abs(ρ̂ - fx2.sampling_cor)
+        # Finite-sample recovery band, not a collapse check. Same
+        # MersenneTwister(20260517) fixture draws different randn streams on
+        # Julia 1.10 vs 1.12, so |ρ̂+0.35| is 0.068 on 1.10 and 0.183 on 1.12
+        # (Linux CI job 95705490872 and local 1.12.6, bit-identical). Sign and
+        # the no-V contrast below still separate residual rho from sampling
+        # cor = +0.6; a "closer to DGP than to sampling" rewrite is too loose
+        # (the no-V 1.12 fit also passes it). 0.15 → 0.20 covers the measured
+        # 1.12 miss without hiding a real absorption.
+        @test abs(ρ̂ - fx2.residual_rho) < 0.20
         novi = drm(_BF_BIV, Gaussian(); data = fx2.data)
         # and WITHOUT V the estimate visibly shifts toward the contaminated blend
         @test fit.scales[:rho12][1] < novi.scales[:rho12][1]
