@@ -91,11 +91,28 @@ end
 
 # Gaussian location–scale with one random intercept (1 | g) on the mean.
 # θ = [β_μ; β_σ (log σ); log σ_b].
-function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol)
+# `reml=true` (#439) keeps β_μ in θ and adds the Patterson–Thompson term
+# ½ logdet(Xμ′ V⁻¹ Xμ) to the Woodbury nll. ML (`reml=false`) is the default
+# and uses the historical nll byte-for-byte.
+"""
+    _fit_ranef_gaussian(..., reml=false) -> DrmFit
+
+Gaussian location–scale with one mean random intercept `(1 | g)` on the
+Woodbury spine. `reml=false` (default) is ML, byte-for-byte with the
+historical nll. `reml=true` (#439) adds `½ logdet(Xμ′ V⁻¹ Xμ) − ½ pμ log(2π)`
+to that nll (Patterson–Thompson). Reached via `drm(...; method = :REML)` for
+a single intercept only — σ-RE, slopes, and multi-ranef stay rejected.
+Worked example: `test/test_reml_ordinary_ranef.jl` (not in the default suite yet).
+"""
+function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol;
+                             reml::Bool = false)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    const_2pi = 0.5 * n * log(2π)
+    const_pμ = 0.5 * pμ * log(2π)
 
-    function nll(θ)
+    # Historical ML Woodbury nll — do not change this loop (byte-for-byte default).
+    function nll_ml(θ)
         βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; lσb = θ[pμ+pσ+1]
         ημ = Xμ * βμ; ησ = Xσ * βσ                 # ησ = log σ_i
         σb² = exp(2lσb)
@@ -121,8 +138,58 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
         end
         quad = q1 - q2
         logdetV = logdetD + logdetCap
-        return 0.5 * (logdetV + quad) + 0.5 * n * log(2π)
+        return 0.5 * (logdetV + quad) + const_2pi
     end
+
+    # Restricted nll: ML Woodbury + ½ logdet(Xμ′ V⁻¹ Xμ) − ½ pμ log(2π).
+    # Xμ′ V⁻¹ Xμ = Xμ′ D⁻¹ Xμ − (Z′ D⁻¹ Xμ)′ diag(1/M) (Z′ D⁻¹ Xμ) with the
+    # same capacitance M_k = 1/σb² + S_k as the ML nll.
+    function nll_reml(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; lσb = θ[pμ+pσ+1]
+        ημ = Xμ * βμ; ησ = Xσ * βσ
+        σb² = exp(2lσb)
+        T = eltype(θ)
+        S = zeros(T, G); C = zeros(T, G)
+        ZtDinvX = zeros(T, G, pμ)
+        XtDinvX = zeros(T, pμ, pμ)
+        q1 = zero(T); logdetD = zero(T)
+        @inbounds for i in 1:n
+            invD = exp(-2 * ησ[i])
+            r = y[i] - ημ[i]
+            a = r * invD
+            k = gidx[i]
+            wi = w[i]
+            S[k] += wi * wi * invD
+            C[k] += wi * a
+            q1 += r * a
+            logdetD += 2 * ησ[i]
+            @inbounds for j in 1:pμ
+                xj = Xμ[i, j]
+                ZtDinvX[k, j] += wi * invD * xj
+                @inbounds for l in 1:pμ
+                    XtDinvX[j, l] += invD * xj * Xμ[i, l]
+                end
+            end
+        end
+        q2 = zero(T); logdetCap = zero(T)
+        XtVinvX = copy(XtDinvX)
+        @inbounds for k in 1:G
+            Mk = 1 / σb² + S[k]
+            invMk = 1 / Mk
+            q2 += C[k]^2 * invMk
+            logdetCap += log(1 + σb² * S[k])
+            @inbounds for j in 1:pμ
+                zj = ZtDinvX[k, j]
+                @inbounds for l in 1:pμ
+                    XtVinvX[j, l] -= zj * invMk * ZtDinvX[k, l]
+                end
+            end
+        end
+        nll_ml_θ = 0.5 * (logdetD + logdetCap + q1 - q2) + const_2pi
+        return nll_ml_θ + 0.5 * logdet(Symmetric(XtVinvX)) - const_pμ
+    end
+
+    nll = reml ? nll_reml : nll_ml
 
     βμ0 = Xμ \ y
     res0 = y - Xμ * βμ0
@@ -154,7 +221,12 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
         [C[k] / (1 / σb² + S[k]) for k in 1:G]
     end
     re = Dict(Symbol(grp) => blup)
-    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll), re)
+    # Profile intervals reuse the ML Woodbury nll (same convention as FE REML).
+    fit = _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll_ml), re)
+    if reml
+        return _withreml(fit, -nll_reml(θ̂), -nll_ml(θ̂))
+    end
+    return fit
 end
 
 # Correlated random intercept+slope (1 + x | g): per group (b0,b1) ~ N(0, Σ_re),

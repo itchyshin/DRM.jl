@@ -182,17 +182,20 @@ support.
 | Profile-likelihood CIs (`profile_result`, `confint(:profile)`) | `src/inference.jl:124` | **Tested** — `test/test_profile_ci.jl` |
 | Parametric bootstrap (`bootstrap_ci`/`_summary`/`_result`, serial + threaded) | `src/inference.jl:708` | **Tested** — `test/test_bootstrap.jl`, `test/test_bootstrap_nongaussian.jl` |
 | REML for the **fixed-effect Gaussian location–scale** fit (`method=:REML`), with the model-selection guard | `src/gaussian_core.jl`, `src/comparison.jl:84` | **Tested** — `test/test_reml.jl` |
+| REML for **Gaussian mean `(1 \| g)`** (`method=:REML`, Woodbury Patterson–Thompson) | `src/gaussian_core.jl`, `src/gaussian_ranef.jl` | **Impl, untested** — standalone `test/test_reml_ordinary_ranef.jl` (**not in the default suite yet**) |
 | `reml_loglik` / `ml_loglik` / `estimation_method` accessors | `src/gaussian_core.jl` (exported `src/DRM.jl:89`) | **Tested** — `test/test_reml.jl` |
 | Epsilon-method bias correction (`bias_correct`, TMB sdreport analogue) | `src/bias_correct.jl:97` | **Tested** — `test/test_bias_correct.jl` |
 | **χ̄² (chi-bar-square) boundary inference** (Self–Liang / Stram–Lee mixture) | `src/chibar.jl` | **Tested** — `test/test_chibar.jl` (corrects older audit text that listed this as Absent) |
 | REML on the q=4 Laplace model (`method = :REML`, `reml_q4`) | `src/reml_q4.jl` | **Tested** — wired into the module; `test/test_reml_q4_allaxes.jl` (corrects older audit text that left this in `experimental/`) |
 
 !!! warning "REML scope"
-    `method=:REML` is wired for the fixed-effect Gaussian location–scale model
-    (`test/test_reml.jl`) and for the bivariate q=4 location–scale engine
-    (`test/test_reml_q4_allaxes.jl`). Ordinary random effects under REML remain
-    rejected. **ML is the default** (REML likelihoods are not comparable across
-    fixed-effect structures).
+    `method=:REML` is opt-in. **ML is the default** (REML likelihoods are not
+    comparable across fixed-effect structures). Wired cells: the fixed-effect
+    Gaussian location–scale model (`test/test_reml.jl`); a single Gaussian mean
+    intercept `(1 | g)` on the Woodbury spine (`test/test_reml_ordinary_ranef.jl`,
+    **not in the default suite yet**; #439); and the bivariate q=4 location–scale
+    engine (`test/test_reml_q4_allaxes.jl`). σ-RE, random slopes, multi-ranef,
+    and non-Gaussian REML stay rejected. This is not AI-REML.
 
 ## Model comparison & accessors
 

@@ -99,7 +99,7 @@ No `nbinom2-locscale` R fixture in this closeout.
 | Capability | Status |
 |---|---|
 | REML (Gaussian fixed-effect location-scale) | implemented |
-| REML with ordinary random effects (Gaussian mean) | rejected |
+| REML with ordinary random effects (Gaussian mean) | implemented |
 | REML bivariate phylogenetic location-scale (q4, all axes) | implemented |
 | Conjugate-EM Gaussian phylo-mean (`algorithm = :em`) | implemented |
 | Natural-gradient EM (`algorithm = :natgrad`) | rejected |
@@ -121,12 +121,15 @@ reusable Fisher metric was extracted as `lc_metric` (`src/lc_metric.jl`,
 `test/test_lc_metric.jl`) — infrastructure for AI-REML / #11/#165, **not** a
 public solver.
 
-`REML with ordinary random effects (Gaussian mean)` is `rejected` on direct
-code evidence: `src/gaussian_core.jl:407` throws
-`ArgumentError("drm: method = :REML is currently implemented only for the " *
-...)` for any non-fixed-effect structure outside the separately gated q4 path
-(confirmed by reading the guard, not the docs page, which only describes this
-in prose).
+`REML with ordinary random effects (Gaussian mean)` is `implemented` (#439):
+`src/gaussian_core.jl` admits a single Gaussian mean intercept `(1 | g)`
+under opt-in `method = :REML` (the former 413–423 FE-only hole; σ-RE, slopes,
+multi-ranef, and structured / phylo / meta stay `ArgumentError`), and
+`src/gaussian_ranef.jl` adds the Patterson–Thompson term
+`½ logdet(Xμ′ V⁻¹ Xμ)` on the Woodbury spine. Exercised by
+`test/test_reml_ordinary_ranef.jl` (standalone; **not in the default suite yet**)
+only; `test/test_reml.jl` retains the random-slope rejection. ML stays the
+default. This is not AI-REML, not a TSV flip, and not “parity complete.”
 
 `REML bivariate phylogenetic location-scale (q4, all axes)` is `implemented`:
 `src/reml_q4.jl` is included in the module (`src/DRM.jl:38`) and
@@ -194,12 +197,16 @@ scope in the same file).
 
 ## Snapshot
 
-- 43 capabilities, all `implemented`/`rejected`/`planned`/`missing` per the
-  mapping above; 37 `implemented`, 1 `rejected`, 1 `planned`, 4 `missing`.
+- 46 capabilities, all `implemented`/`rejected`/`planned`/`missing` per the
+  mapping above; 40 `implemented`, 1 `rejected` (`:natgrad`), 1 `planned`,
+  4 `missing`. (Prior snapshot said 37/1 while the table still listed two
+  `rejected` rows; this recount flips the ordinary-RE REML chip and leaves
+  `:natgrad` as the only `rejected` row.)
 - Sources read: `src/DRM.jl` (include list + export list), `README.md`,
   `docs/src/capabilities.md`, `docs/src/families.md`, `test/runtests.jl`
   (default-suite include list), and targeted `grep`/`git log` against
-  `src/gaussian_core.jl`, `src/reml_q4.jl`, `src/chibar.jl`,
+  `src/gaussian_core.jl`, `src/gaussian_ranef.jl`,
+  `test/test_reml_ordinary_ranef.jl`, `src/reml_q4.jl`, `src/chibar.jl`,
   `src/missing_data.jl`, `src/skewnormal.jl`, and `src/variational.jl` to
   verify claims the docs page did not make or got stale on.
 - `docs/src/capabilities.md` is a real, evidence-cited audit but is **stale**

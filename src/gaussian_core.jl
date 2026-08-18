@@ -312,6 +312,14 @@ Bivariate Gaussian fits use [`BivariateDrmFormula`](@ref); with no structured
 marker they fit the residual `rho12` model, and with shared `phylo(1 | group)`
 markers on `mu1`, `mu2`, `sigma1`, and `sigma2` they route to the verified q=4
 phylogenetic engine.
+
+## `method` — ML (default) or REML
+
+`method` (default `:ML`) selects the estimator. `:REML` is opt-in and is
+implemented for (a) the fixed-effect Gaussian location–scale cell and (b) a
+single Gaussian mean random intercept `(1 | g)` on the Woodbury spine (#439).
+σ-RE, random slopes, multi-ranef, structured / phylo / meta, and non-Gaussian
+REML stay rejected. REML likelihoods are not comparable across mean structures.
 """
 function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false, phylo_coupled::Bool = false, penalty = nothing)
     algorithm in (:auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs) ||
@@ -446,16 +454,23 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     phylo_coupled &&
         throw(ArgumentError("drm: `phylo_coupled` is an internal bridge option for Gaussian mu+sigma phylo ML fits"))
     if method === :REML
-        # REML (opt-in, experimental) is implemented only for the fixed-effect
-        # univariate Gaussian location–scale cell in this slice (the standard
-        # Patterson–Thompson correction for β_μ). Random-effect / structured /
-        # meta cells and the bivariate q=4 path are gated by their own REML work
-        # (report/reml-wiring-design.md, slice 1 / #187); reject them clearly.
-        (isempty(re) && isempty(sigma_re) && structured === nothing && metav === nothing &&
-         length(_collect_structured(rhs[:mu])) == 0) ||
+        # REML (opt-in) is implemented for (a) the fixed-effect univariate
+        # Gaussian location–scale cell and (b) a single mean random intercept
+        # `(1 | g)` on the Woodbury spine (#439). σ-RE, slopes, multi-ranef,
+        # structured / phylo / meta, and non-Gaussian REML stay rejected.
+        # The bivariate q=4 path has its own REML gate.
+        ordinary_mean_intercept = length(re) == 1 &&
+            _re_kind(re[1][1])[1] === :intercept &&
+            isempty(sigma_re) && structured === nothing && metav === nothing &&
+            length(_collect_structured(rhs[:mu])) == 0
+        (ordinary_mean_intercept ||
+         (isempty(re) && isempty(sigma_re) && structured === nothing &&
+          metav === nothing && length(_collect_structured(rhs[:mu])) == 0)) ||
             throw(ArgumentError("drm: method = :REML is currently implemented only for the " *
-                "fixed-effect Gaussian location–scale model (no random effects, no structured " *
-                "/ phylo / meta terms). Use method = :ML (the default) for those models."))
+                "fixed-effect Gaussian location–scale model and for a single Gaussian " *
+                "mean random intercept `(1 | g)` (no random slopes, no random effect on " *
+                "sigma, no structured / phylo / meta terms). Use method = :ML (the default) " *
+                "for those models."))
     end
     if algorithm in (:em, :sparse_lbfgs)
         # The all-node sparse routes fit only the supported cell: a single
@@ -591,7 +606,9 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         (_, grp) = re[1]; (kind, var) = re_kinds[1]
         gidx, G = _group_index(getproperty(data, grp))
         w = kind === :intercept ? ones(length(y)) : Float64.(getproperty(data, var))
-        return _withformula(_fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol), f)
+        reml_here = method === :REML && kind === :intercept
+        return _withformula(_fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol;
+                                               reml = reml_here), f)
     end
     comps = map(zip(re, re_kinds)) do ((_, grp), (kind, var))  # multiple scalar components
         w = kind === :intercept ? ones(length(y)) : Float64.(getproperty(data, var))
