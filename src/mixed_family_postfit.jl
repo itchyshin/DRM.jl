@@ -103,6 +103,25 @@ function mf_fitted(fit, X1, X2)
 end
 
 """
+    mf_fitted(fit)
+
+Fitted means for a cross-family fit produced by the **formula** route
+(`drm(bf(...), (Fam1(), Fam2()); data = …)`), which carries its own design
+matrices. A fit built from raw matrices via `fit_mixed_family` does not, so
+there they must still be supplied: `mf_fitted(fit, X1, X2)`.
+
+Same `u = 0` convention as the three-argument method above.
+"""
+function mf_fitted(fit)
+    (haskey(fit, :X1) && haskey(fit, :X2)) || throw(ArgumentError(
+        "mf_fitted: this fit does not carry its design matrices, so they must be " *
+        "supplied: `mf_fitted(fit, X1, X2)`. Fits made through the formula route " *
+        "`drm(bf(...), (Fam1(), Fam2()); data = …)` carry them and work with " *
+        "`mf_fitted(fit)`."))
+    return mf_fitted(fit, fit.X1, fit.X2)
+end
+
+"""
     mf_summary(fit; nobs = nothing, io = stdout)
 
 Print a human-readable summary of a `fit_mixed_family` fit: the coefficient
