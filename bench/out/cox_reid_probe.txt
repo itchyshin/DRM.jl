@@ -3,3 +3,49 @@ Cox–Reid scoping probe (#441) — DRM.jl
 ==============================================================================
 
 --- Cell B: Gaussian reduction anchor (generic CR penalty vs #440 exact REML) ---
+  refit converged : true     pμ = 2
+  θ̂_ML   :  0.639657   0.349571  -0.279446  -0.087845
+  θ̂_CR   :  0.639651   0.349295  -0.269255  -0.038349
+  θ̂_REML :  0.639648   0.349294  -0.269255  -0.038349
+  max |θ̂_CR − θ̂_REML| = 2.871e-06
+
+--- Cell A: Poisson (1|g), GHQ-32 integral, true σ_b = 0.6 ---
+  G      n_each   nrep            σ̂_ML    bias_ML %         σ̂_CR    bias_CR %
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     3
+│   rcond = 3.348791522539835e-19
+└ @ DRM ~/local-scratch/lanes/DRM.jl-cox-reid-probe/src/vcov_guard.jl:57
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     3
+│   rcond = 1.278151118967979e-18
+└ @ DRM ~/local-scratch/lanes/DRM.jl-cox-reid-probe/src/vcov_guard.jl:57
+  10     6        58            0.5258       -12.37       0.5894        -1.77
+  20     6        60            0.5561        -7.32       0.5903        -1.62
+  40     6        60            0.6085         1.41       0.6263         4.38
+
+--- Cell C: hook viability on the sparse-Laplace route (Poisson phylo) ---
+  analytic gradient on the fit : true
+  pμ = 2, npar = 3
+  _glsp_reml_penalty (analytic-grad FD) : 3.17639042
+  independent value-surface FD          : 3.17375941  (rel diff 8.29e-04)
+  σ̂_phylo (true 0.70)  ML = 0.95488   Cox–Reid = 0.99187
+  refit converged = true, LBFGS steps = 5
+  nll_ML = 184.936791   nll_CR = 188.075188
+
+--- Cell D: cheap Laplace VC bias (Poisson phylo, 12 seeds, true σ = 0.7) ---
+  ntip=16 per=4 nrep=12 nfail=0
+  σ̂_ML = 0.7572  bias_ML = +8.18%     σ̂_CR = 0.8219  bias_CR = +17.41%
+
+done.

@@ -37,13 +37,13 @@ Source: `memory/Two-lever fix for small-cluster non-Gaussian variance-component 
 - [x] `src/sparse_laplace_glmm.jl` mapped; the hook point named
 - [x] Answered: can the Gaussian REML machinery (`_glsp_reml_penalty` /
       `_glsp_reml_refit_clean` / `_withreml`) punch through to non-Gaussian routes?
-- [ ] **Measured on THIS engine** (no imported drmTMB numbers): the current ML
+- [x] **Measured on THIS engine** (no imported drmTMB numbers): the current ML
       variance-component bias, and whether a generic Cox–Reid penalty removes it
-- [ ] **Gaussian reduction anchor:** the generic penalty reproduces the independently
+- [x] **Gaussian reduction anchor:** the generic penalty reproduces the independently
       validated exact Gaussian REML (#440 Woodbury `(1|g)`) to tight tolerance
-- [ ] Design note committed: hook points, cost model, fences, risks, and an explicit
+- [x] Design note committed: hook points, cost model, fences, risks, and an explicit
       **go / no-go** for the implement-G0
-- [ ] Standalone characterization test that documents current behaviour and fails when
+- [x] Standalone characterization test that documents current behaviour and fails when
       the estimator lands (NOT registered in `test/runtests.jl`)
 - [ ] PR against `main`; after-task naming the next G0s in order
 
