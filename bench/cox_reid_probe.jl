@@ -167,13 +167,20 @@ end
 # non-Gaussian Laplace fit — the difference between "a wiring job" and "a
 # derivation job" for the implement-G0.
 # ---------------------------------------------------------------------------
-function cell_c(; ntip::Int = 24, per::Int = 4, seed::Int = 909)
+function cell_c(; ntip::Int = 24, per::Int = 4, seed::Int = 909, σphy::Float64 = 0.7)
     rng = MersenneTwister(seed)
     tree = D.random_balanced_tree(ntip; branch_length = 0.25)
     species = repeat(1:ntip, inner = per)
     n = length(species)
     x = randn(rng, n)
-    y = Float64.([rand(rng, Distributions.Poisson(exp(0.3 + 0.25 * x[i]))) for i in 1:n])
+    # Draw a genuinely tree-structured effect u ~ N(0, σ² Q⁻¹) from the route's OWN
+    # precision, so the fitted model is not misspecified and σ̂ is not pinned at the
+    # σ→0 boundary (where a restricted objective has nothing to correct).
+    Q, leaf_node, _ = D._poisson_phylo_setup(tree, species)
+    L = cholesky(Symmetric(Matrix(Q))).U
+    u = σphy .* (L \ randn(rng, size(Q, 1)))
+    η = 0.3 .+ 0.25 .* x .+ u[leaf_node]
+    y = Float64.([rand(rng, Distributions.Poisson(exp(clamp(ηi, -20, 20)))) for ηi in η])
     data = (; y, x, species)
     form = D.bf(D.@formula(y ~ x + phylo(1 | species)))
 
@@ -206,11 +213,51 @@ function cell_c(; ntip::Int = 24, per::Int = 4, seed::Int = 909)
     θ̂cr, conv, ml_nll, cr_nll, steps =
         D._glsp_reml_refit_clean(fit.nll, grad_fn, θ̂, pμ)
 
-    return (; has_grad, reached = true, pμ, npar = length(θ̂),
+    return (; has_grad, reached = true, pμ, npar = length(θ̂), σphy,
             penalty = pen, penalty_fd = pen_fd,
             pen_rel_diff = abs(pen - pen_fd) / max(abs(pen_fd), 1.0),
             sigma_ml = exp(θ̂[end]), sigma_cr = exp(θ̂cr[end]),
             conv, ml_nll, cr_nll, steps)
+end
+
+# ---------------------------------------------------------------------------
+# Cell D — cheap Laplace VC bias on the same Poisson-phylo spine as Cell C.
+# Public `(1 | g)` is GHQ-32 (`_fit_poisson_ranef`); K=1 crossed Laplace
+# redirects to that GHQ path. The 1-point Laplace marginal lives on phylo /
+# relmat / K≥2 crossed. This cell is the Laplace-bias measurement #441 asked
+# for — not an imported drmTMB figure. 12 seeds, ntip=16: Mac-cheap.
+# ---------------------------------------------------------------------------
+function cell_d(; ntip::Int = 16, per::Int = 4, seeds::Int = 12, σphy::Float64 = 0.7)
+    ml = Float64[]
+    cr = Float64[]
+    nfail = 0
+    for s in 1:seeds
+        rng = MersenneTwister(20260818 + 17s)
+        tree = D.random_balanced_tree(ntip; branch_length = 0.25)
+        species = repeat(1:ntip, inner = per)
+        n = length(species)
+        x = randn(rng, n)
+        Q, leaf_node, _ = D._poisson_phylo_setup(tree, species)
+        L = cholesky(Symmetric(Matrix(Q))).U
+        u = σphy .* (L \ randn(rng, size(Q, 1)))
+        η = 0.3 .+ 0.25 .* x .+ u[leaf_node]
+        y = Float64.([rand(rng, Distributions.Poisson(exp(clamp(ηi, -20, 20)))) for ηi in η])
+        data = (; y, x, species)
+        fit = D.drm(D.bf(D.@formula(y ~ x + phylo(1 | species))), D.Poisson();
+                    data = data, tree = tree, se = false)
+        D.is_converged(fit) && fit.nllgrad !== nothing || (nfail += 1; continue)
+        θ̂ = D.coef(fit)
+        pμ = length(D.coef(fit, :mu))
+        grad_fn = θ -> (g = zeros(length(θ)); fit.nllgrad(g, θ); copy(g))
+        θ̂cr, ok, _, _, _ = D._glsp_reml_refit_clean(fit.nll, grad_fn, θ̂, pμ)
+        ok || (nfail += 1; continue)
+        push!(ml, exp(θ̂[end]))
+        push!(cr, exp(θ̂cr[end]))
+    end
+    return (; ntip, per, σphy, seeds, nfail, nrep = length(ml),
+            ml_mean = _mean(ml), cr_mean = _mean(cr),
+            ml_bias_pct = 100 * (_mean(ml) - σphy) / σphy,
+            cr_bias_pct = 100 * (_mean(cr) - σphy) / σphy)
 end
 
 # ---------------------------------------------------------------------------
@@ -246,10 +293,17 @@ function main()
         @printf("  _glsp_reml_penalty (analytic-grad FD) : %.8f\n", c.penalty)
         @printf("  independent value-surface FD          : %.8f  (rel diff %.2e)\n",
                 c.penalty_fd, c.pen_rel_diff)
-        @printf("  σ̂_phylo  ML = %.5f   Cox–Reid = %.5f\n", c.sigma_ml, c.sigma_cr)
+        @printf("  σ̂_phylo (true %.2f)  ML = %.5f   Cox–Reid = %.5f\n",
+                c.σphy, c.sigma_ml, c.sigma_cr)
         @printf("  refit converged = %s, LBFGS steps = %d\n", c.conv, c.steps)
         @printf("  nll_ML = %.6f   nll_CR = %.6f\n", c.ml_nll, c.cr_nll)
     end
+
+    println("\n--- Cell D: cheap Laplace VC bias (Poisson phylo, 12 seeds, true σ = 0.7) ---")
+    d = cell_d()
+    @printf("  ntip=%d per=%d nrep=%d nfail=%d\n", d.ntip, d.per, d.nrep, d.nfail)
+    @printf("  σ̂_ML = %.4f  bias_ML = %+.2f%%     σ̂_CR = %.4f  bias_CR = %+.2f%%\n",
+            d.ml_mean, d.ml_bias_pct, d.cr_mean, d.cr_bias_pct)
     println("\ndone.")
 end
 
