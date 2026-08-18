@@ -5,7 +5,7 @@ Fan-out: recon only (S1 recon already ran in planning). One builder at a time on
 
 | # | arc | owner | status | gate? |
 |---|-----|--------|--------|-------|
-| S0 | Open ONE GitHub issue; `lane_launch.sh` off origin/main; commit LOOP/ kit | Shannon | doing | — |
+| S0 | Open ONE GitHub issue (#448); `lane_launch.sh` off origin/main; commit LOOP/ kit | Shannon | done | — |
 | S1 | `src/aghq_1d.jl`: Liu–Pierce 1-D wrap of `_gauss_hermite`; k=1 ≡ Laplace; fail-loud dim≠1. Do not vendor GLLVM `aghq_grid.jl` | Noether | todo | OPEN: `src/` = Noether+maintainer (land on branch; merge later) |
 | S2 | TDD: `test/test_aghq_1d.jl` first (red), then kernel. Smoke: k≈5 nll vs GHQ-32 — agreement, not recovery | Noether | todo | — |
 | S3 | Thread `marginal=:AGHQ` + `nAGQ=5` through `_marginal_method` + Poisson `(1|g)`. Default `:LA` unchanged. Fail-loud phylo / crossed / relmat / `(1+x|g)` / associate_pairs. Do not edit `_fit_poisson_general_laplace`. No `:REML`×`:AGHQ` | Noether | todo | OPEN: public `marginal` = Noether+maintainer |
