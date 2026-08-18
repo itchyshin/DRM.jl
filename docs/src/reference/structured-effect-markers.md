@@ -16,4 +16,6 @@ relmat
 
 ```@docs
 meta_V
+meta_vcov_bivariate
+MetaVcovBivariate
 ```

@@ -271,6 +271,10 @@ include("test_boundary_polish.jl")
 include("test_phylo_tree_height.jl")
 # A4d-2: post-fit inventories (profile_targets, structured_effects).
 include("test_introspection.jl")
+# A8: bivariate meta-analysis with known sampling covariance (meta_vcov_bivariate).
+include("test_meta_vcov_bivariate.jl")
+# A11: formula front end for the cross-family latent-rho route.
+include("test_cross_family_formula.jl")
 # Profile-likelihood CIs for the bivariate q4 among-axis SDs (Ayumi #2): the calibrated,
 # no-Hessian complement to the bootstrap — collapsed axis → lower bound 0; panel-hardened
 # (straddle guard, warm-start convergence gate, consistent nll_hat).

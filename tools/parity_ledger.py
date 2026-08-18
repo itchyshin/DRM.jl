@@ -69,8 +69,6 @@ DELIBERATELY_NOT_PORTED = {
     "corpair": "BLOCKED: StatsModels' @formula cannot express keyword args or string "
                "literals, so drmTMB's syntax is not representable; and the fitted route "
                "needs the labelled covariance-block grammar (1|p|id), absent in DRM.jl",
-    "meta_vcov_bivariate": "BLOCKED: meta_V is diagonal-only and the bivariate route "
-                           "ignores metav, so the output would have no consumer",
 }
 
 
