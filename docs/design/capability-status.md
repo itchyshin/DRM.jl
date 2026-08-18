@@ -128,9 +128,8 @@ multi-ranef, and structured / phylo / meta stay `ArgumentError`), and
 `src/gaussian_ranef.jl` adds the Patterson–Thompson term
 `½ logdet(Xμ′ V⁻¹ Xμ)` on the Woodbury spine. Exercised by
 `test/test_reml_ordinary_ranef.jl` (standalone; **not in the default suite yet**)
-and by the inverted `(1 | g)` cell in `test/test_reml.jl` (already in
-`test/runtests.jl`). ML stays the default. This is not AI-REML, not a TSV
-flip, and not “parity complete.”
+only; `test/test_reml.jl` retains the random-slope rejection. ML stays the
+default. This is not AI-REML, not a TSV flip, and not “parity complete.”
 
 `REML bivariate phylogenetic location-scale (q4, all axes)` is `implemented`:
 `src/reml_q4.jl` is included in the module (`src/DRM.jl:38`) and
@@ -198,8 +197,8 @@ scope in the same file).
 
 ## Snapshot
 
-- 43 capabilities, all `implemented`/`rejected`/`planned`/`missing` per the
-  mapping above; 38 `implemented`, 1 `rejected` (`:natgrad`), 1 `planned`,
+- 46 capabilities, all `implemented`/`rejected`/`planned`/`missing` per the
+  mapping above; 40 `implemented`, 1 `rejected` (`:natgrad`), 1 `planned`,
   4 `missing`. (Prior snapshot said 37/1 while the table still listed two
   `rejected` rows; this recount flips the ordinary-RE REML chip and leaves
   `:natgrad` as the only `rejected` row.)

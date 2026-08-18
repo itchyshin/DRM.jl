@@ -16,8 +16,8 @@ that the new file is **not in the default suite yet**.
   cite 413–423, not stale `:407`) for a single intercept `(1 | g)`
 - Patterson–Thompson term `½ logdet(Xμ′ V⁻¹ Xμ)` in `src/gaussian_ranef.jl`
   on the existing `S`/`M` capacitance; `_withreml`; restricted Hessian vcov
-- Invert `test/test_reml.jl` (already in the default suite) so the old
-  `@test_throws` does not go red
+- Keep `test/test_reml.jl`'s default-suite rejection focused on random slopes;
+  it does not exercise ordinary mean `(1 | g)` REML
 - Standalone `test/test_reml_ordinary_ranef.jl` (worked example in the header)
 - `docs/src/capabilities.md` REML-scope warning + Inference row
   **Impl, untested**
@@ -35,20 +35,20 @@ that the new file is **not in the default suite yet**.
 
 ## Verify (log, not exit code)
 
-S2 writer (05b28cf8) reported on `fab5e00e`:
-
 | file | result |
 |---|---|
-| `test/test_reml_ordinary_ranef.jl` | 15/15 |
-| `test/test_reml.jl` | 23/23 |
-| `test/test_gaussian_ranef.jl` | 9/9 |
+| `test/test_reml_ordinary_ranef.jl` | **18/18 pass** on `f51fcaa9` (current PR tip before these docs-only corrections), including the FD ≤ 1e-6 and REML `lrtest` guards added after `fab5e00e` |
 
-This close adds FD ≤ 1e-6 and the REML `lrtest` mean-structure guard to the
-standalone file (`e0d75f45`). Re-run those three files before merge.
+Command:
+`julia --project=. -e 'using DRM, Test; include("test/test_reml_ordinary_ranef.jl")'`.
+The standalone file remains outside `test/runtests.jl`; no default-suite
+coverage of ordinary mean `(1 | g)` REML is claimed.
 
 ## Rose
 
-**clean-with-limitations.** B chip flipped after src+test. Default-suite
-include of the *new* file deferred. Do not claim `Pkg.test()` covers
-ordinary-RE REML via the new file (the inverted `test_reml.jl` cell *will*
-run in the default suite).
+Rose's review of `f51fcaa9` returned **FAIL** for false default-suite coverage
+claims and an inconsistent capability snapshot. These docs-only corrections
+remove those claims and recount the table as 46 total: 40 `implemented`,
+1 `rejected`, 1 `planned`, and 4 `missing`. The B chip remains
+`implemented`, while Documenter remains **Impl, untested** because the
+standalone file is not in the default suite.
