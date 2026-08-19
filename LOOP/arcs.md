@@ -1,24 +1,19 @@
-# Arcs — AGHQ lever 2 (from approved ultra-plan)
-
-Sequential: S0 → S1 → S2 → S3 → S4 → S5 → S6 → S7 → S8 → S9.
-Fan-out: recon only (S1 recon already ran in planning). One builder at a time on `src/`.
-
-| # | arc | owner | status | gate? |
-|---|-----|--------|--------|-------|
-| S0 | Open ONE GitHub issue (#448); `lane_launch.sh` off origin/main; commit LOOP/ kit | Shannon | done | — |
-| S1 | `src/aghq_1d.jl`: Liu–Pierce 1-D wrap of `_gauss_hermite`; k=1 ≡ Laplace; fail-loud dim≠1. Do not vendor GLLVM `aghq_grid.jl` | Noether | done | OPEN: `src/` = Noether+maintainer (land on branch; merge later) |
-| S2 | TDD: `test/test_aghq_1d.jl` first (red), then kernel. Smoke: k≈5 nll vs GHQ-32 — agreement, not recovery | Noether | done | — |
-| S3 | Thread `marginal=:AGHQ` + `nAGQ=5` through `_marginal_method` + Poisson `(1|g)`. Default `:LA` unchanged. Fail-loud phylo / crossed / relmat / `(1+x|g)` / associate_pairs. Do not edit `_fit_poisson_general_laplace`. No `:REML`×`:AGHQ` | Noether | done | OPEN: public `marginal` = Noether+maintainer |
-| S4 | Mac-local `Pkg.test` for new file + Poisson AGHQ smoke. Log the numbers. No Totoro. No Cell D | Curie/Noether | done | — |
-| S5 | Docstrings + worked example. Capability row stays missing. check-log.d + after-task + Rose claim-vs-evidence (no −7.3/−5.0 as DRM, no GLLVM 1.0021, no chip flip) | Pat + Rose | done | — |
-| S6 | One PR `closes #448` from this worktree. DoD. Do not merge | Shannon | done | OPEN: PR merge = human (PR #449) |
-| S7 | MECHANICAL-VERIFY: issue exists; worktree ≠ handover branch; no phylo-Laplace REML hunk; no q4; no chip flip; no GLLVM LOOP; no #420/#406; tests actually ran (read the log) | scout | done | — |
-| S8 | REVIEW: Rose + Noether plan + PR claim audit (skip Other Models if bar exhausted; Rose note in after-task) | Rose + Noether | done | — |
-| S9 | RECONCILE: `docs/dev-log/plan-actual/2026-08-18-aghq-lever-2.md` | Melissa | done | — |
+# Arcs — phylo-laplace-cox-reid (from approved G0)
 
 Status: todo / doing / done / blocked. Gate = needs a human before it can proceed.
 
-## Q1/Q2 (G0 defaults — IF YOU DO NOT MIND)
+| # | arc | status | gate? |
+|---|-----|--------|-------|
+| S1 | Wait until AGHQ #448 has an **open PR** (not merge) before B `src/` | done | wait — **cleared**: [PR #449](https://github.com/itchyshin/DRM.jl/pull/449) OPEN |
+| S2 | File a NEW B issue; fill LOOP kit on `claude/lane-phylo-laplace-cox-reid` off `origin/main` | done | issue [#450](https://github.com/itchyshin/DRM.jl/issues/450) |
+| S3 | TDD red: standalone `test/test_cox_reid_poisson_phylo.jl` (not in `runtests.jl`) | done | 27/27 verified twice |
+| S4 | Wire: lift structured `_reject_reml_route`; thread `reml` into `_fit_poisson_general_laplace`; reuse #444 helpers | done | tip `8084532e` |
+| S5 | Docs: Poisson docstring warning (Cell D not recovery; ML default; no chip) | done | docstring already on `Poisson()` from S4; check-log + after-task this slice |
+| S6 | `Pkg.test()`; read logs; no recovery sentence | done | standalone 27/27 twice (S3/S4); this S5 slice did not re-run |
+| S7 | Rose check-log + after-task + PR `closes #<B>` — do **not** `gh pr merge` | todo | OPEN GATE: human merge |
+| S8 | Melissa plan-vs-actual reconcile | todo | — |
 
-- Q1: Poisson `(1|g)` 1-D AGHQ (not `_fit_poisson_general_laplace`)
-- Q2: public `marginal=:AGHQ` on Poisson `(1|g)` only; chip stays missing
+**SEQUENTIAL:** S1→S2→S3→S4→S5/S6→S7→S8. **PARALLEL after S1:** none (single writer).
+**NEXT = S7 PR.** Sibling opens it. This worker does not `gh pr create` / `gh pr merge`.
+
+**Overlap note:** A (#449) adds `marginal=:AGHQ` on `(1|g)` in `src/poisson.jl`. B lifts structured `_reject_reml_route` and punches `_fit_poisson_general_laplace`. Keep B's `poisson.jl` hunks disjoint from AGHQ dispatch. Do not revert A's hunks if they land on main.

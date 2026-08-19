@@ -413,10 +413,12 @@ non-root tree node and the mode/logdet computations stay sparse.
 """
 function _fit_poisson_phylo_laplace(fam::Poisson, y, Xμ, labels, tree, nmμ, grp,
                                     g_tol; se::Bool = true,
-                                    polish_iterations::Int = 15)
+                                    polish_iterations::Int = 15,
+                                    reml::Bool = false)
     Q, leaf_node, _ = _poisson_phylo_setup(tree, labels)
     return _fit_poisson_general_laplace(fam, y, Xμ, Q, leaf_node, nmμ, grp, g_tol;
-                                        se = se, polish_iterations = polish_iterations)
+                                        se = se, polish_iterations = polish_iterations,
+                                        reml = reml)
 end
 
 """
@@ -457,10 +459,12 @@ unchanged.
 """
 function _fit_poisson_relmat_laplace(fam::Poisson, y, Xμ, C, labels, nmμ, grp,
                                      g_tol; se::Bool = true,
-                                     polish_iterations::Int = 15)
+                                     polish_iterations::Int = 15,
+                                     reml::Bool = false)
     Q, leaf_node = _general_cov_setup(C, labels)
     return _fit_poisson_general_laplace(fam, y, Xμ, Q, leaf_node, nmμ, grp, g_tol;
-                                        se = se, polish_iterations = polish_iterations)
+                                        se = se, polish_iterations = polish_iterations,
+                                        reml = reml)
 end
 
 # Shared body: Poisson sparse-Laplace fit for an arbitrary precision `Q` and
@@ -469,7 +473,8 @@ end
 # (`_fit_poisson_relmat_laplace`); see those for the two front ends.
 function _fit_poisson_general_laplace(fam::Poisson, y, Xμ, Q, leaf_node, nmμ, grp,
                                       g_tol; se::Bool = true,
-                                      polish_iterations::Int = 15)
+                                      polish_iterations::Int = 15,
+                                      reml::Bool = false)
     n = length(y)
     pμ = size(Xμ, 2)
     q = size(Q, 1)
@@ -552,7 +557,17 @@ function _fit_poisson_general_laplace(fam::Poisson, y, Xμ, Q, leaf_node, nmμ, 
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict{Symbol,Vector{Float64}}()
     fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
-    return _withnll(fit, nll, grad!)
+    fit = _withnll(fit, nll, grad!)
+    reml || return fit
+    # Opt-in Cox–Reid (#450): same helpers as the Poisson GHQ cell (#443 / #444).
+    # This spine already has an analytic `grad!`; wrap it as `grad_fn(θ)`.
+    grad_fn = θ -> (g = zeros(length(θ)); grad!(g, θ); g)
+    θ̂, conv, ml_nll, reml_nll, _ =
+        _glsp_reml_refit_clean(nll, grad_fn, θ̂, pμ; ml_converged = converged)
+    V = _glsp_reml_vcov(grad_fn, θ̂, pμ)
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ]))
+    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -ml_nll, n, conv, means, obs, scales)
+    return _withreml(_withnll(fit, nll, grad!), -reml_nll, -ml_nll)
 end
 
 function _phylo_mean_mode(kind, aux, η0, leaf_node, Q, logσ; b0 = nothing,

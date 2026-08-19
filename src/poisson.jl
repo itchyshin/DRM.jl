@@ -25,7 +25,7 @@ fit_phy = drm(bf(@formula(y ~ x + phylo(1 | species))), Poisson();
 # Default remains Laplace (`marginal = :LA`). `loglik` on a VA fit is an ELBO.
 fit_va = drm(bf(@formula(y ~ x + (1 | g))), Poisson(); data = dat, marginal = :VA)
 
-# Opt-in Cox–Reid restricted estimation for `(1 | g)` (#443). ML is the default.
+# Opt-in Cox–Reid restricted estimation (#443 / #450). ML is the default.
 fit_reml = drm(bf(@formula(y ~ x + (1 | g))), Poisson(); data = dat, method = :REML)
 estimation_method(fit_reml)   # :REML
 
@@ -35,28 +35,43 @@ estimation_method(fit_reml)   # :REML
 fit_aghq = drm(bf(@formula(y ~ x + (1 | g))), Poisson();
                data = dat, marginal = :AGHQ, nAGQ = 5)
 fit_aghq.marginal   # :AGHQ
+
+fit_phy_reml = drm(bf(@formula(y ~ x + phylo(1 | species))), Poisson();
+                   data = dat, tree = tr, se = false, method = :REML)
 ```
 
 # Restricted (Cox–Reid) estimation
 
-`method = :REML` is available for a **single scalar random intercept `(1 | g)`** only,
-and is **opt-in — ML remains the default**. It maximises the Cox–Reid adjusted profile
-likelihood `ℓ_ML − ½·log|I_ββ|`, which reduces the ML downward bias in `σ̂_b` when
-clusters are few. On the Gaussian route this correction is exactly Patterson–Thompson
-REML, so it is anchored rather than ad hoc.
+`method = :REML` is **opt-in — ML remains the default**. It maximises the Cox–Reid
+adjusted profile likelihood `ℓ_ML − ½·log|I_ββ|` on two Poisson routes:
+
+- a scalar random intercept `(1 | g)` integrated by GHQ-32 (#443)
+- phylogenetic / `relmat` / `animal` / precomputed-spatial Laplace
+  (`_fit_poisson_general_laplace`, #450)
+
+On the Gaussian route this correction is exactly Patterson–Thompson REML, so the
+mechanism is anchored rather than ad hoc.
+
+!!! warning "Probe Cell D is not a recovery result"
+    A 16-tip / 12-seed Poisson phylo cell over-corrected under Cox–Reid
+    (ML +8.18%, CR +17.41%). Do not read those percentages as a bias-sign
+    headline or a reason to prefer `:REML` on trees. ADEMP on a larger tree
+    is a follow-on. Evidence:
+    `docs/dev-log/evidence/2026-08-18-cox-reid-scoping-probe.md`.
 
 !!! warning "It over-corrects when clusters are plentiful"
     On a Poisson `(1 | g)` cell with true `σ_b = 0.6` and 6 observations per cluster,
     ML was **−12.4%** at `G = 10` where Cox–Reid was **−1.8%** — but by `G = 40` ML was
     **+1.4%** and Cox–Reid **+4.4%**. Reach for it when clusters are few, not by habit.
-    That asymmetry is why ML is the default. Evidence:
-    `docs/dev-log/evidence/2026-08-18-cox-reid-scoping-probe.md`.
+    That asymmetry is why ML is the default.
 
-Every other Poisson route (phylogenetic/structured effects, crossed intercepts,
-correlated slopes `(1 + x | g)`, fixed-effects-only, `zi`/`hu`, `marginal = :VA`) errors
-on `method = :REML` rather than silently returning an ML fit. REML log-likelihoods are
-not comparable across different fixed-effect structures, so do not use them for
-model selection over `μ`.
+Crossed intercepts, correlated slopes `(1 + x | g)`, coordinate-spatial with
+estimated range `ρ`, fixed-effects-only, `zi`/`hu`, `marginal = :VA`, and
+`marginal = :AGHQ` still error on `method = :REML` rather than silently
+returning an ML fit. REML
+log-likelihoods are not comparable across different fixed-effect structures, so
+do not use them for model selection over `μ`. This slice does not flip a
+capability chip.
 """
 struct Poisson end
 
@@ -66,8 +81,9 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
              A = nothing, coords = nothing, g_tol::Real = 1e-8, se::Bool = true,
              marginal::Symbol = :LA, method = nothing, nAGQ::Int = 5)
     # `method` is the ML/REML selector. LA/VA/AGHQ is `marginal` (Q1 / #136 / #448).
-    # `:REML` is the opt-in Cox–Reid restricted objective and is admitted on ONE
-    # route — the scalar random intercept `(1 | g)` under `:LA` (#443). `:REML` ×
+    # `:REML` is the opt-in Cox–Reid restricted objective, admitted on Poisson
+    # `(1 | g)` GHQ under `:LA` (#443) and on `_fit_poisson_general_laplace`
+    # callers (phylo / relmat / animal / precomputed spatial; #450). `:REML` ×
     # `:AGHQ` is not wired. Every other route calls `_reject_reml_route` rather
     # than ignoring the request.
     meth = _reject_method_as_marginal(fam, method; allow_reml = true)
@@ -93,10 +109,11 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
     if st !== nothing
         isva && _va_reject(fam, "a phylogenetic/structured random effect")
         isaghq && _aghq_reject(fam, "a phylogenetic/structured random effect")
-        # The sparse-Laplace hook itself is proven on these routes (probe #441 Cell C),
-        # but their variance-component bias is NOT characterised — Cell D was
-        # underpowered for even a sign claim. Follow-up cell, not this one.
-        reml && _reject_reml_route(fam, "a phylogenetic/structured random effect")
+        # Phylo / relmat / animal / precomputed spatial share `_fit_poisson_general_laplace`
+        # and admit opt-in Cox–Reid (#450). Probe Cell D is not a recovery headline —
+        # the docstring warning is the honesty ledger. Coordinate-spatial with
+        # jointly estimated ρ is a different fitter and stays rejected. AGHQ stays
+        # rejected here (#448): 1-D Liu–Pierce is Poisson `(1 | g)` only.
         isempty(re) ||
             error("Poisson() structured effects cannot be combined with ordinary random effects yet")
         (haskey(rhs, :zi) || haskey(rhs, :hu)) &&
@@ -105,20 +122,23 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
         labels = getproperty(data, grp)
         if kind === :phylo
             tree === nothing && error("phylo(1 | $grp) needs `tree = …`")
-            return _withformula(_fit_poisson_phylo_laplace(fam, y, Xμ, labels, tree, nmμ, grp, g_tol; se = se), f)
+            return _withformula(_fit_poisson_phylo_laplace(fam, y, Xμ, labels, tree, nmμ, grp, g_tol;
+                                                          se = se, reml = reml), f)
         elseif kind === :spatial && K === nothing && coords !== nothing
             # Coordinate-based exponential-kernel spatial covariance with the range
             # ρ ESTIMATED JOINTLY (#270): C(ρ) = exp(-d/ρ) from the site distances,
             # ρ enters the outer parameter vector, and its gradient flows through
             # C(ρ) → Q(ρ) → the Laplace marginal. The coordinate-spatial twin of the
             # Gaussian `_fit_spatial_gaussian` path, on the Poisson Laplace spine.
+            reml && _reject_reml_route(fam, "coordinate-based spatial with jointly estimated range ρ")
             return _withformula(_fit_poisson_spatial_coord(fam, y, Xμ, labels, coords, nmμ, grp, g_tol; se = se), f)
         elseif kind === :relmat || kind === :animal || kind === :spatial
             # General user-supplied PD covariance C on the mean intercept
             # (relatedness / animal model / PRECOMPUTED spatial). Reuses the phylo
             # sparse-Laplace spine with the tree precision swapped for C⁻¹ (#167).
             C = _poisson_structured_cov(kind, grp, K, A, coords)
-            return _withformula(_fit_poisson_relmat_laplace(fam, y, Xμ, C, labels, nmμ, grp, g_tol; se = se), f)
+            return _withformula(_fit_poisson_relmat_laplace(fam, y, Xμ, C, labels, nmμ, grp, g_tol;
+                                                           se = se, reml = reml), f)
         else
             error("Poisson() supports phylo/relmat/animal/spatial(1 | group) among structured markers")
         end

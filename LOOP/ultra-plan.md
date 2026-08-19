@@ -1,217 +1,172 @@
-# AGHQ lever 2 ultra-plan (FROZEN at G0 approval, 2026-08-18)
-
-Source: Cursor plan `AGHQ lever 2` (`aghq_lever_2_6051596f.plan.md`).
-Q1/Q2 IF-YOU-DO-NOT-MIND defaults applied: Poisson `(1|g)` 1-D AGHQ; public `marginal=:AGHQ` + `nAGQ=5`; capability row stays missing.
-This copy is the binding WHAT for lane `aghq-lever-2`. Do not re-plan.
-
+---
+name: Phylo Laplace Cox-Reid
+overview: "Ultra-plan Phases 0–2 for B: opt-in Cox–Reid `method = :REML` on Poisson phylo/relmat Laplace (`_fit_poisson_general_laplace` only). Execution waits until AGHQ (#448) has a PR or Shinichi overrides. No ADEMP this G0. #447 already merged; #103 is a closed unrelated issue."
+todos:
+  - id: s1-wait-aghq-pr
+    content: "S1: Wait until AGHQ #448 has a PR (or owner override). Do not start B src/."
+    status: pending
+  - id: s2-issue-scaffold
+    content: "S2: File a NEW B issue; lane_launch.sh DRM.jl phylo-laplace-cox-reid off origin/main"
+    status: pending
+  - id: s3-tdd-red
+    content: "S3: Standalone test_cox_reid_poisson_phylo.jl (TDD red; not in runtests.jl)"
+    status: pending
+  - id: s4-wire
+    content: "S4: Lift structured REML reject; thread reml into _fit_poisson_general_laplace; reuse #444 helpers"
+    status: pending
+  - id: s5-s8-docs-verify-pr
+    content: "S5–S8: docstring honesty, Pkg.test(), Rose check-log/after-task, PR closes #B, Melissa reconcile"
+    status: pending
+isProject: false
 ---
 
-# AGHQ lever 2 ultra-plan
+# Phylo Laplace Cox-Reid (B)
 
-Plan mode is on. This chat stays read-only through G0. No `src/` edits, no G0 branch, no AGHQ or phylo Laplace implementation here.
+**Plan-first:** this session entered Cursor Plan mode mid-flight; Phases 0–2 stayed read-only. No Phase 3. No `src/` edits. No AGHQ files claimed. Plan kept in Cursor plans only (do not dirty the merged #447 handover branch).
+
+**Shannon.** Active perspectives: Ada (this plan), Noether, Hopper, Curie, Rose. No nested Task scouts were spawned; Ada ran the mechanical sweep inline.
 
 ## GOAL
 
 ```
 GOAL
-Solo platform: Cursor
-Deliverable: One issue, one new scratch worktree off origin/main @ d04ba994
-  (or current origin/main), one PR that lands a DRM-native 1-D Liu–Pierce
-  AGHQ kernel + Poisson (1|g) opt-in path. Capability row stays missing.
-HEADLINE: A. AGHQ port (lever 2) — 1-D adaptive Gauss–Hermite around
-  existing `_gauss_hermite`. Not a GLLVM quadrature-claim copy. Not a
-  tensor port onto phylo Laplace.
-IN PARALLEL: S1 recon already ran this chat (Composer scouts + brain grep).
-DEFER: B. Poisson phylo Laplace Cox–Reid punch
-  (`_fit_poisson_general_laplace`). Dual-start RETRACTED. No q4 / reml_q4.jl.
-  No #49. D-111 Julia General OFF. No steal #420/#406. No leftover
-  docs/a3c-design or docs/arc1-inventory. Never mutate GLLVM LOOP/GOAL.md.
-  Never vendor drmTMB GPL source.
-DISCIPLINE: verify-before-claim (this-engine numbers only) · ML default ·
-  :REML stays opt-in · twin=drmTMB · k=1 proves plumbing not quadrature ·
-  never headline GLLVM Λ · compute=local Mac smoke (no Totoro ADEMP) ·
-  closure=PR mergeable with DoD; capability chip NOT flipped
+Solo platform: Cursor (this session; session_ownership.sh)
+Deliverable: one-issue / one-branch / one-PR that admits opt-in method=:REML
+  on Poisson routes that call _fit_poisson_general_laplace (phylo + relmat/
+  animal / precomputed spatial). ML default unchanged. No recovery headline.
+HEADLINE: Poisson phylo Laplace Cox–Reid punch — reuse #444 helpers after
+  _withnll. Function name, not frozen line :555 (function starts at
+  src/sparse_laplace_glmm.jl:470 on this tree).
+IN PARALLEL: none until AGHQ has a PR. #447 already merged (option 1 done).
+  #420/#406 not blocking B (skip option 2).
+DEFER: AGHQ lever 2 (lane A / #448) · q4 · D-111 · #49 · second family ·
+  ADEMP campaign · Cell D as recovery · dual-start A+B · GLLVM LOOP ·
+  drmTMB GPL · leftover docs/a3c-design
+DISCIPLINE: verify=TDD + Pkg.test() + Rose claim-vs-evidence · compute=local
+  Mac (no Totoro this G0) · closure=PR opens closes #<new B issue>
 ```
 
-ARC PROGRAM: N/A (no Arc Card; owner invoked ultra-plan for a named G0).
+**Do not start B `src/` until A (AGHQ) has a PR or the owner overrides.**
 
-## PREFLIGHT (Phase 0.2) — lane claimed
+## Sweep receipt (Phase 0.25 gate — required)
 
-`~/shinichi-brain/tools/lane_preflight.sh` on this workspace:
+- **repo git** — `git status -sb`; `branch_drift_check.sh`; `gh pr/issue` — this WS `handover/2026-08-18-cursor` @ `1779c55f`, clean, 0 ahead / 1 behind `origin/main` (`53742f4d` = merge of #447). Call: **do not resume this branch for B**; new worktree off `origin/main`.
+- **function** — `_fit_poisson_general_laplace` at [`src/sparse_laplace_glmm.jl`](src/sparse_laplace_glmm.jl):470–556; returns `_withnll` at :555. Callers: `_fit_poisson_phylo_laplace` (:414) and `_fit_poisson_relmat_laplace` (:458). Spatial-coord estimated-ρ is a **different** fitter.
+- **#444 wiring** — merged `2dcc5508`. Public `(1|g)` is GHQ-32 via `_fit_poisson_ranef` ([`src/poisson.jl`](src/poisson.jl):208). Structured/phylo still `_reject_reml_route` at :88. Helpers already generic: `_glsp_reml_penalty` / `_glsp_reml_refit_clean` / `_glsp_reml_vcov` / `_withreml`.
+- **probe C/D** — [`docs/dev-log/evidence/2026-08-18-cox-reid-scoping-probe.md`](docs/dev-log/evidence/2026-08-18-cox-reid-scoping-probe.md). Cell C: hook viable (penalty vs FD rel 8.29e-04; refit 5 LBFGS). Cell D: ntip=16 / 12 seeds — **not a recovery headline** (ML +8.18%, CR +17.41%).
+- **twin drmTMB** — Hopper fence + design 211 / 224. Twin has **Gaussian** structured/phylo REML; Arc 1a **excludes non-Gaussian families**. Public NG REML still gated. O3 is nested AGHQ+CR on `cumulative_logit`, not a TMB `random=` fold. **Co-opt mechanism only** (`½ log|I_ββ|`, ML default). Do not copy O2/O3 or vendor `R/aghq-coxreid.R`.
+- **brain** — `search_notes` hybrid `"Cox-Reid phylo Laplace Poisson _fit_poisson_general_laplace REML"` + `"AGHQ lever 2 handover 2026-08-18…"` (`search_all_projects: true`). Semantic hits were mostly older drmTMB/gllvmTMB/Poisson-phylo-q1 notes, not today's B cell.
+- **deterministic greps** — `Cox-Reid|phylo Laplace|_fit_poisson_general_laplace` on `memory/AGENT_LOG.md` (2026-08-18 two-lever rec, lines ~295–320), `memory/DECISIONS.md` (Cox-Reid as drmTMB estimator; D-94 sequence), `journal/` (2026-07-19 drmTMB AGHQ/CR landed), `OPEN_QUESTIONS.md` (old Gaussian orthogonality note), `projects/deep-research/README.md` (none).
+- **#103** — **real GitHub issue, MERGED, not this plan.** Title: "Add profile curve diagnostics" (`profile_curve` / Fisher). `doo all 103` = planning-chat **options 1+3**, not issue #103.
+- **#448** — live AGHQ issue. Body **DEFER B**: do not edit `_fit_poisson_general_laplace`. Foreign lane `claude/lane-aghq-lever-2` @ `~/local-scratch/lanes/DRM.jl-aghq-lever-2` HEAD `0955569f` (brief cited `9966ca79` — stale), dirty `src/aghq_1d.jl` + `src/DRM.jl` + `test/runtests.jl`. **No AGHQ PR yet.** Do not open a second AGHQ issue.
 
-- PLATFORM: cursor | ON BRANCH: handover/2026-08-18-cursor | LANE: **aghq-lever-2** (new)
-- VERDICT: **FOREIGN LANE ACTIVE (claude)** plus 3 other live Cursor lanes
-- OTHER LANES: claude/lane-cox-reid-wire (merged as #444 — do not claim); cursor/option-a-runtests; cursor/pr423-ci-tol; cursor/lane-cox-reid-probe; PRs #447 (this handover, OPEN MERGEABLE), #420, #406 (CONFLICTING, docs-only — do not steal)
-- Working tree clean. Drift of this handover branch vs origin/main: 1 ahead, 0 behind
-- Do **not** claim leftover worktrees: Dropbox `docs/a3c-design`; catchup `docs/arc1-inventory`; cox-reid-* ; GLLVM honesty/afford trees
-- After G0: **new** scratch worktree off `origin/main` via `lane_launch.sh` / equivalent. Do not build on `handover/2026-08-18-cursor`
+**Verdict:** **build the gap** (wiring). Reuse #444 pattern + generic helpers. Resume nothing (no B branch/issue). #420/#406 are docs-only `CONFLICTING` — **not blocking B**. #447 option-1 human merge **already happened**.
 
-STATE LINE: `PLATFORM: cursor | ON BRANCH: handover/2026-08-18-cursor | LANE: aghq-lever-2 | OTHER LANES: claude+#444-done + 3x cursor leftovers + #420/#406 CONFLICTING`
+## Preflight / bars / NotebookLM
 
-## Sweep receipt (Phase 0.25) — gate PASS
+- **0.2** `lane_preflight.sh`: **FOREIGN LANE ACTIVE (claude)** = AGHQ. Also 3 other Cursor lanes + #420/#406. **Lane claimed (plan-only): `phylo-laplace-cox-reid`.** Do not claim AGHQ files.
+- **0.3 / 0.3b:** bars **UNKNOWN** (Usage not read). This plan on **Grok**. `/goal` on **Grok**.
+- **0.5:** NotebookLM offered below; **not run**.
 
-- **repo git** — same commands as above, plus [Repo AGHQ recon](a0905cb9-b13c-4b3e-9fa3-8ea72ee87b15): no AGHQ branch/PR/issue; 9 DRM + 10 GLLVM scratch trees have **no AGHQ-dirty files**. Production `(1|g)` is **non-adaptive GHQ-32** (`src/poisson.jl:214`). `(1+x|g)` is **12² tensor GHQ** (not AGHQ). QuadGK in `src/associate_pairs.jl` is **adaptive rectangle integration, not AGHQ**. Capability row stays **missing**. True 1-point Laplace: [`_fit_poisson_general_laplace`](src/sparse_laplace_glmm.jl). `LOOP/GOAL.md` still says “No AGHQ; waits on GLLVM honesty” — **stale** (honesty #255/#256 landed). Call: **nothing to resume → build-the-gap**.
-- **twin / sister** — [GLLVM AGHQ fence](0ee3d7d8-b0ce-4600-9047-b88202afa57d): #255 docs-only honesty (`81866b1a`); #256 `_aghq_kd_bound` (`70c2e95f`); site kernel is loadings-only `z_B`, **rejects phylo**, ledger **missing**, no public `aghq=`. drmTMB: **no public AGHQ engine**; package-private O3 lives in `R/aghq-coxreid.R` (GPL — **do not vendor**). Cite −7.3/−5.0/−0.9 as drmTMB’s. Call: **reuse algorithm notes only**.
-- **brain** — MCP `search_notes` ×2 `search_all_projects: true`; greps `AGHQ|aghq|adaptive Gauss|quadrature` on `AGENT_LOG.md`, `DECISIONS.md`, `journal/`, `projects/deep-research/README.md`. Vault two-lever note = drmTMB MEASURED. Call: **reuse diagnosis; build DRM kernel**.
-- **Verdict:** **reuse** Liu–Pierce + `_gauss_hermite` / **resume nothing** / **build-the-gap** = DRM-native 1-D AGHQ. Not new: GHQ-32, Cox–Reid #444, QuadGK associate_pairs, GLLVM tensor/`k^d`.
+## What is already known
 
-Rose plan-review (receipt): each surface cites command/query. Gate **PASS** → Phase 1 allowed.
+- Dual-start A+B is **RETRACTED**. This plan is allowed; B `src/` waits.
+- Public `(1|g)` is GHQ-32, not Laplace. Do not punch `_fit_poisson_ranef` again.
+- Line `:555` drifts. Durable name: `_fit_poisson_general_laplace`.
+- Tree-scale trap: `ape::vcv(corr=TRUE)` = unit tip variance; raw Newick tip variance = height `h`.
+- #444 after-task said "ADEMP before `:REML` admitted on Laplace." Owner override for **this G0**: wire only; ADEMP is a follow-on (D-139, Totoro). Honesty: no bias-sign / recovery claim from Cell D.
+- Capability row for Poisson REML / AGHQ stays **missing**. No TSV chip. No "has non-Gaussian REML".
+- AGHQ already dirties `test/runtests.jl` — B must **not** register tests there this G0.
 
-## Why this is not a GLLVM port, and not phylo-Laplace AGHQ
+## Team raised
 
-GLLVM AGHQ is a **loadings-only** tensor rule (`z_ij = ẑ + L^{-T} u_j`). It fail-louds on phylo. Tensor cost is `k^d`. DRM phylo Laplace latent dimension is tree-sized (`q ≈ 2p−1`). A tensor port onto [`_fit_poisson_general_laplace`](src/sparse_laplace_glmm.jl) is a category error (Noether). GLLVM A4(3) honesty is the **fence**, not the template.
+- **Noether** — hook is proven (Cell C); attach after `_withnll`; reuse unmodified helpers; thread `reml::Bool=false` through phylo + relmat wrappers. Analytic `grad!` already exists (unlike GHQ). Why: wiring, not derivation. Rec: same `_glsp_reml_refit_clean` + `_glsp_reml_vcov` + `_withreml` as #444. Default if "use your judgment": that.
+- **Hopper** — twin = drmTMB scalar-RE mechanism, not GLLVM Λ. Cite −7.3/−5.0/−0.9 as drmTMB's. No GPL. Why: license + estimand fence. Rec: copy #444 honesty ledger. Default: that.
+- **Curie** — Cell D underpowered; ADEMP needs a larger tree + more seeds **before a recovery sentence**. Why: D-139. Rec: **no ADEMP this G0**; file a follow-on issue only. Default: that.
+- **Rose** — one cell, not a capability; do not flip chips; do not headline Cell D; do not steal #420/#406; do not vendor drmTMB. Why: claim-vs-evidence. Rec: docstring warning + tests assert direction/mechanism only. Default: that.
+- **Ada** — wait for AGHQ PR because A and B both touch [`src/poisson.jl`](src/poisson.jl) (A: `marginal=:AGHQ` on `(1|g)`; B: lift structured `_reject_reml_route`). `test/runtests.jl` is already dirty on A — B stays standalone.
 
-On Poisson `(1|g)` the integral is **already GHQ-32**. Hopper: starting AGHQ there does not buy the drmTMB −7.3→−5.0 lever. This G0 earns **plumbing** (k=1 ≡ 1-point Laplace; adaptive k≈5 nll close to GHQ-32 on a smoke). It does **not** earn a recovery headline or a capability-chip flip.
+## Decisions locked (defaults)
 
-Public `marginal=:LA` on `(1|g)` is already GHQ-32, not 1-point Laplace. New docs must not relabel GHQ-32 as AGHQ, and must not claim we replaced Laplace on that route.
+- Wire `:REML` only on callers of `_fit_poisson_general_laplace` (phylo + relmat/animal/precomputed spatial). Keep spatial-coord estimated-ρ, crossed, slopes, VA, FE-only rejected.
+- No ADEMP campaign this G0. No second family.
+- Standalone test file; **do not edit `test/runtests.jl`**.
+- New GitHub issue at `/goal` scaffold (not this chat). Do not reuse #448 / #443 / #103.
+- New worktree off `origin/main` via `lane_launch.sh`. Do not build on this handover tree, Dropbox `docs/a3c-design`, or catchup `docs/arc1-inventory`.
+- Human merges PRs. This worker does not `gh pr merge`.
 
-## DEFER B (explicit)
+## Slice table (compact)
 
-B = Cox–Reid punch on `_fit_poisson_general_laplace` (function name, not frozen `:555`). Owner: “A and then B I guess.” Dual-start **RETRACTED**. Do not edit that fitter for `:REML` this slice. Do not start ADEMP on Cell D.
+- **S0 RECON (done here)** — Ada · Grok · Cursor Models · ~20 min · receipt above · dep: none
+- **S1 GATE (human / unattended wait)** — Shannon · n/a · — · until AGHQ PR URL exists or owner override · dep: lane A
+- **S2 ISSUE+SCAFFOLD** — Ada · Grok · Cursor Models · ~15 min · `gh issue create` + `lane_launch.sh DRM.jl phylo-laplace-cox-reid` · dep: S1
+- **S3 TDD red** — Noether · Grok · Cursor Models · ~30 min · new `test/test_cox_reid_poisson_phylo.jl` (not in runtests) · dep: S2
+- **S4 WIRE** — Noether + maintainer sign-off · Grok · Cursor Models · ~60–90 min · `poisson.jl` lift reject; thread `reml` through phylo/relmat wrappers; punch `_fit_poisson_general_laplace` after `_withnll`; update `_reject_reml_route` message · dep: S3
+- **S5 DOCS** — Pat/Shannon · Grok · Cursor Models · ~20 min · Poisson docstring + warning (Cell D not recovery; over-correction; ML default) · dep: S4
+- **S6 VERIFY** — Karpinski mechanical + Curie honesty · Grok · Cursor Models · ~30 min · `Pkg.test()`; read logs; no recovery sentence · dep: S4
+- **S7 ROSE+PR** — Rose · Grok · Cursor Models · ~20 min · check-log.d + after-task + PR `closes #<B>` · dep: S5+S6
+- **S8 RECONCILE** — Melissa · Grok · Cursor Models · ~10 min · `docs/dev-log/plan-actual/2026-08-18-phylo-laplace-cox-reid.md` · dep: S7
 
-## Phase 0.3 / 0.3b — roster + bars
+**PARALLEL after S1:** none (single writer). **SEQUENTIAL:** S1→S2→S3→S4→S5/S6→S7→S8.
 
-- Session: Cursor Grok parent (this chat). Scouts: Composer/Grok. Judgment: this Other Models pass (plan-mode synthesis).
-- Phase 0.3b: this agent **cannot read** Settings → Usage. **Bars: UNKNOWN now.** Stale vault reading 2026-08-18 morning: Cursor Models **86%**, Other Models **100%**, on-demand off. **Owner: glance Usage before `/goal`.** If Other Models is still exhausted, keep `/goal` on **Grok** (Cursor Models); do not spawn Auto Cost / Claude / GPT children. Keep slices short.
-- Hand `/goal` execution to a **fresh Agent chat**, not this planning thread.
+**FAN-OUT:** 0 during this planning chat. Execution `/goal` is one Cursor lane (Grok). **SCOUT SUITABILITY:** yes (S0 done). **ULTRA EFFORT:** no. **ESTIMATE:** ~3–5 h after S1 unblocks; one `/goal` session + Rose close. **PREFLIGHT:** FOREIGN claude AGHQ; lane `phylo-laplace-cox-reid`. **REVIEW:** Rose + Noether of this plan (below). **SEARCH:** none; NotebookLM offered, not run.
 
-## Phase 0.4 — TEAM RAISED
+## Members plan-review (before execute)
 
-```
-TEAM RAISED
-  Noether — Tensor AGHQ on phylo Laplace is k^{tree} and is not lever 2.
-    Portable piece is 1-D Liu–Pierce around `_gauss_hermite`.
-    k=1 ≡ Laplace is plumbing. · Rec: do not touch
-    `_fit_poisson_general_laplace` this slice. · Q: Q1. · Default: 1-D only.
-  Hopper — Twin = drmTMB. Public AGHQ engine: none. O3 is package-private
-    (`R/aghq-coxreid.R`) — do not vendor GPL. Cite −7.3/−5.0/−0.9 as
-    drmTMB’s. GLLVM #251–#256 are method lessons, not recovery tables.
-    · Rec: no twin Δ, no Λ headlines. · Q: none. · Default: fence.
-  Rose — Capability row stays missing until ADEMP. Do not add a public
-    knob that advertises a chip we will not flip (GLLVM Identity #248
-    lesson). · Rec: Q2 kernel-first; if public, `marginal=:AGHQ` beside
-    `:LA`/`:VA`, chip stays missing. · Q: Q2. · Default: kernel + opt-in
-    Poisson (1|g) only; chip stays missing.
-  Karpinski — Reuse `_gauss_hermite`; keep type-stable 1-D; no ForwardDiff
-    surprise on a new tensor grid. · Rec: wrap nodes, do not re-derive
-    Golub–Welsch. · Q: none. · Default: wrap.
-  Ada — Shinichi named A. Probe order said Cox–Reid first; owner override
-    stands, but the *cell* is 1-D, not B’s phylo fitter. · Rec: approve
-    this plan; B after merge.
-```
+- **Rose on receipt:** present and non-vacuous (commands/queries cited). Pass.
+- **Rose on scope:** wiring-only, no chip, no Cell D recovery — matches #444 honesty. Pass if S7 keeps that ledger.
+- **Noether on slice:** S4 is the only `src/` punch; q4 / `reml_q4.jl` / `gaussian_ranef.jl` stay frozen. Pass.
+- **Gap this plan does not close:** ADEMP / larger-tree recovery stays a follow-on issue.
 
-### Questions for Shinichi (D-148 — paste-ready)
+## What execution actually changes (after S1)
 
-**Q1.** First attach cell?
+In [`src/poisson.jl`](src/poisson.jl) ~88, stop rejecting structured REML for routes that call `_fit_poisson_general_laplace`; keep rejecting spatial-coord estimated-ρ, crossed, slopes, VA, FE-only.
 
-- **WHY NOW:** phylo Laplace is high-d; `(1|g)` already has GHQ-32.
-- **TEAM VIEW:** Noether = 1-D only; Hopper = no recovery headline.
-- **RECOMMENDATION:** Poisson `(1|g)` opt-in 1-D AGHQ. Not `_fit_poisson_general_laplace`.
-- **IF YOU DO NOT MIND:** `yes, 1-D Poisson (1|g) as recommended`
-- Alt: `no, kernel-only this PR, no public drm() path`
+Thread `reml::Bool=false` through `_fit_poisson_phylo_laplace` and `_fit_poisson_relmat_laplace` into `_fit_poisson_general_laplace`. After the existing `_withnll` (today :555), if `reml`: `grad_fn` from existing `grad!`, then `_glsp_reml_refit_clean` + `_glsp_reml_vcov` + `_withreml` — same as [`src/poisson.jl`](src/poisson.jl):244–254, except this spine already has an analytic gradient.
 
-**Q2.** Public surface this PR?
+Tests assert: `estimation_method === :REML`; σ̂_CR > σ̂_ML per seed (penalty direction); reml_loglik ≠ ml_loglik; uncertified routes still error; Binomial still rejects; GHQ `(1|g)` cell untouched; no recovery target.
 
-- **RECOMMENDATION:** `marginal = :AGHQ` + `nAGQ::Int = 5` on Poisson `(1|g)` only; default stays today’s GHQ-32 `:LA`; capability row stays `missing`.
-- **IF YOU DO NOT MIND:** `yes, marginal=:AGHQ on Poisson (1|g) only; chip stays missing`
-- Alt: `no, kernel + tests only; no public keyword`
+## Fences
 
-**Q3 (optional).** NotebookLM grounded search on Liu–Pierce / AGHQ vs Laplace for scalar GLMMs?
+no AGHQ files · no second AGHQ issue · no q4 · D-111 OFF · #49 PARKED · ML default · twin=drmTMB · no steal #420 #406 · no src on leftover docs/a3c-design · never mutate GLLVM LOOP/GOAL.md · never vendor drmTMB · never git add -A · Cell D not recovery · tree-scale trap · public (1|g) is GHQ-32 · do not edit `test/runtests.jl` · no `gh pr merge`
 
-- Offered once; **do not run unprompted**; do not gate the plan.
-- **IF YOU DO NOT MIND:** `skip NotebookLM; vault + dr20 is enough`
+## Questions (D-148 drafted replies)
 
-WHAT CONTINUES if unanswered: defaults above. B stays deferred.
+1. **Start B `src/` when AGHQ has an OPEN PR, or only after AGHQ MERGES?** WHY NOW: file overlap on `poisson.jl`. TEAM: Ada wait-for-PR (rebase onto A's diff). **RECOMMENDATION / IF YOU DO NOT MIND: OPEN PR is enough** (matches your brief). WHAT CONTINUES: S2 scaffold can wait; no `src/` until then.
+2. **Admit relmat/animal on the same spine, or phylo-only?** WHY NOW: both wrappers share the function. TEAM: Noether all callers; Curie still no ADEMP. **RECOMMENDATION / IF YOU DO NOT MIND: all `_fit_poisson_general_laplace` callers**; keep spatial-coord estimated-ρ rejected.
+3. **Want a NotebookLM grounded pass on Cox–Reid / Laplace phylo REML first?** WHY NOW: Phase 0.5 offer. TEAM: Hopper twin already mapped; novelty claim is not this G0. **RECOMMENDATION / IF YOU DO NOT MIND: skip.** Wiring, not a literature claim.
 
-## Phase 0.5 — grounded search
-
-Offered (Q3). Not started. Vault two-lever note + dr20 already cover the literature split (integral vs finite-cluster VC). Inline web not required for this G0.
-
-## Slice table (Phase 1–2)
-
-S0 — Shannon — Grok — Cursor Models — ~10 min — Open **new** GitHub issue (no AGHQ issue exists; do not reuse #136/#49/#443). `lane_launch.sh` / new worktree off `origin/main`. Commit LOOP/ kit. Dep: none.
-
-S1 — Noether — Grok — Cursor Models — ~45–90 min — New `src/aghq_1d.jl` (name flexible): Liu–Pierce 1-D wrapper around `_gauss_hermite`. k=1 ≡ 1-point Laplace identity test. Fail-loud if dimension ≠ 1. Do **not** vendor GLLVM `aghq_grid.jl`. Dep: S0.
-
-S2 — Noether — Grok — Cursor Models — ~45–90 min — TDD: `test/test_aghq_1d.jl` first (red), then kernel. Smoke: adaptive k≈5 nll vs existing GHQ-32 on a tiny Poisson `(1|g)` fixture — **agreement, not recovery**. Dep: S1.
-
-S3 — Noether — Grok — Cursor Models — ~60–90 min — If Q2 default: thread `marginal=:AGHQ` through [`_marginal_method`](src/variational.jl) + Poisson `(1|g)` dispatch in [src/poisson.jl](src/poisson.jl). Default `:LA` unchanged. Fail-loud under `:AGHQ` for phylo / crossed / relmat / `(1+x|g)` 12² tensor / associate_pairs QuadGK. Do not edit `_fit_poisson_general_laplace`. Do not wire `:REML`×`:AGHQ` (B / later). Do not relabel QuadGK as AGHQ. Dep: S2.
-
-S4 — Curie/Noether — Grok — Cursor Models — ~30 min — Mac-local `Pkg.test` for the new file + Poisson AGHQ smoke. Log the numbers. No Totoro. No Cell D redo. Dep: S3.
-
-S5 — Pat + Rose — Grok (prose) — Cursor Models if Other Models exhausted, else Other Models — ~30 min — Docstrings + one worked example. Capability row **stays missing**. Check-log in `docs/dev-log/check-log.d/`. After-task. Rose claim-vs-evidence (no −7.3/−5.0, no GLLVM 1.0021, no chip flip). Dep: S4.
-
-S6 — Shannon — Grok — Cursor Models — ~20 min — One PR `closes #NN` from the new worktree. DoD. Noether + maintainer merge gate (`src/` + public `marginal`). Dep: S5.
-
-S7 MECHANICAL-VERIFY — scout — Grok/Composer — Cursor Models — ~15 min — Issue exists; worktree ≠ handover branch; no `_fit_poisson_general_laplace` REML hunk; no q4; no capability flip; no GLLVM LOOP/GOAL.md; no `#420`/`#406` steal; tests actually ran (read the log).
-
-S8 REVIEW — Rose + Noether — judgment — Other Models **or skip if bar exhausted** (Rose note in after-task instead) — plan + PR claim audit.
-
-S9 RECONCILE — Melissa — Grok — Cursor Models — `docs/dev-log/plan-actual/2026-08-18-aghq-lever-2.md` at close. Meaningful close, not N/A.
-
-- PARALLEL: {S1 recon already done}. SEQUENTIAL: S0 → S1 → S2 → S3 → S4 → S5 → S6 → S7 → S8 → S9
-- FAN-OUT: 0 new children in this planning chat. `/goal` conductor stays lean; one builder at a time (src/ sequential).
-- FAN-OUT BUDGET: checkpoint=aghq-lever-2-g0 · new children=0/6 here · scout=done · build=1 in `/goal` · ceiling=0
-- SCOUT SUITABILITY: yes — S1 recon ran (Composer explore ×2 + brain greps)
-- ULTRA EFFORT: no
-- ESTIMATE: ~4–8 h wall-clock, one session + possible fresh-chat at S5. Fits `/goal`, not this chat.
-- REVIEW: Rose (receipt + claims) + Noether (1-D vs phylo attach)
-- VERIFY: `Pkg.test` log + Rose after-task
-- CONSOLIDATE: PR + check-log + after-task + this plan file
-- LANE RECEIPT: **START A FRESH TASK** after G0 — `/goal` below
-- D-43 PANEL: not a milestone / not fired
-- SEARCH: none (NotebookLM offered, not run)
-
-## Fences (PROTECTED)
-
-- Named G0 = **A only**. B deferred.
-- No q4 / `reml_q4.jl`. No `src/gaussian_ranef.jl` rewrite (wrap `_gauss_hermite` only).
-- D-111 Julia General OFF. #49 PARKED. ML default. `:REML` opt-in, not on this AGHQ cell.
-- Twin = drmTMB. Never GLLVM Λ / loading-matrix headlines.
-- No steal dirty PRs #420 #406.
-- No `src/` on leftover `docs/a3c-design`. Never mutate GLLVM `LOOP/GOAL.md`.
-- Never vendor drmTMB GPL source (including `R/aghq-coxreid.R`). Never `git add -A`. Never stage `.codex/agents/shannon-coordinator.toml`.
-- Do not treat `associate_pairs` QuadGK, VA 12-node ELBO GHQ, or `(1+x|g)` 12² as AGHQ.
-- Do not treat stale `LOOP/GOAL.md` “waits on GLLVM honesty” as current (honesty landed).
-- Do not flip capability TSV / “has AGHQ” sentence.
-- k=1 agreement ≠ quadrature. Never summarise a mixture with a median. Never cite a reference fitter as engine evidence.
-
-## After approval (this chat)
-
-1. Write durable copy to [docs/dev-log/plans/2026-08-18-aghq-lever-2-ultra-plan.md](docs/dev-log/plans/2026-08-18-aghq-lever-2-ultra-plan.md) (docs-only; still no `src/`).
-2. Emit the `/goal` prompt. **Do not start Phase 3 here.**
-
-## Paste-ready `/goal`
+## Paste-ready /goal (after G0 approval — do not run in this chat)
 
 ```
 /goal
 
-Ultra-plan G0 approved. Run this plan to completion via LOOP/.
+Ultra-plan G0 approved. Run plan B to completion via LOOP/.
 
-LANE: aghq-lever-2
-REPO: itchyshin/DRM.jl
-PLAN: docs/dev-log/plans/2026-08-18-aghq-lever-2-ultra-plan.md
-WS tip: origin/main (d04ba994 or newer main). NOT handover/2026-08-18-cursor.
-NOT Dropbox docs/a3c-design. NOT catchup docs/arc1-inventory.
+LANE: phylo-laplace-cox-reid
+REPO: DRM.jl
+PLAN: this Cursor plan (Phylo Laplace Cox-Reid)
 
-READ FIRST: the approved plan → AGENTS.md → HANDOVER.md →
-docs/dev-log/evidence/2026-08-18-hopper-cox-reid-gllvm-fence.md.
+READ FIRST: this plan → repo AGENTS.md →
+  docs/dev-log/evidence/2026-08-18-cox-reid-scoping-probe.md →
+  docs/dev-log/after-task/2026-08-18-cox-reid-poisson-ranef-wiring.md →
+  docs/dev-log/evidence/2026-08-18-hopper-cox-reid-gllvm-fence.md
 
-SCAFFOLD: ~/shinichi-brain/tools/lane_launch.sh <fresh-scratch> aghq-lever-2
-off origin/main. Write LOOP/GOAL.md, LOOP/arcs.md, LOOP/checkpoint.md,
-LOOP/ultra-plan.md from the plan; commit the kit. Open ONE new GitHub issue
-(AGHQ 1-D Liu–Pierce / lever 2). One issue → one branch → one PR (closes #NN).
+SCAFFOLD: ~/shinichi-brain/tools/lane_launch.sh DRM.jl phylo-laplace-cox-reid
+  — NEW worktree off origin/main. Do NOT use the handover tree, Dropbox
+  docs/a3c-design, catchup, or ~/local-scratch/lanes/DRM.jl-aghq-lever-2.
+  Write LOOP/GOAL.md, LOOP/arcs.md, LOOP/checkpoint.md, LOOP/ultra-plan.md
+  from the plan; commit the kit.
 
-HEADLINE: DRM-native 1-D Liu–Pierce AGHQ around `_gauss_hermite`.
-Poisson (1|g) opt-in `marginal=:AGHQ` only if Q2 default stands.
-Capability row stays missing. k=1 ≡ Laplace plumbing. No recovery headline.
+HARD GATE: do not start src/ until AGHQ (#448) has a PR URL, or Shinichi
+  says go. If no PR, STOP after LOOP scaffold + file a NEW GitHub issue
+  for B (do not reuse #448 / #443 / #103). Then wait.
 
-DEFER B: do not edit `_fit_poisson_general_laplace` for Cox–Reid or tensor AGHQ.
-No q4. No #49. No #420/#406. No GLLVM LOOP/GOAL.md. No GPL vendoring.
-No capability-chip flip. No GLLVM Λ numbers. ML stays default.
+START ARC: S2 (issue + worktree) if AGHQ PR exists; else S1 wait.
+NEXT GATE: human merge of B's PR (do not gh pr merge).
 
-RUN: goal skill — re-read GOAL each arc; verify by LOG not exit code;
-pause at OPEN GATE (src/ + public marginal = Noether+maintainer; PR merge);
-overwrite checkpoint each arc; fresh chat at batch barriers.
-START ARC: S0 (issue + worktree). NEXT GATE: maintainer merge of src/.
+Fences: no AGHQ files · no q4 · D-111 OFF · #49 PARKED · ML default ·
+  twin=drmTMB · no steal #420 #406 · Cell D not recovery · tree-scale trap ·
+  public (1|g) is GHQ-32 not Laplace · no test/runtests.jl · no GPL ·
+  never git add -A · never mutate GLLVM LOOP/GOAL.md.
 ```

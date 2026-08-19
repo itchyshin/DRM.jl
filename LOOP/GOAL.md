@@ -1,43 +1,42 @@
-# GOAL — aghq-lever-2 (IMMUTABLE — re-read at the top of EVERY arc)
+# GOAL — phylo-laplace-cox-reid (IMMUTABLE — re-read at the top of EVERY arc)
 
-**IMMUTABLE for this run.** Re-read this file at the top of EVERY arc, before anything else.
+Read this first, every cycle. Auto-compact eats messages, not this file.
 
 ## Mission
 
-Land **one** GitHub issue, **one** scratch worktree off `origin/main` (`d04ba994` or newer), and **one** PR that ships a **DRM-native 1-D Liu–Pierce AGHQ kernel** around existing `_gauss_hermite`, plus a Poisson `(1|g)` opt-in path: `marginal=:AGHQ`, `nAGQ=5`. Default `:LA` stays today's GHQ-32. The capability row stays **missing**. Finish line: a mergeable PR with AGENTS.md Definition of Done; merge itself is a **human gate**.
+One issue · one branch · one PR — opt-in `method=:REML` on Poisson routes that call `_fit_poisson_general_laplace` (phylo + relmat/animal). ML default unchanged. No recovery headline. Human merges the PR (`closes #<B issue>`). Do not `gh pr merge`.
 
 ## Headline
 
-A. AGHQ port (lever 2) — 1-D adaptive Gauss–Hermite around `_gauss_hermite`. Not a GLLVM quadrature-claim copy. Not a tensor port onto phylo Laplace. k=1 ≡ 1-point Laplace is **plumbing**, not a quadrature or recovery headline.
+B. Poisson phylo Laplace Cox–Reid (reuse #444 helpers after `_withnll`).
 
 ## Invariants
 
-- One lane: `aghq-lever-2` on `claude/lane-aghq-lever-2` at `~/local-scratch/lanes/DRM.jl-aghq-lever-2`. Do not touch leftover trees (`docs/a3c-design`, `docs/arc1-inventory`, cox-reid-*, `handover/2026-08-18-cursor`) or dirty PRs #420 / #406.
-- Never push, merge, or publish from the loop — those are HUMAN GATES (`src/` + public `marginal` = Noether + maintainer; PR merge).
-- Verification means reading the **LOG** and inspecting the **artefact**, never the exit code.
-- Q1/Q2 defaults (G0): Poisson `(1|g)` opt-in 1-D AGHQ; public `marginal=:AGHQ` + `nAGQ=5`; chip stays missing.
-- Twin = drmTMB. Cite −7.3/−5.0/−0.9 as **drmTMB's**. Never headline GLLVM Λ. Never vendor drmTMB GPL (`R/aghq-coxreid.R`) or GLLVM `aghq_grid.jl`.
-- ML stays default. `:REML` stays opt-in and is **not** wired to `:AGHQ` this slice.
-- Do not relabel GHQ-32 `:LA` as AGHQ. Do not treat QuadGK / VA 12-node / `(1+x|g)` 12² as AGHQ.
-- k=1 agreement ≠ quadrature. Never summarise a mixture with a median. Never cite a reference fitter as engine evidence.
-- Never `git add -A`. Never stage `.codex/agents/shannon-coordinator.toml`. Never mutate GLLVM `LOOP/GOAL.md`.
-- D-111 Julia General OFF. #49 PARKED. No q4 / `reml_q4.jl`. No Cell D / Totoro ADEMP.
+- Solo platform: Cursor (this `/goal` lane).
+- Dual-start guard: AGHQ lane A is LIVE (#448, PR #449, worktree `~/local-scratch/lanes/DRM.jl-aghq-lever-2`, branch `claude/lane-aghq-lever-2`). Do NOT edit those files. Do NOT open a second AGHQ issue.
+- Do NOT use `/Users/z3437171/local-scratch/lanes/DRM.jl-handover-20260818` (handover leftover LOOP/), Dropbox `docs/a3c-design`, or catchup `docs/arc1-inventory`.
+- Wait for AGHQ **open PR** (not merge) before B `src/` — that PR exists (#449). Branch from `origin/main`. Keep B's `poisson.jl` edits disjoint from AGHQ dispatch if possible. Do not revert A's hunks if they land on main.
+- All `_fit_poisson_general_laplace` callers (phylo + relmat/animal). Do NOT punch `_fit_poisson_ranef` (GHQ `(1|g)` already wired).
+- Lift `_reject_reml_route` for those structured routes only; KEEP rejecting spatial-coord estimated-ρ, crossed, slopes, VA, FE-only, Binomial.
+- Do NOT edit `test/runtests.jl` (AGHQ dirties it). Standalone `test/test_cox_reid_poisson_phylo.jl`.
+- ML is the default. Twin = drmTMB (mechanism only; no GPL vendoring). Capability chip stays missing. Cell D ≠ recovery.
+- Never `git add -A`. Never vendor drmTMB. Never mutate GLLVM `LOOP/GOAL.md`. No q4. D-111 OFF. #49 PARKED. No steal #420/#406.
+- Skip NotebookLM.
+
+## DEFER
+
+AGHQ (#448) · q4 · D-111 · #49 · ADEMP · Cell D as recovery · dual-start A+B
 
 ## Authoritative WHAT
 
-`LOOP/ultra-plan.md` (approved G0). This file wins on "what must never be lost"; the plan wins on slice detail.
+`LOOP/ultra-plan.md` (copy of the approved G0 plan). Detail wins there; this file wins on "what must never be lost".
 
 ## Definition of done
 
-- [ ] One new issue (AGHQ 1-D Liu–Pierce / lever 2); one branch; one PR `closes #NN`
-- [ ] `src/aghq_1d.jl` (name flexible): 1-D Liu–Pierce wrapper; fail-loud if dim ≠ 1; k=1 identity test
-- [ ] TDD: `test/test_aghq_1d.jl` (red then green); smoke: adaptive k≈5 nll **agrees** with GHQ-32 on a tiny Poisson `(1|g)` fixture — agreement, not recovery
-- [ ] `marginal=:AGHQ` + `nAGQ=5` on Poisson `(1|g)` only; default `:LA` unchanged; fail-loud elsewhere listed in the plan
-- [ ] Mac-local `Pkg.test` log read; numbers recorded
-- [ ] Docstrings + worked example; capability row **still missing**; check-log.d + after-task + Rose claim-vs-evidence
-- [ ] DoD (AGENTS.md); no `_fit_poisson_general_laplace` REML/tensor hunk; no capability-chip flip
-
-## Out of scope (the fence — DEFER B)
-
-- Do **not** edit `_fit_poisson_general_laplace` for Cox–Reid or tensor AGHQ
-- No q4, no #49, no #420/#406 steal, no GLLVM LOOP/GOAL.md, no GPL vendoring, no capability-chip flip, no GLLVM Λ numbers
+- [ ] NEW GitHub issue for B (not #448 / #443 / #103)
+- [ ] `method=:REML` wired on `_fit_poisson_general_laplace` after `_withnll` via #444 helpers
+- [ ] Callers: `_fit_poisson_phylo_laplace` and `_fit_poisson_relmat_laplace`
+- [ ] Tests: `estimation_method === :REML`; σ̂_CR > σ̂_ML direction; reml_loglik ≠ ml_loglik; uncertified routes still error; no recovery target
+- [ ] Docs: warning Cell D not recovery; ML default; no capability chip
+- [ ] check-log.d + after-task + Rose audit
+- [ ] PR opened `closes #<B issue>` — human merges; this worker does not `gh pr merge`
