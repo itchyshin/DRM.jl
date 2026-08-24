@@ -19,11 +19,19 @@ file; treat it as historical.
    to say *"Do not start the 11 capability rows"*. Shinichi lifted that on 2026-08-24 by naming
    R↔Julia parity as the G0 and authorising DRM.jl chip flips. The MC entry has been corrected
    in place (a dated `SUPERSEDED 2026-08-24` line prepended; nothing deleted).
-3. **`lane_preflight.sh` will report "FOREIGN LANE ACTIVE (direct-to-main)". That is THIS
-   session's own merge**, not another lane. Every commit in this repo carries Shinichi's
-   identity, so the tool cannot tell my merge from a foreign one. Verify before standing down:
-   `git log --format='%h %ad %s' --date=format:'%H:%M' -3 origin/main` — if the tip is the #458
-   merge, the "lane" is this handover's author. Re-check if anything newer appears.
+3. **A SECOND DRM.jl LANE OPENED at ~21:30 on 2026-08-24, while this handover was being
+   written** (`drm-jl-2b`, owner-confirmed). **Treat this repo as MULTI-LANE (D-88).** Before
+   claiming any shared file, run `~/shinichi-brain/tools/lane_preflight.sh --file <path>` and
+   `tools/lane_lease.sh --claim DRM.jl --paths <...>`. A **REFUSED** lease means it is not safe
+   to run concurrently — narrow the paths or go sequential, never bypass it. If the lanes
+   genuinely overlap, surface it to Shinichi; ownership is his call, not yours (D-87).
+
+   Two separate things will both look like "a foreign lane", so distinguish them by timestamp:
+   `git log --format='%h %ad %s' --date=format:'%H:%M' -5 origin/main`.
+   - A tip at **`acf3d4fb3`** (the #458 merge) is *this handover's author*. `lane_preflight.sh`
+     flags it as `FOREIGN LANE ACTIVE (direct-to-main)` only because every commit here carries
+     Shinichi's identity and the tool cannot tell one author from another.
+   - **Anything newer than `acf3d4fb3` is the other lane, and is real.** Do not dismiss it.
 4. **Do NOT edit `/Users/z3437171/Dropbox/Github Local/drmTMB`.** It is in CRAN prepare-only
    quiesce and carries **102 pre-existing uncommitted files** on branch
    `claude/handover-freshness-0718` from a prior lane. Its dirty-set hash was pinned and verified
