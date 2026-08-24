@@ -1167,8 +1167,9 @@ end
 function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothing,
                              coords=nothing)
     fit.formula isa DrmFormula || return nothing
-    fit.family isa Gaussian || return nothing
-    haskey(fit.scales, :sigma) || return nothing
+    # Gaussian needs a residual scale; other families carry their dispersion in the
+    # family object or in `scales`, and some (Poisson) have none at all.
+    (fit.family isa Gaussian && !haskey(fit.scales, :sigma)) && return nothing
     rhs = Dict(fit.formula.forms)
     haskey(rhs, :mu) || return nothing
     _, re, _, structured = _split_ranef(rhs[:mu])
@@ -1241,11 +1242,44 @@ function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothi
     end
     mu_fixed === nothing && return nothing
 
-    sigma = Vector{Float64}(_scale_vector(fit, :sigma))
-    n = length(mu_fixed)
+    if fit.family isa Gaussian
+        sigma = Vector{Float64}(_scale_vector(fit, :sigma))
+        n = length(mu_fixed)
+        return function (rng)
+            u = sd_u .* (L * randn(rng, G))
+            return mu_fixed .+ u[gidx] .+ sigma .* randn(rng, n)
+        end
+    end
+
+    # NON-GAUSSIAN (#462). The Gaussian branch above adds the random effect on the
+    # RESPONSE scale because identity is the link. Everywhere else the random effect
+    # lives on the LINK scale and has to pass through the inverse link before the
+    # family draw:
+    #
+    #     eta* = Xb + Z u*        u* ~ N(0, sd_u^2 K)
+    #     mu*  = linkinv(eta*)
+    #     y*   ~ Family(mu*, aux)
+    #
+    # Measured before the fix: a Poisson `(1|g)` fit produced replicates with a
+    # between-group SD of 0.696 against 2.690 in the observed data -- roughly a
+    # quarter of the real group structure -- because the conditional simulator
+    # reused the fitted mean.
+    #
+    # `predict(fit, data; type = :link)` is the marginal linear predictor (measured
+    # exact for Poisson: |predict(link) - Xb| = 0), and `_simulate_once(fit, rng;
+    # mu = ...)` reuses the verified per-family draw at the new mean rather than
+    # duplicating it here.
+    eta_fixed = try
+        Vector{Float64}(predict(fit, data; type = :link))
+    catch
+        nothing
+    end
+    eta_fixed === nothing && return nothing
+    length(eta_fixed) == fit.nobs || return nothing
     return function (rng)
         u = sd_u .* (L * randn(rng, G))
-        return mu_fixed .+ u[gidx] .+ sigma .* randn(rng, n)
+        mu_star = _mean_response(fit.family, eta_fixed .+ u[gidx])
+        return _simulate_once(fit, rng; mu = mu_star)
     end
 end
 

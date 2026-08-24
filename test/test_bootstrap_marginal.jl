@@ -205,3 +205,51 @@ end
                    :id, re_sd(f3)[:id])
     @test 0.75 < r3 < 1.3
 end
+
+@testset "#462 the marginal simulator covers non-Gaussian random-effect fits" begin
+    # The Gaussian branch adds the random effect on the RESPONSE scale because
+    # identity is the link. Every other family carries it on the LINK scale, so it
+    # has to pass through the inverse link before the family draw. Until this was
+    # added, `_marginal_simulator` returned `nothing` for non-Gaussian fits, which
+    # meant the bootstrap silently fell back to the conditional simulator.
+    #
+    # Measured before the fix, Poisson (1|g): replicates carried a between-group SD
+    # of 0.696 against 2.690 in the observed data -- about a quarter of the real
+    # group structure.
+    rt(mk, d, sim, reps = 5) = begin
+        rng = MersenneTwister(9)
+        got = Float64[]
+        for _ in 1:reps
+            try push!(got, re_sd(mk((; y = sim(rng), x = d.x, g = d.g)))[:g]) catch end
+        end
+        isempty(got) ? NaN : median(got) / re_sd(mk(d))[:g]
+    end
+
+    Random.seed!(5)
+    G = 30; m = 6; n = G * m
+    g = repeat(1:G, inner = m); x = randn(n)
+    u = 0.8 .* randn(G)
+
+    # --- Poisson
+    yp = Float64[rand(Distributions.Poisson(exp(0.5 + 0.4 * x[i] + u[g[i]]))) for i in 1:n]
+    dp = (; y = yp, x, g)
+    mkp = dd -> drm(bf(@formula(y ~ 1 + x + (1 | g))), Poisson(); data = dd)
+    fp = mkp(dp)
+    sp = DRM._marginal_simulator(fp, dp)
+    @test sp !== nothing
+    # The replicates must carry the group structure, not a quarter of it.
+    grpsd(v) = std([mean(v[g .== k]) for k in 1:G])
+    rng = MersenneTwister(2)
+    sim_bgsd = mean(grpsd(sp(rng)) for _ in 1:20)
+    @test sim_bgsd > 0.5 * grpsd(yp)
+    @test 0.7 < rt(mkp, dp, DRM._marginal_simulator(fp, dp)) < 1.4
+
+    # --- Binomial (a different link, so the inverse-link step is genuinely exercised)
+    yb = Float64[rand(Distributions.Bernoulli(1 / (1 + exp(-(0.2 + 0.6 * x[i] + u[g[i]]))))) for i in 1:n]
+    db = (; y = yb, x, g)
+    mkb = dd -> drm(bf(@formula(y ~ 1 + x + (1 | g))), Binomial(); data = dd)
+    fb = mkb(db)
+    sb = DRM._marginal_simulator(fb, db)
+    @test sb !== nothing
+    @test 0.7 < rt(mkb, db, DRM._marginal_simulator(fb, db)) < 1.4
+end

@@ -1486,7 +1486,7 @@ end
 
 # One residual-level replicate (the per-draw kernel). Returns a response Vector
 # for univariate / RE / meta fits, or a Dict(:mu1, :mu2) for bivariate Gaussian.
-function _simulate_once(fit::DrmFit, rng)
+function _simulate_once(fit::DrmFit, rng; mu = nothing)
     n = fit.nobs
     fam = fit.family
     if fam isa Gaussian && haskey(fit.scales, :sigma1)   # bivariate Gaussian
@@ -1501,7 +1501,10 @@ function _simulate_once(fit::DrmFit, rng)
     # Non-Gaussian families: draw from the fitted distribution. μ is on the
     # response scale (fit.means[:mu]); per-row auxiliary parameters are stored in
     # `fit.scales` by the family fitters.
-    μ = fit.means[:mu]
+    # `mu` overrides the FITTED conditional mean. The parametric bootstrap needs to
+    # draw at a mean built from freshly redrawn random effects, and it must reuse
+    # this function's per-family draw logic rather than duplicate it (#462).
+    μ = mu === nothing ? fit.means[:mu] : mu
     if fam isa Poisson
         if haskey(fit.scales, :zi)
             zi = fit.scales[:zi]
