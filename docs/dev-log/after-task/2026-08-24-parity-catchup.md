@@ -247,3 +247,79 @@ exposes the raw optimiser flag.
 for ordinary fixed effects. Both engines implement them and they agree natively
 (profile to 1.2e-06), so this is bridge routing in `confint.drmTMB_julia()`, which
 lives in drmTMB and is blocked by CRAN prepare-only quiesce.
+
+---
+
+# Addendum 2 — the fix I shipped was incomplete, and how that surfaced (#462)
+
+## What happened
+
+The #459 fix was committed, tested, and reported as done. It covered **structured
+phylo only**. Ordinary `(1 | g)`, `relmat`/`animal`, and every non-Gaussian family
+hit `return nothing` — and `nothing` means the bootstrap falls back to the
+conditional simulator, i.e. **straight back to the original bug, silently**. The
+brief I wrote for that very function said silent fallback must not happen. The code
+did it anyway.
+
+For `relmat` it was worse than the original defect: `means[:mu]` is already the
+marginal mean there, so `simulate` produced replicates with **no random effect at
+all** — between-group SD 0.3226 against 1.0982 in the observed data.
+
+## How it surfaced
+
+Only because I went back to close a gap I had explicitly labelled *"reasoned, not
+measured"*. Nothing failed. No test caught it. The round-trip did.
+
+## Why the obvious fix was also wrong
+
+Whether `fit.means[:mu]` is conditional or marginal **varies by route and does not
+track whether BLUPs exist**:
+
+| route | `ranef` has BLUPs | `means[:mu]` |
+|---|---|---|
+| `phylo(1\|g)` | yes | **conditional** (\|means − Xb\| = 1.53) |
+| `relmat(1\|g)` | no | **marginal** (= 0) |
+| ordinary `(1\|g)` | **yes** | **marginal** (= 0) |
+
+Both plausible rules were tried and both were wrong. Subtracting whenever BLUPs
+exist double-*removes* the effect on the ordinary route — round-trip ratio **1.46**,
+the √2 signature of counting it twice. Never subtracting double-*counts* it on
+phylo. Resolved by asking `predict(fit, data)`, which returns the fixed-effect mean
+exactly on all three routes, instead of inferring it.
+
+Non-Gaussian needed the random effect on the **link** scale, via
+`predict(type = :link)` plus a `mu` override on `_simulate_once` — reusing the
+verified per-family draw rather than re-implementing zero-inflation, hurdles and
+per-row auxiliary parameters in a second place.
+
+## Final coverage and verification
+
+Round-trips (simulate at the fitted `sd_u`, refit, recover it):
+
+| route | ratio |
+|---|---|
+| ordinary `(1\|g)` | 0.979 |
+| `phylo` | 0.943 |
+| `relmat` | 0.905 |
+| Poisson | 0.961 |
+| NB2 | 0.973 |
+| Binomial | 1.087 |
+
+Full suite at HEAD: **304 testsets, zero failures**, with all six #459/#461/#462
+testsets inside it (25 passes).
+
+## drmTMB is clean
+
+Measured, because it is the comparator the whole campaign rests on: drmTMB's
+`simulate()` gives between-group SD **0.7973 vs 0.825 observed**; a conditional
+simulator would give σ/√m ≈ 0.163. It never had this defect. The disagreement with
+drmTMB is what exposed the DRM.jl bug.
+
+## The lesson, stated plainly
+
+Three times this arc, a change of mine looked correct and was not: an inert
+`loadfixture.jl` edit, a √height scale error, and a fix that covered one route of
+four. Each was caught by measurement, never by reading. **What I verified by
+round-trip or positive control, I trust; what I reasoned about, I should treat as
+unverified until measured.** That is now three for three, and it is the most
+reusable thing this arc produced.
