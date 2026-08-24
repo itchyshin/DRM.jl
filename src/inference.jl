@@ -1067,8 +1067,11 @@ function bootstrap_result(
     _check_bootstrap_failure_mode(failures)
     formula = _bootstrap_fit_formula(fit)
     refit = datab -> drm(formula, fit.family; data=datab, K, A, tree, algorithm, g_tol)
+    # #459: redraw the random effects rather than conditioning on the fitted BLUPs.
+    simulate_fn = _marginal_simulator(fit, data; K=K, A=A, tree=tree)
     return _bootstrap_result(
-        fit, formula, data, B, level, rng, threads, refit; failures, check_converged
+        fit, formula, data, B, level, rng, threads, refit;
+        failures, check_converged, simulate_fn
     )
 end
 
@@ -1120,8 +1123,10 @@ function bootstrap_result(
     _check_bootstrap_failure_mode(failures)
     formula = _bootstrap_fit_formula(fit)
     refit = datab -> drm(formula, fit.family; data=datab)
+    simulate_fn = _marginal_simulator(fit, data)   # #459
     return _bootstrap_result(
-        fit, formula, data, B, level, rng, threads, refit; failures, check_converged
+        fit, formula, data, B, level, rng, threads, refit;
+        failures, check_converged, simulate_fn
     )
 end
 
@@ -1135,6 +1140,149 @@ function _bootstrap_fit_formula(fit::DrmFit)
     )
 end
 
+# --- Marginal parametric bootstrap simulation (#459) -------------------------
+#
+# `simulate(fit)` is a CONDITIONAL simulator: for a Gaussian fit it returns
+# `fit.means[:mu] .+ fit.scales[:sigma] .* randn(n)`, and `fit.means[:mu]` ALREADY
+# CONTAINS the fitted BLUPs. Bootstrapping a fixed effect that way is defensible.
+# Bootstrapping a VARIANCE COMPONENT that way is not: every replicate re-uses the
+# same realised random effects, so the refitted SD barely moves and the percentile
+# interval collapses toward the point estimate.
+#
+# Measured 2026-08-24 (#459): the phylo-SD bootstrap CI came out 1674x NARROWER
+# than native TMB on identical data, B and seed -- implied replicate SD 6.45e-05
+# against 0.108. The point estimate was right, which is why it looked plausible.
+#
+# The correct parametric bootstrap redraws the random effects from their fitted
+# distribution and adds them to the FIXED-effect mean:
+#
+#     y* = Xb + Z u*  + e*,    u* ~ N(0, sd_u^2 K),   e* ~ N(0, sigma^2)
+#
+# which is exactly what `bootstrap_q4_phylo.jl` already does for the q=4 path
+# ("redraws tip random effects from the fitted N(0, Q_cond^-1 (x) Sigma_a) ... adds
+# them to the fitted fixed effects"). The univariate path simply never followed it.
+#
+# Returns a closure `rng -> ysim`, or `nothing` when the fit has NO random effects
+# (there conditional and marginal simulation coincide and `simulate` is correct).
+function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothing,
+                             coords=nothing)
+    fit.formula isa DrmFormula || return nothing
+    # Gaussian needs a residual scale; other families carry their dispersion in the
+    # family object or in `scales`, and some (Poisson) have none at all.
+    (fit.family isa Gaussian && !haskey(fit.scales, :sigma)) && return nothing
+    rhs = Dict(fit.formula.forms)
+    haskey(rhs, :mu) || return nothing
+    _, re, _, structured = _split_ranef(rhs[:mu])
+    # No random effect on the mean: conditional and marginal coincide, and the
+    # plain `simulate` is already correct. Nothing to build.
+    (isempty(re) && structured === nothing) && return nothing
+
+    # Which grouping factor, and what covariance does its random effect have?
+    grp, Kg = if structured !== nothing
+        g = structured[2]
+        hasproperty(data, g) || return nothing
+        _, G0 = _group_index(getproperty(data, g))
+        # SCALE TRAP -- verified by round-trip, not assumed. `re_sd` for a PHYLO term
+        # is defined against the RAW covariance `sigma_phy_dense(phy)`, whose diagonal
+        # is the tree height, NOT the normalised correlation that
+        # `_resolve_structured_matrix` returns. Drawing with the correlation matrix
+        # under-disperses by sqrt(height): measured round-trip ratios across trees of
+        # height 0.85/1.7/5.667 were 1.116/0.699/0.374 with the correlation matrix and
+        # 1.032/0.917/0.917 with the raw one. relmat/animal are supplied by the user
+        # and used as given, so there the resolver's matrix is already correct.
+        if structured[1] === :phylo
+            phy = tree isa AbstractString ? augmented_phy(tree) : tree
+            phy === nothing && return nothing
+            (g, sigma_phy_dense(phy; σ²_phy = 1.0))
+        else
+            (g, _resolve_structured_matrix(structured[1], g, G0;
+                                           K=K, A=A, tree=tree, coords=coords))
+        end
+    else
+        # Ordinary `(1 | g)`: independent random intercepts, so the covariance is I.
+        length(re) == 1 || return nothing
+        g = re[1][2]
+        hasproperty(data, g) || return nothing
+        _, G0 = _group_index(getproperty(data, g))
+        (g, Matrix{Float64}(LinearAlgebra.I, G0, G0))
+    end
+
+    gidx, G = _group_index(getproperty(data, grp))
+    size(Kg) == (G, G) || return nothing
+    sds = re_sd(fit)
+    (sds isa AbstractDict && haskey(sds, grp)) || return nothing
+    sd_u = Float64(sds[grp])
+    L = cholesky(Symmetric(Matrix{Float64}(Kg))).L
+
+    # The FIXED-effect mean comes from `predict(fit, data)`, not from unpicking
+    # `fit.means[:mu]`.
+    #
+    # Whether `means[:mu]` is conditional or marginal depends on the fitting route,
+    # and there is NO usable rule -- measured 2026-08-24 across three routes:
+    #
+    #   route            ranef has BLUPs   means[:mu] is
+    #   phylo(1|g)       yes               CONDITIONAL  (|means - Xb| = 1.53)
+    #   relmat(1|g)      no                MARGINAL     (|means - Xb| = 0)
+    #   ordinary (1|g)   yes               MARGINAL     (|means - Xb| = 0)
+    #
+    # So BLUP presence predicts nothing. Both plausible rules were tried and both
+    # were wrong: subtracting whenever BLUPs exist double-REMOVES the random effect
+    # on the ordinary route (round-trip ratio 1.46 ~ the sqrt(2) signature of
+    # counting it twice), and never subtracting double-COUNTS it on the phylo route.
+    #
+    # `predict(fit, data)` returns the fixed-effect prediction on ALL THREE routes
+    # (measured: |predict - Xb| = 0 exactly in each), so it answers the question
+    # directly instead of inferring it. Fall back to `means[:mu]` only if `predict`
+    # is unavailable, and refuse rather than guess if that is also unusable.
+    mu_fixed = try
+        v = Vector{Float64}(predict(fit, data))
+        length(v) == length(fit.means[:mu]) ? v : nothing
+    catch
+        nothing
+    end
+    mu_fixed === nothing && return nothing
+
+    if fit.family isa Gaussian
+        sigma = Vector{Float64}(_scale_vector(fit, :sigma))
+        n = length(mu_fixed)
+        return function (rng)
+            u = sd_u .* (L * randn(rng, G))
+            return mu_fixed .+ u[gidx] .+ sigma .* randn(rng, n)
+        end
+    end
+
+    # NON-GAUSSIAN (#462). The Gaussian branch above adds the random effect on the
+    # RESPONSE scale because identity is the link. Everywhere else the random effect
+    # lives on the LINK scale and has to pass through the inverse link before the
+    # family draw:
+    #
+    #     eta* = Xb + Z u*        u* ~ N(0, sd_u^2 K)
+    #     mu*  = linkinv(eta*)
+    #     y*   ~ Family(mu*, aux)
+    #
+    # Measured before the fix: a Poisson `(1|g)` fit produced replicates with a
+    # between-group SD of 0.696 against 2.690 in the observed data -- roughly a
+    # quarter of the real group structure -- because the conditional simulator
+    # reused the fitted mean.
+    #
+    # `predict(fit, data; type = :link)` is the marginal linear predictor (measured
+    # exact for Poisson: |predict(link) - Xb| = 0), and `_simulate_once(fit, rng;
+    # mu = ...)` reuses the verified per-family draw at the new mean rather than
+    # duplicating it here.
+    eta_fixed = try
+        Vector{Float64}(predict(fit, data; type = :link))
+    catch
+        nothing
+    end
+    eta_fixed === nothing && return nothing
+    length(eta_fixed) == fit.nobs || return nothing
+    return function (rng)
+        u = sd_u .* (L * randn(rng, G))
+        mu_star = _mean_response(fit.family, eta_fixed .+ u[gidx])
+        return _simulate_once(fit, rng; mu = mu_star)
+    end
+end
+
 function _bootstrap_result(
     fit0,
     formula::DrmFormula,
@@ -1146,6 +1294,7 @@ function _bootstrap_result(
     refit;
     failures::Symbol=:error,
     check_converged::Bool=false,
+    simulate_fn=nothing,
 )
     _check_bootstrap_failure_mode(failures)
     B >= 1 || throw(ArgumentError("bootstrap requires B >= 1"))
@@ -1159,11 +1308,16 @@ function _bootstrap_result(
     function run_one!(b)
         rr = Random.MersenneTwister(seeds[b])
         try
-            ysim = simulate(fit0; rng=rr)
+            # Marginal draw when the fit has random effects (#459); the plain
+            # `simulate` is conditional and collapses a variance-component CI.
+            ysim = simulate_fn === nothing ? simulate(fit0; rng=rr) : simulate_fn(rr)
             datab = _bootstrap_data(formula, data, ysim)
             fitb = refit(datab)
-            if check_converged && !fitb.converged
-                error("refit did not converge")
+            # `is_converged`, not the raw `.converged` field: the accessor also
+            # rejects a degenerate optimum (sigma collapsed, likelihood runaway),
+            # which the optimiser's own flag happily calls converged (#461).
+            if check_converged && !is_converged(fitb)
+                error("refit did not converge or landed on a degenerate optimum")
             end
             draws[b, :] = coef(fitb)
             ok[b] = true

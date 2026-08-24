@@ -60,7 +60,22 @@ fe_cells <- list(
   list(id = "fe_gamma", label = "Gamma (log link), fixed effects", jfam = "gamma",
        family = function() Gamma(link = "log"),
        build = function() { set.seed(4242); n <- 150; x <- rnorm(n)
-                            data.frame(y = rgamma(n, shape = 4, rate = 4 / exp(0.5 + 0.3 * x)), x = x) })
+                            data.frame(y = rgamma(n, shape = 4, rate = 4 / exp(0.5 + 0.3 * x)), x = x) }),
+  # plain_binomial_nonphylo. Added 2026-08-24: tools/parity_crosscheck.py found this
+  # capability row carried a committed Route-1 fixture (test/parity/fixtures/
+  # binomial-trials, drmTMB 0.6.0) but NO live engine="tmb" vs engine="julia"
+  # measurement -- offline replay only. Mirrors that fixture's shape
+  # (cbind(successes, failures), logit link, mean-only) so the two routes are
+  # about the same capability, while remaining a separate draw.
+  list(id = "plain_binomial_nonphylo", label = "Binomial (logit, trials), fixed effects",
+       jfam = "binomial",
+       family = function() binomial(),
+       formula = function() bf(cbind(successes, failures) ~ x),
+       build = function() { set.seed(4242); n <- 150; x <- rnorm(n)
+                            size <- 12L
+                            p <- plogis(0.3 + 0.7 * x)
+                            s <- rbinom(n, size, p)
+                            data.frame(successes = s, failures = size - s, x = x) })
 )
 
 # Bivariate lognormal (drmTMB biv_lognormal). Compared native-TMB vs the DRM.jl
@@ -142,10 +157,22 @@ for (cell in fe_cells) {
     capability_id = cell$id, label = cell$label,
     status = NA_character_, max_abs_coef_diff = NA_real_,
     loglik_tmb = NA_real_, loglik_julia = NA_real_, loglik_diff = NA_real_,
-    tolerance = tol, note = "R-via-Julia bridge parity (engine='julia'), drmTMB 0.7.0"
+    ## MEASURE the drmTMB version, never assert it. This note used to hardcode
+    ## "drmTMB 0.7.0", so the TSV claimed a version it had not checked. That is
+    ## not hypothetical: on 2026-08-24 a concurrent `devtools::test()` in the
+    ## drmTMB checkout transiently put 0.6.0.9000 on the search path, and a run
+    ## in that window would have recorded "0.7.0" while measuring something else.
+    tolerance = tol,
+    note = sprintf("R-via-Julia bridge parity (engine='julia'), drmTMB %s",
+                   as.character(utils::packageVersion("drmTMB")))
   )
-  ft <- try(drmTMB(bf(y ~ x), family = cell$family(), data = d, engine = "tmb"), silent = TRUE)
-  jb <- try(drmTMB(bf(y ~ x), family = cell$family(), data = d, engine = "julia"), silent = TRUE)
+  # Most FE cells are a plain `y ~ x`. A cell may override this when its response
+  # is not a bare `y` -- e.g. the binomial trials cell, whose response is
+  # cbind(successes, failures). Without the override the loop would silently fit
+  # the wrong formula rather than erroring.
+  fml <- if (is.null(cell$formula)) bf(y ~ x) else cell$formula()
+  ft <- try(drmTMB(fml, family = cell$family(), data = d, engine = "tmb"), silent = TRUE)
+  jb <- try(drmTMB(fml, family = cell$family(), data = d, engine = "julia"), silent = TRUE)
   if (inherits(ft, "try-error")) {
     res$status <- "NATIVE_FAILED"
   } else if (inherits(jb, "try-error")) {

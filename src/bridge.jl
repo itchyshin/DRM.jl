@@ -198,7 +198,15 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
         result = bootstrap_result(
             fit; data = dat, B = Int(B), level = level, rng = rng,
             tree = tree_obj, threads = threads, failures = :skip,
-            check_converged = false,
+            # #459: a percentile CI must not be computed over refits that did not
+            # converge. This was `false`, which was harmless only while the
+            # simulator was conditional -- every replicate then re-used the fitted
+            # BLUPs, so every refit converged trivially and the interval was
+            # degenerate anyway. With a correct marginal simulator some replicates
+            # are genuinely hard, and admitting their diverged estimates put the
+            # upper percentile at 179 against a point estimate of 1.30.
+            # `failures = :skip` drops them and `used`/`failed` report how many.
+            check_converged = true,
             algorithm = Symbol(get(opts, :algorithm, :auto)),
             g_tol = Float64(get(opts, :g_tol, 1e-8)),
         )
@@ -500,6 +508,12 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing)
         "df" => dof(fit),
         "nobs" => nobs(fit),
         "converged" => is_converged(fit),
+        # Optimiser iterations actually taken. -1 means the fitter does not record
+        # it yet, which the R side must read as "unknown" -- NOT as zero. Before
+        # 2026-08-24 this key did not exist at all, so `fit$bridge$iterations` was
+        # NA everywhere and no bridge-side comparison of optimiser effort was
+        # possible: a speed difference could be measured but never attributed.
+        "iterations" => niterations(fit),
         "fitted" => _bridge_plain(fitted(fit)),
         "residuals" => _bridge_plain(residuals(fit)),
         "sigma" => _bridge_plain(sigma(fit)),

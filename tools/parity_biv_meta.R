@@ -90,7 +90,7 @@ println(join([string(v) for v in out], ","))
 ', file.path(tmp, paste0(cell$id, ".csv")), file.path(tmp, paste0(cell$id, "_scor.txt")))
     sf <- file.path(tmp, paste0(cell$id, ".jl"))
     writeLines(script, sf)
-    out <- system2("julia", c(paste0("--project=", jl), "--startup-file=no", sf),
+    out <- system2("julia", c(shQuote(paste0("--project=", jl)), "--startup-file=no", shQuote(sf)),
                    stdout = TRUE, stderr = FALSE)
     as.numeric(strsplit(tail(out, 1), ",")[[1]])
   }, error = function(e) { res$note <<- paste(res$note, "julia:", conditionMessage(e)); NULL })

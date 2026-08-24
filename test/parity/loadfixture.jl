@@ -84,6 +84,25 @@ function load_expected(dir)::ParityExpected
         end
     end
 
+    # Optional [se] block: per-coefficient Wald standard errors, keyed by the same
+    # flat "<param>_<coefname>" convention as [coef]. The reserved `not_comparable`
+    # array key is NOT an SE value — it names parameters whose SE must be declined
+    # rather than compared (e.g. a variance component pinned at DRM.jl's
+    # _LAPLACE_LOG_SD_FLOOR, a boundary drmTMB does not share). Absent ⇒ SE checks
+    # are skipped entirely, so every pre-existing fixture keeps passing unchanged.
+    se = Dict{String,Float64}()
+    se_not_comparable = String[]
+    if haskey(t, "se")
+        s = t["se"]
+        for (k, v) in s
+            if String(k) == "not_comparable"
+                se_not_comparable = Vector{String}(String.(v))
+            else
+                se[String(k)] = Float64(v)
+            end
+        end
+    end
+
     return ParityExpected(;
         family = String(fit["family"]),
         coef = Dict{String,Float64}(String(k) => Float64(v) for (k, v) in coef),
@@ -95,7 +114,9 @@ function load_expected(dir)::ParityExpected
         vcov = vcov,
         tol = tol,
         ranef_group = ranef_group,
-        ranef = ranef)
+        ranef = ranef,
+        se = se,
+        se_not_comparable = se_not_comparable)
 end
 
 """
