@@ -121,3 +121,40 @@ and p≤40, with logLik agreement, on this machine, at these sizes.
 **May not:** any general "Nx faster" headline; any extrapolation to large problems;
 any attribution to the optimizer; any bootstrap speed claim; any statement that the
 two bootstrap implementations agree.
+
+---
+
+## UPDATE (same day) — the bootstrap defect in §2 is FIXED
+
+§2 above reported the bootstrap intervals disagreeing by 1674× and TMB winning on
+speed. Both statements described a real measurement, and both are now superseded.
+
+**Two stacked defects, the first hiding the second.**
+
+1. **#459 — the simulator was conditional.** `_bootstrap_result` called
+   `simulate(fit0)`, which returns `fit.means[:mu] .+ sigma .* randn(n)`, and
+   `fit.means[:mu]` already contains the fitted BLUPs. Every replicate re-used the
+   same realised random effects, so the refitted variance component never moved.
+   Fixed by `_marginal_simulator`, which redraws the random effects and adds them to
+   the *fixed*-effect mean — the pattern `bootstrap_q4_phylo.jl` already used.
+2. **#461 — a degenerate optimum reported convergence.** With one row per group the
+   Gaussian likelihood is unbounded as the residual scale → 0; `Optim.converged`
+   returns `true` at `sigma = 7.5e-15`, `loglik = 6.8e13`, `sd_phylo = 22980`. This
+   was invisible until (1) was fixed, because the degenerate simulator made every
+   refit converge trivially. Fixed by checking degeneracy in `is_converged`.
+
+**Final state on the same cell (B=200, seed 20260824, installed drmTMB 0.7.0):**
+
+| engine | interval | width | sec/refit | used / failed |
+|---|---|---|---|---|
+| tmb | [1.027252, 1.450820] | 0.4236 | 0.0581 | 200 / 0 |
+| julia | [1.045239, 1.416228] | 0.3710 | 0.0572 | 190 / 10 |
+
+Width ratio **0.88**, per-refit speed ratio **1.017**. So the corrected reading is:
+**the bootstrap implementations agree, and per-refit speed is at parity** — not the
+"TMB 1.41× faster, intervals 1674× apart" recorded in §2.
+
+The 10 dropped replicates are degenerate refits, now excluded *and counted* rather
+than silently admitted.
+
+**§1 (single-fit speed) is unaffected** — those numbers stand as measured.

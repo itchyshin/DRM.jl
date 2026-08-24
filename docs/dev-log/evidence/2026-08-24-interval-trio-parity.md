@@ -108,3 +108,28 @@ at parity **natively** (1.2e-06). Both engines implement all three methods.
 ordinary coefficients — they are not. That the bootstrap implementations agree — they do
 not (#459). Any interval **coverage** claim: agreement between two engines is not calibration
 against truth, which needs a simulation campaign.
+
+---
+
+## UPDATE (same day) — the bootstrap row is no longer "defective"
+
+§3 above recorded bootstrap as *"restricted, and defective where it does run"*. The
+defect half is fixed (#459 + #461); the restriction half stands.
+
+At the one target the bridge does expose, the two implementations now agree:
+julia `[1.045239, 1.416228]` vs tmb `[1.027252, 1.450820]` — width ratio 0.88,
+against 1674× apart when this document was written. Ten degenerate replicates are
+dropped and counted rather than silently included.
+
+**The trio table therefore now reads:**
+
+| method | native drmTMB | native DRM.jl | agreement | via `engine="julia"` |
+|---|---|---|---|---|
+| **Wald** | yes | yes | exact | **at parity** |
+| **profile** | yes | yes | 1.2e-06 | **refused** (#460 — bridge routing) |
+| **bootstrap** | yes | yes | **width ratio 0.88** | **works, but only for the phylo SD target** (#460) |
+
+So all three methods now *agree numerically wherever they can both be reached*. What
+remains is purely bridge surface: `confint.drmTMB_julia()` accepting ordinary
+`fixef:` targets for profile and bootstrap. That code lives in drmTMB, which is in
+CRAN prepare-only quiesce.
