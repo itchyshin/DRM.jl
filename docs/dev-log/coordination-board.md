@@ -15,9 +15,12 @@ _| **Lane is IDLE pending an owner-named G0.** The 2026-08-24 vacation STOP was 
 campaign ran, and it is now finished. Do not start [#460](https://github.com/itchyshin/DRM.jl/issues/460) —
 it is drmTMB-side bridge routing, blocked by CRAN quiesce._
 
-_| **`lane_preflight.sh` reports "FOREIGN LANE ACTIVE (direct-to-main)" — that is the #458 merge
-itself**, not another lane. All commits here carry Shinichi's identity so the tool cannot tell
-them apart. Check `git log -3 origin/main` before standing down._
+_| **TWO LANES LIVE from ~21:30 (D-88).** A second DRM.jl session (`drm-jl-2b`) opened while this
+entry was being written. Claim a lease before writing shared files:
+`tools/lane_lease.sh --claim DRM.jl --paths <...>`; a REFUSED lease means go sequential.
+Separately: `lane_preflight.sh` also reports the #458 **merge itself** as a direct-to-main lane,
+because all commits here carry Shinichi's identity — distinguish by timestamp against
+`acf3d4fb3`._
 
 _| **STILL TRUE:** no capability row is `supported`; drmTMB was NOT edited (dirty-set hash
 verified unchanged); no coverage claim — both `interval_status != "coverage_claimed"` fences
