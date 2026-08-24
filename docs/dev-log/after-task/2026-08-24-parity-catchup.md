@@ -60,7 +60,7 @@ Not staged, deliberately: `.codex/agents/shannon-coordinator.toml` (PROTECTED pe
 | Route-2 refresh, all 5 scripts @ 0.7.0 | **zero drift**, no status change on 20 rows |
 | `DRM_PARITY_TESTS=1 … runparity.jl` | **exit 0**, 11 pass, 0 failures |
 | `tools/parity_crosscheck.py` | **PASS** (after fixing the 3 defects it found) |
-| acceptance ledger | **15 met, 1 abandoned with reason** |
+| acceptance ledger | **22 met, 0 abandoned** (was 15 met / 1 abandoned before the addendum's work) |
 | GF1 coverage fences | intact — both `interval_status != "coverage_claimed"` assertions |
 | GF2 drmTMB untouched | dirty-set hash `0c763689…` identical to baseline |
 | GF3 claim scan | only *disclaimers*; no speed/accuracy claim outside a dated evidence doc |
@@ -109,6 +109,11 @@ Also: `tools/parity_biv_meta.R` was silently broken on any path containing a spa
 (`system2` does not quote; this repo lives under "Github Local").
 
 ## 10. Known residuals
+
+> **PARTLY SUPERSEDED — read the addendum at the end of this file.** The first two
+> bullets below were true when written and are not now: the benchmarks were
+> subsequently measured at the owner's direction, and iteration counts now cross the
+> bridge. The rest of the section still stands.
 
 - **Benchmark timings — CARRIED-OVER, not measured.** The machine never went quiet: DRM.jl's
   own `Pkg.test()` (49+ min) plus a *different lane's* `devtools::test()` held load at ~18
