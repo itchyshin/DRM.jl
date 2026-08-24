@@ -46,11 +46,25 @@ message(sprintf(
   B, n_species, seed, drmtmb_path
 ))
 
-stopifnot(requireNamespace("devtools", quietly = TRUE))
 stopifnot(requireNamespace("ape", quietly = TRUE))
 stopifnot(requireNamespace("JuliaCall", quietly = TRUE))
 
-devtools::load_all(drmtmb_path, quiet = TRUE)
+## Use the INSTALLED drmTMB, matching every other parity/benchmark script in this
+## repo (tools/parity_fixture.R, parity_se.R, parity_classc.R, bench_fit_h2h.R).
+##
+## This previously called devtools::load_all(drmtmb_path), which loads drmTMB from
+## the SOURCE TREE. On 2026-08-24 that silently measured version 0.6.0.9000 off a
+## working tree sitting on branch claude/handover-freshness-0718 with 102
+## uncommitted files -- while another lane was concurrently running
+## devtools::test() against that same tree, so the code under measurement could
+## change mid-run. The result was reported as a drmTMB-vs-DRM.jl benchmark; it was
+## nothing of the kind, and the printed banner said 0.6.0.9000 while the installed
+## package was 0.7.0. A benchmark whose subject is a dirty checkout measures
+## nothing reproducible.
+suppressMessages(library(drmTMB))
+message(sprintf("bench_bootstrap.R: using INSTALLED drmTMB %s from %s",
+                as.character(utils::packageVersion("drmTMB")),
+                find.package("drmTMB")))
 
 # ---- DGP: AVONET/Hackett phylogenetic Gaussian regression (subset) --------
 

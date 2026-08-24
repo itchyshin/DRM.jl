@@ -157,7 +157,14 @@ for (cell in fe_cells) {
     capability_id = cell$id, label = cell$label,
     status = NA_character_, max_abs_coef_diff = NA_real_,
     loglik_tmb = NA_real_, loglik_julia = NA_real_, loglik_diff = NA_real_,
-    tolerance = tol, note = "R-via-Julia bridge parity (engine='julia'), drmTMB 0.7.0"
+    ## MEASURE the drmTMB version, never assert it. This note used to hardcode
+    ## "drmTMB 0.7.0", so the TSV claimed a version it had not checked. That is
+    ## not hypothetical: on 2026-08-24 a concurrent `devtools::test()` in the
+    ## drmTMB checkout transiently put 0.6.0.9000 on the search path, and a run
+    ## in that window would have recorded "0.7.0" while measuring something else.
+    tolerance = tol,
+    note = sprintf("R-via-Julia bridge parity (engine='julia'), drmTMB %s",
+                   as.character(utils::packageVersion("drmTMB")))
   )
   # Most FE cells are a plain `y ~ x`. A cell may override this when its response
   # is not a bare `y` -- e.g. the binomial trials cell, whose response is
