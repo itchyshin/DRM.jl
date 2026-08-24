@@ -4,7 +4,24 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
-_Light tip refresh 2026-08-14 (`docs/claude-handover-idle`):
+## Active-Lane-Split (2026-08-24 — vacation STOP; Claude pickup)
+
+_**START HERE:** [`docs/dev-log/handover/2026-08-24-claude-handover.md`](handover/2026-08-24-claude-handover.md).
+Canonical tree: `/Users/z3437171/Dropbox/Github Local/DRM.jl` on `main` @
+`6ee03fd` (GitHub API 2026-08-24). **Engine DONE:** #449 AGHQ + #451 Cox–Reid
+phylo. **Scout sequence 1–5 STOP** (#452–#455 merged). Lane **IDLE** — Shinichi
+away; next G0 is owner-named only._
+
+_| Open PRs: [#420](https://github.com/itchyshin/DRM.jl/pull/420) + [#406](https://github.com/itchyshin/DRM.jl/pull/406) — DIRTY; leave OPEN per scout #455. Do not rebase while away._
+
+_| AGHQ capability chip still **missing**. #49 **PARKED**. D-111 Julia General **OFF**._
+
+| Lane | Repo | State | Pointer |
+|---|---|---|---|
+| DRM.jl Julia | this repo | **IDLE** / vacation STOP | `docs/dev-log/handover/2026-08-24-claude-handover.md` |
+| drmTMB (R) | sibling | **unknown** | that repo's handover — do not start from DRM.jl |
+
+_Light tip refresh 2026-08-14 (`docs/claude-handover-idle`) — **historical**:
 `origin/main` @ `d0fac9d7` (#405 MERGED). DRM.jl Julia = **IDLE** pending
 owner G0. Next pickup = **Claude**. Cursor lane idle/handing off. Issue 136
 stays OPEN (136e public Gamma RI report landed; VA stays Experimental).
