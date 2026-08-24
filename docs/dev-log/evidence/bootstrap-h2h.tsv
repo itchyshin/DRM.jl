@@ -1,0 +1,3 @@
+label	B	n_species	rows	seed	base_fit_s	bootstrap_elapsed_s	sec_per_refit	used	failed	lower	upper	estimate	status	julia_startup_s	machine	r_version	drmtmb_version	juliacall_version	timestamp
+tmb	5	100	100	20260824	0.292	2.263	0.4526	5	0	1.30026268156955	1.30027098508725	1.30026950047649	bootstrap	3.36	Apple M1 Ultra	R version 4.6.0 (2026-04-24)	0.6.0.9000	0.17.6	2026-08-24T07:30:54-0600
+julia	5	100	100	20260824	12.486	4.17	0.834	5	0	1.300259908438	1.30027714038346	1.30025850644519	bootstrap	3.36	Apple M1 Ultra	R version 4.6.0 (2026-04-24)	0.6.0.9000	0.17.6	2026-08-24T07:30:54-0600
