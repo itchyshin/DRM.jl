@@ -1251,8 +1251,11 @@ function _bootstrap_result(
             ysim = simulate_fn === nothing ? simulate(fit0; rng=rr) : simulate_fn(rr)
             datab = _bootstrap_data(formula, data, ysim)
             fitb = refit(datab)
-            if check_converged && !fitb.converged
-                error("refit did not converge")
+            # `is_converged`, not the raw `.converged` field: the accessor also
+            # rejects a degenerate optimum (sigma collapsed, likelihood runaway),
+            # which the optimiser's own flag happily calls converged (#461).
+            if check_converged && !is_converged(fitb)
+                error("refit did not converge or landed on a degenerate optimum")
             end
             draws[b, :] = coef(fitb)
             ok[b] = true

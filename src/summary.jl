@@ -99,11 +99,46 @@ end
 """
     is_converged(fit::DrmFit) -> Bool
 
-Whether the optimiser reported convergence for this fit — drmTMB's convergence
-flag (`is_converged(fit) === fit.converged`). A `false` here means the reported
-estimates / standard errors should not be trusted.
+Whether this fit may be trusted: the optimiser reported convergence **and** the
+optimum is not degenerate. A `false` here means the reported estimates / standard
+errors should not be trusted.
+
+This is deliberately STRICTER than the raw `fit.converged` flag. The Gaussian
+log-likelihood is unbounded as the residual scale goes to zero: with one row per
+group a structured random effect can interpolate the data, so `sigma` collapses and
+the objective runs away to `+Inf`. `Optim.converged` only asks whether the gradient
+test was met, and at such a point it returns `true`.
+
+Measured 2026-08-24 on a one-row-per-species phylo fit (#461):
+`sd_phylo = 22980`, `sigma = 7.5e-15`, `loglik = 6.8e13`, `converged = true` — and
+25% of parametric-bootstrap replicates landed on such a point. Downstream that is
+WORSE than an outright failure, because every consumer treats the fit as usable and
+a percentile interval silently inherits the nonsense.
+
+Checked here, at the single public accessor, rather than at the ~30 `DrmFit`
+construction sites across 20 family files — one place that every consumer already
+goes through. `fit.converged` still exposes the raw optimiser flag for anyone who
+wants it.
 """
-is_converged(fit::DrmFit) = fit.converged
+is_converged(fit::DrmFit) = fit.converged && _nondegenerate_fit(fit)
+
+# The degeneracy test behind `is_converged`. GAUSSIAN ONLY: for NB2/Beta/Gamma the
+# `:sigma` slot holds a dispersion or shape, where a genuinely small value is
+# legitimate, so applying a residual-scale test there would reject good fits.
+function _nondegenerate_fit(fit::DrmFit)
+    isfinite(fit.loglik) || return false
+    fit.family isa Gaussian || return true
+    haskey(fit.scales, :sigma) || return true
+    s = fit.scales[:sigma]
+    smax = maximum(abs, s)
+    isfinite(smax) || return false
+    # Scale-free bar: a residual SD a millionth of the response SD is
+    # interpolation, not a fit. An absolute floor alone would misjudge data
+    # measured in small units.
+    yv = get(fit.obs, :mu, nothing)
+    yscale = (yv isa AbstractVector && length(yv) > 1) ? std(yv) : 1.0
+    return smax > 1e-6 * max(yscale, eps(Float64))
+end
 
 """
     deviance(fit::DrmFit) -> Float64
