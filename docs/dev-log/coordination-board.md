@@ -4,7 +4,42 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
-## Active-Lane-Split (2026-08-24 — vacation STOP; Claude pickup)
+## Active-Lane-Split (2026-08-24 — parity catch-up ACTIVE; supersedes the STOP below)
+
+_**START HERE:** PR [#458](https://github.com/itchyshin/DRM.jl/pull/458), issue
+[#457](https://github.com/itchyshin/DRM.jl/issues/457), after-task
+`docs/dev-log/after-task/2026-08-24-parity-catchup.md`. Branch `parity/se-axis`.
+The vacation STOP below was **lifted by the owner on 2026-08-24**, who named
+R↔Julia parity as the next G0 and authorised DRM.jl chip flips._
+
+_| **The harness gained an SE / interval axis it never had** — the axis drmTMB's own q4
+`claim_boundary` names as blocking ("interval reliability"). Four capability rows now carry
+live same-target evidence: `plain_binomial_nonphylo`, `phylo_count_large_p` (p=300),
+`general_covariance_structured`, `biv_gaussian_residual`._
+
+_| All 11 canonical fixtures re-measured at **drmTMB 0.7.0** (were frozen at 0.6.0):
+**zero drift**, seeds preserved. AGHQ chip `missing`→`implemented` (Poisson `(1|g)` only —
+scope narrowed, not oversold). Tally 40/1/1/4 → **41/1/1/3**._
+
+_| **STILL TRUE, do not misread:** no capability row is `supported` anywhere; **no drmTMB
+edit** (CRAN prepare-only quiesce); **no coverage claim** — both
+`interval_status != "coverage_claimed"` fences stay. #420/#406 remain OPEN (DIRTY). #49,
+#136 PARKED. D-111 OFF._
+
+_| **CARRIED-OVER:** benchmark timings are **not measured**. The machine never went quiet
+(a foreign lane's `devtools::test()` plus DRM.jl's `Pkg.test()` held load ~18/20 cores), and
+the provisional data showed the direction **flip** between bootstrap and single fits, so a
+ratio under contention could be sign-wrong. Harnesses exist (`tools/bench_fit_h2h.R`,
+`tools/bench_bootstrap.R`); resume command in `.unlazy/parity-catchup/GATES.md` `ABANDON: G4A`.
+Run them **sequentially on an idle machine**. Also: `fit$bridge$iterations` is `NA`, so the
+optimizer-mechanism question cannot be answered until iteration counts cross the bridge._
+
+_| **New engine finding:** DRM.jl clamps at `_LAPLACE_LOG_SD_FLOOR = log(1e-6)`
+(`sparse_laplace_glmm.jl:149`); drmTMB has **no equivalent bound**. On near-degenerate draws
+the engines land on different optima — a feasible-set difference, not a likelihood bug. See
+`docs/dev-log/evidence/2026-08-24-sd-floor-asymmetry.md`._
+
+## Active-Lane-Split (2026-08-24 — vacation STOP; Claude pickup) — SUPERSEDED, kept for history
 
 _**START HERE:** [`docs/dev-log/handover/2026-08-24-claude-handover.md`](handover/2026-08-24-claude-handover.md).
 Canonical tree: `/Users/z3437171/Dropbox/Github Local/DRM.jl` on `main` @
