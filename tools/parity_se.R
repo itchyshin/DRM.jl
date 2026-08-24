@@ -57,7 +57,7 @@ cells <- list(
     family  = function() gaussian()
   ),
   list(
-    capability_id = "biv_gaussian",
+    capability_id = "biv_gaussian_residual",
     cell_id = "se_biv_gaussian_rho12",
     label   = "Bivariate Gaussian, rho12 ~ 1, fixed effects",
     build   = function() {
@@ -72,7 +72,10 @@ cells <- list(
     family  = function() biv_gaussian()
   ),
   list(
-    capability_id = "base_gaussian_ranef",
+    # NOT a drmTMB capability row -- Gaussian ordinary-RE Laplace is a DRM.jl
+    # cell with no counterpart in julia-capabilities.tsv. Prefixed so
+    # tools/parity_crosscheck.py does not read it as an unmatched capability id.
+    capability_id = "drmjl_only:gaussian_ranef",
     cell_id = "se_gaussian_group_ranef",
     label   = "Gaussian location-scale, group random intercept (Laplace)",
     build   = function() {
