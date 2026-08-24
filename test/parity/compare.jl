@@ -314,6 +314,14 @@ function compare_fit(fit, expected::ParityExpected;
     # (rtol_se, atol_se) live in _compare_se!; per-case [tol] overrides apply.
     # Fixture-declared `not_comparable` names are skipped (the fixture itself is
     # the visible record of that decision).
+    # `se_skipped` is a REAL vector, not a throwaway. Passing `String[]` here
+    # discarded every declined name, so a fixture that declared all of its SE
+    # names `not_comparable` would report `passed = true` having compared
+    # nothing, with no trace of it in the result — the exact "silent pass" this
+    # struct's docstring promises does not happen. Route 1 is the path
+    # `runparity.jl` uses, so that promise has to hold here, not only in
+    # `compare_se`.
+    se_skipped = String[]
     if !isempty(expected.se)
         got_se = try
             drm_se_named(fit)
@@ -323,10 +331,12 @@ function compare_fit(fit, expected::ParityExpected;
             nothing
         end
         got_se === nothing ||
-            _compare_se!(failures, String[], got_se, expected)
+            _compare_se!(failures, se_skipped, got_se, expected)
     end
 
-    return (passed = isempty(failures), failures = failures)
+    # `skipped` is additive: existing callers destructure `.passed`/`.failures`
+    # and are unaffected.
+    return (passed = isempty(failures), failures = failures, skipped = se_skipped)
 end
 
 # Shared SE-comparison core: name-matched per-coefficient standard errors, with
