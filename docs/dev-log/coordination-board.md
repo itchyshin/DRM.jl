@@ -4,7 +4,29 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
-## Active-Lane-Split (2026-08-24 — parity catch-up ACTIVE; supersedes the STOP below)
+## Active-Lane-Split (2026-08-24 — parity catch-up MERGED; lane awaiting a new G0)
+
+_**START HERE:** [`docs/dev-log/handover/2026-08-24-claude-handover-parity-merged.md`](handover/2026-08-24-claude-handover-parity-merged.md).
+`origin/main` @ **`acf3d4fb3`** — merge of [#458](https://github.com/itchyshin/DRM.jl/pull/458)
+(20 commits, 65 files). Issues #457/#459/#461/#462 **closed**. Full suite 304 testsets, zero
+failures; CI green both Julia versions._
+
+_| **Lane is IDLE pending an owner-named G0.** The 2026-08-24 vacation STOP was lifted, the
+campaign ran, and it is now finished. Do not start [#460](https://github.com/itchyshin/DRM.jl/issues/460) —
+it is drmTMB-side bridge routing, blocked by CRAN quiesce._
+
+_| **`lane_preflight.sh` reports "FOREIGN LANE ACTIVE (direct-to-main)" — that is the #458 merge
+itself**, not another lane. All commits here carry Shinichi's identity so the tool cannot tell
+them apart. Check `git log -3 origin/main` before standing down._
+
+_| **STILL TRUE:** no capability row is `supported`; drmTMB was NOT edited (dirty-set hash
+verified unchanged); no coverage claim — both `interval_status != "coverage_claimed"` fences
+intact. #420/#406 remain OPEN (DIRTY). #49, #136 PARKED. D-111 OFF._
+
+_| **Behaviour change to know about:** `is_converged` is now stricter than `fit.converged` — it
+rejects degenerate optima (#461). `fit.converged` still gives the raw optimiser flag._
+
+## Active-Lane-Split (2026-08-24 — parity catch-up ACTIVE) — SUPERSEDED by the entry above
 
 _**START HERE:** PR [#458](https://github.com/itchyshin/DRM.jl/pull/458), issue
 [#457](https://github.com/itchyshin/DRM.jl/issues/457), after-task
