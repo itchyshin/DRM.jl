@@ -321,7 +321,9 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
     scales = Dict(:sigma1 => exp.(Xs1 * θ̂[rng(3)]),
                   :sigma2 => exp.(Xs2 * θ̂[rng(4)]),
                   :rho12 => RHO_GUARD .* tanh.(Xr * θ̂[rng(5)]))   # report the model's guarded ρ
-    return _withformula(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n_like, Optim.converged(res), means, obs, scales), nll), f)
+    return _withiterations(
+        _withformula(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n_like, Optim.converged(res), means, obs, scales), nll), f),
+        Optim.iterations(res))
 end
 
 function _bivariate_q4_marker(rhs)

@@ -500,6 +500,12 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing)
         "df" => dof(fit),
         "nobs" => nobs(fit),
         "converged" => is_converged(fit),
+        # Optimiser iterations actually taken. -1 means the fitter does not record
+        # it yet, which the R side must read as "unknown" -- NOT as zero. Before
+        # 2026-08-24 this key did not exist at all, so `fit$bridge$iterations` was
+        # NA everywhere and no bridge-side comparison of optimiser effort was
+        # possible: a speed difference could be measured but never attributed.
+        "iterations" => niterations(fit),
         "fitted" => _bridge_plain(fitted(fit)),
         "residuals" => _bridge_plain(residuals(fit)),
         "sigma" => _bridge_plain(sigma(fit)),

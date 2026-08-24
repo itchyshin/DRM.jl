@@ -138,6 +138,7 @@ struct DrmFit{F}
     marginal::Symbol                       # :LA (default Laplace) or :VA (ELBO; #136)
     phylo_penalty::Float64                 # penalty at the optimum (NaN unless estim_method == :MAP)
     penalty::Any                           # the PhyloPenalty spec that produced it; nothing for ML/REML
+    iterations::Int                        # optimiser iterations actually taken; -1 = not recorded
 end
 
 # 11-arg outer constructor: formula + nll + nllgrad + ranef default to nothing;
@@ -156,43 +157,63 @@ DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, o
 DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales,
        formula, nll, nllgrad, ranef, estim_method, reml_loglik, ml_loglik, marginal) =
     DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales,
-           formula, nll, nllgrad, ranef, estim_method, reml_loglik, ml_loglik, marginal, NaN, nothing)
+           formula, nll, nllgrad, ranef, estim_method, reml_loglik, ml_loglik, marginal, NaN, nothing, -1)
 
 _withformula(fit::DrmFit, f) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, f, fit.nll, fit.nllgrad, fit.ranef,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty, fit.iterations)
 
 # Attach the (negative) log-likelihood closure so profile intervals can re-optimise
 # the nuisance parameters at each fixed value. nll(θ) must accept the full θ vector.
 _withnll(fit::DrmFit, nll, nllgrad = nothing) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, nll, nllgrad, fit.ranef,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty, fit.iterations)
 
 # Attach per-group conditional random-effect estimates (BLUPs). `re` is a
 # Dict{Symbol,...} keyed by grouping factor; see ranef(fit) for the public accessor.
 _withranef(fit::DrmFit, re) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, re,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty, fit.iterations)
 
 # Mark the fit as REML-estimated, recording both the REML and ML log-likelihoods.
 # The public `loglik` slot is set to the REML value (with the documented
 # cross-structure caveat); `ml_loglik` stays available for ML-style comparison.
 _withreml(fit::DrmFit, reml_ll::Real, ml_ll::Real) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, Float64(reml_ll), fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
-    :REML, Float64(reml_ll), Float64(ml_ll), fit.marginal, fit.phylo_penalty, fit.penalty)
+    :REML, Float64(reml_ll), Float64(ml_ll), fit.marginal, fit.phylo_penalty, fit.penalty, fit.iterations)
 
 # Mark the fit as penalized-MAP. `loglik` is left as the UNPENALIZED data
 # log-likelihood (drmTMB keeps `fit$logLik` unpenalized too) and the penalty at
 # the optimum is recorded separately, so `-objective == loglik - phylo_penalty`.
 _withmap(fit::DrmFit, pen_value::Real, spec) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
-    :MAP, fit.reml_loglik, fit.ml_loglik, fit.marginal, Float64(pen_value), spec)
+    :MAP, fit.reml_loglik, fit.ml_loglik, fit.marginal, Float64(pen_value), spec, fit.iterations)
 
 # Tag the integral approximation (`:LA` Laplace default, `:VA` ELBO). Does not
 # change `loglik`; the caller is responsible for putting an ELBO in that slot.
 _withmarginal(fit::DrmFit, m::Symbol) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik, m, fit.phylo_penalty, fit.penalty)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, m, fit.phylo_penalty, fit.penalty, fit.iterations)
+
+# Record how many iterations the optimiser actually took. Separate from the
+# `iterations` OPTION (a cap on the maximum); this is the achieved count, and it
+# is what the R bridge surfaces as `fit$bridge$iterations`. Defaults to -1 --
+# "not recorded" -- so a fitter that has not been wired up reports honestly
+# rather than reporting 0, which would read as "converged instantly".
+_withiterations(fit::DrmFit, n::Integer) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty, Int(n))
+
+"""
+    niterations(fit) -> Int
+
+Optimiser iterations actually taken, or `-1` when the fitter does not record it.
+
+Deliberately NOT named `iterations`: `Optim.iterations` already means this, and
+DRM.jl also uses `iterations` as a fitting OPTION (the cap). Keeping the accessor
+distinct stops "max allowed" and "actually taken" being confused for each other.
+"""
+niterations(fit::DrmFit) = fit.iterations
 
 # Response-missing helpers. R's `NA_real_` may reach Julia as either `missing`
 # or `NaN`, so the Gaussian response path treats both as absent observations.
@@ -644,7 +665,9 @@ function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     means = Dict(:mu => Xμ * θ̂[1:pμ])
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end
 
 function _with_full_fixed_gaussian_rows(fit::DrmFit, y_full, Xμ_full, Xσ_full)
