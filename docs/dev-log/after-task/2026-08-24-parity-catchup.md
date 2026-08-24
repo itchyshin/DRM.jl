@@ -156,3 +156,89 @@ Capability rows with live same-target evidence after this arc: `base_gaussian_lo
 existing same-target fixtures. Un-evidenced and blocked for stated reasons:
 `gaussian_response_mask`, `phylo_gamma_beta_binomial` (binomial axis), `cross_family_latent`,
 `engine_control_surface`.
+
+---
+
+# Addendum — two engine defects the measurement uncovered (#459, #461)
+
+The arc was scoped as *measurement, not repair*. These two are the exception: the
+measurement surfaced defects that made the measured quantity meaningless, so fixing
+them was the only way to finish measuring. The owner directed both.
+
+## What was wrong
+
+**#459 — the parametric bootstrap conditioned on the fitted BLUPs.**
+`_bootstrap_result` called `simulate(fit0)`, a *conditional* simulator: for a
+Gaussian fit it returns `fit.means[:mu] .+ sigma .* randn(n)`, and `fit.means[:mu]`
+already contains the BLUPs. Every replicate re-used the same realised random
+effects, so a variance-component CI collapsed onto its point estimate. Fixed with
+`_marginal_simulator`, following the pattern `bootstrap_q4_phylo.jl` already used.
+
+**#461 — a degenerate optimum reported convergence.** With one row per group the
+Gaussian likelihood is unbounded as the residual scale → 0. `Optim.converged`
+returns `true` at `sigma = 7.5e-15`, `loglik = 6.78e13`, `sd_phylo = 22980`, and 25%
+of replicates landed there. Fixed in `is_converged`.
+
+## Result
+
+| stage | julia interval | width | used / failed |
+|---|---|---|---|
+| as reported in #459 | [1.300189, 1.300442] | 0.000253 | 200 / 0 |
+| after the #459 fix | [1.046098, 179.2615] | — | 200 / 0 |
+| **now** | **[1.045239, 1.416228]** | **0.3710** | **190 / 10** |
+| native TMB | [1.027252, 1.450820] | 0.4236 | 200 / 0 |
+
+From **1674× apart to a width ratio of 0.88**; per-refit speed ratio 1.017.
+
+Also landed: `fit$bridge$iterations` now crosses the bridge (was `NA` everywhere),
+with **no drmTMB change** — the R side passes the payload through, which mattered
+because drmTMB is CRAN-quiesced. First result: DRM.jl takes ~8 iterations where TMB
+takes 5–15, so the 2.2–12.5× fit advantage is **per-iteration cost, not fewer
+iterations**. The "better optimizers" hypothesis is not supported by that.
+
+## What did not go smoothly (the useful part)
+
+**I tried the wrong fix shape for #461 first.** I wired the degeneracy guard into
+individual `DrmFit` construction sites — four files patched, and the guard still
+never fired, because the path in question constructs its fit somewhere else again
+(~30 sites across 20 family files). Reverted all of it and put one check in
+`is_converged`, the single public accessor every consumer already goes through.
+*When a guard has to be repeated at thirty call sites, the call sites are the wrong
+layer.*
+
+**A scale trap nearly shipped inside the #459 fix.** `re_sd` for a phylo term is
+defined against the RAW covariance (diagonal = tree height), not the normalised
+correlation. My first simulator used the correlation matrix and under-dispersed by
+√height; the resulting CI failed to contain its own point estimate. Caught by
+round-trip across three tree heights (0.85 / 1.7 / 5.667): correlation gives
+0.699 / 0.374 / 1.116, raw gives 0.917 / 0.917 / 1.032. Stable ⇒ the residual 0.92
+is ML shrinkage, not scale. *A fix verified on one tree height would have been
+plausible and wrong.*
+
+**A false failure count.** A first read of the full-suite log reported "2 failures".
+Both were testset **names** containing the word "error", each passing. A grep loose
+enough to match a testset title is not a failure detector.
+
+## Verification
+
+Full `julia --project=test test/runtests.jl`: **302 testsets, zero carrying a
+Fail/Error/Broken column.** All four #459/#461 testsets ran inside it (16 passes),
+each with its positive control demonstrated — on the pre-fix path the discriminating
+assertions fail, so they catch the bug rather than merely passing.
+
+`Pkg.test()` cannot be used on this machine: it fails with `ERROR: can not merge
+projects` before running anything. Pre-existing, unrelated to these changes.
+
+## Behaviour change worth knowing
+
+`is_converged` is now **stricter** than `fit.converged`. A fit that previously
+reported `true` at a degenerate optimum now reports `false`. That is the intent —
+such a fit was never usable — but it is a visible change. `fit.converged` still
+exposes the raw optimiser flag.
+
+## Still open
+
+**#460** — profile and bootstrap CIs remain unreachable through `engine = "julia"`
+for ordinary fixed effects. Both engines implement them and they agree natively
+(profile to 1.2e-06), so this is bridge routing in `confint.drmTMB_julia()`, which
+lives in drmTMB and is blocked by CRAN prepare-only quiesce.
