@@ -11,8 +11,12 @@
 # estimate was correct -- which is exactly why it survived. These tests fail if the
 # conditional simulator is ever restored.
 
-using Test, DRM, StatsModels, Random, Statistics, LinearAlgebra
+using Test, DRM, Random, Statistics, LinearAlgebra
 import Distributions   # qualified: DRM exports its own `Poisson` FAMILY
+# NO `using StatsModels`. It is not a declared dependency of test/Project.toml, so
+# `Pkg.test()` (which builds a fresh env from that file) fails on it even though a
+# local `--project=test` run resolves it from the Manifest. `@formula` comes from
+# `using DRM`, which is what every other test file in this suite relies on.
 
 @testset "#459 parametric bootstrap redraws random effects" begin
     Random.seed!(20260607)
