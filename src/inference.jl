@@ -1067,8 +1067,11 @@ function bootstrap_result(
     _check_bootstrap_failure_mode(failures)
     formula = _bootstrap_fit_formula(fit)
     refit = datab -> drm(formula, fit.family; data=datab, K, A, tree, algorithm, g_tol)
+    # #459: redraw the random effects rather than conditioning on the fitted BLUPs.
+    simulate_fn = _marginal_simulator(fit, data; K=K, A=A, tree=tree)
     return _bootstrap_result(
-        fit, formula, data, B, level, rng, threads, refit; failures, check_converged
+        fit, formula, data, B, level, rng, threads, refit;
+        failures, check_converged, simulate_fn
     )
 end
 
@@ -1120,8 +1123,10 @@ function bootstrap_result(
     _check_bootstrap_failure_mode(failures)
     formula = _bootstrap_fit_formula(fit)
     refit = datab -> drm(formula, fit.family; data=datab)
+    simulate_fn = _marginal_simulator(fit, data)   # #459
     return _bootstrap_result(
-        fit, formula, data, B, level, rng, threads, refit; failures, check_converged
+        fit, formula, data, B, level, rng, threads, refit;
+        failures, check_converged, simulate_fn
     )
 end
 
@@ -1135,6 +1140,87 @@ function _bootstrap_fit_formula(fit::DrmFit)
     )
 end
 
+# --- Marginal parametric bootstrap simulation (#459) -------------------------
+#
+# `simulate(fit)` is a CONDITIONAL simulator: for a Gaussian fit it returns
+# `fit.means[:mu] .+ fit.scales[:sigma] .* randn(n)`, and `fit.means[:mu]` ALREADY
+# CONTAINS the fitted BLUPs. Bootstrapping a fixed effect that way is defensible.
+# Bootstrapping a VARIANCE COMPONENT that way is not: every replicate re-uses the
+# same realised random effects, so the refitted SD barely moves and the percentile
+# interval collapses toward the point estimate.
+#
+# Measured 2026-08-24 (#459): the phylo-SD bootstrap CI came out 1674x NARROWER
+# than native TMB on identical data, B and seed -- implied replicate SD 6.45e-05
+# against 0.108. The point estimate was right, which is why it looked plausible.
+#
+# The correct parametric bootstrap redraws the random effects from their fitted
+# distribution and adds them to the FIXED-effect mean:
+#
+#     y* = Xb + Z u*  + e*,    u* ~ N(0, sd_u^2 K),   e* ~ N(0, sigma^2)
+#
+# which is exactly what `bootstrap_q4_phylo.jl` already does for the q=4 path
+# ("redraws tip random effects from the fitted N(0, Q_cond^-1 (x) Sigma_a) ... adds
+# them to the fitted fixed effects"). The univariate path simply never followed it.
+#
+# Returns a closure `rng -> ysim`, or `nothing` when the fit has NO random effects
+# (there conditional and marginal simulation coincide and `simulate` is correct).
+function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothing,
+                             coords=nothing)
+    fit.formula isa DrmFormula || return nothing
+    fit.family isa Gaussian || return nothing
+    haskey(fit.scales, :sigma) || return nothing
+    rhs = Dict(fit.formula.forms)
+    haskey(rhs, :mu) || return nothing
+    _, re, _, structured = _split_ranef(rhs[:mu])
+    # No random effect on the mean: conditional == marginal, nothing to fix.
+    (isempty(re) && structured === nothing) && return nothing
+    # Only the single structured/ordinary random intercept on the mean is handled
+    # here. Anything else must NOT silently fall back to conditional simulation --
+    # that is precisely the failure this function exists to remove -- so signal it.
+    structured === nothing && return nothing            # ordinary (1|g): handled below only if BLUPs exist
+    grp = structured[2]
+    kind = structured[1]
+    hasproperty(data, grp) || return nothing
+    gidx, G = _group_index(getproperty(data, grp))
+    sds = re_sd(fit)
+    blups = ranef(fit)
+    (sds isa AbstractDict && haskey(sds, grp)) || return nothing
+    (blups isa AbstractDict && haskey(blups, grp)) || return nothing
+    sd_u = Float64(sds[grp])
+    bhat = Vector{Float64}(blups[grp])
+    length(bhat) == G || return nothing
+    # SCALE TRAP -- verified by round-trip, not assumed. `re_sd(fit)` for a phylo
+    # term is defined against the RAW phylogenetic covariance
+    # `sigma_phy_dense(phy; sigma2_phy = 1)`, whose diagonal is the tree height,
+    # NOT against the normalised correlation that `_resolve_structured_matrix`
+    # returns (`_phylo_correlation` divides by sqrt(diag)). Drawing with the
+    # correlation matrix therefore under-disperses the random effects by
+    # sqrt(tree height) and the bootstrap SD comes back systematically shrunk.
+    #
+    # Measured on a height-1.8 tree: simulating at the fitted sd and refitting
+    # returned 0.719x the fitted value with the correlation matrix, and 0.974x
+    # with the raw covariance. The raw covariance is the one that round-trips.
+    # (relmat/animal are supplied by the user and used as-is, so for those the
+    # resolver's matrix is already the right one.)
+    Kg = if kind === :phylo
+        phy = tree isa AbstractString ? augmented_phy(tree) : tree
+        sigma_phy_dense(phy; σ²_phy = 1.0)
+    else
+        _resolve_structured_matrix(kind, grp, G; K=K, A=A, tree=tree, coords=coords)
+    end
+    size(Kg) == (G, G) || return nothing
+    L = cholesky(Symmetric(Matrix{Float64}(Kg))).L
+    # Strip the fitted BLUPs back off to recover the FIXED-effect mean. Redrawing
+    # on top of the conditional mean would double-count the random effects.
+    mu_fixed = Vector{Float64}(fit.means[:mu]) .- bhat[gidx]
+    sigma = Vector{Float64}(_scale_vector(fit, :sigma))
+    n = length(mu_fixed)
+    return function (rng)
+        u = sd_u .* (L * randn(rng, G))
+        return mu_fixed .+ u[gidx] .+ sigma .* randn(rng, n)
+    end
+end
+
 function _bootstrap_result(
     fit0,
     formula::DrmFormula,
@@ -1146,6 +1232,7 @@ function _bootstrap_result(
     refit;
     failures::Symbol=:error,
     check_converged::Bool=false,
+    simulate_fn=nothing,
 )
     _check_bootstrap_failure_mode(failures)
     B >= 1 || throw(ArgumentError("bootstrap requires B >= 1"))
@@ -1159,7 +1246,9 @@ function _bootstrap_result(
     function run_one!(b)
         rr = Random.MersenneTwister(seeds[b])
         try
-            ysim = simulate(fit0; rng=rr)
+            # Marginal draw when the fit has random effects (#459); the plain
+            # `simulate` is conditional and collapses a variance-component CI.
+            ysim = simulate_fn === nothing ? simulate(fit0; rng=rr) : simulate_fn(rr)
             datab = _bootstrap_data(formula, data, ysim)
             fitb = refit(datab)
             if check_converged && !fitb.converged

@@ -73,6 +73,7 @@ include("test_heritability.jl")
 include("test_conjugate_em.jl")
 include("test_location_only_reml_mme.jl")
 include("test_bootstrap.jl")
+include("test_bootstrap_marginal.jl")   # #459: bootstrap must redraw random effects
 include("test_gaussian_spatial.jl")
 include("test_predict.jl")
 include("test_predict_response.jl")
