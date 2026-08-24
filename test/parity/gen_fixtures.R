@@ -63,7 +63,43 @@ transform_expected <- function(case, coefs, V, order) {
   list(coef = coefs, vcov = D %*% V %*% D)
 }
 
-write_expected <- function(dir, family, formula, fit, case, ranef = NULL) {
+## Extract hand-added [tol] overrides from an existing fixture so a regeneration
+## does not destroy them.
+##
+## `write_case()` deletes the whole fixture directory before rewriting it, and
+## `write_expected()` emits a FIXED [tol] block (atol_loglik/atol_aic, plus the
+## ranef pair). Three fixtures -- meta-analysis-V, nbinom2-dispersion and
+## robust-student -- also carry hand-added atol_coef/atol_vcov overrides
+## documenting known soft-optimizer deltas vs drmTMB (#370, #392), together with
+## the comments explaining WHY each bar was widened. Before 2026-08-24 any
+## regeneration silently destroyed all of it: no error, no warning, and the
+## reasoning simply gone. The next person to regenerate would have been left with
+## fixtures failing for reasons nobody could reconstruct.
+##
+## Must be called BEFORE the unlink() in write_case(); afterwards there is
+## nothing left to read.
+read_preserved_tol <- function(path) {
+  if (!file.exists(path)) return(character(0))
+  old <- readLines(path, warn = FALSE)
+  i <- which(trimws(old) == "[tol]")
+  if (length(i) != 1L) return(character(0))
+  j <- i + 1L
+  block <- character(0)
+  while (j <= length(old) && !grepl("^\\s*\\[", old[j])) {
+    block <- c(block, old[j]); j <- j + 1L
+  }
+  generated <- c("atol_loglik", "atol_aic", "rtol_ranef", "atol_ranef")
+  keep <- vapply(block, function(ln) {
+    t <- trimws(ln)
+    if (!nzchar(t)) return(FALSE)
+    if (startsWith(t, "#")) return(TRUE)   # the reasoning is the point
+    !(trimws(sub("=.*$", "", t)) %in% generated)
+  }, logical(1), USE.NAMES = FALSE)
+  sub("\\s+$", "", block[keep])
+}
+
+write_expected <- function(dir, family, formula, fit, case, ranef = NULL,
+                           preserved_tol = character(0)) {
   coefs <- flat_coef(fit)
   V <- vcov(fit)
   order <- vcov_order(fit)
@@ -95,6 +131,17 @@ write_expected <- function(dir, family, formula, fit, case, ranef = NULL) {
   for (name in sort(names(coefs))) {
     writeLines(paste0(toml_string(name), " = ", toml_num(coefs[[name]])), con)
   }
+
+  ## Optional [se] block: Wald SEs, sqrt(diag(V)), same flat naming as [coef].
+  ## Free to derive from the vcov already computed above -- no extra R call.
+  se <- sqrt(diag(V))
+  names(se) <- order
+  se_lines <- c("", "[se]")
+  for (name in sort(names(se))) {
+    se_lines <- c(se_lines, paste0(toml_string(name), " = ", toml_num(se[[name]])))
+  }
+  writeLines(se_lines, con)
+
   tol_lines <- c(
     "",
     "[vcov]",
@@ -106,6 +153,7 @@ write_expected <- function(dir, family, formula, fit, case, ranef = NULL) {
     "atol_aic = 1e-3"
   )
   if (!is.null(ranef)) tol_lines <- c(tol_lines, "rtol_ranef = 5e-2", "atol_ranef = 5e-2")
+  tol_lines <- c(tol_lines, preserved_tol)
   writeLines(tol_lines, con)
   if (!is.null(ranef)) {
     writeLines(c(
@@ -135,10 +183,13 @@ write_meta <- function(dir, r_call, seed, note_extra = "") {
 write_case <- function(slug, seed, data, formula, family_label, r_call, fit,
                        note_extra = "", ranef = NULL) {
   dir <- file.path(repo_root(), "test", "parity", "fixtures", slug)
+  ## Read hand-added [tol] overrides BEFORE the unlink below wipes the directory.
+  preserved_tol <- read_preserved_tol(file.path(dir, "expected.toml"))
   if (dir.exists(dir)) unlink(dir, recursive = TRUE)
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   write.csv(data, file.path(dir, "data.csv"), row.names = FALSE)
-  write_expected(dir, family_label, formula, fit, slug, ranef = ranef)
+  write_expected(dir, family_label, formula, fit, slug, ranef = ranef,
+                 preserved_tol = preserved_tol)
   write_meta(dir, r_call, seed, note_extra)
 }
 
