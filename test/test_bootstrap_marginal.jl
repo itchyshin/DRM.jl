@@ -151,3 +151,57 @@ end
     f = drm(bf(@formula(y ~ 1 + x)), Poisson(); data = (; y, x))
     @test is_converged(f) == f.converged      # non-Gaussian: guard is a no-op
 end
+
+@testset "#459 the marginal simulator covers ordinary (1|g) and relmat, not only phylo" begin
+    # The first version of the fix handled ONLY structured phylo and returned
+    # `nothing` for everything else -- which meant the bootstrap silently fell back
+    # to the conditional simulator, i.e. straight back to the bug, for ordinary
+    # `(1 | g)` and for `relmat`/`animal`. Silent fallback is the failure mode this
+    # whole slice exists to remove, so both routes are pinned here.
+    #
+    # These also pin the reason the fix needed `predict`. Whether `fit.means[:mu]`
+    # is conditional or marginal varies BY ROUTE and does not track whether BLUPs
+    # exist (measured: phylo = BLUPs + conditional; relmat = no BLUPs + marginal;
+    # ordinary = BLUPs + marginal). Both plausible rules were tried and both were
+    # wrong -- the ordinary route came back at ratio 1.46, the sqrt(2) signature of
+    # counting the random effect twice.
+
+    roundtrip(sim, refit, grp, sdhat, reps = 6) = begin
+        rng = MersenneTwister(3)
+        median([re_sd(refit(sim(rng)))[grp] for _ in 1:reps]) / sdhat
+    end
+
+    # --- ordinary (1 | g): independent intercepts, covariance = I
+    Random.seed!(31)
+    G = 40; m = 5; n = G * m
+    g = repeat(1:G, inner = m); x = randn(n)
+    y = 0.2 .+ 0.5 .* x .+ (0.9 .* randn(G))[g] .+ 0.4 .* randn(n)
+    d = (; y, x, g)
+    f1 = drm(bf(@formula(y ~ x + (1 | g)), @formula(sigma ~ 1)), Gaussian(); data = d)
+    s1 = DRM._marginal_simulator(f1, d)
+    @test s1 !== nothing
+    r1 = roundtrip(s1,
+                   ys -> drm(bf(@formula(y ~ x + (1 | g)), @formula(sigma ~ 1)),
+                             Gaussian(); data = (; y = ys, x, g)),
+                   :g, re_sd(f1)[:g])
+    @test 0.75 < r1 < 1.3
+
+    # --- relmat(1 | id): user-supplied K, used as given
+    Random.seed!(909)
+    G3 = 40; m3 = 4; n3 = G3 * m3
+    A = randn(G3, 8); K3 = A * A'
+    dd = sqrt.(diag(K3)); K3 = K3 ./ (dd * dd'); K3 += 1e-6I
+    id = repeat(1:G3, inner = m3); x3 = randn(n3)
+    u3 = 0.8 .* (cholesky(Symmetric(K3)).L * randn(G3))
+    y3 = 0.2 .+ 0.5 .* x3 .+ u3[id] .+ 0.4 .* randn(n3)
+    d3 = (; y = y3, x = x3, id)
+    f3 = drm(bf(@formula(y ~ x + relmat(1 | id)), @formula(sigma ~ 1)),
+             Gaussian(); data = d3, K = K3)
+    s3 = DRM._marginal_simulator(f3, d3; K = K3)
+    @test s3 !== nothing
+    r3 = roundtrip(s3,
+                   ys -> drm(bf(@formula(y ~ x + relmat(1 | id)), @formula(sigma ~ 1)),
+                             Gaussian(); data = (; y = ys, x = x3, id), K = K3),
+                   :id, re_sd(f3)[:id])
+    @test 0.75 < r3 < 1.3
+end

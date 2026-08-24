@@ -1172,47 +1172,75 @@ function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothi
     rhs = Dict(fit.formula.forms)
     haskey(rhs, :mu) || return nothing
     _, re, _, structured = _split_ranef(rhs[:mu])
-    # No random effect on the mean: conditional == marginal, nothing to fix.
+    # No random effect on the mean: conditional and marginal coincide, and the
+    # plain `simulate` is already correct. Nothing to build.
     (isempty(re) && structured === nothing) && return nothing
-    # Only the single structured/ordinary random intercept on the mean is handled
-    # here. Anything else must NOT silently fall back to conditional simulation --
-    # that is precisely the failure this function exists to remove -- so signal it.
-    structured === nothing && return nothing            # ordinary (1|g): handled below only if BLUPs exist
-    grp = structured[2]
-    kind = structured[1]
-    hasproperty(data, grp) || return nothing
-    gidx, G = _group_index(getproperty(data, grp))
-    sds = re_sd(fit)
-    blups = ranef(fit)
-    (sds isa AbstractDict && haskey(sds, grp)) || return nothing
-    (blups isa AbstractDict && haskey(blups, grp)) || return nothing
-    sd_u = Float64(sds[grp])
-    bhat = Vector{Float64}(blups[grp])
-    length(bhat) == G || return nothing
-    # SCALE TRAP -- verified by round-trip, not assumed. `re_sd(fit)` for a phylo
-    # term is defined against the RAW phylogenetic covariance
-    # `sigma_phy_dense(phy; sigma2_phy = 1)`, whose diagonal is the tree height,
-    # NOT against the normalised correlation that `_resolve_structured_matrix`
-    # returns (`_phylo_correlation` divides by sqrt(diag)). Drawing with the
-    # correlation matrix therefore under-disperses the random effects by
-    # sqrt(tree height) and the bootstrap SD comes back systematically shrunk.
-    #
-    # Measured on a height-1.8 tree: simulating at the fitted sd and refitting
-    # returned 0.719x the fitted value with the correlation matrix, and 0.974x
-    # with the raw covariance. The raw covariance is the one that round-trips.
-    # (relmat/animal are supplied by the user and used as-is, so for those the
-    # resolver's matrix is already the right one.)
-    Kg = if kind === :phylo
-        phy = tree isa AbstractString ? augmented_phy(tree) : tree
-        sigma_phy_dense(phy; σ²_phy = 1.0)
+
+    # Which grouping factor, and what covariance does its random effect have?
+    grp, Kg = if structured !== nothing
+        g = structured[2]
+        hasproperty(data, g) || return nothing
+        _, G0 = _group_index(getproperty(data, g))
+        # SCALE TRAP -- verified by round-trip, not assumed. `re_sd` for a PHYLO term
+        # is defined against the RAW covariance `sigma_phy_dense(phy)`, whose diagonal
+        # is the tree height, NOT the normalised correlation that
+        # `_resolve_structured_matrix` returns. Drawing with the correlation matrix
+        # under-disperses by sqrt(height): measured round-trip ratios across trees of
+        # height 0.85/1.7/5.667 were 1.116/0.699/0.374 with the correlation matrix and
+        # 1.032/0.917/0.917 with the raw one. relmat/animal are supplied by the user
+        # and used as given, so there the resolver's matrix is already correct.
+        if structured[1] === :phylo
+            phy = tree isa AbstractString ? augmented_phy(tree) : tree
+            phy === nothing && return nothing
+            (g, sigma_phy_dense(phy; σ²_phy = 1.0))
+        else
+            (g, _resolve_structured_matrix(structured[1], g, G0;
+                                           K=K, A=A, tree=tree, coords=coords))
+        end
     else
-        _resolve_structured_matrix(kind, grp, G; K=K, A=A, tree=tree, coords=coords)
+        # Ordinary `(1 | g)`: independent random intercepts, so the covariance is I.
+        length(re) == 1 || return nothing
+        g = re[1][2]
+        hasproperty(data, g) || return nothing
+        _, G0 = _group_index(getproperty(data, g))
+        (g, Matrix{Float64}(LinearAlgebra.I, G0, G0))
     end
+
+    gidx, G = _group_index(getproperty(data, grp))
     size(Kg) == (G, G) || return nothing
+    sds = re_sd(fit)
+    (sds isa AbstractDict && haskey(sds, grp)) || return nothing
+    sd_u = Float64(sds[grp])
     L = cholesky(Symmetric(Matrix{Float64}(Kg))).L
-    # Strip the fitted BLUPs back off to recover the FIXED-effect mean. Redrawing
-    # on top of the conditional mean would double-count the random effects.
-    mu_fixed = Vector{Float64}(fit.means[:mu]) .- bhat[gidx]
+
+    # The FIXED-effect mean comes from `predict(fit, data)`, not from unpicking
+    # `fit.means[:mu]`.
+    #
+    # Whether `means[:mu]` is conditional or marginal depends on the fitting route,
+    # and there is NO usable rule -- measured 2026-08-24 across three routes:
+    #
+    #   route            ranef has BLUPs   means[:mu] is
+    #   phylo(1|g)       yes               CONDITIONAL  (|means - Xb| = 1.53)
+    #   relmat(1|g)      no                MARGINAL     (|means - Xb| = 0)
+    #   ordinary (1|g)   yes               MARGINAL     (|means - Xb| = 0)
+    #
+    # So BLUP presence predicts nothing. Both plausible rules were tried and both
+    # were wrong: subtracting whenever BLUPs exist double-REMOVES the random effect
+    # on the ordinary route (round-trip ratio 1.46 ~ the sqrt(2) signature of
+    # counting it twice), and never subtracting double-COUNTS it on the phylo route.
+    #
+    # `predict(fit, data)` returns the fixed-effect prediction on ALL THREE routes
+    # (measured: |predict - Xb| = 0 exactly in each), so it answers the question
+    # directly instead of inferring it. Fall back to `means[:mu]` only if `predict`
+    # is unavailable, and refuse rather than guess if that is also unusable.
+    mu_fixed = try
+        v = Vector{Float64}(predict(fit, data))
+        length(v) == length(fit.means[:mu]) ? v : nothing
+    catch
+        nothing
+    end
+    mu_fixed === nothing && return nothing
+
     sigma = Vector{Float64}(_scale_vector(fit, :sigma))
     n = length(mu_fixed)
     return function (rng)
