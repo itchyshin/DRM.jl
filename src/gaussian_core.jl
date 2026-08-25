@@ -1707,19 +1707,22 @@ Gaussian mean `(1 | g)` REML, this value is the **normalised** Patterson–
 Thompson restricted log-likelihood — the same convention lme4, glmmTMB and TMB
 report, so it is directly comparable to `logLik()` from those packages.
 
-For the **bivariate q=2 and q=4 Laplace REML routes** (`src/reml_q2.jl`,
+The **bivariate q=2 and q=4 Laplace REML routes** (`src/reml_q2.jl`,
 `src/reml_q4.jl` — reached via structured/phylo bivariate fits with
-`method = :REML`), `reml_loglik` is instead the **unnormalised** restricted
-log-likelihood: it omits the `(n_β/2)·log(2π)` constant that comes from
-integrating the flat prior over the `n_β` marginalised fixed effects. On these
-routes, `reml_loglik(fit) + (n_β/2)·log(2π) ≈` the REML log-likelihood TMB/
-drmTMB would report for the same fit — the two are **not** directly comparable
-without that shift. (For the q=4 phylo layout with `n_β = 6`, the shift is
-`3·log(2π) ≈ 5.51` — large enough to look like a real disagreement between
-engines rather than a labelling difference.) See `fit_q4_reml`'s docstring in
-`src/reml_q4.jl` for the derivation; this is documented rather than changed
-because normalising would move a published number (a maintainer decision, not
-a lane's).
+`method = :REML`) now report the **same normalised scale** (#477, 2026-08-25).
+
+They previously omitted the `(n_β/2)·log(2π)` constant while these univariate
+routes included it, so `reml_loglik(fit)` meant different things depending on
+which route produced the fit. For the q=4 phylo layout with `n_β = 6` the gap was
+`3·log(2π) ≈ 5.51` — large enough to read as a real disagreement between engines
+rather than a labelling difference, which is exactly how it misled this project
+once (see the corrected note in
+`test/parity/q4-reml/biv-q4-phylo-reml/expected.toml`).
+
+Every REML route in DRM.jl now reports the normalised form, matching lme4,
+glmmTMB, TMB and drmTMB. See `fit_q4_reml`'s docstring in `src/reml_q4.jl` for
+the derivation and for the evidence: the q=4 parity gate's `atol_loglik` fell
+from 5.5436 to 0.03 once the constant was no longer being absorbed.
 """
 reml_loglik(fit::DrmFit) = fit.reml_loglik
 

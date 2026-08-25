@@ -197,13 +197,15 @@ support.
     engine (`test/test_reml_q4_allaxes.jl`). σ-RE, random slopes, multi-ranef,
     and non-Gaussian REML stay rejected. This is not AI-REML.
 
-    **Normalisation convention (#477):** the bivariate q=2/q=4 Laplace REML
-    routes (`src/reml_q2.jl`, `src/reml_q4.jl`) report the **unnormalised**
-    Patterson–Thompson restricted log-likelihood — it differs from lme4's/
-    glmmTMB's/TMB's **normalised** `logLik()` by `(n_β/2)·log(2π)`, where `n_β`
-    is the number of marginalised fixed effects. The fixed-effect location–
-    scale and mean `(1 | g)` REML routes already match the normalised
-    convention. See [`reml_loglik`](@ref) for the exact conversion.
+    **Normalisation convention (#477, resolved 2026-08-25):** every REML route
+    in DRM.jl now reports the **normalised** Patterson–Thompson restricted
+    log-likelihood, so `reml_loglik` is directly comparable to lme4's,
+    glmmTMB's, TMB's and drmTMB's `logLik()`. The bivariate q=2/q=4 Laplace
+    routes previously omitted the `(n_β/2)·log(2π)` constant while the
+    fixed-effect location–scale and mean `(1 | g)` routes included it, so one
+    package reported two scales under one name. Evidence: the q=4 parity gate's
+    `atol_loglik` fell from **5.5436 to 0.03** once the constant was no longer
+    being absorbed by the tolerance.
 
 ## Model comparison & accessors
 

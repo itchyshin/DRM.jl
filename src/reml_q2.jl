@@ -185,13 +185,19 @@ convention in `_fit_bivariate_q4_structured`).
 
 # Normalisation convention (#477)
 
-Like `reml_q4.jl`'s `fit_q4_reml`, `reml_loglik` here is the **unnormalised**
-Patterson–Thompson restricted log-likelihood (`ml_ll - 0.5*logdet(S)`) — it
-omits the `(n_β/2)·log(2π)` that lme4/glmmTMB/TMB add when integrating the
-flat prior over the marginalised fixed effects. Here `n_β = 2` (`beta_mu1` +
-`beta_mu2`; `beta_sigma1`/`beta_sigma2`/`beta_rho12` stay outer and are never
-marginalised). See `fit_q4_reml`'s docstring for the full explanation and the
-conversion.
+Like `reml_q4.jl`'s `fit_q4_reml`, `reml_loglik` here reports the
+**normalised** Patterson–Thompson restricted log-likelihood: the raw objective
+`ml_ll - 0.5*logdet(S)` plus the `(n_β/2)·log(2π)` that lme4/glmmTMB/TMB add
+when integrating the flat prior over the marginalised fixed effects. Here
+`n_β = length(β̂)` (`beta_mu1` + `beta_mu2`; `beta_sigma1`/`beta_sigma2`/
+`beta_rho12` stay outer and are never marginalised, and `rho12` comes from `D̂`
+rather than from `β̂`, so it is correctly not counted).
+
+**Changed 2026-08-25 (#477)**, together with the q=4 route — see
+`fit_q4_reml`'s docstring for the derivation and the evidence. Note this route
+has **no parity fixture of its own**: it is verified only by sharing the q=4
+route's arithmetic, which the q=4 gate confirmed by tightening from 5.5436 to
+0.03. A q=2 REML parity fixture would be the way to check it directly.
 """
 function fit_coevolution_q2_reml(prob::CoevoProblem, Q_cond::SparseMatrixCSC;
                                  β0 = nothing, Λ0 = nothing, σ0 = nothing,
@@ -239,8 +245,13 @@ function fit_coevolution_q2_reml(prob::CoevoProblem, Q_cond::SparseMatrixCSC;
     σ̂ = [sqrt(D̂[1, 1]), sqrt(D̂[2, 2])]
     ρ̂ = D̂[1, 2] / (σ̂[1] * σ̂[2])
 
+    # #477: report the NORMALISED restricted log-likelihood, matching the q=4
+    # route, DRM.jl's univariate REML routes, and lme4/glmmTMB/TMB. `β̂` holds
+    # exactly the marginalised fixed effects (`nbeta = k * q` above); `rho12`
+    # comes from `D̂`, not from `β̂`, so it is correctly not counted.
+    reml_ll_norm = _reml_normalise(reml_ll, length(β̂))
     return (; β = β̂, Λ = Λ̂, residual_cov = D̂, σ_res = σ̂, rho12 = ρ̂,
-            reml_loglik = reml_ll, ml_loglik = ml_ll, loglik = reml_ll,
+            reml_loglik = reml_ll_norm, ml_loglik = ml_ll, loglik = reml_ll_norm,
             converged = Optim.converged(res), iterations = Optim.iterations(res),
             u_hat = û)
 end

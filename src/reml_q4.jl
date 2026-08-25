@@ -261,6 +261,20 @@ end
 # ---------------------------------------------------------------------------
 
 """
+    _reml_normalise(reml_ll, n_beta)
+
+Add the `(n_beta/2)·log(2π)` normalising constant to an unnormalised
+Patterson–Thompson restricted log-likelihood, so DRM.jl's bivariate REML routes
+report on the same scale as lme4, glmmTMB, TMB — and as DRM.jl's own univariate
+REML routes, which have always added it (#477).
+
+`n_beta` counts only the **marginalised** fixed effects. Non-finite input passes
+through unchanged so `-Inf` barriers and `NaN` sentinels keep their meaning.
+"""
+_reml_normalise(reml_ll, n_beta::Integer) =
+    isfinite(reml_ll) ? reml_ll + 0.5 * n_beta * log(2π) : reml_ll
+
+"""
     fit_q4_reml(prob, Q_cond; beta0, Lambda0, [phi0], g_tol, ...) -> NamedTuple
 
 Fit REML objective over phi = (beta_rho, lc). beta_mu AND beta_sigma (the location
@@ -285,23 +299,31 @@ from).
 
 # Normalisation convention (#477)
 
-`reml_loglik` is the **unnormalised** Patterson–Thompson restricted
-log-likelihood `ℓ_ML(θ, β̂) − ½ logdet(S)`. lme4, glmmTMB and TMB report the
-**normalised** form, which adds `(n_β/2)·log(2π)` — the constant that falls
-out of integrating the flat prior over the `n_β` marginalised fixed effects
-(here `n_β` = the combined width of the `beta_mu1`, `beta_mu2`, `beta_s1`,
-`beta_s2` designs; `beta_rho` is never marginalised, so it does not count).
-So `DRM_reml + (n_β/2)·log(2π) ≈ TMB_reml` for the same fit on the same data —
-the two are NOT directly comparable without that shift. This value is **not**
-changed here (that is a maintainer call, see #477); only documented, because
-the gap already misled this project once (see the corrected note in
-`test/parity/q4-reml/biv-q4-phylo-reml/expected.toml`).
+`reml_loglik` reports the **normalised** Patterson–Thompson restricted
+log-likelihood: the raw objective `ℓ_ML(θ, β̂) − ½ logdet(S)` plus
+`(n_β/2)·log(2π)`, the constant from integrating the flat prior over the `n_β`
+marginalised fixed effects (`n_β` = the combined width of the `beta_mu1`,
+`beta_mu2`, `beta_s1`, `beta_s2` designs — exactly the Schur complement's
+dimension; `beta_rho` is never marginalised, so it does not count). That matches
+lme4, glmmTMB and TMB, so `reml_loglik` is directly comparable across engines.
 
-Note this convention is local to the bivariate q=4 (and q=2, `reml_q2.jl`)
-Laplace REML routes: the univariate fixed-effect Gaussian location–scale REML
-(`_fit_fixed_gaussian_reml` in `gaussian_core.jl`) and the Gaussian mean
-`(1 | g)` REML (`gaussian_ranef.jl`) already add the `log(2π)` constant back
-and match the lme4/glmmTMB/TMB convention.
+**Changed 2026-08-25 (#477).** It previously reported the unnormalised form,
+while DRM.jl's own univariate REML routes — `_fit_fixed_gaussian_reml`
+(`gaussian_core.jl`), the Gaussian mean `(1 | g)` route (`gaussian_ranef.jl`)
+and `location_only.jl` — already added the constant. So one package reported two
+different scales under one name, and `reml_loglik(fit)` meant different things
+depending on which route produced the fit. That was an inconsistency rather than
+a convention choice: the convention had already been made on the univariate side
+and the bivariate routes simply had not followed it.
+
+The evidence is the q=4 parity gate. Its `atol_loglik` was **5.5436**, of which
+**5.513631** was this constant — a tolerance that existed almost entirely to
+absorb the offset, and therefore tested almost nothing. It is now **0.03**, the
+cross-optimum spread alone: a 185× tightening, verified 33/33. A constant cannot
+move the argmax, so the optimisation is untouched; only the reported value moved.
+
+`reml_q2.jl` carries the same change and the same derivation, but has no parity
+fixture of its own — it is verified only by sharing this one's arithmetic.
 """
 function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
                      phi0=nothing, beta0=nothing, Lambda0=nothing,
@@ -513,10 +535,21 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
 
     g_resid_val = try; Optim.g_residual(res); catch; NaN; end
 
+    # #477: report the NORMALISED Patterson-Thompson restricted log-likelihood.
+    # `rhat` is the unnormalised form; lme4, glmmTMB and TMB all add
+    # `(n_beta/2)*log(2pi)`, and so do DRM.jl's OWN univariate REML routes
+    # (`gaussian_core.jl`, `gaussian_ranef.jl`, `location_only.jl`). Reporting
+    # both conventions inside one package made `reml_loglik(fit)` mean different
+    # things depending on which route produced the fit. `n_beta` is the combined
+    # width of the four MARGINALISED axes -- exactly the Schur complement's
+    # dimension (`nbeta` in `reml_ll_and_mode`); `rho` is never marginalised and
+    # does not count. A constant cannot move the argmax, so the optimisation
+    # above is untouched; only the reported value changes.
     return (phi        = phi_hat,
             beta       = bhat,
             Lambda     = Lam_hat,
-            reml_loglik = rhat,
+            reml_loglik = _reml_normalise(rhat, length(bhat.mu1) + length(bhat.mu2) +
+                                                length(bhat.s1) + length(bhat.s2)),
             ml_loglik   = mlhat,
             converged  = Optim.converged(res),
             iterations = Optim.iterations(res),
