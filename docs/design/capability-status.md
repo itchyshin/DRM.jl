@@ -133,9 +133,9 @@ multi-ranef, and structured / phylo / meta stay `ArgumentError`), and
 default. This is not AI-REML, not a TSV flip, and not “parity complete.”
 
 `REML bivariate phylogenetic location-scale (q4, all axes)` is `implemented`:
-`src/reml_q4.jl` is included in the module (`src/DRM.jl:38`) and
+`src/reml_q4.jl` is included in the module (`src/DRM.jl:55`) and
 `test/test_reml_q4_allaxes.jl` is in the default suite
-(`test/runtests.jl:230`), asserting the restricted correction reaches all four
+(`test/runtests.jl:298`), asserting the restricted correction reaches all four
 axes (mu1, mu2, sigma1, sigma2; issue #18 regression). **This corrects
 `docs/src/capabilities.md`**, which still describes `reml_q4` as
 "present in `src/experimental/` only; not in the `DRM.jl` include list" --
@@ -144,9 +144,9 @@ shows `src/DRM.jl`'s include list was touched after the audit page's last
 commit.
 
 `Chi-bar-square boundary LRT p-value` is `implemented`: `src/chibar.jl` is
-included (`src/DRM.jl:99`), exports `chibar_pvalue`/`lrt_boundary`
-(`src/DRM.jl:125`), and `test/test_chibar.jl` is in the default suite
-(`test/runtests.jl:251`). **This also corrects `docs/src/capabilities.md`**,
+included (`src/DRM.jl:128`), exports `chibar_pvalue`/`lrt_boundary`
+(`src/DRM.jl:160`), and `test/test_chibar.jl` is in the default suite
+(`test/runtests.jl:330`). **This also corrects `docs/src/capabilities.md`**,
 which lists chi-bar-square boundary inference as "Absent -- no
 implementation."
 
@@ -154,7 +154,7 @@ implementation."
 audit, PR #449 / commit `93c3db6b`, merged 2026-08-18): `src/aghq_1d.jl` is
 included at `src/DRM.jl:74` and wires a public front end on `drm()`
 (`marginal = :AGHQ`, Poisson `(1 | g)` only — `src/poisson.jl:35-37,176-177`).
-`test/test_aghq_1d.jl` is in the default suite (`test/runtests.jl:177`) and
+`test/test_aghq_1d.jl` is in the default suite (`test/runtests.jl:178`) and
 exercises the quadrature kernel, the public fit path, and the fail-loud
 guards on every unsupported structure (phylo, crossed, correlated slope,
 other families, `:REML`, `associate_pairs`). This corrects the prior
@@ -175,7 +175,7 @@ NegBinomial2 / Gamma / Beta `(1 | g)` (`src/poisson.jl:26`,
 `src/beta.jl:35`), each with its own registered test
 (`test/test_va_poisson_elbo.jl`, `test/test_va_frontend_families.jl`,
 `test/test_variational_binomial.jl`, `test/test_variational_nb2.jl`,
-`test/test_variational_gamma.jl`; `test/runtests.jl:170-176`). Per
+`test/test_variational_gamma.jl`; `test/runtests.jl:171-177`). Per
 `docs/dev-log/check-log.d/2026-08-09-136-va-rung2-3.md`, the project's own
 guide banner was corrected from "Planned" to "Experimental" for this reason,
 and that entry explicitly notes "Does not close #136." This audit leaves the
@@ -211,7 +211,7 @@ GHQ across two different families) is included at `src/DRM.jl:101`, and
 reaches it instead of hand-built design matrices. Tests are real and
 registered in the default suite: `test/test_mixed_family.jl` (Gaussian x
 Poisson and Gaussian x Gaussian recovery-style tests), `test/test_mixed_family_postfit.jl`,
-and `test/test_cross_family_formula.jl` (`test/runtests.jl:281,350,352`). By
+and `test/test_cross_family_formula.jl` (`test/runtests.jl:282,351,353`). By
 this file's literal ladder (source + a registered test) that reads as
 qualifying for `implemented`. It stays `missing` on this audit because the
 PR that landed the formula front end recorded an explicit non-promotion
@@ -226,7 +226,7 @@ owner rather than flipping it unilaterally (detail in the evidence file).
 two citation corrections. First, `src/missing_data.jl` is included at
 `src/DRM.jl:131`, not `:101` (`:101` is `mixed_family.jl`, above). Second,
 "explicit listwise (complete-case) deletion only" undersells what exists:
-`_fit_observed_response_rows` (`src/gaussian_core.jl:717`) is a shared helper
+`_fit_observed_response_rows` (`src/gaussian_core.jl:740`) is a shared helper
 used by twelve family files (`beta.jl`, `betabinomial.jl`, `binomial.jl`,
 `cumulative.jl`, `gamma.jl`, `gaussian_core.jl`, `lognormal.jl`,
 `negbinomial.jl`, `poisson.jl`, `tweedie.jl`, `student.jl`,
