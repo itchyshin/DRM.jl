@@ -88,7 +88,7 @@ rejection, so it is written down reproducibly rather than asserted.
 ```r
 library(drmTMB); library(ape)
 tr <- compute.brlen(stree(8, type = "balanced"), method = "Grafen")
-tr$tip.label <- paste0("s", 1:8)
+tr\$tip.label <- paste0("s", 1:8)
 d <- data.frame(y1 = rnorm(40), y2 = rnorm(40), x = rnorm(40),
                 sp = factor(rep(paste0("s", 1:8), each = 5)))
 # fixed effects only -> ACCEPTED
