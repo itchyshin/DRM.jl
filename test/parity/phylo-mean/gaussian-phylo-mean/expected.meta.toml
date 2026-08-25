@@ -1,8 +1,10 @@
 drmtmb_version = "0.7.0"
-generated_on = "2026-08-17"
+drmtmb_built = "R 4.6.0; aarch64-apple-darwin23; 2026-08-15 01:49:56 UTC; unix"
+generated_on = "2026-08-24"
 r_call = "drmTMB(bf(y ~ x + phylo(1 | species, tree = tree), sigma ~ 1), family = gaussian(), data = dat, engine = \"tmb\")"
 seed = 111
 n_tip = 18
 n_each = 1
 with_x = true
-note = "Generated outputs only; no drmTMB source vendored. Workflow G fixtures remain 0.6.0 / ML / no tree. This cell is 0.7.0 ML + tree, outside the fixtures/ glob. Not a TSV supported flip. Not the last fixture-gap. ML, univariate, sigma ~ 1. Tight ML tols (not #434 atol_loglik=6). Live Route A clone unless a recorded reseed was required."
+tree_height = 1.6843125150460203e+00
+note = "Generated outputs only; no drmTMB source vendored. Workflow G fixtures remain 0.6.0 / ML / no tree. This cell is 0.7.0 ML + tree, outside the fixtures/ glob. Not a TSV supported flip. Not the last fixture-gap. ML, univariate, sigma ~ 1. Tight ML tols (not #434 atol_loglik=6). Live Route A clone unless a recorded reseed was required. re_sd added (promotion-gap fix): the phylo SD is now a compared quantity. At seed 111 the phylo variance component is boundary-adjacent -- confirmed by direct nll evaluation, the profiled negative log-likelihood changes by < 1e-4 for log_sd_phylo over [-30, -10], so the exact reported value is dominated by each engine's own optimizer stopping tolerance, not a tightly recoverable quantity. Both engines agree the phylo signal is negligible; the sqrt(tree_height) SCALE CONVENTION itself was verified separately by a 3-height round trip (tree rescaled to 0.5/1.0/3.0) documented in test_parity_gaussian_phylo_mean.jl, not by this near-zero fixture alone."

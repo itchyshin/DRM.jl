@@ -11,6 +11,16 @@ n = 18
 "mu_x" = 3.1894321052325258e-01
 "sigma_(Intercept)" = -6.8181178054622016e-01
 
+# The row's DEFINING quantity: the fitted phylogenetic SD, on drmTMB's
+# CORRELATION-SCALE convention (ape::vcv(tree, corr = TRUE) standardises the
+# tip variance to 1, independent of the tree's raw branch-length height).
+# DRM.jl's re_sd(fit)[:species] is on the RAW branch-length scale instead
+# (tip variance = tree_height); the two are related by
+#   species_corr_scale == re_sd(fit)[:species] * sqrt(tree_height)
+# tree_height is recorded in expected.meta.toml.
+[re_sd]
+species_corr_scale = 6.6665393098647662e-06
+
 [status]
 converged = true
 pdHess = true
@@ -20,3 +30,6 @@ interval_status = "wald_unavailable"
 atol_loglik = 1e-6
 atol_coef = 1e-5
 rtol_coef = 1e-5
+# re_sd is a boundary-adjacent variance-component estimate (see note in
+# expected.meta.toml): a coefficient-tight tolerance is not meaningful here.
+atol_re_sd = 1e-4
