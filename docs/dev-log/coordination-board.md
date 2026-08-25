@@ -4,7 +4,52 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
-## Active-Lane-Split (2026-08-24 — parity catch-up MERGED; lane awaiting a new G0)
+## Active-Lane-Split (2026-08-24 — G0 NAMED: catch up with drmTMB, then complete the package)
+
+_**START HERE:** this entry. **Lane `feat/drmtmb-catchup`** (Claude Code), branched off `origin/main`
+@ **`5de340fe`**. The previous entry's "lane is IDLE pending an owner-named G0" is **no longer true** —
+Shinichi named the G0 on 2026-08-24: **catch up with drmTMB, then complete the package.**_
+
+_| **THE drmTMB FENCE IS SETTLED, AND RECORDED.** The previous entry says *"Do not start #460 — blocked
+by CRAN quiesce"*, and that #460 line is **SUPERSEDED**. Shinichi was asked directly, with the stricter
+"DRM.jl only" reading offered as a real alternative, and chose the D-164 reading: **both repos are in
+scope.** Recorded — not merely asserted — as a clarification block inside **D-164** in
+`~/shinichi-brain/memory/DECISIONS.md` @ **`ed5132b`** (the vault is local-only per D-37, so a local
+commit IS landed state). It licenses reversible drmTMB work: branches, PRs, tests, and edits to
+`inst/extdata/julia-capabilities.tsv`._
+
+_| **WHAT THE FENCE STILL FORBIDS, undisturbed:** no `submit_cran()`, no upload, **no release tag, no
+announcement**. D-164's hold on **RELEASE** stands. drmTMB work lands as **branch + PR and is NOT merged
+to drmTMB `main`** without Shinichi's say-so._
+
+_| **CLAIMED BY THIS LANE — do not start these:** [#460](https://github.com/itchyshin/DRM.jl/issues/460)
+(bridge CI routing; its stated prerequisite #459 is already closed, so it is unblocked) ·
+[#465](https://github.com/itchyshin/DRM.jl/issues/465) 9 orphan test files ·
+[#466](https://github.com/itchyshin/DRM.jl/issues/466) `niterations` ·
+[#467](https://github.com/itchyshin/DRM.jl/issues/467) bridge formula constructs ·
+[#468](https://github.com/itchyshin/DRM.jl/issues/468) interval-coverage **pre-run** (D-139 gate).
+Also in scope: bivariate `:REML`, coupled phylo REML, structured markers for bivariate Student/LogNormal,
+exact REML gradient (#11). The three "candidates" the previous handover offered a future session are
+**now claimed here** — anyone reading cold should come to this lane, not start them._
+
+_| **COMPUTE (owner-directed): Totoro AND DRAC.** Totoro for pilot cells (≤150 cores, D-143 binding;
+`OPENBLAS_NUM_THREADS=1`); DRAC for the wide multi-seed grid via SLURM **job arrays**, one seed per
+`$SLURM_ARRAY_TASK_ID` — never on a login node, `sbatch`/`salloc` with `--time`/`--account`, depot and
+R library on `/project` (never `/scratch`, purged ~60 d). Attach via the existing `~/.ssh/cm-*` sockets;
+never trigger Duo (D-64). **D-139 binds: #468 stops for a go/no-go before any grid runs.**_
+
+_| **STILL TRUE, unchanged:** no capability row is `supported` (6 partial · 4 experimental · 1
+deliberately unsupported); **both `interval_status != "coverage_claimed"` fences intact** — agreement
+between two engines is not calibration against truth, and only the coverage campaign can earn their
+removal. #420/#406 remain OPEN (DIRTY) — **do not rebase**. #49, #136 PARKED. D-111 OFF.
+`.codex/agents/shannon-coordinator.toml` PROTECTED — never stage._
+
+_| **CORRECTION to the entry below:** it says *"drmTMB was NOT edited (dirty-set hash verified
+unchanged)"* — the **hash pin `0c7636897a…` is now stale**. drmTMB's tree is **CLEAN (0 dirty files)**,
+not 102; a Codex lane committed that work to `codex/rescue-claude-handover-freshness-0718-20260824`.
+Independently verified by both lanes._
+
+## Active-Lane-Split (2026-08-24 — parity catch-up MERGED) — SUPERSEDED by the entry above
 
 _**START HERE:** [`docs/dev-log/handover/2026-08-24-claude-handover-parity-merged.md`](handover/2026-08-24-claude-handover-parity-merged.md).
 `origin/main` @ **`acf3d4fb3`** — merge of [#458](https://github.com/itchyshin/DRM.jl/pull/458)
