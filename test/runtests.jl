@@ -166,6 +166,7 @@ include("test_binomial.jl")
 include("test_binomial_re.jl")
 include("test_summary.jl")
 include("test_bootstrap_nongaussian.jl")
+include("test_bootstrap_nongaussian_structured.jl")   # #479: K/A/tree threaded through refit
 include("test_aic_bic.jl")
 include("test_vcov_guard.jl")
 include("test_variational.jl")
