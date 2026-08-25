@@ -88,16 +88,14 @@ _within(a, b, rtol, atol) = abs(a - b) <= max(atol, rtol * max(abs(a), abs(b)))
     @test estimation_method(fit) === :REML
     @test isfinite(reml_loglik(fit))
     @test isfinite(loglik(fit))
-    # #484: drm()'s public REML path now auto-detects and recovers from the
-    # zero-accepted-steps stall this cell used to hit at the ML warm start
-    # (a starting-value problem, not slow convergence), so the RUNTIME flag
-    # has moved past this fixture's frozen `status.julia_converged = false`.
-    # That field is deliberately left unchanged here (re-deriving the fixture
-    # itself, and its [tol], is a separate follow-up per #484's acceptance —
-    # not done in the same change that lands the fix it depends on), so pin
-    # the new outcome directly rather than against the now-stale TOML field.
-    # See test/test_q4_reml_warm_restart.jl for the g_residual < g_tol check.
-    @test is_converged(fit) == true
+    # #484 landed the automatic warm restart that lets drm()'s public REML
+    # route converge on this cell; the follow-up fixture re-derivation (same
+    # day) re-measured `status.julia_converged` so the TOML field is now an
+    # accurate statement about the public route. Read it directly, like every
+    # other [status] field checked above, instead of pinning `true` inline.
+    # See test/test_q4_reml_warm_restart.jl for the engine-level
+    # g_residual < g_tol check.
+    @test is_converged(fit) == expected["status"]["julia_converged"]
 
     atol_ll = Float64(get(expected["tol"], "atol_loglik", 1e-3))
     atol_c = Float64(get(expected["tol"], "atol_coef", 1e-3))
