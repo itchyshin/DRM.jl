@@ -32,11 +32,24 @@ file; treat it as historical.
      flags it as `FOREIGN LANE ACTIVE (direct-to-main)` only because every commit here carries
      Shinichi's identity and the tool cannot tell one author from another.
    - **Anything newer than `acf3d4fb3` is the other lane, and is real.** Do not dismiss it.
-4. **Do NOT edit `/Users/z3437171/Dropbox/Github Local/drmTMB`.** It is in CRAN prepare-only
-   quiesce and carries **102 pre-existing uncommitted files** on branch
-   `claude/handover-freshness-0718` from a prior lane. Its dirty-set hash was pinned and verified
-   unchanged throughout this session: `0c7636897a95929a…`. Read it (`git show origin/main:<path>`),
-   never write it.
+4. **drmTMB — CORRECTED 2026-08-24 ~24:00, read this carefully; the original text was wrong
+   in one part and is DISPUTED in another.**
+
+   - **VERIFIED FACT (measured, corrected):** drmTMB is now **CLEAN — 0 dirty files.** The 102
+     uncommitted files this handover originally reported were committed by a Codex lane to
+     `codex/rescue-claude-handover-freshness-0718-20260824` (branch confirmed to exist). The
+     dirty-set hash pinned above, `0c7636897a95929a…`, is **STALE**; the tree now hashes to the
+     empty-set value `e3b0c44298fc1c14…`. Do not use the old hash as a tamper check.
+   - **DISPUTED, NEEDS OWNER CONFIRMATION:** this handover originally said *"Do NOT edit
+     drmTMB — CRAN prepare-only quiesce."* The concurrent lane `drm-jl-2b` reports that
+     **Shinichi lifted that in its session**, on the [[DECISIONS#D-164|D-164]] reading that the
+     hold is on **submission**, not on the package ("reversible work on drmTMB continues as
+     normal"), and that **both repos are in scope** for its G0.
+     **This author could not verify that** — it is a peer's report of an owner instruction given
+     in another session, and a peer cannot grant an escalation. So: **do not treat drmTMB as
+     open on the strength of this paragraph.** Confirm with Shinichi first. What is NOT in
+     dispute either way: no `submit_cran`, no tag, no release announcement — D-164's hold on
+     *release* stands regardless.
 
 ## What Was Accomplished
 
@@ -66,7 +79,18 @@ file; treat it as historical.
 - **Working:** `main` @ `acf3d4fb3`. Full suite **304 testsets, zero failures**. CI green on
   both Julia versions. `tools/parity_ledger.py` → `0 export gaps · 11 rows · 14 gates`,
   **CLOSURE: PASS**. `tools/check_test_deps.py` → clean, 178 files.
-- **In progress:** nothing. No branch of this session is unlanded.
+- **In progress:** nothing. Everything is merged — #458 (`acf3d4fb3`) and this handover kit
+  itself (#463, `04a69c2a5`). *(The original wording "no branch of this session is unlanded" was
+  written while #463 was still open; resolved by that merge.)*
+- **Concurrent lane:** `drm-jl-2b` opened ~21:30 on branch `feat/drmtmb-catchup`, G0 = *"catch up
+  with drmTMB, then complete the package"*. It has **confirmed no overlap** with anything in this
+  handover's What Was Accomplished, and reports claiming: **#460**, the **interval-coverage
+  campaign** (Totoro **and DRAC**, SLURM job arrays, D-139 smoke-then-approve), **`niterations`**
+  in the remaining fitters, plus DRM.jl-side gaps this session did not touch (bivariate `:REML`
+  and coupled phylo REML; structured markers for bivariate Student/LogNormal; 9 orphan test
+  files; bridge formula functions `I()`/`poly()`/`scale()`/`factor()`/`(...)^k`).
+  **So the three "candidates" listed under Next Immediate Steps below are CLAIMED — do not
+  start them without checking with that lane or Shinichi (D-87).**
 - **Blocked:** [#460](https://github.com/itchyshin/DRM.jl/issues/460) — profile and bootstrap
   CIs for ordinary fixed effects through `engine = "julia"`. Both engines implement them and
   agree natively, so it is **bridge routing in drmTMB's `confint.drmTMB_julia()`**, blocked by
