@@ -199,7 +199,7 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
     # so reject it here as the univariate core does (gaussian_core.jl:383-393).
     method === :REML &&
         throw(ArgumentError("drm: method = :REML needs random effects to restrict, and the " *
-            "residual-only bivariate Gaussian model has none — use method = :ML (the " *
+            "residual-only bivariate Gaussian model has no random effects — use method = :ML (the " *
             "default). REML IS available on the structured bivariate routes: q=4 " *
             "(shared `phylo`/`relmat`/`animal`/`spatial` on mu1, mu2, sigma1, sigma2) " *
             "and q=2 (#470)."))
