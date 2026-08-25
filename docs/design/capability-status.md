@@ -169,7 +169,7 @@ believing something false — and the fix for that is prose, not a status change
 `Chi-bar-square boundary LRT p-value` is `implemented`: `src/chibar.jl` is
 included (`src/DRM.jl:128`), exports `chibar_pvalue`/`lrt_boundary`
 (`src/DRM.jl:160`), and `test/test_chibar.jl` is in the default suite
-(`test/runtests.jl:353`). **This also corrects `docs/src/capabilities.md`**,
+(`test/runtests.jl:356`). **This also corrects `docs/src/capabilities.md`**,
 which lists chi-bar-square boundary inference as "Absent -- no
 implementation."
 
@@ -234,7 +234,7 @@ GHQ across two different families) is included at `src/DRM.jl:101`, and
 reaches it instead of hand-built design matrices. Tests are real and
 registered in the default suite: `test/test_mixed_family.jl` (Gaussian x
 Poisson and Gaussian x Gaussian recovery-style tests), `test/test_mixed_family_postfit.jl`,
-and `test/test_cross_family_formula.jl` (`test/runtests.jl:296,374,376`). By
+and `test/test_cross_family_formula.jl` (`test/runtests.jl:296,377,379`). By
 this file's literal ladder (source + a registered test) that reads as
 qualifying for `implemented`. It stays `missing` on this audit because the
 PR that landed the formula front end recorded an explicit non-promotion
