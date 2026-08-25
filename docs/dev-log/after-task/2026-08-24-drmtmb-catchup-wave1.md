@@ -39,18 +39,20 @@ pre-run, and the one drmTMB-side routing fix that unlocks the most user-visible 
 
 ## 3a. Decisions and Rejected Alternatives
 
-- **`poly()` stays rejected.** R defaults to `raw = FALSE` (QR-orthogonal). A raw-power implementation
-  would fit and silently disagree with R. A formula that returns different numbers is worse than an
-  honest refusal, so the refusal was sharpened rather than removed.
-  **Clarified 2026-08-25 (#492), because this bullet reads as more final than it is.** That rules out a
-  *raw-power* implementation; it does not establish that `poly()` cannot be supported. R's algorithm is
-  deterministic, and ~10 lines of Julia reproduce `stats::poly(x, 3)` to **9.99e-16** on byte-identical
-  CSV — with the QR sign convention already matching. The real blocker is **prediction**: `stats::poly()`
-  returns a `coefs` attribute (`alpha`, `norm2`) so `predict()` can re-apply the *original* basis, and
-  recomputing the QR on new data reintroduces exactly the silent disagreement the refusal exists to
-  prevent, one step downstream. So `poly()` cannot be closed independently of the `newdata` limitation
-  already listed in §12. The rejection is correct **and** the group is closable — those are not in
-  tension, and the bullet above should not be read as saying otherwise.
+- **`poly()` was rejected, then LANDED (#492).** The original reasoning — R defaults to `raw = FALSE`
+  (QR-orthogonal), so a raw-power stand-in would fit and silently disagree — was right about raw powers
+  and too broad as a conclusion. R's algorithm is deterministic and transcribes to **9.99e-16**.
+  Two things I had asserted turned out to be wrong, both in the pessimistic direction:
+  **(a)** I said `newdata` was the blocker, because recomputing the QR on fresh rows would silently give a
+  different basis. Materialised columns are not reconstructed for `newdata` at all — they **fail loudly**
+  (`src/bridge.jl:28`), exactly as `scale()` already does.
+  **(b)** The real boundary was somewhere I had not looked, and only measurement found it. `poly()`
+  rewrites to a `+` group, and R treats `poly(x, 2)` as **one term** — so `(x + poly(x, 2))^2` gives R
+  **6** model-matrix columns while the flattened rewrite gives **7**, the extra being `poly1 & poly2`.
+  `^` is now rejected with those numbers in the message; `*`, `:`, `+` and `- term` all matched R exactly
+  and are accepted, each backed by a fixture on byte-identical CSV.
+  The lesson is the one this report already draws twice: the risk was real, it just was not where the
+  argument said it was, and only running `model.matrix()` on both sides showed that.
 - **`- term` through an unexpanded `*` stays rejected**, with a new guard that throws: a silent no-op
   there would leave the removed interaction in the Julia model.
 - **`niterations` keeps `-1`** where no single `Optim.optimize` call exists. Attributing a seeding run's
