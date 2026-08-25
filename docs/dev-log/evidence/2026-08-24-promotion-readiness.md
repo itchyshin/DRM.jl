@@ -92,3 +92,30 @@ make them wrong; it means **a promotion citing them should also cite
 is *not* a prerequisite for any promotion listed above — `covered` asks for *relevant interval evidence*,
 not calibrated coverage. Coverage is what would let the two
 `interval_status != "coverage_claimed"` fences come down, which is a different and larger claim.
+
+---
+
+## Addendum, 2026-08-25 — four verdicts above were overturned by later measurement
+
+This document is a **dated snapshot of what I believed on 2026-08-24**, and it is left intact
+above rather than rewritten, because the record of what was believed when is the part that has
+evidential value. Four of its per-row verdicts did not survive the night. Three failed the same
+way — I read a *disclaimer* as a *requirement*, or a *symptom* as a *cause*.
+
+| row | the verdict above | what actually happened | class of error |
+|---|---|---|---|
+| `biv_q4_phylo_reml` | "needs a converged fixture… → **#478**" | Promoted to **covered**. The fixture was re-derived on a converged fit; #478 turned out to state a *limitation* ("does not establish"), not a gate. | **read a limitation as a gate** |
+| `cross_family_latent` | "promotion criterion is **unsatisfiable by construction**… parity evidence can never exist" | **Retracted.** Re-reading the boundary: it never demands native parity. It says "development route" and constrains what public docs may claim. Narrow, not unsatisfiable. | **read a disclaimer as a requirement** |
+| `gaussian_response_mask` | "**no working path at all** for that cell. **Do not promote**" | Half wrong within hours: **#482 fixed the default `drop` path**, and my stated cause was wrong too — it was positional species-to-leaf mapping, not a missing tree re-prune. Still held at `partial`, but for a *different and better* reason: `include` remains refused, which is a hole in the named capability. | **plausible cause instead of the measured one** |
+| `phylo_count_large_p` | "native TMB's dense phylo factorisation is **O(p³)**" | **Retracted (#486).** Measured **O(p^1.27)** to p=3000. The premise the whole slice was built on was false, and only running it revealed that. | **asserted a complexity I had not measured** |
+
+The one verdict that held up unchanged is `gaussian_phylo_mean` — "its defining parameter is in no
+comparison at all" was correct, the fixture was regenerated to carry the phylogenetic SD, and the
+row is now `covered`.
+
+**What generalises.** Every error in this table was a *reading* error, not a computation error, and
+each one made the work look **more** blocked than it was: three rows were declared unmovable and two
+of them moved. A pessimistic misreading is not the safe direction — it silently cancels work that
+was ready. The counter-practice that caught all four was the same one that produced the original
+findings: **running the thing** — the converged refit, the p=3000 fit, the 42/42 mask test — rather
+than reasoning about what it would do.
