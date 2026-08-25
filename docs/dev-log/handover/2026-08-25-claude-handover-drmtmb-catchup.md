@@ -204,7 +204,18 @@ These came after the section above, and one of them changed a capability row.
   them, and too loose a value starts silently accepting genuinely unconverged fits, which is a worse and
   quieter failure. Recorded with `@test_broken`, so a repair reports "Unexpectedly Pass" rather than
   looking like a regression.
-  **Corroborated, not undermined, by the parity numbers.** The R harness records 14 columns and none is
+  **Sharper than filed — the flag is ANTI-CORRELATED with care.** On identical data at p=512:
+  `g_tol = 1e-8` (the default) → `converged = false` at relative gradient **1.39e-07**; `g_tol = 10.0` →
+  `converged = true` at **1.18e-03**, four orders of magnitude worse. Every deliberately sloppy fit
+  reports success; the careful one reports failure. The mechanism is the short-circuit
+  `Optim.converged(res) && return true` at the top of `_laplace_outer_converged` — a loose `g_tol` makes
+  Optim's own criterion trivially satisfiable, so the fallback never runs. The flag answers *"did the
+  optimiser meet the tolerance you asked for"*, and **asking for less makes it easier to say yes**.
+  A relative criterion separates cleanly (1.2e-07…1.5e-07 careful vs 1.18e-03 sloppy), so any threshold
+  in 1e-06…1e-05 works with wide margin — my earlier worry that it might not discriminate is not
+  supported. **Mitigating, and it belongs in the record:** the estimates barely move — `b1 = 0.2894`
+  to four decimals at `g_tol` = 1e-8, 1e-1 *and* 1.0. This is a **reporting** defect, not a fitting one.
+    **Corroborated, not undermined, by the parity numbers.** The R harness records 14 columns and none is
   convergence, so the flag was never consulted — but TMB and DRM.jl agreeing to 6.4e-08 means both
   optimisers landed on the same point, and two different optimisers stopping at the same wrong place is
   not credible. So the fits are at the optimum and the flag is wrong. An earlier version of this handover
