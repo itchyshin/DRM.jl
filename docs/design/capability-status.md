@@ -143,6 +143,29 @@ that was true when the audit page was written but is no longer true; `git log`
 shows `src/DRM.jl`'s include list was touched after the audit page's last
 commit.
 
+`Model comparison suite (LRT/anova/AICc/weights/update)` is `implemented`, but the
+`weights` member needs reading carefully, because two things in this ledger point
+different ways and a scanning reader will take the wrong one.
+
+- It is **not** Akaike / model weights. Neither DRM.jl nor drmTMB computes those,
+  despite `weights` sitting in a list next to `AICc` — which is precisely the
+  reading the row name invites. There is no `akaike_weights` in either package.
+- It is `StatsAPI.weights`: **prior, per-observation** weights. `src/comparison.jl`
+  returns `ones(nobs(fit))` unconditionally, because DRM.jl fits do not store prior
+  weights at all. Its docstring says so plainly.
+- drmTMB's `weights.drmTMB` returns a real stored vector (`object$model$weights`,
+  `R/methods.R`), which it genuinely uses — its bootstrap reads it
+  (`R/profile.R`) and `associate_pairs()` guards on `any(weights != 1)`.
+
+So the accessor is at parity in *name* and not in *substance*, and the gap is
+already recorded elsewhere in this ledger: the `base_weights` gate is closed as an
+`intentional_error` on the grounds that "DRM.jl bridge payload has no weights
+slot". Passing `weights = ...` through `engine = "julia"` is refused.
+
+Kept `implemented` because every named member exists and is exported, which is this
+file's stated bar. Flagged because a row can meet the bar and still leave a reader
+believing something false — and the fix for that is prose, not a status change.
+
 `Chi-bar-square boundary LRT p-value` is `implemented`: `src/chibar.jl` is
 included (`src/DRM.jl:128`), exports `chibar_pvalue`/`lrt_boundary`
 (`src/DRM.jl:160`), and `test/test_chibar.jl` is in the default suite
