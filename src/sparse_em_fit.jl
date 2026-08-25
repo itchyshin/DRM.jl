@@ -86,6 +86,14 @@ end
 # --- M-step (a): closed-form Λ (4×4) ----------------------------------------
 # Λ_new = (1/N)( Û Q_cond Û'  +  Σ_{(s,t)} Q_cond[s,t]·Cov(u_s,u_t|y) ),
 # N = n_keep. Posterior covariance blocks from Takahashi selected inverse.
+#
+# NOT reachable from the public `drm()` API (#472). Measured to DESCEND the
+# true Laplace marginal at p=100 fixture scale, for every step size tested
+# (`test/test_lambda_p100.jl`, deliberately left unwired — see
+# `test/runtests.jl`'s note by the `test_lambda_direction.jl` include).
+# Production (`fit_ml_q4.jl`) does not call this: it replaces the Λ step with
+# `lambda_ml_step`, a line-searched finite-difference ascent on the true
+# marginal, which is the reason this closed-form update was abandoned.
 function mstep_Lambda(prob::AugProblem, Q_cond::SparseMatrixCSC, u::Vector{Float64}, ch_H)
     N = prob.n_total                       # n_keep
     Û = reshape(u, 4, N)                    # 4 × n_keep
@@ -150,6 +158,14 @@ function mstep_beta(prob::AugProblem, u::Vector{Float64}, β; n_newton=25, tol=1
 end
 
 # --- EM driver with monotonicity guard --------------------------------------
+# NOT reachable from the public `drm()` API (#472) — this is the closed-form-Λ
+# EM route, driven only by this file's own `abspath(PROGRAM_FILE)` demo and by
+# `bench/` scripts. Its Λ block (`mstep_Lambda`) does not ascend the true
+# marginal at p=100 (see that function's docstring); production fits go
+# through `fit_ml_q4.jl` instead, which line-searches the Λ step. The
+# monotonicity `@assert` below guards THIS driver's own bookkeeping (it only
+# accepts a step if `marg` reports an improvement), so it cannot mask
+# `mstep_Lambda`'s failure to ascend the underlying objective.
 function fit_em_aug(prob::AugProblem, Q_cond::SparseMatrixCSC, β0, Λ0;
                     max_em=200, tol=1e-6, verbose=true)
     β = β0; Λ = Matrix(Λ0)

@@ -182,6 +182,16 @@ Returns `(; β, Λ, residual_cov, σ_res, rho12, reml_loglik, ml_loglik, loglik,
 converged, iterations, u_hat)`, mirroring `fit_coevolution_q2_residual`'s
 field names (`loglik` is set to `reml_loglik`, matching the q=4 REML fitter's
 convention in `_fit_bivariate_q4_structured`).
+
+# Normalisation convention (#477)
+
+Like `reml_q4.jl`'s `fit_q4_reml`, `reml_loglik` here is the **unnormalised**
+Patterson–Thompson restricted log-likelihood (`ml_ll - 0.5*logdet(S)`) — it
+omits the `(n_β/2)·log(2π)` that lme4/glmmTMB/TMB add when integrating the
+flat prior over the marginalised fixed effects. Here `n_β = 2` (`beta_mu1` +
+`beta_mu2`; `beta_sigma1`/`beta_sigma2`/`beta_rho12` stay outer and are never
+marginalised). See `fit_q4_reml`'s docstring for the full explanation and the
+conversion.
 """
 function fit_coevolution_q2_reml(prob::CoevoProblem, Q_cond::SparseMatrixCSC;
                                  β0 = nothing, Λ0 = nothing, σ0 = nothing,

@@ -268,6 +268,26 @@ and scale fixed effects) are profiled out internally; only beta_rho stays outer.
 
 Returns NamedTuple: (phi, beta, Lambda, reml_loglik, ml_loglik, converged,
                      iterations, g_residual, f_calls, u_hat)
+
+# Normalisation convention (#477)
+
+`reml_loglik` is the **unnormalised** Patterson–Thompson restricted
+log-likelihood `ℓ_ML(θ, β̂) − ½ logdet(S)`. lme4, glmmTMB and TMB report the
+**normalised** form, which adds `(n_β/2)·log(2π)` — the constant that falls
+out of integrating the flat prior over the `n_β` marginalised fixed effects
+(here `n_β` = the combined width of the `beta_mu1`, `beta_mu2`, `beta_s1`,
+`beta_s2` designs; `beta_rho` is never marginalised, so it does not count).
+So `DRM_reml + (n_β/2)·log(2π) ≈ TMB_reml` for the same fit on the same data —
+the two are NOT directly comparable without that shift. This value is **not**
+changed here (that is a maintainer call, see #477); only documented, because
+the gap already misled this project once (see the corrected note in
+`test/parity/q4-reml/biv-q4-phylo-reml/expected.toml`).
+
+Note this convention is local to the bivariate q=4 (and q=2, `reml_q2.jl`)
+Laplace REML routes: the univariate fixed-effect Gaussian location–scale REML
+(`_fit_fixed_gaussian_reml` in `gaussian_core.jl`) and the Gaussian mean
+`(1 | g)` REML (`gaussian_ranef.jl`) already add the `log(2π)` constant back
+and match the lme4/glmmTMB/TMB convention.
 """
 function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
                      phi0=nothing, beta0=nothing, Lambda0=nothing,

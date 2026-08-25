@@ -197,6 +197,14 @@ support.
     engine (`test/test_reml_q4_allaxes.jl`). σ-RE, random slopes, multi-ranef,
     and non-Gaussian REML stay rejected. This is not AI-REML.
 
+    **Normalisation convention (#477):** the bivariate q=2/q=4 Laplace REML
+    routes (`src/reml_q2.jl`, `src/reml_q4.jl`) report the **unnormalised**
+    Patterson–Thompson restricted log-likelihood — it differs from lme4's/
+    glmmTMB's/TMB's **normalised** `logLik()` by `(n_β/2)·log(2π)`, where `n_β`
+    is the number of marginalised fixed effects. The fixed-effect location–
+    scale and mean `(1 | g)` REML routes already match the normalised
+    convention. See [`reml_loglik`](@ref) for the exact conversion.
+
 ## Model comparison & accessors
 
 | Capability | Source | Status |

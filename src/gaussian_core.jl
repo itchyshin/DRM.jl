@@ -1679,6 +1679,27 @@ estimation_method(fit::DrmFit) = fit.estim_method
 
 The restricted (REML) log-likelihood. Returns `NaN` for an ML fit (REML was not
 used). See [`loglik`](@ref) for the cross-structure-comparison caveat.
+
+# A convention gap on the bivariate q=2/q=4 routes (#477)
+
+For the **univariate** fixed-effect Gaussian location–scale REML and the
+Gaussian mean `(1 | g)` REML, this value is the **normalised** Patterson–
+Thompson restricted log-likelihood — the same convention lme4, glmmTMB and TMB
+report, so it is directly comparable to `logLik()` from those packages.
+
+For the **bivariate q=2 and q=4 Laplace REML routes** (`src/reml_q2.jl`,
+`src/reml_q4.jl` — reached via structured/phylo bivariate fits with
+`method = :REML`), `reml_loglik` is instead the **unnormalised** restricted
+log-likelihood: it omits the `(n_β/2)·log(2π)` constant that comes from
+integrating the flat prior over the `n_β` marginalised fixed effects. On these
+routes, `reml_loglik(fit) + (n_β/2)·log(2π) ≈` the REML log-likelihood TMB/
+drmTMB would report for the same fit — the two are **not** directly comparable
+without that shift. (For the q=4 phylo layout with `n_β = 6`, the shift is
+`3·log(2π) ≈ 5.51` — large enough to look like a real disagreement between
+engines rather than a labelling difference.) See `fit_q4_reml`'s docstring in
+`src/reml_q4.jl` for the derivation; this is documented rather than changed
+because normalising would move a published number (a maintainer decision, not
+a lane's).
 """
 reml_loglik(fit::DrmFit) = fit.reml_loglik
 
