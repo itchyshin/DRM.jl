@@ -1,37 +1,37 @@
-cell	ntip	param	coef	method	n	coverage	mcse	interval_failed	upper_eq_estimate
-U	16	mu	(Intercept)	profile	1000	0.9300	0.0081	0	0
-U	16	mu	(Intercept)	wald	1000	0.9050	0.0093	0	0
-U	16	mu	x	profile	1000	0.9460	0.0071	0	0
-U	16	mu	x	wald	1000	0.9410	0.0075	0	0
-U	16	resd	species	profile	1000	0.9180	0.0087	0	0
-U	16	sigma	(Intercept)	profile	1000	0.8100	0.0124	0	243
-U	32	mu	(Intercept)	profile	1000	0.9590	0.0063	0	0
-U	32	mu	(Intercept)	wald	1000	0.9520	0.0068	0	0
-U	32	mu	x	profile	1000	0.9530	0.0067	0	0
-U	32	mu	x	wald	1000	0.9500	0.0069	0	0
-U	32	resd	species	profile	1000	0.9370	0.0077	0	0
-U	32	sigma	(Intercept)	profile	1000	0.9140	0.0089	0	106
-U	64	mu	(Intercept)	profile	1000	0.9420	0.0074	0	0
-U	64	mu	(Intercept)	wald	1000	0.9330	0.0079	0	0
-U	64	mu	x	profile	1000	0.9520	0.0068	0	0
-U	64	mu	x	wald	1000	0.9500	0.0069	0	0
-U	64	resd	species	profile	1000	0.9440	0.0073	0	0
-U	64	sigma	(Intercept)	profile	1000	0.9470	0.0071	0	19
-B	16(fixture)	mu1	(Intercept)	wald	917	0.9095	0.0095	21	0
-B	16(fixture)	mu1	x	wald	917	0.9400	0.0078	1	0
-B	16(fixture)	mu2	(Intercept)	wald	917	0.9073	0.0096	22	0
-B	16(fixture)	mu2	x	wald	917	0.9269	0.0086	3	0
-B	16(fixture)	phylocov	Sigma_a:L11	wald	917	0.9466	0.0074	2	0
-B	16(fixture)	phylocov	Sigma_a:L21	wald	917	0.8735	0.0110	4	0
-B	16(fixture)	phylocov	Sigma_a:L22	wald	917	0.9433	0.0076	8	0
-B	16(fixture)	phylocov	Sigma_a:L31	wald	917	0.8909	0.0103	12	0
-B	16(fixture)	phylocov	Sigma_a:L32	wald	917	0.8462	0.0119	14	0
-B	16(fixture)	phylocov	Sigma_a:L33	wald	917	0.9629	0.0062	29	0
-B	16(fixture)	phylocov	Sigma_a:L41	wald	917	0.8833	0.0106	18	0
-B	16(fixture)	phylocov	Sigma_a:L42	wald	917	0.8768	0.0109	15	0
-B	16(fixture)	phylocov	Sigma_a:L43	wald	917	0.8103	0.0129	18	0
-B	16(fixture)	phylocov	Sigma_a:L44	wald	917	0.9847	0.0040	14	0
-B	16(fixture)	rho12	(Intercept)	profile	917	0.9651	0.0061	7	0
-B	16(fixture)	rho12	(Intercept)	wald	917	0.9368	0.0080	3	0
-B	16(fixture)	sigma1	(Intercept)	wald	917	0.8953	0.0101	24	0
-B	16(fixture)	sigma2	(Intercept)	wald	917	0.8811	0.0107	20	0
+cell	ntip	param	coef	method	n	coverage_marginal	mcse_marginal	interval_failed	n_successful	coverage_conditional	mcse_conditional
+U	16	mu	(Intercept)	profile	1000	0.9300	0.0081	0	1000	0.9300	0.0081
+U	16	mu	(Intercept)	wald	1000	0.9050	0.0093	0	1000	0.9050	0.0093
+U	16	mu	x	profile	1000	0.9460	0.0071	0	1000	0.9460	0.0071
+U	16	mu	x	wald	1000	0.9410	0.0075	0	1000	0.9410	0.0075
+U	16	resd	species	profile	1000	0.9020	0.0094	44	956	0.9435	0.0075
+U	16	sigma	(Intercept)	profile	1000	0.6430	0.0152	313	687	0.9360	0.0093
+U	32	mu	(Intercept)	profile	1000	0.9590	0.0063	0	1000	0.9590	0.0063
+U	32	mu	(Intercept)	wald	1000	0.9520	0.0068	0	1000	0.9520	0.0068
+U	32	mu	x	profile	1000	0.9530	0.0067	0	1000	0.9530	0.0067
+U	32	mu	x	wald	1000	0.9500	0.0069	0	1000	0.9500	0.0069
+U	32	resd	species	profile	1000	0.9370	0.0077	1	999	0.9379	0.0076
+U	32	sigma	(Intercept)	profile	1000	0.8280	0.0119	132	868	0.9539	0.0071
+U	64	mu	(Intercept)	profile	1000	0.9420	0.0074	0	1000	0.9420	0.0074
+U	64	mu	(Intercept)	wald	1000	0.9330	0.0079	0	1000	0.9330	0.0079
+U	64	mu	x	profile	1000	0.9520	0.0068	0	1000	0.9520	0.0068
+U	64	mu	x	wald	1000	0.9500	0.0069	0	1000	0.9500	0.0069
+U	64	resd	species	profile	1000	0.9440	0.0073	0	1000	0.9440	0.0073
+U	64	sigma	(Intercept)	profile	1000	0.9270	0.0082	24	976	0.9498	0.0070
+B	16(fixture)	mu1	(Intercept)	wald	1000	0.9080	0.0091	24	976	0.9303	0.0081
+B	16(fixture)	mu1	x	wald	1000	0.9370	0.0077	1	999	0.9379	0.0076
+B	16(fixture)	mu2	(Intercept)	wald	1000	0.9120	0.0090	23	977	0.9335	0.0080
+B	16(fixture)	mu2	x	wald	1000	0.9270	0.0082	3	997	0.9298	0.0081
+B	16(fixture)	phylocov	Sigma_a:L11	wald	1000	0.9460	0.0071	3	997	0.9488	0.0070
+B	16(fixture)	phylocov	Sigma_a:L21	wald	1000	0.8760	0.0104	5	995	0.8804	0.0103
+B	16(fixture)	phylocov	Sigma_a:L22	wald	1000	0.9450	0.0072	8	992	0.9526	0.0067
+B	16(fixture)	phylocov	Sigma_a:L31	wald	1000	0.8900	0.0099	14	986	0.9026	0.0094
+B	16(fixture)	phylocov	Sigma_a:L32	wald	1000	0.8450	0.0114	16	984	0.8587	0.0111
+B	16(fixture)	phylocov	Sigma_a:L33	wald	1000	0.9560	0.0065	39	961	0.9948	0.0023
+B	16(fixture)	phylocov	Sigma_a:L41	wald	1000	0.8840	0.0101	19	981	0.9011	0.0095
+B	16(fixture)	phylocov	Sigma_a:L42	wald	1000	0.8740	0.0105	16	984	0.8882	0.0100
+B	16(fixture)	phylocov	Sigma_a:L43	wald	1000	0.8100	0.0124	20	980	0.8265	0.0121
+B	16(fixture)	phylocov	Sigma_a:L44	wald	1000	0.9860	0.0037	14	986	1.0000	0.0000
+B	16(fixture)	rho12	(Intercept)	profile	1000	0.7560	0.0136	223	777	0.9730	0.0058
+B	16(fixture)	rho12	(Intercept)	wald	1000	0.9340	0.0079	3	997	0.9368	0.0077
+B	16(fixture)	sigma1	(Intercept)	wald	1000	0.8900	0.0099	29	971	0.9166	0.0089
+B	16(fixture)	sigma2	(Intercept)	wald	1000	0.8830	0.0102	22	978	0.9029	0.0095
