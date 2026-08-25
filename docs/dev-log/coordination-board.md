@@ -4,7 +4,34 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
-## Active-Lane-Split (2026-08-24 — G0 NAMED: catch up with drmTMB, then complete the package)
+## Active-Lane-Split (2026-08-25 — Waves 1+2 landed on a branch; THREE PRs await the owner)
+
+_**START HERE:** [`docs/dev-log/handover/2026-08-25-claude-handover-drmtmb-catchup.md`](handover/2026-08-25-claude-handover-drmtmb-catchup.md)._
+
+_| **NOTHING IS MERGED. Both repos' `main` are untouched** — DRM.jl `8d45b651`, drmTMB `fb8e6c1a5`.
+Three PRs are open and are the OWNER's call, not a lane's: **DRM.jl#485** (draft, 44 commits),
+**drmTMB#1080** (#460 bridge CI routing, repaired after adversarial review), **drmTMB#1082** (four
+capability rows moved). `AGENTS.md` requires maintainer approval for `src/`, the formula grammar, and
+`AGENTS.md` — all three are touched._
+
+_| **FOUR CAPABILITY ROWS MOVED** (drmTMB#1082): `0 covered · 6 partial · 4 experimental · 1 unsupported`
+→ **`3 covered · 4 partial · 3 experimental · 1 unsupported`**, CLOSURE: PASS. `biv_gaussian_residual`,
+`plain_binomial_nonphylo`, `base_gaussian_location_scale` → covered; `general_covariance_structured`
+→ partial. Each checked against design/168's four limbs, not against an impression._
+
+_| **`supported` IS NOT A STATUS** — the vocabulary is `covered > partial > experimental > planned >
+unsupported`. The countdown used to count `claim_status != 'supported'` and print "N unsupported rows":
+`len(caps)` by construction, unable to ever register progress. Fixed in `d265d876`._
+
+_| **STILL TRUE:** both `interval_status != "coverage_claimed"` fences intact — **no row claims interval
+coverage**; the #468 campaign is UNRUN and awaits an owner go/no-go (D-139). #420/#406 OPEN and DIRTY
+(do not rebase). #49, #136 PARKED. D-111 OFF. `.codex/agents/shannon-coordinator.toml` PROTECTED._
+
+_| **DO NOT reinstall drmTMB casually (#473):** "0.7.0" identifies ≥16 builds; the installed one is 16
+shipped commits behind `origin/main`. Reinstalling moves the comparator under every banked number at
+once — record `Rscript tools/drmtmb_provenance.R --toml` first, then re-run the harnesses._
+
+## Active-Lane-Split (2026-08-24 — G0 NAMED) — SUPERSEDED by the entry above
 
 _**START HERE:** this entry. **Lane `feat/drmtmb-catchup`** (Claude Code), branched off `origin/main`
 @ **`5de340fe`**. The previous entry's "lane is IDLE pending an owner-named G0" is **no longer true** —
