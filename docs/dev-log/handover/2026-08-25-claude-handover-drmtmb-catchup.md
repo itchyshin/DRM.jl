@@ -65,7 +65,7 @@ formula constructs · #468 coverage pre-run · #470 bivariate q=2 REML · #471 L
 
 ## Current Working State
 
-- **Working:** `feat/drmtmb-catchup`, **56 commits ahead**, pushed. Full suite **VERIFIED: 318 testsets,
+- **Working:** `feat/drmtmb-catchup`, **64 commits ahead**, pushed. Full suite **VERIFIED: 320 testsets,
   0 failures, 0 errors**, run to completion on this tree. `check_test_deps` OK · `parity_ledger`
   CLOSURE: PASS · all 39 parity TOML parse.
 - **In progress: nothing.** All background agents completed and their work is merged.
@@ -102,6 +102,29 @@ formula constructs · #468 coverage pre-run · #470 bivariate q=2 REML · #471 L
    failures, 0 errors**. DRM.jl#485 is already marked ready for review — **do not merge it**.
 3. **STOP. The rest is his.** Do not merge any PR; do not run the coverage grid; do not reinstall drmTMB;
    do not re-ask the CRAN submission question.
+
+## Late findings (after the first draft of this handover)
+
+- **#477 is sharper than filed — DRM.jl is internally inconsistent about REML.** I filed it as "we omit a
+  constant lme4/glmmTMB/TMB include". Verified from source, it is **route-specific**: the univariate
+  fixed-effect and mean `(1|g)` REML paths DO add `(pμ/2)·log(2π)` (`src/gaussian_core.jl:905,955`); the
+  bivariate q4 and q2 routes do not. So `reml_loglik(fit)` means different things depending on which route
+  produced the fit — a user comparing a univariate against a bivariate REML fit *within DRM.jl* is
+  comparing different scales. Documented in four places; **no value changed** — unifying it moves a
+  published number and is the owner's call. If unified, move the BIVARIATE routes: the univariate ones
+  already match the ecosystem.
+- **#489: all five `bridge-*` fixtures were broken under the generic runner**, in two modes — three
+  crashed, and **two fitted silently and wrongly**: `(x+z)^2` became an elementwise power rather than R's
+  degree-2 crossing (df 3 vs 5). That is precisely what #467's retained rejection asserted would happen,
+  now measured rather than argued. Fixed by routing `bridge-*` through `drm_bridge` (11 pass/2 fail/3
+  error → 16 pass).
+- **#488: `vcov_guard` does not cover the sparse-Laplace route.** The guard that warns "these SEs are not
+  trustworthy" cannot fire there — `src/sparse_laplace_glmm.jl` computes `vcov` inline via
+  `try inv() catch identity`. Silently catching a singularity and returning the identity is the strongest
+  case for a warning and currently produces none, on the route backing every non-Gaussian phylo family.
+- **#487: SE parity loosens ~196x from p=300 to p=1000 and does NOT track conditioning** (rcond worsens
+  only 3.2x there, and SE parity *improves* p=1000→3000 while rcond worsens further). The benign
+  "different factorisations rounding differently" explanation is refuted. Unexplained.
 
 ## Blockers / Open Questions — all need the owner
 
