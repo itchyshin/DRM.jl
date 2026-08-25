@@ -70,7 +70,12 @@ def include_lines(path: str, lines: list[str]) -> dict[str, int]:
     """basename -> 1-based line of its `include("basename")` in `path`."""
     found: dict[str, int] = {}
     for i, line in enumerate(lines, start=1):
-        m = re.search(r'include\(\s*"([^"]+)"\s*\)', line)
+        # Strip a trailing Julia comment FIRST. Without this, a commented-out
+        # `# include("test_x.jl")` still matches and the file is reported as wired --
+        # which silently defeats the WIRED check. Caught by deliberately commenting
+        # out an include and finding the guard stayed green.
+        code = line.split("#", 1)[0]
+        m = re.search(r'include\(\s*"([^"]+)"\s*\)', code)
         if m:
             found.setdefault(os.path.basename(m.group(1)), i)
     return found
