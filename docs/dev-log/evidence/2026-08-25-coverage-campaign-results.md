@@ -91,6 +91,41 @@ diagonal entries on a log scale (bounded below) and the off-diagonals not. The c
 transformed scale" from "these components are genuinely hard to identify at N = 128". The discriminating
 test — profile vs Wald on the same fits — is proposed in #495.
 
+## 4b. Decomposed with zero new compute — and the over-coverage hides a bias (#495, #496)
+
+The discriminating test proposed in #495 (profile vs Wald) turned out **not to be runnable**:
+`profile_result(fit; parm = :phylocov)` throws `ArgumentError: matrix contains Infs or NaNs`, and `parm`
+selects by *block* not coefficient, so a three-target design cannot be expressed. A D-139 pre-run caught
+that before ~20 CPU-h were spent.
+
+The question was answerable from the banked 1000 reps instead. For a 95 % Wald interval the reported SE
+is `(upper − lower) / (2 × 1.96)`, which decomposes miscoverage into **bias**, **wrong SE**, and **SE
+that fails to adapt**:
+
+| entry | axes | truth | mean(est) | bias | emp SD | mean(SE) | SE/empSD | coverage |
+|---|---|---|---|---|---|---|---|---|
+| L11 | mu1×mu1 | −0.6931 | −0.7849 | −0.092 | 0.326 | 0.269 | 0.825 | 0.949 |
+| L22 | mu2×mu2 | −0.7803 | −1.0483 | −0.268 | 0.508 | 0.408 | 0.802 | 0.953 |
+| **L33** | s1×s1 | −0.9549 | −1.8299 | **−0.875** | 1.054 | 1.604 | **1.522** | 0.995 |
+| **L44** | s2×s2 | −0.9534 | **−2.8055** | **−1.852** | 1.243 | **3.498** | **2.815** | **1.000** |
+| L43 | s2×s1 | 0.0619 | 0.0461 | −0.016 | 0.228 | 0.188 | 0.827 | 0.827 |
+
+**The scale-axis over-coverage is concealing a severe bias (#496).** `L44`'s mean estimate is −2.81
+against a truth of −0.95 — a phylo SD of ≈0.06 where the truth is ≈0.39, i.e. the component collapses
+toward the boundary. Its SE is 2.8× the empirical SD, which is what a log-scale Wald SE does near a
+boundary, and the two errors cancel: the interval contains the truth **986 times out of 986 while being
+centred in the wrong place**. Read from coverage alone, `L44` looks like the best-behaved parameter on
+the fit. It is the worst. §4's "uninformatively wide" was too generous a description.
+
+**The under-coverage is an SE that does not adapt.** Correlation between `|estimate − truth|` and the
+reported SE, per rep: **L11 +0.702, L44 +0.786, L43 +0.032**. That is why `L11` covers nominally despite
+an SE averaging 17 % below the empirical SD — it tracks each rep's error — while `L43`'s SE carries
+essentially no information about the error and under-covers at 0.827. The off-diagonal defect is not
+"SE too small" but "SE **uninformative**", which is a different problem with a different fix.
+
+So the single finding in §4 is really **two defects with unrelated fixes**: a point-estimate bias on the
+scale axes (#496) and uninformative covariance SEs (#495). Interval work cannot touch the first.
+
 ## 5. What this licenses
 
 **Supports a calibration statement:** Cell U `mu` at every rung and `sigma`/`resd` conditional on a
