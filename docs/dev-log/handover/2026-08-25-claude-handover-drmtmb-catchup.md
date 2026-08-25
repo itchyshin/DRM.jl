@@ -256,6 +256,37 @@ from the main-effect case. Given `^` turned out to disagree, that caution earned
 
 **7/7 bridge-formula fixtures · `test_bridge_formula_translation.jl` 49/49.**
 
+## #477 fixed — REML normalisation unified, and the q=4 gate tightened 185×
+
+DRM.jl was reporting **two** restricted-log-likelihood scales under one name: the univariate routes
+(`gaussian_core.jl`, `gaussian_ranef.jl`, `location_only.jl`) added the `(n_β/2)·log(2π)` constant,
+matching lme4/glmmTMB/TMB; the bivariate q=2 and q=4 Laplace routes did not.
+
+**I had deferred this and the deferral was circular.** The in-code note reading *"that is a maintainer
+call"* is `468acca4` — my own commit from earlier the same night, on this branch, not on `origin/main`.
+I was citing myself as the authority for not acting.
+
+The reframing that settled it: this was not a convention **choice**. A choice would be picking one
+scale. The convention had already been made on the univariate side; the bivariate routes had simply not
+followed it. And what the deferral protected was thin — nothing banks a bivariate `reml_loglik` value
+(the tests assert `isfinite` and `!= ml_loglik`, never a number), and the package is unregistered.
+
+**The change is self-verifying, which is what made it safe on a branch.** The q=4 parity gate's
+`atol_loglik` was **5.5436**, of which **5.513631** was exactly this constant — a tolerance that existed
+almost entirely to absorb an offset and therefore tested almost nothing. It is now **0.03**, the
+cross-optimum spread alone, passing **33/33**. Had the constant been wrong, the gate would have failed.
+
+A constant cannot move the argmax, so the optimisation is untouched; only the reported value moved.
+`n_β` is the Schur complement's own dimension (four marginalised axes for q=4, `length(β̂)` for q=2), so
+`rho` is correctly excluded.
+
+**Honest limit:** `reml_q2.jl` shares the derivation but has **no parity fixture of its own** — it is
+verified only by sharing the q=4 route's arithmetic. A q=2 REML parity fixture is the way to check it
+directly, and that is recorded in its docstring.
+
+**If you prefer the unnormalised convention** it is one constant to remove in two places — but the
+univariate routes should change too. The thing worth avoiding is reporting both.
+
 ## Blockers / Open Questions — all need the owner
 
 - **#468 interval-coverage go/no-go.** Pre-run says GO. n_sim = 1000/cell (MCSE 0.69 pp), **~25 CPU-h**,

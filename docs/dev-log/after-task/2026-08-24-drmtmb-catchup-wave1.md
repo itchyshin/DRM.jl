@@ -153,7 +153,11 @@ Wave 1 merges shifted `runtests.jl`.
 - **#472** `mstep_Lambda` descends the true marginal at p=100 — real, not shipped-path.
 - **#473** `drmTMB 0.7.0` spans ≥16 builds; every banked parity number used the older one.
 - **#476** two parity files share `FIXTURE`/`_load_data` in `Main` with *differing* numeric-column sets.
-- **#477** `reml_loglik` omits the constant lme4/glmmTMB/TMB include — user-facing.
+- **#477 FIXED 2026-08-25.** Was: `reml_loglik` omits the constant lme4/glmmTMB/TMB include. DRM.jl was
+  reporting two scales under one name — univariate routes added it, bivariate q=2/q=4 did not. Unified.
+  The q=4 parity gate's `atol_loglik` fell from **5.5436 to 0.03** (33/33), a 185× tightening, because
+  5.513631 of that tolerance was the constant itself. I had deferred this citing an in-code "maintainer
+  call" note that turned out to be **my own commit from the same night** — a circular deferral.
 - **#478** two `claim_boundary` criteria unsatisfiable as written; one rewrite narrows scope → owner call.
 - **#479 → #480** the formula-based bootstrap surface still declares `K`/`A`/`tree` Gaussian-only.
 - **#482** Gaussian mean-phylo + missing response has **no working path** — the default `drop` fails too.
