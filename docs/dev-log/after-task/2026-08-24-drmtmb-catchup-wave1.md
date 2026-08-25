@@ -42,6 +42,15 @@ pre-run, and the one drmTMB-side routing fix that unlocks the most user-visible 
 - **`poly()` stays rejected.** R defaults to `raw = FALSE` (QR-orthogonal). A raw-power implementation
   would fit and silently disagree with R. A formula that returns different numbers is worse than an
   honest refusal, so the refusal was sharpened rather than removed.
+  **Clarified 2026-08-25 (#492), because this bullet reads as more final than it is.** That rules out a
+  *raw-power* implementation; it does not establish that `poly()` cannot be supported. R's algorithm is
+  deterministic, and ~10 lines of Julia reproduce `stats::poly(x, 3)` to **9.99e-16** on byte-identical
+  CSV — with the QR sign convention already matching. The real blocker is **prediction**: `stats::poly()`
+  returns a `coefs` attribute (`alpha`, `norm2`) so `predict()` can re-apply the *original* basis, and
+  recomputing the QR on new data reintroduces exactly the silent disagreement the refusal exists to
+  prevent, one step downstream. So `poly()` cannot be closed independently of the `newdata` limitation
+  already listed in §12. The rejection is correct **and** the group is closable — those are not in
+  tension, and the bullet above should not be read as saying otherwise.
 - **`- term` through an unexpanded `*` stays rejected**, with a new guard that throws: a silent no-op
   there would leave the removed interaction in the Julia model.
 - **`niterations` keeps `-1`** where no single `Optim.optimize` call exists. Attributing a seeding run's
