@@ -33,12 +33,20 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEST = os.path.join(REPO, "test")
 
 # Always available without being declared.
-STDLIB = {
-    "Base", "Core", "Main", "Test", "Random", "LinearAlgebra", "SparseArrays",
-    "Statistics", "Printf", "DelimitedFiles", "TOML", "Dates", "Logging",
-    "Serialization", "Pkg", "InteractiveUtils", "Markdown", "Libdl", "Profile",
-    "Distributed", "SharedArrays", "Sockets", "UUIDs", "Unicode", "Mmap",
-}
+# Only the pseudo-modules that can NEVER appear in a Project.toml. Everything
+# else — including every Julia stdlib — MUST be declared, because a stdlib is
+# resolvable in the DEFAULT environment but not in `--project=test` after a
+# clean `Pkg.instantiate()`. That distinction is invisible locally, where a
+# populated depot or a transitive Manifest entry resolves it anyway.
+#
+# This set used to list the stdlibs as blanket-allowed, and that hole cost a
+# red CI run: `test/test_vcov_guard.jl` did `using Logging`, this guard passed
+# it, the local suite passed 325/0/0, and CI failed with
+# "ArgumentError: Package Logging not found in current path" after 28 minutes.
+# Every other stdlib the suite uses (Test, Random, LinearAlgebra, SparseArrays,
+# Statistics, Printf, DelimitedFiles, TOML) was already declared — the project's
+# convention was right and only the checker disagreed with it.
+STDLIB = {"Base", "Core", "Main"}
 
 
 def declared_deps():
