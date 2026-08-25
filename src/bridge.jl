@@ -147,28 +147,42 @@ end
     drm_bridge_inference(; formula, family, data, tree = nothing,
                          options = Dict(), method = "profile",
                          level = 0.95, B = 199, seed = nothing,
-                         threads = false)
+                         threads = false, parm = nothing)
 
-Run a narrow inference primitive for the R bridge. This first slice is limited
-to the Gaussian phylogenetic SD block (`param = :resd`), because the R side
-needs explicit response-scale transforms and parity checks before exposing
-broader Julia inference results.
+Run a narrow inference primitive for the R bridge.
+
+With `parm = nothing` (the default) this targets the Gaussian phylogenetic SD
+block (`param = :resd` / `:resd_mu` / `:resd_sigma`), because the R side needs
+explicit response-scale transforms and parity checks before exposing broader
+Julia inference results. This path is unchanged from the first slice.
+
+Pass `parm = "fixef:<dpar>:<coef>"` (e.g. `"fixef:mu:x"`) to instead profile
+or bootstrap a single ordinary fixed-effect coefficient, on its link scale —
+the same primitive `DRM.profile_result` / `DRM.bootstrap_result` calls the R
+bridge previously had to reach by calling DRM.jl's underscore-prefixed
+marshalling internals directly (see #475); this kwarg is the supported route
+that replaces that qualified-internal call. Returns the same payload shape
+either way.
 """
 function drm_bridge_inference(; formula, family::AbstractString, data,
         tree = nothing, options = Dict{String,Any}(), method::AbstractString = "profile",
         level::Real = 0.95, B::Integer = 199, seed = nothing,
-        threads::Bool = false)
+        threads::Bool = false, parm = nothing)
     dat = _bridge_data(data)
     bundle, dat = _bridge_formula(formula, family, dat)
     fam = _bridge_family(family)
     opts = _bridge_options(options)
     bridge_method = lowercase(strip(String(method)))
     is_biv = bundle isa BivariateDrmFormula
+    target = parm === nothing ? nothing : _bridge_parse_fixef_parm(parm)
     # The univariate σ-phylo location-scale route precomputes its boundary-aware
     # profile CIs into the fit (it has no re-optimisable objective), so request them
     # at fit time for the profile method. The bivariate q=4 route has no such flag
-    # (its drm method rejects `profile_ci`) — skip it there.
-    (!is_biv && bridge_method == "profile") && (opts[:profile_ci] = true)
+    # (its drm method rejects `profile_ci`) — skip it there. An explicit fixed-effect
+    # `parm` target profiles the fit's own re-optimisable objective and never reads
+    # that precomputed stash, so it is skipped there too — matching the R bridge's
+    # previous qualified-internal call, which never set this option either.
+    (!is_biv && target === nothing && bridge_method == "profile") && (opts[:profile_ci] = true)
     tree_obj = tree === nothing ? nothing : _bridge_tree(tree)
     fit = _bridge_fit(bundle, fam, dat; tree = tree_obj, K = nothing,
                       A = nothing, coords = nothing, options = opts)
@@ -176,18 +190,21 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     # Bivariate q=4 phylogenetic fit: the uncertainty target is the four among-axis
     # SDs sqrt.(diag(Σ_a)), not a single SD row. The boundary makes the q4 profile
     # singular, so the route is the parametric bootstrap; return all four rows.
-    if is_biv && fit.ranef isa NamedTuple && haskey(fit.ranef, :Sigma_a)
+    # Skipped when an explicit fixed-effect `parm` target was given (below).
+    if target === nothing && is_biv && fit.ranef isa NamedTuple && haskey(fit.ranef, :Sigma_a)
         return _bridge_bivariate_inference(fit, dat, bridge_method;
                                            B = B, level = level, seed = seed)
     end
 
     if bridge_method == "profile"
-        # Profile ONLY the SD target the bridge returns (`_bridge_pick_sd_row`'s set),
-        # not the full parameter vector — the bridge reports a single SD row, so
-        # profiling the fixed effects too is wasted re-optimisation (#202 bridge perf).
-        result = profile_result(fit; level = level, threads = threads,
-                                parm = [:resd_sigma, :resd, :resd_mu])
-        row = _bridge_pick_sd_row(result.ci)
+        # Profile ONLY the requested block: the bridge's implicit SD target
+        # (`_bridge_pick_sd_row`'s set) when no `parm` was given, or the single
+        # fixed-effect block named by `parm` — never the full parameter vector,
+        # which would be wasted re-optimisation (#202 bridge perf).
+        profile_parm = target === nothing ? [:resd_sigma, :resd, :resd_mu] : target.param
+        result = profile_result(fit; level = level, threads = threads, parm = profile_parm)
+        row = target === nothing ? _bridge_pick_sd_row(result.ci) :
+                                    _bridge_pick_fixef_row(result.ci, target)
         return _bridge_inference_flatten(
             row;
             method = "profile",
@@ -205,22 +222,34 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     elseif bridge_method == "bootstrap"
         rng = seed === nothing ? Random.default_rng() :
               Random.MersenneTwister(Int(seed))
-        result = bootstrap_result(
-            fit; data = dat, B = Int(B), level = level, rng = rng,
-            tree = tree_obj, threads = threads, failures = :skip,
-            # #459: a percentile CI must not be computed over refits that did not
-            # converge. This was `false`, which was harmless only while the
-            # simulator was conditional -- every replicate then re-used the fitted
-            # BLUPs, so every refit converged trivially and the interval was
-            # degenerate anyway. With a correct marginal simulator some replicates
-            # are genuinely hard, and admitting their diverged estimates put the
-            # upper percentile at 179 against a point estimate of 1.30.
-            # `failures = :skip` drops them and `used`/`failed` report how many.
-            check_converged = true,
-            algorithm = Symbol(get(opts, :algorithm, :auto)),
-            g_tol = Float64(get(opts, :g_tol, 1e-8)),
-        )
-        row = _bridge_pick_sd_row(result.summary)
+        result = if target !== nothing && !(fit isa DrmFit{<:Gaussian})
+            # DRM.jl's generic (non-Gaussian) `bootstrap_result` method rejects any
+            # non-`nothing` `tree`/`algorithm`/`g_tol` keyword; only the
+            # Gaussian-specific method accepts them. The SD-target path below never
+            # hits this branch (target === nothing), so its behaviour is unchanged.
+            bootstrap_result(
+                fit; data = dat, B = Int(B), level = level, rng = rng,
+                threads = threads, failures = :skip, check_converged = true,
+            )
+        else
+            bootstrap_result(
+                fit; data = dat, B = Int(B), level = level, rng = rng,
+                tree = tree_obj, threads = threads, failures = :skip,
+                # #459: a percentile CI must not be computed over refits that did not
+                # converge. This was `false`, which was harmless only while the
+                # simulator was conditional -- every replicate then re-used the fitted
+                # BLUPs, so every refit converged trivially and the interval was
+                # degenerate anyway. With a correct marginal simulator some replicates
+                # are genuinely hard, and admitting their diverged estimates put the
+                # upper percentile at 179 against a point estimate of 1.30.
+                # `failures = :skip` drops them and `used`/`failed` report how many.
+                check_converged = true,
+                algorithm = Symbol(get(opts, :algorithm, :auto)),
+                g_tol = Float64(get(opts, :g_tol, 1e-8)),
+            )
+        end
+        row = target === nothing ? _bridge_pick_sd_row(result.summary) :
+                                    _bridge_pick_fixef_row(result.summary, target)
         return _bridge_inference_flatten(
             row;
             method = "bootstrap",
@@ -237,6 +266,34 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
         )
     end
     throw(ArgumentError("drm_bridge_inference: unsupported method `$method`"))
+end
+
+# Parse the R bridge's `"fixef:<dpar>:<coef>"` target string (e.g. `"fixef:mu:x"`)
+# into the `(param, coef)` pair `_ci_param_selected`/`_bridge_pick_fixef_row` need.
+# `limit = 3` keeps a `:`-bearing coefficient name (e.g. an interaction `"x:z"`)
+# intact in the third part rather than splitting it further.
+function _bridge_parse_fixef_parm(parm)
+    parm isa AbstractString || throw(ArgumentError(
+        "drm_bridge_inference: `parm` must be a string of the form " *
+        "`\"fixef:<dpar>:<coef>\"` (e.g. `\"fixef:mu:x\"`)"))
+    parts = split(String(parm), ':'; limit = 3)
+    (length(parts) == 3 && lowercase(parts[1]) == "fixef") || throw(ArgumentError(
+        "drm_bridge_inference: unsupported `parm` target `$(repr(parm))`; expected " *
+        "`\"fixef:<dpar>:<coef>\"` (e.g. `\"fixef:mu:x\"`)"))
+    return (param = Symbol(parts[2]), coef = String(parts[3]))
+end
+
+# Pick the single fixed-effect row named by an explicit `parm` target. There is NO
+# silent fall-back: if the (param, coef) pair is not present the row would be some
+# other coefficient mislabelled as the requested one, so throw an explicit error
+# naming what WAS available (mirrors `_bridge_pick_sd_row`'s discipline).
+function _bridge_pick_fixef_row(rows, target)
+    for row in rows
+        row.param === target.param && row.coef == target.coef && return row
+    end
+    got = join(("$(r.param):$(r.coef)" for r in rows), ", ")
+    throw(ArgumentError("drm_bridge_inference: no row for target " *
+        "`fixef:$(target.param):$(target.coef)` in the result; got [$(got)]."))
 end
 
 function _bridge_fit(bundle, fam, data; tree, K, A, coords, options)
