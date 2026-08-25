@@ -1100,10 +1100,12 @@ function bootstrap_result(
     B::Int=300,
     level::Real=0.95,
     rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
-    kwargs...,
 )
     # Bivariate q=4 phylogenetic fit: there is no scalar SD block to refit-and-
     # recoef; the quantities of interest are the among-axis SDs sqrt.(diag(Σ_a)).
@@ -1115,15 +1117,22 @@ function bootstrap_result(
                                  failures = (failures === :error ? :error : :warn),
                                  check_converged = check_converged)
     end
-    for (_, value) in pairs(kwargs)
-        value === nothing || throw(
-            ArgumentError("bootstrap_result: K/A/tree are only valid for Gaussian fits")
-        )
-    end
     _check_bootstrap_failure_mode(failures)
     formula = _bootstrap_fit_formula(fit)
-    refit = datab -> drm(formula, fit.family; data=datab)
-    simulate_fn = _marginal_simulator(fit, data)   # #459
+    # #479: the univariate non-Gaussian structured routes (phylo/relmat/animal/
+    # spatial Laplace) do NOT stash the tree/K/A on the fit the way the bivariate
+    # q=4 route stashes `fit.ranef.phy` -- `_fit_poisson_general_laplace` et al.
+    # never call `_withranef`. So, exactly like the Gaussian method just above,
+    # the caller re-supplies the same K/A/tree used to produce `fit`; a mismatch
+    # (or an unsupported family/route) is caught loudly by `drm(...)`'s own
+    # per-family checks (e.g. "relmat(1 | g) needs K = …") rather than silently
+    # refitting an unstructured model.
+    extra = Dict{Symbol,Any}()
+    tree !== nothing && (extra[:tree] = tree)
+    K !== nothing && (extra[:K] = K)
+    A !== nothing && (extra[:A] = A)
+    refit = datab -> drm(formula, fit.family; data=datab, extra...)
+    simulate_fn = _marginal_simulator(fit, data; K=K, A=A, tree=tree)   # #459 / #479
     return _bootstrap_result(
         fit, formula, data, B, level, rng, threads, refit;
         failures, check_converged, simulate_fn
