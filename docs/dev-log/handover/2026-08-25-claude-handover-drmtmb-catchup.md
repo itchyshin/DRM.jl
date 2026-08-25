@@ -1,4 +1,4 @@
-# Session Handoff: drmTMB catch-up — SEVEN capability rows moved, three PRs awaiting the owner
+# Session Handoff: drmTMB catch-up — EIGHT capability rows moved, three PRs awaiting the owner
 
 Meta: 2026-08-25 · from **Claude Code** (Shannon) · TARGET **claude** · AUTHOR **claude**
 
@@ -30,20 +30,23 @@ treat as historical.
 
 ## What Was Accomplished
 
-**Seven capability rows moved** (drmTMB#1082, unmerged):
+**Eight capability rows moved** (drmTMB#1082, unmerged):
 
 ```
 before: 0 covered · 6 partial · 4 experimental · 1 unsupported
-after:  5 covered · 3 partial · 2 experimental · 1 unsupported     CLOSURE: PASS
+after:  5 covered · 4 partial · 1 experimental · 1 unsupported     CLOSURE: PASS
 ```
 
 **Seven rows moved in total.** Two of the four that did not move were held for reasons I later found
 were **my own misreadings**, so the list below is the corrected one:
 
 - `engine_control_surface` — **must not move.** Deliberately rejected; that is the whole point of the row.
-- `cross_family_latent` — **narrow, not unsatisfiable.** I first read its boundary as demanding native
-  parity that cannot exist. Re-reading it: it only says "development route" and constrains public docs.
-  Movable in principle; not tonight.
+- `cross_family_latent` — **MOVED to `partial` after all.** I first read its boundary as demanding
+  native parity that cannot exist; it only says "development route" and constrains public docs. Its own
+  `next_action` — "resolve the mixed-family API mismatch" — had been satisfied on `main` since 2026-08-16
+  (`0095fefd`), and nobody had moved the row. Part of what kept it down was our own capability page
+  calling the shipped model "Absent" (DRM.jl#490). Held at `partial`, not `covered`: the R bridge cannot
+  reach the route at all, there is no native comparator, and it is one family pair on one fixture.
 - `general_covariance_structured` — moved to `partial`; `covered` needs breadth this lane did not build.
 - `phylo_gamma_beta_binomial` — needs **your decision** (#473 reinstall).
 - `gaussian_response_mask` — **held at `partial` deliberately, and this one is a judgement, not a block.**

@@ -14,11 +14,20 @@ Three PRs are open and are the OWNER's call, not a lane's: **DRM.jl#485** (draft
 capability rows moved). `AGENTS.md` requires maintainer approval for `src/`, the formula grammar, and
 `AGENTS.md` — all three are touched._
 
-_| **SEVEN CAPABILITY ROWS MOVED** (drmTMB#1082): `0 covered · 6 partial · 4 experimental · 1 unsupported`
-→ **`5 covered · 3 partial · 2 experimental · 1 unsupported`**, CLOSURE: PASS. To covered:
+_| **EIGHT CAPABILITY ROWS MOVED** (drmTMB#1082): `0 covered · 6 partial · 4 experimental · 1 unsupported`
+→ **`5 covered · 4 partial · 1 experimental · 1 unsupported`**, CLOSURE: PASS. To covered:
 `biv_gaussian_residual`, `plain_binomial_nonphylo`, `base_gaussian_location_scale`,
 `gaussian_phylo_mean`, `biv_q4_phylo_reml`. To partial: `general_covariance_structured`,
-`phylo_count_large_p`. Each checked against design/168's four limbs, not against an impression._
+`phylo_count_large_p`, `cross_family_latent`. Each checked against design/168's four limbs, not against
+an impression. **Every row that can move without the owner has now moved** — the one remaining
+`experimental` row (`phylo_gamma_beta_binomial`) is gated on the #473 reinstall decision, and
+`engine_control_surface` is `unsupported` by design and must never move._
+
+_| **OUR OWN CAPABILITY PAGE WAS EVIDENCE AGAINST US** (DRM.jl#490): `docs/src/capabilities.md` listed the
+cross-family bivariate model as "Absent — no cross-family bivariate model is implemented" while
+`src/mixed_family.jl`, three wired test files and a ~450-line methods guide sat on `main`. Public
+documentation is one of design/168's four limbs, so the page was holding a row down by asserting the
+capability did not exist. Swept the page's other two negative claims — both hold._
 
 _| **ONE ROW HELD BACK ON PURPOSE:** `gaussian_response_mask` stays `partial` though its four limbs
 are arguably met. `response = "include"` is still refused on the Gaussian mean-phylo route, and that is

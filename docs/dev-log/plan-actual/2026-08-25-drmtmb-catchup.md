@@ -75,7 +75,7 @@ checkout at session start.
 
 | claim | status |
 |---|---|
-| 7 capability rows moved | **measured**, limb-by-limb against design/168 |
+| 8 capability rows moved | **measured**, limb-by-limb against design/168 |
 | 1 row NOT moved on purpose (`gaussian_response_mask`) | limbs arguably met; held `partial` because one of its two mask modes still fails |
 | REML cuts bias 2.5–2.8× | measured, 60/60 seeds |
 | q4 constant-offset prediction holds | measured on a converged fit |

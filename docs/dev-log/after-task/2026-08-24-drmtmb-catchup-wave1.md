@@ -29,11 +29,12 @@ pre-run, and the one drmTMB-side routing fix that unlocks the most user-visible 
 - **#479** — non-Gaussian `bootstrap_result` dropped `tree`/`K`/`A` on refit. Real shipped-behaviour bug.
 - **#470** — bivariate q=2 structured REML. Recovery: bias 0.0603→0.0216 (mu1), 0.0563→0.0226 (mu2), 60/60 seeds.
 - **#471** — structured markers for bivariate LogNormal via Gaussian delegation; **Student deliberately rejected**.
-- **Seven capability rows moved** (drmTMB#1082): `0 covered · 6 partial · 4 experimental · 1 unsupported`
-  → **`5 covered · 3 partial · 2 experimental · 1 unsupported`**. Five partial→covered
+- **Eight capability rows moved** (drmTMB#1082): `0 covered · 6 partial · 4 experimental · 1 unsupported`
+  → **`5 covered · 4 partial · 1 experimental · 1 unsupported`**. Five partial→covered
   (`biv_gaussian_residual`, `plain_binomial_nonphylo`, `base_gaussian_location_scale`,
-  `gaussian_phylo_mean`, `biv_q4_phylo_reml`); two experimental→partial
-  (`general_covariance_structured`, `phylo_count_large_p`).
+  `gaussian_phylo_mean`, `biv_q4_phylo_reml`); three experimental→partial
+  (`general_covariance_structured`, `phylo_count_large_p`, `cross_family_latent`).
+  Only `phylo_gamma_beta_binomial` is still `experimental`, and it is owner-gated on #473.
 - **q4 REML constant-offset prediction CONFIRMED** on a converged fit: predicted 5.513631, measured 5.504981.
 
 ## 3a. Decisions and Rejected Alternatives
@@ -77,7 +78,7 @@ Both new guards were verified to **fail** on injected drift and pass on restorat
 ## 7a. Issue Ledger
 
 Opened, DRM.jl: #465–#484, #486 (20). drmTMB: #1079, #1081, #1083 (3).
-PRs opened: **DRM.jl#485** (draft, 48 commits), **drmTMB#1080** (#460 fix), **drmTMB#1082** (7 rows moved).
+PRs opened: **DRM.jl#485** (draft, 48 commits), **drmTMB#1080** (#460 fix), **drmTMB#1082** (8 rows moved).
 **Closed: none. Merged: none.** Both repos' `main` untouched.
 
 ## 8. Consistency Audit
