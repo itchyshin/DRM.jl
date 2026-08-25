@@ -21,13 +21,14 @@ or `"biv_gaussian"`. `data` is a column table, dictionary, or named tuple.
 
 `formula` accepts R syntax beyond plain `@formula`: `:` interactions, `*`
 crossing, `- 1`/general `- term` removal, `(...)^k` crossing, and
-`scale(x)`/`I(expr)`/`factor(x)` (materialised into real columns — `I(...)`
-only over a safe `+ - * / ^` grammar, never arbitrary code). `poly(x, k)`
-stays unsupported: R's default orthogonal (`raw = FALSE`) columns can't be
-reproduced without silently disagreeing with R's coefficients. These
-materialised columns are NOT (yet) reconstructed for `newdata` — a formula
-using them combined with `newdata` fails loudly (missing column) rather than
-silently mismodelling; see #467.
+`scale(x)`/`I(expr)`/`factor(x)`/`poly(x, k)` (materialised into real columns —
+`I(...)` only over a safe `+ - * / ^` grammar, never arbitrary code).
+`poly(x, k)` is R's ORTHOGONAL basis (`raw = FALSE`, the default) and expands to
+`k` columns; only `poly(x, k)` itself is accepted — `raw = TRUE` is spelled
+`I(x^k)`, and an explicit `coefs =` or the multivariate `poly(x, y, degree)`
+are rejected rather than approximated (#492). These materialised columns are NOT
+(yet) reconstructed for `newdata` — a formula using them combined with `newdata`
+fails loudly (missing column) rather than silently mismodelling; see #467.
 
 The return value is a `Dict{String,Any}` made of primitive R-reconstructable
 pieces: named coefficients, covariance matrix, likelihood summaries, fitted
@@ -505,16 +506,22 @@ function _bridge_translate_r_ops(part::AbstractString)
     return replace(part, ':' => '&')
 end
 
-# R formula constructs `@formula` either cannot evaluate as the R user intends
-# (`poly`, undefined in `@formula` and highest-risk to fake — R's default is
-# `raw = FALSE`, QR-orthogonalised columns, not raw powers, so a raw-power
-# stand-in would silently disagree with R) or need a materialised column /
-# expanded term list to match R exactly (`I`, `scale`, `factor`, `(...)^k`,
-# and general `- term` removal — see `_bridge_xlate` below). `poly` stays
-# rejected; the rest are implemented as faithful rewrites before `@formula`.
+# R formula constructs that `@formula` cannot evaluate as the R user intends,
+# and so need a materialised column or an expanded term list to match R exactly
+# (`I`, `scale`, `factor`, `poly`, `(...)^k`, and general `- term` removal —
+# see `_bridge_xlate` below). All are implemented as faithful rewrites before
+# `@formula`, each with an R-parity fixture on byte-identical data.
+#
+# `poly` was in this table as a blanket rejection until 2026-08-25, on the
+# grounds that R's default `raw = FALSE` basis is "highest-risk to fake" and a
+# raw-power stand-in would silently disagree. The premise was right and the
+# conclusion was too broad: R's algorithm is deterministic, and transcribing it
+# reproduces `stats::poly(x, 3)` to 9.99e-16 (#492). What remains rejected is
+# the part that genuinely cannot be faked — `raw = TRUE` (write `I(x^k)`), an
+# explicit `coefs =`, and multivariate `poly(x, y, degree)` — and that rejection
+# now lives at the call site, where it can name the specific unsupported form.
 const _BRIDGE_REJECT_CALLS = Dict{Symbol,String}(
     :^ => "R crossing `(...)^k` is unsupported via engine=\"julia\" for this shape (need a literal positive integer power over a `+`-only expression, with no `*` inside); expand it explicitly (e.g. `a + b + a&b`).",
-    :poly => "R `poly(x, k)` is unsupported via engine=\"julia\": R's default is `raw = FALSE` (QR-orthogonalised polynomial columns), and a raw-power implementation would silently disagree with R's coefficients. Precompute the orthogonal columns in R (`poly(x, k)`, then export them) and pass them as covariates, or refit with `poly(x, k, raw = TRUE)` in R for parity with a manual power expansion.",
 )
 
 # Mutable per-formula-bridge context: materialises `I(...)`, `scale(...)`, and
@@ -589,11 +596,62 @@ function _bridge_eval_scale(sym::Symbol, ctx::_BridgeXlateCtx)
     return (col .- mu) ./ sdv
 end
 
+# `poly(x, k)`: R's ORTHOGONAL polynomial basis — `stats::poly()`'s default
+# (`raw = FALSE`), not raw powers. R's algorithm is deterministic: centre `x`,
+# build the Vandermonde `[1, xc, xc^2, …, xc^k]`, take its QR, rescale each
+# column by its own norm, and drop the constant column. Transcribing it
+# reproduces `stats::poly(x, 3)` to 9.99e-16 on byte-identical data (#492), and
+# the QR sign convention already matches R's, so no sign-fixing pass is needed.
+#
+# Returns the n×k matrix; the caller materialises one data column per degree
+# because Tables.jl does not accept a matrix-valued column in a column table.
+#
+# NOT supported, and rejected at the call site rather than approximated:
+# `raw = TRUE` (write the powers with `I(x^k)`), an explicit `coefs =`, and the
+# multivariate `poly(x, y, degree)`, which is a different construction.
+function _bridge_eval_poly(sym::Symbol, degree::Int, ctx::_BridgeXlateCtx)
+    col = float.(_bridge_lookup_column(ctx, sym))
+    n = length(col)
+    nuniq = length(unique(col))
+    # R: "'degree' must be less than number of unique points".
+    degree < nuniq || throw(ArgumentError(
+        "drmTMB(engine=\"julia\"): `poly($(sym), $(degree))` needs the degree to be less than the " *
+        "number of unique values in `$(sym)` (found $(nuniq)); R's `stats::poly()` errors here too."))
+    xc = col .- (sum(col) / n)
+    X = hcat((xc .^ k for k in 0:degree)...)
+    F = LinearAlgebra.qr(X)
+    Z = Matrix(F.Q) * LinearAlgebra.Diagonal(LinearAlgebra.diag(F.R))
+    nrm2 = vec(sum(abs2, Z; dims = 1))
+    any(v -> v <= 0 || !isfinite(v), nrm2) && throw(ArgumentError(
+        "drmTMB(engine=\"julia\"): `poly($(sym), $(degree))` produced a degenerate basis; the column is " *
+        "probably collinear at this degree. Lower the degree or precompute the basis in R."))
+    Z = Z ./ sqrt.(nrm2)'
+    return Z[:, 2:end]
+end
+
 # Does `e` contain a `*` (R/StatsModels crossing) anywhere? `-` (general term
 # removal) and `^` (crossing power) below do their own term-list algebra by
 # flattening `+`/`&` only; an unexpanded `*` inside that algebra could hide a
 # term from a `-` removal or a `^` combination, silently disagreeing with R.
 # Reject those combinations explicitly instead of guessing.
+# Does `e` contain a `poly(...)` call anywhere? `poly` is the only construct
+# here that rewrites to a GROUP of terms (`+`), so it is only meaningful where a
+# group is meaningful. Under a scalar function — `log1p(poly(x, 2))` — R applies
+# the function elementwise to a k-column MATRIX, giving k columns, while this
+# rewrite would apply it to the SUM of the k columns, giving one. That is a
+# silent disagreement of exactly the kind the blanket `poly` rejection existed to
+# prevent, so it is rejected explicitly instead of being inherited by accident.
+_bridge_contains_poly(e) = false
+function _bridge_contains_poly(e::Expr)
+    e.head === :call && e.args[1] === :poly && return true
+    return any(_bridge_contains_poly, e.args)
+end
+
+# Formula operators under which a `+` group of terms means what R means.
+# `-` and `(...)^k` are absent because they have their own branches above and
+# flatten `+` themselves before doing term algebra.
+const _BRIDGE_TERM_OPS = (:+, :&, :*, :~)
+
 _bridge_contains_star(e) = false
 function _bridge_contains_star(e::Expr)
     e.head === :call && e.args[1] === :* && return true
@@ -688,6 +746,20 @@ function _bridge_xlate(e::Expr, ctx::_BridgeXlateCtx)
         throw(ArgumentError("drmTMB(engine=\"julia\"): R term removal with `-` is unsupported; list the terms you want explicitly."))
     elseif f === :^
         if length(e.args) == 3 && e.args[3] isa Integer && e.args[3] >= 1
+            # MEASURED 2026-08-25: `poly()` is NOT safe under `(...)^k`, and this is
+            # the one place the `+`-group rewrite breaks. R treats `poly(x, 2)` as a
+            # SINGLE term, so `(x + poly(x, 2))^2` crosses two terms and never forms
+            # `poly1:poly2` — R gives 6 model-matrix columns. Flattening poly into
+            # `p1 + p2` makes it two terms, so the same expansion yields 7, the extra
+            # column being `p1 & p2`. Checked against `model.matrix()` on both sides.
+            # Rejected rather than special-cased: keeping the group intact through the
+            # power algebra would need a term-grouping concept the rewrite does not have.
+            _bridge_contains_poly(e.args[2]) && throw(ArgumentError(
+                "drmTMB(engine=\"julia\"): `poly(x, k)` inside `(...)^k` crossing is unsupported. R treats " *
+                "`poly(x, k)` as ONE term, so it never crosses a poly column with another poly column; this " *
+                "rewrite expands poly into k separate terms, which would add those extra interactions " *
+                "(measured: R 6 columns vs 7 here for `(x + poly(x, 2))^2`). Expand the crossing explicitly, " *
+                "or precompute the basis in R and pass the columns as covariates."))
             inner = _bridge_xlate(e.args[2], ctx)
             _bridge_contains_star(inner) &&
                 throw(ArgumentError("drmTMB(engine=\"julia\"): R crossing `(...)^k` over an expression that already contains unexpanded `*` crossing is unsupported; expand explicitly."))
@@ -698,6 +770,27 @@ function _bridge_xlate(e::Expr, ctx::_BridgeXlateCtx)
         length(e.args) == 2 ||
             throw(ArgumentError("drmTMB(engine=\"julia\"): `I(...)` takes exactly one expression."))
         return _bridge_materialize!(ctx, "I", e.args[2], () -> _bridge_eval_I(e.args[2], ctx))
+    elseif f === :poly
+        # `poly(x, k)` expands to k model-matrix columns, so unlike `scale()` this
+        # returns a `+` GROUP of materialised symbols rather than one symbol. That
+        # composes safely with the `-` and `(...)^k` algebra below because both
+        # flatten `+` before operating on the term list.
+        length(e.args) == 3 || throw(ArgumentError(
+            "drmTMB(engine=\"julia\"): only `poly(x, k)` is supported via engine=\"julia\". " *
+            "`raw = TRUE` is spelled `I(x^k)` term by term; an explicit `coefs =` and the multivariate " *
+            "`poly(x, y, degree)` are unsupported — precompute those columns in R and pass them as covariates."))
+        arg = e.args[2]
+        arg isa Symbol || throw(ArgumentError(
+            "drmTMB(engine=\"julia\"): `poly(...)` only supports a bare column reference (e.g. `poly(x, 3)`), " *
+            "not a general expression; precompute the basis and pass it as covariates."))
+        deg = e.args[3]
+        (deg isa Integer && deg >= 1) || throw(ArgumentError(
+            "drmTMB(engine=\"julia\"): `poly($(arg), …)` needs an integer degree >= 1 written as a literal " *
+            "(got `$(deg)`)."))
+        degi = Int(deg)
+        basis = _bridge_eval_poly(arg, degi, ctx)
+        syms = [_bridge_materialize!(ctx, "poly$(degi)c$(j)", arg, () -> basis[:, j]) for j in 1:degi]
+        return Expr(:call, :+, syms...)
     elseif f === :scale
         length(e.args) == 2 ||
             throw(ArgumentError("drmTMB(engine=\"julia\"): `scale(...)` with explicit `center`/`scale` arguments is unsupported via engine=\"julia\"; precompute the standardized column and pass it as a covariate."))
@@ -723,10 +816,18 @@ function _bridge_xlate(e::Expr, ctx::_BridgeXlateCtx)
     elseif haskey(_BRIDGE_REJECT_CALLS, f)
         throw(ArgumentError("drmTMB(engine=\"julia\"): " * _BRIDGE_REJECT_CALLS[f]))
     end
+    # `poly()` may only sit where a GROUP of terms is meaningful. Checked BEFORE
+    # recursing, while the argument expressions still say `poly(...)`.
+    if !(f in _BRIDGE_TERM_OPS) && any(_bridge_contains_poly, e.args[2:end])
+        throw(ArgumentError("drmTMB(engine=\"julia\"): `poly(x, k)` may only appear as a model term " *
+            "(under `~`, `+`, `&`, `*`, or the `-` / `(...)^k` term algebra), not inside `$(f)(...)`. " *
+            "`poly()` expands to k columns; R would apply `$(f)` elementwise to all k, while this rewrite " *
+            "would apply it to their sum — one column instead of k, silently. Precompute the transformed " *
+            "basis in R and pass the columns as covariates."))
+    end
     # Recurse into EVERY remaining call's arguments (`~`, `+`, `&`, `*`, `log`,
-    # `phylo`, …) so a rejected construct nested at ANY depth — e.g. `poly()` under
-    # `*` (`x1 * poly(x1, 2)`) or under `log()` — is still caught, not only when it
-    # sits directly under `~`/`+`/`&`.
+    # `phylo`, …) so a rejected construct nested at ANY depth is still caught, not
+    # only when it sits directly under `~`/`+`/`&`.
     return Expr(:call, f, (_bridge_xlate(a, ctx) for a in e.args[2:end])...)
 end
 

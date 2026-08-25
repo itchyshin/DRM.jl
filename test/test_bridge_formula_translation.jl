@@ -14,9 +14,10 @@
 # byte-identical numeric agreement with drmTMB live under
 # test/parity/fixtures/bridge-*/ (gated, `DRM_PARITY_TESTS=1`); this file
 # checks the translation's STRUCTURE: what fits, what still throws, and that a
-# rejection is caught at ANY nesting depth. `poly()` stays rejected — R's
-# default `raw = FALSE` orthogonal columns cannot be reproduced without
-# silently disagreeing with R, so a raw-power stand-in was refused.
+# rejection is caught at ANY nesting depth. `poly()` LANDED 2026-08-25 (#492):
+# R's `raw = FALSE` orthogonal basis is deterministic and transcribes to 9.99e-16,
+# so the old blanket rejection was replaced by a narrow one. What stays rejected is
+# what genuinely cannot be reproduced by this rewrite — see the `poly()` testsets.
 using DRM
 using Test
 
@@ -53,33 +54,62 @@ using Test
         @test fitok("y ~ x1 + x2 + x3 + x1:x2:x3; sigma ~ 1")   # 3-way
     end
 
-    @testset "R `*` crossing: valid fits, poly() nested ban still rejected" begin
+    @testset "R `*` crossing: valid fits, nested bans still caught" begin
         # `*` (crossing = main effects + interaction) is a valid Julia formula op.
         @test fitok("y ~ x1 * x2 + phylo(1 | species); sigma ~ 1")
-        # I()/scale() are now LANDED (see below) — `*`/transform nesting no
-        # longer bans them. `poly()` is the one construct that STAYS rejected,
-        # so it is the exemplar for "a ban nested at any depth is still caught"
-        # (it must NOT leak a raw Julia error either).
-        for f in ("y ~ x1 * poly(x1, 2); sigma ~ 1",
-                  "y ~ log1p(poly(x1, 2)); sigma ~ 1",
-                  "y ~ x1 & poly(x1, 2); sigma ~ 1",             # under `&` (R `:`)
-                  "y ~ (x1 + poly(x1, 2))^2; sigma ~ 1",         # under `^`'s inner sum
-                  "y ~ x1 + x2 - poly(x1, 2); sigma ~ 1")        # under `-`'s removed term
+        # I()/scale()/poly() are all LANDED now, so the exemplar for "a ban nested
+        # at any depth is still caught" is a construct that remains unsupported —
+        # and it must NOT leak a raw Julia error.
+        for f in ("y ~ log1p(poly(x1, 2)); sigma ~ 1",            # poly under a scalar fn
+                  "y ~ (x1 + poly(x1, 2))^2; sigma ~ 1",          # poly under `^`
+                  "y ~ I(log(x1)); sigma ~ 1")                    # outside I()'s grammar
             rejects(f)
         end
     end
 
-    @testset "poly() stays rejected with a sharper message" begin
+    @testset "poly() is landed, and its shape guards are narrow (#492)" begin
+        # R's orthogonal (`raw = FALSE`) basis is deterministic; the transcription
+        # matches `stats::poly(x, 3)` to 9.99e-16. Numeric agreement with drmTMB is
+        # in test/parity/fixtures/bridge-poly*/ (gated); here: what fits, what does not.
+        @test fitok("y ~ poly(x1, 3); sigma ~ 1")
+        @test fitok("y ~ poly(x1, 2) + x2; sigma ~ 1")
+        @test fitok("y ~ x2 * poly(x1, 2); sigma ~ 1")     # `*` matches R (fixture: bridge-poly-cross)
+        @test fitok("y ~ x2 & poly(x1, 2); sigma ~ 1")     # R `:` — 3 columns both sides
+
+        # k columns, not one: poly(x1, 3) must add exactly 3 mu coefficients.
+        base = drm_bridge(; formula = "y ~ 1; sigma ~ 1", family = "gaussian", data = dat, tree = phy)
+        p3   = drm_bridge(; formula = "y ~ poly(x1, 3); sigma ~ 1", family = "gaussian", data = dat, tree = phy)
+        nmu(o) = count(k -> startswith(k, "mu_"), keys(o["coef"]))
+        @test nmu(p3) == nmu(base) + 3
+
+        # `(...)^k`: MEASURED mismatch, not a guess. R treats poly as ONE term, so
+        # `(x + poly(x, 2))^2` gives 6 model-matrix columns; flattening poly into two
+        # terms yields 7, the extra being poly1 & poly2.
         try
-            drm_bridge(; formula = "y ~ poly(x1, 2); sigma ~ 1", family = "gaussian",
-                      data = dat, tree = phy)
-            @test false   # must throw
+            drm_bridge(; formula = "y ~ (x1 + poly(x1, 2))^2; sigma ~ 1", family = "gaussian",
+                       data = dat, tree = phy)
+            @test false
         catch e
             @test e isa ArgumentError
-            msg = sprint(showerror, e)
-            @test occursin("raw = FALSE", msg)          # explains WHY, not just THAT
-            @test occursin("orthogonal", msg) || occursin("orthogonalised", msg)
+            @test occursin("ONE term", sprint(showerror, e))
         end
+
+        # A scalar function applied to a k-column basis: R maps it over the matrix
+        # (k columns out); this rewrite would map it over their SUM (one column).
+        try
+            drm_bridge(; formula = "y ~ log1p(poly(x1, 2)); sigma ~ 1", family = "gaussian",
+                       data = dat, tree = phy)
+            @test false
+        catch e
+            @test e isa ArgumentError
+            @test occursin("may only appear as a model term", sprint(showerror, e))
+        end
+
+        # Forms that cannot be reproduced, each named specifically rather than
+        # swept under one blanket refusal.
+        rejects("y ~ poly(x1, 2, raw = TRUE); sigma ~ 1")   # raw powers: use I(x^k)
+        rejects("y ~ poly(x1 + x2, 2); sigma ~ 1")          # not a bare column
+        rejects("y ~ poly(x1, 0); sigma ~ 1")               # degree must be >= 1
     end
 
     @testset "scale()/I()/factor() are now landed" begin

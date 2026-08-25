@@ -229,10 +229,61 @@ generate_power <- function() {
 .parity_only <- trimws(.parity_only[.parity_only != ""])
 .run <- function(slug, fn) if (length(.parity_only) == 0L || slug %in% .parity_only) fn()
 
+generate_poly <- function() {
+  seed <- 20260824
+  dat <- make_data(seed)[, c("y", "x")]   # only what the formula references
+  fit <- drmTMB(drm_formula(y ~ poly(x, 3), sigma ~ 1), family = gaussian(), data = dat)
+  ## poly(x, 3) is ONE R term spanning THREE model-matrix columns. The bridge
+  ## materialises one synthetic column per degree, so the map is 3 -> 3.
+  name_map <- c(
+    "mu:(Intercept)"    = "mu_(Intercept)",
+    "mu:poly(x, 3)1"    = "mu___bridge_poly3c1_1",
+    "mu:poly(x, 3)2"    = "mu___bridge_poly3c2_2",
+    "mu:poly(x, 3)3"    = "mu___bridge_poly3c3_3",
+    "sigma:(Intercept)" = "sigma_(Intercept)"
+  )
+  write_bridge_fixture(
+    "bridge-poly", dat, "y ~ poly(x, 3); sigma ~ 1", "gaussian", fit, name_map,
+    "drmTMB(drm_formula(y ~ poly(x, 3), sigma ~ 1), family = gaussian(), data = dat)",
+    seed,
+    paste0("drm_bridge #492: poly(x, k) is R's ORTHOGONAL basis (raw = FALSE, the default), ",
+           "reproduced by centring, QR of the Vandermonde, rescaling by column norms, and dropping ",
+           "the constant column. Three materialised columns, one per degree. This fixture is the ",
+           "check that the transcription matches R rather than merely looking like it.")
+  )
+}
+
+generate_poly_cross <- function() {
+  seed <- 20260824
+  dat <- make_data(seed)[, c("y", "x", "z")]
+  ## The multi-column case that matters: `z * poly(x, 2)` crosses a plain column
+  ## with a THREE-term group. The bridge rewrites poly to `(p1 + p2)` and lets
+  ## StatsModels do the crossing; R crosses z with each poly column. This fixture
+  ## is the check that those two produce the same model, not merely similar ones.
+  fit <- drmTMB(drm_formula(y ~ z * poly(x, 2), sigma ~ 1), family = gaussian(), data = dat)
+  name_map <- c(
+    "mu:(Intercept)"      = "mu_(Intercept)",
+    "mu:z"                = "mu_z",
+    "mu:poly(x, 2)1"      = "mu___bridge_poly2c1_1",
+    "mu:poly(x, 2)2"      = "mu___bridge_poly2c2_2",
+    "mu:z:poly(x, 2)1"    = "mu_z & __bridge_poly2c1_1",
+    "mu:z:poly(x, 2)2"    = "mu_z & __bridge_poly2c2_2",
+    "sigma:(Intercept)"   = "sigma_(Intercept)"
+  )
+  write_bridge_fixture(
+    "bridge-poly-cross", dat, "y ~ z * poly(x, 2); sigma ~ 1", "gaussian", fit, name_map,
+    "drmTMB(drm_formula(y ~ z * poly(x, 2), sigma ~ 1), family = gaussian(), data = dat)",
+    seed,
+    "drm_bridge #492: poly() under `*` crossing. poly rewrites to a `+` group, so this checks the group crosses the way R crosses the matrix columns."
+  )
+}
+
 .run("bridge-scale", generate_scale)
 .run("bridge-I", generate_I)
 .run("bridge-factor", generate_factor)
 .run("bridge-minus-term", generate_minus_term)
 .run("bridge-power", generate_power)
+.run("bridge-poly", generate_poly)
+.run("bridge-poly-cross", generate_poly_cross)
 
 message("Generated drm_bridge formula-construct parity fixtures under test/parity/fixtures/bridge-*")

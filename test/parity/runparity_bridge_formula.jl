@@ -21,6 +21,8 @@ const _BRIDGE_FORMULA_COHORT = Set([
     "bridge-factor",
     "bridge-minus-term",
     "bridge-power",
+    "bridge-poly",
+    "bridge-poly-cross",
 ])
 
 let fixtures_root = joinpath(@__DIR__, "fixtures")
