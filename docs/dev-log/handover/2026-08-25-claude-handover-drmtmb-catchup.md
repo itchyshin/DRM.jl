@@ -1,5 +1,43 @@
 # Session Handoff: drmTMB catch-up — EIGHT capability rows moved, three PRs awaiting the owner
 
+> ## ⚠️ CORRECTED STATE — read this before any count below
+>
+> **The real tally is `2 covered · 7 partial · 1 experimental · 1 unsupported`, CLOSURE: PASS.**
+> Every "eight rows moved / five covered" figure further down this document was written before two
+> discoveries and is **stale**. The measured evidence behind those rows is unchanged and still good;
+> what changed is where it lives and what it is permitted to claim.
+>
+> **1. The ledger TSV is a GENERATED artifact, not source.** `docs/design/192` says so outright:
+> *"not hand-edited source-of-truth tables… generated from `drm_julia_capability_comparison()`"*.
+> I hand-edited `inst/extdata/julia-capabilities.tsv` all night; another lane ran the regenerator at
+> 06:16 and every promotion vanished — correctly. Everything reported as CLOSURE: PASS before that was
+> passing against a file any regeneration could revert. **Fixed at source:** statuses and all eleven
+> boundaries (including the measured-evidence text, up to 3.6 KB per row) now live in
+> `R/julia-bridge.R`, regenerated through `tools/write-julia-capability-comparison.R`, verified
+> byte-identical on a second run. **Edit the R function, never the TSV.**
+>
+> **2. Three rows are governance-capped, not evidence-limited.** `base_gaussian_location_scale`,
+> `biv_gaussian_residual` and `gaussian_phylo_mean` are `drm_julia_phase15_admitted_cells()`, and
+> `tests/testthat/test-julia-gate-vs-engine.R:205` asserts they stay `partial`/`experimental`. I had
+> promoted all three; the suite failed. Their own boundaries said why in plain sight — *"CRAN readers
+> still use TMB; vignette keeps Julia deferred/experimental"* — and I read it as description rather
+> than constraint. It is release governance (D-164 territory) and therefore **the owner's call, not a
+> lane's**. Reverted to `partial` with the evidence retained and the cap recorded on each row.
+>
+> Both are the same error at different levels: I checked whether the evidence justified a claim, and
+> never checked whether I was permitted to make it or whether I was writing it in the right place.
+> The package's own test suite answers both in seconds.
+>
+> **Surviving promotions: `biv_q4_phylo_reml` and `plain_binomial_nonphylo`** — neither is a Phase 1.5
+> cell.
+>
+> **Interval coverage is now MEASURED** (Totoro, authorised 2026-08-25). Results:
+> `docs/dev-log/evidence/2026-08-25-coverage-campaign-results.md`. Both `coverage_claimed` fences are
+> **untouched and should stay** until DRM.jl#493 is fixed — the campaign's own design mandates a
+> separate fence PR with a Rose audit between, and the Cell B off-diagonals (0.810–0.891) argue against
+> lifting anyway.
+
+
 Meta: 2026-08-25 · from **Claude Code** (Shannon) · TARGET **claude** · AUTHOR **claude**
 
 You are **Claude Code**, picking up **DRM.jl** with **no chat context**. Rehydrate from this repository

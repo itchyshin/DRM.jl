@@ -185,6 +185,32 @@ Wave 1 merges shifted `runtests.jl`.
   family on that route. **Deliberately unfixed**: the threshold moves accept/reject for all of them and a
   too-loose value fails silently. The measurements to choose it are in the issue.
 
+## 10b. Two structural errors found late — both about PERMISSION, not evidence
+
+Recorded separately because they invalidate counts stated earlier in this report, and because they are
+the same mistake at two levels.
+
+**The ledger TSV is a build product.** Every promotion and boundary I wrote went into
+`inst/extdata/julia-capabilities.tsv`. `docs/design/192` states plainly that it is *"not a hand-edited
+source-of-truth table"* — it is generated from `drm_julia_capability_comparison()` in
+`R/julia-bridge.R`. Another lane regenerated at 06:16 and all eight promotions vanished, correctly. I
+noticed only because a countdown afterwards reported a tally I did not expect. Fixed at source and
+verified idempotent.
+
+**Three rows are capped below `covered` by an active test.**
+`tests/testthat/test-julia-gate-vs-engine.R:205` asserts the three
+`drm_julia_phase15_admitted_cells()` stay `partial`/`experimental`. The cap is CRAN-facing and
+therefore release governance — D-164's territory, not a lane's. The rows' own boundaries said so
+(*"vignette keeps Julia deferred/experimental"*) and I read it as description.
+
+**Corrected tally: `2 covered · 7 partial · 1 experimental · 1 unsupported`**, CLOSURE: PASS.
+
+The generalisable point: this report already records five cases of misreading a *disclaimer* as a
+*requirement* and being too pessimistic. These two are the mirror image — reading a *constraint* as a
+*description* and being too permissive. The common root is not optimism or pessimism, it is failing to
+ask what KIND of statement I am reading. And in both cases a check that takes seconds — running the
+package's own test suite, grepping for a generator — would have answered it.
+
 ## 11. Team Learning
 
 **A note in our own fixture caused an analytical dead end.** It asserted that the two engines restrict
