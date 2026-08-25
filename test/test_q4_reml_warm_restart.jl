@@ -99,16 +99,25 @@ end
     @test rr.converged == true
     @test rr.g_residual < g_tol   # the residual criterion itself, not just the flag
 
-    # #484: the converged fit should reproduce the (n_beta/2)*log(2*pi) constant-
-    # offset gap against drmTMB's native REML documented in reml_q4.jl (#477) — a
-    # strong independent check that the restart found the right optimum, not a
-    # different one. n_beta = 6 (mu1 + mu2 + sigma1 + sigma2 design widths = 2+2+1+1).
+    # #484: does the restart find the RIGHT optimum, or merely a converged one?
+    # The check is the same as before and is now strictly sharper.
+    #
+    # Until #477 this route reported the UNNORMALISED restricted log-likelihood,
+    # so the expected gap against drmTMB's native REML was the integration
+    # constant (n_beta/2)*log(2*pi) = 5.513631 with n_beta = 6 (mu1 + mu2 +
+    # sigma1 + sigma2 design widths = 2+2+1+1), and this test allowed a 5.5136
+    # offset. Both engines now report the normalised scale, so there is no
+    # offset left to allow: the gap must be ZERO to within this cell's
+    # cross-optimum reml_ll spread. Measured at the #477 change: 0.001938.
+    #
+    # This assertion is what caught the change propagating — it failed with
+    # `isapprox(0.001938, 5.513631)` the moment the constant was added, which is
+    # independent confirmation (separate from the parity fixture) that the whole
+    # gap really was the constant.
     expected = TOML.parsefile(joinpath(FIXTURE, "expected.toml"))
     tmb_reml = Float64(expected["fit"]["loglik"])
-    n_beta = 6
-    predicted_gap = (n_beta / 2) * log(2 * pi)
     measured_gap = tmb_reml - rr.reml_loglik
-    @test isapprox(measured_gap, predicted_gap; atol = 0.05)
+    @test isapprox(measured_gap, 0.0; atol = 0.05)
 end
 
 end # module TestQ4RemlWarmRestart

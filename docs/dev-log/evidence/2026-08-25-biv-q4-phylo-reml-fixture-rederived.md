@@ -178,3 +178,34 @@ No re-measured number disagreed with drmTMB by more than the re-derived
 `src/` (untouched) · `tools/` (untouched) · `.codex/agents/` ·
 `test/parity/**` outside `q4-reml/biv-q4-phylo-reml/` · data regeneration ·
 promoting the row · editing any drmTMB TSV · coverage · AI-REML.
+
+---
+
+## Superseded the same day — #477 removed the constant this derivation was built around
+
+The tolerance derived above, **`atol_loglik = 5.5436`**, is
+`(n_β/2)·log(2π) [5.513631] + 0.03 [cross-optimum spread]`. The first term exists only because DRM.jl's
+bivariate REML routes reported the **unnormalised** restricted log-likelihood while drmTMB reported the
+normalised one.
+
+**That is no longer true** (#477, same day): every REML route in DRM.jl now reports the normalised form,
+matching drmTMB, TMB, lme4, glmmTMB — and matching DRM.jl's own univariate REML routes, which had always
+added the constant. So the offset term is gone and the tolerance is the spread alone:
+
+```
+atol_loglik   5.5436  ->  0.03      (185x tighter)
+measured gap  5.515569 -> 0.001938
+```
+
+Verified 33/33 on the fixture, and independently by `test/test_q4_reml_warm_restart.jl`, whose #484
+same-optimum check previously *allowed* a 5.5136 offset and now allows none.
+
+**The derivation above is still correct as history and is left intact** — it is the record of why the
+tolerance was what it was. What it should no longer be used for is re-deriving a tolerance: the a-priori
+basis it argues from had a term in it that was a reporting artefact rather than a property of the two
+engines.
+
+That is the useful lesson here, and it is uncomfortable. The derivation was careful, explicitly a-priori
+rather than fitted to the observed gap, and documented at length — and its largest term measured a
+labelling difference in our own package. A tolerance that is 99.5% one constant is worth a second look at
+the constant, not just at the derivation's rigour.
