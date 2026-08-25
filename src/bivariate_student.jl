@@ -158,7 +158,9 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Student, data, rhs
                   :sigma2 => exp.(Xs2 * θ̂[rng(4)]),
                   :nu => 2 .+ exp.(Xν * θ̂[rng(5)]),
                   :rho12 => RHO_GUARD .* tanh.(Xr * θ̂[rng(6)]))
-    return _withformula(
-        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n_like,
-                        Optim.converged(res), means, obs, scales), nll), f)
+    return _withiterations(
+        _withformula(
+            _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n_like,
+                            Optim.converged(res), means, obs, scales), nll), f),
+        Optim.iterations(res))
 end

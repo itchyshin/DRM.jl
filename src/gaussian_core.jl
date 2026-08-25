@@ -212,6 +212,42 @@ Optimiser iterations actually taken, or `-1` when the fitter does not record it.
 Deliberately NOT named `iterations`: `Optim.iterations` already means this, and
 DRM.jl also uses `iterations` as a fitting OPTION (the cap). Keeping the accessor
 distinct stops "max allowed" and "actually taken" being confused for each other.
+
+`-1` is not a placeholder to be filled in later on every route — it is the
+honest answer for a fit that has no single outer optimiser call to count, and
+it is preferred over any approximated or borrowed number (#466).
+
+# Coverage by family
+
+Wired (reports `Optim.iterations(res)` from the LBFGS run that produced `θ̂`):
+`Gaussian` (both the plain ML fixed-effects fit and the Cox–Reid REML
+fixed-effects fit), `Student`, `SkewNormal`, `Poisson`, `NegBinomial2`,
+`TruncatedNegBinomial2`, `Beta`, `BetaBinomial`, `Binomial`, `Gamma`,
+`LogNormal`, `ZeroOneBeta`, `Tweedie`, `CumulativeLogit` — for their fixed-effects
+fit and, where the family has one, its scalar `(1 | g)` random-intercept,
+correlated `(1 + x | g)`, zero-inflated (`zi`), hurdle (`hu`), and (Poisson only)
+AGHQ / coordinate-spatial-range variants. The bivariate residual routes
+(`Gaussian`/`Gaussian`, `Student`/`Student`, `LogNormal`/`LogNormal`) are wired
+the same way; `LogNormal`'s bivariate fit borrows the Gaussian-on-log-y
+optimiser run wholesale (only the reported likelihood is Jacobian-shifted), so
+it carries that run's iteration count rather than re-deriving one.
+`fit_mixed_family`'s cross-family latent-`rho` route reports its own optimiser
+run too, but through the returned `NamedTuple`'s `iterations` field — that route
+does not produce a `DrmFit`, so `niterations` does not apply to it.
+
+Still `-1` (no single outer LBFGS call to attribute the count to, or not yet
+wired): Gaussian's `meta_V`, `phylo`/`relmat`/`animal`/`spatial`, and
+multi-random-effect routes (the Cox–Reid REML *random-intercept* route, e.g.
+Poisson `(1 | g)` with `method = :REML`, also stays `-1` — its reported `θ̂`
+comes from a secondary restricted refit, not the counted LBFGS run, so
+attributing that run's count to it would be a mismatch, not a full count); the
+bivariate Gaussian `phylo`/structured (q2/q4) sparse-Laplace routes; and every
+family's `phylo`/`relmat`/`animal`/coordinate-spatial random-effect routes other
+than Poisson's spatial-range fit above. These share the sparse augmented-state
+Laplace engine (`src/sparse_*.jl`, `src/*_phylo.jl`) rather than a single
+top-level `Optim.optimize` call, so there is no one iteration count to report
+honestly; do not infer non-iteration (e.g. "closed form") from `-1` on these
+routes — check the family/route, not just the flag.
 """
 niterations(fit::DrmFit) = fit.iterations
 
@@ -969,7 +1005,7 @@ function _fit_fixed_gaussian_reml(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
         return s + const_2pi
     end
     fit = DrmFit(fam, blocks, names, θ̂, V, reml_ll, n, Optim.converged(res), means, obs, scales)
-    return _withreml(_withnll(fit, nll_full), reml_ll, ml_ll)
+    return _withiterations(_withreml(_withnll(fit, nll_full), reml_ll, ml_ll), Optim.iterations(res))
 end
 
 # ---- accessors -----------------------------------------------------------
