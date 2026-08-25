@@ -38,7 +38,17 @@ _| **COMPUTE (owner-directed): Totoro AND DRAC.** Totoro for pilot cells (≤150
 R library on `/project` (never `/scratch`, purged ~60 d). Attach via the existing `~/.ssh/cm-*` sockets;
 never trigger Duo (D-64). **D-139 binds: #468 stops for a go/no-go before any grid runs.**_
 
-_| **STILL TRUE, unchanged:** no capability row is `supported` (6 partial · 4 experimental · 1
+_| **VOCABULARY CORRECTION (2026-08-24) — `supported` IS NOT A STATUS.** Earlier entries below, this
+lane's own first entry, and Mission Control all said "no capability row is `supported`". The governing
+registry (drmTMB `docs/design/168`) defines exactly five: **`covered > partial > experimental > planned
+> unsupported`**. Nothing can ever become `supported`. Worse, `tools/parity_ledger.py` counted
+`claim_status != 'supported'` and printed the result as "N unsupported capability rows" — a number equal
+to `len(caps)` by construction, which could never move however much evidence landed, and which labelled
+6 `partial` + 4 `experimental` rows with a word the registry reserves for *deliberately rejected*. Fixed
+in `d265d876`; the countdown now reads **`11 capability rows [6 partial · 4 experimental · 1
+unsupported]`**. **Promotion here means `experimental → partial` or `partial → covered`.**_
+
+_| **STILL TRUE, unchanged:** no capability row is `covered` (6 partial · 4 experimental · 1
 deliberately unsupported); **both `interval_status != "coverage_claimed"` fences intact** — agreement
 between two engines is not calibration against truth, and only the coverage campaign can earn their
 removal. #420/#406 remain OPEN (DIRTY) — **do not rebase**. #49, #136 PARKED. D-111 OFF.
