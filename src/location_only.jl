@@ -110,6 +110,68 @@ function make_loc_problem(phy::AugmentedPhy, y, X; species=1:(phy.n_leaves))
     )
 end
 
+"""
+    _phylo_mean_leaf_index(phy::AugmentedPhy, labels) -> Vector{Int}
+
+Map per-row group `labels` to the tree's raw leaf index (`1:phy.n_leaves`) —
+the convention `make_loc_problem`'s `species=` keyword expects. Mirrors the
+three-tier match `_poisson_phylo_setup` already uses for the Laplace phylo
+routes, most to least specific:
+
+  1. leaf NAME (`phy.leaf_names`) — subset-tolerant: `labels` may name only
+     SOME of the tree's leaves (e.g. after a caller drops missing-response
+     rows upstream — #482). A leaf that never appears in `labels` simply gets
+     no observation and stays in the phylo PRIOR only, exactly like the
+     σ-phylo route's documented "species whose every row is missing stays in
+     the prior with no likelihood term" (`gaussian_core.jl`, the σ-phylo
+     missing-response block).
+  2. integer tip index `1:phy.n_leaves`.
+  3. positional (`_group_index`, first-seen order) — the only tier with no
+     name information to anchor to, so it requires `labels` to visit every
+     tip exactly once (`G == phy.n_leaves`); this is the pre-#482 behaviour,
+     kept as a last-resort fallback.
+
+Throws an `ArgumentError` naming the mismatch if none of the three tiers
+apply (e.g. group labels that are neither tree tip names nor valid integer
+indices, and do not even form a complete one-level-per-tip bijection).
+"""
+function _phylo_mean_leaf_index(phy::AugmentedPhy, labels)
+    by_name = Dict(phy.leaf_names[i] => i for i in 1:phy.n_leaves)
+    leaf = Vector{Int}(undef, length(labels))
+    matched_names = true
+    @inbounds for i in eachindex(labels)
+        key = string(labels[i])
+        if haskey(by_name, key)
+            leaf[i] = by_name[key]
+        else
+            matched_names = false
+            break
+        end
+    end
+    matched_names && return leaf
+
+    numeric_labels = true
+    @inbounds for i in eachindex(labels)
+        li = labels[i]
+        if li isa Integer && 1 <= Int(li) <= phy.n_leaves
+            leaf[i] = Int(li)
+        else
+            numeric_labels = false
+            break
+        end
+    end
+    numeric_labels && return leaf
+
+    gidx, G = _group_index(labels)
+    G == phy.n_leaves ||
+        throw(ArgumentError("drm (Gaussian phylo mean): the group column has $(G) distinct " *
+            "level(s) but the tree has $(phy.n_leaves) leaves, and the levels are not the " *
+            "tree's leaf names or integer tip indices either — phylo group labels must match " *
+            "tree tip names, integer tip indices, or (as a last resort) supply exactly one " *
+            "level per tree tip."))
+    return gidx
+end
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Core Woodbury helpers — all O(p) via sparse Cholesky
 # ─────────────────────────────────────────────────────────────────────────────
