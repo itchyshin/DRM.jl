@@ -15,10 +15,14 @@ can actually see the same failures. This closes that particular blind spot.
 
     python3 tools/check_test_deps.py
 
-Only files `runtests.jl` actually includes are checked. Several standalone
-diagnostic scripts in `test/` (grad_check_*.jl, test_lambda_p100.jl,
-test_step1_sparse.jl) import CSV/DataFrames and are deliberately NOT part of the
-suite; flagging them would be noise, and would train people to ignore this tool.
+Only files `runtests.jl` actually includes are checked. A few standalone
+diagnostic scripts in `test/` (grad_check_*.jl) import CSV/DataFrames and are
+deliberately NOT part of the suite; flagging them would be noise, and would
+train people to ignore this tool. `test_lambda_p100.jl` (#465) is also
+deliberately not part of the suite, but for a different reason: it's a genuine,
+reproducible failure at fixture scale (the sparse-EM Λ M-step descends the true
+marginal at p=100 real data), not a dependency issue — see the #465 after-task
+note.
 """
 
 import os

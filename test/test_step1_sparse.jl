@@ -1,18 +1,13 @@
 # test_step1_sparse.jl — Step 1 foundation: confirm the ported sparse Q
 # reproduces the R-side ape::vcv Σ_phy, and that sparse Cholesky +
 # Takahashi selected-inversion match dense linear algebra.
-#
-# Run:
-#   cd /Users/z3437171/Dropbox/Github Local/drm-julia-poc/julia/drm_q4
-#   /Users/z3437171/.juliaup/bin/julia --project=.. test_step1_sparse.jl
 
-using LinearAlgebra, SparseArrays, Test, Printf
-using CSV, DataFrames
+using DRM
+using Test, LinearAlgebra, SparseArrays
+using DelimitedFiles: readdlm
 
-include("sparse_phy.jl")
-include("takahashi_selinv.jl")
-
-const FIX = normpath(joinpath(@__DIR__, "..", "..", "fixtures"))
+const D = DRM
+const FIX = joinpath(@__DIR__, "..", "bench", "fixtures")
 
 # ---------------------------------------------------------------------------
 # Helper: align Julia's Newick-order leaves to the R Σ_phy / data order.
@@ -35,12 +30,14 @@ end
     @test phy.n_total == 2 * 100 - 1
     @test nnz(phy.Q_topology) < 20 * phy.n_leaves   # ~8p sparse
 
-    df = CSV.read(joinpath(FIX, "q4_p100.csv"), DataFrame)
-    species_order = String.(df.species)             # = tree$tip.label order
+    raw, header = readdlm(joinpath(FIX, "q4_p100.csv"), ','; header = true)
+    cols = Symbol.(strip.(string.(vec(header))))
+    species_col = findfirst(==(:species), cols)
+    species_order = String.(strip.(string.(raw[:, species_col])))   # = tree$tip.label order
     @test length(species_order) == 100
     @test Set(species_order) == Set(phy.leaf_names)  # same leaves, maybe reordered
 
-    Σ_R = Matrix{Float64}(CSV.read(joinpath(FIX, "q4_p100_sigma_phy.csv"), DataFrame))
+    Σ_R = readdlm(joinpath(FIX, "q4_p100_sigma_phy.csv"), ',', Float64; skipstart = 1)
     @test size(Σ_R) == (100, 100)
 
     # --- (a) sparse Q reproduces the dense ape::vcv Σ_phy --------------------
@@ -52,7 +49,6 @@ end
         Σ_jl_Rorder[perm[k], perm[l]] = Σ_jl_newick[k, l]
     end
     relerr = maximum(abs.(Σ_jl_Rorder .- Σ_R)) / maximum(abs.(Σ_R))
-    @printf "  max rel error Σ_phy (sparse-recon vs R vcv): %.2e\n" relerr
     @test relerr < 1e-8
 
     # --- (b) sparse Cholesky logdet matches dense ---------------------------
@@ -64,7 +60,6 @@ end
     ch = cholesky(Ms)
     ld_sparse = logdet(ch)
     ld_dense = logdet(Symmetric(Matrix(M)))
-    @printf "  logdet sparse=%.6f dense=%.6f  |Δ|=%.2e\n" ld_sparse ld_dense abs(ld_sparse - ld_dense)
     @test isapprox(ld_sparse, ld_dense; rtol = 1e-10)
 
     # --- (c) Takahashi selected inverse matches dense inv at the pattern ----
@@ -80,14 +75,11 @@ end
             ncheck += 1
         end
     end
-    @printf "  Takahashi selinv: checked %d entries, max |Δ vs dense inv| = %.2e\n" ncheck maxerr
+    @test ncheck > 0
     @test maxerr < 1e-8
 
     # --- (d) diagonal of inverse via takahashi_diag -------------------------
-    d_sel = takahashi_diag(ch)
+    d_sel = D.takahashi_diag(ch)
     d_dense = diag(Minv_dense)
-    @printf "  diag(inv): max |Δ| = %.2e\n" maximum(abs.(d_sel .- d_dense))
     @test maximum(abs.(d_sel .- d_dense)) < 1e-8
 end
-
-println("\n=== Step 1 complete: sparse infra validated against dense + R ===")

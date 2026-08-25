@@ -206,10 +206,23 @@ include("test_bridge_formula_translation.jl")
 # (multi-row payload) + the profile→bootstrap redirect (Ayumi #2 uncertainty-via-R).
 include("test_bridge_bivariate_inference.jl")
 
-# NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
-# (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
-# script-style include paths and need path/`using DRM` updates before wiring
-# into this suite.
+# Poc-migrated foundation checks (#465): the poc's script-style includes and
+# hardcoded paths were fixed to run in-suite. `test_step1_sparse` cross-checks
+# the ported sparse Newick/Takahashi infra against real R (ape::vcv) fixtures;
+# `test_sparse_aug` is Checkpoint 3 (augmented sparse Laplace == dense leaf-only
+# oracle); `test_lambda_direction` checks the sparse-EM Λ M-step direction
+# ascends the true marginal (mstep_Lambda/fit_em_aug back the sparse_em_fit.jl
+# demos, off the public `drm()` path, and had no other coverage).
+include("test_step1_sparse.jl")
+include("test_sparse_aug.jl")
+include("test_lambda_direction.jl")
+
+# NOTE (HANDOVER step, #465 remainder): test_analytic_grad.jl and
+# test_q4_laplace.jl were investigated and NOT wired — see the #465 after-task
+# note for why (superseded by test_qgate_fd_gradient.jl / obsolete bench POC).
+# test_lambda_p100.jl is a genuine, reproducible failure at fixture scale
+# (mstep_Lambda descends the true marginal at p=100) tracked as a new issue,
+# not silently skipped.
 
 # Always-on R-parity HARNESS smoke test (machinery only, no R, no fixtures).
 # Placed at the END to avoid colliding with other in-flight branches' includes.
@@ -303,6 +316,15 @@ include("test_reml_baseline_ladder.jl")
 include("test_164_mean_re_covariate_sigma.jl")
 # Same covariate-dispersion path extended to Gamma and Beta (#164).
 include("test_164_gamma_hetero.jl")
+
+# Cox–Reid (opt-in `method = :REML`) for Poisson (#465, migrated from the poc
+# and previously never run — no test covered the PR #451 Cox–Reid landing).
+# #443: the scalar `(1 | g)` GHQ route (the one certified cell). #450: phylo /
+# relmat / animal Laplace. The characterization file documents the ML default
+# and the routes still uncertified.
+include("test_cox_reid_poisson_ranef.jl")
+include("test_cox_reid_poisson_phylo.jl")
+include("test_cox_reid_characterization.jl")
 
 # Experimental optimizer / EM-robustness fixes for the not-yet-wired sources under
 # src/experimental/ (#305 deterministic LBFGS gradient, #306 monotone conjugate EM,
