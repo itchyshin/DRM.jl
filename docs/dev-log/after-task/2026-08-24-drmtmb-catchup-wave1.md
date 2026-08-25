@@ -135,6 +135,18 @@ Wave 1 merges shifted `runtests.jl`.
 - **#486** native TMB does **not** scale O(p³) on the large-p phylo route — measured **O(p^1.27)** to
   p=3000, overturning the premise that slice was built on.
 - The #468 go/no-go is **unanswered by design**.
+- **#487** SE parity loosens ~196× from p=300 to p=1000 and does **not** track conditioning — the benign
+  "different factorisations round differently" story is refuted, and it is unexplained.
+- **#488** `vcov_guard` cannot fire on the sparse-Laplace route, which is where `inv()` is wrapped in a
+  bare `try/catch` returning the identity — the strongest case for a warning, producing none.
+- **#489** all five `bridge-*` fixtures were broken under the generic runner; two fitted **silently and
+  wrongly** (`(x+z)^2` as an elementwise power, df 3 vs 5).
+- **#490** `docs/src/capabilities.md` declared the **shipped** cross-family bivariate model "Absent", and
+  separately cited a test that never runs. Both fixed; the second is now guarded.
+- **#491** `converged` on the sparse-Laplace path is **anti-correlated with care** — `g_tol = 1e-8` gives
+  `false` at relative gradient 1.39e-07 while `g_tol = 10.0` gives `true` at 1.18e-03. Affects every
+  family on that route. **Deliberately unfixed**: the threshold moves accept/reject for all of them and a
+  too-loose value fails silently. The measurements to choose it are in the issue.
 
 ## 11. Team Learning
 
@@ -147,6 +159,27 @@ permanently unpromotable. Source reading refuted it: both restrict all four axes
 The lesson is not "check fixtures". It is that **a prose note sitting beside correct numbers inherits
 their credibility**, and nothing in the DoD gates prose the way it gates code. The numbers were right the
 whole time; the sentence next to them was wrong, and the sentence is what everyone downstream read.
+
+**The same gap, one level up: our own documentation was evidence against us.** `cross_family_latent` sat
+at `experimental` for over a week after its stated blocker was resolved, partly because
+`docs/src/capabilities.md` said the capability was **"Absent — no cross-family bivariate model is
+implemented"** while the implementation, three wired test files and a ~450-line methods guide were all on
+`main`. Public documentation is one of design/168's four limbs, so a page asserting a capability does not
+exist **holds its own row down**. The mirror defect sat on the same page — a capability propped up by a
+test that never runs. One direction hides working software; the other props up a claim with nothing
+underneath. Only the second is mechanically checkable, and it now is
+(`tools/check_doc_test_citations.py`).
+
+**And the direction of my errors was consistent, which is the part worth carrying forward.** Four
+promotion verdicts were overturned in one night — `biv_q4_phylo_reml`, `cross_family_latent`,
+`gaussian_response_mask`, `phylo_count_large_p`. Every single one had made the work look **more** blocked
+than it was: a disclaimer read as a requirement, a limitation read as a gate, a plausible cause
+substituted for the measured one, an unmeasured complexity asserted. Three rows were declared unmovable
+and two of them moved.
+
+A pessimistic misreading feels like the safe direction and is not. It cancels work that was ready, quietly,
+and leaves no failing test behind to notice. The only thing that caught any of them was running the thing
+— the converged refit, the p=3000 fit, the 42/42 mask test, the smoke fit that took ten seconds.
 
 ## 12. Cross-Product Coverage
 
