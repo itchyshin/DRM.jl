@@ -311,6 +311,9 @@ include("test_reml_newton_sigma_phylo.jl")
 # Bivariate q4 REML must correct ALL FOUR among-axis SDs (β_μ AND β_σ profiled), not
 # just the means — regression for the scale-axis REML gap (#18).
 include("test_reml_q4_allaxes.jl")
+# Bivariate q2 structured REML (#470): marginalises beta_mu1/beta_mu2 only (the
+# axes with a random effect on this route); sigma1/sigma2/rho12 stay outer.
+include("test_reml_q2_structured.jl")
 include("test_reml_baseline_ladder.jl")
 # Covariate dispersion (`sigma ~ x`) with a mean-only phylo RE for NB2 (#164):
 # the per-observation log-dispersion (vector-nuisance) generalisation of the
