@@ -67,8 +67,29 @@ Both directions are calibration failures:
   0.995. An interval that always contains the truth is not a 95 % interval; it is uninformatively wide.
   Over-coverage is a calibration failure, not a safe margin.
 
-These are **Wald** intervals on **log-Cholesky** parameters — a nonlinear reparameterisation. The
-campaign establishes *that* the split exists and how large it is; it does not establish *why*.
+**SHARPENED after checking the axis mapping (#495).** "Diagonal vs off-diagonal" was how I first read
+this, and it is the coarser story. The axes are `(:mu1, :mu2, :sigma1, :sigma2)`
+(`src/gaussian_bivariate.jl:123`), and grouping by how much the **scale** axes participate gives an
+ordered gradient:
+
+| group | n | coverage | MCSE |
+|---|---|---|---|
+| diagonal, **mean** axes (L11, L22) | 1989 | **0.951** | 0.005 |
+| diagonal, **scale** axes (L33, L44) | 1947 | **0.997** | 0.001 |
+| off-diagonal, mean × mean (L21) | 995 | 0.880 | 0.010 |
+| off-diagonal, mean × scale (×4) | 3935 | 0.888 | 0.005 |
+| off-diagonal, **scale × scale** (L43) | 980 | **0.827** | 0.012 |
+
+That reframes it as **two defects, not one**. The mean-axis variances are *correctly calibrated* —
+0.951 at MCSE 0.005 on ~2000 intervals — which is the control proving the machinery can hit nominal on
+this very fit. The scale-axis variances over-cover to uselessness, and every covariance under-covers,
+worst where both axes are scales.
+
+These are **Wald** intervals on **log-Cholesky** parameters — a nonlinear reparameterisation, with the
+diagonal entries on a log scale (bounded below) and the off-diagonals not. The campaign establishes
+*that* the gradient exists and its size; it does not establish *why*, and cannot separate "Wald on a
+transformed scale" from "these components are genuinely hard to identify at N = 128". The discriminating
+test — profile vs Wald on the same fits — is proposed in #495.
 
 ## 5. What this licenses
 
