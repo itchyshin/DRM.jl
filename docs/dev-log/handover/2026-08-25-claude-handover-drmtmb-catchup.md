@@ -65,7 +65,7 @@ formula constructs · #468 coverage pre-run · #470 bivariate q=2 REML · #471 L
 
 ## Current Working State
 
-- **Working:** `feat/drmtmb-catchup`, **64 commits ahead**, pushed. Full suite **VERIFIED: 320 testsets,
+- **Working:** `feat/drmtmb-catchup`, **72 commits ahead**, pushed. Full suite **VERIFIED: 324 testsets,
   0 failures, 0 errors**, run to completion on this tree. `check_test_deps` OK · `parity_ledger`
   CLOSURE: PASS · all 39 parity TOML parse.
 - **In progress: nothing.** All background agents completed and their work is merged.
@@ -102,6 +102,28 @@ formula constructs · #468 coverage pre-run · #470 bivariate q=2 REML · #471 L
    failures, 0 errors**. DRM.jl#485 is already marked ready for review — **do not merge it**.
 3. **STOP. The rest is his.** Do not merge any PR; do not run the coverage grid; do not reinstall drmTMB;
    do not re-ask the CRAN submission question.
+
+## Every finding raised this session — final disposition
+
+**Fixed on the lane (18):** #465 orphan tests · #466 niterations · #467 bridge formulas · #470 q=2 REML ·
+#471 LogNormal markers · #472 EM fenced honestly · #474 `readdlm` column typing · #475 public `parm`
+kwarg · #476 parity helpers isolated · #477 REML convention documented · #479 + #480 bootstrap threads
+`K`/`A`/`tree` · #482 mean-phylo missing response · #483 fixture reseeded where the parameter is
+identifiable · #484 warm restart in the public REML path · #487 SE-vs-p settled · #488 `vcov_guard`
+extended to sparse-Laplace · #489 `runparity.jl` reaches the bridge fixtures.
+
+**Recorded, not fixed (3):** #473 comparator provenance · #481 reverse ledger pass (**half-closed** — it
+cannot see capability divergence under an already-matched name, which is the case that motivated it) ·
+#486 native TMB is O(p^1.27), not O(p³).
+
+**Needs the owner (3):** #468 coverage go/no-go · #478 scope narrowing · the three merges.
+
+**#484 changed the picture for `biv_q4_phylo_reml`:** `drm(..., method = :REML)` now converges through
+public kwargs alone (`g_residual = 5.295e-4 < g_tol = 1e-3`), and the converged fit reproduces the
+`(n_β/2)·log(2π)` constant to a residual of **0.001938** — 4.5× tighter than the manual recipe, 60×
+tighter than non-converged. The fixture's `status.julia_converged = false` and its `[tol]` are
+**deliberately left stale**; re-deriving a fixture inside the change that fixes the thing it measures
+would make evidence and code circular. That re-derivation is the natural next task.
 
 ## Late findings (after the first draft of this handover)
 
