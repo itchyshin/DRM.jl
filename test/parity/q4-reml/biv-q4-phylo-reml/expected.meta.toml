@@ -1,4 +1,6 @@
 drmtmb_version = "0.7.0"
+drmtmb_built = "R 4.6.0; aarch64-apple-darwin23; 2026-08-15 01:49:56 UTC; unix"
+drmtmb_code_hash = "8dc7c6cd77f8d5cf8bebc9adb29a5a53900d2d320de074bde43cba8fa4e1bb7e"
 generated_on = "2026-08-16"
 r_call = "drmTMB(bf(mu1 = y1 ~ x + phylo(1 | p | species, tree = tree), mu2 = y2 ~ x + phylo(1 | p | species, tree = tree), sigma1 = sigma1 ~ 1 + phylo(1 | p | species, tree = tree), sigma2 = sigma2 ~ 1 + phylo(1 | p | species, tree = tree), rho12 = rho12 ~ 1), family = biv_gaussian(), data = dat, REML = TRUE, engine = \"tmb\", control = drm_control(optimizer_preset = \"robust\"))"
 seed = 20260822
