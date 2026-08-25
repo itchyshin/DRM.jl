@@ -800,9 +800,11 @@ function bootstrap_ci(
     return _bootstrap_ci_rows(rows)
 end
 
-# Family-agnostic parametric bootstrap — any family `simulate` supports. No
-# structured-matrix keywords (those are Gaussian-only). Same row shape as the
-# Gaussian method and `confint`.
+# Family-agnostic parametric bootstrap — any family `simulate` supports.
+# #480: K/A/tree ARE forwardable here — #479 established that the non-Gaussian
+# bootstrap can thread a structured covariance; the guard was a one-sided
+# plumbing gap, not a real restriction. Same row shape as the Gaussian method
+# and `confint`.
 function bootstrap_ci(
     formula::DrmFormula,
     family;
@@ -810,12 +812,16 @@ function bootstrap_ci(
     B::Int=300,
     level::Real=0.95,
     rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
 )
     rows = bootstrap_summary(
-        formula, family; data, B, level, rng, threads, failures, check_converged
+        formula, family; data, B, level, rng, K, A, tree, threads, failures,
+        check_converged
     )
     return _bootstrap_ci_rows(rows)
 end
@@ -920,8 +926,9 @@ function bootstrap_summary(
     return result.summary
 end
 
-# Family-agnostic summary method — any family `simulate` supports. No structured
-# matrix keywords; those are Gaussian-only.
+# Family-agnostic summary method — any family `simulate` supports. #480: K/A/tree
+# thread through to `bootstrap_result`, which forwards them to `drm(...)` only
+# when supplied — see the comment there for why they are not Gaussian-only.
 function bootstrap_summary(
     formula::DrmFormula,
     family;
@@ -929,12 +936,16 @@ function bootstrap_summary(
     B::Int=300,
     level::Real=0.95,
     rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
 )
     result = bootstrap_result(
-        formula, family; data, B, level, rng, threads, failures, check_converged
+        formula, family; data, B, level, rng, K, A, tree, threads, failures,
+        check_converged
     )
     return result.summary
 end
@@ -1082,15 +1093,36 @@ function bootstrap_result(
     B::Int=300,
     level::Real=0.95,
     rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
 )
     _check_bootstrap_failure_mode(failures)
-    fit0 = drm(formula, family; data)
-    refit = datab -> drm(formula, family; data=datab)
+    # #480: mirror #479's fit-based fix. Forward a structured-matrix keyword to
+    # `drm(...)` only when the caller actually supplied it -- most non-Gaussian
+    # `drm` methods (LogNormal, Tweedie, Student, SkewNormal, ZeroOneBeta,
+    # CumulativeLogit, TruncatedNegBinomial2) do not declare `K`/`A`/`tree` at
+    # all, so forwarding them unconditionally (even as `nothing`) would throw a
+    # MethodError on every ordinary unstructured non-Gaussian fit. The
+    # structured routes (Poisson, Binomial, Gamma, Beta, BetaBinomial,
+    # NegBinomial2, Gaussian) accept and use them; `drm(...)`'s own per-family
+    # checks (e.g. "phylo(1 | g) needs `tree = …`") catch a genuine mismatch
+    # loudly instead of silently refitting an unstructured model.
+    extra = Dict{Symbol,Any}()
+    tree !== nothing && (extra[:tree] = tree)
+    K !== nothing && (extra[:K] = K)
+    A !== nothing && (extra[:A] = A)
+    fit0 = drm(formula, family; data, extra...)
+    refit = datab -> drm(formula, family; data=datab, extra...)
+    # #459/#479: redraw the random effects rather than conditioning on the
+    # fitted BLUPs, so a variance-component bootstrap CI is not degenerate.
+    simulate_fn = _marginal_simulator(fit0, data; K=K, A=A, tree=tree)
     return _bootstrap_result(
-        fit0, formula, data, B, level, rng, threads, refit; failures, check_converged
+        fit0, formula, data, B, level, rng, threads, refit;
+        failures, check_converged, simulate_fn
     )
 end
 
