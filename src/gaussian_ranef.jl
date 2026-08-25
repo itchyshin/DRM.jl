@@ -6,6 +6,12 @@
 # and the Woodbury identity reduce everything to O(n) accumulations plus a
 # diagonal G×G capacitance (one random-intercept term), all ForwardDiff-friendly.
 
+# Barrier used when the REML restriction matrix Xμ′V⁻¹Xμ fails its Cholesky.
+# It is PSD by construction but built by Woodbury SUBTRACTION, so as σb² → ∞ it
+# tends to 0 and rounding can flip its determinant negative (#499). A finite
+# barrier — not Inf — because LBFGS's HagerZhang line search asserts isfinite.
+const REML_NONPD_PENALTY = 1e8
+
 # Split a μ right-hand side into its fixed part and any `(lhs | g)` terms.
 # `structured` is the FIRST structured marker (relmat/animal/phylo/spatial) for
 # backward compatibility; use `_collect_structured` to retrieve the full list
@@ -186,7 +192,17 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
             end
         end
         nll_ml_θ = 0.5 * (logdetD + logdetCap + q1 - q2) + const_2pi
-        return nll_ml_θ + 0.5 * logdet(Symmetric(XtVinvX)) - const_pμ
+        # Xμ′V⁻¹Xμ is PSD by construction, but it is formed by Woodbury SUBTRACTION.
+        # As σb² → ∞ the group means absorb the mean signal, Xμ′V⁻¹Xμ → 0, and rounding
+        # noise can make its determinant NEGATIVE (measured at lσb ≈ 16, σb² ≈ 8e13).
+        # `logdet` has no Symmetric method: it falls through to the LU path, where
+        # logabsdet returns sign -1 and log(-1.0) throws DomainError (#499). Reject the
+        # step instead. NOTE: it must be a LARGE FINITE barrier, not +Inf — LBFGS's
+        # default HagerZhang line search asserts `isfinite(phi_c)` and would trade
+        # the DomainError for an AssertionError.
+        cholXtVinvX = cholesky(Symmetric(XtVinvX); check=false)
+        issuccess(cholXtVinvX) || return nll_ml_θ + T(REML_NONPD_PENALTY)
+        return nll_ml_θ + 0.5 * logdet(cholXtVinvX) - const_pμ
     end
 
     nll = reml ? nll_reml : nll_ml
