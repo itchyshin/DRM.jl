@@ -1,4 +1,4 @@
-# Session Handoff: drmTMB catch-up — four capability rows moved, three PRs awaiting the owner
+# Session Handoff: drmTMB catch-up — SIX capability rows moved, three PRs awaiting the owner
 
 Meta: 2026-08-25 · from **Claude Code** (Shannon) · TARGET **claude** · AUTHOR **claude**
 
@@ -30,7 +30,7 @@ treat as historical.
 
 ## What Was Accomplished
 
-**Four capability rows moved** (drmTMB#1082, unmerged):
+**Six capability rows moved** (drmTMB#1082, unmerged):
 
 ```
 before: 0 covered · 6 partial · 4 experimental · 1 unsupported
@@ -65,11 +65,10 @@ formula constructs · #468 coverage pre-run · #470 bivariate q=2 REML · #471 L
 
 ## Current Working State
 
-- **Working:** `feat/drmtmb-catchup`, **44 commits ahead**, pushed. Last completed full suite: **312
-  testsets, 0 failures, 0 errors**. A re-run covering a regression fix was clean when this was written —
-  **confirm it before marking #485 ready.**
-- **In progress:** one background agent measuring `phylo_count_large_p` at p=1000 under D-139 (pre-run,
-  estimate p=3000, stop if >30 min).
+- **Working:** `feat/drmtmb-catchup`, **56 commits ahead**, pushed. Full suite **VERIFIED: 318 testsets,
+  0 failures, 0 errors**, run to completion on this tree. `check_test_deps` OK · `parity_ledger`
+  CLOSURE: PASS · all 39 parity TOML parse.
+- **In progress: nothing.** All background agents completed and their work is merged.
 
 ## Key Decisions & Rationale
 
@@ -86,9 +85,9 @@ formula constructs · #468 coverage pre-run · #470 bivariate q=2 REML · #471 L
 
 | Artifact | Committed | Pushed | PR | State |
 |---|---|---|---|---|
-| `feat/drmtmb-catchup` (44 commits) | y | y | **DRM.jl#485 DRAFT** | **CARRIED-OVER** — needs maintainer approval; mark ready once the suite confirms |
+| `feat/drmtmb-catchup` (56 commits) | y | y | **DRM.jl#485 READY** | **CARRIED-OVER** — suite-verified; needs maintainer approval (touches `src/`, the formula grammar, and `AGENTS.md`) |
 | drmTMB `claude/julia-fixef-profile-bootstrap-460` | y | y | **#1080 OPEN** | **CARRIED-OVER** — #460 fix, repaired after adversarial review |
-| drmTMB `claude/ledger-biv-gaussian-residual-covered` | y | y | **#1082 OPEN** | **CARRIED-OVER** — the four row moves |
+| drmTMB `claude/ledger-biv-gaussian-residual-covered` | y | y | **#1082 OPEN** | **CARRIED-OVER** — the six row moves |
 | Vault D-164 clarification `ed5132b` | y | n/a (D-37 local-only) | none | **LANDED** |
 | Mission Control `status/drmTMB.json` `6f492da` | y | n/a | none | **LANDED** |
 | `.codex/agents/shannon-coordinator.toml` | n | n | none | **PROTECTED — never stage** |
@@ -98,11 +97,11 @@ formula constructs · #468 coverage pre-run · #470 bivariate q=2 REML · #471 L
 
 1. **OWED — rehydrate.** `~/shinichi-brain/tools/lane_preflight.sh`, `git fetch origin`,
    `git status -sb`, `~/shinichi-brain/tools/handoff_gate.sh "$PWD"`.
-2. **OWED — confirm the suite.** Re-run
-   `julia --project=test --startup-file=no test/runtests.jl` (~35 min). Baseline **312 testsets, 0
-   failures**. If green, **mark DRM.jl#485 ready for review** (do not merge).
-3. **OWED — collect the in-flight agent** if it has landed: `phylo_count_large_p` at p=1000.
-4. **STOP. The rest is his.** Do not merge any PR; do not run the coverage grid; do not reinstall drmTMB.
+2. **OWED — re-confirm the suite** if anything has changed since:
+   `julia --project=test --startup-file=no test/runtests.jl` (~35 min). Baseline **318 testsets, 0
+   failures, 0 errors**. DRM.jl#485 is already marked ready for review — **do not merge it**.
+3. **STOP. The rest is his.** Do not merge any PR; do not run the coverage grid; do not reinstall drmTMB;
+   do not re-ask the CRAN submission question.
 
 ## Blockers / Open Questions — all need the owner
 
