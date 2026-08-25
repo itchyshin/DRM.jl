@@ -146,6 +146,41 @@ def main() -> int:
                     print(f"OK   {tag} -> include(\"{target}\") at :{actual}")
             continue
 
+        # A multi-line citation (`:296,374,376` or `:49-51`) that names exactly as many
+        # includable files nearby is still provable: compare the two sorted sets. This
+        # was originally skipped, and four genuinely stale citations hid in that gap --
+        # the skip bucket was the majority of the file, so leaving it unchecked meant the
+        # guard was mostly decorative.
+        if len(resolvable) > 1 and len(resolvable) == len(nums):
+            expected = sorted(table[t] for t in resolvable)
+            got = sorted(nums)
+            if expected != got:
+                pairs = ", ".join(f'{t} -> :{table[t]}' for t in sorted(resolvable, key=lambda t: table[t]))
+                failures.append(f"{tag} -> STALE: cited {got}, actual {expected}  ({pairs})")
+            else:
+                ok += 1
+                if args.verbose:
+                    print(f"OK   {tag} -> {len(resolvable)} include(s) at {expected}")
+            continue
+
+        # A contiguous range (`:172-178`) whose nearby names all fall inside it, and whose
+        # endpoints are themselves includes, is verifiable as a span.
+        if len(resolvable) >= 2 and "-" in spec and "," not in spec:
+            lines_of = [table[t] for t in resolvable]
+            lo, hi = min(nums), max(nums)
+            outside = [t for t in resolvable if not (lo <= table[t] <= hi)]
+            # Containment only. NOT tight-spanning: the prose may name a subset of the
+            # includes the range covers, so demanding the endpoints match a partial set
+            # produces false positives -- which this check did on its first outing.
+            if outside:
+                where = ", ".join(f'{t} -> :{table[t]}' for t in sorted(outside, key=lambda t: table[t]))
+                failures.append(f"{tag} -> STALE: range {lo}-{hi} does not contain {where}")
+            else:
+                ok += 1
+                if args.verbose:
+                    print(f"OK   {tag} -> range {lo}-{hi} spans {len(resolvable)} include(s)")
+            continue
+
         skipped.append(f"{tag} -> not precisely resolvable ({len(nums)} line(s), {len(resolvable)} include match(es))")
 
     # --- check 3: WIRED -----------------------------------------------------
