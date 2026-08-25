@@ -126,6 +126,13 @@ Read `joinpath(dir, "data.csv")` with `readdlm(...; header = true)` and return a
 NamedTuple of column vectors keyed by the (Symbol) header, so it drops straight
 into `drm(...; data = nt)`. Numeric columns become `Vector{Float64}`; any
 non-numeric column is kept as-is (e.g. string grouping factors).
+
+#474: `readdlm` returns a `Matrix{Any}` the moment ANY column in the file is
+non-numeric, so every column's *container* eltype reads `Any` even where a
+column's own values are all numbers — a per-column `eltype(col) <: Number`
+check is blind to that and silently drops the column to categorical. Decide
+numeric-ness from the column's actual values instead, so one string column
+cannot contaminate its numeric neighbours.
 """
 function load_data(dir)::NamedTuple
     path = joinpath(dir, "data.csv")
@@ -133,7 +140,7 @@ function load_data(dir)::NamedTuple
     cols = Symbol.(strip.(string.(vec(header))))
     pairs = map(enumerate(cols)) do (j, name)
         col = raw[:, j]
-        coltyped = eltype(col) <: Number ? Vector{Float64}(col) : col
+        coltyped = all(v -> v isa Number, col) ? Float64.(col) : col
         name => coltyped
     end
     return NamedTuple(pairs)

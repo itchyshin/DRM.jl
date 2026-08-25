@@ -11,6 +11,11 @@
 # Workflow G fixtures stay 0.6.0 / ML / no tree; this cell is 0.7.0 REML + tree
 # outside test/parity/fixtures/.
 
+# #476: wrapped in a module so this file's FIXTURE/_load_data/_coef_named/
+# _within cannot collide with the same names in another parity test file
+# included later by runtests.jl (they used to live bare in Main).
+module TestParityBivQ4PhyloREML
+
 using DRM
 using Test
 using TOML
@@ -99,3 +104,5 @@ _within(a, b, rtol, atol) = abs(a - b) <= max(atol, rtol * max(abs(a), abs(b)))
         @test _within(got[name], Float64(ref), rtol_c, atol_c)
     end
 end
+
+end # module TestParityBivQ4PhyloREML

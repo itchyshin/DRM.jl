@@ -47,6 +47,11 @@
 # test below checks that DRM.jl's raw re_sd, after x sqrt(measured height),
 # lands on that same invariant value at all three heights.
 
+# #476: wrapped in a module so this file's FIXTURE/_load_data/_coef_named/
+# _within cannot collide with the same names in another parity test file
+# included later by runtests.jl (they used to live bare in Main).
+module TestParityGaussianPhyloMean
+
 using DRM
 using Test
 using TOML
@@ -197,3 +202,5 @@ end
         end
     end
 end
+
+end # module TestParityGaussianPhyloMean
