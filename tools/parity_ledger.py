@@ -167,18 +167,50 @@ def main() -> int:
     for name in missing:
         print(f"  {name}")
     print()
+    # Report the real distribution against the GOVERNING vocabulary, which
+    # drmTMB's docs/design/168-r-julia-finish-capability-matrix.md defines as:
+    #   covered > partial > experimental > planned > unsupported
+    #
+    # This line used to read `sum(... claim_status != 'supported')` and print it as
+    # "N unsupported capability rows". `supported` is not a value in that
+    # vocabulary and never has been, so the condition was true for every row: the
+    # number was len(caps) by construction and could never move, no matter how much
+    # evidence landed. It also labelled `partial` and `experimental` rows
+    # "unsupported", a word the vocabulary reserves for "deliberately rejected or
+    # out of scope" -- which describes exactly one row (engine_control_surface).
+    # That phrasing had propagated into the handover, the coordination board and
+    # Mission Control as though it were a measurement.
+    order = ["covered", "partial", "experimental", "planned", "unsupported"]
+    tally = {k: 0 for k in order}
+    other: dict[str, int] = {}
+    for c in caps:
+        st = (c.get("claim_status") or "").strip()
+        if st in tally:
+            tally[st] += 1
+        else:
+            other[st or "<blank>"] = other.get(st or "<blank>", 0) + 1
+    dist = " · ".join(f"{tally[k]} {k}" for k in order if tally[k])
+    if other:
+        dist += " · " + " · ".join(f"{v} {k}?" for k, v in sorted(other.items()))
+
     print(f"COUNTDOWN: {len(missing)} export gaps ({len(unmatched)} raw, "
           f"{len(accounted)} accounted for) · "
-          f"{sum(1 for c in caps if c.get('claim_status') != 'supported')} unsupported capability rows · "
+          f"{len(caps)} capability rows [{dist}] · "
           f"{len(blocked)} closed gates")
 
-    # Closure invariant: every row is either `supported` (which requires a parity
-    # fixture) or says IN WRITING why it is not. Asserting this by hand rots the
-    # moment someone adds a row, so check it and fail loudly.
+    # Closure invariant: every row is either `covered` (the top rung, whose
+    # evidence is audited separately) or says IN WRITING why it is not. Asserting
+    # this by hand rots the moment someone adds a row, so check it and fail loudly.
+    #
+    # Note this is UNCHANGED in strictness: the old code exempted `supported`,
+    # a value that never occurs, so the exemption never fired and every row needed
+    # a claim_boundary. No row is `covered` today either, so the same rows are
+    # checked as before -- but the exemption now names a status that can actually
+    # be reached.
     print()
     unclosed: list[str] = []
     for row in caps:
-        if row.get("claim_status") == "supported":
+        if row.get("claim_status") == "covered":
             continue                      # fixture evidence is audited separately
         if not row.get("claim_boundary", "").strip():
             unclosed.append(f"capability {row['capability_id']}: no claim_boundary")
@@ -189,12 +221,12 @@ def main() -> int:
             unclosed.append(f"gate {g['gate_id']}: no review_due")
 
     if unclosed:
-        print(f"CLOSURE: FAIL — {len(unclosed)} row(s) neither supported nor bounded")
+        print(f"CLOSURE: FAIL — {len(unclosed)} row(s) neither `covered` nor bounded")
         for u in unclosed:
             print(f"  {u}")
         return 1
 
-    print(f"CLOSURE: PASS — every one of {len(caps)} capability rows is supported "
+    print(f"CLOSURE: PASS — every one of {len(caps)} capability rows is `covered` "
           f"or carries a written claim_boundary; all {len(blocked)} closed gates "
           f"carry evidence + review_due")
     return 0
