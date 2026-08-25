@@ -167,7 +167,7 @@ file's stated bar. Flagged because a row can meet the bar and still leave a read
 believing something false — and the fix for that is prose, not a status change.
 
 `Chi-bar-square boundary LRT p-value` is `implemented`: `src/chibar.jl` is
-included (`src/DRM.jl:128`), exports `chibar_pvalue`/`lrt_boundary`
+included (`src/DRM.jl:129`), exports `chibar_pvalue`/`lrt_boundary`
 (`src/DRM.jl:160`), and `test/test_chibar.jl` is in the default suite
 (`test/runtests.jl`). **This also corrects `docs/src/capabilities.md`**,
 which lists chi-bar-square boundary inference as "Absent -- no
@@ -175,7 +175,7 @@ implementation."
 
 `AGHQ adaptive-quadrature marginal estimator` is `implemented` (2026-08-24
 audit, PR #449 / commit `93c3db6b`, merged 2026-08-18): `src/aghq_1d.jl` is
-included at `src/DRM.jl:74` and wires a public front end on `drm()`
+included at `src/DRM.jl:75` and wires a public front end on `drm()`
 (`marginal = :AGHQ`, Poisson `(1 | g)` only — `src/poisson.jl:35-37,176-177`).
 `test/test_aghq_1d.jl` is in the default suite (`test/runtests.jl`) and
 exercises the quadrature kernel, the public fit path, and the fail-loud
