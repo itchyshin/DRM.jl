@@ -103,12 +103,14 @@ function _finite_hessian(f, x; h::Real = 1e-4)
         end
     end
     # Flag a non-usable Hessian so a fabricated covariance does not pass silently.
-    # The callers wrap `inv(Symmetric(H))` in a `try/catch` that substitutes the
-    # identity (unit-variance SEs) when the inverse throws. A non-finite H is the
-    # only input that makes `inv` throw, so replace non-finite entries with a
-    # large finite curvature (SE→0, visibly degenerate rather than exactly 1.0)
-    # and warn; also warn when H is finite but not positive definite so the
-    # user knows the reported SEs are not trustworthy.
+    # The callers pass this H to `_vcov_from_hessian` (src/vcov_guard.jl, #488),
+    # which decides invert-vs-pseudo-invert from the eigenvalues and warns on a
+    # boundary — so it needs a finite H to do that eigenvalue analysis at all.
+    # Replace non-finite entries with a large finite curvature (SE→0, visibly
+    # degenerate rather than exactly 1.0) and warn; also warn when H is finite
+    # but not positive definite so the user knows the reported SEs are not
+    # trustworthy — this warning is about the FD Hessian's own quality and is
+    # independent of (and can fire alongside) the guard's singularity warning.
     if !all(isfinite, H)
         @warn "sparse-Laplace vcov: finite-difference Hessian is non-finite " *
               "(a step likely straddled a clamp); reported SEs are unreliable."
@@ -543,11 +545,7 @@ function _fit_poisson_general_laplace(fam::Poisson, y, Xμ, Q, leaf_node, nmμ, 
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace Poisson (general covariance)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -819,11 +817,7 @@ function _fit_general_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, Q,
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace GLMM (general-mean nuisance)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -1015,11 +1009,7 @@ function _fit_phylo_mean_laplace_hetero(fam, kind, aux_from, n::Int, Xμ, Xσ,
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace GLMM (phylo-mean, covariate dispersion)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -1170,11 +1160,7 @@ function _fit_phylo_mean_laplace(fam, kind, aux, n::Int, Xμ, labels, tree, nmμ
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace GLMM (phylo-mean)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -1778,11 +1764,7 @@ function _fit_poisson_crossed_intercepts_laplace(fam::Poisson, y, Xμ, gidx, G, 
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace Poisson (crossed intercepts)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -1953,11 +1935,7 @@ function _fit_poisson_crossed_laplace(fam::Poisson, y, Xμ, comps, nmμ, g_tol; 
     θ̂ = Optim.minimizer(res)
     V = if se
         H = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(H))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        _vcov_from_hessian(H; context = "sparse-Laplace Poisson (crossed)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -2836,11 +2814,7 @@ function _fit_crossed_mean_laplace(fam, kind, aux, n::Int, Xμ, gidx, G, hidx, H
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace GLMM (crossed-mean)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -3003,11 +2977,7 @@ function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gi
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
         Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace GLMM (crossed-mean nuisance)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
