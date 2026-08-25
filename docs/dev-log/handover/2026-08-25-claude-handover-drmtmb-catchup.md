@@ -167,6 +167,49 @@ would make evidence and code circular. That re-derivation is the natural next ta
   only 3.2x there, and SE parity *improves* p=1000→3000 while rcond worsens further). The benign
   "different factorisations rounding differently" explanation is refuted. Unexplained.
 
+## Later still — the docs-limb audit and the large-p gate
+
+These came after the section above, and one of them changed a capability row.
+
+- **#490: our own capability page was evidence against us.** `docs/src/capabilities.md` listed the
+  cross-family bivariate model as **"Absent — no cross-family bivariate model is implemented"**, Source
+  column an em-dash, while `src/mixed_family.jl`, `src/mixed_family_postfit.jl`, three wired test files
+  and a ~450-line methods guide all sat on `main`. The formula front end has been there since
+  **2026-08-16 (`0095fefd`)**. Smoke-verified before rewriting the claim: `rho_latent = 0.5336`, finite
+  loglik, post-fit designs carried. This is why `cross_family_latent` sat at `experimental` while its own
+  `next_action` — "resolve the mixed-family API mismatch" — had been satisfied for over a week. **Public
+  documentation is one of design/168's four limbs**, so a page asserting a capability is absent holds its
+  own row down.
+- **The mirror-image defect, same page.** `test_q4_laplace.jl` was cited as evidence for the q=4
+  sparse-Laplace row and **never runs**: deliberately unwired (recorded at `runtests.jl:225` during #465)
+  because it exercises `bench/fit_q4_julia.jl` rather than `src/fit_q4_sparse_tmb.jl` — the file its own
+  row names as Source. Not wiring it was right; citing it was not.
+  Now guarded by `tools/check_doc_test_citations.py` (108 citations, prove-or-skip), verified against
+  three injected drifts: a prefixed citation, a **bare** `test_foo.jl` citation (the escape hatch), and a
+  commented-out `include()`. The page's other two negative claims were swept and both hold.
+- **A Julia-side gate for `phylo_count_large_p` now exists** — `test/test_phylo_count_largep_gate.jl`,
+  23 pass + 1 broken, 7.5s, no R and no fixtures. It closes limb (a) of that row's boundary. Its
+  load-bearing assertion round-trips `re_sd` across tree heights **0.8 / 1.6 / 4.0**, because `re_sd` is
+  defined against the RAW `sigma_phy_dense(phy)` (diagonal = tree height) and the raw and normalised
+  readings **agree exactly at height 1** — so a height-1 fixture cannot detect the mistake. Verified to
+  fire on the injected error (spread **2.236× = √(4.0/0.8)**) and not on correct behaviour (1.08×).
+- **#491, found by writing that gate, and more serious than the gate.** `fit.converged` is `true` at
+  p=128 and **`false` for every p ≥ 192 while the estimates get better**. `_laplace_outer_converged`
+  compares a flat limit — `1e-4*(1 + norm(θ, Inf))` ≈ 1.6e-4 — against a gradient that grows linearly
+  with n (measured 9.07e-5 / 1.91e-4 / 3.68e-4 at n = 512/1024/2048) while the **relative** gradient is
+  flat (1.21e-7 / 1.33e-7 / 1.39e-7). The `g_tol * n` term written to prevent exactly this is ~30× too
+  small to win the `max()` and first binds near n = 16,000. It affects **every family on the
+  sparse-Laplace path**, not just phylo counts.
+  **Deliberately not fixed** — choosing the relative tolerance moves the accept/reject boundary for all of
+  them, and too loose a value starts silently accepting genuinely unconverged fits, which is a worse and
+  quieter failure. Recorded with `@test_broken`, so a repair reports "Unexpectedly Pass" rather than
+  looking like a regression.
+  **Corroborated, not undermined, by the parity numbers.** The R harness records 14 columns and none is
+  convergence, so the flag was never consulted — but TMB and DRM.jl agreeing to 6.4e-08 means both
+  optimisers landed on the same point, and two different optimisers stopping at the same wrong place is
+  not credible. So the fits are at the optimum and the flag is wrong. An earlier version of this handover
+  and of the row's boundary had that backwards and quietly impugned sound evidence; both are corrected.
+
 ## Blockers / Open Questions — all need the owner
 
 - **#468 interval-coverage go/no-go.** Pre-run says GO. n_sim = 1000/cell (MCSE 0.69 pp), **~25 CPU-h**,
