@@ -81,11 +81,31 @@ verified non-Gaussian engine in this codebase to reuse for it — building one
 for this route alone would be inventing a parallel, unverified numerical design
 rather than mirroring the established one, on exactly the family (correlated
 structured scale) this project has already gotten a scale convention silently
-wrong once. drmTMB has the same limit: `biv_student()` raises "currently
-allows fixed-effect formulas only; random and structured effects are
-deferred" for the identical request (checked directly against drmTMB 0.7.0),
-so there is no reference implementation on either side of the port to mirror
-yet.
+wrong once. drmTMB has the same limit, and that is the load-bearing half of this
+rejection, so it is written down reproducibly rather than asserted.
+**Re-verified live 2026-08-25** against the installed drmTMB 0.7.0:
+
+```r
+library(drmTMB); library(ape)
+tr <- compute.brlen(stree(8, type = "balanced"), method = "Grafen")
+tr$tip.label <- paste0("s", 1:8)
+d <- data.frame(y1 = rnorm(40), y2 = rnorm(40), x = rnorm(40),
+                sp = factor(rep(paste0("s", 1:8), each = 5)))
+# fixed effects only -> ACCEPTED
+drmTMB(bf(mu1 = y1 ~ x, mu2 = y2 ~ x, sigma1 = ~1, sigma2 = ~1,
+          nu = ~1, rho12 = ~1), family = biv_student(), data = d)
+# add a structured marker -> REFUSED
+drmTMB(bf(mu1 = y1 ~ x + phylo(1 | sp, tree = tr), mu2 = y2 ~ x, ...),
+       family = biv_student(), data = d)
+#> `biv_student()` currently allows fixed-effect formulas only; random and
+#>  structured effects are deferred.
+```
+
+So there is no reference implementation on **either** side of the port. For a
+parity goal that matters more than the numerical argument above: a parity gap
+cannot be closed against a capability the reference package does not have, and
+implementing one unilaterally would mean inventing the answer this port exists
+to mirror.
 
 ```julia
 f = bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
