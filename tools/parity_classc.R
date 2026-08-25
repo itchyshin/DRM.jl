@@ -4,7 +4,10 @@
 #
 # Both rows are MEASUREMENT ONLY: the engine works on both sides and only the
 # number is missing. Each cell fits the SAME target twice through drmTMB,
-# `engine = "tmb"` vs `engine = "julia"`, and compares coefficients + logLik.
+# `engine = "tmb"` vs `engine = "julia"`, and compares coefficients + logLik +
+# fixed-effect SE (where obtainable — `vcov()` on either side can fail
+# independently of the fit itself; a failure there does not retract the
+# coefficient/logLik comparison already made for that cell).
 # `engine = "julia"` routes a `phylo(1 | group, tree = tree)` mean term and a
 # `relmat(1 | group, K = K)` mean term through the DRM.jl bridge automatically
 # (drmTMB_julia_bridge / drmTMB_julia_structured_bridge); no manual JuliaCall
@@ -46,12 +49,28 @@ structured_sd <- function(fit) {
   unname(hits[[1L]])
 }
 
+# Fixed-effect Wald SEs = sqrt(diag(vcov())), in whatever coefficient order
+# the fit itself returns (same positional convention `run_cell` already uses
+# for the coefficient-diff comparison below — this file does not do the
+# name-normalising match tools/parity_se.R uses). NA (not an error) if
+# vcov() fails on that side; SE is a second-order quantity and the two
+# engines are not guaranteed to produce one for every model.
+se_of <- function(fit) {
+  tryCatch({
+    v <- diag(as.matrix(vcov(fit)))
+    ifelse(v > 0, sqrt(v), NA_real_)
+  }, error = function(e) NULL)
+}
+fmt_se <- function(x) if (is.null(x)) "NA" else paste(sprintf("%.6g", x), collapse = ";")
+
 run_cell <- function(capability_id, cell_id, label, native_expr, julia_expr,
                      note_prefix = "") {
   res <- list(
     capability_id = capability_id, cell_id = cell_id, label = label,
     status = NA_character_, max_abs_coef_diff = NA_real_,
     loglik_tmb = NA_real_, loglik_julia = NA_real_, loglik_diff = NA_real_,
+    max_abs_se_diff = NA_real_, max_rel_se_diff = NA_real_,
+    se_tmb = "NA", se_julia = "NA",
     tolerance = tol, note = ""
   )
   ft <- tryCatch(eval(native_expr), error = function(e) {
@@ -82,6 +101,16 @@ run_cell <- function(capability_id, cell_id, label, native_expr, julia_expr,
     res$loglik_tmb <- as.numeric(logLik(ft))
     res$loglik_julia <- as.numeric(logLik(fj))
     res$loglik_diff <- abs(res$loglik_tmb - res$loglik_julia)
+
+    se_t <- se_of(ft); se_j <- se_of(fj)
+    res$se_tmb <- fmt_se(se_t); res$se_julia <- fmt_se(se_j)
+    if (!is.null(se_t) && !is.null(se_j)) {
+      ks <- min(length(se_t), length(se_j))
+      d <- abs(se_t[seq_len(ks)] - se_j[seq_len(ks)])
+      res$max_abs_se_diff <- max(d)
+      res$max_rel_se_diff <- max(d / pmax(abs(se_t[seq_len(ks)]), abs(se_j[seq_len(ks)])))
+    }
+
     near_floor <- (!is.na(sd_jl) && sd_jl < 5 * sd_floor) ||
       (!is.na(sd_tmb) && sd_tmb < 5 * sd_floor)
     if (near_floor) {
