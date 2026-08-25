@@ -49,7 +49,15 @@ end
     @test fit_reml.converged
     @test isfinite(fit_reml.reml_loglik)
     @test isfinite(fit_reml.ml_loglik)
-    @test fit_reml.reml_loglik < fit_reml.ml_loglik   # −0.5·logdet(S) correction is negative
+    # Still holds after #477 normalised this route, but for a slightly different
+    # reason than the original comment gave, so it is worth restating: the
+    # reported value is now `ml_ll − ½logdet(S) + (n_β/2)·log(2π)`, i.e. a
+    # NEGATIVE correction plus a POSITIVE constant (n_β = 2 here, so log(2π) ≈
+    # 1.838). The inequality survives because ½logdet(S) dominates that constant
+    # on these fits — it is not the tautology "the correction is negative" any
+    # more. Under the normalised convention REML > ML is possible in general, so
+    # if this ever fails, check the two magnitudes before assuming a regression.
+    @test fit_reml.reml_loglik < fit_reml.ml_loglik
     @test size(fit_reml.Λ) == (2, 2)
     @test isposdef(Symmetric(fit_reml.Λ))
     @test isposdef(Symmetric(fit_reml.residual_cov))
