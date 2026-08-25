@@ -198,10 +198,11 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
     # REML (Patterson–Thompson) is implemented only for the q=4 structured paths,
     # so reject it here as the univariate core does (gaussian_core.jl:383-393).
     method === :REML &&
-        throw(ArgumentError("drm: method = :REML is implemented only for the bivariate q=4 " *
-            "location–scale engine (shared `phylo`/`relmat`/`animal`/`spatial` on mu1, mu2, " *
-            "sigma1, sigma2). The residual-only bivariate Gaussian model has no random " *
-            "effects; use method = :ML (the default)."))
+        throw(ArgumentError("drm: method = :REML needs random effects to restrict, and the " *
+            "residual-only bivariate Gaussian model has none — use method = :ML (the " *
+            "default). REML IS available on the structured bivariate routes: q=4 " *
+            "(shared `phylo`/`relmat`/`animal`/`spatial` on mu1, mu2, sigma1, sigma2) " *
+            "and q=2 (#470)."))
     return _fit_bivariate_residual(f, fam, data, rhs, g_tol; V = V)
 end
 

@@ -28,6 +28,28 @@
 # failure mode, but that concerns multivariate-t *probabilities* (rectangle
 # integrals), not the density this likelihood evaluates — do not import that
 # workaround here.
+#
+# WHY STRUCTURED MARKERS (phylo/relmat/animal/spatial) STAY REJECTED (#471).
+# The bivariate Gaussian q=2/q=4 structured routes are exact or verified-Laplace
+# because a Gaussian group-level random effect composed with a GAUSSIAN
+# conditional response has a closed-form (or hand-derived, analytically
+# differentiated) marginal — that is what `gaussian_bivariate.jl`,
+# `coevolution_q.jl`, and the sparse augmented-state Laplace engine in
+# `sparse_aug_plsm.jl`/`fit_q4_sparse_tmb.jl` are built on. None of that carries
+# over to a Student-t conditional density: a Gaussian random intercept under a
+# heavy-tailed, per-row scale-mixture likelihood has NO closed-form marginal, and
+# there is no verified engine in this codebase (sparse or otherwise) whose
+# per-leaf likelihood is bivariate-t rather than bivariate-Gaussian to reuse. The
+# instruction for this family of markers is to MIRROR the established design,
+# not invent a parallel one — building a bespoke, unverified joint-Laplace
+# engine for this one PR would be exactly that parallel design, on the family
+# this project's own history says is the least forgiving place to get a scale
+# convention wrong silently. drmTMB agrees this is unsolved, not merely
+# unported: `biv_student()`'s own R implementation raises "currently allows
+# fixed-effect formulas only; random and structured effects are deferred" for
+# the identical request (drmTMB 0.7.0, checked directly), so there is no
+# reference implementation on either side of the port to mirror. The residual
+# (fixed-effects-only) route below is unaffected and stays parity-verified.
 
 using SpecialFunctions: loggamma
 
@@ -46,8 +68,24 @@ parameters (log link) — not standard deviations; for `ν > 2` the marginal
 `nu` is shared across both responses by construction, and **zero `rho12` does
 not mean independent margins** at finite `ν`.
 
-Matching drmTMB's first slice, this route is residual-only: no random effects,
-no structured markers, and no REML.
+## Structured markers (`phylo`/`relmat`/`animal`/`spatial`) — NOT implemented
+
+This route stays residual-only: no random effects, no structured markers, and
+no REML. This is a deliberate rejection, not a missing port. The bivariate
+Gaussian structured routes are exact (q=2) or a verified Laplace approximation
+with a hand-derived, analytically differentiated per-leaf density (q=4); both
+depend on the conditional response being Gaussian, which a Student-t density
+is not. A Gaussian group-level random effect under a heavy-tailed,
+per-row scale-mixture likelihood has no closed-form marginal, and there is no
+verified non-Gaussian engine in this codebase to reuse for it — building one
+for this route alone would be inventing a parallel, unverified numerical design
+rather than mirroring the established one, on exactly the family (correlated
+structured scale) this project has already gotten a scale convention silently
+wrong once. drmTMB has the same limit: `biv_student()` raises "currently
+allows fixed-effect formulas only; random and structured effects are
+deferred" for the identical request (checked directly against drmTMB 0.7.0),
+so there is no reference implementation on either side of the port to mirror
+yet.
 
 ```julia
 f = bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
@@ -68,8 +106,15 @@ function drm(f::BivariateDrmFormula, fam::Student; data, g_tol::Real = 1e-8,
     structured_marker === nothing ||
         throw(ArgumentError("drm: the bivariate Student-t route is residual-only — " *
             "`phylo`/`relmat`/`animal`/`spatial` markers are not implemented for the " *
-            "bivariate `Student`, matching drmTMB's `biv_student()` first slice. Use " *
-            "`Gaussian()` for the structured bivariate engines."))
+            "bivariate `Student`. This is a deliberate rejection, not a missing port: " *
+            "the bivariate Gaussian structured routes rely on a Gaussian conditional " *
+            "response (closed-form q=2, or a hand-derived Laplace q=4), and neither " *
+            "carries over to a Student-t density — there is no verified non-Gaussian " *
+            "engine in this codebase to mirror, and drmTMB's own `biv_student()` " *
+            "defers random/structured effects too (checked directly against drmTMB " *
+            "0.7.0). Use `Gaussian()` for the structured bivariate engines, or " *
+            "`LogNormal()` if the response is lognormal (it delegates to the same " *
+            "verified Gaussian machinery on log(y))."))
     return _fit_bivariate_residual(f, fam, data, rhs, g_tol)
 end
 

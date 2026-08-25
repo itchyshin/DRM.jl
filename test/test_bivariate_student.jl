@@ -88,4 +88,35 @@ using Random
         @test length(coef(fit2)) == 8
         @test isapprox(coef(fit2), coef(fit); atol = 1e-6)
     end
+
+    @testset "structured markers (phylo/relmat/animal/spatial) keep a clear rejection (#471)" begin
+        # A DELIBERATE rejection, not a missing port: there is no closed-form (or
+        # verified-Laplace) marginal for a Gaussian group random effect under a
+        # Student-t conditional density in this codebase, and drmTMB's own
+        # `biv_student()` defers the identical request. The message must SAY that,
+        # not just refuse.
+        species = repeat(["sp1", "sp2", "sp3", "sp4"], inner = 200)
+        dat_sp = merge(data, (; species = species))
+        f_phylo = bf(mu1 = @formula(y1 ~ x + phylo(1 | species)),
+                     mu2 = @formula(y2 ~ x + phylo(1 | species)),
+                     sigma1 = @formula(sigma1 ~ 1 + phylo(1 | species)),
+                     sigma2 = @formula(sigma2 ~ 1 + phylo(1 | species)),
+                     rho12 = @formula(rho12 ~ 1))
+        err = try
+            drm(f_phylo, Student(); data = dat_sp)
+            nothing
+        catch e
+            e
+        end
+        @test err isa ArgumentError
+        @test occursin("deliberate rejection", err.msg)
+        @test occursin("Gaussian", err.msg)
+
+        # Same rejection for a q=2-shaped marker (mu1/mu2 only).
+        f_q2 = bf(mu1 = @formula(y1 ~ x + relmat(1 | species)),
+                  mu2 = @formula(y2 ~ x + relmat(1 | species)),
+                  sigma1 = @formula(sigma1 ~ 1), sigma2 = @formula(sigma2 ~ 1),
+                  rho12 = @formula(rho12 ~ 1))
+        @test_throws ArgumentError drm(f_q2, Student(); data = dat_sp)
+    end
 end
