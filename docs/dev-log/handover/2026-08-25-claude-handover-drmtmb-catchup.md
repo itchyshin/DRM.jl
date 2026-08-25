@@ -34,15 +34,23 @@ treat as historical.
 
 ```
 before: 0 covered · 6 partial · 4 experimental · 1 unsupported
-after:  3 covered · 4 partial · 3 experimental · 1 unsupported     CLOSURE: PASS
+after:  4 covered · 4 partial · 2 experimental · 1 unsupported     CLOSURE: PASS
 ```
+
+**Six rows moved in total** — that is the maximum reachable without you. Of the five that did not:
+`gaussian_response_mask` and `engine_control_surface` **must not move** (no working path; deliberately
+rejected); `cross_family_latent` is **unsatisfiable by construction** (no native comparator exists);
+`biv_q4_phylo_reml` and `phylo_gamma_beta_binomial` need **your decisions** (#478 scope narrowing, #473
+reinstall).
 
 | row | move | evidence |
 |---|---|---|
 | `biv_gaussian_residual` | → covered | coef 9.861e-07 (7/7 name-matched), SE 9.176e-08, logLik 1.307e-11 |
 | `plain_binomial_nonphylo` | → covered | SE 1.268e-09 — tighter than all three Gaussian cells |
 | `base_gaussian_location_scale` | → covered | SE 1.499e-07 + live parity finally run (ΔlogLik 6.257e-09) |
+| `gaussian_phylo_mean` | → covered | phylo SD 1.50e-08 across 3 tree heights, **after reseeding** — the old seed's parameter was unidentifiable (#483) |
 | `general_covariance_structured` | → partial | all four claimed families measured; SE axis added |
+| `phylo_count_large_p` | → partial | p = 20/300/1000/3000 PARITY_PASS; TMB measured **O(p^1.27)**, not O(p³) (#486) |
 
 **Merged into the lane** (DRM.jl#485, draft): #465 orphan tests · #466 `niterations` · #467 bridge
 formula constructs · #468 coverage pre-run · #470 bivariate q=2 REML · #471 LogNormal structured markers ·
