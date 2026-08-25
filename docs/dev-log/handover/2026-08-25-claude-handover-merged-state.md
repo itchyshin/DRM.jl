@@ -35,7 +35,35 @@ Local suite was 325/0/0 on the merged tree; CI green on Julia 1.10 **and** 1.12.
 | 498 | Poisson phylo Laplace collapses on Julia 1.12, not 1.10 (σ̂ 3e-04 vs truth 0.45) | open |
 | 499 | intermittent `DomainError(log of -1.0)` on Gaussian `(1\|g)` REML; **confirmed flaky** (pass→fail→pass, unchanged commit) | open |
 
-## IN FLIGHT at handover time
+## The boundary investigation — DONE, hypothesis REFUTED
+
+A 4-agent workflow investigated whether #496/#498/#499 shared one boundary-handling mechanism.
+**They do not.** Three unrelated defects that share a symptom vocabulary but not a mechanism, a code
+path, a parameter direction, or a fix. The decisive point: **#499 fails at variance → ∞**
+(σb² ≈ 8×10¹³) while the other two fail at variance → 0 — opposite tails, so no single
+"boundary weakness" can describe both.
+
+| # | what it actually is | outcome |
+|---|---|---|
+| 496 | O(1/N) small-sample bias; tracks **Cholesky depth**, not mean-vs-scale (L22 is a *mean* axis and already jumps 3×) | documented — [PR #502](https://github.com/itchyshin/DRM.jl/pull/502) |
+| 498 | **not a `src/` defect** — `MersenneTwister` is not stream-stable 1.10→1.12, so "seed 450" meant different data | fixed — [PR #501](https://github.com/itchyshin/DRM.jl/pull/501) |
+| 499 | real crash: `Xμ′V⁻¹Xμ` formed by Woodbury **subtraction** rounds to a negative determinant | fixed — [PR #500](https://github.com/itchyshin/DRM.jl/pull/500) |
+
+Two findings worth carrying forward:
+
+- **#499 is deterministic, not flaky.** It reproduces every time when a mean covariate is collinear
+  with the grouping factor. The "intermittent CI failure / runner ULP noise" reading was wrong.
+- **#498 is proven closed by cross-version measurement** (Totoro, same checkout, only Julia differs):
+  StableRNG draws hash identically on 1.10.10 and 1.12.6, and the fits agree to **10 significant
+  figures**. There is no version-dependent numerical behaviour in `src/`.
+
+Also learned, and worth not repeating: the first #499 fix returned `+Inf` on the non-PD case, which
+merely traded `DomainError` for `AssertionError` — LBFGS's HagerZhang line search asserts
+`isfinite(phi_c)`. It needed a large *finite* barrier. **The reproducer caught that; reasoning did
+not.** Likewise the synthesis's second recommendation (a ±30 clamp on `lσb`) was dropped after
+checking: the excursion is at `lσb ≈ 16`, inside that range, so it cannot be what fixes it.
+
+## Superseded — was in flight at the previous checkpoint
 
 A Workflow (`boundary-weakness-investigation`, run `wf_532cbc5c-409`) is investigating whether **#496,
 #498 and #499 share one boundary-handling mechanism** or are three separate bugs. Three parallel
