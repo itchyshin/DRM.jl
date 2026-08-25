@@ -221,6 +221,12 @@ include("test_step1_sparse.jl")
 include("test_sparse_aug.jl")
 include("test_lambda_direction.jl")
 
+# Julia-side standing gate for the phylo_count_large_p capability row: the row's
+# own boundary named the absence of one as its limitation (the harness was R-side
+# only). Needs no R and no fixtures. Also round-trips re_sd across tree heights,
+# which is the raw-vs-normalised covariance trap.
+include("test_phylo_count_largep_gate.jl")
+
 # NOTE (HANDOVER step, #465 remainder): test_analytic_grad.jl and
 # test_q4_laplace.jl were investigated and NOT wired — see the #465 after-task
 # note for why (superseded by test_qgate_fd_gradient.jl / obsolete bench POC).
