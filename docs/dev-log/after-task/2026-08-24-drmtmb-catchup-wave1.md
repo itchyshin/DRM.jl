@@ -1,7 +1,8 @@
-# After-task — drmTMB catch-up, Wave 1
+# After-task — drmTMB catch-up, Waves 1–2
 
 **Date:** 2026-08-24 · **Platform:** Claude Code (Shannon) · **Branch:** `feat/drmtmb-catchup`
-**Issues:** #465 #466 #467 #468 · DRM.jl#460 → drmTMB#1080 · **Base:** `origin/main` @ `8d45b651`
+**Issues:** #465 #466 #467 #468 #470 #471 #479 · DRM.jl#460 → drmTMB#1080 · ledger → drmTMB#1082
+**Base:** `origin/main` @ `8d45b651` · **PR:** DRM.jl#485 (draft)
 
 ## 1. Goal
 
@@ -23,6 +24,13 @@ pre-run, and the one drmTMB-side routing fix that unlocks the most user-visible 
 - **DRM.jl#460 → drmTMB#1080** — profile and bootstrap now accept `fixef:<dpar>:<coef>` targets through
   the bridge; Wald row count reconciled with native drmTMB. PR open, **not merged**.
 - **Tooling:** `tools/check_capability_citations.py`, `tools/drmtmb_provenance.R`; ledger countdown fixed.
+
+**Wave 2 (added after Wave 1 verified):**
+- **#479** — non-Gaussian `bootstrap_result` dropped `tree`/`K`/`A` on refit. Real shipped-behaviour bug.
+- **#470** — bivariate q=2 structured REML. Recovery: bias 0.0603→0.0216 (mu1), 0.0563→0.0226 (mu2), 60/60 seeds.
+- **#471** — structured markers for bivariate LogNormal via Gaussian delegation; **Student deliberately rejected**.
+- **Four capability rows moved** (drmTMB#1082): 0 covered → **3 covered + 1 experimental→partial**.
+- **q4 REML constant-offset prediction CONFIRMED** on a converged fit: predicted 5.513631, measured 5.504981.
 
 ## 3a. Decisions and Rejected Alternatives
 
@@ -64,8 +72,9 @@ Both new guards were verified to **fail** on injected drift and pass on restorat
 
 ## 7a. Issue Ledger
 
-Opened: #465 #466 #467 #468 #470 #471 #472 #473 #474 #475 #476 #477 #478, drmTMB#1079, drmTMB#1080.
-Closed: none — nothing merged.
+Opened, DRM.jl: #465–#484, #486 (20). drmTMB: #1079, #1081, #1083 (3).
+PRs opened: **DRM.jl#485** (draft, 48 commits), **drmTMB#1080** (#460 fix), **drmTMB#1082** (4 rows moved).
+**Closed: none. Merged: none.** Both repos' `main` untouched.
 
 ## 8. Consistency Audit
 
@@ -86,6 +95,15 @@ Wave 1 merges shifted `runtests.jl`.
   file was rebuilt forward from `git show HEAD:`.
 - **A subagent audit reported "0 over-claims" and under-reported stale citations** (5 of 6). The
   adversarial pass and the mechanical sweep both found things it missed.
+- **I broke the suite twice, and both times my own verification was the failure.**
+  (a) I reworded an error message and "verified" no test matched — by grepping a phrase **longer** than the
+  substring the test asserts. A grep for a longer phrase cannot prove the absence of a shorter one.
+  (b) Resolving a merge, two files conflicted; I resolved and validated one, then `git add`ed the
+  directory, staging conflict markers in the other. Both were caught by the full suite, not by me. Same
+  shape: **a check narrower than what it was reported to cover.** The second time I swept every `.toml`
+  under `test/parity` rather than re-checking only the file I had broken.
+- **A failing test ABORTS the suite**, so a low testset count means truncation, not progress. I read
+  "293 summaries" as partial progress when it was a stop.
 - **`check-after-task.R` reports unapproved gates as UNMET.** It blocks this report on
   `.unlazy/parity-catchup/GATES.md` — the *previous* session's scope, for work already merged — saying
   *"the work is not finished"*. Re-verifying shows `UNMET: 22 (met: 3)`, but every one of the 22 carries
@@ -103,6 +121,14 @@ Wave 1 merges shifted `runtests.jl`.
 - **#476** two parity files share `FIXTURE`/`_load_data` in `Main` with *differing* numeric-column sets.
 - **#477** `reml_loglik` omits the constant lme4/glmmTMB/TMB include — user-facing.
 - **#478** two `claim_boundary` criteria unsatisfiable as written; one rewrite narrows scope → owner call.
+- **#479 → #480** the formula-based bootstrap surface still declares `K`/`A`/`tree` Gaussian-only.
+- **#482** Gaussian mean-phylo + missing response has **no working path** — the default `drop` fails too.
+- **#483** `gaussian_phylo_mean`'s phylo SD is **unidentifiable at seed 111** (nll flat over 20 orders of
+  magnitude); the comparison would have PASSED inside tolerance while meaning nothing.
+- **#484** `drm()`'s public kwargs cannot converge q4 REML; the engine can, via a warm restart the API
+  does not expose.
+- **#486** native TMB does **not** scale O(p³) on the large-p phylo route — measured **O(p^1.27)** to
+  p=3000, overturning the premise that slice was built on.
 - The #468 go/no-go is **unanswered by design**.
 
 ## 11. Team Learning
