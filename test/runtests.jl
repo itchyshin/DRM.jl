@@ -342,6 +342,9 @@ if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
     @testset "R-parity via drm_bridge vs drmTMB 0.6.0" begin
         include("parity/runparity_bridge.jl")
     end
+    @testset "R-parity via drm_bridge R-formula constructs vs drmTMB 0.7.0 (#467)" begin
+        include("parity/runparity_bridge_formula.jl")
+    end
 else
     @info "R-parity suite skipped (set DRM_PARITY_TESTS=1 to run)"
 end

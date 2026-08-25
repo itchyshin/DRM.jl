@@ -1,0 +1,5 @@
+drmtmb_version = "0.7.0"
+generated_on = "2026-08-24"
+r_call = "drmTMB(drm_formula(y ~ x + z - z, sigma ~ 1), family = gaussian(), data = dat)"
+seed = 20260824
+note = "Generated outputs only; no drmTMB source vendored (MIT-clean). drm_bridge #467: general `- term` removal (z listed then removed); equivalent to `y ~ x`."
