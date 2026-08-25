@@ -23,6 +23,10 @@ pre-run, and the one drmTMB-side routing fix that unlocks the most user-visible 
   the go/no-go.** No grid run, no fence touched, no coverage claimed.
 - **DRM.jl#460 → drmTMB#1080** — profile and bootstrap now accept `fixef:<dpar>:<coef>` targets through
   the bridge; Wald row count reconciled with native drmTMB. PR open, **not merged**.
+  **Verified LIVE 2026-08-25** through the full R→Julia stack, not just `testthat` (which runs against
+  the source tree and can leave the bridge layer unexercised): profile `[0.3853512, 0.5717354]` and
+  bootstrap `[0.4021655, 0.5696364]` on `fixef:mu:x`, both previously **refused** by a message that
+  rejected the exact string it recommended.
 - **Tooling:** `tools/check_capability_citations.py`, `tools/drmtmb_provenance.R`; ledger countdown fixed.
 
 **Wave 2 (added after Wave 1 verified):**

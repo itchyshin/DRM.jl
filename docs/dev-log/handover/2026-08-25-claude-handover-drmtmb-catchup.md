@@ -287,6 +287,46 @@ directly, and that is recorded in its docstring.
 **If you prefer the unnormalised convention** it is one constant to remove in two places — but the
 univariate routes should change too. The thing worth avoiding is reporting both.
 
+## #460 verified LIVE through the full R→Julia stack
+
+I had reported the headline as covered by `testthat` — 15 files, 0 failures. **That runs against the
+source tree, and the R→Julia bridge is exactly the layer a source-tree unit test can leave
+unexercised.** It did not establish that a user gets an interval.
+
+Verified without reinstalling (that is #473, which moves the comparator under every banked parity number
+at once): drmTMB#1080's `R/julia-bridge.R` sourced into a live session over the *installed* build, method
+called on a real `drmTMB_julia` fit.
+
+**Before**, on the installed build:
+
+```
+Error: Unknown confidence-interval target: "fixef:mu:x".
+ℹ Use full profile target names such as "fixef:mu:x".
+ℹ First available targets: .
+```
+
+It rejects the exact string it recommends, and lists nothing. `confint(fit, method = "wald")` on the same
+fit reports the parameter under that very name.
+
+**After**, on `fixef:mu:x`:
+
+| method | lower | upper |
+|---|---|---|
+| wald | 0.3868388 | 0.5702478 |
+| **profile** | **0.3853512** | **0.5717354** |
+| **bootstrap** (R = 99, seed = 7) | **0.4021655** | **0.5696364** |
+
+Profile is slightly wider than Wald on both sides — the expected direction.
+
+**One ergonomic edge the unit tests did not surface:** `B = 99` is rejected — the replicate count on this
+method is `R`, matching `boot::boot`. That is a *correct* refusal (it declines an unknown argument rather
+than silently returning a default-size bootstrap), but `B` is the name used in the sibling project, so a
+user will hit it. Recorded on the PR for your call.
+
+**Does not establish coverage.** Three intervals, one dataset, one family, one route. Both
+`coverage_claimed` fences stay intact. Full write-up:
+`docs/dev-log/evidence/2026-08-25-460-live-stack-verification.md`.
+
 ## Blockers / Open Questions — all need the owner
 
 - **#468 interval-coverage go/no-go.** Pre-run says GO. n_sim = 1000/cell (MCSE 0.69 pp), **~25 CPU-h**,
