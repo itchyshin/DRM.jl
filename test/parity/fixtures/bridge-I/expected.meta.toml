@@ -1,0 +1,5 @@
+drmtmb_version = "0.7.0"
+generated_on = "2026-08-24"
+r_call = "drmTMB(drm_formula(y ~ x + I(x^2), sigma ~ 1), family = gaussian(), data = dat)"
+seed = 20260824
+note = "Generated outputs only; no drmTMB source vendored (MIT-clean). drm_bridge #467: I(x^2) evaluated via the safe restricted-arithmetic evaluator, materialised as `__bridge_I_1`."
