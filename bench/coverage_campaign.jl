@@ -324,9 +324,22 @@ function run_rep(cell::Symbol, seed::Integer, ntip::Integer, per::Integer, jit::
     try
         for r in confint(fit; method = :profile, parm = profile_parm(cell))
             tr = truth_lookup(cell, r.param, r.coef)
-            covered = Int(r.lower <= tr <= r.upper)
-            push!(rows, mkrow(seed, conv, r.param, r.coef, "profile", r.estimate, r.lower, r.upper,
-                               tr, covered, t_fit, reported_ntip, cell, jit))
+            if isfinite(r.lower) && isfinite(r.upper)
+                covered = Int(r.lower <= tr <= r.upper)
+                push!(rows, mkrow(seed, conv, r.param, r.coef, "profile", r.estimate, r.lower, r.upper,
+                                   tr, covered, t_fit, reported_ntip, cell, jit))
+            else
+                # Same guard the Wald branch above already carries, and it became
+                # load-bearing here after DRM.jl#493: a failed profile endpoint now
+                # returns +/-Inf (rather than the old fabricated near-zero step), so
+                # an unguarded `r.lower <= tr <= r.upper` would be TRIVIALLY TRUE and
+                # would report ~100% coverage on exactly the reps whose endpoint
+                # search failed -- inverting the signal the campaign exists to measure.
+                # Recorded as an interval failure: stays in the denominator
+                # (Williams 10b), never silently dropped and never counted as covered.
+                push!(rows, mkrow(seed, conv, r.param, r.coef, "profile", NaN, NaN, NaN,
+                                   tr, 0, t_fit, reported_ntip, cell, jit))
+            end
         end
     catch err
         @warn "profile confint threw; that method's rows marked failed (interval failed, not dropped)" cell seed exception =
