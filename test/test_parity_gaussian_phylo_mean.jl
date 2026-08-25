@@ -11,6 +11,40 @@
 # coverage. Not R-via-Julia bridge admission.
 # Workflow G fixtures stay 0.6.0 / ML / no tree; this cell is 0.7.0 ML + tree
 # outside test/parity/fixtures/.
+#
+# re_sd now a compared quantity (promotion-gap fix): the row's DEFINING
+# parameter -- the phylogenetic SD -- is compared against drmTMB below, not
+# just coefficients/logLik. THE TRAP: DRM.jl's `re_sd(fit)[:species]` is on
+# the RAW branch-length scale (tip variance = tree height h); drmTMB's is on
+# the CORRELATION scale (`ape::vcv(tree, corr = TRUE)`, tip variance 1
+# regardless of h). The two agree only when h == 1 -- this fixture's tree has
+# h ~= 1.684, so the raw comparison would silently be wrong by sqrt(h) ~= 1.30
+# without the conversion applied below.
+#
+# 3-HEIGHT ROUND TRIP (verified 2026-08-24, not shipped as a fixture -- see
+# below for why): the seed-111 tree was rescaled to heights 0.5 / 1.0 / 3.0
+# (same data, same topology) and refit in both engines.
+#
+#   height   drmTMB sd_phylo (corr)   DRM.jl re_sd (raw)   raw*sqrt(h)
+#   0.5      6.666539e-06             1.834230e-05         1.296997e-05
+#   1.0      6.666539e-06             1.175157e-05         1.175157e-05
+#   3.0      6.666539e-06             7.342258e-06          1.271716e-05
+#
+# drmTMB's value is EXACTLY height-invariant (confirmed to ~1e-8), as expected
+# since it standardises internally -- this validates the scale-CONVENTION
+# claim directly. DRM.jl's raw*sqrt(h) does NOT converge tightly to drmTMB's
+# 6.67e-6 at any height, because at seed 111 the phylo variance component is
+# boundary-adjacent: a direct nll sweep (fixing log_sd_phylo at the fitted
+# sigma) showed the profiled negative log-likelihood changes by < 1e-4 over
+# log_sd_phylo in [-30, -10] -- i.e. the likelihood is flat there, so the
+# exact reported value is dominated by each engine's own optimiser stopping
+# tolerance (TMB's nlminb vs. DRM.jl's L-BFGS g_tol), not a tightly
+# recoverable quantity. This is why the comparison below uses a generous,
+# EXPLICITLY documented tolerance (`atol_re_sd`) rather than the coefficient
+# tolerance, and why claim_status stays partial: this fixture evidences the
+# SCALE CONVENTION (drmTMB height-invariance, confirmed) but not a tight
+# numeric match on the phylo SD itself (not achievable at this seed's
+# near-zero estimate).
 
 using DRM
 using Test
@@ -96,4 +130,25 @@ _within(a, b, rtol, atol) = abs(a - b) <= max(atol, rtol * max(abs(a), abs(b)))
         @test haskey(got, name)
         @test _within(got[name], Float64(ref), rtol_c, atol_c)
     end
+
+    # The row's DEFINING quantity: the fitted phylogenetic SD (see the SCALE
+    # TRAP note above the testset). Compare on drmTMB's CORRELATION scale by
+    # multiplying DRM.jl's RAW-scale re_sd by sqrt(tree_height).
+    @test haskey(expected, "re_sd")
+    @test haskey(expected["re_sd"], "species_corr_scale")
+    @test haskey(meta, "tree_height")
+
+    phy = augmented_phy(tree)
+    h = phylo_tree_height(phy)
+    ref_h = Float64(meta["tree_height"])
+    @test _within(h, ref_h, 1e-6, 1e-6)   # Julia's and R's tree-height readings agree
+
+    sds = re_sd(fit)
+    @test haskey(sds, :species)
+    sd_phylo_raw = Float64(sds[:species])
+    sd_phylo_corr = sd_phylo_raw * sqrt(h)
+
+    ref_sd_phylo = Float64(expected["re_sd"]["species_corr_scale"])
+    atol_re_sd = Float64(get(expected["tol"], "atol_re_sd", 1e-4))
+    @test _within(sd_phylo_corr, ref_sd_phylo, 0.0, atol_re_sd)
 end

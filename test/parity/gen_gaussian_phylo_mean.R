@@ -60,6 +60,39 @@ extract_pdHess <- function(fit) {
   }, error = function(e) NA)
 }
 
+## The row's DEFINING quantity: the fitted phylogenetic SD. Read from the
+## sdreport's FINAL fixed-parameter vector (matches `coef(fit)`) -- NOT
+## `fit$obj$par`, which holds the fitter's STARTING values and never updates
+## post-optimisation (verified 2026-08-24: for this cell `obj$par["log_sd_phylo"]`
+## reads -1.97, the start; `sdr$par.fixed["log_sd_phylo"]` reads -11.92, the
+## actual MLE -- an 8-log-unit gap). This is on drmTMB's CORRELATION-SCALE
+## convention: drmTMB standardises the phylogenetic covariance via
+## `ape::vcv(tree, corr = TRUE)` internally, so the value does not depend on
+## the tree's raw branch-length height. Cross-checked against the public
+## `fit$sdpars$mu` field, which must agree exactly.
+extract_sd_phylo <- function(fit, term_label) {
+  nm <- names(fit$sdr$par.fixed)
+  idx <- which(nm == "log_sd_phylo")
+  if (length(idx) != 1) {
+    stop("expected exactly one 'log_sd_phylo' fixed parameter, found ", length(idx))
+  }
+  sd_from_sdr <- as.numeric(exp(fit$sdr$par.fixed[idx]))
+  sd_from_sdpars <- tryCatch(as.numeric(fit$sdpars$mu[[term_label]]), error = function(e) NA_real_)
+  if (is.finite(sd_from_sdpars) &&
+      !isTRUE(all.equal(sd_from_sdr, sd_from_sdpars, tolerance = 1e-8))) {
+    stop("sd_phylo mismatch: sdr$par.fixed gives ", sd_from_sdr,
+         " but sdpars$mu gives ", sd_from_sdpars)
+  }
+  sd_from_sdr
+}
+
+## Maximum root-to-tip path length -- the tip variance the tree implies when
+## DRM.jl's `re_sd()` (RAW branch-length scale) is compared to drmTMB's
+## CORRELATION-scale `sd_phylo`: species_corr_scale == raw * sqrt(tree_height).
+tree_height <- function(tree) {
+  max(ape::node.depth.edgelength(tree)[seq_along(tree$tip.label)])
+}
+
 extract_interval_status <- function(fit) {
   ci <- tryCatch(confint(fit, method = "wald"), error = function(e) e)
   if (inherits(ci, "error")) {
@@ -137,6 +170,8 @@ write_fixture <- function(cell, fit, out_dir) {
   converged <- isTRUE(identical(fit$opt$convergence, 0L) || identical(fit$opt$convergence, 0))
   pd <- extract_pdHess(fit)
   interval_status <- extract_interval_status(fit)
+  sd_phylo_corr <- extract_sd_phylo(fit, "phylo(1 | species)")
+  h <- tree_height(cell$tree)
 
   con <- file(file.path(out_dir, "expected.toml"), "w")
   on.exit(close(con), add = TRUE)
@@ -156,6 +191,18 @@ write_fixture <- function(cell, fit, out_dir) {
   }
   writeLines(c(
     "",
+    "# The row's DEFINING quantity: the fitted phylogenetic SD, on drmTMB's",
+    "# CORRELATION-SCALE convention (ape::vcv(tree, corr = TRUE) standardises the",
+    "# tip variance to 1, independent of the tree's raw branch-length height).",
+    "# DRM.jl's re_sd(fit)[:species] is on the RAW branch-length scale instead",
+    "# (tip variance = tree_height); the two are related by",
+    "#   species_corr_scale == re_sd(fit)[:species] * sqrt(tree_height)",
+    "# tree_height is recorded in expected.meta.toml.",
+    "[re_sd]"
+  ), con)
+  writeLines(paste0("species_corr_scale = ", toml_num(sd_phylo_corr)), con)
+  writeLines(c(
+    "",
     "[status]",
     paste0("converged = ", toml_bool(converged)),
     paste0("pdHess = ", toml_bool(pd)),
@@ -164,7 +211,10 @@ write_fixture <- function(cell, fit, out_dir) {
     "[tol]",
     "atol_loglik = 1e-6",
     "atol_coef = 1e-5",
-    "rtol_coef = 1e-5"
+    "rtol_coef = 1e-5",
+    "# re_sd is a boundary-adjacent variance-component estimate (see note in",
+    "# expected.meta.toml): a coefficient-tight tolerance is not meaningful here.",
+    "atol_re_sd = 1e-4"
   ), con)
 
   note <- paste(
@@ -173,16 +223,32 @@ write_fixture <- function(cell, fit, out_dir) {
     "This cell is 0.7.0 ML + tree, outside the fixtures/ glob.",
     "Not a TSV supported flip. Not the last fixture-gap.",
     "ML, univariate, sigma ~ 1. Tight ML tols (not #434 atol_loglik=6).",
-    "Live Route A clone unless a recorded reseed was required."
+    "Live Route A clone unless a recorded reseed was required.",
+    "re_sd added (promotion-gap fix): the phylo SD is now a compared quantity.",
+    "At seed 111 the phylo variance component is boundary-adjacent -- confirmed",
+    "by direct nll evaluation, the profiled negative log-likelihood changes by",
+    "< 1e-4 for log_sd_phylo over [-30, -10], so the exact reported value is",
+    "dominated by each engine's own optimizer stopping tolerance, not a tightly",
+    "recoverable quantity. Both engines agree the phylo signal is negligible;",
+    "the sqrt(tree_height) SCALE CONVENTION itself was verified separately by a",
+    "3-height round trip (tree rescaled to 0.5/1.0/3.0) documented in",
+    "test_parity_gaussian_phylo_mean.jl, not by this near-zero fixture alone."
   )
+  # #473 (comparator provenance) is open and `tools/drmtmb_provenance.R` does
+  # not exist in this checkout, so `drmtmb_built` is read directly from the
+  # installed package's DESCRIPTION rather than via `--toml`; no
+  # `drmtmb_code_hash` is recorded (that needs the not-yet-shipped tool's
+  # exact hash recipe).
   writeLines(c(
     paste0("drmtmb_version = ", toml_string(as.character(utils::packageVersion("drmTMB")))),
+    paste0("drmtmb_built = ", toml_string(as.character(utils::packageDescription("drmTMB")$Built))),
     paste0("generated_on = ", toml_string(as.character(Sys.Date()))),
     paste0("r_call = ", toml_string(r_call_text())),
     paste0("seed = ", as.integer(cell$seed)),
     paste0("n_tip = ", as.integer(cell$n_tip)),
     paste0("n_each = ", as.integer(cell$n_each)),
     paste0("with_x = ", toml_bool(cell$with_x)),
+    paste0("tree_height = ", toml_num(h)),
     paste0("note = ", toml_string(note))
   ), file.path(out_dir, "expected.meta.toml"))
 }

@@ -1,8 +1,10 @@
 drmtmb_version = "0.7.0"
-generated_on = "2026-08-17"
+drmtmb_built = "R 4.6.0; aarch64-apple-darwin23; 2026-08-15 01:49:56 UTC; unix"
+generated_on = "2026-08-24"
 r_call = "drmTMB(bf(y ~ x + phylo(1 | species, tree = tree), sigma ~ 1), family = gaussian(), data = dat, engine = \"tmb\")"
 seed = 111
 n_tip = 18
 n_each = 1
 with_x = true
+tree_height = 1.6843125150460203e+00
 note = "Generated outputs only; no drmTMB source vendored. Workflow G fixtures were re-measured to 0.7.0 on 2026-08-24 (ee8658df); this note previously said they remain 0.6.0, which stopped being true that day. This cell is 0.7.0 ML + tree, outside the fixtures/ glob. Not a TSV supported flip. Not the last fixture-gap. ML, univariate, sigma ~ 1. Tight ML tols (not #434 atol_loglik=6). Live Route A clone unless a recorded reseed was required."
