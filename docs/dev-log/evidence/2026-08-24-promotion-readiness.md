@@ -30,12 +30,19 @@ make them wrong; it means **a promotion citing them should also cite
 
 ## Row-by-row
 
-### Recommend promoting — evidence exists now
+### Closest to promotable — but only one is actually ready
 
-| Row | now | → | Evidence | Residual risk |
+| Row | now | → | Evidence | What is still missing |
 |---|---|---|---|---|
-| `biv_gaussian_residual` | partial | **covered** | Live same-target evidence (#458); SE agreement ~1e-06; a canonical fixture cell at 0.7.0 | Needs the `:`→`_` label normalisation ported from `tools/parity_se.R` into `tools/parity_fixture.R` so coefficients are name-matched, not just logLik. **Hours, DRM.jl-side, no reinstall.** |
-| `plain_binomial_nonphylo` | partial | **covered** | Live Workflow G binomial-trials cell vs DRM.jl `expected.toml`; agreement 2.48e-13 | Boundary says "still experimental, not a CRAN default" — that clause is about drmTMB's release posture, not about evidence. Reword rather than block. |
+| `plain_binomial_nonphylo` | partial | **covered** | Live Workflow G binomial-trials cell vs DRM.jl `expected.toml`; logLik agreement **2.48e-13** (`docs/dev-log/evidence/parity-fixtures.tsv:7`) | Its boundary says "still experimental, not a CRAN default" — that clause is about drmTMB's *release posture*, not about evidence. Reword rather than block. |
+| `biv_gaussian_residual` | partial | **not yet — materially closer** | **Measured 2026-08-24**, name-matched, live `engine="tmb"` vs `engine="julia"`, **7/7 coefficients**: coef max abs diff **9.861e-07**; SE **9.176e-08** abs / **1.835e-06** rel, independently cross-confirmed by `tools/parity_se.R` on the same draw; logLik **1.307e-11**. First fixture stamped with a real comparator build (`drmtmb_built` + `drmtmb_code_hash`, #473). | A **single** fixed-effects draw (n=400, one seed); **no** interval/diagnostic evidence; **no** public documentation pointing at the cell. Those are two of design/168's four limbs. |
+
+> **Correction to this document, made by the measurement it commissioned.** This row originally claimed
+> the blocker was that coefficients were not name-matched, needing the `:`→`_` normalisation ported from
+> `tools/parity_se.R`. Measured: `fixef()`-derived coefficient names **already agreed** between engines
+> (both use `.`); the `:`→`_` mismatch is real but lives in **`vcov()`'s dimnames** — the SE axis, not the
+> coefficient axis. The normalisation was ported and applied to both defensively. The diagnosis here was
+> wrong and the measurement corrected it, which is the point of measuring.
 
 ### Blocked on one specific, cheap thing
 
@@ -70,7 +77,10 @@ make them wrong; it means **a promotion citing them should also cite
 
 ## Honest summary
 
-- **2 rows could move on evidence that exists**, one of them after a few hours of harness work.
+- **1 row could move on evidence that exists** (`plain_binomial_nonphylo`). A second
+  (`biv_gaussian_residual`) gained strong name-matched parity tonight but is still short of `covered`
+  on two of the bar's four limbs — the harness work closed the gap it was said to have, and revealed
+  the gap it actually had.
 - **1 row is much closer than believed** (`biv_q4_phylo_reml`) because a fixture note's structural
   explanation was wrong.
 - **1 row must not move and its text must be corrected** (`gaussian_response_mask`, #482).
