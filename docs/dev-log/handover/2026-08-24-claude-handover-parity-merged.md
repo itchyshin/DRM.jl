@@ -40,16 +40,20 @@ file; treat it as historical.
      `codex/rescue-claude-handover-freshness-0718-20260824` (branch confirmed to exist). The
      dirty-set hash pinned above, `0c7636897a95929a…`, is **STALE**; the tree now hashes to the
      empty-set value `e3b0c44298fc1c14…`. Do not use the old hash as a tamper check.
-   - **DISPUTED, NEEDS OWNER CONFIRMATION:** this handover originally said *"Do NOT edit
-     drmTMB — CRAN prepare-only quiesce."* The concurrent lane `drm-jl-2b` reports that
-     **Shinichi lifted that in its session**, on the [[DECISIONS#D-164|D-164]] reading that the
-     hold is on **submission**, not on the package ("reversible work on drmTMB continues as
-     normal"), and that **both repos are in scope** for its G0.
-     **This author could not verify that** — it is a peer's report of an owner instruction given
-     in another session, and a peer cannot grant an escalation. So: **do not treat drmTMB as
-     open on the strength of this paragraph.** Confirm with Shinichi first. What is NOT in
-     dispute either way: no `submit_cran`, no tag, no release announcement — D-164's hold on
-     *release* stands regardless.
+   - **RESOLVED 2026-08-24 — and the error was this handover's.** The original text said
+     *"Do NOT edit drmTMB — CRAN prepare-only quiesce."* That was **stricter than the decision it
+     cited**. [[DECISIONS#D-164|D-164]] already read, before any of today's discussion:
+     *"**Reversible work on drmTMB continues as normal** (D-116). This holds the **release**, not
+     the package."* Verified directly against the ledger at `ed5132b~1` — this needs no peer's
+     word and no owner re-confirmation; it was an over-read on my part.
+     Recorded as a clarification block inside D-164 at vault commit **`ed5132b`** by lane
+     `drm-jl-2b`, which honestly notes that Shinichi answered a structured multiple-choice
+     question and that **no verbatim quotation is claimed, because none was given**.
+     **So drmTMB MAY be edited** — branches, PRs, tests, and `inst/extdata/julia-capabilities.tsv`
+     (the capability ledger lives in drmTMB, so no row can be promoted without touching it).
+     **What is NOT licensed, and never was in dispute:** `submit_cran()`, an upload, a release
+     tag, or an announcement. D-164's hold on **RELEASE** stands, undisturbed. drmTMB work lands
+     as branch + PR, not merged to drmTMB `main` without Shinichi's say-so.
 
 ## What Was Accomplished
 
