@@ -108,11 +108,13 @@ With no structured-effect marker, this is the residual-correlation model:
 effect formula.
 
 With matching structured markers on `mu1` and `mu2` only, this routes to the
-q=2 exact-Gaussian ML point-fit cell. The q=2 route currently accepts
-`phylo(1 | group)` with `tree`, `relmat(1 | group)` with `K`, or
-`animal(1 | group)` with `A`; it requires complete responses, identical mean
-fixed-effect designs, and intercept-only `sigma1`, `sigma2`, and `rho12`.
-`spatial(1 | group)` remains outside the formula route here.
+q=2 exact-Gaussian point-fit cell, `method = :ML` (default) or `method =
+:REML` (Patterson–Thompson; marginalises `beta_mu1`/`beta_mu2` only — see
+`reml_q2.jl`). The q=2 route currently accepts `phylo(1 | group)` with
+`tree`, `relmat(1 | group)` with `K`, or `animal(1 | group)` with `A`; it
+requires complete responses, identical mean fixed-effect designs, and
+intercept-only `sigma1`, `sigma2`, and `rho12`. `spatial(1 | group)` remains
+outside the formula route here.
 
 With the same `phylo(1 | group)` marker on all four location/scale predictors
 (`mu1`, `mu2`, `sigma1`, and `sigma2`) and a supplied `tree`, this routes to the
@@ -150,8 +152,20 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
         throw(ArgumentError("drm: known sampling covariance `V` is implemented for the " *
             "residual bivariate route only; combining it with structured " *
             "phylo/relmat/animal/spatial markers is a later slice."))
+    # #470: `V` is accepted only on the residual-only route (checked just above),
+    # and that route computes each row's Gaussian density directly from
+    # V_i + Sigma_het with no random effect marginalised — so there is no
+    # Schur-complement axis for this package's (single) REML formulation to
+    # correct, the same reason method = :REML is rejected for the residual-only
+    # model without `V` (below). A meta-analytic REML that profiles the fixed
+    # effects via GLS under V_i + Sigma_het (as e.g. metafor's `rma`) would be a
+    # legitimate but DIFFERENT derivation on a route this task does not touch;
+    # this is a scope boundary, not a temporary gap, hence the permanent wording.
     V !== nothing && method === :REML &&
-        throw(ArgumentError("drm: `V` (known sampling covariance) is ML-only in this slice."))
+        throw(ArgumentError("drm: `V` (known sampling covariance) has no REML target in this " *
+            "package: it is accepted only on the bivariate residual-correlation route, which " *
+            "marginalises no random effect and so has nothing for a restricted likelihood to " *
+            "correct — use method = :ML."))
     if structured_marker !== nothing && structured_marker[1] === :phylo_q4
         return _fit_bivariate_q4_phylo(
             f, fam, data, fixed, structured_marker, tree;
@@ -172,24 +186,23 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
             method = method,
         )
     elseif structured_marker !== nothing && structured_marker[1] === :structured_q2
-        method === :REML &&
-            throw(ArgumentError("drm: method = :REML is not implemented for the bivariate " *
-                "q=2 structured residual-correlation route; use method = :ML."))
         coords === nothing ||
             throw(ArgumentError("drm: bivariate q=2 spatial(coords) is not implemented; use a known covariance relmat route or method = :ML native TMB."))
         return _fit_bivariate_q2_structured(
             f, fam, data, fixed, structured_marker, tree, K, A;
             g_tol = Float64(g_tol),
+            method = method,
         )
     end
     # The residual-only bivariate route has no random effects / structured terms;
     # REML (Patterson–Thompson) is implemented only for the q=4 structured paths,
     # so reject it here as the univariate core does (gaussian_core.jl:383-393).
     method === :REML &&
-        throw(ArgumentError("drm: method = :REML is implemented only for the bivariate q=4 " *
-            "location–scale engine (shared `phylo`/`relmat`/`animal`/`spatial` on mu1, mu2, " *
-            "sigma1, sigma2). The residual-only bivariate Gaussian model has no random " *
-            "effects; use method = :ML (the default)."))
+        throw(ArgumentError("drm: method = :REML needs random effects to restrict, and the " *
+            "residual-only bivariate Gaussian model has no random effects — use method = :ML (the " *
+            "default). REML IS available on the structured bivariate routes: q=4 " *
+            "(shared `phylo`/`relmat`/`animal`/`spatial` on mu1, mu2, sigma1, sigma2) " *
+            "and q=2 (#470)."))
     return _fit_bivariate_residual(f, fam, data, rhs, g_tol; V = V)
 end
 
@@ -467,7 +480,7 @@ end
 
 function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, data,
                                       fixed, marker, tree, K, A;
-                                      g_tol::Float64)
+                                      g_tol::Float64, method::Symbol = :ML)
     marker[1] === :structured_q2 || error("internal error: expected q2 structured marker")
     kind = marker[2]
     grp = marker[3]
@@ -518,16 +531,29 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
     else
         0.0
     end
-    fit_q2 = fit_coevolution_q2_residual(
-        prob,
-        Q_cond;
-        β0 = β0,
-        Λ0 = Matrix(Symmetric([0.25 0.02; 0.02 0.25])),
-        σ0 = [std(r1) + eps(), std(r2) + eps()],
-        rho0 = ρ0,
-        g_tol = g_tol,
-        iterations = 300,
-    )
+    fit_q2 = if method === :REML
+        fit_coevolution_q2_reml(
+            prob,
+            Q_cond;
+            β0 = β0,
+            Λ0 = Matrix(Symmetric([0.25 0.02; 0.02 0.25])),
+            σ0 = [std(r1) + eps(), std(r2) + eps()],
+            rho0 = ρ0,
+            g_tol = g_tol,
+            iterations = 300,
+        )
+    else
+        fit_coevolution_q2_residual(
+            prob,
+            Q_cond;
+            β0 = β0,
+            Λ0 = Matrix(Symmetric([0.25 0.02; 0.02 0.25])),
+            σ0 = [std(r1) + eps(), std(r2) + eps()],
+            rho0 = ρ0,
+            g_tol = g_tol,
+            iterations = 300,
+        )
+    end
 
     k = size(X1, 2)
     blocks = [
@@ -596,6 +622,7 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
     end
     fit = DrmFit(fam, blocks, names, θ̂, V, fit_q2.loglik, length(y1),
                  fit_q2.converged, means, obs, scales)
+    fit = method === :REML ? _withreml(fit, fit_q2.reml_loglik, fit_q2.ml_loglik) : fit
     return _withranef(_withformula(_withnll(fit, nll), f), re)
 end
 

@@ -133,7 +133,7 @@ residual correlation ρ12. This is the verified core engine (`src/sparse_phy.jl`
 
 | Capability | Source | Status |
 |---|---|---|
-| Verified q=4 sparse-Laplace single fit + exact O(p) gradient | `src/fit_q4_sparse_tmb.jl` | **Tested** — `test/test_q4_laplace.jl`, `test/test_sparse_aug.jl`, FD gradient gate `test/test_qgate_fd_gradient.jl`, zero-alloc inner gate `test/test_qgate_alloc_inner.jl` |
+| Verified q=4 sparse-Laplace single fit + exact O(p) gradient | `src/fit_q4_sparse_tmb.jl` | **Tested** — `test/test_sparse_aug.jl`, FD gradient gate `test/test_qgate_fd_gradient.jl`, zero-alloc inner gate `test/test_qgate_alloc_inner.jl` |
 | Sparse augmented phylo precision `kron(Q, Λ⁻¹)` foundation | `src/sparse_phy.jl` | **Tested** — `test/runtests.jl:13`, `test/test_step1_sparse.jl`, `test/test_crossed_selected_inverse.jl` |
 | Takahashi selected inverse | `src/takahashi_selinv.jl` | **Tested** — `test/test_crossed_selected_inverse.jl`, used throughout the gradient gates |
 | Public `bf(mu1=…, mu2=…, sigma1=…, sigma2=…, rho12=…)` q=4 front end | `src/gaussian_bivariate.jl` | **Tested** — `test/test_gaussian_bivariate_phylo.jl` (recovers Σ_a, β; validates marker constraints) |
@@ -164,7 +164,7 @@ support.
 |---|---|---|
 | Bivariate Gaussian with residual `rho12` (`cbind` / `mu1`,`mu2`) | `src/gaussian_bivariate.jl` | **Tested** — `test/test_gaussian_bivariate.jl` |
 | `rho12(fit)` accessor | `src/summary.jl:65` | **Tested** — `test/test_rho12_accessor.jl` |
-| Cross-family bivariate (different families on `y1` vs `y2`) | — | **Absent** — the bivariate path is Gaussian-only (`src/gaussian_bivariate.jl`); no cross-family bivariate model is implemented |
+| Cross-family bivariate (different families on `y1` vs `y2`) | `src/mixed_family.jl`, `src/mixed_family_postfit.jl` | **Experimental — implemented, not absent.** `drm(bf(...), (Gaussian(), Poisson()); data = …)` fits two responses from different families coupled by a **latent-scale scalar** correlation, read from `fit.rho_latent`. Tested: `test/test_mixed_family.jl`, `test/test_mixed_family_postfit.jl`, `test/test_cross_family_formula.jl`. Methods reference: [Cross-family methods](model-guides/cross-family-methods.md). **Not release-ready** (`cross_family_latent` is `experimental`): single-fixture evidence, no interval coverage. `rho12 ~ x` is **rejected** on this route — the correlation is latent and scalar, so a per-observation formula would imply a model it does not fit; that is the two-Gaussian residual route above. |
 
 ## Meta-analysis
 
@@ -196,6 +196,16 @@ support.
     **not in the default suite yet**; #439); and the bivariate q=4 location–scale
     engine (`test/test_reml_q4_allaxes.jl`). σ-RE, random slopes, multi-ranef,
     and non-Gaussian REML stay rejected. This is not AI-REML.
+
+    **Normalisation convention (#477, resolved 2026-08-25):** every REML route
+    in DRM.jl now reports the **normalised** Patterson–Thompson restricted
+    log-likelihood, so `reml_loglik` is directly comparable to lme4's,
+    glmmTMB's, TMB's and drmTMB's `logLik()`. The bivariate q=2/q=4 Laplace
+    routes previously omitted the `(n_β/2)·log(2π)` constant while the
+    fixed-effect location–scale and mean `(1 | g)` routes included it, so one
+    package reported two scales under one name. Evidence: the q=4 parity gate's
+    `atol_loglik` fell from **5.5436 to 0.03** once the constant was no longer
+    being absorbed by the tolerance.
 
 ## Model comparison & accessors
 

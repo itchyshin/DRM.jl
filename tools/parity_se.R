@@ -89,6 +89,27 @@ cells <- list(
     },
     formula = function() bf(y ~ x + (1 | g), sigma ~ 1),
     family  = function() gaussian()
+  ),
+  list(
+    # plain_binomial_nonphylo -- the fourth `covered` limb for this row
+    # (docs/design/168): implementation + focused tests + public docs already
+    # exist, the SE axis did not. Mirrors the SAME build as the
+    # plain_binomial_nonphylo cell in tools/parity_fixture.R (cbind(successes,
+    # failures) ~ x, logit link, mean-only, drmTMB 0.6.0 fixture shape) so this
+    # is evidence about the same capability, not a fresh draw.
+    capability_id = "plain_binomial_nonphylo",
+    cell_id = "se_binomial_trials",
+    label   = "Binomial (logit, trials), fixed effects",
+    build   = function() {
+      set.seed(4242)
+      n <- 150; x <- rnorm(n)
+      size <- 12L
+      p <- plogis(0.3 + 0.7 * x)
+      s <- rbinom(n, size, p)
+      data.frame(successes = s, failures = size - s, x = x)
+    },
+    formula = function() bf(cbind(successes, failures) ~ x),
+    family  = function() binomial()
   )
 )
 

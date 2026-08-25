@@ -15,10 +15,14 @@ can actually see the same failures. This closes that particular blind spot.
 
     python3 tools/check_test_deps.py
 
-Only files `runtests.jl` actually includes are checked. Several standalone
-diagnostic scripts in `test/` (grad_check_*.jl, test_lambda_p100.jl,
-test_step1_sparse.jl) import CSV/DataFrames and are deliberately NOT part of the
-suite; flagging them would be noise, and would train people to ignore this tool.
+Only files `runtests.jl` actually includes are checked. A few standalone
+diagnostic scripts in `test/` (grad_check_*.jl) import CSV/DataFrames and are
+deliberately NOT part of the suite; flagging them would be noise, and would
+train people to ignore this tool. `test_lambda_p100.jl` (#465) is also
+deliberately not part of the suite, but for a different reason: it's a genuine,
+reproducible failure at fixture scale (the sparse-EM Λ M-step descends the true
+marginal at p=100 real data), not a dependency issue — see the #465 after-task
+note.
 """
 
 import os
@@ -29,12 +33,20 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEST = os.path.join(REPO, "test")
 
 # Always available without being declared.
-STDLIB = {
-    "Base", "Core", "Main", "Test", "Random", "LinearAlgebra", "SparseArrays",
-    "Statistics", "Printf", "DelimitedFiles", "TOML", "Dates", "Logging",
-    "Serialization", "Pkg", "InteractiveUtils", "Markdown", "Libdl", "Profile",
-    "Distributed", "SharedArrays", "Sockets", "UUIDs", "Unicode", "Mmap",
-}
+# Only the pseudo-modules that can NEVER appear in a Project.toml. Everything
+# else — including every Julia stdlib — MUST be declared, because a stdlib is
+# resolvable in the DEFAULT environment but not in `--project=test` after a
+# clean `Pkg.instantiate()`. That distinction is invisible locally, where a
+# populated depot or a transitive Manifest entry resolves it anyway.
+#
+# This set used to list the stdlibs as blanket-allowed, and that hole cost a
+# red CI run: `test/test_vcov_guard.jl` did `using Logging`, this guard passed
+# it, the local suite passed 325/0/0, and CI failed with
+# "ArgumentError: Package Logging not found in current path" after 28 minutes.
+# Every other stdlib the suite uses (Test, Random, LinearAlgebra, SparseArrays,
+# Statistics, Printf, DelimitedFiles, TOML) was already declared — the project's
+# convention was right and only the checker disagreed with it.
+STDLIB = {"Base", "Core", "Main"}
 
 
 def declared_deps():

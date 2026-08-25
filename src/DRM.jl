@@ -65,6 +65,7 @@ include("fisherz_q4.jl")
 # sparse precision (kron(Q_tree, Λ⁻¹)) with a q×q Λ and an EXACT conjugate-Gaussian
 # Laplace marginal. Independent of the q=4 location-scale leaf code above.
 include("coevolution_q.jl")
+include("reml_q2.jl")  # #470: REML for the bivariate q=2 structured residual-correlation route
 
 # Gaussian location–scale front end (public bf()/drm() API).
 include("gaussian_core.jl")
@@ -144,7 +145,7 @@ export AugProblem, make_problem,
        # general-q coevolution block (#188)
        CoevoProblem, make_coevo_problem, make_coevo_problem_from_precision,
        make_coevo_problem_from_covariance, coevo_marginal, coevo_marginal_cov,
-       fit_coevolution, fit_coevolution_q2_residual,
+       fit_coevolution, fit_coevolution_q2_residual, fit_coevolution_q2_reml,
        simulate_coevolution, coevo_pack, coevo_unpack, coevo_theta_len,
        lc_to_cov, cov_to_lc, lc_len
 

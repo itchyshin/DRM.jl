@@ -212,6 +212,42 @@ Optimiser iterations actually taken, or `-1` when the fitter does not record it.
 Deliberately NOT named `iterations`: `Optim.iterations` already means this, and
 DRM.jl also uses `iterations` as a fitting OPTION (the cap). Keeping the accessor
 distinct stops "max allowed" and "actually taken" being confused for each other.
+
+`-1` is not a placeholder to be filled in later on every route — it is the
+honest answer for a fit that has no single outer optimiser call to count, and
+it is preferred over any approximated or borrowed number (#466).
+
+# Coverage by family
+
+Wired (reports `Optim.iterations(res)` from the LBFGS run that produced `θ̂`):
+`Gaussian` (both the plain ML fixed-effects fit and the Cox–Reid REML
+fixed-effects fit), `Student`, `SkewNormal`, `Poisson`, `NegBinomial2`,
+`TruncatedNegBinomial2`, `Beta`, `BetaBinomial`, `Binomial`, `Gamma`,
+`LogNormal`, `ZeroOneBeta`, `Tweedie`, `CumulativeLogit` — for their fixed-effects
+fit and, where the family has one, its scalar `(1 | g)` random-intercept,
+correlated `(1 + x | g)`, zero-inflated (`zi`), hurdle (`hu`), and (Poisson only)
+AGHQ / coordinate-spatial-range variants. The bivariate residual routes
+(`Gaussian`/`Gaussian`, `Student`/`Student`, `LogNormal`/`LogNormal`) are wired
+the same way; `LogNormal`'s bivariate fit borrows the Gaussian-on-log-y
+optimiser run wholesale (only the reported likelihood is Jacobian-shifted), so
+it carries that run's iteration count rather than re-deriving one.
+`fit_mixed_family`'s cross-family latent-`rho` route reports its own optimiser
+run too, but through the returned `NamedTuple`'s `iterations` field — that route
+does not produce a `DrmFit`, so `niterations` does not apply to it.
+
+Still `-1` (no single outer LBFGS call to attribute the count to, or not yet
+wired): Gaussian's `meta_V`, `phylo`/`relmat`/`animal`/`spatial`, and
+multi-random-effect routes (the Cox–Reid REML *random-intercept* route, e.g.
+Poisson `(1 | g)` with `method = :REML`, also stays `-1` — its reported `θ̂`
+comes from a secondary restricted refit, not the counted LBFGS run, so
+attributing that run's count to it would be a mismatch, not a full count); the
+bivariate Gaussian `phylo`/structured (q2/q4) sparse-Laplace routes; and every
+family's `phylo`/`relmat`/`animal`/coordinate-spatial random-effect routes other
+than Poisson's spatial-range fit above. These share the sparse augmented-state
+Laplace engine (`src/sparse_*.jl`, `src/*_phylo.jl`) rather than a single
+top-level `Optim.optimize` call, so there is no one iteration count to report
+honestly; do not infer non-iteration (e.g. "closed form") from `-1` on these
+routes — check the family/route, not just the flag.
 """
 niterations(fit::DrmFit) = fit.iterations
 
@@ -512,8 +548,16 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         (isempty(re) && isempty(sigma_re) && structured === nothing && metav === nothing &&
          length(all_structured) == 0) ||
             throw(ArgumentError("drm: missing Gaussian responses are currently supported for " *
-                "fixed-effect univariate location-scale models. Structured, random-effect, " *
-                "and meta-analysis response-missing support need their own likelihood slice."))
+                "fixed-effect univariate location-scale models (and, separately, the σ-phylo " *
+                "location-scale route). This is a ROUTE-level restriction, not a family-level " *
+                "one — drmTMB's R bridge admits `response = \"include\"` for any Gaussian model " *
+                "regardless of formula structure (#482), but DRM.jl's engine has not yet " *
+                "implemented a missing-response likelihood for a MEAN-phylo/relmat/animal/" *
+                "spatial term, a random effect, or `meta_V` — each needs its own derivation. " *
+                "If this is a phylo-MEAN model, dropping the missing-response rows before " *
+                "calling `drm` (matching `missing = miss_control(response = \"drop\")` at the R " *
+                "bridge, or `drm_listwise` natively) DOES fit correctly here — only unfiltered " *
+                "missing responses on this route are refused."))
     end
     if !isempty(sigma_re)                                      # random effect on log σ
         (isempty(re) && structured === nothing && metav === nothing) ||
@@ -579,8 +623,20 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             if use_sparse_phylo
                 phy = tree isa AbstractString ? augmented_phy(tree) : tree
         _warn_if_tree_not_unit_height(phy)
+                # Match rows to tree LEAVES BY NAME/tip-index (#482), not by the
+                # generic `_group_index` position used above for relmat/animal/
+                # spatial. `_group_index` numbers levels by first-seen order in
+                # `data`, independent of the tree — fine when every leaf is
+                # present, but a SPECIES SUBSET (e.g. after a caller drops
+                # missing-response rows upstream) renumbers the remaining species
+                # 1:(fewer), silently pointing rows at the WRONG tree leaves
+                # instead of just failing the `G == phy.n_leaves` count check.
+                # `_phylo_mean_leaf_index` is subset-tolerant: an absent leaf gets
+                # no observation and stays in the phylo prior only, matching the
+                # σ-phylo route's identical convention.
+                gidx_phy = _phylo_mean_leaf_index(phy, getproperty(data, grp))
                 algorithm in (:auto, :sparse_lbfgs) && return _withformula(
-                    _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol;
+                    _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx_phy, phy.n_leaves, phy, nmμ, nmσ, grp, g_tol;
                                                           penalty = penalty), f)
                 # The conjugate-EM variant maximises a different surrogate; adding a
                 # prior to it is a separate derivation, not a wiring change.
@@ -589,7 +645,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                                         "(the conjugate-EM phylo variant). Use `algorithm = :auto` or " *
                                         "`:sparse_lbfgs` for a penalized phylo fit."))
                 return _withformula(
-                    _fit_structured_gaussian_em(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol), f)
+                    _fit_structured_gaussian_em(fam, y, Xμ, Xσ, gidx_phy, phy.n_leaves, phy, nmμ, nmσ, grp, g_tol), f)
             end
             penalty === nothing ||
                 throw(ArgumentError("drm: `penalty` is only wired for the sparse phylo route. This model " *
@@ -969,7 +1025,7 @@ function _fit_fixed_gaussian_reml(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
         return s + const_2pi
     end
     fit = DrmFit(fam, blocks, names, θ̂, V, reml_ll, n, Optim.converged(res), means, obs, scales)
-    return _withreml(_withnll(fit, nll_full), reml_ll, ml_ll)
+    return _withiterations(_withreml(_withnll(fit, nll_full), reml_ll, ml_ll), Optim.iterations(res))
 end
 
 # ---- accessors -----------------------------------------------------------
@@ -1643,6 +1699,30 @@ estimation_method(fit::DrmFit) = fit.estim_method
 
 The restricted (REML) log-likelihood. Returns `NaN` for an ML fit (REML was not
 used). See [`loglik`](@ref) for the cross-structure-comparison caveat.
+
+# A convention gap on the bivariate q=2/q=4 routes (#477)
+
+For the **univariate** fixed-effect Gaussian location–scale REML and the
+Gaussian mean `(1 | g)` REML, this value is the **normalised** Patterson–
+Thompson restricted log-likelihood — the same convention lme4, glmmTMB and TMB
+report, so it is directly comparable to `logLik()` from those packages.
+
+The **bivariate q=2 and q=4 Laplace REML routes** (`src/reml_q2.jl`,
+`src/reml_q4.jl` — reached via structured/phylo bivariate fits with
+`method = :REML`) now report the **same normalised scale** (#477, 2026-08-25).
+
+They previously omitted the `(n_β/2)·log(2π)` constant while these univariate
+routes included it, so `reml_loglik(fit)` meant different things depending on
+which route produced the fit. For the q=4 phylo layout with `n_β = 6` the gap was
+`3·log(2π) ≈ 5.51` — large enough to read as a real disagreement between engines
+rather than a labelling difference, which is exactly how it misled this project
+once (see the corrected note in
+`test/parity/q4-reml/biv-q4-phylo-reml/expected.toml`).
+
+Every REML route in DRM.jl now reports the normalised form, matching lme4,
+glmmTMB, TMB and drmTMB. See `fit_q4_reml`'s docstring in `src/reml_q4.jl` for
+the derivation and for the evidence: the q=4 parity gate's `atol_loglik` fell
+from 5.5436 to 0.03 once the constant was no longer being absorbed.
 """
 reml_loglik(fit::DrmFit) = fit.reml_loglik
 

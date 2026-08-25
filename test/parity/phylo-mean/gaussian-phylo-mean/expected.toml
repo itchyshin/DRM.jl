@@ -3,13 +3,25 @@ family = "gaussian"
 formula = "y ~ x + phylo(1 | species); sigma ~ 1"
 method = "ML"
 engine = "tmb"
-loglik = -1.3268281548905353e+01
-n = 18
+loglik = -3.2735298972267131e+01
+n = 72
 
 [coef]
-"mu_(Intercept)" = 2.8404228592503949e-01
-"mu_x" = 3.1894321052325258e-01
-"sigma_(Intercept)" = -6.8181178054622016e-01
+"mu_(Intercept)" = 6.9149905119528943e-01
+"mu_x" = 1.4581870345132255e+00
+"sigma_(Intercept)" = -1.1761387347674666e+00
+
+# The row's DEFINING quantity: the fitted phylogenetic SD, on drmTMB's
+# CORRELATION-SCALE convention (ape::vcv(tree, corr = TRUE) standardises the
+# tip variance to 1, independent of the tree's raw branch-length height).
+# DRM.jl's re_sd(fit)[:species] is on the RAW branch-length scale instead
+# (tip variance = tree_height); the two are related by
+#   species_corr_scale == re_sd(fit)[:species] * sqrt(tree_height)
+# tree_height is recorded in expected.meta.toml. This cell's estimate is
+# NOT boundary-adjacent -- see expected.meta.toml [identifiability] and
+# nll_profile.csv for the curvature evidence #483 asked for.
+[re_sd]
+species_corr_scale = 9.1657744651040096e-01
 
 [status]
 converged = true
@@ -20,3 +32,9 @@ interval_status = "wald_unavailable"
 atol_loglik = 1e-6
 atol_coef = 1e-5
 rtol_coef = 1e-5
+# Re-derived for #483 (NOT the retired seed-111 1e-4, which was sized
+# against an unidentifiable ~6.7e-06 estimate and meant nothing).
+# = 1% of log_sd_phylo's Wald SE, delta-method-mapped to the SD scale
+# (0.01 * log_sd_phylo_se * sd_phylo_corr); see expected.meta.toml
+# [identifiability] for the SE and the full derivation note.
+atol_re_sd = 2.8627056822019127e-03

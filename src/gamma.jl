@@ -165,7 +165,9 @@ function _fit_gamma_ranef(fam::Gamma, y, Xμ, Xσ, gidx, G, nmμ, nmσ, grp, g_t
     names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end
 
 # Gamma GLMM with a CORRELATED random intercept+slope (1 + x | g) on the log mean.
@@ -215,7 +217,9 @@ function _fit_gamma_corr_ranef(fam::Gamma, y, Xμ, Xσ, xs, gidx, G, nmμ, nmσ,
     names = [:mu => nmμ, :sigma => nmσ, :recov => ["$(grp):L11", "$(grp):L22", "$(grp):L21"]]
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end
 
 function _fit_gamma(fam::Gamma, y, Xμ, Xσ, nmμ, nmσ, g_tol)
@@ -245,5 +249,7 @@ function _fit_gamma(fam::Gamma, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     names = [:mu => nmμ, :sigma => nmσ]
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))  # response-scale μ̂
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end

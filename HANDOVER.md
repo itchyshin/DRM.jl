@@ -138,7 +138,11 @@ data attach only at the p leaf nodes.
   Replaces the dense-Σ_phy O(p³) generator (capped ~p=3000).
 
 **Core files** (`src/`, wired): `sparse_phy` · `takahashi_selinv` ·
-`sparse_aug_plsm` · `sparse_em_fit` (`make_problem(...; species=)`, `mstep_*`) ·
+`sparse_aug_plsm` · `sparse_em_fit` (`make_problem(...; species=)` and
+`mstep_beta`, both reached via `fit_ml_q4`/`gaussian_bivariate` — but **not**
+`mstep_Lambda`/`fit_em_aug`: production replaces the closed-form Λ step with
+`fit_ml_q4.jl`'s line-searched ascent, and `mstep_Lambda` was measured to
+*descend* the true marginal at p=100, off the public `drm()` path; #472) ·
 `fit_ml_q4` · `fit_q4_sparse_tmb` · the family modules (`gaussian_*`, `student`,
 `poisson`, `negbinomial`, `beta`, `betabinomial`, `binomial`, `gamma`,
 `lognormal`, `zeroonebeta`, `tweedie`, `cumulative`) · `inference` (Wald +

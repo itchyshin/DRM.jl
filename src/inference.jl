@@ -56,8 +56,17 @@ const _ProfileStatsRow = NamedTuple{
         :lower_unbounded,
         :upper_unbounded,
         :nonmonotone,
+        # DRM.jl#493: the refinement loop's `thi - tlo < 1e-8` bracket-collapse
+        # exit was being treated identically to genuine convergence
+        # (`abs(ht) < 1e-9`), which let a trapped, non-monotone profiled-nll
+        # surface report a fabricated near-zero step as if it were a real
+        # endpoint (measured: arm width 3.7e-09 vs a healthy ~0.2). These flag
+        # that failure per arm, distinct from `unbounded` (a legitimate result:
+        # the profile never crosses within the search range).
+        :lower_endpoint_failed,
+        :upper_endpoint_failed,
     ),
-    Tuple{Symbol,String,Int,Int,Int,Int,Bool,Bool,Bool},
+    Tuple{Symbol,String,Int,Int,Int,Int,Bool,Bool,Bool,Bool,Bool},
 }
 
 function _worker_threads(active::Bool, ntasks::Int)
@@ -205,12 +214,16 @@ function profile_result(fit::DrmFit; level::Real=0.95, threads::Bool=false, parm
             end
         end
     end
+    # DRM.jl#493: a coefficient counts as `failed` when either arm's endpoint
+    # search hit the bracket-collapse exit without genuine convergence (the row
+    # is still returned, with ±Inf on the failed side — see `_profile_endpoint_result`).
+    failed = count(s -> s.lower_endpoint_failed || s.upper_endpoint_failed, stats)
     return (
         ci=rows,
         stats=stats,
         attempted=length(jobs),
         used=length(rows),
-        failed=0,
+        failed=failed,
         threaded=threaded,
         worker_threads=_worker_threads(threaded, endpoint_threaded ? 2 : length(jobs)),
         julia_threads=Threads.nthreads(),
@@ -309,6 +322,11 @@ function _ls_profile_result(fit::DrmFit; level::Real=0.95, parm=nothing)
                 lower_unbounded=!isfinite(ci.lower),
                 upper_unbounded=!isfinite(ci.upper),
                 nonmonotone=false,
+                # `_ls_profile_ci` (locscale_profile.jl) is the robust trust-region
+                # route, not the generic `_profile_endpoint_result` DRM.jl#493 fixes;
+                # it has no analogous bracket-collapse failure mode.
+                lower_endpoint_failed=false,
+                upper_endpoint_failed=false,
             )
         end
     end
@@ -403,6 +421,12 @@ function _loconly_profile_row_result(
         lower_unbounded=lstats.unbounded,
         upper_unbounded=rstats.unbounded,
         nonmonotone=lstats.nonmonotone || rstats.nonmonotone,
+        # `_loconly_profile_endpoint_result` was not in scope for DRM.jl#493 (the
+        # reported degenerate fit routes through the generic path, not here) and
+        # is not instrumented for the same bracket-collapse failure; default false
+        # rather than claim a check that was not made.
+        lower_endpoint_failed=false,
+        upper_endpoint_failed=false,
     )
     return row, stats
 end
@@ -571,12 +595,29 @@ function _profile_optimize(obj, u0::Vector{Float64}, autodiff::Symbol; (grad!)=n
     if grad! !== nothing
         try
             od = Optim.OnceDifferentiable(obj, grad!, u0)
-            method = Optim.LBFGS(; linesearch=Optim.LineSearches.BackTracking())
+            # DRM.jl#494: `BackTracking()`'s own default `iterations` is 1_000,
+            # uncapped by the `Optim.Options(iterations=40)` below (that only
+            # bounds outer LBFGS steps). When a trial step drives the profiled
+            # nuisance parameters to extreme values (measured: the bivariate q4
+            # among-axis log-Cholesky diagonal pushed to (-45.2, 61.6) vs. the
+            # fit's own ~(-2.6, 0.36)), a single bad outer step could retry the
+            # line search up to 1_000 times, each retry a full cold-started
+            # inner mode solve — the mechanism behind the rho12 profile runaway
+            # (measured 10-20x wall-clock inflation on seed 181; up to 17 min
+            # reported). Capping it here removes that multiplier.
+            method = Optim.LBFGS(; linesearch=Optim.LineSearches.BackTracking(; iterations=20))
             return Optim.optimize(
                 od, u0, method, Optim.Options(; iterations=40, g_tol=1e-6, x_abstol=1e-8)
             )
         catch
-            return Optim.optimize(obj, u0, Optim.LBFGS(); autodiff=:finite)
+            # Previously no `Optim.Options` here, so this inherited Optim's own
+            # default `iterations = 1_000` (25x the primary path's 40), each
+            # needing a full finite-difference gradient. Match the primary
+            # path's budget so this fallback can't reintroduce the same runaway.
+            return Optim.optimize(
+                obj, u0, Optim.LBFGS(), Optim.Options(; iterations=40, g_tol=1e-6, x_abstol=1e-8);
+                autodiff=:finite,
+            )
         end
     end
     try
@@ -677,6 +718,7 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
             root_iterations=0,
             unbounded=true,
             nonmonotone=nonmonotone,
+            endpoint_failed=false,
         )
         return value, stats
     end
@@ -685,16 +727,62 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
     # bisection (Newton can jump past the first crossing on a noisy slope).
     t = (tlo + thi) / 2
     root_iterations = 0
+    # `converged` is set ONLY by the genuine convergence test `abs(ht) < 1e-9`
+    # (DRM.jl#493). The loop's OTHER exit, `thi - tlo < 1e-8`, is a bracket-
+    # collapse safety valve, not a root: on a trapped, non-monotone profiled-nll
+    # surface (the warm-started inner nuisance solve landing in a spurious local
+    # optimum ~28 NLL units above the true profile, for every t on the affected
+    # arm) `ht` stays pinned near its saturated value the entire time — measured
+    # ht ≈ +25.85 at exit on seed 1's degenerate upper sigma arm — while `thi`
+    # is repeatedly halved toward `tlo = 0`, exiting with a step of ~7e-9 that
+    # looks like a converged endpoint but is not one.
+    #
+    # Convergence must be judged on the SCALE OF THE PROBLEM, not on an absolute
+    # 1e-9 alone. `abs(ht) < 1e-9` is reachable only when the Newton branch is
+    # live (`hp` finite and positive). On the BISECTION-ONLY path — `hp = NaN`,
+    # i.e. `autodiff === :finite`, which the shipping q2 bivariate structured
+    # route takes (`gaussian_bivariate.jl` attaches no gradient callback and
+    # ForwardDiff genuinely throws on its inner sparse Cholesky) — pure halving
+    # needs ~27 steps to drive an O(0.1) bracket under the 1e-8 floor, and that
+    # floor is hit while `abs(ht)` is still ~1e-7. Judging that as failure
+    # condemns a perfectly good endpoint: measured 10/12 arms on real q2 fits and
+    # 29/30 on healthy Cell U fits forced onto `:finite`, every one of them with
+    # a tightly clustered, plausible width.
+    #
+    # The two populations are separated by magnitude, not by exit route:
+    #   legitimate bisection exit   abs(ht) ~ 1e-7 .. 1e-8
+    #   genuinely trapped surface   abs(ht) ~ 2.0 .. 1e4   (>= `half` itself)
+    # so the discriminator is `abs(ht)` against the LR target `half` (1.92 at
+    # 95%). `ABSTOL_REL * half` ~ 1.9e-4 sits ~1900x above the loosest legitimate
+    # exit and ~10000x below the tightest genuine trap. Six orders of margin on
+    # each side; nothing observed in between across ~500 endpoints.
+    ABSTOL_REL = 1e-4
+    converged = false
+    ht = NaN
     for _ in 1:60
         root_iterations += 1
         (ht, hp) = heval(t)
-        abs(ht) < 1e-9 && break
+        if abs(ht) < 1e-9
+            converged = true
+            break
+        end
         ht < 0 ? (tlo = t) : (thi = t)
         tn = (!nonmonotone && isfinite(hp) && hp > 0) ? t - ht / hp : (tlo + thi) / 2   # Newton, else bisect
         t = (tlo < tn < thi) ? tn : (tlo + thi) / 2                     # guard into bracket
-        thi - tlo < 1e-8 && break
+        if thi - tlo < 1e-8
+            # Bracket collapsed. That is a genuine root iff the residual is small
+            # relative to the target; otherwise the surface never crossed and the
+            # step is fabricated (DRM.jl#493).
+            converged = isfinite(ht) && abs(ht) < ABSTOL_REL * half
+            break
+        end
     end
-    value = θ̂[k] + dir * t
+    # A failed endpoint mirrors the `unbounded` convention (±Inf toward `dir`,
+    # never a fabricated finite value) rather than returning θ̂[k] + dir*t as if
+    # it were a real root; `endpoint_failed` distinguishes it from a genuine
+    # unbounded profile so callers can tell "doesn't cross" from "solver could
+    # not tell where it crosses".
+    value = converged ? θ̂[k] + dir * t : (dir < 0 ? -Inf : Inf)
     stats = (
         evaluations=evaluations,
         gradient_evaluations=gradient_evaluations,
@@ -702,6 +790,7 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
         root_iterations=root_iterations,
         unbounded=false,
         nonmonotone=nonmonotone,
+        endpoint_failed=!converged,
     )
     return value, stats
 end
@@ -746,6 +835,8 @@ function _profile_row_result(
         lower_unbounded=lstats.unbounded,
         upper_unbounded=rstats.unbounded,
         nonmonotone=lstats.nonmonotone || rstats.nonmonotone,
+        lower_endpoint_failed=lstats.endpoint_failed,
+        upper_endpoint_failed=rstats.endpoint_failed,
     )
     return row, stats
 end
@@ -800,9 +891,11 @@ function bootstrap_ci(
     return _bootstrap_ci_rows(rows)
 end
 
-# Family-agnostic parametric bootstrap — any family `simulate` supports. No
-# structured-matrix keywords (those are Gaussian-only). Same row shape as the
-# Gaussian method and `confint`.
+# Family-agnostic parametric bootstrap — any family `simulate` supports.
+# #480: K/A/tree ARE forwardable here — #479 established that the non-Gaussian
+# bootstrap can thread a structured covariance; the guard was a one-sided
+# plumbing gap, not a real restriction. Same row shape as the Gaussian method
+# and `confint`.
 function bootstrap_ci(
     formula::DrmFormula,
     family;
@@ -810,12 +903,16 @@ function bootstrap_ci(
     B::Int=300,
     level::Real=0.95,
     rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
 )
     rows = bootstrap_summary(
-        formula, family; data, B, level, rng, threads, failures, check_converged
+        formula, family; data, B, level, rng, K, A, tree, threads, failures,
+        check_converged
     )
     return _bootstrap_ci_rows(rows)
 end
@@ -920,8 +1017,9 @@ function bootstrap_summary(
     return result.summary
 end
 
-# Family-agnostic summary method — any family `simulate` supports. No structured
-# matrix keywords; those are Gaussian-only.
+# Family-agnostic summary method — any family `simulate` supports. #480: K/A/tree
+# thread through to `bootstrap_result`, which forwards them to `drm(...)` only
+# when supplied — see the comment there for why they are not Gaussian-only.
 function bootstrap_summary(
     formula::DrmFormula,
     family;
@@ -929,12 +1027,16 @@ function bootstrap_summary(
     B::Int=300,
     level::Real=0.95,
     rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
 )
     result = bootstrap_result(
-        formula, family; data, B, level, rng, threads, failures, check_converged
+        formula, family; data, B, level, rng, K, A, tree, threads, failures,
+        check_converged
     )
     return result.summary
 end
@@ -1082,15 +1184,36 @@ function bootstrap_result(
     B::Int=300,
     level::Real=0.95,
     rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
 )
     _check_bootstrap_failure_mode(failures)
-    fit0 = drm(formula, family; data)
-    refit = datab -> drm(formula, family; data=datab)
+    # #480: mirror #479's fit-based fix. Forward a structured-matrix keyword to
+    # `drm(...)` only when the caller actually supplied it -- most non-Gaussian
+    # `drm` methods (LogNormal, Tweedie, Student, SkewNormal, ZeroOneBeta,
+    # CumulativeLogit, TruncatedNegBinomial2) do not declare `K`/`A`/`tree` at
+    # all, so forwarding them unconditionally (even as `nothing`) would throw a
+    # MethodError on every ordinary unstructured non-Gaussian fit. The
+    # structured routes (Poisson, Binomial, Gamma, Beta, BetaBinomial,
+    # NegBinomial2, Gaussian) accept and use them; `drm(...)`'s own per-family
+    # checks (e.g. "phylo(1 | g) needs `tree = …`") catch a genuine mismatch
+    # loudly instead of silently refitting an unstructured model.
+    extra = Dict{Symbol,Any}()
+    tree !== nothing && (extra[:tree] = tree)
+    K !== nothing && (extra[:K] = K)
+    A !== nothing && (extra[:A] = A)
+    fit0 = drm(formula, family; data, extra...)
+    refit = datab -> drm(formula, family; data=datab, extra...)
+    # #459/#479: redraw the random effects rather than conditioning on the
+    # fitted BLUPs, so a variance-component bootstrap CI is not degenerate.
+    simulate_fn = _marginal_simulator(fit0, data; K=K, A=A, tree=tree)
     return _bootstrap_result(
-        fit0, formula, data, B, level, rng, threads, refit; failures, check_converged
+        fit0, formula, data, B, level, rng, threads, refit;
+        failures, check_converged, simulate_fn
     )
 end
 
@@ -1100,10 +1223,12 @@ function bootstrap_result(
     B::Int=300,
     level::Real=0.95,
     rng=default_rng(),
+    K=nothing,
+    A=nothing,
+    tree=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
-    kwargs...,
 )
     # Bivariate q=4 phylogenetic fit: there is no scalar SD block to refit-and-
     # recoef; the quantities of interest are the among-axis SDs sqrt.(diag(Σ_a)).
@@ -1115,15 +1240,22 @@ function bootstrap_result(
                                  failures = (failures === :error ? :error : :warn),
                                  check_converged = check_converged)
     end
-    for (_, value) in pairs(kwargs)
-        value === nothing || throw(
-            ArgumentError("bootstrap_result: K/A/tree are only valid for Gaussian fits")
-        )
-    end
     _check_bootstrap_failure_mode(failures)
     formula = _bootstrap_fit_formula(fit)
-    refit = datab -> drm(formula, fit.family; data=datab)
-    simulate_fn = _marginal_simulator(fit, data)   # #459
+    # #479: the univariate non-Gaussian structured routes (phylo/relmat/animal/
+    # spatial Laplace) do NOT stash the tree/K/A on the fit the way the bivariate
+    # q=4 route stashes `fit.ranef.phy` -- `_fit_poisson_general_laplace` et al.
+    # never call `_withranef`. So, exactly like the Gaussian method just above,
+    # the caller re-supplies the same K/A/tree used to produce `fit`; a mismatch
+    # (or an unsupported family/route) is caught loudly by `drm(...)`'s own
+    # per-family checks (e.g. "relmat(1 | g) needs K = …") rather than silently
+    # refitting an unstructured model.
+    extra = Dict{Symbol,Any}()
+    tree !== nothing && (extra[:tree] = tree)
+    K !== nothing && (extra[:K] = K)
+    A !== nothing && (extra[:A] = A)
+    refit = datab -> drm(formula, fit.family; data=datab, extra...)
+    simulate_fn = _marginal_simulator(fit, data; K=K, A=A, tree=tree)   # #459 / #479
     return _bootstrap_result(
         fit, formula, data, B, level, rng, threads, refit;
         failures, check_converged, simulate_fn

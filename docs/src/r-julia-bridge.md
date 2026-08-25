@@ -78,6 +78,55 @@ finite mean-coefficient covariance block. Scale and variance-component
 covariance are still left unset for the R bridge, so profile/bootstrap work
 remains the next inference slice.
 
+## R formula constructs through `engine = "julia"`
+
+R's formula mini-language is not Julia's. `@formula` cannot evaluate `poly(x, 3)` or
+`factor(g)` the way an R user means them, so the bridge **rewrites** each construct into
+materialised columns or an expanded term list *before* handing the formula to
+`@formula`. Every construct below is either implemented with an R-parity fixture on
+byte-identical data (`test/parity/fixtures/bridge-*`), or rejected for a measured reason.
+
+| construct | status |
+|---|---|
+| `I(expr)` | supported, over a safe `+ - * / ^` grammar only — never arbitrary code |
+| `scale(x)` | supported; centres and scales by the sample mean/SD (R's default, `n-1` denominator) |
+| `factor(g)` | supported; levels ordered by `sort(unique(...))` on the original values, matching R's `contr.treatment` baseline |
+| `(...)^k` | supported for a literal positive integer `k` over a `+`-only expression |
+| `- term` | supported, including general term removal |
+| `poly(x, k)` | supported — R's **orthogonal** basis (`raw = FALSE`, the default), expanding to `k` columns |
+| `poly(x, k, raw = TRUE)` | rejected — write the powers explicitly with `I(x^k)` |
+| `poly()` inside `(...)^k` | **rejected on measured evidence**, see below |
+| `poly()` inside a scalar function | rejected, e.g. `log1p(poly(x, 2))` |
+| `poly(x, y, degree)`, explicit `coefs =` | rejected — precompute in R and pass the columns |
+
+### Two rejections worth explaining
+
+`poly()` is the only construct that rewrites to a **group** of terms, and a group does not
+compose everywhere a single column does.
+
+**Inside `(...)^k`.** R treats `poly(x, 2)` as **one term**, so `(x + poly(x, 2))^2` crosses
+two terms and never forms `poly1:poly2`. Measured against `model.matrix()` on both sides:
+R produces **6** model-matrix columns, the flattened rewrite produces **7** — the extra one
+being exactly that interaction. Rejected rather than special-cased, because keeping the group
+intact through the power algebra needs a term-grouping concept this rewrite does not have.
+
+**Inside a scalar function.** R maps the function elementwise over poly's `k`-column matrix,
+giving `k` columns; the rewrite would map it over their **sum**, giving one. Silent, and of
+exactly the shape a bridge exists to prevent.
+
+Where poly *does* compose, it was checked rather than assumed — `x * poly(x, 2)`,
+`z : poly(x, 2)`, `poly(x, 2) + z` and `x + z - poly(x, 2)` all match R's model-matrix width
+exactly.
+
+### Materialised columns and `newdata`
+
+`I()`, `scale()`, `factor()` and `poly()` become synthetic columns (`__bridge_<kind>_<n>`),
+which is why bridge coefficient names differ from R's term text — the model is the same, only
+the label differs. Those columns are **not** reconstructed for `newdata`: a formula using them
+together with `newdata` **fails loudly** with a missing column rather than silently
+re-deriving a different basis. For `poly()` that matters more than for the others, since
+recomputing the QR on fresh rows would produce a genuinely different basis.
+
 ## Coefficient-scale parity gate (#370 / #383 / #385)
 
 Behind `DRM_PARITY_TESTS=1`, `test/parity/runparity_bridge.jl` fits the

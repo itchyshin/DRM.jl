@@ -261,6 +261,20 @@ end
 # ---------------------------------------------------------------------------
 
 """
+    _reml_normalise(reml_ll, n_beta)
+
+Add the `(n_beta/2)·log(2π)` normalising constant to an unnormalised
+Patterson–Thompson restricted log-likelihood, so DRM.jl's bivariate REML routes
+report on the same scale as lme4, glmmTMB, TMB — and as DRM.jl's own univariate
+REML routes, which have always added it (#477).
+
+`n_beta` counts only the **marginalised** fixed effects. Non-finite input passes
+through unchanged so `-Inf` barriers and `NaN` sentinels keep their meaning.
+"""
+_reml_normalise(reml_ll, n_beta::Integer) =
+    isfinite(reml_ll) ? reml_ll + 0.5 * n_beta * log(2π) : reml_ll
+
+"""
     fit_q4_reml(prob, Q_cond; beta0, Lambda0, [phi0], g_tol, ...) -> NamedTuple
 
 Fit REML objective over phi = (beta_rho, lc). beta_mu AND beta_sigma (the location
@@ -268,6 +282,48 @@ and scale fixed effects) are profiled out internally; only beta_rho stays outer.
 
 Returns NamedTuple: (phi, beta, Lambda, reml_loglik, ml_loglik, converged,
                      iterations, g_residual, f_calls, u_hat)
+
+# Automatic warm restart (#484)
+
+On some cells the REML LBFGS's first line-search step from the ML warm start
+fails outright (zero accepted steps — a starting-value problem, not slow
+convergence, so a bigger `iterations` or looser `g_tol` cannot fix it). That
+exact stall (`!converged` with the minimizer still sitting at `phi0`) is
+detected automatically and retried by re-deriving a coarser ML warm start and
+continuing from there — judged at the SAME `g_tol` the caller passed, never a
+loosened one. A REML fit whose first attempt already moves at all — converged
+or not — is completely unaffected; see the block above `phi_hat` for the
+mechanism. Needs `beta0`/`Lambda0` to fire (skipped if the caller supplied
+`phi0` directly, since there is then nothing to re-derive a coarser start
+from).
+
+# Normalisation convention (#477)
+
+`reml_loglik` reports the **normalised** Patterson–Thompson restricted
+log-likelihood: the raw objective `ℓ_ML(θ, β̂) − ½ logdet(S)` plus
+`(n_β/2)·log(2π)`, the constant from integrating the flat prior over the `n_β`
+marginalised fixed effects (`n_β` = the combined width of the `beta_mu1`,
+`beta_mu2`, `beta_s1`, `beta_s2` designs — exactly the Schur complement's
+dimension; `beta_rho` is never marginalised, so it does not count). That matches
+lme4, glmmTMB and TMB, so `reml_loglik` is directly comparable across engines.
+
+**Changed 2026-08-25 (#477).** It previously reported the unnormalised form,
+while DRM.jl's own univariate REML routes — `_fit_fixed_gaussian_reml`
+(`gaussian_core.jl`), the Gaussian mean `(1 | g)` route (`gaussian_ranef.jl`)
+and `location_only.jl` — already added the constant. So one package reported two
+different scales under one name, and `reml_loglik(fit)` meant different things
+depending on which route produced the fit. That was an inconsistency rather than
+a convention choice: the convention had already been made on the univariate side
+and the bivariate routes simply had not followed it.
+
+The evidence is the q=4 parity gate. Its `atol_loglik` was **5.5436**, of which
+**5.513631** was this constant — a tolerance that existed almost entirely to
+absorb the offset, and therefore tested almost nothing. It is now **0.03**, the
+cross-optimum spread alone: a 185× tightening, verified 33/33. A constant cannot
+move the argmax, so the optimisation is untouched; only the reported value moved.
+
+`reml_q2.jl` carries the same change and the same derivation, but has no parity
+fixture of its own — it is verified only by sharing this one's arithmetic.
 """
 function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
                      phi0=nothing, beta0=nothing, Lambda0=nothing,
@@ -379,14 +435,87 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
     # The REML landscape is well-behaved NEAR the ML optimum (S is PD there).
     # We use BackTracking with a line search that rejects Inf evaluations.
     od  = Optim.NLSolversBase.only_fg!(fg!)
-    res = Optim.optimize(
-        od, Vector{Float64}(phi0),
+    _optimize_phi(start_phi, gtol_i, iters_i) = Optim.optimize(
+        od, Vector{Float64}(start_phi),
         LBFGS(m=5,
               alphaguess=Optim.LineSearches.InitialStatic(scaled=true),
               linesearch=Optim.LineSearches.BackTracking(order=3)),
-        Optim.Options(g_tol=g_tol, f_reltol=1e-5, successive_f_tol=10,
-                      iterations=iterations, show_trace=verbose, show_every=1),
+        Optim.Options(g_tol=gtol_i, f_reltol=1e-5, successive_f_tol=10,
+                      iterations=iters_i, show_trace=verbose, show_every=1),
     )
+
+    res = _optimize_phi(phi0, g_tol, iterations)
+
+    # Automatic warm restart (#484). Some phi0 land the REML LBFGS on a failed
+    # line-search step right at the ML warm start -- the trace shows ONLY
+    # "Iter 0" (zero ACCEPTED steps: x never moves off phi0), which is a
+    # starting-value problem, not slow convergence -- more iterations or a
+    # looser g_tol cannot help a run that never took a step. Detectable and
+    # cheap to fix, so this is automatic rather than an opt-in kwarg --
+    # silently returning a non-converged fit when a restart would succeed is
+    # the worse default.
+    #
+    # Detection is by POSITION, not `Optim.iterations(res)`: LBFGS still
+    # counts a rejected line-search pass as one iteration internally (so
+    # `iterations` reads 1, not 0, on the exact failure this restart targets
+    # -- confirmed by direct reproduction), but a rejected step leaves `x`
+    # bit-identical to phi0, which is the true "took no step" signature.
+    # Fires ONLY on that exact signature (`!converged && x == phi0`), so a
+    # REML fit that already moves at all -- converged or not -- is untouched;
+    # and the point reported below is judged at the CALLER's own unchanged
+    # `g_tol`, never a loosened one.
+    #
+    # The restart re-derives the ML warm start ITSELF at a looser tolerance
+    # rather than just loosening the REML g_tol check on the SAME phi0.
+    # Loosening the check alone does not move x: phi0's gradient norm can
+    # already sit under a 10x-looser g_tol, so the "coarse pass" would just
+    # report instant convergence at the identical stalled point (confirmed by
+    # direct reproduction) -- there would be nothing new to continue from. A
+    # less-precise ML fit (larger `g_tol` on `fit_q4_sparse_tmb`, mirroring
+    # the `phi0 === nothing` branch above but coarser) lands somewhere
+    # genuinely different, off the exact point whose first line-search step
+    # fails. Needs `beta0`/`Lambda0` (the caller's own starting guesses) to
+    # redo that fit; if the caller bypassed them by supplying `phi0` directly,
+    # there is nothing to re-derive from, so the restart is skipped.
+    if !Optim.converged(res) && Optim.minimizer(res) == phi0 &&
+       beta0 !== nothing && Lambda0 !== nothing
+        g_tol_coarse = max(g_tol * 10, 1e-2)
+        r_ml_coarse = fit_q4_sparse_tmb(prob, Q_cond;
+                                         β0=beta0, Λ0=Matrix(Lambda0),
+                                         g_tol=max(g_tol_coarse*5, 1e-2),
+                                         iterations=min(iterations, 100),
+                                         n_newton=n_newton, lc_zero=lc_zero_idx)
+        phi0_coarse = pack_phi(prob, r_ml_coarse.β.rho, r_ml_coarse.Λ)
+        phi0_coarse[phi_zero] .= 0.0
+
+        res_coarse = _optimize_phi(phi0_coarse, g_tol_coarse, iterations)
+        if Optim.minimizer(res_coarse) != phi0_coarse
+            # Continue from the coarse optimum at the SAME g_tol the caller
+            # asked for. Generous iteration budget -- convergence from here is
+            # cheap (a handful of steps once started near the mode) and the
+            # caller's `iterations` was sized for the cold run that just
+            # failed, not this near-converged continuation.
+            #
+            # A single continuation can ALSO end in a line-search stall part
+            # way (confirmed by direct reproduction: 5 steps of real progress,
+            # then the same rejected-step signature, still short of g_tol) --
+            # LBFGS carries no memory across separate `optimize` calls, so a
+            # FRESH run from the last point it reached can take a step the
+            # stale one's line-search state could not. Keep relaunching from
+            # the current best point while it keeps moving and hasn't
+            # converged; stop the moment it does either, or after a bounded
+            # number of rounds so a genuinely stuck cell still terminates.
+            cur = Optim.minimizer(res_coarse)
+            res_try = _optimize_phi(cur, g_tol, max(iterations, 1000))
+            round = 0
+            while !Optim.converged(res_try) && Optim.minimizer(res_try) != cur && round < 10
+                cur = Optim.minimizer(res_try)
+                res_try = _optimize_phi(cur, g_tol, max(iterations, 1000))
+                round += 1
+            end
+            res = res_try
+        end
+    end
 
     phi_hat    = Optim.minimizer(res)
     _, lc_hat  = unpack_phi(prob, phi_hat)
@@ -406,10 +535,21 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
 
     g_resid_val = try; Optim.g_residual(res); catch; NaN; end
 
+    # #477: report the NORMALISED Patterson-Thompson restricted log-likelihood.
+    # `rhat` is the unnormalised form; lme4, glmmTMB and TMB all add
+    # `(n_beta/2)*log(2pi)`, and so do DRM.jl's OWN univariate REML routes
+    # (`gaussian_core.jl`, `gaussian_ranef.jl`, `location_only.jl`). Reporting
+    # both conventions inside one package made `reml_loglik(fit)` mean different
+    # things depending on which route produced the fit. `n_beta` is the combined
+    # width of the four MARGINALISED axes -- exactly the Schur complement's
+    # dimension (`nbeta` in `reml_ll_and_mode`); `rho` is never marginalised and
+    # does not count. A constant cannot move the argmax, so the optimisation
+    # above is untouched; only the reported value changes.
     return (phi        = phi_hat,
             beta       = bhat,
             Lambda     = Lam_hat,
-            reml_loglik = rhat,
+            reml_loglik = _reml_normalise(rhat, length(bhat.mu1) + length(bhat.mu2) +
+                                                length(bhat.s1) + length(bhat.s2)),
             ml_loglik   = mlhat,
             converged  = Optim.converged(res),
             iterations = Optim.iterations(res),

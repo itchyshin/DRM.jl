@@ -4,7 +4,11 @@
 The catch-up campaign's countdown. Reads three drmTMB artifacts -- `NAMESPACE`,
 `inst/extdata/julia-capabilities.tsv`, `inst/extdata/julia-gates.tsv` -- plus
 DRM.jl's own export block, and reports what the R bridge admits versus what the
-Julia engine can actually fit.
+Julia engine can actually fit. Reports BOTH directions: what drmTMB exports have
+no DRM.jl twin (the forward "genuinely owed" pass) and what DRM.jl exports have
+no drmTMB twin (the reverse "genuinely ahead" pass, #481) -- so DRM.jl growing a
+capability drmTMB lacks (e.g. #471's structured markers on bivariate LogNormal)
+is a written decision instead of unnoticed drift in either direction.
 
 Always reads drmTMB through `git show <ref>:<path>` rather than the working
 tree. A working checkout can sit hundreds of commits behind `origin/main`
@@ -69,6 +73,154 @@ DELIBERATELY_NOT_PORTED = {
     "corpair": "BLOCKED: StatsModels' @formula cannot express keyword args or string "
                "literals, so drmTMB's syntax is not representable; and the fitted route "
                "needs the labelled covariance-block grammar (1|p|id), absent in DRM.jl",
+}
+
+# #481. The forward pass above answers "what does drmTMB have that DRM.jl doesn't".
+# It never asks the reverse question, so DRM.jl can grow capabilities drmTMB has no
+# analogue for -- e.g. #471's structured markers on bivariate LogNormal, which
+# drmTMB's own source refuses outright (R/drmTMB.R:8998, :9097) -- and the ledger
+# stays silent, because silence is all it can express in that direction.
+#
+# NOTE on scope: this reverse pass is a NAME-level diff, exactly like the forward
+# one. It cannot see a capability difference hiding under a NAME that already
+# matches -- `LogNormal` already matches R's `lognormal` export directly, so the
+# #471 structured-marker advantage sits underneath an already-matched name and
+# does not appear as a row below. That is a real limit of a name-keyed instrument,
+# not a bug in this pass; it is recorded here rather than faked into a row.
+#
+# Each name below is DRM.jl exporting something drmTMB's NAMESPACE has no matching
+# symbol for. Most are legitimate and not a capability gap in DRM.jl's favour: a
+# Julia-idiomatic generic name drmTMB reaches via S3method() on an already-global
+# base/stats generic (never its own export()), a struct/exception type backing
+# what R represents as an implicit S3 class tag, sparse-Laplace engine internals
+# never meant to have an R-facing name, or an accessor function for a value R
+# exposes as a raw fitted-object field or printed summary() text instead of a
+# queryable function. Each entry is a WRITTEN CLAIM -- it must be true.
+AHEAD_ACCOUNTED = {
+    # --- mirrors a base R / stats generic drmTMB reaches via S3method(), never
+    #     its own NAMESPACE export() (verified against drmTMB's S3method() list)
+    "aic": "mirrors stats::AIC; drmTMB reaches it via S3method(AIC, drmTMB), never export()",
+    "anova": "mirrors stats::anova; drmTMB reaches it via S3method(anova, drmTMB), never export()",
+    "bic": "mirrors stats::BIC; drmTMB reaches it via S3method(BIC, drmTMB), never export()",
+    "coef": "mirrors stats::coef; drmTMB reaches it via S3method(coef, drmTMB/_julia/_julia_xfam)",
+    "confint": "mirrors stats::confint; drmTMB reaches it via S3method(confint, drmTMB/_julia/_julia_xfam)",
+    "deviance": "mirrors stats::deviance; drmTMB reaches it via S3method(deviance, drmTMB/_julia)",
+    "dof_residual": "StatsAPI naming for stats::df.residual; drmTMB reaches it via S3method(df.residual, ...)",
+    "fitted": "mirrors stats::fitted; drmTMB reaches it via S3method(fitted, drmTMB/_julia/_julia_xfam)",
+    "loglik": "StatsAPI naming for stats::logLik; drmTMB reaches it via S3method(logLik, drmTMB/_julia/_julia_xfam)",
+    "nobs": "mirrors stats::nobs; drmTMB reaches it via S3method(nobs, drmTMB/_julia/_julia_xfam)",
+    "predict": "mirrors stats::predict; drmTMB reaches it via S3method(predict, drmTMB/_julia/_julia_xfam)",
+    "residuals": "mirrors stats::residuals; drmTMB reaches it via S3method(residuals, drmTMB/_julia)",
+    "sigma": "mirrors stats::sigma; drmTMB reaches it via S3method(sigma, drmTMB/_julia)",
+    "simulate": "mirrors stats::simulate; drmTMB reaches it via S3method(simulate, drmTMB)",
+    "update": "mirrors stats::update; drmTMB reaches it via S3method(update, drm_pair_association)",
+    "vcov": "mirrors stats::vcov; drmTMB reaches it via S3method(vcov, drmTMB/_julia/_julia_xfam)",
+    "weights": "mirrors stats::weights; drmTMB reaches it via S3method(weights, drmTMB)",
+    # --- base-R family constructor, reused directly by drmTMB and never
+    #     re-exported (verified: drmTMB.R passes `family = gaussian()/poisson()/
+    #     binomial()` straight through to base stats:: constructors)
+    "Binomial": "R passes family = stats::binomial() straight through; drmTMB never re-exports it",
+    "Gamma": "R passes family = stats::Gamma() straight through; drmTMB never re-exports it",
+    "Gaussian": "R passes family = stats::gaussian() straight through; drmTMB never re-exports it",
+    "Poisson": "R passes family = stats::poisson() straight through; drmTMB never re-exports it",
+    # --- Julia formula-literal / struct / exception type backing what R
+    #     represents as a bare `~` literal or an implicit S3 class tag, not an
+    #     exported symbol
+    "@formula": "StatsModels macro mirroring R's built-in `~` formula literal; base R syntax needs no export",
+    "BivariateDrmFormula": "struct backing a bivariate `bf()` formula; R represents the same as an S3 'drm_formula' tag",
+    "DrmFit": "struct backing a fitted model; R represents the same as an S3 'drmTMB'/'drmTMB_julia' tag",
+    "PairAssociation": "struct backing associate_pairs(); R represents the same as an S3 'drm_pair_association' tag",
+    "PhyloCorPenaltyNeedsTwoSD": "Exception type for drm_phylo_penalty()'s two-SD precondition; R signals the same via cli_abort(), not a typed condition export",
+    "PhyloPenalty": "struct backing drm_phylo_penalty()'s return object; R represents the same as an S3-classed list",
+    # --- sparse augmented-state Laplace / q4 Fisher-z / general-q coevolution
+    #     ENGINE INTERNALS: problem construction, packing, and inner-loop math
+    #     reached only through the compiled bridge call (or, for the general-q
+    #     coevolution block, not reached from R at all -- see the coevolution_*
+    #     rows below) -- never meant to carry an R-facing name
+    "AugProblem": "sparse augmented-state Laplace problem struct; internal, reached only via drm_bridge",
+    "CoevoProblem": "general-q coevolution problem struct (#188); internal, no R bridge call reaches it",
+    "aug_prior_grad!": "augmented-state prior-gradient inner-loop helper; engine internal",
+    "augmented_phy": "phylogenetic augmented-state constructor; engine internal",
+    "augmented_tree_precision": "sparse tree-precision assembly; engine internal",
+    "build_Huu": "augmented-state Hessian block assembly; engine internal",
+    "coevo_marginal": "general-q coevolution marginal likelihood (#188); internal, no R bridge call reaches it",
+    "coevo_marginal_cov": "general-q coevolution marginal covariance (#188); internal, no R bridge call reaches it",
+    "coevo_pack": "general-q coevolution parameter packing (#188); internal utility",
+    "coevo_theta_len": "general-q coevolution parameter-vector length (#188); internal utility",
+    "coevo_unpack": "general-q coevolution parameter unpacking (#188); internal utility",
+    "cov_to_lc": "covariance -> log-Cholesky parameterization utility; engine internal",
+    "estep_mode": "sparse-EM E-step mode-finder; engine internal",
+    "fit_q4_sparse_fisherz": "q4 Fisher-z reparameterized fitter; internal, reached only via the verified fit_q4_sparse_tmb route",
+    "fit_q4_sparse_tmb": "verified q4 sparse-Laplace fitter; internal, reached only via drm_bridge, never called by name from R",
+    "fz_DRD": "Fisher-z D*R*D covariance reconstruction; engine internal",
+    "fz_R": "Fisher-z spherical-correlation Cholesky; engine internal",
+    "fz_correlations": "Fisher-z pairwise correlation extraction; engine internal",
+    "fz_init_from_Sigma": "Fisher-z parameter initialization from Sigma; engine internal",
+    "fz_marginal_and_grad": "Fisher-z marginal likelihood + gradient; engine internal",
+    "fz_phi_to_lc": "Fisher-z -> log-Cholesky parameter map; engine internal",
+    "gaussian_locscale_phylo_sds": "accessor over DRM.jl's SEPARATE-vs-COUPLED block representation for sigma~phylo fits; an internal representation detail, not a modelling capability",
+    "joint_grad": "augmented-state joint gradient; engine internal",
+    "joint_nll": "augmented-state joint negative log-likelihood; engine internal",
+    "lc_len": "log-Cholesky parameter-vector length; engine internal",
+    "lc_metric": "Fisher/observed-information metric on log-Cholesky params (#13 S1b infra); engine internal",
+    "lc_to_cov": "log-Cholesky -> covariance parameterization utility; engine internal",
+    "lc_to_Λ": "log-Cholesky -> precision-matrix map; engine internal",
+    "Λ_to_lc": "precision-matrix -> log-Cholesky map (inverse of lc_to_Λ); engine internal",
+    "make_coevo_problem": "general-q coevolution problem constructor (#188); internal, no R bridge call reaches it",
+    "make_coevo_problem_from_covariance": "general-q coevolution problem constructor (#188); internal, no R bridge call reaches it",
+    "make_coevo_problem_from_precision": "general-q coevolution problem constructor (#188); internal, no R bridge call reaches it",
+    "make_problem": "sparse augmented-state problem constructor; internal, reached only via drm_bridge",
+    "marginal_and_exact_grad": "exact O(p) marginal likelihood + gradient; internal, reached only via drm_bridge",
+    "marginal_nll": "marginal negative log-likelihood; engine internal",
+    "pack_theta": "augmented-state parameter packing; engine internal",
+    "phylo_correlation": "tree branch-length -> correlation matrix utility; engine internal (adjacent to sigma_phy_dense)",
+    "phylo_interaction_nll": "likelihood piece backing fit_phylo_interaction (already matched via ALIASES); engine internal",
+    "phylo_tree_height": "tree-utility accessor; engine internal",
+    "prior_precision": "augmented-state prior precision assembly; engine internal",
+    "random_balanced_tree": "synthetic phylogenetic tree generator for tests/benchmarks; engine internal",
+    "random_caterpillar_tree": "synthetic phylogenetic tree generator for tests/benchmarks; engine internal",
+    "sigma_phy_dense": "dense phylogenetic covariance construction (small-tree/testing path); engine internal",
+    "takahashi_selinv": "Takahashi selected-inverse sparse linear algebra; engine internal",
+    "unpack_theta": "augmented-state parameter unpacking; engine internal",
+    # --- reached dynamically by R's own bridge, not through a matching R-level
+    #     export name (verified: R/julia-bridge.R calls these via
+    #     JuliaCall::julia_call("drmTMB_drm_bridge"[_inference], ...))
+    "drm_bridge": "the function R's engine=\"julia\" bridge calls via JuliaCall::julia_call(\"drmTMB_drm_bridge\", ...) -- this IS the bridge, reached dynamically rather than by a matching R export",
+    "drm_bridge_inference": "the function R's confint()/profile() bridge calls via JuliaCall::julia_call(\"drmTMB_drm_bridge_inference\", ...) -- reached dynamically, not by a matching R export",
+    # --- cross-family (`fit_mixed_family`) post-fit accessors: R dispatches the
+    #     SAME base generics (coef/AIC/BIC/fitted/summary) via the
+    #     drmTMB_julia_xfam S3 class; Julia's method-per-name convention needs a
+    #     distinct symbol per generic for the same underlying values
+    "mf_aic": "R reaches this via S3method(AIC, drmTMB_julia_xfam); Julia needs a distinct name for the same generic",
+    "mf_bic": "R reaches this via S3method(BIC, drmTMB_julia_xfam); Julia needs a distinct name for the same generic",
+    "mf_coef": "R reaches this via S3method(coef, drmTMB_julia_xfam); Julia needs a distinct name for the same generic",
+    "mf_fitted": "R reaches this via S3method(fitted, drmTMB_julia_xfam); Julia needs a distinct name for the same generic",
+    "mf_summary": "R reaches this via S3method(summary, drmTMB_julia_xfam); Julia needs a distinct name for the same generic",
+    # --- plotting / raw-data feeders for the Makie backend, paralleling an
+    #     already-ported R plot_*() consumer or S3-dispatched plot() method
+    "corpairs_data": "data feeder for the Makie corpairs plot; R's plot_corpairs() (already ported) is a ggplot2 consumer of the same values",
+    "drm_figure": "Makie plotting dispatcher (#336); R's ggplot2 equivalents are the already-ported plot_corpairs()/plot_parameter_surface() directly",
+    "parameter_surface": "convenience wrapper combining prediction_grid() + predict_parameters() (both already ported) into one call",
+    "plot_profile": "Makie wrapper mirroring R's S3method(plot, profile.drmTMB); R dispatches via base plot(), not a separate name",
+    "profile_curve": "named accessor for what R's profile.drmTMB() computes internally via the private drm_profile_curve() helper and returns as part of the S3 object",
+    "profile_result": "named accessor for the object R's profile() generic (S3method(profile, drmTMB)) already returns",
+    # --- StatsAPI accessor function for a value R exposes as a raw fitted-object
+    #     field or as printed summary()/coeftable() text, not a separate function
+    "coeftable": "StatsAPI generic for the coefficient table; R prints the same via summary.drmTMB/print.drmTMB, no separate accessor",
+    "dof": "StatsAPI generic for fixed-effect parameter count; drmTMB computes this internally for AIC/BIC without exposing an accessor",
+    "estimation_method": "accessor for what R exposes as the raw fit$REML/fit$estimator field",
+    "family": "StatsAPI accessor for the fitted family object; R never queries it back -- family is a formula-time argument only",
+    "lrtest": "convenience wrapper equivalent to R's anova(fit1, fit2); drmTMB has no separately named lrtest()",
+    "ml_loglik": "accessor for what R exposes as the raw fit$REML field alongside logLik.drmTMB's single value",
+    "niterations": "StatsAPI generic for optimizer iteration count; R's TMB-based fits keep this as an internal fit$opt$iterations field, not an accessor",
+    "re_sd": "random-effect SD accessor; the same values are in drmTMB's printed summary() random-effects block, not a queryable function",
+    "reml_loglik": "accessor for what R exposes as the raw fit$REML field alongside logLik.drmTMB's single value",
+    "stderror": "StatsAPI generic for per-parameter SEs; R surfaces the same values as a std.error column in coeftable()/predict_parameters() output",
+    "vc": "variance-components accessor; drmTMB surfaces the same values through printed summary() output, not a queryable function",
+    # --- drmTMB keeps this as a field on its own fitted object, not a function
+    "integration_diagnostics": "drmTMB retains the same quadrature abs.error as a field on its own association object, not a separate accessor function",
+    # --- exists BECAUSE an R capability stays parked, not ahead of it
+    "drm_listwise": "listwise-deletion preprocessing stand-in while the full drmTMB missing-data surface (#49: categorical/mi/impute_model/imputed/miss_control) stays parked -- a stopgap, not an advantage",
 }
 
 
@@ -137,6 +289,21 @@ def main() -> int:
     missing = [x for x in unmatched if x not in DELIBERATELY_NOT_PORTED]
     accounted = [x for x in unmatched if x in DELIBERATELY_NOT_PORTED]
 
+    # #481: the reverse pass. Same has_twin() logic, direction flipped -- reuses
+    # ALIASES (r_name -> j_name) by checking the ALIASES *values*, so a DRM.jl
+    # export spelled to match a known R alias (e.g. NegBinomial2 for nbinom2)
+    # counts as twinned without duplicating the map.
+    r_norm = {norm(x) for x in r_exports}
+    alias_j_norm = {norm(v) for v in ALIASES.values()}
+
+    def has_r_twin(name: str) -> bool:
+        n = norm(name)
+        return n in r_norm or n in alias_j_norm
+
+    ahead_unmatched = [x for x in j_exports if not has_r_twin(x)]
+    ahead_missing = [x for x in ahead_unmatched if x not in AHEAD_ACCOUNTED]
+    ahead_accounted = [x for x in ahead_unmatched if x in AHEAD_ACCOUNTED]
+
     caps = tsv_rows(args.drmtmb, args.ref, "inst/extdata/julia-capabilities.tsv")
     gates = tsv_rows(args.drmtmb, args.ref, "inst/extdata/julia-gates.tsv")
 
@@ -167,18 +334,64 @@ def main() -> int:
     for name in missing:
         print(f"  {name}")
     print()
+
+    # #481: the reverse direction. Same shape as the forward blocks above --
+    # DRM.jl exports with no drmTMB twin, split into what's accounted for in
+    # writing versus what's a genuine, unaccounted divergence.
+    print(f"AHEAD OF drmTMB, ACCOUNTED FOR IN WRITING ({len(ahead_accounted)}) -- not a gap, and why")
+    for name in ahead_accounted:
+        print(f"  {name:<28} {AHEAD_ACCOUNTED[name]}")
+    print()
+
+    print(f"DRM.jl EXPORTS WITH NO drmTMB TWIN ({len(ahead_missing)}) -- genuinely ahead")
+    for name in ahead_missing:
+        print(f"  {name}")
+    print()
+    # Report the real distribution against the GOVERNING vocabulary, which
+    # drmTMB's docs/design/168-r-julia-finish-capability-matrix.md defines as:
+    #   covered > partial > experimental > planned > unsupported
+    #
+    # This line used to read `sum(... claim_status != 'supported')` and print it as
+    # "N unsupported capability rows". `supported` is not a value in that
+    # vocabulary and never has been, so the condition was true for every row: the
+    # number was len(caps) by construction and could never move, no matter how much
+    # evidence landed. It also labelled `partial` and `experimental` rows
+    # "unsupported", a word the vocabulary reserves for "deliberately rejected or
+    # out of scope" -- which describes exactly one row (engine_control_surface).
+    # That phrasing had propagated into the handover, the coordination board and
+    # Mission Control as though it were a measurement.
+    order = ["covered", "partial", "experimental", "planned", "unsupported"]
+    tally = {k: 0 for k in order}
+    other: dict[str, int] = {}
+    for c in caps:
+        st = (c.get("claim_status") or "").strip()
+        if st in tally:
+            tally[st] += 1
+        else:
+            other[st or "<blank>"] = other.get(st or "<blank>", 0) + 1
+    dist = " · ".join(f"{tally[k]} {k}" for k in order if tally[k])
+    if other:
+        dist += " · " + " · ".join(f"{v} {k}?" for k, v in sorted(other.items()))
+
     print(f"COUNTDOWN: {len(missing)} export gaps ({len(unmatched)} raw, "
           f"{len(accounted)} accounted for) · "
-          f"{sum(1 for c in caps if c.get('claim_status') != 'supported')} unsupported capability rows · "
+          f"{len(ahead_missing)} ahead-of-drmTMB ({len(ahead_accounted)} accounted for) · "
+          f"{len(caps)} capability rows [{dist}] · "
           f"{len(blocked)} closed gates")
 
-    # Closure invariant: every row is either `supported` (which requires a parity
-    # fixture) or says IN WRITING why it is not. Asserting this by hand rots the
-    # moment someone adds a row, so check it and fail loudly.
+    # Closure invariant: every row is either `covered` (the top rung, whose
+    # evidence is audited separately) or says IN WRITING why it is not. Asserting
+    # this by hand rots the moment someone adds a row, so check it and fail loudly.
+    #
+    # Note this is UNCHANGED in strictness: the old code exempted `supported`,
+    # a value that never occurs, so the exemption never fired and every row needed
+    # a claim_boundary. No row is `covered` today either, so the same rows are
+    # checked as before -- but the exemption now names a status that can actually
+    # be reached.
     print()
     unclosed: list[str] = []
     for row in caps:
-        if row.get("claim_status") == "supported":
+        if row.get("claim_status") == "covered":
             continue                      # fixture evidence is audited separately
         if not row.get("claim_boundary", "").strip():
             unclosed.append(f"capability {row['capability_id']}: no claim_boundary")
@@ -189,12 +402,12 @@ def main() -> int:
             unclosed.append(f"gate {g['gate_id']}: no review_due")
 
     if unclosed:
-        print(f"CLOSURE: FAIL — {len(unclosed)} row(s) neither supported nor bounded")
+        print(f"CLOSURE: FAIL — {len(unclosed)} row(s) neither `covered` nor bounded")
         for u in unclosed:
             print(f"  {u}")
         return 1
 
-    print(f"CLOSURE: PASS — every one of {len(caps)} capability rows is supported "
+    print(f"CLOSURE: PASS — every one of {len(caps)} capability rows is `covered` "
           f"or carries a written claim_boundary; all {len(blocked)} closed gates "
           f"carry evidence + review_due")
     return 0

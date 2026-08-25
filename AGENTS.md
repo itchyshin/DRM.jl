@@ -38,7 +38,7 @@ mirrors of those charters) live in `.cursor/agents/*.md`.
 | 8 | **Pat** | PhD-student tester / UX | Quickstart UX, error messages, tutorials, the "what can I fit today?" reader voice, the biologist-on-Julia path. Owns Documenter voice consistency (reader-first, like drmTMB). |
 | 9 | **Grace** | CI / Documenter / release | GitHub Actions discipline, `Documenter.yml`, `TagBot.yml`, Aqua.jl hygiene, the Julia General registry. Keeps CI cost-disciplined. |
 | 10 | **Karpinski** | Julia performance | Type stability (`@code_warntype`), JET.jl, Allocs.jl, sparse linalg, ForwardDiff dispatch, formatter config. Owns the engine-quality battery's perf gates. |
-| 11 | **Hopper** | R↔Julia translator | RCall.jl parity tests (`DRM_PARITY_TESTS=1`), `bf()` round-trip R↔Julia, drmTMB result-shape parity against committed generated outputs (fixtures record drmTMB **0.6.0**, #392). Day-1 standing reviewer. |
+| 11 | **Hopper** | R↔Julia translator | RCall.jl parity tests (`DRM_PARITY_TESTS=1`), `bf()` round-trip R↔Julia, drmTMB result-shape parity against committed generated outputs (fixtures record drmTMB **0.7.0**, re-measured 2026-08-24 in `ee8658df`; #392's 0.6.0 anchor is superseded). Day-1 standing reviewer. |
 | 12 | **Pólya** | Scouting + creative combination | (a) Routine watch of drmTMB pkgdown, gllvmTMB capabilities + NEWS, GLLVM.jl, and the statistics/ecology/Bayesian literature; diffs against the last scout, files an `idea` issue per actionable signal. (b) On phase-start, a creative-combination pass — what unexpected pairing opens the next slice? **Pólya proposes; Pólya does not implement.** |
 
 **Deferred / ad-hoc roles.** **Lovelace** (R-side `engine = "julia"` bridge
@@ -81,7 +81,7 @@ block for details.
 | **B** `bf-formula-frontend.js` | `bf(mu,sigma,rho12)` + markers — drmTMB-exact parity (incl. reserved-syntax rejections) |
 | **D** `mirror-article.js` | Per-article: scaffold → ingest → Florence figure → Pat reader → Rose claim-vs-evidence |
 | **F** `pre-publish-audit.js` | Rose-led drift + scope-honesty + missing-cell audit before every tag |
-| **G** `r-parity-suite.js` | RCall.jl round-trip vs committed drmTMB-generated fixture outputs (0.6.0) |
+| **G** `r-parity-suite.js` | RCall.jl round-trip vs committed drmTMB-generated fixture outputs (0.7.0) |
 | **H** `add-family.js` | Per-family: link infra → Laplace path → ADEMP cell → article stub → R-parity gate |
 | **S** `scout-and-combine.js` | Pólya's routine + phase-start scout → `idea` issues + `docs/dev-log/scout/` snapshot |
 | **R** `autoresearch.js` | Estimator-optimisation loop with verify-and-revert against the verified baseline |
@@ -140,7 +140,7 @@ The PR closes its issue (`closes #NN`) and uses `.github/PULL_REQUEST_TEMPLATE.m
 can paste-and-run. This includes the *rejections*: the reserved-but-unsupported
 syntax drmTMB errors on, DRM.jl must error on too, with parallel messages.
 Anchor: formula grammar still mirrors **drmTMB v0.1.3** spelling; numeric
-Workflow G fixtures record **drmTMB 0.6.0** (`expected.meta.toml`, #392).
+Workflow G fixtures record **drmTMB 0.7.0** (`expected.meta.toml`; re-measured 2026-08-24, `ee8658df`).
 See `docs/src/developer-notes/formula-grammar.md`.
 
 ### 2. R↔Julia bridge (Hopper + Lovelace own)
@@ -206,9 +206,15 @@ or `itchyshin/GLLVM.jl` when relevant. Nothing evaporates in chat.
 
 **Formula grammar** remains pinned to **drmTMB v0.1.3** spelling (rejections +
 aliases). **Numeric Workflow G fixtures** record the maintainer-installed
-`packageVersion("drmTMB")` used at generation — currently **0.6.0** for all
-eleven admitted cells (#392 refreshed the original six). Do not assert CRAN/tag
-status beyond that recorded string. Re-anchor fixtures when regenerating against
+`packageVersion("drmTMB")` used at generation — **0.7.0** for all thirteen cells
+carrying that field (re-measured 2026-08-24, `ee8658df`, seeds preserved, zero
+drift; #392's 0.6.0 anchor is superseded — this file still asserted it in four
+places afterwards, which is how a constitution drifts from the data it
+describes). **A version string is not a build**: 0.7.0
+spans at least 16 shipped-file commits of drmTMB `origin/main`, so record
+`Rscript tools/drmtmb_provenance.R --toml` alongside it (DRM.jl#473). Do not
+assert CRAN/tag status beyond that recorded string. Re-anchor fixtures when
+regenerating against
 a new installed version.
 
 <!-- shinichi-hub -->

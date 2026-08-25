@@ -11,6 +11,11 @@
 # Workflow G fixtures stay 0.6.0 / ML / no tree; this cell is 0.7.0 REML + tree
 # outside test/parity/fixtures/.
 
+# #476: wrapped in a module so this file's FIXTURE/_load_data/_coef_named/
+# _within cannot collide with the same names in another parity test file
+# included later by runtests.jl (they used to live bare in Main).
+module TestParityBivQ4PhyloREML
+
 using DRM
 using Test
 using TOML
@@ -83,8 +88,13 @@ _within(a, b, rtol, atol) = abs(a - b) <= max(atol, rtol * max(abs(a), abs(b)))
     @test estimation_method(fit) === :REML
     @test isfinite(reml_loglik(fit))
     @test isfinite(loglik(fit))
-    # Julia Optim flag on this Mac-small cell is recorded, not required true.
-    # drmTMB status.converged is the native-TMB flag (true on this seed).
+    # #484 landed the automatic warm restart that lets drm()'s public REML
+    # route converge on this cell; the follow-up fixture re-derivation (same
+    # day) re-measured `status.julia_converged` so the TOML field is now an
+    # accurate statement about the public route. Read it directly, like every
+    # other [status] field checked above, instead of pinning `true` inline.
+    # See test/test_q4_reml_warm_restart.jl for the engine-level
+    # g_residual < g_tol check.
     @test is_converged(fit) == expected["status"]["julia_converged"]
 
     atol_ll = Float64(get(expected["tol"], "atol_loglik", 1e-3))
@@ -99,3 +109,5 @@ _within(a, b, rtol, atol) = abs(a - b) <= max(atol, rtol * max(abs(a), abs(b)))
         @test _within(got[name], Float64(ref), rtol_c, atol_c)
     end
 end
+
+end # module TestParityBivQ4PhyloREML

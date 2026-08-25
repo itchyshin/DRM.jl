@@ -106,26 +106,11 @@ _sigma_b(fit) = exp(D.coef(fit)[end])
     end
 
     @testset "scalar-per-cluster only — other Poisson routes still reject" begin
-        # Poisson phylo Laplace: the hook is proven (probe Cell C) but the cell is NOT
-        # certified, so it must error rather than silently ignore `method`.
-        rng = MersenneTwister(4433)
-        ntip, per = 12, 4
-        tree = D.random_balanced_tree(ntip; branch_length = 0.25)
-        species = repeat(1:ntip, inner = per)
-        n = length(species)
-        x = randn(rng, n)
-        y = Float64.([rand(rng, Distributions.Poisson(exp(0.25 + 0.2 * x[i]))) for i in 1:n])
-        err = try
-            D.drm(D.bf(D.@formula(y ~ x + phylo(1 | species))), D.Poisson();
-                  data = (; y, x, species), tree = tree, se = false, method = :REML)
-            nothing
-        catch e
-            e
-        end
-        @test err isa ArgumentError
-        msg = sprint(showerror, err)
-        @test occursin("(1 | g)", msg)
-        @test occursin("REML", msg)
+        # Poisson phylo Laplace: this used to assert a family-wide reject here, but
+        # #450 admitted opt-in :REML on the phylo/relmat Laplace route. That
+        # assertion has moved to test/test_cox_reid_poisson_phylo.jl, which owns the
+        # shipped cell (same pattern as the #441 -> #443 handoff documented in
+        # test/test_cox_reid_characterization.jl).
 
         # Correlated random slope `(1 + x | g)` is a 2-D RE, not scalar-per-cluster.
         data = _cr_poisson_draw(4434)

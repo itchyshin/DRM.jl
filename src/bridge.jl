@@ -19,6 +19,17 @@ Fit a DRM.jl model through a marshalling-friendly boundary for R callers.
 strings. `family` is a string such as `"gaussian"`, `"student"`, `"nbinom2"`,
 or `"biv_gaussian"`. `data` is a column table, dictionary, or named tuple.
 
+`formula` accepts R syntax beyond plain `@formula`: `:` interactions, `*`
+crossing, `- 1`/general `- term` removal, `(...)^k` crossing, and
+`scale(x)`/`I(expr)`/`factor(x)`/`poly(x, k)` (materialised into real columns —
+`I(...)` only over a safe `+ - * / ^` grammar, never arbitrary code).
+`poly(x, k)` is R's ORTHOGONAL basis (`raw = FALSE`, the default) and expands to
+`k` columns; only `poly(x, k)` itself is accepted — `raw = TRUE` is spelled
+`I(x^k)`, and an explicit `coefs =` or the multivariate `poly(x, y, degree)`
+are rejected rather than approximated (#492). These materialised columns are NOT
+(yet) reconstructed for `newdata` — a formula using them combined with `newdata`
+fails loudly (missing column) rather than silently mismodelling; see #467.
+
 The return value is a `Dict{String,Any}` made of primitive R-reconstructable
 pieces: named coefficients, covariance matrix, likelihood summaries, fitted
 values, residuals, scales, and residual correlations when present.
@@ -33,7 +44,7 @@ function drm_bridge(; formula, family::AbstractString, data, tree = nothing,
         K = nothing, A = nothing, coords = nothing, newdata = nothing,
         options = Dict{String,Any}())
     dat = _bridge_data(data)
-    bundle = _bridge_formula(formula, family)
+    bundle, dat = _bridge_formula(formula, family, dat)
     fam = _bridge_family(family)
     opts = _bridge_options(options)
     fit = _bridge_fit(bundle, fam, dat; tree = tree, K = K, A = A,
@@ -137,28 +148,42 @@ end
     drm_bridge_inference(; formula, family, data, tree = nothing,
                          options = Dict(), method = "profile",
                          level = 0.95, B = 199, seed = nothing,
-                         threads = false)
+                         threads = false, parm = nothing)
 
-Run a narrow inference primitive for the R bridge. This first slice is limited
-to the Gaussian phylogenetic SD block (`param = :resd`), because the R side
-needs explicit response-scale transforms and parity checks before exposing
-broader Julia inference results.
+Run a narrow inference primitive for the R bridge.
+
+With `parm = nothing` (the default) this targets the Gaussian phylogenetic SD
+block (`param = :resd` / `:resd_mu` / `:resd_sigma`), because the R side needs
+explicit response-scale transforms and parity checks before exposing broader
+Julia inference results. This path is unchanged from the first slice.
+
+Pass `parm = "fixef:<dpar>:<coef>"` (e.g. `"fixef:mu:x"`) to instead profile
+or bootstrap a single ordinary fixed-effect coefficient, on its link scale —
+the same primitive `DRM.profile_result` / `DRM.bootstrap_result` calls the R
+bridge previously had to reach by calling DRM.jl's underscore-prefixed
+marshalling internals directly (see #475); this kwarg is the supported route
+that replaces that qualified-internal call. Returns the same payload shape
+either way.
 """
 function drm_bridge_inference(; formula, family::AbstractString, data,
         tree = nothing, options = Dict{String,Any}(), method::AbstractString = "profile",
         level::Real = 0.95, B::Integer = 199, seed = nothing,
-        threads::Bool = false)
+        threads::Bool = false, parm = nothing)
     dat = _bridge_data(data)
-    bundle = _bridge_formula(formula, family)
+    bundle, dat = _bridge_formula(formula, family, dat)
     fam = _bridge_family(family)
     opts = _bridge_options(options)
     bridge_method = lowercase(strip(String(method)))
     is_biv = bundle isa BivariateDrmFormula
+    target = parm === nothing ? nothing : _bridge_parse_fixef_parm(parm)
     # The univariate σ-phylo location-scale route precomputes its boundary-aware
     # profile CIs into the fit (it has no re-optimisable objective), so request them
     # at fit time for the profile method. The bivariate q=4 route has no such flag
-    # (its drm method rejects `profile_ci`) — skip it there.
-    (!is_biv && bridge_method == "profile") && (opts[:profile_ci] = true)
+    # (its drm method rejects `profile_ci`) — skip it there. An explicit fixed-effect
+    # `parm` target profiles the fit's own re-optimisable objective and never reads
+    # that precomputed stash, so it is skipped there too — matching the R bridge's
+    # previous qualified-internal call, which never set this option either.
+    (!is_biv && target === nothing && bridge_method == "profile") && (opts[:profile_ci] = true)
     tree_obj = tree === nothing ? nothing : _bridge_tree(tree)
     fit = _bridge_fit(bundle, fam, dat; tree = tree_obj, K = nothing,
                       A = nothing, coords = nothing, options = opts)
@@ -166,18 +191,21 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     # Bivariate q=4 phylogenetic fit: the uncertainty target is the four among-axis
     # SDs sqrt.(diag(Σ_a)), not a single SD row. The boundary makes the q4 profile
     # singular, so the route is the parametric bootstrap; return all four rows.
-    if is_biv && fit.ranef isa NamedTuple && haskey(fit.ranef, :Sigma_a)
+    # Skipped when an explicit fixed-effect `parm` target was given (below).
+    if target === nothing && is_biv && fit.ranef isa NamedTuple && haskey(fit.ranef, :Sigma_a)
         return _bridge_bivariate_inference(fit, dat, bridge_method;
                                            B = B, level = level, seed = seed)
     end
 
     if bridge_method == "profile"
-        # Profile ONLY the SD target the bridge returns (`_bridge_pick_sd_row`'s set),
-        # not the full parameter vector — the bridge reports a single SD row, so
-        # profiling the fixed effects too is wasted re-optimisation (#202 bridge perf).
-        result = profile_result(fit; level = level, threads = threads,
-                                parm = [:resd_sigma, :resd, :resd_mu])
-        row = _bridge_pick_sd_row(result.ci)
+        # Profile ONLY the requested block: the bridge's implicit SD target
+        # (`_bridge_pick_sd_row`'s set) when no `parm` was given, or the single
+        # fixed-effect block named by `parm` — never the full parameter vector,
+        # which would be wasted re-optimisation (#202 bridge perf).
+        profile_parm = target === nothing ? [:resd_sigma, :resd, :resd_mu] : target.param
+        result = profile_result(fit; level = level, threads = threads, parm = profile_parm)
+        row = target === nothing ? _bridge_pick_sd_row(result.ci) :
+                                    _bridge_pick_fixef_row(result.ci, target)
         return _bridge_inference_flatten(
             row;
             method = "profile",
@@ -195,22 +223,34 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     elseif bridge_method == "bootstrap"
         rng = seed === nothing ? Random.default_rng() :
               Random.MersenneTwister(Int(seed))
-        result = bootstrap_result(
-            fit; data = dat, B = Int(B), level = level, rng = rng,
-            tree = tree_obj, threads = threads, failures = :skip,
-            # #459: a percentile CI must not be computed over refits that did not
-            # converge. This was `false`, which was harmless only while the
-            # simulator was conditional -- every replicate then re-used the fitted
-            # BLUPs, so every refit converged trivially and the interval was
-            # degenerate anyway. With a correct marginal simulator some replicates
-            # are genuinely hard, and admitting their diverged estimates put the
-            # upper percentile at 179 against a point estimate of 1.30.
-            # `failures = :skip` drops them and `used`/`failed` report how many.
-            check_converged = true,
-            algorithm = Symbol(get(opts, :algorithm, :auto)),
-            g_tol = Float64(get(opts, :g_tol, 1e-8)),
-        )
-        row = _bridge_pick_sd_row(result.summary)
+        result = if target !== nothing && !(fit isa DrmFit{<:Gaussian})
+            # DRM.jl's generic (non-Gaussian) `bootstrap_result` method rejects any
+            # non-`nothing` `tree`/`algorithm`/`g_tol` keyword; only the
+            # Gaussian-specific method accepts them. The SD-target path below never
+            # hits this branch (target === nothing), so its behaviour is unchanged.
+            bootstrap_result(
+                fit; data = dat, B = Int(B), level = level, rng = rng,
+                threads = threads, failures = :skip, check_converged = true,
+            )
+        else
+            bootstrap_result(
+                fit; data = dat, B = Int(B), level = level, rng = rng,
+                tree = tree_obj, threads = threads, failures = :skip,
+                # #459: a percentile CI must not be computed over refits that did not
+                # converge. This was `false`, which was harmless only while the
+                # simulator was conditional -- every replicate then re-used the fitted
+                # BLUPs, so every refit converged trivially and the interval was
+                # degenerate anyway. With a correct marginal simulator some replicates
+                # are genuinely hard, and admitting their diverged estimates put the
+                # upper percentile at 179 against a point estimate of 1.30.
+                # `failures = :skip` drops them and `used`/`failed` report how many.
+                check_converged = true,
+                algorithm = Symbol(get(opts, :algorithm, :auto)),
+                g_tol = Float64(get(opts, :g_tol, 1e-8)),
+            )
+        end
+        row = target === nothing ? _bridge_pick_sd_row(result.summary) :
+                                    _bridge_pick_fixef_row(result.summary, target)
         return _bridge_inference_flatten(
             row;
             method = "bootstrap",
@@ -227,6 +267,34 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
         )
     end
     throw(ArgumentError("drm_bridge_inference: unsupported method `$method`"))
+end
+
+# Parse the R bridge's `"fixef:<dpar>:<coef>"` target string (e.g. `"fixef:mu:x"`)
+# into the `(param, coef)` pair `_ci_param_selected`/`_bridge_pick_fixef_row` need.
+# `limit = 3` keeps a `:`-bearing coefficient name (e.g. an interaction `"x:z"`)
+# intact in the third part rather than splitting it further.
+function _bridge_parse_fixef_parm(parm)
+    parm isa AbstractString || throw(ArgumentError(
+        "drm_bridge_inference: `parm` must be a string of the form " *
+        "`\"fixef:<dpar>:<coef>\"` (e.g. `\"fixef:mu:x\"`)"))
+    parts = split(String(parm), ':'; limit = 3)
+    (length(parts) == 3 && lowercase(parts[1]) == "fixef") || throw(ArgumentError(
+        "drm_bridge_inference: unsupported `parm` target `$(repr(parm))`; expected " *
+        "`\"fixef:<dpar>:<coef>\"` (e.g. `\"fixef:mu:x\"`)"))
+    return (param = Symbol(parts[2]), coef = String(parts[3]))
+end
+
+# Pick the single fixed-effect row named by an explicit `parm` target. There is NO
+# silent fall-back: if the (param, coef) pair is not present the row would be some
+# other coefficient mislabelled as the requested one, so throw an explicit error
+# naming what WAS available (mirrors `_bridge_pick_sd_row`'s discipline).
+function _bridge_pick_fixef_row(rows, target)
+    for row in rows
+        row.param === target.param && row.coef == target.coef && return row
+    end
+    got = join(("$(r.param):$(r.coef)" for r in rows), ", ")
+    throw(ArgumentError("drm_bridge_inference: no row for target " *
+        "`fixef:$(target.param):$(target.coef)` in the result; got [$(got)]."))
 end
 
 function _bridge_fit(bundle, fam, data; tree, K, A, coords, options)
@@ -360,9 +428,10 @@ function _bridge_family(family::AbstractString)
     throw(ArgumentError("drm_bridge: unsupported family `$family`"))
 end
 
-function _bridge_formula(formula, family::AbstractString)
+function _bridge_formula(formula, family::AbstractString, data)
+    ctx = _BridgeXlateCtx(data)
     parts = _bridge_formula_parts(formula)
-    parsed = map(_bridge_parse_formula_part, parts)
+    parsed = map(p -> _bridge_parse_formula_part(p, ctx), parts)
     any(isnothing, parsed) &&
         throw(ArgumentError("drm_bridge: could not parse formula specification"))
 
@@ -377,20 +446,18 @@ function _bridge_formula(formula, family::AbstractString)
         end
     end
 
-    if any(k -> k in _BRIDGE_BIVARIATE_KEYS, keys(keyed))
+    bundle = if any(k -> k in _BRIDGE_BIVARIATE_KEYS, keys(keyed))
         (isempty(positional) && haskey(keyed, :mu1) && haskey(keyed, :mu2)) ||
             throw(ArgumentError("drm_bridge: bivariate formulas need keyed `mu1` and `mu2` entries"))
         # `nu` is threaded through for `biv_student`; omitted (not defaulted) for
         # every other bivariate family so their bundles stay unchanged.
-        return bf(; mu1 = keyed[:mu1],
-                    mu2 = keyed[:mu2],
-                    sigma1 = get(keyed, :sigma1, nothing),
-                    sigma2 = get(keyed, :sigma2, nothing),
-                    nu = get(keyed, :nu, nothing),
-                    rho12 = get(keyed, :rho12, nothing))
-    end
-
-    if !isempty(keyed)
+        bf(; mu1 = keyed[:mu1],
+             mu2 = keyed[:mu2],
+             sigma1 = get(keyed, :sigma1, nothing),
+             sigma2 = get(keyed, :sigma2, nothing),
+             nu = get(keyed, :nu, nothing),
+             rho12 = get(keyed, :rho12, nothing))
+    elseif !isempty(keyed)
         isempty(positional) ||
             throw(ArgumentError("drm_bridge: do not mix keyed and positional univariate formulas"))
         haskey(keyed, :mu) ||
@@ -399,11 +466,19 @@ function _bridge_formula(formula, family::AbstractString)
         for p in (:sigma, :nu, :zi, :hu, :zoi, :coi)
             haskey(keyed, p) && push!(ordered, keyed[p])
         end
-        return bf(ordered...)
+        bf(ordered...)
+    else
+        isempty(positional) &&
+            throw(ArgumentError("drm_bridge: at least one formula is required"))
+        bf(positional...)
     end
-    isempty(positional) &&
-        throw(ArgumentError("drm_bridge: at least one formula is required"))
-    return bf(positional...)
+
+    # `ctx.extra` collects the columns materialised by `I(...)`, `scale(...)`,
+    # and `factor(...)` (see `_bridge_xlate` below). Merge them into the data
+    # ONLY when something was actually materialised, so a formula that uses
+    # none of these constructs gets back the exact `data` it was given.
+    augmented = isempty(ctx.extra) ? data : merge(_bridge_ctx_cols!(ctx), NamedTuple(ctx.extra))
+    return bundle, augmented
 end
 
 function _bridge_formula_parts(formula)
@@ -431,64 +506,349 @@ function _bridge_translate_r_ops(part::AbstractString)
     return replace(part, ':' => '&')
 end
 
-# R formula constructs `@formula` cannot evaluate as the R user intends: these
-# bind to the wrong Julia object (`I` → `LinearAlgebra.I`) or are undefined
-# (`poly`/`scale`/`factor`), so they crash with a raw Julia error; `^` (R
-# crossing) would silently mis-model. Reject them with a clear message instead.
+# R formula constructs that `@formula` cannot evaluate as the R user intends,
+# and so need a materialised column or an expanded term list to match R exactly
+# (`I`, `scale`, `factor`, `poly`, `(...)^k`, and general `- term` removal —
+# see `_bridge_xlate` below). All are implemented as faithful rewrites before
+# `@formula`, each with an R-parity fixture on byte-identical data.
+#
+# `poly` was in this table as a blanket rejection until 2026-08-25, on the
+# grounds that R's default `raw = FALSE` basis is "highest-risk to fake" and a
+# raw-power stand-in would silently disagree. The premise was right and the
+# conclusion was too broad: R's algorithm is deterministic, and transcribing it
+# reproduces `stats::poly(x, 3)` to 9.99e-16 (#492). What remains rejected is
+# the part that genuinely cannot be faked — `raw = TRUE` (write `I(x^k)`), an
+# explicit `coefs =`, and multivariate `poly(x, y, degree)` — and that rejection
+# now lives at the call site, where it can name the specific unsupported form.
 const _BRIDGE_REJECT_CALLS = Dict{Symbol,String}(
-    :^ => "R crossing `(...)^k` is unsupported via engine=\"julia\"; expand it explicitly (e.g. `a + b + a:b`).",
-    :I => "R `I(...)` is unsupported via engine=\"julia\"; precompute the column (e.g. add `x2 = x^2` to the data) and use it as a covariate.",
-    :poly => "R `poly()` is unsupported via engine=\"julia\"; precompute the polynomial columns and pass them as covariates.",
-    :scale => "R `scale()` is unsupported via engine=\"julia\"; precompute the standardized column and pass it as a covariate.",
-    :factor => "R `factor()`/`as.factor()` is unsupported via engine=\"julia\"; make the column a factor before fitting so its contrasts match R.",
+    :^ => "R crossing `(...)^k` is unsupported via engine=\"julia\" for this shape (need a literal positive integer power over a `+`-only expression, with no `*` inside); expand it explicitly (e.g. `a + b + a&b`).",
 )
+
+# Mutable per-formula-bridge context: materialises `I(...)`, `scale(...)`, and
+# `factor(...)` calls into real data columns (never `eval`s user code — see
+# `_bridge_eval_I`), reusing the same synthesised column for repeated
+# occurrences of the identical call across formula parts (e.g. `scale(x)` in
+# both `mu` and `sigma`). `cols` is computed lazily so a formula that uses
+# none of these constructs never touches `data` at all.
+mutable struct _BridgeXlateCtx
+    data
+    cols::Union{Nothing,NamedTuple}
+    extra::Dict{Symbol,Any}
+    cache::Dict{String,Symbol}
+    n::Int
+end
+_BridgeXlateCtx(data) = _BridgeXlateCtx(data, nothing, Dict{Symbol,Any}(), Dict{String,Symbol}(), 0)
+
+function _bridge_ctx_cols!(ctx::_BridgeXlateCtx)
+    ctx.cols === nothing && (ctx.cols = Tables.columntable(ctx.data))
+    return ctx.cols
+end
+
+function _bridge_lookup_column(ctx::_BridgeXlateCtx, sym::Symbol)
+    haskey(ctx.extra, sym) && return ctx.extra[sym]
+    cols = _bridge_ctx_cols!(ctx)
+    haskey(cols, sym) &&
+        return cols[sym]
+    throw(ArgumentError("drmTMB(engine=\"julia\"): column `$(sym)` referenced in the formula is not present in `data`."))
+end
+
+# Materialise (and cache) a new data column, returning the `Symbol` that now
+# refers to it. Identical `kind`+source-expression pairs reuse the same
+# synthesised column instead of recomputing it.
+function _bridge_materialize!(ctx::_BridgeXlateCtx, kind::AbstractString, key_expr, compute::Function)
+    key = kind * "::" * repr(key_expr)
+    cached = get(ctx.cache, key, nothing)
+    cached === nothing || return cached
+    ctx.n += 1
+    name = Symbol("__bridge_", kind, "_", ctx.n)
+    ctx.extra[name] = compute()
+    ctx.cache[key] = name
+    return name
+end
+
+# `I(expr)`: evaluate `expr` against the data through a SAFE, restricted
+# arithmetic grammar (`+ - * / ^`, data columns, numeric literals) — never
+# `Base.eval` on user-supplied text, which would run arbitrary code.
+function _bridge_eval_I(expr, ctx::_BridgeXlateCtx)
+    expr isa Symbol && return _bridge_lookup_column(ctx, expr)
+    expr isa Number && return expr
+    if expr isa Expr && expr.head === :call && expr.args[1] isa Symbol
+        op = expr.args[1]
+        fn = op === :+ ? (+) :
+             op === :- ? (-) :
+             op === :* ? (*) :
+             op === :/ ? (/) :
+             op === :^ ? (^) :
+             throw(ArgumentError("drmTMB(engine=\"julia\"): `I(...)` only supports the arithmetic operators +, -, *, /, ^ over data columns and numeric literals; got `$(op)`."))
+        args = Any[_bridge_eval_I(a, ctx) for a in expr.args[2:end]]
+        return broadcast(fn, args...)
+    end
+    throw(ArgumentError("drmTMB(engine=\"julia\"): `I(...)` only supports arithmetic (+, -, *, /, ^) over data columns and numeric literals; unsupported expression `$(expr)`."))
+end
+
+# `scale(x)`: center and scale by the sample mean/SD (R's `scale()` default —
+# `sd()` uses the n-1 denominator, matching `Statistics.std`'s default).
+function _bridge_eval_scale(sym::Symbol, ctx::_BridgeXlateCtx)
+    col = float.(_bridge_lookup_column(ctx, sym))
+    mu = Statistics.mean(col)
+    sdv = Statistics.std(col)
+    sdv == 0 && throw(ArgumentError("drmTMB(engine=\"julia\"): `scale($(sym))` has zero standard deviation; cannot standardize a constant column."))
+    return (col .- mu) ./ sdv
+end
+
+# `poly(x, k)`: R's ORTHOGONAL polynomial basis — `stats::poly()`'s default
+# (`raw = FALSE`), not raw powers. R's algorithm is deterministic: centre `x`,
+# build the Vandermonde `[1, xc, xc^2, …, xc^k]`, take its QR, rescale each
+# column by its own norm, and drop the constant column. Transcribing it
+# reproduces `stats::poly(x, 3)` to 9.99e-16 on byte-identical data (#492), and
+# the QR sign convention already matches R's, so no sign-fixing pass is needed.
+#
+# Returns the n×k matrix; the caller materialises one data column per degree
+# because Tables.jl does not accept a matrix-valued column in a column table.
+#
+# NOT supported, and rejected at the call site rather than approximated:
+# `raw = TRUE` (write the powers with `I(x^k)`), an explicit `coefs =`, and the
+# multivariate `poly(x, y, degree)`, which is a different construction.
+function _bridge_eval_poly(sym::Symbol, degree::Int, ctx::_BridgeXlateCtx)
+    col = float.(_bridge_lookup_column(ctx, sym))
+    n = length(col)
+    nuniq = length(unique(col))
+    # R: "'degree' must be less than number of unique points".
+    degree < nuniq || throw(ArgumentError(
+        "drmTMB(engine=\"julia\"): `poly($(sym), $(degree))` needs the degree to be less than the " *
+        "number of unique values in `$(sym)` (found $(nuniq)); R's `stats::poly()` errors here too."))
+    xc = col .- (sum(col) / n)
+    X = hcat((xc .^ k for k in 0:degree)...)
+    F = LinearAlgebra.qr(X)
+    Z = Matrix(F.Q) * LinearAlgebra.Diagonal(LinearAlgebra.diag(F.R))
+    nrm2 = vec(sum(abs2, Z; dims = 1))
+    any(v -> v <= 0 || !isfinite(v), nrm2) && throw(ArgumentError(
+        "drmTMB(engine=\"julia\"): `poly($(sym), $(degree))` produced a degenerate basis; the column is " *
+        "probably collinear at this degree. Lower the degree or precompute the basis in R."))
+    Z = Z ./ sqrt.(nrm2)'
+    return Z[:, 2:end]
+end
+
+# Does `e` contain a `*` (R/StatsModels crossing) anywhere? `-` (general term
+# removal) and `^` (crossing power) below do their own term-list algebra by
+# flattening `+`/`&` only; an unexpanded `*` inside that algebra could hide a
+# term from a `-` removal or a `^` combination, silently disagreeing with R.
+# Reject those combinations explicitly instead of guessing.
+# Does `e` contain a `poly(...)` call anywhere? `poly` is the only construct
+# here that rewrites to a GROUP of terms (`+`), so it is only meaningful where a
+# group is meaningful. Under a scalar function — `log1p(poly(x, 2))` — R applies
+# the function elementwise to a k-column MATRIX, giving k columns, while this
+# rewrite would apply it to the SUM of the k columns, giving one. That is a
+# silent disagreement of exactly the kind the blanket `poly` rejection existed to
+# prevent, so it is rejected explicitly instead of being inherited by accident.
+_bridge_contains_poly(e) = false
+function _bridge_contains_poly(e::Expr)
+    e.head === :call && e.args[1] === :poly && return true
+    return any(_bridge_contains_poly, e.args)
+end
+
+# Formula operators under which a `+` group of terms means what R means.
+# `-` and `(...)^k` are absent because they have their own branches above and
+# flatten `+` themselves before doing term algebra.
+const _BRIDGE_TERM_OPS = (:+, :&, :*, :~)
+
+_bridge_contains_star(e) = false
+function _bridge_contains_star(e::Expr)
+    e.head === :call && e.args[1] === :* && return true
+    return any(_bridge_contains_star, e.args)
+end
+
+# Flatten the top-level `+` chain of an already-`_bridge_xlate`d expression
+# into its additive terms (each term itself opaque — a symbol, an `&`
+# interaction, a function call, …). Used by both `-` (term removal) and `^`
+# (crossing power) term algebra.
+_bridge_formula_terms(e) = Any[e]
+function _bridge_formula_terms(e::Expr)
+    if e.head === :call && e.args[1] === :+
+        return vcat(_bridge_formula_terms.(e.args[2:end])...)
+    end
+    return Any[e]
+end
+
+# Canonicalise a term for structural-equality matching: `&` (R's `:`) is an
+# unordered interaction, so `a&b` must match `b&a` when removing a term.
+_bridge_canon(t) = t
+function _bridge_canon(e::Expr)
+    if e.head === :call && e.args[1] === :&
+        operands = sort(_bridge_canon.(e.args[2:end]); by = repr)
+        return Expr(:call, :&, operands...)
+    end
+    return Expr(e.head, _bridge_canon.(e.args)...)
+end
+
+# `lhs - rhs`: remove every term of `rhs` (itself possibly a `+`-sum, e.g.
+# `- (a + b)`) from the term list of `lhs`, by canonical structural match. A
+# term absent from `lhs` is silently a no-op — this matches R's own
+# `terms()` behaviour for a `-` naming a term that was never present.
+function _bridge_remove_terms(lhs, rhs)
+    lhs_terms = _bridge_formula_terms(lhs)
+    rhs_canon = Set(_bridge_canon.(_bridge_formula_terms(rhs)))
+    return filter(t -> !(_bridge_canon(t) in rhs_canon), lhs_terms)
+end
+
+function _bridge_terms_to_sum(terms::Vector)
+    isempty(terms) && return 1
+    length(terms) == 1 && return terms[1]
+    return Expr(:call, :+, terms...)
+end
+
+# All `k`-subsets of `items`, preserving relative order (order doesn't affect
+# the numerics — `&` is commutative in `@formula` — only readability).
+function _bridge_combinations(items::Vector, k::Int)
+    k <= 0 && return [Any[]]
+    isempty(items) && return Vector{Any}[]
+    first, rest = items[1], items[2:end]
+    with_first = [vcat(Any[first], c) for c in _bridge_combinations(rest, k - 1)]
+    without_first = _bridge_combinations(rest, k)
+    return vcat(with_first, without_first)
+end
+
+# `(inner)^k`: R expands to every combination of `inner`'s order-1 terms taken
+# 1..k at a time, joined by `:` (our `&`) — main effects through order-`k`
+# interactions, e.g. `(a+b+c)^2` = `a+b+c+a&b+a&c+b&c`.
+function _bridge_expand_power(base_terms::Vector, k::Int)
+    out = Any[]
+    for j in 1:k, combo in _bridge_combinations(base_terms, j)
+        push!(out, length(combo) == 1 ? combo[1] : Expr(:call, :&, combo...))
+    end
+    return out
+end
 
 # Translate / validate the parsed formula tree before `@formula`. `:` is already
 # `&` (handled at the string level); here we translate R's `- 1`/`- 0` intercept
-# control and reject the crash/silent-mismodel constructs above. Markers
-# (phylo/relmat/animal/spatial/meta_V/cbind) and StatsModels transforms
-# (log/exp/…) pass through unchanged.
-_bridge_xlate(x) = x
-function _bridge_xlate(e::Expr)
+# control, expand `(...)^k` crossing and general `- term` removal into the
+# `+`/`&` terms `@formula` already understands faithfully (confirmed: `*`
+# crossing already matches R via `@formula` natively), materialise `I`/`scale`/
+# `factor` into real columns, and reject the constructs that cannot be made
+# faithful. Markers (phylo/relmat/animal/spatial/meta_V/cbind) and StatsModels
+# transforms (log/exp/…) pass through unchanged.
+_bridge_xlate(x, ctx::_BridgeXlateCtx) = x
+function _bridge_xlate(e::Expr, ctx::_BridgeXlateCtx)
     e.head === :call || return e
     f = e.args[1]
     if f === :-
         if length(e.args) == 3 && e.args[3] === 1
-            return Expr(:call, :+, 0, _bridge_xlate(e.args[2]))   # `… - 1` → drop intercept
+            return Expr(:call, :+, 0, _bridge_xlate(e.args[2], ctx))   # `… - 1` → drop intercept
         elseif length(e.args) == 3 && e.args[3] === 0
-            return _bridge_xlate(e.args[2])                        # `… - 0` → keep intercept
+            return _bridge_xlate(e.args[2], ctx)                        # `… - 0` → keep intercept
+        elseif length(e.args) == 3
+            lhs = _bridge_xlate(e.args[2], ctx)
+            rhs = _bridge_xlate(e.args[3], ctx)
+            (_bridge_contains_star(lhs) || _bridge_contains_star(rhs)) &&
+                throw(ArgumentError("drmTMB(engine=\"julia\"): R term removal `-` combined with unexpanded `*` crossing is unsupported (the removed term could be hiding inside the `*`); expand the crossing explicitly (e.g. `a + b + a&b`) before removing a term."))
+            return _bridge_terms_to_sum(_bridge_remove_terms(lhs, rhs))
         end
         throw(ArgumentError("drmTMB(engine=\"julia\"): R term removal with `-` is unsupported; list the terms you want explicitly."))
+    elseif f === :^
+        if length(e.args) == 3 && e.args[3] isa Integer && e.args[3] >= 1
+            # MEASURED 2026-08-25: `poly()` is NOT safe under `(...)^k`, and this is
+            # the one place the `+`-group rewrite breaks. R treats `poly(x, 2)` as a
+            # SINGLE term, so `(x + poly(x, 2))^2` crosses two terms and never forms
+            # `poly1:poly2` — R gives 6 model-matrix columns. Flattening poly into
+            # `p1 + p2` makes it two terms, so the same expansion yields 7, the extra
+            # column being `p1 & p2`. Checked against `model.matrix()` on both sides.
+            # Rejected rather than special-cased: keeping the group intact through the
+            # power algebra would need a term-grouping concept the rewrite does not have.
+            _bridge_contains_poly(e.args[2]) && throw(ArgumentError(
+                "drmTMB(engine=\"julia\"): `poly(x, k)` inside `(...)^k` crossing is unsupported. R treats " *
+                "`poly(x, k)` as ONE term, so it never crosses a poly column with another poly column; this " *
+                "rewrite expands poly into k separate terms, which would add those extra interactions " *
+                "(measured: R 6 columns vs 7 here for `(x + poly(x, 2))^2`). Expand the crossing explicitly, " *
+                "or precompute the basis in R and pass the columns as covariates."))
+            inner = _bridge_xlate(e.args[2], ctx)
+            _bridge_contains_star(inner) &&
+                throw(ArgumentError("drmTMB(engine=\"julia\"): R crossing `(...)^k` over an expression that already contains unexpanded `*` crossing is unsupported; expand explicitly."))
+            return _bridge_terms_to_sum(_bridge_expand_power(_bridge_formula_terms(inner), Int(e.args[3])))
+        end
+        throw(ArgumentError("drmTMB(engine=\"julia\"): " * _BRIDGE_REJECT_CALLS[:^]))
+    elseif f === :I
+        length(e.args) == 2 ||
+            throw(ArgumentError("drmTMB(engine=\"julia\"): `I(...)` takes exactly one expression."))
+        return _bridge_materialize!(ctx, "I", e.args[2], () -> _bridge_eval_I(e.args[2], ctx))
+    elseif f === :poly
+        # `poly(x, k)` expands to k model-matrix columns, so unlike `scale()` this
+        # returns a `+` GROUP of materialised symbols rather than one symbol. That
+        # composes safely with the `-` and `(...)^k` algebra below because both
+        # flatten `+` before operating on the term list.
+        length(e.args) == 3 || throw(ArgumentError(
+            "drmTMB(engine=\"julia\"): only `poly(x, k)` is supported via engine=\"julia\". " *
+            "`raw = TRUE` is spelled `I(x^k)` term by term; an explicit `coefs =` and the multivariate " *
+            "`poly(x, y, degree)` are unsupported — precompute those columns in R and pass them as covariates."))
+        arg = e.args[2]
+        arg isa Symbol || throw(ArgumentError(
+            "drmTMB(engine=\"julia\"): `poly(...)` only supports a bare column reference (e.g. `poly(x, 3)`), " *
+            "not a general expression; precompute the basis and pass it as covariates."))
+        deg = e.args[3]
+        (deg isa Integer && deg >= 1) || throw(ArgumentError(
+            "drmTMB(engine=\"julia\"): `poly($(arg), …)` needs an integer degree >= 1 written as a literal " *
+            "(got `$(deg)`)."))
+        degi = Int(deg)
+        basis = _bridge_eval_poly(arg, degi, ctx)
+        syms = [_bridge_materialize!(ctx, "poly$(degi)c$(j)", arg, () -> basis[:, j]) for j in 1:degi]
+        return Expr(:call, :+, syms...)
+    elseif f === :scale
+        length(e.args) == 2 ||
+            throw(ArgumentError("drmTMB(engine=\"julia\"): `scale(...)` with explicit `center`/`scale` arguments is unsupported via engine=\"julia\"; precompute the standardized column and pass it as a covariate."))
+        arg = e.args[2]
+        arg isa Symbol ||
+            throw(ArgumentError("drmTMB(engine=\"julia\"): `scale(...)` only supports a bare column reference (e.g. `scale(x)`), not a general expression; precompute the standardized column and pass it as a covariate."))
+        return _bridge_materialize!(ctx, "scale", arg, () -> _bridge_eval_scale(arg, ctx))
+    elseif f === :factor
+        length(e.args) == 2 ||
+            throw(ArgumentError("drmTMB(engine=\"julia\"): `factor(...)` with extra arguments is unsupported via engine=\"julia\"; precompute the factor column and pass it as a covariate."))
+        arg = e.args[2]
+        arg isa Symbol ||
+            throw(ArgumentError("drmTMB(engine=\"julia\"): `factor(...)` only supports a bare column reference (e.g. `factor(g)`), not a general expression; precompute the factor column and pass it as a covariate."))
+        # A plain (non-`<:Real`) `Vector{Any}` copy flips StatsModels onto its
+        # categorical dispatch, with levels ordered by `sort(unique(...))` on
+        # the ORIGINAL values (numeric order preserved, not string order) —
+        # exactly R's `factor()` default levels, giving `contr.treatment`
+        # dummy coding against the same (lowest) baseline level.
+        return _bridge_materialize!(ctx, "factor", arg,
+            () -> Any[v for v in _bridge_lookup_column(ctx, arg)])
     elseif !(f isa Symbol)
         throw(ArgumentError("drmTMB(engine=\"julia\"): unsupported formula function `$(f)`; precompute it as a covariate column."))
     elseif haskey(_BRIDGE_REJECT_CALLS, f)
         throw(ArgumentError("drmTMB(engine=\"julia\"): " * _BRIDGE_REJECT_CALLS[f]))
     end
+    # `poly()` may only sit where a GROUP of terms is meaningful. Checked BEFORE
+    # recursing, while the argument expressions still say `poly(...)`.
+    if !(f in _BRIDGE_TERM_OPS) && any(_bridge_contains_poly, e.args[2:end])
+        throw(ArgumentError("drmTMB(engine=\"julia\"): `poly(x, k)` may only appear as a model term " *
+            "(under `~`, `+`, `&`, `*`, or the `-` / `(...)^k` term algebra), not inside `$(f)(...)`. " *
+            "`poly()` expands to k columns; R would apply `$(f)` elementwise to all k, while this rewrite " *
+            "would apply it to their sum — one column instead of k, silently. Precompute the transformed " *
+            "basis in R and pass the columns as covariates."))
+    end
     # Recurse into EVERY remaining call's arguments (`~`, `+`, `&`, `*`, `log`,
-    # `phylo`, …) so a rejected construct nested at ANY depth — e.g. `I()` under
-    # `*` (`x1 * I(x1^2)`) or under `log()` — is still caught, not only when it
-    # sits directly under `~`/`+`/`&`.
-    return Expr(:call, f, (_bridge_xlate(a) for a in e.args[2:end])...)
+    # `phylo`, …) so a rejected construct nested at ANY depth is still caught, not
+    # only when it sits directly under `~`/`+`/`&`.
+    return Expr(:call, f, (_bridge_xlate(a, ctx) for a in e.args[2:end])...)
 end
 
-function _bridge_parse_formula_part(part::AbstractString)
+function _bridge_parse_formula_part(part::AbstractString, ctx::_BridgeXlateCtx)
     expr = Meta.parse(_bridge_translate_r_ops(part))
     if expr isa Expr && expr.head === :(=)
         length(expr.args) == 2 || return nothing
         key = expr.args[1]
         key isa Symbol || return nothing
-        form = _bridge_formula_from_expr(expr.args[2])
+        form = _bridge_formula_from_expr(expr.args[2], ctx)
         form === nothing && return nothing
         return key => form
     end
-    form = _bridge_formula_from_expr(expr)
+    form = _bridge_formula_from_expr(expr, ctx)
     form === nothing && return nothing
     return nothing => form
 end
 
-function _bridge_formula_from_expr(expr)
+function _bridge_formula_from_expr(expr, ctx::_BridgeXlateCtx)
     (expr isa Expr && expr.head === :call && expr.args[1] === :~) || return nothing
-    expr = _bridge_xlate(expr)
+    expr = _bridge_xlate(expr, ctx)
     return eval(Expr(:macrocall, Symbol("@formula"), LineNumberNode(0), expr))
 end
 

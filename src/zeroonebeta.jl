@@ -93,5 +93,7 @@ function _fit_zeroonebeta(fam::ZeroOneBeta, y, Xμ, Xσ, Xz, Xc, nmμ, nmσ, nmz
                   :sigma => exp.(Xσ * θ̂[(pμ+1):i1]),
                   :zoi => zoî,
                   :coi => coî)
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end

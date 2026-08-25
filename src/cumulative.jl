@@ -100,5 +100,7 @@ function _fit_cumulative(fam::CumulativeLogit, y::Vector{Int}, Xμ, K, nmμ, g_t
     end
     means = Dict(:mu => score); obs = Dict(:mu => Float64.(y))
     scales = Dict(:ordinal_eta => η̂, :ordinal_cuts => Float64.(cuts))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end

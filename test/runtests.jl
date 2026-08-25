@@ -38,6 +38,7 @@ include("test_gaussian_core.jl")
 # runs near the core Gaussian tests.
 include("test_reml.jl")
 include("test_reml_ordinary_ranef.jl")  # #445 Option A: #439/#440 Gaussian mean (1 | g) REML
+include("test_niterations.jl")  # #466: fit.niterations wired into every iterative family fitter
 include("test_bf_grammar.jl")
 include("test_gaussian_bivariate.jl")
 include("test_bivariate_lognormal.jl")
@@ -66,6 +67,7 @@ include("test_postfit.jl")
 include("test_meta.jl")
 include("test_simulate.jl")
 include("test_gaussian_structured.jl")
+include("test_gaussian_phylo_mean_missing_response.jl")  # #482: species-subset (drop) + include refusal
 include("test_phylo_interaction.jl")
 include("test_two_structured_gaussian.jl")
 include("test_two_structured_gaussian_sparse.jl")
@@ -166,6 +168,8 @@ include("test_binomial.jl")
 include("test_binomial_re.jl")
 include("test_summary.jl")
 include("test_bootstrap_nongaussian.jl")
+include("test_bootstrap_nongaussian_structured.jl")   # #479: K/A/tree threaded through refit
+include("test_bootstrap_formula_structured.jl")   # #480: same fix on the formula-based surface
 include("test_aic_bic.jl")
 include("test_vcov_guard.jl")
 include("test_variational.jl")
@@ -206,16 +210,36 @@ include("test_bridge_formula_translation.jl")
 # (multi-row payload) + the profile→bootstrap redirect (Ayumi #2 uncertainty-via-R).
 include("test_bridge_bivariate_inference.jl")
 
-# NOTE (HANDOVER step): richer tests exist in test/*.jl migrated from the poc
-# (test_step1_sparse, check_sparse_tmb, grad_check_*). They use the poc's
-# script-style include paths and need path/`using DRM` updates before wiring
-# into this suite.
+# Poc-migrated foundation checks (#465): the poc's script-style includes and
+# hardcoded paths were fixed to run in-suite. `test_step1_sparse` cross-checks
+# the ported sparse Newick/Takahashi infra against real R (ape::vcv) fixtures;
+# `test_sparse_aug` is Checkpoint 3 (augmented sparse Laplace == dense leaf-only
+# oracle); `test_lambda_direction` checks the sparse-EM Λ M-step direction
+# ascends the true marginal (mstep_Lambda/fit_em_aug back the sparse_em_fit.jl
+# demos, off the public `drm()` path, and had no other coverage).
+include("test_step1_sparse.jl")
+include("test_sparse_aug.jl")
+include("test_lambda_direction.jl")
+
+# Julia-side standing gate for the phylo_count_large_p capability row: the row's
+# own boundary named the absence of one as its limitation (the harness was R-side
+# only). Needs no R and no fixtures. Also round-trips re_sd across tree heights,
+# which is the raw-vs-normalised covariance trap.
+include("test_phylo_count_largep_gate.jl")
+
+# NOTE (HANDOVER step, #465 remainder): test_analytic_grad.jl and
+# test_q4_laplace.jl were investigated and NOT wired — see the #465 after-task
+# note for why (superseded by test_qgate_fd_gradient.jl / obsolete bench POC).
+# test_lambda_p100.jl is a genuine, reproducible failure at fixture scale
+# (mstep_Lambda descends the true marginal at p=100) tracked as a new issue,
+# not silently skipped.
 
 # Always-on R-parity HARNESS smoke test (machinery only, no R, no fixtures).
 # Placed at the END to avoid colliding with other in-flight branches' includes.
 include("test_parity_harness.jl")
 include("test_parity_biv_q4_phylo_reml.jl")       # #445 Option A: #433/#434 same-target fixture
 include("test_parity_gaussian_phylo_mean.jl")     # #445 Option A: #437/#438 Route A fixture
+include("test_q4_reml_warm_restart.jl")           # #484: public drm() converges the q4 phylo REML cell
 
 # Delta-method prediction standard errors (feat-predict-se).
 include("test_predict_se.jl")
@@ -296,6 +320,9 @@ include("test_reml_newton_sigma_phylo.jl")
 # Bivariate q4 REML must correct ALL FOUR among-axis SDs (β_μ AND β_σ profiled), not
 # just the means — regression for the scale-axis REML gap (#18).
 include("test_reml_q4_allaxes.jl")
+# Bivariate q2 structured REML (#470): marginalises beta_mu1/beta_mu2 only (the
+# axes with a random effect on this route); sigma1/sigma2/rho12 stay outer.
+include("test_reml_q2_structured.jl")
 include("test_reml_baseline_ladder.jl")
 # Covariate dispersion (`sigma ~ x`) with a mean-only phylo RE for NB2 (#164):
 # the per-observation log-dispersion (vector-nuisance) generalisation of the
@@ -303,6 +330,15 @@ include("test_reml_baseline_ladder.jl")
 include("test_164_mean_re_covariate_sigma.jl")
 # Same covariate-dispersion path extended to Gamma and Beta (#164).
 include("test_164_gamma_hetero.jl")
+
+# Cox–Reid (opt-in `method = :REML`) for Poisson (#465, migrated from the poc
+# and previously never run — no test covered the PR #451 Cox–Reid landing).
+# #443: the scalar `(1 | g)` GHQ route (the one certified cell). #450: phylo /
+# relmat / animal Laplace. The characterization file documents the ML default
+# and the routes still uncertified.
+include("test_cox_reid_poisson_ranef.jl")
+include("test_cox_reid_poisson_phylo.jl")
+include("test_cox_reid_characterization.jl")
 
 # Experimental optimizer / EM-robustness fixes for the not-yet-wired sources under
 # src/experimental/ (#305 deterministic LBFGS gradient, #306 monotone conjugate EM,
@@ -318,6 +354,9 @@ if get(ENV, "DRM_PARITY_TESTS", "0") == "1"
     end
     @testset "R-parity via drm_bridge vs drmTMB 0.6.0" begin
         include("parity/runparity_bridge.jl")
+    end
+    @testset "R-parity via drm_bridge R-formula constructs vs drmTMB 0.7.0 (#467)" begin
+        include("parity/runparity_bridge_formula.jl")
     end
 else
     @info "R-parity suite skipped (set DRM_PARITY_TESTS=1 to run)"

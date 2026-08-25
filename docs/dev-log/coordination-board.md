@@ -4,7 +4,50 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
-## Active-Lane-Split (2026-08-24 — G0 NAMED: catch up with drmTMB, then complete the package)
+## Active-Lane-Split (2026-08-25 — Waves 1+2 landed on a branch; THREE PRs await the owner)
+
+_**START HERE:** [`docs/dev-log/handover/2026-08-25-claude-handover-drmtmb-catchup.md`](handover/2026-08-25-claude-handover-drmtmb-catchup.md)._
+
+_| **NOTHING IS MERGED. Both repos' `main` are untouched** — DRM.jl `8d45b651`, drmTMB `fb8e6c1a5`.
+Three PRs are open and are the OWNER's call, not a lane's: **DRM.jl#485** (draft, 44 commits),
+**drmTMB#1080** (#460 bridge CI routing, repaired after adversarial review), **drmTMB#1082** (four
+capability rows moved). `AGENTS.md` requires maintainer approval for `src/`, the formula grammar, and
+`AGENTS.md` — all three are touched._
+
+_| **EIGHT CAPABILITY ROWS MOVED** (drmTMB#1082): `0 covered · 6 partial · 4 experimental · 1 unsupported`
+→ **`5 covered · 4 partial · 1 experimental · 1 unsupported`**, CLOSURE: PASS. To covered:
+`biv_gaussian_residual`, `plain_binomial_nonphylo`, `base_gaussian_location_scale`,
+`gaussian_phylo_mean`, `biv_q4_phylo_reml`. To partial: `general_covariance_structured`,
+`phylo_count_large_p`, `cross_family_latent`. Each checked against design/168's four limbs, not against
+an impression. **Every row that can move without the owner has now moved** — the one remaining
+`experimental` row (`phylo_gamma_beta_binomial`) is gated on the #473 reinstall decision, and
+`engine_control_surface` is `unsupported` by design and must never move._
+
+_| **OUR OWN CAPABILITY PAGE WAS EVIDENCE AGAINST US** (DRM.jl#490): `docs/src/capabilities.md` listed the
+cross-family bivariate model as "Absent — no cross-family bivariate model is implemented" while
+`src/mixed_family.jl`, three wired test files and a ~450-line methods guide sat on `main`. Public
+documentation is one of design/168's four limbs, so the page was holding a row down by asserting the
+capability did not exist. Swept the page's other two negative claims — both hold._
+
+_| **ONE ROW HELD BACK ON PURPOSE:** `gaussian_response_mask` stays `partial` though its four limbs
+are arguably met. `response = "include"` is still refused on the Gaussian mean-phylo route, and that is
+a hole in the **named** capability, not an excluded neighbour. Its old boundary — which said the default
+`drop` path also fails — was corrected: #482 fixed it (the cause was positional species-to-leaf mapping,
+not a missing tree re-prune)._
+
+_| **`supported` IS NOT A STATUS** — the vocabulary is `covered > partial > experimental > planned >
+unsupported`. The countdown used to count `claim_status != 'supported'` and print "N unsupported rows":
+`len(caps)` by construction, unable to ever register progress. Fixed in `d265d876`._
+
+_| **STILL TRUE:** both `interval_status != "coverage_claimed"` fences intact — **no row claims interval
+coverage**; the #468 campaign is UNRUN and awaits an owner go/no-go (D-139). #420/#406 OPEN and DIRTY
+(do not rebase). #49, #136 PARKED. D-111 OFF. `.codex/agents/shannon-coordinator.toml` PROTECTED._
+
+_| **DO NOT reinstall drmTMB casually (#473):** "0.7.0" identifies ≥16 builds; the installed one is 16
+shipped commits behind `origin/main`. Reinstalling moves the comparator under every banked number at
+once — record `Rscript tools/drmtmb_provenance.R --toml` first, then re-run the harnesses._
+
+## Active-Lane-Split (2026-08-24 — G0 NAMED) — SUPERSEDED by the entry above
 
 _**START HERE:** this entry. **Lane `feat/drmtmb-catchup`** (Claude Code), branched off `origin/main`
 @ **`5de340fe`**. The previous entry's "lane is IDLE pending an owner-named G0" is **no longer true** —
@@ -38,8 +81,19 @@ _| **COMPUTE (owner-directed): Totoro AND DRAC.** Totoro for pilot cells (≤150
 R library on `/project` (never `/scratch`, purged ~60 d). Attach via the existing `~/.ssh/cm-*` sockets;
 never trigger Duo (D-64). **D-139 binds: #468 stops for a go/no-go before any grid runs.**_
 
-_| **STILL TRUE, unchanged:** no capability row is `supported` (6 partial · 4 experimental · 1
-deliberately unsupported); **both `interval_status != "coverage_claimed"` fences intact** — agreement
+_| **VOCABULARY CORRECTION (2026-08-24) — `supported` IS NOT A STATUS.** Earlier entries below, this
+lane's own first entry, and Mission Control all said "no capability row is `supported`". The governing
+registry (drmTMB `docs/design/168`) defines exactly five: **`covered > partial > experimental > planned
+> unsupported`**. Nothing can ever become `supported`. Worse, `tools/parity_ledger.py` counted
+`claim_status != 'supported'` and printed the result as "N unsupported capability rows" — a number equal
+to `len(caps)` by construction, which could never move however much evidence landed, and which labelled
+6 `partial` + 4 `experimental` rows with a word the registry reserves for *deliberately rejected*. Fixed
+in `d265d876`; the countdown now reads **`11 capability rows [6 partial · 4 experimental · 1
+unsupported]`**. **Promotion here means `experimental → partial` or `partial → covered`.**_
+
+_| **SUPERSEDED 2026-08-25** — the "no row is covered" line below was true when written and is not
+now: five rows are `covered` on drmTMB#1082 (unmerged). **Still true and unchanged:**
+**both `interval_status != "coverage_claimed"` fences intact** — agreement
 between two engines is not calibration against truth, and only the coverage campaign can earn their
 removal. #420/#406 remain OPEN (DIRTY) — **do not rebase**. #49, #136 PARKED. D-111 OFF.
 `.codex/agents/shannon-coordinator.toml` PROTECTED — never stage._

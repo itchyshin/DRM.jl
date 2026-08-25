@@ -127,14 +127,15 @@ under opt-in `method = :REML` (the former 413–423 FE-only hole; σ-RE, slopes,
 multi-ranef, and structured / phylo / meta stay `ArgumentError`), and
 `src/gaussian_ranef.jl` adds the Patterson–Thompson term
 `½ logdet(Xμ′ V⁻¹ Xμ)` on the Woodbury spine. Exercised by
-`test/test_reml_ordinary_ranef.jl` (standalone; **not in the default suite yet**)
-only; `test/test_reml.jl` retains the random-slope rejection. ML stays the
+`test/test_reml_ordinary_ranef.jl`, which is **in the default suite**
+(`test/runtests.jl`, wired by #445 "Option A" after #439/#440 landed);
+`test/test_reml.jl` retains the random-slope rejection. ML stays the
 default. This is not AI-REML, not a TSV flip, and not “parity complete.”
 
 `REML bivariate phylogenetic location-scale (q4, all axes)` is `implemented`:
-`src/reml_q4.jl` is included in the module (`src/DRM.jl:38`) and
+`src/reml_q4.jl` is included in the module (`src/DRM.jl:55`) and
 `test/test_reml_q4_allaxes.jl` is in the default suite
-(`test/runtests.jl:230`), asserting the restricted correction reaches all four
+(`test/runtests.jl`), asserting the restricted correction reaches all four
 axes (mu1, mu2, sigma1, sigma2; issue #18 regression). **This corrects
 `docs/src/capabilities.md`**, which still describes `reml_q4` as
 "present in `src/experimental/` only; not in the `DRM.jl` include list" --
@@ -142,18 +143,41 @@ that was true when the audit page was written but is no longer true; `git log`
 shows `src/DRM.jl`'s include list was touched after the audit page's last
 commit.
 
+`Model comparison suite (LRT/anova/AICc/weights/update)` is `implemented`, but the
+`weights` member needs reading carefully, because two things in this ledger point
+different ways and a scanning reader will take the wrong one.
+
+- It is **not** Akaike / model weights. Neither DRM.jl nor drmTMB computes those,
+  despite `weights` sitting in a list next to `AICc` — which is precisely the
+  reading the row name invites. There is no `akaike_weights` in either package.
+- It is `StatsAPI.weights`: **prior, per-observation** weights. `src/comparison.jl`
+  returns `ones(nobs(fit))` unconditionally, because DRM.jl fits do not store prior
+  weights at all. Its docstring says so plainly.
+- drmTMB's `weights.drmTMB` returns a real stored vector (`object$model$weights`,
+  `R/methods.R`), which it genuinely uses — its bootstrap reads it
+  (`R/profile.R`) and `associate_pairs()` guards on `any(weights != 1)`.
+
+So the accessor is at parity in *name* and not in *substance*, and the gap is
+already recorded elsewhere in this ledger: the `base_weights` gate is closed as an
+`intentional_error` on the grounds that "DRM.jl bridge payload has no weights
+slot". Passing `weights = ...` through `engine = "julia"` is refused.
+
+Kept `implemented` because every named member exists and is exported, which is this
+file's stated bar. Flagged because a row can meet the bar and still leave a reader
+believing something false — and the fix for that is prose, not a status change.
+
 `Chi-bar-square boundary LRT p-value` is `implemented`: `src/chibar.jl` is
-included (`src/DRM.jl:99`), exports `chibar_pvalue`/`lrt_boundary`
-(`src/DRM.jl:125`), and `test/test_chibar.jl` is in the default suite
-(`test/runtests.jl:251`). **This also corrects `docs/src/capabilities.md`**,
+included (`src/DRM.jl:129`), exports `chibar_pvalue`/`lrt_boundary`
+(`src/DRM.jl:160`), and `test/test_chibar.jl` is in the default suite
+(`test/runtests.jl`). **This also corrects `docs/src/capabilities.md`**,
 which lists chi-bar-square boundary inference as "Absent -- no
 implementation."
 
 `AGHQ adaptive-quadrature marginal estimator` is `implemented` (2026-08-24
 audit, PR #449 / commit `93c3db6b`, merged 2026-08-18): `src/aghq_1d.jl` is
-included at `src/DRM.jl:74` and wires a public front end on `drm()`
+included at `src/DRM.jl:75` and wires a public front end on `drm()`
 (`marginal = :AGHQ`, Poisson `(1 | g)` only — `src/poisson.jl:35-37,176-177`).
-`test/test_aghq_1d.jl` is in the default suite (`test/runtests.jl:177`) and
+`test/test_aghq_1d.jl` is in the default suite (`test/runtests.jl`) and
 exercises the quadrature kernel, the public fit path, and the fail-loud
 guards on every unsupported structure (phylo, crossed, correlated slope,
 other families, `:REML`, `associate_pairs`). This corrects the prior
@@ -174,7 +198,7 @@ NegBinomial2 / Gamma / Beta `(1 | g)` (`src/poisson.jl:26`,
 `src/beta.jl:35`), each with its own registered test
 (`test/test_va_poisson_elbo.jl`, `test/test_va_frontend_families.jl`,
 `test/test_variational_binomial.jl`, `test/test_variational_nb2.jl`,
-`test/test_variational_gamma.jl`; `test/runtests.jl:170-176`). Per
+`test/test_variational_gamma.jl`; `test/runtests.jl`). Per
 `docs/dev-log/check-log.d/2026-08-09-136-va-rung2-3.md`, the project's own
 guide banner was corrected from "Planned" to "Experimental" for this reason,
 and that entry explicitly notes "Does not close #136." This audit leaves the
@@ -210,7 +234,7 @@ GHQ across two different families) is included at `src/DRM.jl:101`, and
 reaches it instead of hand-built design matrices. Tests are real and
 registered in the default suite: `test/test_mixed_family.jl` (Gaussian x
 Poisson and Gaussian x Gaussian recovery-style tests), `test/test_mixed_family_postfit.jl`,
-and `test/test_cross_family_formula.jl` (`test/runtests.jl:281,350,352`). By
+and `test/test_cross_family_formula.jl` (`test/runtests.jl`). By
 this file's literal ladder (source + a registered test) that reads as
 qualifying for `implemented`. It stays `missing` on this audit because the
 PR that landed the formula front end recorded an explicit non-promotion
@@ -225,7 +249,7 @@ owner rather than flipping it unilaterally (detail in the evidence file).
 two citation corrections. First, `src/missing_data.jl` is included at
 `src/DRM.jl:131`, not `:101` (`:101` is `mixed_family.jl`, above). Second,
 "explicit listwise (complete-case) deletion only" undersells what exists:
-`_fit_observed_response_rows` (`src/gaussian_core.jl:717`) is a shared helper
+`_fit_observed_response_rows` (`src/gaussian_core.jl:740`) is a shared helper
 used by twelve family files (`beta.jl`, `betabinomial.jl`, `binomial.jl`,
 `cumulative.jl`, `gamma.jl`, `gaussian_core.jl`, `lognormal.jl`,
 `negbinomial.jl`, `poisson.jl`, `tweedie.jl`, `student.jl`,
@@ -239,7 +263,7 @@ masked partial likelihood, not row deletion. Registered tests:
 `test/test_missing_response.jl`, `test/test_missing_response_nongaussian.jl`
 (fourteen families), and `test/test_missing_response_bivariate.jl` (FD-vs-exact
 gradient with masked cells, plus a missing-at-random fit check)
-(`test/runtests.jl:48-50`). This is still short of drmTMB's named row --
+(`test/runtests.jl`). This is still short of drmTMB's named row --
 a native masked likelihood across 18 fitted routes -- because outside the q4
 bivariate engine the native mechanism is auto-triggered listwise deletion,
 the same underlying operation as `drm_listwise`, not a masked likelihood;

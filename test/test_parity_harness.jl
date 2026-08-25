@@ -168,3 +168,33 @@ end
         @test compare_fit(fit, le).passed
     end
 end
+
+@testset "load_data: a numeric column survives a mixed-type CSV (#474)" begin
+    # readdlm returns a Matrix{Any} the moment ANY column in the file is
+    # non-numeric, so a per-column eltype check on that Matrix{Any} sees `Any`
+    # even where a column's own values are all numbers. Guard against a
+    # numeric predictor silently becoming categorical when it shares a CSV
+    # with a string column.
+    mktempdir() do dir
+        open(joinpath(dir, "data.csv"), "w") do io
+            println(io, "y,x,grp")
+            println(io, "1.1,10,a")
+            println(io, "1.9,10,b")
+            println(io, "3.2,20,a")
+            println(io, "3.8,20,b")
+            println(io, "5.3,30,a")
+            println(io, "4.7,30,b")
+            println(io, "7.1,40,a")
+            println(io, "6.9,40,b")
+        end
+        dat = load_data(dir)
+        @test dat.x isa Vector{Float64}
+        @test dat.x == [10.0, 10.0, 20.0, 20.0, 30.0, 30.0, 40.0, 40.0]
+
+        # Modelled as continuous: one "mu_x" coefficient, not a dummy per
+        # distinct value (what a Vector{Any} column produces).
+        fit = drm(bf(@formula(y ~ 1 + x)), Gaussian(); data = dat)
+        named = drm_coef_named(fit)
+        @test Set(keys(named)) == Set(["mu_(Intercept)", "mu_x", "sigma_(Intercept)"])
+    end
+end
