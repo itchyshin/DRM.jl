@@ -14,10 +14,17 @@ Three PRs are open and are the OWNER's call, not a lane's: **DRM.jl#485** (draft
 capability rows moved). `AGENTS.md` requires maintainer approval for `src/`, the formula grammar, and
 `AGENTS.md` — all three are touched._
 
-_| **FOUR CAPABILITY ROWS MOVED** (drmTMB#1082): `0 covered · 6 partial · 4 experimental · 1 unsupported`
-→ **`3 covered · 4 partial · 3 experimental · 1 unsupported`**, CLOSURE: PASS. `biv_gaussian_residual`,
-`plain_binomial_nonphylo`, `base_gaussian_location_scale` → covered; `general_covariance_structured`
-→ partial. Each checked against design/168's four limbs, not against an impression._
+_| **SEVEN CAPABILITY ROWS MOVED** (drmTMB#1082): `0 covered · 6 partial · 4 experimental · 1 unsupported`
+→ **`5 covered · 3 partial · 2 experimental · 1 unsupported`**, CLOSURE: PASS. To covered:
+`biv_gaussian_residual`, `plain_binomial_nonphylo`, `base_gaussian_location_scale`,
+`gaussian_phylo_mean`, `biv_q4_phylo_reml`. To partial: `general_covariance_structured`,
+`phylo_count_large_p`. Each checked against design/168's four limbs, not against an impression._
+
+_| **ONE ROW HELD BACK ON PURPOSE:** `gaussian_response_mask` stays `partial` though its four limbs
+are arguably met. `response = "include"` is still refused on the Gaussian mean-phylo route, and that is
+a hole in the **named** capability, not an excluded neighbour. Its old boundary — which said the default
+`drop` path also fails — was corrected: #482 fixed it (the cause was positional species-to-leaf mapping,
+not a missing tree re-prune)._
 
 _| **`supported` IS NOT A STATUS** — the vocabulary is `covered > partial > experimental > planned >
 unsupported`. The countdown used to count `claim_status != 'supported'` and print "N unsupported rows":
@@ -75,8 +82,9 @@ to `len(caps)` by construction, which could never move however much evidence lan
 in `d265d876`; the countdown now reads **`11 capability rows [6 partial · 4 experimental · 1
 unsupported]`**. **Promotion here means `experimental → partial` or `partial → covered`.**_
 
-_| **STILL TRUE, unchanged:** no capability row is `covered` (6 partial · 4 experimental · 1
-deliberately unsupported); **both `interval_status != "coverage_claimed"` fences intact** — agreement
+_| **SUPERSEDED 2026-08-25** — the "no row is covered" line below was true when written and is not
+now: five rows are `covered` on drmTMB#1082 (unmerged). **Still true and unchanged:**
+**both `interval_status != "coverage_claimed"` fences intact** — agreement
 between two engines is not calibration against truth, and only the coverage campaign can earn their
 removal. #420/#406 remain OPEN (DIRTY) — **do not rebase**. #49, #136 PARKED. D-111 OFF.
 `.codex/agents/shannon-coordinator.toml` PROTECTED — never stage._

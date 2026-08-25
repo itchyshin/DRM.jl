@@ -1,4 +1,4 @@
-# Session Handoff: drmTMB catch-up — SIX capability rows moved, three PRs awaiting the owner
+# Session Handoff: drmTMB catch-up — SEVEN capability rows moved, three PRs awaiting the owner
 
 Meta: 2026-08-25 · from **Claude Code** (Shannon) · TARGET **claude** · AUTHOR **claude**
 
@@ -30,18 +30,34 @@ treat as historical.
 
 ## What Was Accomplished
 
-**Six capability rows moved** (drmTMB#1082, unmerged):
+**Seven capability rows moved** (drmTMB#1082, unmerged):
 
 ```
 before: 0 covered · 6 partial · 4 experimental · 1 unsupported
-after:  4 covered · 4 partial · 2 experimental · 1 unsupported     CLOSURE: PASS
+after:  5 covered · 3 partial · 2 experimental · 1 unsupported     CLOSURE: PASS
 ```
 
-**Six rows moved in total** — that is the maximum reachable without you. Of the five that did not:
-`gaussian_response_mask` and `engine_control_surface` **must not move** (no working path; deliberately
-rejected); `cross_family_latent` is **unsatisfiable by construction** (no native comparator exists);
-`biv_q4_phylo_reml` and `phylo_gamma_beta_binomial` need **your decisions** (#478 scope narrowing, #473
-reinstall).
+**Seven rows moved in total.** Two of the four that did not move were held for reasons I later found
+were **my own misreadings**, so the list below is the corrected one:
+
+- `engine_control_surface` — **must not move.** Deliberately rejected; that is the whole point of the row.
+- `cross_family_latent` — **narrow, not unsatisfiable.** I first read its boundary as demanding native
+  parity that cannot exist. Re-reading it: it only says "development route" and constrains public docs.
+  Movable in principle; not tonight.
+- `general_covariance_structured` — moved to `partial`; `covered` needs breadth this lane did not build.
+- `phylo_gamma_beta_binomial` — needs **your decision** (#473 reinstall).
+- `gaussian_response_mask` — **held at `partial` deliberately, and this one is a judgement, not a block.**
+  All four design/168 limbs are arguably met, and I fixed its stated blocker myself in #482 (the default
+  `drop` path works on mean-phylo now — the cause was positional species-to-leaf mapping, not a missing
+  tree re-prune). But `response = "include"` is still refused on that route, and that is a hole in the
+  **named** capability rather than an excluded neighbour: one of the two mask modes does not work on a
+  route this row covers. Promoting it would have been defensible on the letter of the bar and wrong on
+  the substance.
+
+Two entries in the previous version of this paragraph were wrong: `biv_q4_phylo_reml` was listed as
+needing your #478 decision — #478 states a *limitation*, not a gate, so it was promotable and is now
+`covered`; and `gaussian_response_mask` was listed as having "no working path", which #482 had already
+fixed by the time I wrote it.
 
 | row | move | evidence |
 |---|---|---|
