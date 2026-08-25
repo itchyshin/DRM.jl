@@ -102,7 +102,12 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::LogNormal, data, r
                  gfit.scales, gfit.formula, lnll, gfit.nllgrad, gfit.ranef,
                  gfit.estim_method, gfit.reml_loglik, gfit.ml_loglik - jac,
                  gfit.marginal)
-    return out
+    # The 19-arg constructor above defaults `iterations` to -1 ("not recorded");
+    # this route borrows the Gaussian bivariate fit's optimiser run wholesale
+    # (only the reported likelihood is Jacobian-shifted), so its iteration count
+    # is the honest count for THIS fit too — carry it through rather than
+    # dropping it back to -1.
+    return _withiterations(out, gfit.iterations)
 end
 
 # Strictly-positive check on the observed cells of a bivariate lognormal response.

@@ -38,6 +38,7 @@ include("test_gaussian_core.jl")
 # runs near the core Gaussian tests.
 include("test_reml.jl")
 include("test_reml_ordinary_ranef.jl")  # #445 Option A: #439/#440 Gaussian mean (1 | g) REML
+include("test_niterations.jl")  # #466: fit.niterations wired into every iterative family fitter
 include("test_bf_grammar.jl")
 include("test_gaussian_bivariate.jl")
 include("test_bivariate_lognormal.jl")
