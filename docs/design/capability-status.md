@@ -127,8 +127,9 @@ under opt-in `method = :REML` (the former 413–423 FE-only hole; σ-RE, slopes,
 multi-ranef, and structured / phylo / meta stay `ArgumentError`), and
 `src/gaussian_ranef.jl` adds the Patterson–Thompson term
 `½ logdet(Xμ′ V⁻¹ Xμ)` on the Woodbury spine. Exercised by
-`test/test_reml_ordinary_ranef.jl` (standalone; **not in the default suite yet**)
-only; `test/test_reml.jl` retains the random-slope rejection. ML stays the
+`test/test_reml_ordinary_ranef.jl`, which is **in the default suite**
+(`test/runtests.jl:40`, wired by #445 "Option A" after #439/#440 landed);
+`test/test_reml.jl` retains the random-slope rejection. ML stays the
 default. This is not AI-REML, not a TSV flip, and not “parity complete.”
 
 `REML bivariate phylogenetic location-scale (q4, all axes)` is `implemented`:
