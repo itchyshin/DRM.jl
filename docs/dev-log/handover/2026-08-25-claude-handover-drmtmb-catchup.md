@@ -221,6 +221,41 @@ These came after the section above, and one of them changed a capability row.
   not credible. So the fits are at the optimum and the flag is wrong. An earlier version of this handover
   and of the row's boundary had that backwards and quietly impugned sound evidence; both are corrected.
 
+## `poly()` landed — the bridge-formula group is now closed (#492)
+
+`poly()` was the last construct on #467's list and the only one rejected outright. It is implemented,
+with two R-parity fixtures on byte-identical CSV.
+
+**Both blockers I had stated were wrong, and both in the pessimistic direction.**
+
+1. I said `newdata` was the blocker — recomputing the QR on fresh rows would silently give a different
+   basis. Materialised columns are **not reconstructed for `newdata` at all**; they fail *loudly* with a
+   missing column (`src/bridge.jl:28`), exactly as `scale()` already does. The thing I was worried about
+   was already shipping with the identical limitation.
+2. The real boundary was somewhere I had not looked. `poly()` expands to k columns, so it rewrites to a
+   `+` group — and R treats `poly(x, 2)` as **one term**. Measured against `model.matrix()` on both sides:
+
+   | formula | R | bridge | |
+   |---|---|---|---|
+   | `x1 * poly(x1, 2)` | 6 | 6 | accept |
+   | `x2 : poly(x1, 2)` | 3 | 3 | accept |
+   | `poly(x1, 2) + x2` | 4 | 4 | accept |
+   | `x1 + x2 - poly(x1, 2)` | 3 | 3 | accept |
+   | **`(x1 + poly(x1, 2))^2`** | **6** | **7** | **reject** |
+
+   The extra column is `poly1 & poly2`, which R never forms. Seven against six, silently, in a construct
+   that looks obviously fine. `^` is rejected with those numbers in the message.
+
+Also rejected, each named rather than swept under one blanket refusal: `poly()` under a scalar function
+(`log1p(poly(x, 2))` — R maps over the k-column matrix, this rewrite would map over their *sum*),
+`raw = TRUE` (write `I(x^k)`), explicit `coefs =`, multivariate `poly(x, y, degree)`, a non-bare column,
+and degree < 1.
+
+`bridge-poly-cross` exists because accepting `*` was a **claim about crossing**, not an extrapolation
+from the main-effect case. Given `^` turned out to disagree, that caution earned itself.
+
+**7/7 bridge-formula fixtures · `test_bridge_formula_translation.jl` 49/49.**
+
 ## Blockers / Open Questions — all need the owner
 
 - **#468 interval-coverage go/no-go.** Pre-run says GO. n_sim = 1000/cell (MCSE 0.69 pp), **~25 CPU-h**,
