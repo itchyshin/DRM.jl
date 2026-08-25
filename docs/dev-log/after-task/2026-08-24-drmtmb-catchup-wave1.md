@@ -67,13 +67,31 @@ pre-run, and the one drmTMB-side routing fix that unlocks the most user-visible 
 
 `julia --project=test --startup-file=no test/runtests.jl` · `tools/check_test_deps.py` (OK, 185 files) ·
 `tools/parity_ledger.py` (CLOSURE: PASS) · `tools/check_capability_citations.py` ·
+`tools/check_doc_test_citations.py` (new — 108 citations on the public capability page) ·
 `DRM_PARITY_TESTS=1` bridge-formula fixtures (5/5) · drmTMB targeted `testthat` (15 files, 0 failures).
+
+Full-suite runs to completion, each on the tree as it then stood: **312** (Wave 1), **324** (post-merge),
+and a final run on the complete tree with the new gate included. `Pkg.test()` is broken on this machine;
+the direct `runtests.jl` invocation is the only valid form.
 
 ## 6. Tests of the Tests
 
-Both new guards were verified to **fail** on injected drift and pass on restoration —
-`check_capability_citations.py` on a broken single citation, a broken range, and a broken list;
-`drmtmb_provenance.R --check` on a wrong hash. A guard only ever seen green is an untested guard.
+Every new guard was verified to **fail** on injected drift and pass on restoration. A guard only ever
+seen green is an untested guard.
+
+- `check_capability_citations.py` — a broken single citation, a broken range, a broken list.
+- `drmtmb_provenance.R --check` — a wrong hash.
+- `check_doc_test_citations.py` — three drifts: a prefixed citation of an unwired test, a **bare**
+  `test_foo.jl` citation (the obvious escape hatch, which the first version would have missed), and a
+  **commented-out** `include()`, which must not read as wired.
+- `test_phylo_count_largep_gate.jl` — the raw-vs-normalised covariance trap, injected by re-simulating
+  from the normalised correlation. Recovered SD went 0.6261 / 0.4427 / 0.2800 across heights 0.8 / 1.6 /
+  4.0, a spread of **2.236×** — √(4.0/0.8) to three digits, exactly what the arithmetic predicts.
+  Correct behaviour spreads 1.08×; the threshold sits at 1.5, with margin on both sides.
+
+The last one is the only test here that could not have been written without first getting the trap wrong
+somewhere else: raw and normalised agree **exactly** at tree height 1, so a height-1 fixture proves
+nothing and looks like it proves everything.
 
 ## 7a. Issue Ledger
 
