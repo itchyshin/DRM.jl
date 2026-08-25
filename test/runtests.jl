@@ -67,6 +67,7 @@ include("test_postfit.jl")
 include("test_meta.jl")
 include("test_simulate.jl")
 include("test_gaussian_structured.jl")
+include("test_gaussian_phylo_mean_missing_response.jl")  # #482: species-subset (drop) + include refusal
 include("test_phylo_interaction.jl")
 include("test_two_structured_gaussian.jl")
 include("test_two_structured_gaussian_sparse.jl")

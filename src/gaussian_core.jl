@@ -548,8 +548,16 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         (isempty(re) && isempty(sigma_re) && structured === nothing && metav === nothing &&
          length(all_structured) == 0) ||
             throw(ArgumentError("drm: missing Gaussian responses are currently supported for " *
-                "fixed-effect univariate location-scale models. Structured, random-effect, " *
-                "and meta-analysis response-missing support need their own likelihood slice."))
+                "fixed-effect univariate location-scale models (and, separately, the σ-phylo " *
+                "location-scale route). This is a ROUTE-level restriction, not a family-level " *
+                "one — drmTMB's R bridge admits `response = \"include\"` for any Gaussian model " *
+                "regardless of formula structure (#482), but DRM.jl's engine has not yet " *
+                "implemented a missing-response likelihood for a MEAN-phylo/relmat/animal/" *
+                "spatial term, a random effect, or `meta_V` — each needs its own derivation. " *
+                "If this is a phylo-MEAN model, dropping the missing-response rows before " *
+                "calling `drm` (matching `missing = miss_control(response = \"drop\")` at the R " *
+                "bridge, or `drm_listwise` natively) DOES fit correctly here — only unfiltered " *
+                "missing responses on this route are refused."))
     end
     if !isempty(sigma_re)                                      # random effect on log σ
         (isempty(re) && structured === nothing && metav === nothing) ||
@@ -615,8 +623,20 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             if use_sparse_phylo
                 phy = tree isa AbstractString ? augmented_phy(tree) : tree
         _warn_if_tree_not_unit_height(phy)
+                # Match rows to tree LEAVES BY NAME/tip-index (#482), not by the
+                # generic `_group_index` position used above for relmat/animal/
+                # spatial. `_group_index` numbers levels by first-seen order in
+                # `data`, independent of the tree — fine when every leaf is
+                # present, but a SPECIES SUBSET (e.g. after a caller drops
+                # missing-response rows upstream) renumbers the remaining species
+                # 1:(fewer), silently pointing rows at the WRONG tree leaves
+                # instead of just failing the `G == phy.n_leaves` count check.
+                # `_phylo_mean_leaf_index` is subset-tolerant: an absent leaf gets
+                # no observation and stays in the phylo prior only, matching the
+                # σ-phylo route's identical convention.
+                gidx_phy = _phylo_mean_leaf_index(phy, getproperty(data, grp))
                 algorithm in (:auto, :sparse_lbfgs) && return _withformula(
-                    _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol;
+                    _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx_phy, phy.n_leaves, phy, nmμ, nmσ, grp, g_tol;
                                                           penalty = penalty), f)
                 # The conjugate-EM variant maximises a different surrogate; adding a
                 # prior to it is a separate derivation, not a wiring change.
@@ -625,7 +645,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                                         "(the conjugate-EM phylo variant). Use `algorithm = :auto` or " *
                                         "`:sparse_lbfgs` for a penalized phylo fit."))
                 return _withformula(
-                    _fit_structured_gaussian_em(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol), f)
+                    _fit_structured_gaussian_em(fam, y, Xμ, Xσ, gidx_phy, phy.n_leaves, phy, nmμ, nmσ, grp, g_tol), f)
             end
             penalty === nothing ||
                 throw(ArgumentError("drm: `penalty` is only wired for the sparse phylo route. This model " *
