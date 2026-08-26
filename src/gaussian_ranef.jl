@@ -214,6 +214,47 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
     θ0[pμ+1] = log(std(res0) + eps())
     θ0[pμ+pσ+1] = log(std(res0) / 2 + eps())
 
+    # WHY THIS ROUTE NEEDS NO n-SCALED CONVERGENCE FALLBACK (measured 2026-08-26).
+    #
+    # `nll_ml` is a raw SUM over observations, and `g_tol` is an ABSOLUTE gradient
+    # tolerance, so the #491 question applies here too: does `converged` become
+    # unreliable at large n? #491 was exactly this on the sparse-Laplace route,
+    # where a flat threshold graded an n-scaled gradient and good large-n fits
+    # were reported as failures. INVESTIGATED AND THE ANSWER IS NO -- the flag is
+    # trustworthy here, and the reason is structural rather than lucky.
+    #
+    # MEASURED, n = 500 .. 1,000,000 (Gaussian random intercept, StableRNG):
+    #   g_converged = TRUE at every n, on the GRADIENT criterion specifically
+    #   (f_converged and x_converged are false throughout, so nothing weaker is
+    #   propping it up). Iteration count is 11 at every n up to 5e5, 13 at 1e6.
+    #
+    # THE MECHANISM. The achievable gradient floor here is MACHINE EPSILON times
+    # the objective scale, not an inner-solve noise floor -- measured floor/nll is
+    # constant at 2.3e-16 .. 5.8e-16 across three decades of n:
+    #
+    #        n        nll        achievable floor    floor/nll   headroom to 1e-8
+    #      1e3        954          2.27e-13           2.4e-16      43,980x
+    #      1e4        9,913        4.26e-12           4.3e-16       2,346x
+    #      1e5        99,823       5.82e-11           5.8e-16         172x
+    #      1e6        998,477      2.33e-10           2.3e-16          43x
+    #
+    # That is because the marginal here is EXACT (Woodbury + matrix-determinant
+    # lemma, see the header) -- no inner Newton mode solve, so no stopping noise.
+    # `sparse_laplace_glmm.jl` has five iterative-solve constructs, and its floor
+    # was ~1e-4 at n = 512, some NINE ORDERS larger than the 2.3e-13 here at
+    # n = 1000. That gap is the whole difference between #491 and this route.
+    #
+    # NOTE `autodiff = :forward` does NOT make this scale-invariant, which is the
+    # tempting wrong explanation. Measured away from the optimum, the gradient
+    # scales LINEARLY with n (||g|| = 249 / 2,215 / 21,610 at n = 1e3/1e4/1e5,
+    # per-observation flat at ~0.22). Optim sees the true summed gradient.
+    #
+    # SO THE MARGIN IS FINITE AND SHRINKS AS 1/n. Since floor is proportional to n
+    # and g_tol is absolute, headroom falls from ~44,000x to ~43x over 1e3 .. 1e6.
+    # EXTRAPOLATED (not measured, and flagged as such): it would reach g_tol = 1e-8
+    # near n ~ 4e7. Far outside any dataset this route is built for, but if that
+    # ever changes, normalise the objective by n the way fit_q4_sparse_tmb.jl and
+    # reml_q4.jl do -- do NOT add a #491-style fallback, which only papers over it.
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
     V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
