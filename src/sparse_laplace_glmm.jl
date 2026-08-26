@@ -178,8 +178,16 @@ end
 function _laplace_outer_converged(res, nllhat, gfinal, θ, n::Int, g_tol)
     isfinite(nllhat) && nllhat < 1e17 || return false
     Optim.converged(res) && return true
-    grad_limit = max(1e-4 * (1 + norm(θ, Inf)), g_tol * max(n, 1))
-    return norm(gfinal, Inf) <= grad_limit
+    # gfinal is the gradient of the SUMMED (not averaged) penalized marginal
+    # NLL, so its norm scales with n; comparing it against an n-independent
+    # threshold (the old `1e-4 * (1 + norm(θ, Inf))` term) makes the check
+    # fail at exactly the n where that flat term stops dominating the
+    # n-scaled `g_tol * n` term -- i.e. it gets HARDER to pass as n grows,
+    # backwards from what a convergence check should do (#491). Normalise
+    # by n first, matching the convention already used by the q4 routes
+    # (fit_q4_sparse_tmb.jl, reml_q4.jl), which optimise the MEAN objective
+    # for the same scale-invariance reason.
+    return norm(gfinal, Inf) / max(n, 1) <= max(g_tol, 1e-4)
 end
 
 function _poisson_fixed_start(y, X)
