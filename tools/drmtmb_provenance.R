@@ -31,49 +31,22 @@
 #   Rscript tools/drmtmb_provenance.R --toml     # paste into expected.meta.toml
 #   Rscript tools/drmtmb_provenance.R --check <code_hash>   # exit 1 on mismatch
 
-suppressWarnings(suppressMessages({
-  ok <- requireNamespace("drmTMB", quietly = TRUE)
-}))
+# The fingerprint itself lives in drmtmb_provenance_lib.R so the parity harnesses
+# can stamp it into their evidence without a second copy of the hashing logic.
+# Two copies could drift, and a stamp that no longer matches what `--check`
+# computes would be a false reassurance rather than provenance.
+source(file.path(dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1])),
+                 "drmtmb_provenance_lib.R"))
 
-if (!ok) {
+prov <- drmtmb_provenance()
+if (is.null(prov)) {
   cat("ERROR: drmTMB is not installed in this R library.\n", file = stderr())
   quit(status = 2)
 }
-
-desc <- utils::packageDescription("drmTMB")
-version <- as.character(utils::packageVersion("drmTMB"))
-built <- if (is.null(desc$Built)) "<none>" else desc$Built
-
-# Hash the installed CODE, not the files: deparse every object in the namespace in
-# name order. This is stable across reinstalls of identical source and changes the
-# moment any function body does.
-ns <- asNamespace("drmTMB")
-nms <- sort(ls(ns, all.names = TRUE))
-src <- vapply(
-  nms,
-  function(n) {
-    obj <- tryCatch(get(n, envir = ns), error = function(e) NULL)
-    if (is.function(obj)) {
-      paste(deparse(obj), collapse = "\n")
-    } else {
-      # non-functions: record name + class only; data payloads are not the contract
-      paste0("<", paste(class(obj), collapse = ","), ">")
-    }
-  },
-  character(1)
-)
-blob <- paste0(nms, "\036", src, collapse = "\035")
-
-code_hash <- if (requireNamespace("digest", quietly = TRUE)) {
-  digest::digest(blob, algo = "sha256", serialize = FALSE)
-} else {
-  # no hard dependency on digest: fall back to the system tool
-  tf <- tempfile()
-  on.exit(unlink(tf), add = TRUE)
-  writeLines(blob, tf, useBytes = TRUE)
-  out <- tryCatch(system2("shasum", c("-a", "256", tf), stdout = TRUE), error = function(e) NA_character_)
-  if (length(out) && !is.na(out[1])) sub("\\s.*$", "", out[1]) else "<unavailable>"
-}
+version   <- prov$version
+built     <- prov$built
+code_hash <- prov$code_hash
+nms       <- seq_len(prov$n_objects)   # only its length is used below
 
 args <- commandArgs(trailingOnly = TRUE)
 
