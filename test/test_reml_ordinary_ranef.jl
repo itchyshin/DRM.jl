@@ -144,4 +144,44 @@ import ForwardDiff
         @test_throws ArgumentError lrtest(red, full)
         @test isfinite(aic(full))
     end
+
+    # ------------------------------------------------------------------ #499
+    # Xμ′V⁻¹Xμ is PSD by construction but formed by Woodbury SUBTRACTION, so it
+    # can round to a noise-level NEGATIVE determinant. `logdet` has no Symmetric
+    # method and falls through to LU, where logabsdet returns sign -1 and
+    # log(-1.0) throws DomainError.
+    #
+    # First seen as an INTERMITTENT CI failure (pass → fail → pass on an unchanged
+    # commit) and assumed to be runner ULP noise. It is not. A mean covariate held
+    # CONSTANT WITHIN GROUP is collinear with Z, so as σb² grows the group means
+    # absorb the mean signal, Xμ′V⁻¹Xμ → 0, and rounding decides the sign. That
+    # design reproduces it deterministically.
+    #
+    # Deliberately RNG-free: #498 showed MersenneTwister is not stream-stable
+    # across Julia versions, and a regression test must not depend on that.
+    @testset "REML restriction matrix stays PSD-safe when x is collinear with g (#499)" begin
+        G = 8; per = 6
+        gi = repeat(1:G, inner = per)
+        xg = [-1.5, -0.9, -0.4, 0.1, 0.3, 0.8, 1.2, 1.7]   # one x per group
+        bg = [ 3.1, -2.4,  1.8, -3.6, 2.9, -1.1, 0.7, -2.2] # wide group spread
+        x  = xg[gi]
+        y  = 1.0 .+ 0.5 .* x .+ bg[gi] .+
+             0.01 .* [isodd(i) ? 1.0 : -1.0 for i in 1:(G * per)]
+        data = (; y, x, g = gi)
+
+        fμ = @formula(y ~ 1 + x + (1 | g))
+        fσ = @formula(sigma ~ 1)
+
+        # Before the fix this threw DomainError(-1.0, "log was called with a
+        # negative real argument"). A non-PD restriction must reject the step,
+        # never throw.
+        #
+        # This asserts ONLY that the fit completes with a finite criterion. The x
+        # slope is NOT identified under this design (x is collinear with g, so the
+        # random intercepts absorb it) and is not checked — a degenerate design is
+        # exactly the point, and its estimate is not meaningful.
+        fit = drm(bf(fμ, fσ), Gaussian(); data, method = :REML)
+        @test fit.converged
+        @test isfinite(reml_loglik(fit))
+    end
 end
