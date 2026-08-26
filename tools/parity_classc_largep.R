@@ -209,7 +209,22 @@ print(do.call(rbind, rcond_log))
 # original measurement, so this updates it in place with full-precision SE
 # columns rather than adding a duplicate; poisson_phylo_p1000/p3000 are new).
 # ---------------------------------------------------------------------------
-se_cols <- c("max_abs_se_diff", "max_rel_se_diff", "se_tmb", "se_julia")
+# --- provenance stamp (#473) -------------------------------------------------
+# Record WHICH drmTMB build produced these numbers, not just its version string.
+# "drmTMB 0.7.0" identifies at least 16 different builds, so a version alone
+# cannot tell a later reader whether a disagreement is DRM.jl regressing or the
+# COMPARATOR having moved underneath the fixture. Stamped at write time from the
+# single definition in drmtmb_provenance_lib.R.
+.tools_dir <- tryCatch({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (length(f)) dirname(sub("^--file=", "", f[1])) else "tools"
+}, error = function(e) "tools")
+source(file.path(.tools_dir, "drmtmb_provenance_lib.R"))
+.drmtmb_stamp <- drmtmb_code_hash()
+new_tab$drmtmb_code_hash <- .drmtmb_stamp
+
+se_cols <- c("max_abs_se_diff", "max_rel_se_diff", "se_tmb", "se_julia",
+             "drmtmb_code_hash")
 old <- read.delim(out_path, sep = "\t", stringsAsFactors = FALSE, check.names = FALSE,
                    colClasses = "character", na.strings = character(0), quote = "")
 missing_cols <- setdiff(se_cols, names(old))
@@ -218,7 +233,7 @@ for (col in missing_cols) old[[col]] <- NA_character_
 base_order <- c("capability_id", "cell_id", "label", "status", "max_abs_coef_diff",
                  "loglik_tmb", "loglik_julia", "loglik_diff",
                  "max_abs_se_diff", "max_rel_se_diff", "se_tmb", "se_julia",
-                 "tolerance", "note")
+                 "tolerance", "note", "drmtmb_code_hash")
 old <- old[, base_order]
 
 new_tab_chr <- as.data.frame(lapply(new_tab, as.character), stringsAsFactors = FALSE)
