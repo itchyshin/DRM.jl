@@ -399,3 +399,63 @@ phylocov miscalibration is a Wald-on-nonlinear-reparameterisation artefact. **D-
 the workflow**: its first phase measures seconds/rep and returns GO or NO-GO with a budget, so it will
 not launch a long campaign while the owner is asleep. If NO-GO it reports the number that *would*
 answer it.
+
+---
+
+# Session 6 — overnight close-out
+
+## Merged tonight
+
+| repo | commit | what |
+|---|---|---|
+| DRM.jl | `8d0bfedb` | #500 (#499 PSD-safe logdet) — closed #499 |
+| DRM.jl | `0b8f561f` | #507 (#503 follow-up, source-level guard) |
+| DRM.jl | `ca7c95cd` | #501 / #502 / #504 / #505 |
+| drmTMB | `fc8ee77a6` | #1085 — Phase 1.5 cap lifted, **2 → 5 covered of 10** |
+
+## Held for the owner
+
+- **PR #506** (#491 convergence normalisation) — fully green, Julia 1.12 included. Held deliberately:
+  it changes the convergence criterion for **every family** on the sparse-Laplace path.
+- **PR #508** (#495 closed-form logdet gradient) — CI running. Correct and faster, but it does **not**
+  fix #495; it removes one of three throw surfaces.
+
+## #495 — the discriminating test cannot run
+
+Set out to compare profile vs Wald on the same fits. **Profile intervals on `:phylocov` fail 10/10**,
+across three exception types (`ArgumentError` / `DomainError` / `SingularException`), 14–490 s per
+attempt. There is no instrument, so the NO-GO is not a budget problem.
+
+One of the three is a **fourth site of the #503 defect class**: `fit_q4_sparse_tmb.jl:331` computed
+`ForwardDiff.gradient(v -> logdet(Symmetric(lc_to_Λ(v))), lc)`, which throws once the profile
+optimiser drives `lc` to where `lc_to_Λ` is numerically singular. No guard was needed — in log-Cholesky
+`logdet Λ = 2·Σ_diagonal lc[k]`, so the gradient is exactly **2** on positions `[1,5,8,10]` and 0
+elsewhere. Matches AD to 4.4e-16, cheaper, cannot throw. PR #508.
+
+**Two further blockers recorded on #495:**
+1. `parm` selects by **block, not coefficient** (`inference.jl:263`), so a cheap 3-entry pilot
+   (L11 control / L44 over-coverer / L43 under-coverer) is not expressible through the public API.
+   A per-coefficient `parm` is a small change and the difference between a ~10-minute pilot and an
+   unaffordable one. **This is the highest-leverage next step for #495.**
+2. Wald itself can return `(-Inf, Inf)` on this block — 8 of 10 entries on one seed. The 1000-rep
+   campaign's summaries are conditioned on "finite interval" and never surfaced it.
+
+## Issue ledger: 28 → 15 open
+
+28 closed, every one verified by running something rather than reading code. Of the 15 remaining, six
+are real near-term work (#495, #491, #482, #473, #472, #467) and the rest are roadmap or deliberately
+deferred backlog (#327, #280, #270, #269, #227, #49, #9, #8, #471).
+
+## The recurring failure mode of this session, for whoever reads next
+
+**Six comparisons returned "no difference" from apparatus that was not live.** A stashed patch that
+never loaded; a copied Manifest pointing `dev` at the wrong directory; an invalid `pgrep` flag; two
+suites truncating one log; and — after I had already filed a lesson about exactly this — a positive
+control that grepped `closed form` lowercase against a comment reading `CLOSED FORM`.
+
+The rule earned: **a null result is only evidence if the apparatus is known to be live**, and a token
+check is only as good as the token. Filed at `~/shinichi-brain/memory/LESSONS.md`.
+
+## Status board
+
+`https://claude.ai/code/artifact/cabc9c81-95fe-4d0a-8b49-6bfd5943f57b`
