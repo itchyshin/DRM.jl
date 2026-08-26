@@ -107,6 +107,46 @@ estimates shift only 0.04–0.21 SD — they were already at the answer.
 
 Same signature at ntip=16/32/64, so N changes the **frequency**, not the mechanism.
 
+### #503 — I filed it wrong; the correction is the finding
+
+Filed as "unguarded sparse Cholesky throws PosDefException". **The throw is the SAFE branch.** Fixing
+only it would have repaired the 772 cases that already failed safely and left 1654 that silently
+return a finite likelihood computed from a wildly non-PD matrix (worst: `min_eig = -1.17e22`
+returning `reml_loglik = -131.881`).
+
+Root cause is upstream: `lc_to_cov` is PD by construction in exact arithmetic but numerically
+singular at extreme log-Cholesky values — at `lc = [-25, 1, -25]`, `det(Λ) = -2.24e-38` (negative)
+while `isposdef` still answers true. `inv(Λ)` is meaningless, `H_uu` inherits it, and LAPACK's `potrf`
+notices only sometimes.
+
+**CI's red was the machine behaving correctly.** Totoro's green was the dangerous branch.
+
+Fix in [PR #505](https://github.com/itchyshin/DRM.jl/pull/505): reject inadmissible Λ before `inv(Λ)`
+(`det > 0`, `cond < 1e12`), plus `check = false` at the flagged line as defence in depth.
+Tree route only — the relmat route keeps a PD `D⁻¹` term on every block, which is why this hid.
+
+| | non-PD H | silent finite | rejected | healthy |
+|---|---|---|---|---|
+| main | 2426 | **1654** | 772 | 2207 |
+| guarded | 2426 | **0** | 2426 | **1407** |
+
+The 2207 → 1407 is the cost: `cond` alone cannot separate ~800 extreme-but-benign Λ from the bad
+ones. Real fits sit at `cond` 1.0–2.6 and every failure needs ≥1.6e17, so the threshold has nine
+orders of headroom — but it is a behaviour change, and it is the number to push back on.
+
+### Five PRs, all locally verified
+
+| PR | issue | 1.10 CI | 1.12 CI | full suite |
+|---|---|---|---|---|
+| [#500](https://github.com/itchyshin/DRM.jl/pull/500) | 499 | pass | fail (#503) | 325 / 0 |
+| [#501](https://github.com/itchyshin/DRM.jl/pull/501) | 498 | pass | **pass** | — |
+| [#502](https://github.com/itchyshin/DRM.jl/pull/502) | 496 | pass | **pass** | — |
+| [#504](https://github.com/itchyshin/DRM.jl/pull/504) | 497 | pass | **pass** | 325 / 0 |
+| [#505](https://github.com/itchyshin/DRM.jl/pull/505) | 503 | pending | pending | 325 / 0 |
+
+**None merged** — deliberately left for the owner. #505 changes behaviour for ~800 parameter
+combinations and deserves a real read.
+
 ### Hypotheses tested and REFUTED — do not re-derive these
 
 1. *One shared boundary weakness across #496/#498/#499.* Three unrelated defects; #499 fails at
@@ -116,6 +156,11 @@ Same signature at ntip=16/32/64, so N changes the **frequency**, not the mechani
 3. *#497 is a lying convergence flag (#491 class).* The flag is honest.
 4. *The `Inf` barrier at `reml_q4.jl:381/383` causes #497's `ls_failed`.* Plumbing verified; the fit
    is **bit-identical** with a 1e6 barrier (`theta[end] = -1.057576`). It is never reached.
+5. *#503's unguarded Cholesky is the defect.* It is the safe branch; see above.
+
+Also corrected: the honest #497 baseline is **238/300**, not 249/300 — 11 fits report
+`converged = true` with `g_residual` above the requested `g_tol` (Optim stopped on the f-criterion).
+That is a correctness bug in its own right and #504 fixes it too.
 
 Still open on #497: what *does* make BackTracking fail on a finite objective. The finite-difference
 gradient producing a non-descent direction is the obvious next hypothesis. **Untested.**
