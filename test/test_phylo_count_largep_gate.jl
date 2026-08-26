@@ -28,18 +28,20 @@
 # three trees. Measured spread is ~1.08x. That gap is what the assertion below
 # is sized against.
 #
-# KNOWN-BROKEN: `converged` at scale — DRM.jl#491
+# FIXED: `converged` at scale — DRM.jl#491
 # -----------------------------------------------
-# `fit.converged` is true at p=128 and false for every p >= 192, while the
-# estimates get BETTER. `_laplace_outer_converged` compares a flat limit,
+# `fit.converged` used to be true at p=128 and false for every p >= 192, while
+# the estimates got BETTER. `_laplace_outer_converged` compared a flat limit,
 # 1e-4*(1 + norm(theta, Inf)) ~ 1.6e-4, against a gradient that grows linearly
 # with n; the relative gradient is flat (1.21e-7, 1.33e-7, 1.39e-7 at
-# n = 512, 1024, 2048). The `g_tol * n` term written to handle this is ~30x too
-# small to ever win the max() and first binds near n = 16,000.
+# n = 512, 1024, 2048). The `g_tol * n` term written to handle this was ~30x too
+# small to ever win the max() and first bound near n = 16,000. The fix
+# normalises the gradient by n before comparing it to a flat floor
+# (max(g_tol, 1e-4)), matching the convention already used by the q4 routes.
 #
-# That is recorded with `@test_broken` rather than by asserting `false`. Pinning
-# the wrong value would make a FIX look like a regression; `@test_broken` reports
-# "Unexpectedly Pass" the moment #491 is repaired, which is the signal we want.
+# This used to be recorded with `@test_broken` rather than by asserting
+# `false`, so that a fix would show up as "Unexpectedly Passed" instead of
+# looking like a regression. Now that #491 is fixed, it is a plain `@test`.
 
 using DRM
 using Test
@@ -103,10 +105,10 @@ end
     @testset "converged flag at scale (DRM.jl#491)" begin
         small = _largep_sim_fit(128, 0.2, SIG_TRUE)
         large = _largep_sim_fit(512, 0.2, SIG_TRUE)
-        @test small.fit.converged                      # true today
-        # Should also be true: the p=512 fit is BETTER by every relative measure.
-        # Currently false because the acceptance limit does not scale with n.
-        @test_broken large.fit.converged
+        @test small.fit.converged
+        # The p=512 fit is BETTER than p=128 by every relative measure, and is
+        # now also flagged true (the acceptance limit is normalised by n).
+        @test large.fit.converged
         # Whatever the flag says, the fit itself must stay usable.
         @test isfinite(large.fit.loglik)
         @test isapprox(large.fit.theta[2], B1_TRUE; atol = 0.08)
