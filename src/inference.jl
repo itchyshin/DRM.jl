@@ -279,21 +279,25 @@ function _ci_validate_parm(fit::DrmFit, parm)
             push!(known, (p, String(nm)))
         end
     end
+    # A bare block Symbol naming a block this fit does not have is NOT an error:
+    # callers legitimately pass a SUPERSET of block names covering several model
+    # shapes (e.g. [:mu, :sigma, :resd, :resd_sigma]) and expect absent blocks to
+    # be skipped. Rejecting that would break existing callers for no benefit.
+    #
+    # A Pair is different -- it names one specific coefficient -- but only when
+    # its block is actually present. Absent block => same superset logic, skip it.
+    # So the check fires exactly where a typo is the only plausible explanation:
+    # the block exists, and the coefficient in it does not.
     for sel in sels
-        if sel isa Pair
-            key = (first(sel), String(last(sel)))
-            if !(key in known)
-                avail = sort([c for (b, c) in known if b === first(sel)])
-                throw(ArgumentError(
-                    "confint: no coefficient `$(last(sel))` in block `:$(first(sel))`. " *
-                    (isempty(avail) ?
-                        "That block has no coefficients (known blocks: $(sort(collect(blocks))))." :
-                        "Available in that block: $(avail)."),
-                ))
-            end
-        elseif sel isa Symbol
-            sel in blocks || throw(ArgumentError(
-                "confint: no block `:$(sel)`. Known blocks: $(sort(collect(blocks)))."))
+        sel isa Pair || continue
+        blk = first(sel)
+        blk in blocks || continue
+        if !((blk, String(last(sel))) in known)
+            avail = sort([c for (b, c) in known if b === blk])
+            throw(ArgumentError(
+                "confint: no coefficient `$(last(sel))` in block `:$(blk)`. " *
+                "Available in that block: $(avail).",
+            ))
         end
     end
     return nothing
