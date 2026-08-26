@@ -328,7 +328,27 @@ function marginal_and_exact_grad(prob::AugProblem, Q_cond::SparseMatrixCSC,
     #          −0.5 logdetP = const + 0.5 N logdet Λ(lc). AD over the dense 4×4
     #          logdet (CHOLMOD-free). Only the 10 lc entries are nonzero. ----
     N = prob.n_total
-    glogdetΛ = ForwardDiff.gradient(v -> logdet(Symmetric(lc_to_Λ(v))), lc)
+    # #495: this was `ForwardDiff.gradient(v -> logdet(Symmetric(lc_to_Λ(v))), lc)`,
+    # which THROWS DomainError once the profile optimiser pushes `lc` far enough
+    # that `lc_to_Λ(lc)` is numerically singular -- PD by construction in exact
+    # arithmetic, not in floating point. That is the #503 defect class again, on
+    # a fourth surface: the ForwardDiff-Dual path inside the profile endpoint's
+    # gradient, which the reml_q2.jl admissibility guard does not reach. It made
+    # `confint(fit; method = :profile, parm = :phylocov)` fail 10/10 attempts.
+    #
+    # No guard is needed, because the quantity has a CLOSED FORM here. In the
+    # log-Cholesky parameterisation Λ = L L' with L[i,i] = exp(lc[k]), so
+    #     logdet Λ = 2 * logdet L = 2 * Σ_diagonal lc[k]
+    # and its gradient is exactly 2 on the diagonal positions and 0 elsewhere.
+    # Verified against the AD result to 4.4e-16 on healthy Λ, and exact where AD
+    # throws. Also cheaper: no 4x4 logdet, no AD tape.
+    glogdetΛ = zeros(eltype(grad), 10)
+    let k = 0
+        for j in 1:4, i in j:4
+            k += 1
+            i == j && (glogdetΛ[k] = 2)
+        end
+    end
     grad[o6+1:o6+10] .+= 0.5 * N .* glogdetΛ
 
     # --- (2c) 0.5 ∇_θ logdetH via tr(H⁻¹ ∂H/∂θ_k), Takahashi. --------------
