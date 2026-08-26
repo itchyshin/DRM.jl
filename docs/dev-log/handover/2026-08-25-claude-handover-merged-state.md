@@ -76,6 +76,59 @@ Known before it started: `_LAPLACE_LOG_SD_FLOOR = log(1e-6)` exists **only** in
 collapse (σ̂ ≈ 3e-04) sits two orders **above** it. So a shared floor is already ruled out as the
 explanation.
 
+## Session 2 (2026-08-25 evening) — four PRs open, all Julia 1.10 green
+
+| PR | issue | what | verification |
+|---|---|---|---|
+| [#500](https://github.com/itchyshin/DRM.jl/pull/500) | 499 | PSD-safe REML restriction determinant | **full suite 325 testsets, 0 failures**; original throws on the new test |
+| [#501](https://github.com/itchyshin/DRM.jl/pull/501) | 498 | StableRNG in the Cox–Reid generators | cross-version on Totoro: draws hash identically, fits agree to 10 s.f. |
+| [#502](https://github.com/itchyshin/DRM.jl/pull/502) | 496 | documented as measured small-sample behaviour | docs job passes |
+| [#504](https://github.com/itchyshin/DRM.jl/pull/504) | 497 | widened stall-restart trigger | **0/51 → 51/51**, both arms one ENV-switched build |
+
+**New issue [#503](https://github.com/itchyshin/DRM.jl/issues/503)** — unguarded sparse Cholesky at
+`reml_q2.jl:96` throws `PosDefException` at the definiteness boundary. Line 133 of the same file
+already guards; one site was missed. Platform-sensitive: passes Julia 1.12.6 (Totoro), fails 1.12.7
+(CI). **Deliberately NOT fixed** — there is no deterministic reproducer, and the failure path is
+exactly what cannot be verified without one. Filing beats a plausible unverifiable guard.
+
+**#503 is the only thing keeping #500's 1.12 job red.** Proven disjoint: `nll_reml` is a local
+closure in `gaussian_ranef.jl` and nothing in `reml_q2.jl` references it.
+
+### What #497 turned out to be (the most useful result)
+
+Not a lying flag. `g_residual` (`g_tol = 1e-3`): converged median 0.00073, non-converged median
+0.00338 — **all 51 above tolerance**, genuinely non-stationary. 51/51 terminate via `ls_failed`,
+median 3 iterations, none hitting the 200-iteration cap.
+
+The defect is that **the stall-restart cannot see them**. Its trigger is the exact equality
+`minimizer(res) == phi0`; 180/249 (72%) of the *successes* depend on that restart, and 0/51 of the
+failures ever match it because they move a few steps first. Widening it rescues all 51, and their
+estimates shift only 0.04–0.21 SD — they were already at the answer.
+
+Same signature at ntip=16/32/64, so N changes the **frequency**, not the mechanism.
+
+### Hypotheses tested and REFUTED — do not re-derive these
+
+1. *One shared boundary weakness across #496/#498/#499.* Three unrelated defects; #499 fails at
+   variance → ∞, the others → 0.
+2. *#498 is a Julia-version-dependent collapse.* No version-dependent behaviour exists; the RNG was
+   not stream-stable, so the comparison was never like-for-like.
+3. *#497 is a lying convergence flag (#491 class).* The flag is honest.
+4. *The `Inf` barrier at `reml_q4.jl:381/383` causes #497's `ls_failed`.* Plumbing verified; the fit
+   is **bit-identical** with a 1e6 barrier (`theta[end] = -1.057576`). It is never reached.
+
+Still open on #497: what *does* make BackTracking fail on a finite objective. The finite-difference
+gradient producing a non-descent direction is the obvious next hypothesis. **Untested.**
+
+### Process notes worth not repeating
+
+- Long jobs were twice run in a working tree something else was editing (once locally, once on
+  Totoro). Use an isolated worktree / directory and a **unique log path** — two suites redirecting to
+  one log truncated each other and produced misleading line counts.
+- `pgrep -fc` is not valid on macOS; the flag error made a fallback print "finished" for a suite that
+  was still running.
+- 34 agent worktrees have accumulated under `.claude/worktrees/`.
+
 ## Owner decisions still outstanding
 
 1. **The Phase 1.5 cap** — `base_gaussian_location_scale`, `biv_gaussian_residual`,
