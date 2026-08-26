@@ -512,3 +512,81 @@ can be judged against a gradient that works.
 2. **#495** — add per-coefficient `parm` selection (`inference.jl:263`); it is the difference between a
    ~10-minute pilot and an unaffordable one.
 3. **PR #506** — owner read, then merge.
+
+---
+
+# Session 8 — a wrong diagnosis retracted, a non-bug documented, and the merge queue
+
+## #509: I filed it wrong, and the retraction is the finding
+
+Filed as "the q4 analytic gradient is wrong by five orders of magnitude on the relmat/structured
+route". **It is not.** Two things overturned it:
+
+1. **The engine passes its own gate on a well-posed structured problem** — I applied the phylo FD gate
+   to `make_problem_from_Q` (the constructor the structured route uses) and got
+   `max|analytic − FD| = 4.73e-07`, inside the 1e-6 bar. Both routes also define `nll`/`nllgrad!`
+   **byte-identically** (`gaussian_bivariate.jl:780-785` vs `:935-940`).
+2. **The fixture I measured on is SATURATED** — q=4 latent × 6 groups = 24 latent against 12 rows × 2
+   responses = 24 observations. Λ is unidentified; the fit lands at `det(Λ) = 8.5e-19`,
+   `cond(Λ) = 1.3e+12`, `eigmin = 1.1e-12`. A huge gradient at a singular Λ is **correct behaviour on
+   a pathological objective**, and FD is meaningless there.
+
+Not an FD-methodology artefact either — warm-started at `n_newton` 30 and 120, and cold-started, all
+give `max|diff| = 104,591` identically.
+
+**#509 is rescoped** to what is actually there: `converged = true` at `cond(Λ) = 1.3e+12` (a hair above
+the 1e12 threshold the #503 guard uses on q2), and a saturated fixture that lets a smoke test pass on
+an unidentified model.
+
+## PR #510 — MERGED. FD gate now covers the structured constructor
+
+`main` is `a0755c9d`. The gate existed for phylo and not for structured — the route's own test file
+says so — and its only gradient test was `norm(gp) > norm(g0)`, which a wrong gradient satisfies as
+easily as a right one. The new gate **passes**, so it records a property that already holds.
+
+Design constraint recorded in the test: the model saturates once `4G ≥ 2n`, so it uses `nrep = 4`
+deliberately. Same lesson as #483 — a fixture that passes inside tolerance while meaning nothing.
+
+## PR #511 — gaussian_ranef is SAFE at scale, and now says why
+
+Asked whether `gaussian_ranef.jl`'s convergence flag is trustworthy at large n, given it has a raw-SUM
+objective, an ABSOLUTE `g_tol`, and no fallback at all. **Investigated: no bug.**
+
+Measured n = 500 → 1,000,000: `g_converged = true` at every n, on the **gradient** criterion
+specifically (`f_converged` and `x_converged` false throughout). 11 iterations at every n to 5e5.
+
+**Mechanism** — the achievable floor is machine epsilon × objective scale, not inner-solve noise:
+
+| n | nll | floor | floor/nll | headroom to 1e-8 |
+|---|---|---|---|---|
+| 1e3 | 954 | 2.27e-13 | 2.4e-16 | 43,980× |
+| 1e4 | 9,913 | 4.26e-12 | 4.3e-16 | 2,346× |
+| 1e5 | 99,823 | 5.82e-11 | 5.8e-16 | 172× |
+| 1e6 | 998,477 | 2.33e-10 | 2.3e-16 | **43×** |
+
+The marginal here is **exact** (Woodbury + matrix-determinant lemma) — no inner Newton solve, so no
+stopping noise. `sparse_laplace_glmm.jl` has five iterative-solve constructs and a floor of ~1e-4 at
+n = 512, **nine orders larger**. That gap is the whole difference between #491 and this route.
+
+**Ruled out, because it is the tempting wrong answer:** `autodiff = :forward` does NOT make this
+scale-invariant. Away from the optimum the gradient scales linearly with n (‖g‖ = 249 / 2,215 / 21,610
+at n = 1e3/1e4/1e5, per-observation flat at ~0.22).
+
+The margin is finite and shrinks as 1/n; **extrapolated** (labelled as such in the source) it reaches
+`g_tol` near n ≈ 4e7. If that ever matters, normalise the objective by n as the q4 routes do — NOT a
+#491-style fallback, which papers over the mis-scaling.
+
+## Operational notes
+
+- **The stale `.git/index.lock` is cleared** (owner-authorised; 3.6 h old, zero holders). It had been
+  blocking `git pull`, which is how the working tree drifted a commit behind — and my `gaussian_ranef`
+  edit would have **reverted the #499 fix** had I not checked the base. Fourth stale-base near-miss of
+  this program; always diff your edit's base against `origin/main` before committing.
+- **Merging several PRs serialises.** This repo requires branches current before merge, so each merge
+  puts the others `BEHIND` and their auto-merge stops firing. A watcher that assumes a fixed order can
+  deadlock; the working pattern is to re-`update-branch` whichever is `BEHIND` until all land.
+- **A `git worktree add` that times out leaves a half-created worktree** whose `.git` file git then
+  rejects (`worktree repair` does not fix it, likely the space in "Github Local"). It blocks checking
+  out that branch in the main tree. The alternate-index commit path (`GIT_INDEX_FILE` + `hash-object`
+  / `update-index` / `write-tree` / `commit-tree` / `update-ref`) works around both this and a stale
+  index lock, and is worth knowing.
