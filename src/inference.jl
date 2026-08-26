@@ -165,7 +165,7 @@ function profile_result(fit::DrmFit; level::Real=0.95, threads::Bool=false, parm
     # (the route has no re-optimisable objective). Present only when profile_ci=true was set.
     let stored = _glsp_stored_profile_rows(fit)
         if !isempty(stored)
-            sel = filter(r -> _ci_param_selected(r.param, parm), stored)
+            sel = filter(r -> _ci_coef_selected(r.param, r.coef, parm), stored)
             return (ci=sel, stats=_ProfileStatsRow[], attempted=length(sel), used=length(sel),
                     failed=0, threaded=false, worker_threads=1, julia_threads=Threads.nthreads(),
                     blas_threads=BLAS.get_num_threads(), blas_oversubscribed=false,
@@ -235,20 +235,99 @@ function profile_result(fit::DrmFit; level::Real=0.95, threads::Bool=false, parm
     )
 end
 
+# `parm` selection. Two granularities, because a block can be expensive:
+#
+#   nothing                      every coefficient
+#   :mu                          every coefficient in the :mu block
+#   [:mu, :sigma]                every coefficient in those blocks
+#   :phylocov => "L44"           ONE coefficient           (#495)
+#   [:phylocov => "L44", ...]    several named coefficients (#495)
+#   [:mu, :phylocov => "L44"]    mixed block and coefficient selectors
+#
+# The per-coefficient form exists because profiling is priced per coefficient and
+# some blocks are large: `:phylocov` on the q4 route is TEN entries, so a
+# diagnostic that only needs three (a calibrated control, an over-coverer and an
+# under-coverer) previously had to pay for all ten or none. Block-level callers
+# are unaffected -- every pre-existing `parm` value means exactly what it did.
+_ci_block_of(sel) = sel isa Pair ? first(sel) : sel
+
 function _ci_param_selected(param::Symbol, parm)
     parm === nothing && return true
     parm isa Symbol && return param === parm
-    parm isa AbstractVector{Symbol} && return param in parm
-    throw(ArgumentError("confint: parm must be nothing, a Symbol, or a Vector{Symbol}"))
+    parm isa Pair && return param === first(parm)
+    if parm isa AbstractVector
+        return any(sel -> param === _ci_block_of(sel), parm)
+    end
+    throw(ArgumentError(
+        "confint: parm must be nothing, a Symbol, a `:block => \"coef\"` Pair, " *
+        "or a Vector of those",
+    ))
+end
+
+# A `parm` that names a coefficient which does not exist must THROW, not quietly
+# return zero rows. A silent empty result from a typo is indistinguishable from a
+# legitimate "nothing selected", and this codebase has repeatedly been bitten by
+# measurements taken through apparatus that was not actually connected.
+function _ci_validate_parm(fit::DrmFit, parm)
+    parm === nothing && return nothing
+    sels = parm isa AbstractVector ? collect(parm) : [parm]
+    known = Set{Tuple{Symbol,String}}()
+    blocks = Set{Symbol}()
+    for ((p, _), (_, nms)) in zip(fit.blocks, fit.coefnames)
+        push!(blocks, p)
+        for nm in nms
+            push!(known, (p, String(nm)))
+        end
+    end
+    for sel in sels
+        if sel isa Pair
+            key = (first(sel), String(last(sel)))
+            if !(key in known)
+                avail = sort([c for (b, c) in known if b === first(sel)])
+                throw(ArgumentError(
+                    "confint: no coefficient `$(last(sel))` in block `:$(first(sel))`. " *
+                    (isempty(avail) ?
+                        "That block has no coefficients (known blocks: $(sort(collect(blocks))))." :
+                        "Available in that block: $(avail)."),
+                ))
+            end
+        elseif sel isa Symbol
+            sel in blocks || throw(ArgumentError(
+                "confint: no block `:$(sel)`. Known blocks: $(sort(collect(blocks)))."))
+        end
+    end
+    return nothing
+end
+
+# Full selection: block AND coefficient name. A bare block selector admits every
+# coefficient in it, so this reduces to `_ci_param_selected` unless a Pair names
+# the coefficient explicitly.
+function _ci_coef_selected(param::Symbol, coef::AbstractString, parm)
+    parm === nothing && return true
+    parm isa Symbol && return param === parm
+    parm isa Pair && return param === first(parm) && String(last(parm)) == String(coef)
+    if parm isa AbstractVector
+        return any(parm) do sel
+            sel isa Pair ?
+                (param === first(sel) && String(last(sel)) == String(coef)) :
+                param === sel
+        end
+    end
+    throw(ArgumentError(
+        "confint: parm must be nothing, a Symbol, a `:block => \"coef\"` Pair, " *
+        "or a Vector of those",
+    ))
 end
 
 function _wald_ci(fit::DrmFit, level::Real, parm)
+    _ci_validate_parm(fit, parm)
     se = stderror(fit)
     z = quantile(Normal(), 1 - (1 - level) / 2)
     rows = _CIRow[]
     for ((p, r), (_, nms)) in zip(fit.blocks, fit.coefnames)
         _ci_param_selected(p, parm) || continue
         for (j, idx) in enumerate(r)
+            _ci_coef_selected(p, nms[j], parm) || continue
             est = fit.theta[idx]
             s = se[idx]
             push!(
@@ -261,10 +340,12 @@ function _wald_ci(fit::DrmFit, level::Real, parm)
 end
 
 function _profile_jobs(fit::DrmFit, parm)
+    _ci_validate_parm(fit, parm)
     jobs = NamedTuple{(:param, :coef, :k),Tuple{Symbol,String,Int}}[]
     for ((pp, r), (_, nms)) in zip(fit.blocks, fit.coefnames)
         _ci_param_selected(pp, parm) || continue
         for (j, k) in enumerate(r)
+            _ci_coef_selected(pp, nms[j], parm) || continue
             push!(jobs, (param=pp, coef=nms[j], k=k))
         end
     end
