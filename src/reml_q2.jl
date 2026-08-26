@@ -93,9 +93,16 @@ function _q2_profile_and_schur(prob::CoevoProblem, Q_cond::SparseMatrixCSC,
     Dinv = inv(Symmetric(D))
     P    = prior_precision(Q_cond, inv(Λ))
     H_uu = coevo_Huu(prob, P, Dinv)
-    chH  = cholesky(Symmetric(H_uu))
-
     nu = q * prob.N; nbeta = k * q
+    # Defence in depth (#503), matching the `ch_S` pattern below. The real guard
+    # is `_q2_lambda_admissible`; this catches anything that reaches here anyway.
+    chH  = cholesky(Symmetric(H_uu); check = false)
+    if !issuccess(chH)
+        Sz = Symmetric(zeros(nbeta, nbeta))
+        return (β̂ = β0, û = zeros(nu), S = Sz,
+                ch_S = cholesky(Sz; check = false), ok = false)
+    end
+
     H_ub = zeros(nu, nbeta)
     H_bb = zeros(nbeta, nbeta)
     @inbounds for i in eachindex(prob.leaf_node)
@@ -145,8 +152,38 @@ end
 # REML log-likelihood at outer parameters (Λ, D): profile beta_mu (exact
 # Newton step above), evaluate the ML marginal at beta_hat via the existing
 # (tested) `coevo_marginal_cov`, and subtract 0.5*logdet(S).
+# #503: `lc_to_cov` is PD by construction in exact arithmetic, but at extreme
+# log-Cholesky values the Lambda it returns is numerically singular -- at
+# lc = [-25, 1, -25] its determinant is NEGATIVE (-2.2e-38) while `isposdef`
+# still answers true. `inv(Lambda)` is then meaningless, H_uu inherits it, and
+# LAPACK's potrf detects the resulting indefiniteness only SOMETIMES: it throws
+# PosDefException on some builds (caught upstream -> -Inf, the SAFE outcome) and
+# SUCCEEDS on others, handing the optimiser a finite but meaningless REML value
+# computed from a factorisation of a non-PD matrix. Measured over a 2352-point
+# sweep of the REACHABLE parameter space: 20 throw, 833 return silent garbage.
+# Guarding the factorisation alone would fix only the branch that already failed
+# safely. This rejects the inadmissible parameter itself -- what both share.
+#
+# Threshold: a real fit on the shipped fixture sits at cond(Lambda) = 2.2, and a
+# generous +/-3 log-Cholesky box around that optimum reaches only 3.7e8, while
+# every reproducible failure needs cond >= 1.6e17. Nine orders of separation;
+# 1e12 sits in the middle of the gap.
+#
+# This is the TREE route only: it builds N = 2p-2 augmented nodes of which only
+# p carry data, so the internal-node blocks of H_uu are held up by the prior
+# alone. The known-covariance/relmat route cannot reach this -- every node there
+# carries data, so each block keeps a PD D^-1 term.
+function _q2_lambda_admissible(Λ::AbstractMatrix; maxcond::Float64 = 1e12)
+    A = Matrix{Float64}(Λ)
+    all(isfinite, A) || return false
+    d = det(A)
+    (isfinite(d) && d > 0) || return false
+    return cond(A) < maxcond
+end
+
 function _q2_reml_ll(prob::CoevoProblem, Q_cond::SparseMatrixCSC,
                      Λ::AbstractMatrix, D::AbstractMatrix, β0::AbstractMatrix)
+    _q2_lambda_admissible(Λ) || return -Inf, β0, zeros(prob.q * prob.N)
     local prof
     try
         prof = _q2_profile_and_schur(prob, Q_cond, Λ, D, β0)
