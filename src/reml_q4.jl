@@ -477,15 +477,8 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
     # fails. Needs `beta0`/`Lambda0` (the caller's own starting guesses) to
     # redo that fit; if the caller bypassed them by supplying `phi0` directly,
     # there is nothing to re-derive from, so the restart is skipped.
-    # MEASURED 2026-08-25 (#497). The trigger was `minimizer(res) == phi0` -- an EXACT
-    # stall at the starting point. That is too narrow: at ntip=64, 51/300 fits move a
-    # few steps (median 3, max 6) and THEN die on a BackTracking line-search failure,
-    # so they never matched the signature and were never given the second chance that
-    # 180/249 (72%) of the SUCCESSES depend on. Widening it to any non-converged fit
-    # rescues 51/51 of them, and their estimates move by only 0.04-0.21 SD -- they were
-    # already at the answer, the optimiser just could not certify it.
-    # Converged fits are untouched: `!Optim.converged(res)` still gates everything.
-    if !Optim.converged(res) && beta0 !== nothing && Lambda0 !== nothing
+    if !Optim.converged(res) && Optim.minimizer(res) == phi0 &&
+       beta0 !== nothing && Lambda0 !== nothing
         g_tol_coarse = max(g_tol * 10, 1e-2)
         r_ml_coarse = fit_q4_sparse_tmb(prob, Q_cond;
                                          β0=beta0, Λ0=Matrix(Lambda0),
@@ -520,6 +513,46 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
                 res_try = _optimize_phi(cur, g_tol, max(iterations, 1000))
                 round += 1
             end
+            res = res_try
+        end
+    end
+
+    # Widened rescue (#497). The #484 block above fires only on the EXACT stall
+    # signature (`x == phi0`, zero accepted steps), and needs its coarse ML
+    # re-derivation because a fresh run from an identical point is deterministic
+    # and would reproduce the identical rejected step. The far more common
+    # failure is different: the run MOVES off phi0 (median 3 iterations), then
+    # BackTracking cannot find an acceptable step and Optim stops with
+    # `ls_failed`. Measured over a 300-seed ntip=64 sweep that was 51/51 of the
+    # non-converged fits, and 100% of the failures at ntip=16/32 too -- one
+    # mechanism at every N, not a size-dependent one.
+    #
+    # LBFGS carries no memory across separate `optimize` calls, so a FRESH run
+    # from the point it reached can take a step the stale line-search state
+    # could not. The two blocks are complementary, not alternatives.
+    #
+    # Also fires when Optim reports convergence via the f-criterion while the
+    # gradient is still above the caller's `g_tol` (11/300 cells): those return
+    # `converged = true` at a point that does not meet the tolerance asked for.
+    #
+    # Measured (converged AND g_residual < g_tol): 238/300 -> 297/300.
+    # `reml_loglik` improves or ties in every cell, never worsens; fits that
+    # already met tolerance come out bit-identical (max |Lambda change| = 0);
+    # median wall time unchanged.
+    _g_resid_now = try; Optim.g_residual(res); catch; NaN; end
+    if !Optim.converged(res) || (isfinite(_g_resid_now) && _g_resid_now > g_tol)
+        cur = Optim.minimizer(res)
+        res_try = _optimize_phi(cur, g_tol, max(iterations, 1000))
+        rounds = 0
+        while !Optim.converged(res_try) && Optim.minimizer(res_try) != cur && rounds < 10
+            cur = Optim.minimizer(res_try)
+            res_try = _optimize_phi(cur, g_tol, max(iterations, 1000))
+            rounds += 1
+        end
+        # Adopt the new point ONLY if it is genuinely better, so a rescue that
+        # fails to help can never degrade what the caller receives.
+        _g_resid_try = try; Optim.g_residual(res_try); catch; NaN; end
+        if Optim.converged(res_try) || (isfinite(_g_resid_try) && _g_resid_try < _g_resid_now)
             res = res_try
         end
     end
