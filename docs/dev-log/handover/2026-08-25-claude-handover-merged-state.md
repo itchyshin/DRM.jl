@@ -267,3 +267,79 @@ columns are not reconstructed for `newdata` — it fails loudly, which is right,
 - Workflow `wf_237b7034-22c` on **#491** (sparse-Laplace `converged` flag). Two diagnosis agents
   done, fix agent running, branch `fix/491-laplace-converged` exists.
 - CI on drmTMB #1085 and DRM.jl #500.
+
+---
+
+# Session 4 — the cap is LIFTED and merged; a fix of mine was incomplete
+
+## Landed: 2 → 5 covered
+
+**drmTMB `fc8ee77a6`** (PR #1085, merged). The parity ledger now reads:
+
+```
+0 export gaps (17/17) · 19 ahead-of-drmTMB
+11 capability rows [5 covered · 4 partial · 1 experimental · 1 unsupported]
+CLOSURE: PASS
+```
+
+`base_gaussian_location_scale`, `biv_gaussian_residual`, `gaussian_phylo_mean` promoted on evidence
+they already had. Interval fences **unchanged** — `covered` is a capability claim, not a coverage one.
+
+## #491 solved — and it IS the lying flag #497 was not
+
+Two same-shaped questions, opposite answers, both settled by measuring the right gradient:
+
+- `‖gfinal‖∞` is the gradient of the **summed** NLL, so it scales with n (1.085e-4 → 4.414e-4)
+- the threshold `1e-4·(1+‖θ‖∞)` is **flat** at ~1.5e-4
+- `g_tol·n`, written to compensate, is **8–32× too small to ever win the `max()`** — first binds at n ≈ 15,500
+- per-observation gradient is flat (2.1–2.6e-7); restart from θ̂ moves < 1e-7
+- **`Optim.converged(res)` is false at EVERY p including 128** — the fallback arithmetic alone decided
+  the entire column
+
+Fix (PR #506, branch `fix/491-laplace-converged`): normalise by n, matching the mean-objective
+convention the q4 routes already use. Independently re-verified with a token control on both arms —
+`beta1` **identical** (0.3131 / 0.2368 / 0.3293), only the boolean moves.
+
+**Not fixed, flagged:** the `Optim.converged(res) && return true` short-circuit remains, and it makes
+the flag anti-correlated with care (g_tol=1e-8 → false at 1.39e-07; g_tol=10 → true at 1.18e-03).
+Removing it moves the boundary for every family on that path — owner's call, but now decidable
+against numbers. Also flagged: a `q ≈ n` edge case (m=1) still reports false, bit-identically.
+
+## My #503 fix was INCOMPLETE — PR #507
+
+I claimed on #500 that #503 was its only blocker and #505 would clear it. **Wrong.** CI on 1.12.7
+still threw with #505 merged, and the stacktrace names a **different site**: `coevo_marginal_cov`
+(`coevolution_q.jl:233`) has its own unguarded `cholesky(Symmetric(H))` behind a *"PD: P + PSD data
+term"* comment — the same by-construction claim #503 disproved elsewhere.
+
+Two call sites in `reml_q2.jl` reach it unprotected: **line 197** (the existing `try` wrapped only
+`_q2_profile_and_schur`) and **line 281** (the final evaluation). The Λ-admissibility guard does not
+cover them — different matrix, so `cond < 1e12` protects nothing here.
+
+**Verification limit, stated:** this does not reproduce on macOS 1.10 or Linux 1.12.6. Local tests can
+only show no regression. **CI on 1.12 is the real test of #507.** If it goes green that is the
+evidence; if not, there is a third site.
+
+## Issue ledger: 28 → 17 open, 26 closed today
+
+Every closure verified by running something. Highlights: **#460 (the program's headline)** — profile
+`[0.3853512, 0.5717354]` and bootstrap `[0.4021655, 0.5696364]` through `engine="julia"`, both
+previously refused; #479/#480 Poisson-phylo bootstrap 25/25 against "fails every replicate"; #484
+33/33 on the exact cell it was filed against.
+
+**Reclassified:** #471 is not a catch-up item (drmTMB's own `biv_student()` defers it too, so building
+it moves *ahead*); #467 is 6-of-6 done, narrowed to `newdata` reconstruction; #473 narrowed to
+coverage (2 of 21 fixtures record `drmtmb_code_hash`).
+
+## Status board
+
+`https://claude.ai/code/artifact/cabc9c81-95fe-4d0a-8b49-6bfd5943f57b` — the eleven rows, the two-axis
+reading, and what is deliberately not claimed.
+
+## Open PRs
+
+| PR | what | state |
+|---|---|---|
+| #500 | #499 PSD-safe logdet | blocked on #507, not on itself; 1.10 green, suite 325/0 |
+| #506 | #491 convergence normalisation | CI running |
+| #507 | #503 follow-up guard | CI running — this is the one that unblocks #500 |
