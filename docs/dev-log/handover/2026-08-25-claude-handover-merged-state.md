@@ -343,3 +343,59 @@ reading, and what is deliberately not claimed.
 | #500 | #499 PSD-safe logdet | blocked on #507, not on itself; 1.10 green, suite 325/0 |
 | #506 | #491 convergence normalisation | CI running |
 | #507 | #503 follow-up guard | CI running — this is the one that unblocks #500 |
+
+---
+
+# Session 5 — #503 finally closed, at the source
+
+## The whack-a-mole and what ended it
+
+`coevo_marginal_cov` (`coevolution_q.jl:233`) had ONE unguarded `cholesky(Symmetric(H))` reached
+from **three** call sites: `reml_q2.jl:197`, `reml_q2.jl:281`, `coevolution_q.jl:438`. I guarded them
+one at a time and it took **two CI rounds** to find the third. Guarding the *source* covers all three
+and any future caller. PR #507, merged — `main` is `0b8f561f`.
+
+**The detail worth remembering:** that same function already applies this exact pattern twelve lines
+below, to `chP`, with a comment explaining why an incomplete factor poisons the likelihood. That guard
+was written and the one on `chH` was missed — which is *precisely* the shape of #503 itself, where
+`reml_q2.jl` guarded `ch_S` and missed `chH`. The same slip twice in one subsystem. When you find one
+unguarded factorisation here, grep for its siblings before fixing it.
+
+## First local reproduction, with a two-way positive control
+
+Earlier rounds could only be tested through CI, because the failing Λ is one a converging optimiser
+rarely visits. Calling `coevo_marginal_cov` directly reaches it deterministically:
+
+| Λ | cond | main | guarded |
+|---|---|---|---|
+| healthy | 1 | −133.203 | −133.203 |
+| singular | 3.24e+26 | **THREW PosDefException** | **−Inf** |
+| Λ → ∞ | 1 | −153.965 | −153.965 |
+
+Healthy fits bit-identical; only the failing case moves, to the barrier the callers already expect.
+Full suite on that commit: **325 testsets, 0 failures.** CI green on Julia 1.12.7 — the platform that
+had been failing.
+
+## Also swept, so this is not a fourth-site risk
+
+Audited every `cholesky(` in `src/` without `check = false`. The rest are benign — simulation code
+with known-PD inputs (`fit_ml_q4.jl`, `sparse_em_fit.jl`), or live paths that already handle failure
+(`location_only.jl:193/195` ridge-and-retry, `sparse_aug_plsm.jl:158` finite surrogate).
+
+## State
+
+| PR | what | state |
+|---|---|---|
+| **#506** | #491 convergence normalisation | **fully green, HELD** — changes the criterion for every family on the sparse-Laplace path; wants an owner read |
+| #500 | #499 PSD-safe logdet | CI re-running now that it carries #507 |
+
+Issues **28 → 16 open**, 27 closed. #496 closed as documented-not-patched (its docs page shipped in
+#502 and is live on `main`).
+
+## In flight
+
+Workflow `wf_7d269f3d-43c` on **#495** — profile-vs-Wald on the same fits, to test whether the
+phylocov miscalibration is a Wald-on-nonlinear-reparameterisation artefact. **D-139 gate is built into
+the workflow**: its first phase measures seconds/rep and returns GO or NO-GO with a budget, so it will
+not launch a long campaign while the owner is asleep. If NO-GO it reports the number that *would*
+answer it.
