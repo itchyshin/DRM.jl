@@ -173,6 +173,20 @@ for (cell in cells) {
 }
 
 tab <- do.call(rbind, rows)
+# --- provenance stamp (#473) -------------------------------------------------
+# Record WHICH drmTMB build produced these numbers, not just its version string.
+# "drmTMB 0.7.0" identifies at least 16 different builds, so a version alone
+# cannot tell a later reader whether a disagreement is DRM.jl regressing or the
+# COMPARATOR having moved underneath the fixture. Stamped at write time from the
+# single definition in drmtmb_provenance_lib.R.
+.tools_dir <- tryCatch({
+  f <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  if (length(f)) dirname(sub("^--file=", "", f[1])) else "tools"
+}, error = function(e) "tools")
+source(file.path(.tools_dir, "drmtmb_provenance_lib.R"))
+.drmtmb_stamp <- drmtmb_code_hash()
+tab$drmtmb_code_hash <- .drmtmb_stamp
+
 dir.create(dirname(out_path), showWarnings = FALSE, recursive = TRUE)
 write.table(tab, out_path, sep = "\t", row.names = FALSE, quote = FALSE)
 cat("\nwrote ", out_path, "\n", sep = "")
