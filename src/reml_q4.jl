@@ -477,8 +477,15 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
     # fails. Needs `beta0`/`Lambda0` (the caller's own starting guesses) to
     # redo that fit; if the caller bypassed them by supplying `phi0` directly,
     # there is nothing to re-derive from, so the restart is skipped.
-    if !Optim.converged(res) && Optim.minimizer(res) == phi0 &&
-       beta0 !== nothing && Lambda0 !== nothing
+    # MEASURED 2026-08-25 (#497). The trigger was `minimizer(res) == phi0` -- an EXACT
+    # stall at the starting point. That is too narrow: at ntip=64, 51/300 fits move a
+    # few steps (median 3, max 6) and THEN die on a BackTracking line-search failure,
+    # so they never matched the signature and were never given the second chance that
+    # 180/249 (72%) of the SUCCESSES depend on. Widening it to any non-converged fit
+    # rescues 51/51 of them, and their estimates move by only 0.04-0.21 SD -- they were
+    # already at the answer, the optimiser just could not certify it.
+    # Converged fits are untouched: `!Optim.converged(res)` still gates everything.
+    if !Optim.converged(res) && beta0 !== nothing && Lambda0 !== nothing
         g_tol_coarse = max(g_tol * 10, 1e-2)
         r_ml_coarse = fit_q4_sparse_tmb(prob, Q_cond;
                                          β0=beta0, Λ0=Matrix(Lambda0),
