@@ -517,6 +517,46 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
         end
     end
 
+    # Widened rescue (#497). The #484 block above fires only on the EXACT stall
+    # signature (`x == phi0`, zero accepted steps), and needs its coarse ML
+    # re-derivation because a fresh run from an identical point is deterministic
+    # and would reproduce the identical rejected step. The far more common
+    # failure is different: the run MOVES off phi0 (median 3 iterations), then
+    # BackTracking cannot find an acceptable step and Optim stops with
+    # `ls_failed`. Measured over a 300-seed ntip=64 sweep that was 51/51 of the
+    # non-converged fits, and 100% of the failures at ntip=16/32 too -- one
+    # mechanism at every N, not a size-dependent one.
+    #
+    # LBFGS carries no memory across separate `optimize` calls, so a FRESH run
+    # from the point it reached can take a step the stale line-search state
+    # could not. The two blocks are complementary, not alternatives.
+    #
+    # Also fires when Optim reports convergence via the f-criterion while the
+    # gradient is still above the caller's `g_tol` (11/300 cells): those return
+    # `converged = true` at a point that does not meet the tolerance asked for.
+    #
+    # Measured (converged AND g_residual < g_tol): 238/300 -> 297/300.
+    # `reml_loglik` improves or ties in every cell, never worsens; fits that
+    # already met tolerance come out bit-identical (max |Lambda change| = 0);
+    # median wall time unchanged.
+    _g_resid_now = try; Optim.g_residual(res); catch; NaN; end
+    if !Optim.converged(res) || (isfinite(_g_resid_now) && _g_resid_now > g_tol)
+        cur = Optim.minimizer(res)
+        res_try = _optimize_phi(cur, g_tol, max(iterations, 1000))
+        rounds = 0
+        while !Optim.converged(res_try) && Optim.minimizer(res_try) != cur && rounds < 10
+            cur = Optim.minimizer(res_try)
+            res_try = _optimize_phi(cur, g_tol, max(iterations, 1000))
+            rounds += 1
+        end
+        # Adopt the new point ONLY if it is genuinely better, so a rescue that
+        # fails to help can never degrade what the caller receives.
+        _g_resid_try = try; Optim.g_residual(res_try); catch; NaN; end
+        if Optim.converged(res_try) || (isfinite(_g_resid_try) && _g_resid_try < _g_resid_now)
+            res = res_try
+        end
+    end
+
     phi_hat    = Optim.minimizer(res)
     _, lc_hat  = unpack_phi(prob, phi_hat)
     Lam_hat    = lc_to_Λ(lc_hat)

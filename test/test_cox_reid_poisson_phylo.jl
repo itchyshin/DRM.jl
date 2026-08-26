@@ -14,8 +14,8 @@
 #
 # Worked example:
 #
-#   using DRM, Random, Distributions
-#   rng = MersenneTwister(450)
+#   using DRM, StableRNGs, Distributions
+#   rng = StableRNG(450)
 #   ntip, per = 12, 4
 #   tree = random_balanced_tree(ntip; branch_length = 0.25)
 #   species = repeat(1:ntip, inner = per)
@@ -32,12 +32,13 @@
 
 using DRM
 using Test, Random, LinearAlgebra
+using StableRNGs
 import Distributions
 
 const D = DRM
 
 function _cr_phylo_draw(seed::Int; ntip::Int = 12, per::Int = 4, σphy::Float64 = 0.45)
-    rng = MersenneTwister(seed)
+    rng = StableRNG(seed)
     tree = D.random_balanced_tree(ntip; branch_length = 0.25)
     species = repeat(1:ntip, inner = per)
     n = length(species)
@@ -50,7 +51,7 @@ function _cr_phylo_draw(seed::Int; ntip::Int = 12, per::Int = 4, σphy::Float64 
 end
 
 function _cr_relmat_draw(seed::Int; G::Int = 16, m::Int = 4, σb::Float64 = 0.50)
-    rng = MersenneTwister(seed)
+    rng = StableRNG(seed)
     pos = rand(rng, G, 2) .* 6.0
     Dist = [sqrt(sum(abs2, pos[k, :] .- pos[l, :])) for k in 1:G, l in 1:G]
     K = Symmetric(exp.(-Dist ./ 0.8) + 1e-8 * I)
@@ -144,7 +145,7 @@ _sigma(fit) = exp(D.coef(fit)[end])
     end
 
     @testset "uncertified routes still error" begin
-        rng = MersenneTwister(4504)
+        rng = StableRNG(4504)
         G, m = 8, 4
         n = G * m
         g = repeat(1:G, inner = m)
@@ -217,7 +218,7 @@ _sigma(fit) = exp(D.coef(fit)[end])
     end
 
     @testset "GHQ (1|g) cell is untouched" begin
-        rng = MersenneTwister(4506)
+        rng = StableRNG(4506)
         G, m = 10, 6
         g = repeat(1:G, inner = m)
         x = randn(rng, G * m)

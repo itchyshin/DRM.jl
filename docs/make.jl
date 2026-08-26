@@ -58,6 +58,7 @@ makedocs(
             "diagnostics-and-validation/exact-gaussian-diagnostics.md",
             "diagnostics-and-validation/testing-likelihoods.md",
             "diagnostics-and-validation/simulation-plot-grammar.md",
+            "diagnostics-and-validation/small-sample-behaviour.md",
         ],
         "Developer Notes" => [
             "developer-notes/formula-grammar.md",
