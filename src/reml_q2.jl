@@ -194,7 +194,21 @@ function _q2_reml_ll(prob::CoevoProblem, Q_cond::SparseMatrixCSC,
     end
     prof.ok || return -Inf, prof.β̂, prof.û
     issuccess(prof.ch_S) || return -Inf, prof.β̂, prof.û
-    ml_ll, û, _, _ = coevo_marginal_cov(prob, Q_cond, prof.β̂, Λ, D)
+    # #503 (follow-up): `coevo_marginal_cov` has its OWN unguarded
+    # `cholesky(Symmetric(H))` (coevolution_q.jl:233, commented "PD: P + PSD data
+    # term"). It sits OUTSIDE the try above, which only wrapped
+    # `_q2_profile_and_schur`, so a PosDefException from here escaped the whole
+    # fit -- observed on CI's Julia 1.12.7 in test_reml_q2_structured.jl even
+    # with the Λ-admissibility guard in place. A Λ can pass `cond < 1e12` and
+    # still drive THIS Hessian to the definiteness boundary. Reject the step.
+    local ml_ll, û
+    try
+        ml_ll, û, _, _ = coevo_marginal_cov(prob, Q_cond, prof.β̂, Λ, D)
+    catch e
+        (e isa DomainError || e isa LinearAlgebra.PosDefException ||
+         e isa LinearAlgebra.SingularException) || rethrow(e)
+        return -Inf, prof.β̂, prof.û
+    end
     isfinite(ml_ll) || return -Inf, prof.β̂, û
     return ml_ll - 0.5 * logdet(prof.ch_S), prof.β̂, û
 end
@@ -278,7 +292,17 @@ function fit_coevolution_q2_reml(prob::CoevoProblem, Q_cond::SparseMatrixCSC;
     phî = Optim.minimizer(res)
     Λ̂, D̂ = _q2_reml_unpack_phi(phî)
     reml_ll, β̂, û = _q2_reml_ll(prob, Q_cond, Λ̂, D̂, β_cache[])
-    ml_ll, = coevo_marginal_cov(prob, Q_cond, β̂, Λ̂, D̂)
+    # #503 (follow-up): same unguarded factorisation, at the FINAL point. Here a
+    # failure must not abort a REML fit that otherwise succeeded -- ml_loglik is
+    # a secondary quantity reported for cross-structure comparison, so NaN is the
+    # honest value rather than a thrown fit.
+    ml_ll = try
+        first(coevo_marginal_cov(prob, Q_cond, β̂, Λ̂, D̂))
+    catch e
+        (e isa DomainError || e isa LinearAlgebra.PosDefException ||
+         e isa LinearAlgebra.SingularException) || rethrow(e)
+        NaN
+    end
     σ̂ = [sqrt(D̂[1, 1]), sqrt(D̂[2, 2])]
     ρ̂ = D̂[1, 2] / (σ̂[1] * σ̂[2])
 
