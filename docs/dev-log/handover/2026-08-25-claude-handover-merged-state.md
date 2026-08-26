@@ -188,3 +188,82 @@ gradient producing a non-descent direction is the obvious next hypothesis. **Unt
 ```text
 Read AGENTS.md and docs/dev-log/handover/2026-08-25-claude-handover-merged-state.md. Run the handover rehydration steps, reconcile them with the current git state, then continue only the OWED Next Immediate Steps.
 ```
+
+---
+
+# Session 3 (2026-08-25 night) — merges, the cap lift, and an issue-ledger reckoning
+
+## Merged to main
+
+Four PRs, all fully green at merge: **#501** (#498 StableRNG), **#502** (#496 docs),
+**#504** (#497 relaunch rescue), **#505** (#503 Λ guard). `main` is now `ca7c95cd`.
+
+**#500** (#499 PSD-safe logdet) is rebased onto that and left unmerged at the owner's instruction —
+its only failing check was #503, which #505 fixed, so its CI should now clear.
+
+## The Phase 1.5 cap is lifted — drmTMB PR #1085
+
+Owner decision. Three rows promoted `partial → covered`: `base_gaussian_location_scale`,
+`biv_gaussian_residual`, `gaussian_phylo_mean`. **The ledger goes 2 → 5 covered of 10 admissible.**
+
+Done at the SOURCE OF TRUTH (`R/julia-bridge.R`) with both TSV artifacts regenerated — the TSVs are
+generated files and hand-editing them is how an earlier pass in this program lost a night's work.
+
+The cap assertion was **inverted, not deleted**, so the decision is locked in and a reversion fails
+loudly:
+
+```r
+was:  expect_true(all(phase15$claim_status %in% c("partial", "experimental")))
+now:  expect_true(all(phase15$claim_status == "covered"))
+```
+
+**What it does NOT claim: interval coverage.** Every `interval_status` fence is unchanged. For
+`gaussian_phylo_mean` the recorded interval-failure rate (313/1000 on sigma at ntip=16) stands, as
+does its own note that *the failure rate, not the calibration, is what would block a coverage claim*.
+
+Verified locally: all 16 julia-facing test files pass, FAIL 0; the gate file is 140 passes (up from 138).
+
+## Issue-ledger reckoning — 11 issues closed, all verified by RUNNING something
+
+The open-issue list was badly stale. Every closure below was checked behaviourally, not by reading code:
+
+| # | what proved it |
+|---|---|
+| **460** *(the program's headline)* | profile `[0.3853512, 0.5717354]` and bootstrap `[0.4021655, 0.5696364]` through `engine="julia"`, both previously refused outright |
+| 466 | Poisson reports `niterations = 5` (was `-1`) |
+| 468 | coverage campaign complete — pre-run, certification, results + TSV all banked |
+| 470 | `test_reml_q2_structured.jl` 34/34, covering both the feature and the boundary it asked to confirm |
+| 477, 492, 493, 494 | code verified present on `main`; should have closed with PR #485 |
+| 478 | both claim_boundary rewrites already landed; **no owner decision was needed after all** — nothing was narrowed, the AI-REML term moved from "required" to "explicitly outside" |
+| 479 | Poisson-phylo bootstrap **25/25 successes** against a documented "fails every replicate" |
+| 480 | formula-based surface likewise 25/25, no `MethodError` |
+| 483 | fixture reseeded to 404; the retired seed-111 effect was IID noise, not phylogenetic at all |
+| 484 | `test_parity_biv_q4_phylo_reml.jl` 33/33 — the exact cell it was filed against |
+| 489 | `runparity.jl` exit 0, bridge-* fixtures all executing |
+
+## Two reclassifications that change the roadmap
+
+**#471 is not a catch-up item.** `biv_student()` in drmTMB *itself* raises *"currently allows
+fixed-effect formulas only; random and structured effects are deferred"*. There is no reference
+implementation on either side, so building this would put DRM.jl **ahead of** drmTMB, not level.
+Relabel as beyond-parity/v1.0, and if built it needs simulation recovery rather than parity, since no
+comparator exists.
+
+**#467 is 6 of 6 done**, narrowed to one residual gap. `scale`/`I`/`factor`/`poly`/`(a+b)^k`/`- term`
+all verified accepted with the coefficient counts R's expansion implies. `_BRIDGE_REJECT_CALLS` now
+holds only `:^`, and only for a power over an expression containing `*`. What remains: materialised
+columns are not reconstructed for `newdata` — it fails loudly, which is right, and matters most for
+`poly` whose basis is defined relative to the training `x`.
+
+## Where the catch-up actually stands
+
+- **Features: caught up.** 0 export gaps (17/17 accounted), and DRM.jl is **ahead in 19 places**.
+- **Evidence grade: 2 → 5 of 10 covered** once #1085 lands.
+- The remainder is not "make it do more" — it is proving to `covered` standard what already works,
+  and that is campaign work rather than code.
+
+## In flight at write time
+
+- Workflow `wf_237b7034-22c` on **#491** (sparse-Laplace `converged` flag). Two diagnosis agents
+  done, fix agent running, branch `fix/491-laplace-converged` exists.
+- CI on drmTMB #1085 and DRM.jl #500.
