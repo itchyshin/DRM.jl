@@ -459,3 +459,56 @@ check is only as good as the token. Filed at `~/shinichi-brain/memory/LESSONS.md
 ## Status board
 
 `https://claude.ai/code/artifact/cabc9c81-95fe-4d0a-8b49-6bfd5943f57b`
+
+---
+
+# Session 7 — the most important finding came from a change I then withdrew
+
+## NEW ISSUE #509: the q4 analytic gradient is badly wrong on the relmat/structured route
+
+Measured, same script and FD scheme (central, h = 1e-6), on each route's own fit:
+
+| route | ‖analytic‖ | ‖FD‖ | max abs diff | note |
+|---|---|---|---|---|
+| q4 **phylo** | 8.487 | 8.808 | 0.328 | **corr 0.9977** — the control |
+| q4 **relmat structured** | **108,595** | 20,603 | **103,026** | ‖g‖ = 108,595 **at a converged optimum** |
+
+The phylo row is what makes this readable: it proves `fit.nll` and `fit.nllgrad` are the same function,
+so the FD comparison is valid and this is **not** the #497 trap where `nll` held a different objective.
+
+**Why it went unnoticed** — `test_gaussian_bivariate_q4_structured.jl:167` says so itself: *"Engine FD
+≤1e-6 is already gated on phylo Q_cond… Here we only prove the structured route wires the same nll /
+nllgrad closures."* The FD gate exists for phylo and **not** for structured. The route's only gradient
+test is `norm(gp) > norm(g0)`, which passes happily with a badly wrong gradient.
+
+**Consequences to check:** every q4 result on `relmat`/`animal`/`spatial`; the
+`general_covariance_structured` capability row is measured on this route; and it plausibly contributes
+to #495's profile failures — a profile optimiser driven by a wrong gradient will wander into
+inadmissible regions.
+
+**First step:** extend `test_qgate_fd_gradient.jl`'s existing FD gate to the structured `Q_cond` path.
+The gate exists; it is simply not applied there.
+
+## PR #508 CLOSED, deliberately
+
+The closed-form ∇logdetΛ is mathematically right (matches AD to 4.4e-16) but it **altered the fitted
+trajectory** on the relmat route and I could not explain why. On a route whose gradient is already
+wrong, *"does my change alter the answer"* is not a meaningful test — both answers are wrong.
+
+Revisit **after** #509 is understood. The closed form will still be correct and still cheaper then, and
+can be judged against a gradient that works.
+
+## State at close
+
+| | |
+|---|---|
+| DRM.jl `main` | `8d0bfedb` |
+| drmTMB `main` | `fc8ee77a6` — ledger **5 covered of 10** |
+| open issues | **16** (was 28); 28 closed, all verified by running something |
+| held for owner | **PR #506** (#491) — fully green, changes the convergence criterion for every family on the sparse-Laplace path |
+
+**Highest-leverage next steps**, in order:
+1. **#509** — a broken gradient on a shipped route outranks everything else here.
+2. **#495** — add per-coefficient `parm` selection (`inference.jl:263`); it is the difference between a
+   ~10-minute pilot and an unaffordable one.
+3. **PR #506** — owner read, then merge.
