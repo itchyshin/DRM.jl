@@ -353,7 +353,20 @@ introduces. Returns `(val[, grad], b, ok)`; on a non-PD inner solve `ok = false`
 """
 function _poisson_phylo_laplace_fg(y, Xμ, leaf_node, Q, logdetQ, lf, θ;
                                    grad::Bool = false, b0 = nothing,
-                                   newton_tol::Real = 1e-8, newton_maxiter::Int = 60)
+                                   newton_tol::Real = 1e-10, newton_maxiter::Int = 60)
+    # newton_tol was 1e-8 until 2026-08-26. That is tight enough for coefficients
+    # and logLik (parity ~1e-8) but NOT for the SECOND-derivative quantity: the
+    # inner mode's residual error propagates into the Hessian, and therefore into
+    # every reported SE. Measured on the Poisson relmat cell against native TMB:
+    #     newton_tol   SE(beta0) gap vs TMB
+    #        1e-6           5.6 %
+    #        1e-8           1.29 %      <- the old default
+    #        1e-10          1.1e-05
+    # Two to three orders, at NO extra iteration cost (newton_maxiter unchanged at
+    # 60; the solve simply stops later). The control that rules out a "different
+    # information convention" explanation: Gaussian shares the identical
+    # downstream _finite_hessian/_vcov_from_hessian pipeline and shows NO gap
+    # (3.4e-07), so the divergence is the inner solve, not the outer machinery.
     n = length(y)
     pμ = length(θ) - 1
     q = size(Q, 1)
@@ -648,7 +661,7 @@ end
 
 function _phylo_mean_laplace_nuisance_fg(kind, aux_from, n::Int, Xμ, leaf_node,
                                          Q, logdetQ, θ; grad::Bool = false,
-                                         b0 = nothing, newton_tol::Real = 1e-8,
+                                         b0 = nothing, newton_tol::Real = 1e-10,
                                          newton_maxiter::Int = 60)
     pμ = length(θ) - 2
     βμ = θ[1:pμ]
@@ -858,7 +871,7 @@ A one-column constant `Xσ` reproduces `_phylo_mean_laplace_nuisance_fg` exactly
 """
 function _phylo_mean_laplace_hetero_fg(kind, aux_from, n::Int, Xμ, Xσ, leaf_node,
                                        Q, logdetQ, θ; grad::Bool = false,
-                                       b0 = nothing, newton_tol::Real = 1e-8,
+                                       b0 = nothing, newton_tol::Real = 1e-10,
                                        newton_maxiter::Int = 60)
     pσ = size(Xσ, 2)
     pμ = length(θ) - pσ - 1
@@ -1034,7 +1047,7 @@ end
 
 function _phylo_mean_laplace_fg(kind, aux, n::Int, Xμ, leaf_node, Q, logdetQ, θ;
                                 grad::Bool = false, b0 = nothing,
-                                newton_tol::Real = 1e-8, newton_maxiter::Int = 60)
+                                newton_tol::Real = 1e-10, newton_maxiter::Int = 60)
     pμ = length(θ) - 1
     βμ = θ[1:pμ]
     logσ = clamp(θ[pμ+1], -8.0, 3.0)
@@ -1644,7 +1657,7 @@ inner mode (the same recipe the q4 Q-gate / the Poisson-phylo gate use to reach
 """
 function _poisson_crossed_laplace_fg(y, Xμ, gidx, G, hidx, Hh, lf, θ;
                                      grad::Bool = false, b0 = nothing,
-                                     newton_tol::Real = 1e-8, newton_maxiter::Int = 60)
+                                     newton_tol::Real = 1e-10, newton_maxiter::Int = 60)
     n = length(y)
     pμ = length(θ) - 2
     logσ = clamp.(θ[pμ+1:pμ+2], -8.0, 3.0)
