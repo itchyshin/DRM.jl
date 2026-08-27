@@ -90,6 +90,16 @@ end
         g_fd[k] = (fit.nll(θtest .+ e) - fit.nll(θtest .- e)) / (2h)
     end
     @test g_an ≈ g_fd rtol = 1e-4 atol = 1e-4
+
+    # Converged is not for sale on this route either (2026-08-27 audit catch):
+    # the generic crossed path was the ONE fit function still reporting raw
+    # `Optim.converged(res)` — invisible to the #491 sweep because it never
+    # called `_laplace_outer_converged` at all. The honest default fit reports
+    # converged; a deliberately sloppy g_tol must not.
+    @test fit.converged
+    fit_sloppy = DRM._fit_poisson_crossed_laplace(DRM.Poisson(), y, X, comps,
+                                                  ["(Intercept)", "x"], 10.0)
+    @test !fit_sloppy.converged
 end
 
 @testset "Poisson crossed intercepts via drm() routing" begin
