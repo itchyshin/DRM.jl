@@ -128,4 +128,21 @@ end
         # re-asserted here so this testset stands alone).
         @test _largep_sim_fit(128, 0.2, SIG_TRUE).fit.converged
     end
+
+    @testset "FD vcov step grows with n (large-p SE gap, D-179 roadmap A1)" begin
+        # The p >= 1000 SE-parity gap (~1.5e-3 at p=1000, ~3.6e-3 at p=3000 vs
+        # native TMB on identical data) was the FD NOISE FLOOR: the outer vcov
+        # Hessian differentiated the summed, inner-solved objective at a fixed
+        # h = 1e-4, and the objective's evaluation noise grows with n while the
+        # /h^2 amplification does not. The step is now n-aware
+        # (h ~ 2.5e-7 * n, clamped to [1e-4, 1e-2]); with it the measured gaps
+        # fall to 2.0e-5 (p=1000) and 8.1e-6 (p=3000). Cross-engine numbers
+        # live in the R-side harness (tools/parity_classc_largep.R); this lock
+        # just keeps the step's shape from silently reverting.
+        @test DRM._fd_hessian_step(48) == 1e-4        # small fixtures: unchanged
+        @test DRM._fd_hessian_step(400) == 1e-4       # clamp edge
+        @test DRM._fd_hessian_step(4000) ≈ 1e-3       # p=1000 cell
+        @test DRM._fd_hessian_step(12000) ≈ 3e-3      # p=3000 cell
+        @test DRM._fd_hessian_step(10^6) == 1e-2      # truncation guard
+    end
 end
