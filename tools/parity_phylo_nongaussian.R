@@ -105,6 +105,22 @@ r_fit <- function(cell) {
 }
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
+# Mu-block Wald SEs = sqrt(diag(vcov())) filtered to the mu parameter block by
+# label ("mu:(Intercept)", "mu:x"). Mirrors tools/parity_classc.R: the SE is a
+# second-order quantity, recorded as evidence columns, and NA (not an error) if
+# vcov() fails on one side.
+se_mu_of <- function(fit) {
+  tryCatch({
+    V <- as.matrix(vcov(fit))
+    v <- diag(V)
+    labels <- rownames(V) %||% names(v)
+    keep <- grepl("^mu[:_]", labels)
+    v <- v[keep]
+    ifelse(v > 0, sqrt(v), NA_real_)
+  }, error = function(e) NULL)
+}
+fmt_se <- function(x) if (is.null(x) || !length(x)) "NA" else paste(sprintf("%.6g", x), collapse = ";")
+
 j_fit <- function(cell) {
   JuliaCall::julia_command(sprintf(
     "pn_d = (; y = Float64.(pn_%s), x = Float64.(pn_x), species = String.(pn_sp))", cell$id))
@@ -116,7 +132,9 @@ j_fit <- function(cell) {
   as.numeric(JuliaCall::julia_eval(sprintf(
     'let d = pn_d, tr = pn_tree
        f = DRM.drm(%s, %s; data = d, tree = tr)
-       vcat(DRM.coef(f, :mu), DRM.loglik(f))
+       se = DRM.stderror(f)
+       se_mu = first(se[r] for (p, r) in f.blocks if p === :mu)
+       vcat(DRM.coef(f, :mu), DRM.loglik(f), se_mu)
      end', jbf, cell$jfam)))
 }
 
@@ -126,6 +144,8 @@ for (cell in cells) {
               label = cell$label, status = NA_character_,
               max_abs_coef_diff = NA_real_, loglik_tmb = NA_real_,
               loglik_julia = NA_real_, loglik_diff = NA_real_,
+              max_abs_se_diff = NA_real_, max_rel_se_diff = NA_real_,
+              se_tmb = "NA", se_julia = "NA",
               tolerance = tol, note = "")
 
   rv <- tryCatch({
@@ -137,7 +157,7 @@ for (cell in cells) {
     fit <- eval(str2lang(sprintf('drmTMB(%s, family = %s, data = fx$data)',
                                  bf_txt, cell$rfam)))
     cf <- fit$coefficients$mu
-    c(as.numeric(cf), as.numeric(fit$logLik))
+    c(as.numeric(cf), as.numeric(fit$logLik), as.numeric(se_mu_of(fit)))
   }, error = function(e) { res$note <<- paste("native:", conditionMessage(e)); NULL })
 
   jv <- tryCatch(j_fit(cell),
@@ -145,10 +165,16 @@ for (cell in cells) {
 
   if (!is.null(rv) && !is.null(jv) && length(rv) == length(jv) &&
       all(is.finite(rv)) && all(is.finite(jv))) {
-    k <- length(rv)
-    res$max_abs_coef_diff <- max(abs(rv[-k] - jv[-k]))
-    res$loglik_tmb <- rv[k]; res$loglik_julia <- jv[k]
-    res$loglik_diff <- abs(rv[k] - jv[k])
+    # Each vector is [k mu coefficients, logLik, k mu SEs]; length 2k + 1.
+    k <- (length(rv) - 1L) %/% 2L
+    res$max_abs_coef_diff <- max(abs(rv[seq_len(k)] - jv[seq_len(k)]))
+    res$loglik_tmb <- rv[k + 1L]; res$loglik_julia <- jv[k + 1L]
+    res$loglik_diff <- abs(res$loglik_tmb - res$loglik_julia)
+    se_t <- rv[(k + 2L):length(rv)]; se_j <- jv[(k + 2L):length(jv)]
+    res$se_tmb <- fmt_se(se_t); res$se_julia <- fmt_se(se_j)
+    d <- abs(se_t - se_j)
+    res$max_abs_se_diff <- max(d)
+    res$max_rel_se_diff <- max(d / pmax(abs(se_t), abs(se_j)))
     res$status <- if (max(res$max_abs_coef_diff, res$loglik_diff) < tol) "PARITY_PASS" else "PARITY_FAIL"
   } else if (is.null(rv)) {
     # A native engine that REFUSES the syntax is not a failed comparison -- it is
