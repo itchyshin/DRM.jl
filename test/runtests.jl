@@ -230,9 +230,10 @@ include("test_phylo_count_largep_gate.jl")
 # NOTE (HANDOVER step, #465 remainder): test_analytic_grad.jl and
 # test_q4_laplace.jl were investigated and NOT wired — see the #465 after-task
 # note for why (superseded by test_qgate_fd_gradient.jl / obsolete bench POC).
-# test_lambda_p100.jl is a genuine, reproducible failure at fixture scale
-# (mstep_Lambda descends the true marginal at p=100) tracked as a new issue,
-# not silently skipped.
+# test_lambda_p100.jl is WIRED as a #472 CHARACTERISATION: it asserts the
+# measured defect (mstep_Lambda descends the true marginal at p=100) so a
+# future repair trips it loudly and must revisit the fence.
+include("test_lambda_p100.jl")
 
 # Always-on R-parity HARNESS smoke test (machinery only, no R, no fixtures).
 # Placed at the END to avoid colliding with other in-flight branches' includes.
