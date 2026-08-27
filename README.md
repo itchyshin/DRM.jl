@@ -151,20 +151,29 @@ closed).
 
 **Verified engine (foundation):** the q=4 ML location-scale single fit — 2.18×
 over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
+Per-family engine-vs-engine timings, with their caveats stated, are
+consolidated in [report/speed-per-family.md](report/speed-per-family.md); the
+R↔Julia capability ledger itself lives in drmTMB's generated
+`inst/extdata/julia-capabilities.tsv`, where rows are promoted only on
+measured evidence.
 
-**Inference:** Wald + profile + parametric bootstrap; opt-in **REML** for the
-fixed-effect Gaussian location–scale fit (`method = :REML`, with the
-model-selection guard); epsilon-method bias correction; `heritability` /
+**Inference:** Wald + profile + parametric bootstrap; opt-in **REML**
+(`method = :REML`, with the model-selection guard) across the fixed-effect
+Gaussian location–scale fit, a single Gaussian mean intercept `(1|g)` (#439),
+the σ-phylo route, the bivariate q=4 all-axes route (`reml_q4.jl`, #11), and
+the bivariate q=2 structured route (`reml_q2.jl`, #470); epsilon-method bias
+correction; `heritability` /
 `repeatability` / `icc` with delta + profile CIs. Julia-side R↔Julia helpers
 (`drm_bridge` / `drm_bridge_inference`) are in-tree; **Phase 1.5 /
 [#5](https://github.com/itchyshin/DRM.jl/issues/5)** is **closed** at the
 experimental Hopper finish-matrix bar (#349 + drmTMB #878) — not a CRAN /
 “supported” promotion.
 
-**Not fully wired / still open:** remaining `src/experimental/` prototypes
-(SQUAREM / `fit_em_natgrad` [#13 FAIL — not a public solver], E-step variants,
-dense oracle, leftover `location_only` copy — public `method = :REML`,
-`algorithm = :em`, and `lc_metric` Fisher infra are already in `src/`);
+**Not fully wired / still open:** `src/experimental/` holds only classified
+material — recorded negative results (#13, #472), superseded predecessors, and
+oracles; see [src/experimental/README.md](src/experimental/README.md) for the
+per-file verdicts (public `method = :REML`, `algorithm = :em`, and `lc_metric`
+Fisher infra are already in `src/`);
 **χ̄² boundary inference** where not yet exported; the **variational (VA/ELBO)**
 marginal track (#136, deferred). See
 [Capabilities](docs/src/capabilities.md),
