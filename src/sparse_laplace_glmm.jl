@@ -95,7 +95,13 @@ end
 # n = 12000 (p = 3000) it gives 3.6e-3 vs 6.6e-6 at h = 3e-3; at n = 1200
 # (p = 300) h in [1e-4, 1e-3] is uniformly <= 1.2e-6, so the larger step costs
 # nothing at small n. The three optima fit h ~ 2.5e-7 * n; clamped below at the
-# old default (small fixtures) and above at 1e-2 (truncation guard).
+# old default (small fixtures) and above at 1e-2. NOTE (audit 2026-08-27): the
+# clamp bounds the BASE step only — _finite_hessian then scales it per
+# coordinate by (1 + |θ_i|), so the step actually evaluated on a
+# large-magnitude coordinate exceeds the base bound by that factor. The
+# measured optima above were measured through that same scaling, so the
+# calibration stands; the ceiling is a guard on the base step, not a hard cap
+# on every stencil.
 _fd_hessian_step(n::Integer) = clamp(2.5e-7 * n, 1e-4, 1e-2)
 
 function _finite_hessian(f, x; h::Real = 1e-4)
@@ -1989,7 +1995,17 @@ function _fit_poisson_crossed_laplace(fam::Poisson, y, Xμ, comps, nmμ, g_tol; 
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ]))
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict{Symbol,Vector{Float64}}()
-    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nll(θ̂), n, Optim.converged(res), means, obs, scales)
+    # #491 audit catch: this was the ONE fit function in the file still
+    # reporting raw `Optim.converged(res)` — the exact anti-correlated design
+    # the header documents as rejected. It never called
+    # `_laplace_outer_converged` at all, so the Wave A sweep over that
+    # helper's call sites could not find it. Same fixed relative criterion as
+    # every sibling route now.
+    nllhat = nll(θ̂)
+    gfinal = zeros(length(θ̂))
+    grad!(gfinal, θ̂)
+    converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
+    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
     return _withnll(fit, nll, grad!)
 end
 

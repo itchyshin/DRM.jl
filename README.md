@@ -38,7 +38,7 @@ Same model, same real `q4_p100` data, same Laplace ML marginal as drmTMB
 |---|---|---|
 | single fit (p=100) | 2.48 s, false-conv | **1.14 s, converged → 2.18× faster** |
 | logLik | −256.52 | −256.51 (matches) |
-| O(p) scaling to p=10,000 | infeasible (dense) | **~113 s, k≈1.08 (near-linear)** |
+| O(p) scaling to p=10,000 | not attempted at that scale (measured O(p^1.27) to p=3000, #486) | **~113 s, k≈1.08 (near-linear)** |
 | Wald SEs at the variance boundary | all-NaN (non-PD Hessian) | **valid for 16/17 params** |
 
 Full grid and honest caveats: [report/comparison-grid.md](report/comparison-grid.md).
@@ -86,7 +86,7 @@ sigma: x            0.39537  0.0335957   11.768    <1e-31   0.329524   0.461217
 ─────────────────────────────────────────────────────────────────────────
 ```
 
-The same `bf(...)` grammar carries the full audited surface — 13 families, random
+The same `bf(...)` grammar carries the full audited surface — 14 families, random
 effects on the mean **and** scale, structured (`relmat` / `animal` / `phylo` /
 `spatial`) effects, `meta_V` meta-analysis, the bivariate `rho12` model, and the
 q=4 phylogenetic location–scale (PLSM) route — see
@@ -111,7 +111,7 @@ src/experimental/   leftover prototypes NOT wired into the public API
                     in src/: method=:REML, algorithm=:em, lc_metric (Fisher infra).
 bench/              runnable benchmarks + the q4_p100 fixtures + R fixture gen
 test/               runtests.jl + migrated correctness checks
-report/             13 design/provenance reports (the full poc record)
+report/             53 design/provenance/benchmark reports (the full poc record)
 docs/               Documenter site (mirrors drmTMB navbar) + dev-log; CONTRACT.md
 AGENTS.md ROADMAP.md   the 12-persona team + the phase plan
 .claude/workflows/  10 scripted workflows (W0/Q/A/B/D/F/G/H/S/R)
@@ -137,7 +137,7 @@ General registration. S2/S3 hygiene already landed (#340–#342).
   `phylo` / `spatial`), `meta_V`, and the bivariate q=4 phylogenetic
   location-scale route with `Σ_a` stored on the fit; Wald + profile + bootstrap
   intervals; `predict` / `simulate`.
-- **13 families** — Gaussian, Student-t, Poisson, NegBinomial2,
+- **14 families** — Gaussian, Student-t, SkewNormal, Poisson, NegBinomial2,
   TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal,
   ZeroOneBeta, Tweedie, and CumulativeLogit — plus `zi` / `hu` count modifiers
   and beta boundary modifiers `zoi` / `coi`.
