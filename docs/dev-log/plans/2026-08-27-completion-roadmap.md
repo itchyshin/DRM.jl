@@ -101,6 +101,11 @@ three days: **roughly 5–8 working sessions**, plus campaign time only if Optio
 
 ## Decisions this roadmap needs from Shinichi
 
+**ANSWERED 2026-08-27, all six** — owner instruction: *"Answer decisions 1-6 with your
+recommendations."* Every recommendation below is therefore adopted as decided; recorded as vault
+D-179 and on issues #491, #471, and #8. Wave A is unblocked in full.
+
+
 1. **#491** — adopt a relative-gradient convergence criterion (1e-06..1e-05) and drop the
    short-circuit? (Numbers banked; recommendation: yes, at 1e-06.)
 2. **`gaussian_response_mask`** — if the experiment says wrapper: implement it? (Recommendation: yes.)
