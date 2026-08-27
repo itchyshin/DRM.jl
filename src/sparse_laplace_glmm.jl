@@ -175,19 +175,27 @@ function _laplace_boundary_polish(nll, grad!, θ̂, nllhat; iterations::Int = 10
     end
 end
 
+# The reported `converged` flag answers a FIXED, scale-invariant question --
+# is the mean per-observation gradient small at the optimum -- rather than "did
+# the optimiser meet whatever tolerance it was asked for". Two prior designs
+# failed here (#491): an n-independent absolute limit got HARDER to pass as n
+# grew (gfinal is the gradient of the SUMMED penalized marginal NLL, so its
+# norm scales with n while the limit did not), and short-circuiting on
+# `Optim.converged(res)` made the flag ANTI-correlated with care -- a loose
+# g_tol makes Optim's own criterion trivially satisfiable, so g_tol = 10.0
+# reported converged at relative gradient 1.18e-03 while the default g_tol =
+# 1e-8 reported NOT converged at 1.39e-07. Measured separation on this path:
+# careful fits sit at 1.2e-07..1.5e-07, deliberately sloppy ones at ~1e-03, so
+# 1e-6 has orders of magnitude of margin on both sides (owner decision
+# 2026-08-27, D-179 #1). A fit that genuinely met a tight optimiser tolerance
+# passes this check a fortiori, so no short-circuit is needed; `res` and
+# `g_tol` stay in the signature so the eight call sites and their tests do not
+# churn on a reporting-policy change.
+const _LAPLACE_OUTER_RELTOL = 1e-6
+
 function _laplace_outer_converged(res, nllhat, gfinal, θ, n::Int, g_tol)
     isfinite(nllhat) && nllhat < 1e17 || return false
-    Optim.converged(res) && return true
-    # gfinal is the gradient of the SUMMED (not averaged) penalized marginal
-    # NLL, so its norm scales with n; comparing it against an n-independent
-    # threshold (the old `1e-4 * (1 + norm(θ, Inf))` term) makes the check
-    # fail at exactly the n where that flat term stops dominating the
-    # n-scaled `g_tol * n` term -- i.e. it gets HARDER to pass as n grows,
-    # backwards from what a convergence check should do (#491). Normalise
-    # by n first, matching the convention already used by the q4 routes
-    # (fit_q4_sparse_tmb.jl, reml_q4.jl), which optimise the MEAN objective
-    # for the same scale-invariance reason.
-    return norm(gfinal, Inf) / max(n, 1) <= max(g_tol, 1e-4)
+    return norm(gfinal, Inf) / max(n, 1) <= _LAPLACE_OUTER_RELTOL
 end
 
 function _poisson_fixed_start(y, X)
