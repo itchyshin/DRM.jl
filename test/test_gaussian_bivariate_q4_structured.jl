@@ -165,9 +165,13 @@ end
 end
 
 @testset "Bivariate q=4 structured gradient wiring smoke (#189)" begin
-    # Engine FD ≤1e-6 is already gated on phylo Q_cond (`test_qgate_fd_gradient.jl`).
-    # Here we only prove the structured route wires the same nll / nllgrad closures.
-    fx = _q4s_simulate(; G = 6, nrep = 2, seed = 1895)
+    # Engine FD ≤1e-6 is gated on BOTH routes now (`test_qgate_fd_gradient.jl`,
+    # structured since #510). Here we only prove the structured route wires the
+    # same nll / nllgrad closures — on an IDENTIFIED fixture: nrep = 2 made this
+    # 4G = 24 latent values against 2n = 24 observations, a saturated model whose
+    # Λ is singular, and a smoke assertion on an unidentified fit tests very
+    # little (#509, the same lesson as #483). nrep = 4 keeps it small and posed.
+    fx = _q4s_simulate(; G = 6, nrep = 4, seed = 1895)
     fit = drm(
         _q4s_formula_relmat(), Gaussian();
         data = fx.data, K = fx.K,
@@ -183,4 +187,33 @@ end
     gp = zeros(length(θ))
     fit.nllgrad(gp, θp)
     @test norm(gp) > norm(g0)   # informative gradient away from the MLE
+end
+
+@testset "converged is gated on Λ admissibility (#509)" begin
+    # The regime the retracted half of #509 was actually measuring: G = 6,
+    # nrep = 2 is SATURATED (4G = 24 latent values, 2n = 24 observations), the
+    # fitted Λ comes out numerically singular (measured det 8.5e-19,
+    # cond 1.3e12), and the optimiser still reported success. The public flag
+    # now refuses to claim convergence at an inadmissible Λ — same notion the
+    # q2 route's #503 guard uses (finite, det > 0, cond < 1e12).
+    fx_sat = _q4s_simulate(; G = 6, nrep = 2, seed = 1895)
+    fit_sat = drm(
+        _q4s_formula_relmat(), Gaussian();
+        data = fx_sat.data, K = fx_sat.K,
+        q4_iterations = 100, q4_n_newton = 30, q4_vcov = false,
+    )
+    @test !fit_sat.converged
+    # ... while the fit itself is still returned and finite (the gate is on the
+    # CLAIM, not the estimates).
+    @test all(isfinite, fit_sat.theta)
+
+    # Positive control: the identified default fixture still reports converged,
+    # so the gate separates the two regimes rather than failing everything.
+    fx_ok = _q4s_simulate(; seed = 1894)
+    fit_ok = drm(
+        _q4s_formula_relmat(), Gaussian();
+        data = fx_ok.data, K = fx_ok.K,
+        q4_iterations = 120, q4_n_newton = 30, q4_vcov = false,
+    )
+    @test fit_ok.converged
 end

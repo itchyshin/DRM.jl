@@ -813,7 +813,12 @@ function _fit_bivariate_q4_structured(f::BivariateDrmFormula, fam::Gaussian, dat
         prob = prob,
         n_newton = q4_n_newton,
     )
-    fit = DrmFit(fam, blocks, names, θ̂, V, r.loglik, length(y1), r.converged, means, obs, scales)
+    # #509: the optimiser reported success at a numerically singular Λ
+    # (saturated fixture, cond(Λ) = 1.3e12). Gate the public flag on the same
+    # Λ-admissibility notion the q2 route's #503 guard uses — the estimates
+    # stay available; success is just not claimed at an inadmissible Λ.
+    q4_converged = r.converged && _q2_lambda_admissible(Matrix{Float64}(r.Λ))
+    fit = DrmFit(fam, blocks, names, θ̂, V, r.loglik, length(y1), q4_converged, means, obs, scales)
     fit = method === :REML ? _withreml(fit, reml_ll, ml_ll) : fit
     return _withranef(_withformula(_withnll(fit, nll, nllgrad!), f), re)
 end
@@ -970,7 +975,9 @@ function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fi
         prob = prob,                 # AugProblem — lets profile_sigma_a re-optimise the marginal
         n_newton = q4_n_newton,      # the inner-mode iteration count this fit used
     )
-    fit = DrmFit(fam, blocks, names, θ̂, V, r.loglik, length(y1), r.converged, means, obs, scales)
+    # #509: same Λ-admissibility gate as the structured constructor above.
+    q4_converged = r.converged && _q2_lambda_admissible(Matrix{Float64}(r.Λ))
+    fit = DrmFit(fam, blocks, names, θ̂, V, r.loglik, length(y1), q4_converged, means, obs, scales)
     fit = method === :REML ? _withreml(fit, reml_ll, ml_ll) : fit
     return _withranef(_withformula(_withnll(fit, nll, nllgrad!), f), re)
 end
