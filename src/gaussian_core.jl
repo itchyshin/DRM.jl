@@ -545,19 +545,51 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                 "random effect (no additional `(1 | g)` / meta_V terms)."))
     end
     if has_missing_response
-        (isempty(re) && isempty(sigma_re) && structured === nothing && metav === nothing &&
-         length(all_structured) == 0) ||
+        # The phylo-MEAN cell accepts masked responses by fitting the observed
+        # rows against the FULL tree, matching drmTMB's
+        # `miss_control(response = "include")` semantics. This is measured, not
+        # assumed (D-179 #2, 2026-08-27): native drmTMB's own include and drop
+        # fits on this cell are byte-identical — with rows conditionally
+        # independent given the latent field, a missing Gaussian response
+        # integrates out of its own likelihood factor entirely, so no
+        # missing-response likelihood exists to derive. The subset-tolerant
+        # leaf matching (#482) keeps a fully-masked species in the phylo prior
+        # with no likelihood term, exactly like the σ-phylo route above. Only
+        # this exact cell is unwrapped: the dense structured fallback
+        # (non-constant sigma design), relmat/animal/spatial, `(1|g)`, and
+        # `meta_V` match rows to levels POSITIONALLY, which is not subset-safe
+        # (#482's trap), so they still refuse below.
+        phylo_mean_cell = structured !== nothing && structured[1] === :phylo &&
+            length(all_structured) == 1 && isempty(re) && isempty(sigma_re) &&
+            metav === nothing && size(Xσ, 2) == 1 &&
+            algorithm in (:auto, :em, :sparse, :sparse_lbfgs)
+        if phylo_mean_cell
+            keep = collect(response_observed)
+            n_obs = count(keep)
+            total_dof = size(Xμ, 2) + size(Xσ, 2) + 1   # + the phylo variance
+            n_obs >= total_dof ||
+                error("drm (Gaussian mean-phylo): only $(n_obs) observed responses for a model " *
+                      "with $(total_dof) parameters — too few to fit.")
+            grp_ms = structured[2]
+            labels_kept = getproperty(data, grp_ms)[keep]
+            y = Float64.(y[keep]); Xμ = Xμ[keep, :]; Xσ = Xσ[keep, :]
+            data = NamedTuple{(grp_ms,)}((labels_kept,))
+            response_observed = trues(n_obs)
+            has_missing_response = false
+        elseif !(isempty(re) && isempty(sigma_re) && structured === nothing &&
+                 metav === nothing && length(all_structured) == 0)
             throw(ArgumentError("drm: missing Gaussian responses are currently supported for " *
-                "fixed-effect univariate location-scale models (and, separately, the σ-phylo " *
-                "location-scale route). This is a ROUTE-level restriction, not a family-level " *
-                "one — drmTMB's R bridge admits `response = \"include\"` for any Gaussian model " *
-                "regardless of formula structure (#482), but DRM.jl's engine has not yet " *
-                "implemented a missing-response likelihood for a MEAN-phylo/relmat/animal/" *
-                "spatial term, a random effect, or `meta_V` — each needs its own derivation. " *
-                "If this is a phylo-MEAN model, dropping the missing-response rows before " *
-                "calling `drm` (matching `missing = miss_control(response = \"drop\")` at the R " *
-                "bridge, or `drm_listwise` natively) DOES fit correctly here — only unfiltered " *
-                "missing responses on this route are refused."))
+                "fixed-effect univariate location-scale models, the σ-phylo location-scale " *
+                "route, and the phylo-MEAN cell (`phylo(1 | g)` on the mean with `sigma ~ 1`, " *
+                "fitted as observed rows + full tree, matching drmTMB's " *
+                "`response = \"include\"`). This is a ROUTE-level restriction, not a " *
+                "family-level one — DRM.jl's engine has no missing-response handling for a " *
+                "relmat/animal/spatial mean term, a random effect, `meta_V`, or a phylo mean " *
+                "with a non-constant sigma design, whose positional row-to-level matching is " *
+                "not subset-safe (#482). Dropping the missing-response rows before calling " *
+                "`drm` (matching `missing = miss_control(response = \"drop\")` at the R " *
+                "bridge, or `drm_listwise` natively) is the supported route there."))
+        end
     end
     if !isempty(sigma_re)                                      # random effect on log σ
         (isempty(re) && structured === nothing && metav === nothing) ||
