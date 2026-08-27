@@ -52,7 +52,7 @@ import Distributions
 # Simulate a phylogenetic Poisson count dataset and fit it.
 # `sig` is the phylo SD on the RAW covariance scale, matching `re_sd`'s definition.
 function _largep_sim_fit(p::Int, branch_length::Real, sig::Real;
-                         seed::Int = 4242, m::Int = 4, b0 = 0.2, b1 = 0.3)
+                         seed::Int = 4242, m::Int = 4, b0 = 0.2, b1 = 0.3, g_tol = 1e-8)
     rng = MersenneTwister(seed)
     phy = DRM.random_balanced_tree(p; branch_length = branch_length)
     Sraw = DRM.sigma_phy_dense(phy)              # diagonal = tree height
@@ -64,7 +64,7 @@ function _largep_sim_fit(p::Int, branch_length::Real, sig::Real;
     eta = b0 .+ b1 .* x .+ a[species]
     y = Float64.([rand(rng, Distributions.Poisson(exp(clamp(eta[i], -20, 20)))) for i in 1:n])
     fit = drm(bf(@formula(y ~ x + phylo(1 | species))), DRM.Poisson();
-              data = (; y, x, species), tree = phy, se = false)
+              data = (; y, x, species), tree = phy, se = false, g_tol = g_tol)
     return (; fit, height = Sraw[1, 1], n)
 end
 
@@ -112,5 +112,37 @@ end
         # Whatever the flag says, the fit itself must stay usable.
         @test isfinite(large.fit.loglik)
         @test isapprox(large.fit.theta[2], B1_TRUE; atol = 0.08)
+    end
+
+    @testset "converged is not for sale (DRM.jl#491, D-179 #1)" begin
+        # The sharpest finding in #491: with the old `Optim.converged(res) &&
+        # return true` short-circuit, ASKING for a sloppier fit made the flag
+        # EASIER to earn -- g_tol = 10.0 reported converged at a relative
+        # gradient of 1.18e-03, four orders of magnitude worse than the default
+        # fit that reported NOT converged. The flag now answers a fixed,
+        # scale-invariant question (mean per-observation gradient <= 1e-6), so a
+        # deliberately loose optimiser run must NOT be reported as converged.
+        sloppy = _largep_sim_fit(128, 0.2, SIG_TRUE; g_tol = 10.0)
+        @test !sloppy.fit.converged
+        # ... while the honestly-converged default fit still is (asserted above,
+        # re-asserted here so this testset stands alone).
+        @test _largep_sim_fit(128, 0.2, SIG_TRUE).fit.converged
+    end
+
+    @testset "FD vcov step grows with n (large-p SE gap, D-179 roadmap A1)" begin
+        # The p >= 1000 SE-parity gap (~1.5e-3 at p=1000, ~3.6e-3 at p=3000 vs
+        # native TMB on identical data) was the FD NOISE FLOOR: the outer vcov
+        # Hessian differentiated the summed, inner-solved objective at a fixed
+        # h = 1e-4, and the objective's evaluation noise grows with n while the
+        # /h^2 amplification does not. The step is now n-aware
+        # (h ~ 2.5e-7 * n, clamped to [1e-4, 1e-2]); with it the measured gaps
+        # fall to 2.0e-5 (p=1000) and 8.1e-6 (p=3000). Cross-engine numbers
+        # live in the R-side harness (tools/parity_classc_largep.R); this lock
+        # just keeps the step's shape from silently reverting.
+        @test DRM._fd_hessian_step(48) == 1e-4        # small fixtures: unchanged
+        @test DRM._fd_hessian_step(400) == 1e-4       # clamp edge
+        @test DRM._fd_hessian_step(4000) ≈ 1e-3       # p=1000 cell
+        @test DRM._fd_hessian_step(12000) ≈ 3e-3      # p=3000 cell
+        @test DRM._fd_hessian_step(10^6) == 1e-2      # truncation guard
     end
 end

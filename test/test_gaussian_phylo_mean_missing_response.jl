@@ -165,7 +165,18 @@ using Test, Random, LinearAlgebra, Statistics
         @test occursin("tree tip names", msg) || occursin("integer tip indices", msg)
     end
 
-    @testset "include (unfiltered missing response) stays refused, with a route-level message" begin
+    @testset "include (unfiltered missing response) IS the drop fit on the phylo-mean cell (D-179 #2)" begin
+        # The decision experiment (2026-08-27): native drmTMB's own Gaussian
+        # mean-phylo fits under `response = "include"` and `response = "drop"`
+        # are BYTE-IDENTICAL — logLik and coefficients exactly equal, same rows
+        # used. With rows conditionally independent given the latent field, a
+        # missing Gaussian response integrates out of its own likelihood factor
+        # entirely, so `include` is `drop` + prediction, not a new likelihood.
+        # DRM.jl therefore accepts masked responses on this cell by fitting the
+        # observed rows against the FULL tree (the subset-tolerant #482 leaf
+        # matching), instead of refusing. The two calls below must agree not
+        # approximately but exactly: after the row filter they are the same
+        # computation on the same bytes.
         Random.seed!(20260935)
         p = 12
         m = 4
@@ -173,32 +184,71 @@ using Test, Random, LinearAlgebra, Statistics
         species = repeat(1:p, inner = m)
         n = length(species)
         x = randn(n)
-        y = Vector{Union{Missing,Float64}}(randn(n))
+        yv = 0.2 .+ 0.4 .* x .+ 0.3 .* randn(n)
+        y = Vector{Union{Missing,Float64}}(yv)
         y[3] = missing
+        y[(2 * m + 1):(3 * m)] .= missing   # species 3 entirely masked: prior-only leaf
         dat = (; y, x, species)
 
+        fit_incl = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
+                       Gaussian(); data = dat, tree = phy)
+
+        keep = .!ismissing.(y)
+        dat_dropped = (; y = Float64.(y[keep]), x = x[keep], species = species[keep])
+        fit_drop = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
+                       Gaussian(); data = dat_dropped, tree = phy)
+
+        @test fit_incl.converged
+        @test nobs(fit_incl) == count(keep)
+        @test fit_incl.loglik == fit_drop.loglik
+        @test fit_incl.theta == fit_drop.theta
+    end
+
+    @testset "the wrapper does not leak past the phylo-mean cell" begin
+        # Only the exact phylo-MEAN cell is unwrapped. Routes whose row-to-level
+        # matching is positional (the #482 trap) must still refuse a masked
+        # response rather than silently fit against the wrong levels.
+        Random.seed!(20260937)
+        G = 8
+        m = 5
+        g = repeat(1:G, inner = m)
+        n = length(g)
+        x = randn(n)
+        y = Vector{Union{Missing,Float64}}(randn(n))
+        y[2] = missing
+        K = Matrix{Float64}(I, G, G)
+
+        # relmat mean structure: still refused.
         err = nothing
         try
-            drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
-                Gaussian(); data = dat, tree = phy)
+            drm(bf(@formula(y ~ x + relmat(1 | g)), @formula(sigma ~ 1)),
+                Gaussian(); data = (; y, x, g), K = K)
         catch e
             err = e
         end
         @test err isa ArgumentError
-        msg = sprint(showerror, err)
-        # Honest about WHY: a route-level gap, not the family-level gap drmTMB's
-        # R bridge gate checks (#482) — and it names the working alternative.
-        @test occursin("ROUTE-level", msg)
-        @test occursin("not a family-level", msg)
-        @test occursin("drop", msg)
+        @test occursin("ROUTE-level", sprint(showerror, err))
 
-        # The SAME model, pre-filtered (mirroring `response = \"drop\"`), fits —
-        # confirming the message's advice is actually true.
-        keep = .!ismissing.(y)
-        dat_dropped = (; y = Float64.(y[keep]), x = x[keep], species = species[keep])
-        fit = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
-                  Gaussian(); data = dat_dropped, tree = phy)
-        @test fit.converged
+        # phylo mean but a NON-CONSTANT sigma design: falls to the dense
+        # structured fitter, whose positional matching is not subset-safe —
+        # still refused.
+        Random.seed!(20260938)
+        p = 10
+        phy = random_balanced_tree(p; branch_length = 1.0)
+        species = repeat(1:p, inner = 4)
+        n2 = length(species)
+        x2 = randn(n2)
+        z2 = randn(n2)
+        y2 = Vector{Union{Missing,Float64}}(randn(n2))
+        y2[7] = missing
+        err2 = nothing
+        try
+            drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ z)),
+                Gaussian(); data = (; y = y2, x = x2, z = z2, species))
+        catch e
+            err2 = e
+        end
+        @test err2 isa ArgumentError
     end
 
     @testset "non-phylo Gaussian response masks are unaffected" begin
