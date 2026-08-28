@@ -59,6 +59,7 @@ include("test_corpairs.jl")
 include("test_gaussian_ranef.jl")
 include("test_lss_group.jl")   # #544 location-scale-scale sd(g) ~ x
 include("test_lss_phylo.jl")   # #545 sd_phylo + #548 cancellation regression
+include("test_lsss_multi.jl")  # #555 multi-component sd() (lsss)
 include("test_inference.jl")
 include("test_profile_ci.jl")
 include("test_check_drm.jl")

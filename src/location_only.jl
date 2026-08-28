@@ -3423,11 +3423,29 @@ function _fit_structured_gaussian_sparse_lbfgs(
 
     σ² = exp(2 * θ̂[pμ + 1])
     VX = Vinv_mul(prob, chM, σ², prob.X)
-    V = fill(NaN, length(θ̂), length(θ̂))
+    V = zeros(length(θ̂), length(θ̂))
     V[1:pμ, 1:pμ] .= try
         inv(Symmetric((prob.X' * VX + VX' * prob.X) ./ 2))
     catch
         fill(NaN, pμ, pμ)
+    end
+    # #556: the variance-parameter block used to be NaN BY CONSTRUCTION, so
+    # `sigma`/`resd` SEs were NA on every fit this route serves (Mizuno M2 —
+    # caught by the acceptance matrix; drmTMB native reports finite SEs here).
+    # β is profiled out EXACTLY, so the 2×2 curvature of the profiled objective
+    # at v̂ is the correct observed information for (log σ_e, log σ_phylo), and
+    # Gaussian mean/covariance orthogonality zeroes the cross block (left 0).
+    let vhat = [θ̂[pμ + 1], θ̂[pμ + 2]]
+        fv = function (v)
+            val, _, βv, _ = _loconly_profile_fg(prob, v[1], v[2])
+            if penalty !== nothing && βv !== nothing
+                val += _phylo_pen_apply_single!(zeros(2), penalty, v, 2)
+            end
+            return val
+        end
+        Hv = _finite_hessian(fv, vhat; h = _fd_hessian_step(n))
+        V[(pμ + 1):(pμ + 2), (pμ + 1):(pμ + 2)] .=
+            _vcov_from_hessian(Hv; context = "sparse phylo-mean variance block")
     end
     e = prob.y .- prob.X * β̂
     u_post = chM \ (prob.S' * e / σ²)

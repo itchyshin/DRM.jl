@@ -377,3 +377,166 @@ function _fit_structured_gaussian_lss(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G, K
     return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n,
                            Optim.converged(res), means, obs, scales), nll)
 end
+
+# ---------------------------------------------------------------------------
+# #555 — location-scale-scale-SCALE: several random effects, each with its own
+# SD submodel, in one fit. drmTMB accepts e.g.
+#     bf(y ~ x + (1|species) + (1|study) + phylo(1|species, tree = tr),
+#        sigma ~ 1, sd(species) ~ x, sd(study) ~ 1,
+#        sd(species, level = "phylogenetic") ~ x)
+# (verified by direct fits, 2026-08-28). Marginal:
+#     V = Σ_k Z_k D_k² Z_k'  +  Z_p (D_a K D_a) Z_p'  +  diag(σ_e,i²)
+# with each D a per-group diagonal exp(Zg α) from its own linear predictor
+# (a scalar SD is the `~ 1` special case). Dense assembly, ML, ForwardDiff —
+# same correctness-first stance and 5000-row cap as the #545 engine; the iid
+# α's share one `:sd` block (names group-prefixed when there is more than one
+# iid component) and the phylo α's are the `:sd_phylo` block.
+
+# One variance component of the multi engine.
+struct _LssComp
+    gidx::Vector{Int}
+    G::Int
+    Zg::Matrix{Float64}
+    nm::Vector{String}
+    K::Union{Nothing,Matrix{Float64}}   # nothing = iid; matrix = phylo correlation
+    label::String
+end
+
+function _fit_gaussian_lss_multi(fam::Gaussian, y, Xμ, Xσ, comps::Vector{_LssComp},
+                                 nmμ, nmσ, g_tol)
+    n = length(y)
+    pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    n ≤ 5000 || throw(ArgumentError("drm: the multi-component sd() route assembles a dense " *
+        "$(n)×$(n) marginal covariance and is limited to 5000 rows in this slice (#555)."))
+    psds = [size(c.Zg, 2) for c in comps]
+    offs = pμ + pσ .+ cumsum([0; psds])           # α_c = θ[offs[c]+1 : offs[c+1]]
+
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
+        ημ = Xμ * βμ; ησ = Xσ * βσ
+        T = eltype(θ)
+        Vm = zeros(T, n, n)
+        for (ci, c) in enumerate(comps)
+            α = θ[offs[ci]+1:offs[ci+1]]
+            σa = exp.(c.Zg * α)
+            if c.K === nothing
+                # iid: Z Diagonal(σa²) Z' adds σa[g]² wherever rows share a group
+                @inbounds for j in 1:n, i in 1:n
+                    if c.gidx[i] == c.gidx[j]
+                        Vm[i, j] += σa[c.gidx[i]]^2
+                    end
+                end
+            else
+                Σc = (σa * σa') .* c.K
+                @inbounds for j in 1:n, i in 1:n
+                    Vm[i, j] += Σc[c.gidx[i], c.gidx[j]]
+                end
+            end
+        end
+        @inbounds for i in 1:n
+            Vm[i, i] += exp(2 * ησ[i])
+        end
+        Vfac = cholesky(Symmetric(Vm); check = false)
+        issuccess(Vfac) || return convert(T, 1e18)
+        r = y .- ημ
+        return 0.5 * (logdet(Vfac) + dot(r, Vfac \ r) + n * log(2π))
+    end
+
+    βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
+    m = length(comps)
+    θ0 = zeros(offs[end])
+    θ0[1:pμ] .= βμ0
+    θ0[pμ+1] = log(std(res0) / sqrt(m + 1) + eps())
+    for (ci, c) in enumerate(comps)
+        θ0[offs[ci]+1:offs[ci+1]] .= c.Zg \ fill(log(std(res0) / sqrt(m + 1) + eps()), c.G)
+    end
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res)
+    Vcov = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
+
+    iid = [ci for (ci, c) in enumerate(comps) if c.K === nothing]
+    phy = [ci for (ci, c) in enumerate(comps) if c.K !== nothing]
+    blocks = Pair{Symbol,UnitRange{Int}}[:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ)]
+    names = Pair{Symbol,Vector{String}}[:mu => nmμ, :sigma => nmσ]
+    # the iid α's are one contiguous :sd block ONLY when the components are
+    # laid out contiguously — the builder below guarantees iid-then-phylo order.
+    if !isempty(iid)
+        lo = offs[first(iid)] + 1; hi = offs[last(iid)+1]
+        nm = String[]
+        for ci in iid
+            c = comps[ci]
+            append!(nm, length(iid) > 1 ? string.(c.label, ": ", c.nm) : c.nm)
+        end
+        push!(blocks, :sd => lo:hi); push!(names, :sd => nm)
+    end
+    if !isempty(phy)
+        ci = only(phy)
+        push!(blocks, :sd_phylo => (offs[ci]+1):offs[ci+1])
+        push!(names, :sd_phylo => comps[ci].nm)
+    end
+    means = Dict(:mu => Xμ * θ̂[1:pμ])
+    obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
+    return _withnll(DrmFit(fam, blocks, names, θ̂, Vcov, -nll(θ̂), n,
+                           Optim.converged(res), means, obs, scales), nll)
+end
+
+# Build the component list from parsed formula parts and dispatch. Handles every
+# sd() request the single-component routes do not: several iid REs, iid + phylo,
+# an RE without an sd() part (scalar, `~ 1`), and a phylo term without its own
+# sd() part alongside sd()-carrying iid REs.
+function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re_kinds,
+                                 structured, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method)
+    method === :ML ||
+        throw(ArgumentError("drm: multi-component sd() models are ML-only for now (#555)."))
+    for (kind, _) in re_kinds
+        kind === :intercept ||
+            throw(ArgumentError("drm: sd() supports random INTERCEPT terms only."))
+    end
+    re_groups = Symbol[grp for (_, grp) in re]
+    for (sgrp, _) in sdp
+        sgrp in re_groups ||
+            throw(ArgumentError("drm: `sd($sgrp)` must name the grouping of a `(1 | $sgrp)` " *
+                "random effect in the mean formula (random effects present: " *
+                join(re_groups, ", ") * ")."))
+    end
+    comps = _LssComp[]
+    sdmap = Dict(sdp)
+    for grp in re_groups                          # iid components first (block layout)
+        gidx, G = _group_index(getproperty(data, grp))
+        if haskey(sdmap, grp)
+            Zg, nm = _sd_group_design(f.response, sdmap[grp], data, gidx, G, grp)
+        else
+            Zg, nm = ones(G, 1), ["(Intercept)"]  # RE without sd() part: scalar SD
+        end
+        push!(comps, _LssComp(gidx, G, Zg, nm, nothing, String(grp)))
+    end
+    if structured !== nothing
+        kind, pgrp = structured
+        kind === :phylo ||
+            throw(ArgumentError("drm: sd() submodels with `$kind(1 | $pgrp)` are not " *
+                "supported — the structured scale level is `phylogenetic` only (#555)."))
+        tree === nothing && error("phylo(1 | $pgrp) needs `tree = …`")
+        gidx, G = _group_index(getproperty(data, pgrp))
+        Kmat = _phylo_correlation(tree)
+        size(Kmat) == (G, G) ||
+            error("structured matrix must be $(G)×$(G) (the number of `$pgrp` levels)")
+        if !isempty(sdpp)
+            (sgrp, srhs) = only(sdpp)
+            sgrp === pgrp ||
+                throw(ArgumentError("drm: `sd($sgrp, phylogenetic)` must name the phylo " *
+                    "grouping — the mean formula has `phylo(1 | $pgrp)`."))
+            Zg, nm = _sd_group_design(f.response, srhs, data, gidx, G, pgrp)
+        else
+            Zg, nm = ones(G, 1), ["(Intercept)"]  # phylo term with scalar SD
+        end
+        push!(comps, _LssComp(gidx, G, Zg, nm, Matrix{Float64}(Kmat), String(pgrp)))
+    elseif !isempty(sdpp)
+        (sgrp, _) = only(sdpp)
+        throw(ArgumentError("drm: `sd($sgrp, phylogenetic)` requires a `phylo(1 | $sgrp)` " *
+            "random effect in the mean formula."))
+    end
+    isempty(comps) &&
+        throw(ArgumentError("drm: sd() formulas need matching random effects in the mean formula."))
+    return _fit_gaussian_lss_multi(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol)
+end

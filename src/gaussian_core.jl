@@ -453,17 +453,41 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     # so an unsupported combination ERRORS instead of silently dropping the sd()
     # part (the issue-#2 silent-drop class).
     sdpp = _sdphylo_parts(f)
-    if !isempty(sdpp)
-        return _withformula(_drm_gaussian_lss_phylo(f, fam, sdpp, re, structured,
-            structured_sigma, sigma_re, metav, has_missing_response,
-            y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method, penalty), f)
-    end
     sdp = _sd_parts(f)
-    if !isempty(sdp)
+    if !isempty(sdpp) || !isempty(sdp)
+        # Shared refusals for every sd() route (single or multi component).
+        length(sdpp) ≤ 1 ||
+            throw(ArgumentError("drm: one `sd(group, phylogenetic) ~ …` formula per model."))
+        structured_sigma === nothing ||
+            throw(ArgumentError("drm: sd() submodels with a σ-phylo random effect are not " *
+                "supported — the residual scale takes FIXED-effect predictors here."))
+        metav === nothing ||
+            throw(ArgumentError("drm: sd() submodels cannot be combined with `meta_V(...)`."))
+        isempty(sigma_re) ||
+            throw(ArgumentError("drm: sd() submodels cannot be combined with a random effect " *
+                "on `sigma`."))
+        has_missing_response &&
+            throw(ArgumentError("drm: sd() submodels do not yet support missing responses — " *
+                "use `drm_listwise` to preprocess."))
+        penalty === nothing ||
+            throw(ArgumentError("drm: `penalty` is not wired for sd() submodel routes."))
         re_kinds_sd = [_re_kind(rl) for (rl, _) in re]
-        return _withformula(_drm_gaussian_lss(f, fam, sdp, re, re_kinds_sd, structured,
-            structured_sigma, sigma_re, metav, has_missing_response,
-            y, Xμ, Xσ, nmμ, nmσ, data, g_tol, method), f)
+        # The two verified single-component engines keep their exact routes
+        # (#544 Woodbury with REML; #545 dense phylo); every COMBINATION —
+        # several iid REs, iid + phylo, an RE without its own sd() part —
+        # goes to the multi-component dense engine (#555).
+        if isempty(sdpp) && structured === nothing && length(re) == 1 && length(sdp) == 1
+            return _withformula(_drm_gaussian_lss(f, fam, sdp, re, re_kinds_sd, structured,
+                structured_sigma, sigma_re, metav, has_missing_response,
+                y, Xμ, Xσ, nmμ, nmσ, data, g_tol, method), f)
+        elseif isempty(sdp) && isempty(re) && structured !== nothing && length(sdpp) == 1
+            return _withformula(_drm_gaussian_lss_phylo(f, fam, sdpp, re, structured,
+                structured_sigma, sigma_re, metav, has_missing_response,
+                y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method, penalty), f)
+        else
+            return _withformula(_drm_gaussian_lss_multi(f, fam, sdp, sdpp, re, re_kinds_sd,
+                structured, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method), f)
+        end
     end
     # σ-phylo location-scale (B0–B2): a structured phylo marker on `sigma` routes to
     # the Gaussian location-scale Laplace engine (separate / coupled / asymmetric
