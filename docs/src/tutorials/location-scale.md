@@ -1,8 +1,10 @@
-# When variance carries signal
+# When variance carries signal, Part 1: location–scale
 
 !!! note "Status — Stable"
-    Mirrors drmTMB's [When variance carries signal](https://itchyshin.github.io/drmTMB/articles/location-scale.html).
+    Mirrors drmTMB's [When variance carries signal, Part 1](https://itchyshin.github.io/drmTMB/articles/location-scale.html).
     **In DRM.jl today:** the univariate Gaussian location–scale model fits by ML.
+    Continue with [Part 2: location–scale–scale](location-scale-scale.md) when the
+    question moves from the residual SD to the SD of a random effect.
 
 Sometimes the science is in the *spread*, not the mean. A classic case: two
 conditions with the **same** average response but different variability. A
@@ -76,5 +78,7 @@ re_sd(fitre)[:grp]      # recovered SD of the group-level dispersion (≈ 0.5)
 
 ## See also
 
+- [Part 2: location–scale–scale](location-scale-scale.md) — predictors on the
+  SD of a random effect (iid and phylogenetic).
 - [Get started](../get-started.md) — your first fit.
 - [Changing residual coupling with rho12](bivariate-coscale.md) — two responses.
