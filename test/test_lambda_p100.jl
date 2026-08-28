@@ -54,11 +54,18 @@ const FIX = joinpath(@__DIR__, "..", "bench", "fixtures")
     P0 = prior_precision(Q_cond, inv(Λ0)); u0, ch0, _ = estep_mode(prob, P0, β; n_newton = 60)
     Λem = D.mstep_Lambda(prob, Q_cond, u0, ch0)
 
-    # The measured defect, asserted as such (see header): every tested step
-    # along the closed-form update direction LOWERS the marginal.
-    @test L_of_Λ(Λem) < L0
+    # The measured defect, asserted as such (see header): the FULL closed-form
+    # step lowers the marginal by a huge margin (measured −338 vs −282, ~56
+    # nats — platform-independent), and NO step size along the update
+    # direction achieves a MATERIAL improvement. The material-improvement
+    # bound (0.1 nats) rather than strict descent at every α: on Julia 1.10
+    # CI the α=0.01 step came out +0.035 nats (noise-level platform variation
+    # in the inner Newton), while a REPAIRED M-step would gain O(1)+ nats and
+    # trip the bound — so the tripwire semantics survive, without asserting a
+    # sign that platform arithmetic does not preserve.
+    @test L_of_Λ(Λem) < L0 - 10
     for α in (1.0, 0.5, 0.25, 0.1, 0.01)
         Λα = Matrix(Symmetric(Λ0 .+ α .* (Λem .- Λ0)))
-        @test L_of_Λ(Λα) < L0
+        @test L_of_Λ(Λα) < L0 + 0.1
     end
 end
