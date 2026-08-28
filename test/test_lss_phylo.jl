@@ -130,3 +130,23 @@ end
         Dict{Symbol,Any}(:mu => "y ~ x", :bogus => "bogus ~ x"), "gaussian",
         (y = [1.0, 2.0], x = [0.0, 1.0]))
 end
+
+@testset "threaded inference on the stored nll closure (#549/#550)" begin
+    # The dense-route nll closure is stored on the fit and called CONCURRENTLY by
+    # threaded profile/bootstrap. #549: a closure-local named like an enclosing
+    # local is ONE shared boxed variable — two threads' Dual-tagged matrices
+    # crossed and the profile crashed. On a single-threaded CI runner the
+    # threaded branches degrade to serial, so this is a smoke everywhere and a
+    # genuine race regression test wherever JULIA_NUM_THREADS > 1.
+    phy, dat = _qqq_sim()
+    fit = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ x),
+                 @formula(sd(species, phylogenetic) ~ x)),
+              Gaussian(); data = dat, tree = phy)
+    ci = confint(fit; parm = :sd_phylo, method = :profile, threads = true)
+    @test length(ci) == 2
+    @test all(r -> r.lower < r.estimate < r.upper, ci)
+    bs = bootstrap_result(fit; data = dat, B = 12, tree = phy, threads = true,
+                          rng = StableRNG(42), failures = :skip)
+    @test bs.used ≥ 10                      # at most a couple of degenerate refits
+    @test bs.attempted == 12
+end

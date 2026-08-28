@@ -341,14 +341,20 @@ function _fit_structured_gaussian_lss(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G, K
         T = eltype(θ)
         σa = exp.(ησa)                                    # per-species phylo SD
         Σa = (σa * σa') .* Ksym                           # D_a K D_a
-        V = Matrix{T}(undef, n, n)
+        # NOT named `V` (#549): the enclosing fitter also assigns `V` (the vcov),
+        # and a name assigned in BOTH a closure and its enclosing function is ONE
+        # shared boxed variable in Julia. This closure is stored on the fit and
+        # called CONCURRENTLY by threaded profile CIs, so the shared box was a
+        # data race — measured as Dual-tag type mixing (two threads' matrices
+        # crossing) and, from R, a HagerZhang `AssertionError: B > A`.
+        Vm = Matrix{T}(undef, n, n)
         @inbounds for j in 1:n, i in 1:n
-            V[i, j] = Σa[gidx[i], gidx[j]]                # Z Σ_a Z'
+            Vm[i, j] = Σa[gidx[i], gidx[j]]               # Z Σ_a Z'
         end
         @inbounds for i in 1:n
-            V[i, i] += exp(2 * ησ[i])                     # + σ_e,i²
+            Vm[i, i] += exp(2 * ησ[i])                    # + σ_e,i²
         end
-        Vfac = cholesky(Symmetric(V); check = false)
+        Vfac = cholesky(Symmetric(Vm); check = false)
         issuccess(Vfac) || return convert(T, 1e18)
         r = y .- ημ
         return 0.5 * (logdet(Vfac) + dot(r, Vfac \ r) + n * log(2π))
