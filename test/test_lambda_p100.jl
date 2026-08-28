@@ -1,9 +1,22 @@
-# test_lambda_p100.jl — does the sparse-EM Λ M-step (`mstep_Lambda`) ASCEND
-# the true Laplace marginal on the REAL q4_p100 data? Same question as
-# test_lambda_direction.jl (p=8, synthetic), but at the fixture scale (p=100)
-# that originally motivated it. `mstep_Lambda`/`fit_em_aug` are not on the
-# public `drm()` path (see test_lambda_direction.jl), but back the
-# `sparse_em_fit.jl` demos and have no other test coverage at this scale.
+# test_lambda_p100.jl — CHARACTERISATION of a measured negative result (#472).
+#
+# The sparse-EM Λ M-step (`mstep_Lambda`) does NOT ascend the true Laplace
+# marginal on the real q4_p100 data: the closed-form update moves DOWNHILL for
+# every step size in (1.0, 0.5, 0.25, 0.1, 0.01) — measured 2026-08-25, and
+# independently corroborated by the (unwired) test_analytic_grad.jl, whose
+# gradient premise fails at 3–690% against central differences. This is the
+# measured confirmation of why production (`src/fit_ml_q4.jl`) abandoned the
+# closed-form step for line-searched ascent. `mstep_Lambda`/`fit_em_aug` are
+# NOT reachable from the public `drm()` API and back only the `bench/` EM
+# demos (fence recorded in src/sparse_em_fit.jl and HANDOVER.md).
+#
+# This file therefore asserts the DESCENT — the defect as measured — per
+# #472's own instruction that no option may weaken the test to make it pass.
+# If someone repairs `mstep_Lambda`, these assertions fail LOUDLY, which is
+# the intended tripwire: a repair must also revisit the fence text here, in
+# src/sparse_em_fit.jl, and in HANDOVER.md. Same question as
+# test_lambda_direction.jl (p=8, synthetic), at the fixture scale (p=100)
+# that originally motivated it.
 
 using DRM
 using Test, LinearAlgebra, Statistics
@@ -12,7 +25,7 @@ using DelimitedFiles: readdlm
 const D = DRM
 const FIX = joinpath(@__DIR__, "..", "bench", "fixtures")
 
-@testset "sparse-EM Λ M-step ascends the true Laplace marginal (q4_p100)" begin
+@testset "sparse-EM Λ M-step DESCENDS the true Laplace marginal (q4_p100, #472 characterisation)" begin
     raw, header = readdlm(joinpath(FIX, "q4_p100.csv"), ','; header = true)
     cols = Symbol.(strip.(string.(vec(header))))
     col(name) = raw[:, findfirst(==(name), cols)]
@@ -41,9 +54,18 @@ const FIX = joinpath(@__DIR__, "..", "bench", "fixtures")
     P0 = prior_precision(Q_cond, inv(Λ0)); u0, ch0, _ = estep_mode(prob, P0, β; n_newton = 60)
     Λem = D.mstep_Lambda(prob, Q_cond, u0, ch0)
 
-    @test L_of_Λ(Λem) > L0
+    # The measured defect, asserted as such (see header): the FULL closed-form
+    # step lowers the marginal by a huge margin (measured −338 vs −282, ~56
+    # nats — platform-independent), and NO step size along the update
+    # direction achieves a MATERIAL improvement. The material-improvement
+    # bound (0.1 nats) rather than strict descent at every α: on Julia 1.10
+    # CI the α=0.01 step came out +0.035 nats (noise-level platform variation
+    # in the inner Newton), while a REPAIRED M-step would gain O(1)+ nats and
+    # trip the bound — so the tripwire semantics survive, without asserting a
+    # sign that platform arithmetic does not preserve.
+    @test L_of_Λ(Λem) < L0 - 10
     for α in (1.0, 0.5, 0.25, 0.1, 0.01)
         Λα = Matrix(Symmetric(Λ0 .+ α .* (Λem .- Λ0)))
-        @test L_of_Λ(Λα) > L0
+        @test L_of_Λ(Λα) < L0 + 0.1
     end
 end
