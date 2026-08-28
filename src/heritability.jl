@@ -40,6 +40,11 @@ using Optim: Optim
 # closed-form path (:sigma intercept + :resd), guarding the heteroscedastic case.
 # ---------------------------------------------------------------------------
 function _variance_component_indices(fit::DrmFit)
+    # Location-scale-scale fits (#544): group-varying RE SD makes "the" variance
+    # component ill-defined, exactly like the heteroscedastic-residual rejection below.
+    any(p -> first(p) === :sd, fit.blocks) &&
+        error("heritability/repeatability: this fit models the random-effect SD with " *
+            "covariates (`sd(group) ~ ...`), so a single variance component is not defined")
     comps = Pair{Symbol,Int}[]
     resid_idx = nothing
     have = Dict(p => r for (p, r) in fit.blocks)

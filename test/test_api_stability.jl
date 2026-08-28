@@ -64,6 +64,8 @@ const API_EXPERIMENTAL = [
     "PhyloPenalty", "PhyloCorPenaltyNeedsTwoSD",
     # bivariate meta
     "meta_vcov_bivariate", "MetaVcovBivariate",
+    # location-scale-scale (#544; sd_phylo lands with #545)
+    "sd",
 ]
 
 const API_ENGINE = [

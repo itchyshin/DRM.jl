@@ -99,9 +99,23 @@ function bf(mu::FormulaTerm, dpars::FormulaTerm...)
     forms = Pair{Symbol,Any}[:mu => mu.rhs]
     seen = Set{Symbol}()
     for f in dpars
-        f.lhs isa Term || throw(ArgumentError("bf: each distributional-parameter formula " *
+        flhs = f.lhs
+        # Location–scale–scale (#544): `sd(g) ~ …` puts a linear predictor on the
+        # log SD of the `(1 | g)` random effect (drmTMB grammar). Stored under a
+        # prefixed key so the family routers can extract or refuse it explicitly.
+        if flhs isa FunctionTerm && flhs.f === sd
+            (length(flhs.args) == 1 && flhs.args[1] isa Term) ||
+                throw(ArgumentError("bf: `sd()` takes the grouping variable of the random " *
+                    "effect, e.g. `sd(g) ~ x` matching `(1 | g)` in the response formula."))
+            key = Symbol("sd_", flhs.args[1].sym)
+            any(p -> first(p) === key, forms) &&
+                throw(ArgumentError("bf: duplicate `sd($(flhs.args[1].sym)) ~ …` formula."))
+            push!(forms, key => f.rhs)
+            continue
+        end
+        flhs isa Term || throw(ArgumentError("bf: each distributional-parameter formula " *
             "must read `param ~ …` with a parameter name on the left (got `$(f.lhs)`)."))
-        name = _check_dpar_name!(seen, f.lhs.sym)
+        name = _check_dpar_name!(seen, flhs.sym)
         push!(forms, name => f.rhs)
     end
     any(p -> first(p) === :sigma, forms) || push!(forms, :sigma => ConstantTerm(1))
@@ -407,6 +421,16 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     response_observed = _observed_response_mask(y)
     has_missing_response = !all(response_observed)
     all_structured = _collect_structured(rhs[:mu])
+    # Location–scale–scale (#544): `sd(g) ~ …` — dispatch before every other route
+    # so an unsupported combination ERRORS instead of silently dropping the sd()
+    # part (the issue-#2 silent-drop class).
+    sdp = _sd_parts(f)
+    if !isempty(sdp)
+        re_kinds_sd = [_re_kind(rl) for (rl, _) in re]
+        return _withformula(_drm_gaussian_lss(f, fam, sdp, re, re_kinds_sd, structured,
+            structured_sigma, sigma_re, metav, has_missing_response,
+            y, Xμ, Xσ, nmμ, nmσ, data, g_tol, method), f)
+    end
     # σ-phylo location-scale (B0–B2): a structured phylo marker on `sigma` routes to
     # the Gaussian location-scale Laplace engine (separate / coupled / asymmetric
     # blocks + boundary-aware profile CIs). The 4th `_split_ranef` value used to be
@@ -1840,6 +1864,12 @@ log-σ scale — the two are NOT directly comparable, and the suffix keeps them
 distinct so a side-by-side read is not silently mixing scales.
 """
 function re_sd(fit::DrmFit)
+    # Location–scale–scale fits (#544) model the RE SD with covariates, so a
+    # single per-grouping SD is ill-defined — refuse rather than misreport.
+    any(p -> first(p) === :sd, fit.blocks) &&
+        throw(ArgumentError("re_sd: this fit models the random-effect SD with covariates " *
+            "(`sd(group) ~ …`), so a single SD per grouping is not defined. Use " *
+            "`coef(fit, :sd)` for the log-SD coefficients."))
     d = Dict{Symbol,Float64}()
     for (p, r) in fit.blocks
         p === :resd || continue

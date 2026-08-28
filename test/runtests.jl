@@ -57,6 +57,7 @@ include("test_coevo_accessors.jl")
 include("test_coevo_q6.jl")
 include("test_corpairs.jl")
 include("test_gaussian_ranef.jl")
+include("test_lss_group.jl")   # #544 location-scale-scale sd(g) ~ x
 include("test_inference.jl")
 include("test_profile_ci.jl")
 include("test_check_drm.jl")

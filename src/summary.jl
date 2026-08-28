@@ -42,6 +42,7 @@ function _block_title(p::Symbol)
     p === :cutpoints && return "Cutpoints"
     p === :range   && return "Spatial range (log)"
     p === :resd    && return "Random-effect SD (log σ_b)"
+    p === :sd      && return "RE SD model sd(group) (log σ_b)"
     p === :resid   && return "Residual scale (log σ)"
     p === :recov   && return "Random-effect covariance (Cholesky)"
     p === :phylocov && return "Group-level covariance Σ_a (log-Cholesky; see vc/coevolution)"
