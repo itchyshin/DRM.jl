@@ -11,7 +11,7 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 ## v0.7.0 — 2026-08-28
 
 **The twin-parity release.** Versioning now twin-tracks drmTMB (D-181, like GLLVM.jl↔gllvmTMB):
-v0.7.0 means "at parity with drmTMB 0.7.0", pinned at drmTMB commit ; drmTMB's
+v0.7.0 means "at parity with drmTMB 0.7.0", pinned at drmTMB commit `a6de6bb71`; drmTMB's
 fast-moving mi() missing-data axis is a named, fenced delta (D-180 #1) and the designated
 post-0.7 headline. Registration in Julia General is planned at v0.7.1, mirroring the twin.
 
