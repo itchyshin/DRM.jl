@@ -22,6 +22,7 @@ makedocs(
         "Getting started" => "getting-started.md",
         "Get started" => "get-started.md",
         "Capabilities" => "capabilities.md",
+        "API stability" => "api-stability.md",
         "Model Guides" => [
             "model-guides/model-map.md",
             "model-guides/which-scale.md",
