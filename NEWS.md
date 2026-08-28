@@ -8,6 +8,32 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 (nothing yet)
 
+## v0.7.0 — 2026-08-28
+
+**The twin-parity release.** Versioning now twin-tracks drmTMB (D-181, like GLLVM.jl↔gllvmTMB):
+v0.7.0 means "at parity with drmTMB 0.7.0", pinned at drmTMB commit `a6de6bb71`; drmTMB's
+fast-moving mi() missing-data axis is a named, fenced delta (D-180 #1) and the designated
+post-0.7 headline. Registration in Julia General is planned at v0.7.1, mirroring the twin.
+
+- **The API freeze** — every one of the 159 exports classified into Stable / Experimental /
+  Engine tiers, machine-checked by `test/test_api_stability.jl` (total classification: a new
+  export cannot appear untiered, a stable name cannot vanish silently). The promise and its
+  honest Julia-0.x framing: `docs/src/api-stability.md`.
+- **The comprehensive engine speed grid** (`report/engine-speed-grid.md`) — Julia wins 14 of 15
+  comparable warm-fit cells (2.3×–42×); the one loss (q4 phylo REML, 0.46×) was diagnosed (the
+  inner alternation burned 15 iterations per objective evaluation against a never-firing exit)
+  and fixed to ~parity (0.94×, 2.1× faster).
+- **The user-journey sweep** (`tools/user_journey_sweep.R`) — 29 models typed the way users type
+  them, both engines: 25 matches at 1e-6..1e-11, refusal quality graded, and one real bug found
+  and fixed (drmTMB#1099: `predict(newdata)` on factors/interactions failed on
+  Julia-vs-R coefficient-name conventions).
+- **The threaded bootstrap, demonstrated** — `confint(fit, parm, method = "bootstrap",
+  threads = TRUE)` from R: 10× native TMB at R=199 on the same model and data
+  (`docs/dev-log/evidence/2026-08-28-engine-julia-usability-demo.md`).
+- Wave Q quality debt to zero: drmTMB#1090 (univariate `nu` tripping the bivariate bridge
+  branch) fixed; #526 (q4 REML flag folds in the inner alternation, measured criterion);
+  #527 hardening both repos; #482 and #8 closed.
+
 ## v0.2.0 — 2026-08-28
 
 ### The completion arc (2026-08-24 → 2026-08-27, D-179)
