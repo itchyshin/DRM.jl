@@ -63,7 +63,7 @@ returns to Gaussian.
 Random.seed!(2)
 yt = 0.5 .+ 0.8 .* x .+ 2.0 .* rand(Distributions.TDist(4), n)
 fitt = drm(bf(@formula(y ~ x), @formula(sigma ~ 1), @formula(nu ~ 1)), Student(); data = (; y = yt, x))
-(slope = coef(fitt, :mu)[2], nu = exp(coef(fitt, :nu)[1]))   # estimated d.o.f.
+(slope = coef(fitt, :mu)[2], nu = 2 + exp(coef(fitt, :nu)[1]))   # d.o.f., ν = 2 + exp(η)
 ```
 
 ### LogNormal — `LogNormal()`
