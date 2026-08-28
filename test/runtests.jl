@@ -237,7 +237,7 @@ include("test_lambda_p100.jl")
 
 # Always-on R-parity HARNESS smoke test (machinery only, no R, no fixtures).
 # Placed at the END to avoid colliding with other in-flight branches' includes.
-# v1.0 API freeze gate (Wave A): total classification of every export.
+# API freeze gate, v0.7 line (Wave A, D-181): total classification of every export.
 include("test_api_stability.jl")
 include("test_parity_harness.jl")
 include("test_parity_biv_q4_phylo_reml.jl")       # #445 Option A: #433/#434 same-target fixture

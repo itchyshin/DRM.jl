@@ -1,4 +1,4 @@
-# test_api_stability.jl — the v1.0 API freeze gate (Wave A of the v1.0 roadmap,
+# test_api_stability.jl — the API freeze gate for the v0.7 line (Wave A of the completion roadmap; release label v0.7.0 per D-181,
 # docs/dev-log/plans/2026-08-28-v1.0-roadmap.md; decisions D-180).
 #
 # Every exported name is classified into exactly one of three tiers, and the
@@ -87,7 +87,7 @@ const API_ENGINE = [
     "coevo_pack", "coevo_unpack", "coevo_theta_len",
 ]
 
-@testset "v1.0 API freeze gate" begin
+@testset "API freeze gate (v0.7 line)" begin
     exported = Set(string.(names(DRM)))
     classified = vcat(API_STABLE, API_EXPERIMENTAL, API_ENGINE, ["DRM"])
 
