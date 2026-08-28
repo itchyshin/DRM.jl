@@ -6,8 +6,9 @@
 # diagonal per group, so a per-group variance is a drop-in. The scalar model is
 # the special case Zg = ones(G, 1); `test/test_lss_group.jl` pins that reduction.
 #
-# `sd_phylo(species) ~ x` (climate-dependent phylogenetic SD, the Mizuno et al.
-# QQQ model) is #545 and routes through the sparse phylo spine, not this file.
+# `sd_phylo(species) ~ x` (#545, the Mizuno et al. QQQ model's phylogenetic
+# scale component) lives in the second half of this file: dense scaled-structure
+# engine first (correctness), O(p) sparse to follow (performance).
 
 """
     sd(group)
@@ -37,7 +38,7 @@ _sd_parts(f::DrmFormula) = Pair{Symbol,Any}[
 # consumer reads `Dict(f.forms)` by known keys, so an unguarded sd() part would
 # be DROPPED SILENTLY — the exact bug class of issue #2 (silent σ-phylo drop).
 function _lss_only_gaussian_guard(f::DrmFormula, fam)
-    isempty(_sd_parts(f)) ||
+    (isempty(_sd_parts(f)) && isempty(_sdphylo_parts(f))) ||
         throw(ArgumentError("drm: `sd(group) ~ …` location-scale-scale formulas are " *
             "supported for the univariate Gaussian family only (got $(nameof(typeof(fam))))."))
     return nothing
@@ -230,4 +231,145 @@ function _fit_ranef_gaussian_lss(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G, nmμ, 
         return _withreml(fit, -nll_reml(θ̂), -nll_ml(θ̂))
     end
     return fit
+end
+
+# ---------------------------------------------------------------------------
+# #545 — sd_phylo(species) ~ x: climate-dependent PHYLOGENETIC SD (the Mizuno
+# et al. QQQ model's phylogenetic scale component). Marginal, per Eq. 25 of the
+# registered report:  V = D_a A D_a + D_e²,  log σ_a,k = Z_k' α  (one row per
+# species), log σ_e,i = Xσ_i' βσ (the existing heteroscedastic residual).
+# Dense-Woodbury engine (correctness first; O(p) sparse is the perf follow-up):
+# Σ_a = D_a K D_a ⇒ Σ_a⁻¹ = D_a⁻¹ K⁻¹ D_a⁻¹, logdet Σ_a = logdet K + 2 Σ log σ_a,k.
+
+"""
+    sd_phylo(group)
+
+Formula marker for the phylogenetic location–scale–scale model: on the
+left-hand side of a `bf` component formula,
+
+```julia
+bf(y ~ x + phylo(1 | species), sigma ~ x, sd_phylo(species) ~ z)
+```
+
+it puts a linear predictor on the **log per-species SD of the phylogenetic
+random effect**: `a ~ MVN(0, D_a K D_a)` with `D_a = Diagonal(exp.(Z * α))`
+and `K` the Brownian-motion phylogenetic correlation from `tree`. Mirrors
+drmTMB's `sd_phylo(species) ~ …`. Predictors must be constant within species.
+Coefficients appear as the `:sd_phylo` block.
+"""
+sd_phylo(x) = x
+
+_sdphylo_parts(f::DrmFormula) = Pair{Symbol,Any}[
+    Symbol(String(first(p))[(length("sdphy_")+1):end]) => last(p)
+    for p in f.forms if startswith(String(first(p)), "sdphy_")]
+
+# Router leg for sd_phylo: validate against the parsed Gaussian model and
+# dispatch the dense scaled-structure fitter.
+function _drm_gaussian_lss_phylo(f::DrmFormula, fam::Gaussian, sdpp, re, structured,
+                                 structured_sigma, sigma_re, metav, has_missing_response,
+                                 y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method, penalty)
+    length(sdpp) == 1 ||
+        throw(ArgumentError("drm: one `sd_phylo(group) ~ …` formula per model (got $(length(sdpp)))."))
+    sgrp, srhs = sdpp[1]
+    isempty(_sd_parts(f)) ||
+        throw(ArgumentError("drm: `sd_phylo($sgrp)` cannot be combined with a plain `sd(group)` " *
+            "formula yet — one scale–scale submodel per fit."))
+    structured !== nothing ||
+        throw(ArgumentError("drm: `sd_phylo($sgrp)` requires a `phylo(1 | $sgrp)` structured " *
+            "random effect in the mean formula."))
+    kind, grp = structured
+    kind === :phylo ||
+        throw(ArgumentError("drm: `sd_phylo($sgrp)` requires a `phylo(1 | g)` mean random effect " *
+            "(the mean has `$kind(1 | $grp)`); sd() submodels for relmat/animal are a follow-up."))
+    grp === sgrp ||
+        throw(ArgumentError("drm: `sd_phylo($sgrp)` must name the phylo grouping — the mean " *
+            "formula has `phylo(1 | $grp)`."))
+    structured_sigma === nothing ||
+        throw(ArgumentError("drm: `sd_phylo($sgrp)` with a σ-phylo random effect is not supported — " *
+            "the residual scale takes FIXED-effect predictors (`sigma ~ x`) in this route."))
+    metav === nothing ||
+        throw(ArgumentError("drm: `sd_phylo($sgrp)` cannot be combined with `meta_V(...)`."))
+    (isempty(re) && isempty(sigma_re)) ||
+        throw(ArgumentError("drm: `sd_phylo($sgrp)` supports no additional random effects " *
+            "beyond the phylo structured intercept."))
+    has_missing_response &&
+        throw(ArgumentError("drm: `sd_phylo($sgrp)` does not yet support missing responses — " *
+            "use `drm_listwise` to preprocess."))
+    penalty === nothing ||
+        throw(ArgumentError("drm: `penalty` is not wired for the sd_phylo route."))
+    method === :ML ||
+        throw(ArgumentError("drm: `sd_phylo($sgrp)` is ML-only for now (the Mizuno et al. " *
+            "protocol uses ML for AIC/LRT comparability); REML here is a follow-up."))
+    tree === nothing && error("phylo(1 | $sgrp) needs `tree = …`")
+    gidx, G = _group_index(getproperty(data, sgrp))
+    Kmat = _phylo_correlation(tree)
+    size(Kmat) == (G, G) ||
+        error("structured matrix must be $(G)×$(G) (the number of `$sgrp` levels)")
+    Zg, nmsd = _sd_group_design(f.response, srhs, data, gidx, G, sgrp)
+    return _fit_structured_gaussian_lss(fam, y, Xμ, Xσ, Zg, gidx, G, Kmat, nmμ, nmσ, nmsd,
+                                        sgrp, g_tol)
+end
+
+# Marginal for the scaled-structure model, assembled DIRECTLY as
+#     V = Z (D_a K D_a) Z' + diag(σ_e,i²)
+# and factorised with a dense Cholesky. θ = [β_μ; β_σ (log σ_e); α (log σ_a)].
+#
+# WHY NOT WOODBURY HERE (measured 2026-08-28). The Woodbury/capacitance form used
+# by `_fit_structured_gaussian` computes the quadratic as `q1 - dot(C, M \ C)`.
+# With a per-species D_a the optimiser can walk into σ_e → 0, where q1 and the
+# correction are BOTH enormous and their difference is pure rounding noise: the
+# objective there returned nll ≈ −3.3e12 while the true dense value was +4.7e6,
+# and LBFGS chased that artifact to a garbage optimum (σ_e ≈ e^−10). The
+# likelihood itself was correct — verified against a brute-force dense evaluation
+# at the true parameters to 1e-14 — so this is a CANCELLATION failure, not a
+# derivation error. The dense assembly has no such subtraction.
+#
+# COST. O(n³) per evaluation, so this route is for species-level datasets up to a
+# few thousand rows: the family- and order-level analyses of the Mizuno et al.
+# protocol (N ≈ 50–500) fit instantly. The whole-tree scope (~10⁴ species) needs
+# the sparse O(p) augmented-state spine — tracked as the follow-up on #545.
+function _fit_structured_gaussian_lss(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G, K,
+                                      nmμ, nmσ, nmsd, grp, g_tol; block::Symbol = :sd_phylo)
+    n = length(y)
+    pμ, pσ, psd = size(Xμ, 2), size(Xσ, 2), size(Zg, 2)
+    n ≤ 5000 || throw(ArgumentError("drm: the `sd_phylo` route assembles a dense $(n)×$(n) " *
+        "marginal covariance and is limited to 5000 rows in this slice. The sparse O(p) " *
+        "whole-tree engine is the follow-up on issue #545."))
+    Ksym = Symmetric(Matrix{Float64}(K))
+
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; α = θ[pμ+pσ+1:pμ+pσ+psd]
+        ημ = Xμ * βμ; ησ = Xσ * βσ; ησa = Zg * α
+        T = eltype(θ)
+        σa = exp.(ησa)                                    # per-species phylo SD
+        Σa = (σa * σa') .* Ksym                           # D_a K D_a
+        V = Matrix{T}(undef, n, n)
+        @inbounds for j in 1:n, i in 1:n
+            V[i, j] = Σa[gidx[i], gidx[j]]                # Z Σ_a Z'
+        end
+        @inbounds for i in 1:n
+            V[i, i] += exp(2 * ησ[i])                     # + σ_e,i²
+        end
+        Vfac = cholesky(Symmetric(V); check = false)
+        issuccess(Vfac) || return convert(T, 1e18)
+        r = y .- ημ
+        return 0.5 * (logdet(Vfac) + dot(r, Vfac \ r) + n * log(2π))
+    end
+
+    βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
+    θ0 = zeros(pμ + pσ + psd)
+    θ0[1:pμ] .= βμ0
+    θ0[pμ+1] = log(std(res0) / sqrt(2) + eps())
+    θ0[pμ+pσ+1:end] .= Zg \ fill(log(std(res0) / sqrt(2) + eps()), G)
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res)
+    V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
+
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), block => (pμ+pσ+1):(pμ+pσ+psd)]
+    names = [:mu => nmμ, :sigma => nmσ, block => nmsd]
+    means = Dict(:mu => Xμ * θ̂[1:pμ])
+    obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
+    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n,
+                           Optim.converged(res), means, obs, scales), nll)
 end

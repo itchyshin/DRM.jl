@@ -103,13 +103,14 @@ function bf(mu::FormulaTerm, dpars::FormulaTerm...)
         # Location–scale–scale (#544): `sd(g) ~ …` puts a linear predictor on the
         # log SD of the `(1 | g)` random effect (drmTMB grammar). Stored under a
         # prefixed key so the family routers can extract or refuse it explicitly.
-        if flhs isa FunctionTerm && flhs.f === sd
+        if flhs isa FunctionTerm && (flhs.f === sd || flhs.f === sd_phylo)
+            marker = flhs.f === sd ? "sd" : "sd_phylo"
             (length(flhs.args) == 1 && flhs.args[1] isa Term) ||
-                throw(ArgumentError("bf: `sd()` takes the grouping variable of the random " *
-                    "effect, e.g. `sd(g) ~ x` matching `(1 | g)` in the response formula."))
-            key = Symbol("sd_", flhs.args[1].sym)
+                throw(ArgumentError("bf: `$marker()` takes the grouping variable of the random " *
+                    "effect, e.g. `$marker(g) ~ x` matching the random effect in the response formula."))
+            key = Symbol(flhs.f === sd ? "sd_" : "sdphy_", flhs.args[1].sym)
             any(p -> first(p) === key, forms) &&
-                throw(ArgumentError("bf: duplicate `sd($(flhs.args[1].sym)) ~ …` formula."))
+                throw(ArgumentError("bf: duplicate `$marker($(flhs.args[1].sym)) ~ …` formula."))
             push!(forms, key => f.rhs)
             continue
         end
@@ -424,6 +425,12 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     # Location–scale–scale (#544): `sd(g) ~ …` — dispatch before every other route
     # so an unsupported combination ERRORS instead of silently dropping the sd()
     # part (the issue-#2 silent-drop class).
+    sdpp = _sdphylo_parts(f)
+    if !isempty(sdpp)
+        return _withformula(_drm_gaussian_lss_phylo(f, fam, sdpp, re, structured,
+            structured_sigma, sigma_re, metav, has_missing_response,
+            y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method, penalty), f)
+    end
     sdp = _sd_parts(f)
     if !isempty(sdp)
         re_kinds_sd = [_re_kind(rl) for (rl, _) in re]
@@ -1866,7 +1873,7 @@ distinct so a side-by-side read is not silently mixing scales.
 function re_sd(fit::DrmFit)
     # Location–scale–scale fits (#544) model the RE SD with covariates, so a
     # single per-grouping SD is ill-defined — refuse rather than misreport.
-    any(p -> first(p) === :sd, fit.blocks) &&
+    any(p -> first(p) in (:sd, :sd_phylo), fit.blocks) &&
         throw(ArgumentError("re_sd: this fit models the random-effect SD with covariates " *
             "(`sd(group) ~ …`), so a single SD per grouping is not defined. Use " *
             "`coef(fit, :sd)` for the log-SD coefficients."))

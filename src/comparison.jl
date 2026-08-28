@@ -83,7 +83,7 @@ end
 # the parameter space, where the LR statistic is NOT χ²(Δdof) — the correct
 # reference is a chi-bar-square mixture (see `lrt_boundary`/`chibar_pvalue`).
 const _VARIANCE_COMPONENT_BLOCKS =
-    (:resd, :resid, :recov, :phylocov, :resd_mu, :resd_sigma, :sd)
+    (:resd, :resid, :recov, :phylocov, :resd_mu, :resd_sigma, :sd, :sd_phylo)
 
 # Variance-component block symbols present in `fit` (with a non-empty range).
 function _variance_component_blocks(fit::DrmFit)
