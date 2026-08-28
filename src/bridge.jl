@@ -4,7 +4,12 @@
 # side deliberately boring for JuliaCall: strings, column tables, plain arrays,
 # and dictionaries cross the boundary; DRM.jl objects stay on the Julia side.
 
-const _BRIDGE_BIVARIATE_KEYS = Set((:mu1, :mu2, :sigma1, :sigma2, :nu, :rho12))
+# `nu` is deliberately NOT here (#1090): univariate Student owns a keyed `nu`
+# formula too, so it cannot discriminate bivariate — mu1/mu2/sigma1/sigma2/
+# rho12 do. The bivariate branch still threads a keyed `nu` through to
+# biv_student when mu1/mu2 route it there; the univariate keyed branch already
+# lists `:nu` in its parameter order.
+const _BRIDGE_BIVARIATE_KEYS = Set((:mu1, :mu2, :sigma1, :sigma2, :rho12))
 const _BRIDGE_TREE_CACHE = Dict{UInt64,Tuple{String,Any}}()
 const _BRIDGE_TREE_CACHE_MAX = 4
 

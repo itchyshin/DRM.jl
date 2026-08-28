@@ -181,6 +181,17 @@ function reml_ll_and_mode(prob::AugProblem, Q_cond::SparseMatrixCSC,
     # The Schur complement S is only PD at the joint mode of jn(u, beta_profiled).
     u_hat = u0 === nothing ? zeros(4*prob.n_total) : Vector{Float64}(u0)
     ch_H  = nothing
+    # #526: surface whether the alternation actually settled, rather than
+    # letting a budget exhaustion pass silently into a flag that only reported
+    # the outer optimiser's verdict. Two thresholds on purpose: the LOOP still
+    # exits early at the strict 1e-6 (fitting behaviour untouched), but the
+    # REPORTED verdict uses a relative criterion with a measured floor —
+    # instrumentation on the #484 fixtures showed delta_b sitting in a flat
+    # ~6.2e-6 LIMIT CYCLE across all 15 alternations while the engine-level
+    # gradient met g_tol, i.e. a machine-level equilibrium around the joint
+    # mode, not a stall. 1e-4·(1 + ‖β‖) passes that oscillation with ~30x
+    # margin and still fails a materially moving beta (delta_b ~ 1e-2).
+    last_delta = Inf
     for alt_it in 1:15    # up to 15 alternations for cold starts
         u_hat, ch_H, _ = estep_mode(prob, P, beta_full; u0=u_hat, n_newton=n_newton)
         u_hat = Vector{Float64}(u_hat)
@@ -189,8 +200,12 @@ function reml_ll_and_mode(prob::AugProblem, Q_cond::SparseMatrixCSC,
                   norm(b_new.s1  .- beta_full.s1)  + norm(b_new.s2  .- beta_full.s2)
         beta_full = (mu1 = b_new.mu1, mu2 = b_new.mu2,
                      s1  = b_new.s1,  s2  = b_new.s2, rho = rho_coef)
-        delta_b < 1e-6 && break   # joint convergence
+        last_delta = delta_b
+        delta_b < 1e-6 && break   # joint convergence (strict loop exit)
     end
+    beta_scale = norm(beta_full.mu1) + norm(beta_full.mu2) +
+                 norm(beta_full.s1) + norm(beta_full.s2)
+    inner_converged = last_delta < 1e-4 * (1 + beta_scale)
     # Final E-step with converged beta
     u_hat, ch_H, _ = estep_mode(prob, P, beta_full; u0=u_hat, n_newton=n_newton)
     u_hat = Vector{Float64}(u_hat)
@@ -248,11 +263,11 @@ function reml_ll_and_mode(prob::AugProblem, Q_cond::SparseMatrixCSC,
     if !issuccess(ch_S)
         # S non-PD: mode/beta not jointly converged, or phi outside valid region.
         # Return -Inf so the optimizer avoids this point (barrier).
-        return -Inf, u_hat, ch_H, beta_full, P
+        return -Inf, u_hat, ch_H, beta_full, P, inner_converged
     end
     ld_S  = logdet(ch_S)
 
-    return ml_ll - 0.5*ld_S, u_hat, ch_H, beta_full, P
+    return ml_ll - 0.5*ld_S, u_hat, ch_H, beta_full, P, inner_converged
 end
 
 # ---------------------------------------------------------------------------
@@ -561,14 +576,14 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
     _, lc_hat  = unpack_phi(prob, phi_hat)
     Lam_hat    = lc_to_Λ(lc_hat)
 
-    rhat, uhat, ch_H, bhat, P_hat = reml_ll_and_mode(
+    rhat, uhat, ch_H, bhat, P_hat, inner_ok = reml_ll_and_mode(
         prob, Q_cond, phi_hat; u0=u_cache[], beta0=beta_cache[], n_newton=n_newton)
     # The warm-cached u0/beta0 are the last line-search state, which need not sit at
     # the JOINT (u, β) mode for phi_hat. If that lands on the non-PD Schur barrier
     # (S not PD ⇒ rhat = -Inf), re-evaluate COLD so the alternating E-step / β
     # Newton re-converges the joint mode at phi_hat (mirrors the Gate-B cold check).
     if !isfinite(rhat)
-        rhat, uhat, ch_H, bhat, P_hat = reml_ll_and_mode(
+        rhat, uhat, ch_H, bhat, P_hat, inner_ok = reml_ll_and_mode(
             prob, Q_cond, phi_hat; n_newton=n_newton)
     end
     mlhat = laplace_ll(prob, P_hat, bhat, uhat, ch_H)
@@ -591,7 +606,12 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
             reml_loglik = _reml_normalise(rhat, length(bhat.mu1) + length(bhat.mu2) +
                                                 length(bhat.s1) + length(bhat.s2)),
             ml_loglik   = mlhat,
-            converged  = Optim.converged(res),
+            # #526: the public flag now also requires the FINAL evaluation's
+            # inner (u, beta) alternation to have met its joint criterion, so
+            # "converged" means the same thing users read on the ML path — at
+            # the optimum, with the mode actually found — instead of only the
+            # outer optimiser's verdict over phi.
+            converged  = Optim.converged(res) && inner_ok,
             iterations = Optim.iterations(res),
             g_residual = g_resid_val,
             f_calls    = eval_cnt[],

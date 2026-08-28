@@ -151,6 +151,11 @@ closed).
 
 **Verified engine (foundation):** the q=4 ML location-scale single fit — 2.18×
 over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
+**Interval claims are capability parity, not coverage** — the R↔Julia ledger's
+`coverage_claimed` fences are permanent documented boundaries by owner decision
+(D-179 #4, reaffirmed D-180 #2); measured coverage campaigns exist in the
+dev-log evidence but no route claims calibrated intervals as a supported
+guarantee.
 Per-family engine-vs-engine timings, with their caveats stated, are
 consolidated in [report/speed-per-family.md](report/speed-per-family.md); the
 R↔Julia capability ledger itself lives in drmTMB's generated
