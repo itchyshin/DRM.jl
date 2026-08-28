@@ -59,6 +59,7 @@ function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, K = nothing,
     marg = _marginal_method(marginal)                     # :LA (default) or :VA (#136)
     marg isa AGHQ && _aghq_reject(fam, "this family")
     isva = marg isa Variational
+    _lss_only_gaussian_guard(f, fam)   # #544: refuse, never silently drop, sd() parts
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||

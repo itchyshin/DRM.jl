@@ -48,6 +48,7 @@ function drm(f::DrmFormula, fam::BetaBinomial; data, tree = nothing, g_tol::Real
 
     f.response2 === nothing &&
         error("BetaBinomial() needs a two-column response: bf(cbind(successes, failures) ~ …)")
+    _lss_only_gaussian_guard(f, fam)   # #544: refuse, never silently drop, sd() parts
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||

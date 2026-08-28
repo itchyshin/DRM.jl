@@ -34,6 +34,7 @@ function drm(f::DrmFormula, fam::ZeroOneBeta; data, g_tol::Real = 1e-8)
     end
     missing_fit !== nothing && return missing_fit
 
+    _lss_only_gaussian_guard(f, fam)   # #544: refuse, never silently drop, sd() parts
     rhs = Dict(f.forms)
     for (_, r) in f.forms
         _, re, mv, st = _split_ranef(r)

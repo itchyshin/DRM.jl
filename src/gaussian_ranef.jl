@@ -402,6 +402,11 @@ Random-effect covariance summary per grouping factor.
   grouping factor.
 """
 function vc(fit::DrmFit)
+    # Location-scale-scale fits (#544): the RE variance varies by group-level
+    # covariates, so a single component matrix is ill-defined -- refuse.
+    any(p -> first(p) in (:sd, :sd_phylo), fit.blocks) &&
+        throw(ArgumentError("vc: this fit models the random-effect SD with covariates " *
+            "(`sd(group) ~ ...`); use `coef(fit, :sd)` for the log-SD coefficients."))
     d = Dict{Symbol,Matrix{Float64}}()
     # q=4 phylogenetic coevolution: the raw 4×4 group-level Σ_a is stashed on
     # `ranef` (axes mu1,mu2,sigma1,sigma2); surface it here per #192.

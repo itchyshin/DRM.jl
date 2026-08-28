@@ -70,6 +70,17 @@ spatial(x) = x
 function _fit_structured_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, K, nmμ, nmσ, grp, g_tol)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    # #548: with a NON-CONSTANT residual scale the Woodbury quadratic below
+    # (`q1 - dot(C, Mfac \ C)`) loses every digit as σ_e,i → 0 — measured, it
+    # returned logLik +1.1e105 with `converged = true` at a point whose true dense
+    # value was −1873.48 (drmTMB: −70.38). Route that case through the stable
+    # dense assembly added for #545, which reproduces drmTMB to 7 s.f. The
+    # homoscedastic path (pσ == 1) is the verified one and is left untouched.
+    if pσ > 1
+        return _fit_structured_gaussian_lss(fam, y, Xμ, Xσ, ones(G, 1), gidx, G, K,
+                                            nmμ, nmσ, [String(grp)], grp, g_tol;
+                                            block = :resd)
+    end
     Kfac = cholesky(Symmetric(K))
     Kinv = inv(Kfac)            # constant (K fixed)
     logdetK = logdet(Kfac)

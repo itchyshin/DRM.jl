@@ -38,10 +38,12 @@ makedocs(
         ],
         "Tutorials" => [
             "tutorials/location-scale.md",
+            "tutorials/location-scale-scale.md",
             "tutorials/robust-student.md",
             "tutorials/count-nbinom2.md",
             "tutorials/proportion-beta-binomial.md",
             "tutorials/bivariate-coscale.md",
+            "tutorials/bivariate-nongaussian.md",
             "tutorials/meta-analysis.md",
             "tutorials/structural-dependence.md",
             "tutorials/animal-models.md",

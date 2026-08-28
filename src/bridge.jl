@@ -442,10 +442,17 @@ function _bridge_formula(formula, family::AbstractString, data)
 
     keyed = Dict{Symbol,Any}()
     positional = Any[]
+    lss = Any[]                # `sd(g) ~ …` / `sd_phylo(s) ~ …` parts (#546):
+                               # marker-keyed, so they belong to NEITHER bucket and
+                               # must not trip the keyed-vs-positional guard below.
     for item in parsed
         key, form = item
         if key === nothing
-            push!(positional, form)
+            if form.lhs isa FunctionTerm && (form.lhs.f === sd || form.lhs.f === sd_phylo)
+                push!(lss, form)
+            else
+                push!(positional, form)
+            end
         else
             keyed[key] = form
         end
@@ -471,11 +478,20 @@ function _bridge_formula(formula, family::AbstractString, data)
         for p in (:sigma, :nu, :zi, :hu, :zoi, :coi)
             haskey(keyed, p) && push!(ordered, keyed[p])
         end
+        append!(ordered, lss)
+        # An unrecognised key must ERROR, never be dropped: a silently ignored
+        # part returns a DIFFERENT MODEL wearing the requested model's name
+        # (the issue-#2 class).
+        for k in keys(keyed)
+            k in (:mu, :sigma, :nu, :zi, :hu, :zoi, :coi) ||
+                throw(ArgumentError("drm_bridge: unknown univariate formula part `$k`. " *
+                    "Supported: mu, sigma, nu, zi, hu, zoi, coi, sd(group), sd_phylo(group)."))
+        end
         bf(ordered...)
     else
         isempty(positional) &&
             throw(ArgumentError("drm_bridge: at least one formula is required"))
-        bf(positional...)
+        bf(positional..., lss...)
     end
 
     # `ctx.extra` collects the columns materialised by `I(...)`, `scale(...)`,
@@ -486,13 +502,25 @@ function _bridge_formula(formula, family::AbstractString, data)
     return bundle, augmented
 end
 
+# Render one keyed part as a parsable string. Location-scale-scale entries
+# (#546) arrive keyed by the marker call itself -- `sd_phylo(species)` -- and
+# the R side already writes the full `sd_phylo(species) ~ rhs` into the VALUE.
+# Emitting `key = value` there would make Julia read `f(x) = body` as a
+# short-form FUNCTION DEFINITION (body wrapped in a block), which the formula
+# parser cannot see through. So pass the value straight through: it is already
+# the positional spelling `bf` understands.
+function _bridge_keyed_part(k::AbstractString, v)
+    occursin(r"^sd(_phylo)?\([^()]+\)$", k) && return String(v)
+    return "$k = $v"
+end
+
 function _bridge_formula_parts(formula)
     if formula isa AbstractString
         return filter(!isempty, strip.(split(String(formula), ';')))
     elseif formula isa NamedTuple
-        return ["$(String(k)) = $(v)" for (k, v) in pairs(formula)]
+        return [_bridge_keyed_part(String(k), v) for (k, v) in pairs(formula)]
     elseif formula isa AbstractDict
-        return ["$(String(k)) = $(v)" for (k, v) in pairs(formula)]
+        return [_bridge_keyed_part(String(k), v) for (k, v) in pairs(formula)]
     elseif formula isa AbstractVector
         return String.(formula)
     end

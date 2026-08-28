@@ -30,6 +30,7 @@ function drm(f::DrmFormula, fam::CumulativeLogit; data, g_tol::Real = 1e-8)
     end
     missing_fit !== nothing && return missing_fit
 
+    _lss_only_gaussian_guard(f, fam)   # #544: refuse, never silently drop, sd() parts
     rhs = Dict(f.forms)
     _, re, mv, st = _split_ranef(rhs[:mu])
     (isempty(re) && mv === nothing && st === nothing) ||
@@ -84,22 +85,25 @@ function _fit_cumulative(fam::CumulativeLogit, y::Vector{Int}, Xμ, K, nmμ, g_t
     names = [:mu => nmμ, :cutpoints => ["theta$k" for k in 1:nc]]
     # fitted = expected category score Σ_k k·P(y=k)
     β̂ = θ̂[1:pμ]; δ̂ = θ̂[pμ+1:pμ+nc]
-    cuts = similar(δ̂); cuts[1] = δ̂[1]
-    for k in 2:nc; cuts[k] = cuts[k-1] + exp(δ̂[k]); end
+    # `cuts_hat`, NOT `cuts` (#549 class): the nll closure above also assigns
+    # `cuts`, and sharing the name here would make it one boxed variable shared
+    # with a closure that threaded profile CIs call concurrently.
+    cuts_hat = similar(δ̂); cuts_hat[1] = δ̂[1]
+    for k in 2:nc; cuts_hat[k] = cuts_hat[k-1] + exp(δ̂[k]); end
     η̂ = pμ == 0 ? zeros(n) : Xμ * β̂
     score = Vector{Float64}(undef, n)
     for i in 1:n
         sc = 0.0
         for k in 1:K
-            Pk = k == 1 ? _logistic(cuts[1] - η̂[i]) :
-                 k == K ? 1 - _logistic(cuts[nc] - η̂[i]) :
-                 _logistic(cuts[k] - η̂[i]) - _logistic(cuts[k-1] - η̂[i])
+            Pk = k == 1 ? _logistic(cuts_hat[1] - η̂[i]) :
+                 k == K ? 1 - _logistic(cuts_hat[nc] - η̂[i]) :
+                 _logistic(cuts_hat[k] - η̂[i]) - _logistic(cuts_hat[k-1] - η̂[i])
             sc += k * Pk
         end
         score[i] = sc
     end
     means = Dict(:mu => score); obs = Dict(:mu => Float64.(y))
-    scales = Dict(:ordinal_eta => η̂, :ordinal_cuts => Float64.(cuts))
+    scales = Dict(:ordinal_eta => η̂, :ordinal_cuts => Float64.(cuts_hat))
     return _withiterations(
         _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
         Optim.iterations(res))

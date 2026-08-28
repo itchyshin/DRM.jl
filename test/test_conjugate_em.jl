@@ -48,7 +48,10 @@ using Test, Random, LinearAlgebra
     @test loglik(fit_slb) ≈ loglik(fit_def) rtol = 1e-6
     @test fit_def.nll !== nothing
     @test all(isfinite, diag(vcov(fit_def))[1:2])
-    @test all(isnan, diag(vcov(fit_def))[3:4])
+    # #556: the sparse route's variance block is now COMPUTED (profiled
+    # curvature), not NaN-by-construction — assert finite and positive.
+    @test all(isfinite, diag(vcov(fit_def))[3:4])
+    @test all(>(0), diag(vcov(fit_def))[3:4])
 
     # (b) Explicit EM and legacy dense GLS remain available and reach the
     # same likelihood surface on this balanced-tree anchor.

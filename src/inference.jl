@@ -76,6 +76,24 @@ function _blas_oversubscribed(active::Bool)
     return active && Threads.nthreads() > 1 && BLAS.get_num_threads() > 1
 end
 
+# Run `f()` with BLAS pinned to one thread when a multi-threaded Julia region is
+# about to make CONCURRENT dense-BLAS calls, restoring the setting afterwards.
+# Concurrent callers into multi-threaded OpenBLAS contend on its internal locks:
+# measured on the #545 dense route (64 tips, B = 99 bootstrap, 8 Julia threads),
+# serial 5.03 s / threaded-unpinned 9.53 s / threaded-pinned 0.58 s — the pin is
+# the difference between a 1.9x SLOWDOWN and an 8.7x speedup (#550).
+function _with_pinned_blas(f, active::Bool)
+    active || return f()
+    old = BLAS.get_num_threads()
+    old > 1 || return f()
+    BLAS.set_num_threads(1)
+    try
+        return f()
+    finally
+        BLAS.set_num_threads(old)
+    end
+end
+
 """
     confint(fit; level = 0.95, method = :wald, threads = false, parm = nothing)
 
@@ -193,24 +211,28 @@ function profile_result(fit::DrmFit; level::Real=0.95, threads::Bool=false, parm
     endpoint_threaded = threaded && length(jobs) == 1
     elapsed = @elapsed begin
         if coefficient_threaded
-            Threads.@threads for i in eachindex(jobs)
-                rows[i], stats[i] = _profile_row_result(
-                    jobs[i], nll, nllgrad, θ̂, nllhat, half, se, autodiff
-                )
+            _with_pinned_blas(true) do
+                Threads.@threads for i in eachindex(jobs)
+                    rows[i], stats[i] = _profile_row_result(
+                        jobs[i], nll, nllgrad, θ̂, nllhat, half, se, autodiff
+                    )
+                end
             end
         else
-            for i in eachindex(jobs)
-                rows[i], stats[i] = _profile_row_result(
-                    jobs[i],
-                    nll,
-                    nllgrad,
-                    θ̂,
-                    nllhat,
-                    half,
-                    se,
-                    autodiff;
-                    endpoint_threads=endpoint_threaded,
-                )
+            _with_pinned_blas(endpoint_threaded) do
+                for i in eachindex(jobs)
+                    rows[i], stats[i] = _profile_row_result(
+                        jobs[i],
+                        nll,
+                        nllgrad,
+                        θ̂,
+                        nllhat,
+                        half,
+                        se,
+                        autodiff;
+                        endpoint_threads=endpoint_threaded,
+                    )
+                end
             end
         end
     end
@@ -1426,9 +1448,30 @@ function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothi
 
     gidx, G = _group_index(getproperty(data, grp))
     size(Kg) == (G, G) || return nothing
-    sds = re_sd(fit)
-    (sds isa AbstractDict && haskey(sds, grp)) || return nothing
-    sd_u = Float64(sds[grp])
+    # Location-scale-scale fits (#544/#545): the RE SD is per group,
+    # σ_g,k = exp(Z_k' α), so the draw scales each group's effect individually.
+    # For the PHYLO lss fit the α coefficients are defined against the
+    # NORMALISED correlation (that is what `_fit_structured_gaussian_lss`
+    # receives via `_phylo_correlation`), so the draw must use the correlation
+    # too — the raw-covariance SCALE TRAP note above applies to the scalar
+    # `re_sd` definition, not to this route.
+    lss_sd = _sd_parts(fit.formula); lss_phy = _sdphylo_parts(fit.formula)
+    sd_g = if !isempty(lss_sd) || !isempty(lss_phy)
+        (sgrp, srhs) = isempty(lss_phy) ? lss_sd[1] : lss_phy[1]
+        sgrp === grp || return nothing
+        if !isempty(lss_phy)
+            phy = tree isa AbstractString ? augmented_phy(tree) : tree
+            phy === nothing && return nothing
+            Kg = _phylo_correlation(phy)
+            size(Kg) == (G, G) || return nothing
+        end
+        Zg, _ = _sd_group_design(fit.formula.response, srhs, data, gidx, G, grp)
+        exp.(Zg * coef(fit, isempty(lss_phy) ? :sd : :sd_phylo))
+    else
+        sds = re_sd(fit)
+        (sds isa AbstractDict && haskey(sds, grp)) || return nothing
+        fill(Float64(sds[grp]), G)
+    end
     L = cholesky(Symmetric(Matrix{Float64}(Kg))).L
 
     # The FIXED-effect mean comes from `predict(fit, data)`, not from unpicking
@@ -1463,7 +1506,7 @@ function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothi
         sigma = Vector{Float64}(_scale_vector(fit, :sigma))
         n = length(mu_fixed)
         return function (rng)
-            u = sd_u .* (L * randn(rng, G))
+            u = sd_g .* (L * randn(rng, G))
             return mu_fixed .+ u[gidx] .+ sigma .* randn(rng, n)
         end
     end
@@ -1494,7 +1537,7 @@ function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothi
     eta_fixed === nothing && return nothing
     length(eta_fixed) == fit.nobs || return nothing
     return function (rng)
-        u = sd_u .* (L * randn(rng, G))
+        u = sd_g .* (L * randn(rng, G))
         mu_star = _mean_response(fit.family, eta_fixed .+ u[gidx])
         return _simulate_once(fit, rng; mu = mu_star)
     end
@@ -1547,8 +1590,10 @@ function _bootstrap_result(
     threaded = threads && Threads.nthreads() > 1
     elapsed = @elapsed begin
         if threaded
-            Threads.@threads for b in 1:B
-                run_one!(b)
+            _with_pinned_blas(threaded) do
+                Threads.@threads for b in 1:B
+                    run_one!(b)
+                end
             end
         else
             for b in 1:B

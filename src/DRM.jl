@@ -72,6 +72,7 @@ include("gaussian_core.jl")
 include("meta_vcov_bivariate.jl")  # A8: known bivariate sampling covariance (drmTMB meta_vcov_bivariate)
 include("gaussian_bivariate.jl")
 include("gaussian_ranef.jl")
+include("gaussian_lss.jl")   # #544: location-scale-scale sd(g) ~ x on the (1|g) SD
 include("aghq_1d.jl")            # #448: 1-D Liu–Pierce AGHQ around `_gauss_hermite`
 include("gaussian_meta.jl")
 include("gaussian_structured.jl")
@@ -150,7 +151,7 @@ export AugProblem, make_problem,
        lc_to_cov, cov_to_lc, lc_len
 
 # Public API — the Gaussian distributional-regression front end.
-export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, DrmFormula, BivariateDrmFormula, DrmFit,
+export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, NegBinomial2, TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, CumulativeLogit, cbind, meta_V, relmat, animal, phylo, spatial, sd, sd_phylo, DrmFormula, BivariateDrmFormula, DrmFit,
        coef, vcov, loglik, nobs, dof, aic, bic, fixef, re_sd, vc, ranef, sigma, corpairs, rho12, stderror, confint, coeftable, fitted, residuals, predict, predict_parameters, marginal_parameters, prediction_grid, simulate, bootstrap_ci, bootstrap_summary, bootstrap_result, bootstrap_sigma_a, check_drm, family,
        profile_result, profile_curve, parameter_surface, corpairs_data,
        drm_figure, plot_profile, plot_parameter_surface, plot_corpairs,

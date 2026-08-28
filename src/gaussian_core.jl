@@ -99,9 +99,51 @@ function bf(mu::FormulaTerm, dpars::FormulaTerm...)
     forms = Pair{Symbol,Any}[:mu => mu.rhs]
     seen = Set{Symbol}()
     for f in dpars
-        f.lhs isa Term || throw(ArgumentError("bf: each distributional-parameter formula " *
+        flhs = f.lhs
+        # Location–scale–scale (#544): `sd(g) ~ …` puts a linear predictor on the
+        # log SD of the `(1 | g)` random effect (drmTMB grammar). Stored under a
+        # prefixed key so the family routers can extract or refuse it explicitly.
+        if flhs isa FunctionTerm && (flhs.f === sd || flhs.f === sd_phylo)
+            marker = flhs.f === sd ? "sd" : "sd_phylo"
+            (1 <= length(flhs.args) <= 2 && all(a -> a isa Term, flhs.args)) ||
+                throw(ArgumentError("bf: `$marker()` takes the grouping variable of the random " *
+                    "effect and an optional dependence level, e.g. `sd(g) ~ x` or " *
+                    "`sd(species, phylogenetic) ~ x`."))
+            grpsym = flhs.args[1].sym
+            # Canonical grammar mirrors drmTMB: `sd(group)` for the iid (1 | g)
+            # random effect, `sd(group, phylogenetic)` for the phylogenetic SD
+            # (drmTMB: `sd(group, level = "phylogenetic")`; @formula does not
+            # parse keyword arguments or string literals, so the level is a bare
+            # symbol here). `sd_phylo(group)` is the DEPRECATED legacy spelling,
+            # kept working like the twin keeps it, and canonicalised identically.
+            is_phylo = if flhs.f === sd_phylo
+                length(flhs.args) == 1 ||
+                    throw(ArgumentError("bf: `sd_phylo()` already names the phylogenetic level — " *
+                        "use `sd($grpsym, phylogenetic) ~ …` for the canonical spelling."))
+                Base.depwarn("`sd_phylo(g) ~ …` is deprecated; use `sd(g, phylogenetic) ~ …` " *
+                             "(drmTMB: `sd(g, level = \"phylogenetic\")`).", :sd_phylo)
+                true
+            elseif length(flhs.args) == 2
+                lvl = flhs.args[2].sym
+                lvl in (:phylogenetic, :spatial, :animal, :relmat) ||
+                    throw(ArgumentError("bf: `sd($grpsym, $lvl)` — the dependence level must be " *
+                        "one of phylogenetic, spatial, animal, relmat."))
+                lvl === :phylogenetic ||
+                    throw(ArgumentError("bf: `sd(group, $lvl)` random-effect SD models are " *
+                        "planned but not implemented yet — `phylogenetic` is the supported level."))
+                true
+            else
+                false
+            end
+            key = Symbol(is_phylo ? "sdphy_" : "sd_", grpsym)
+            any(p -> first(p) === key, forms) &&
+                throw(ArgumentError("bf: duplicate `$marker($grpsym) ~ …` formula."))
+            push!(forms, key => f.rhs)
+            continue
+        end
+        flhs isa Term || throw(ArgumentError("bf: each distributional-parameter formula " *
             "must read `param ~ …` with a parameter name on the left (got `$(f.lhs)`)."))
-        name = _check_dpar_name!(seen, f.lhs.sym)
+        name = _check_dpar_name!(seen, flhs.sym)
         push!(forms, name => f.rhs)
     end
     any(p -> first(p) === :sigma, forms) || push!(forms, :sigma => ConstantTerm(1))
@@ -407,6 +449,46 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     response_observed = _observed_response_mask(y)
     has_missing_response = !all(response_observed)
     all_structured = _collect_structured(rhs[:mu])
+    # Location–scale–scale (#544): `sd(g) ~ …` — dispatch before every other route
+    # so an unsupported combination ERRORS instead of silently dropping the sd()
+    # part (the issue-#2 silent-drop class).
+    sdpp = _sdphylo_parts(f)
+    sdp = _sd_parts(f)
+    if !isempty(sdpp) || !isempty(sdp)
+        # Shared refusals for every sd() route (single or multi component).
+        length(sdpp) ≤ 1 ||
+            throw(ArgumentError("drm: one `sd(group, phylogenetic) ~ …` formula per model."))
+        structured_sigma === nothing ||
+            throw(ArgumentError("drm: sd() submodels with a σ-phylo random effect are not " *
+                "supported — the residual scale takes FIXED-effect predictors here."))
+        metav === nothing ||
+            throw(ArgumentError("drm: sd() submodels cannot be combined with `meta_V(...)`."))
+        isempty(sigma_re) ||
+            throw(ArgumentError("drm: sd() submodels cannot be combined with a random effect " *
+                "on `sigma`."))
+        has_missing_response &&
+            throw(ArgumentError("drm: sd() submodels do not yet support missing responses — " *
+                "use `drm_listwise` to preprocess."))
+        penalty === nothing ||
+            throw(ArgumentError("drm: `penalty` is not wired for sd() submodel routes."))
+        re_kinds_sd = [_re_kind(rl) for (rl, _) in re]
+        # The two verified single-component engines keep their exact routes
+        # (#544 Woodbury with REML; #545 dense phylo); every COMBINATION —
+        # several iid REs, iid + phylo, an RE without its own sd() part —
+        # goes to the multi-component dense engine (#555).
+        if isempty(sdpp) && structured === nothing && length(re) == 1 && length(sdp) == 1
+            return _withformula(_drm_gaussian_lss(f, fam, sdp, re, re_kinds_sd, structured,
+                structured_sigma, sigma_re, metav, has_missing_response,
+                y, Xμ, Xσ, nmμ, nmσ, data, g_tol, method), f)
+        elseif isempty(sdp) && isempty(re) && structured !== nothing && length(sdpp) == 1
+            return _withformula(_drm_gaussian_lss_phylo(f, fam, sdpp, re, structured,
+                structured_sigma, sigma_re, metav, has_missing_response,
+                y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method, penalty), f)
+        else
+            return _withformula(_drm_gaussian_lss_multi(f, fam, sdp, sdpp, re, re_kinds_sd,
+                structured, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method), f)
+        end
+    end
     # σ-phylo location-scale (B0–B2): a structured phylo marker on `sigma` routes to
     # the Gaussian location-scale Laplace engine (separate / coupled / asymmetric
     # blocks + boundary-aware profile CIs). The 4th `_split_ranef` value used to be
@@ -1840,6 +1922,12 @@ log-σ scale — the two are NOT directly comparable, and the suffix keeps them
 distinct so a side-by-side read is not silently mixing scales.
 """
 function re_sd(fit::DrmFit)
+    # Location–scale–scale fits (#544) model the RE SD with covariates, so a
+    # single per-grouping SD is ill-defined — refuse rather than misreport.
+    any(p -> first(p) in (:sd, :sd_phylo), fit.blocks) &&
+        throw(ArgumentError("re_sd: this fit models the random-effect SD with covariates " *
+            "(`sd(group) ~ …`), so a single SD per grouping is not defined. Use " *
+            "`coef(fit, :sd)` for the log-SD coefficients."))
     d = Dict{Symbol,Float64}()
     for (p, r) in fit.blocks
         p === :resd || continue

@@ -84,6 +84,7 @@ function drm(f::DrmFormula, fam::NegBinomial2; data, tree = nothing, K = nothing
     marg = _marginal_method(marginal)                     # :LA (default) or :VA (#136)
     marg isa AGHQ && _aghq_reject(fam, "this family")
     isva = marg isa Variational
+    _lss_only_gaussian_guard(f, fam)   # #544: refuse, never silently drop, sd() parts
     rhs = Dict(f.forms)
     # Location–scale: a coupled `(1 | tag | group)` shared by the mean and sigma
     # formulas → one 2×2 group-level covariance fit by the augmented-state engine.
@@ -414,6 +415,7 @@ function drm(f::DrmFormula, fam::TruncatedNegBinomial2; data, g_tol::Real = 1e-8
     end
     missing_fit !== nothing && return missing_fit
 
+    _lss_only_gaussian_guard(f, fam)   # #544: refuse, never silently drop, sd() parts
     rhs = Dict(f.forms)
     for (_, r) in f.forms
         _, re, mv, st = _split_ranef(r)
