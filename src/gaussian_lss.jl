@@ -17,15 +17,18 @@ Formula marker for a location–scale–scale model. Used only on the left-hand
 side of a `bf` component formula,
 
 ```julia
-bf(y ~ x + (1 | g), sigma ~ x, sd(g) ~ z)
+bf(y ~ x + (1 | g),              sigma ~ x, sd(g) ~ z)                  # iid RE SD
+bf(y ~ x + phylo(1 | species),   sigma ~ x, sd(species, phylogenetic) ~ z)  # phylo SD
 ```
 
-to put a linear predictor on the **log standard deviation of the `(1 | g)`
-random effect**: `log σ_b,k = Z_k' α` with one row per group level. Mirrors
-drmTMB's `sd(group) ~ …`. Predictors in the `sd()` formula must be constant
-within each level of `group`. Univariate Gaussian only; the fitted
-coefficients appear as the `:sd` block (`coef(fit, :sd)`, `confint(fit; parm
-= :sd)`).
+to put a linear predictor on the **log standard deviation of a random
+effect**. Plain `sd(g)` targets the iid `(1 | g)` intercept
+(`log σ_b,k = Z_k' α`, one row per group level); `sd(group, phylogenetic)`
+targets the per-species phylogenetic SD (drmTMB:
+`sd(group, level = "phylogenetic")`; `@formula` cannot parse keyword
+arguments, so the level is a bare symbol). Predictors must be constant
+within each group level. Univariate Gaussian only; coefficients appear as
+the `:sd` (iid) or `:sd_phylo` (phylogenetic) block.
 """
 sd(x) = x
 
@@ -244,18 +247,13 @@ end
 """
     sd_phylo(group)
 
-Formula marker for the phylogenetic location–scale–scale model: on the
-left-hand side of a `bf` component formula,
-
-```julia
-bf(y ~ x + phylo(1 | species), sigma ~ x, sd_phylo(species) ~ z)
-```
-
-it puts a linear predictor on the **log per-species SD of the phylogenetic
+DEPRECATED legacy spelling for the phylogenetic SD submodel — use
+`sd(group, phylogenetic) ~ …` (drmTMB: `sd(group, level = "phylogenetic")`).
+Both put a linear predictor on the **log per-species SD of the phylogenetic
 random effect**: `a ~ MVN(0, D_a K D_a)` with `D_a = Diagonal(exp.(Z * α))`
-and `K` the Brownian-motion phylogenetic correlation from `tree`. Mirrors
-drmTMB's `sd_phylo(species) ~ …`. Predictors must be constant within species.
-Coefficients appear as the `:sd_phylo` block.
+and `K` the Brownian-motion phylogenetic correlation from `tree`. Kept
+working, exactly as the twin keeps its legacy spelling, and canonicalised to
+the same `:sd_phylo` block; new code should write the `sd(group, …)` form.
 """
 sd_phylo(x) = x
 

@@ -105,12 +105,39 @@ function bf(mu::FormulaTerm, dpars::FormulaTerm...)
         # prefixed key so the family routers can extract or refuse it explicitly.
         if flhs isa FunctionTerm && (flhs.f === sd || flhs.f === sd_phylo)
             marker = flhs.f === sd ? "sd" : "sd_phylo"
-            (length(flhs.args) == 1 && flhs.args[1] isa Term) ||
+            (1 <= length(flhs.args) <= 2 && all(a -> a isa Term, flhs.args)) ||
                 throw(ArgumentError("bf: `$marker()` takes the grouping variable of the random " *
-                    "effect, e.g. `$marker(g) ~ x` matching the random effect in the response formula."))
-            key = Symbol(flhs.f === sd ? "sd_" : "sdphy_", flhs.args[1].sym)
+                    "effect and an optional dependence level, e.g. `sd(g) ~ x` or " *
+                    "`sd(species, phylogenetic) ~ x`."))
+            grpsym = flhs.args[1].sym
+            # Canonical grammar mirrors drmTMB: `sd(group)` for the iid (1 | g)
+            # random effect, `sd(group, phylogenetic)` for the phylogenetic SD
+            # (drmTMB: `sd(group, level = "phylogenetic")`; @formula does not
+            # parse keyword arguments or string literals, so the level is a bare
+            # symbol here). `sd_phylo(group)` is the DEPRECATED legacy spelling,
+            # kept working like the twin keeps it, and canonicalised identically.
+            is_phylo = if flhs.f === sd_phylo
+                length(flhs.args) == 1 ||
+                    throw(ArgumentError("bf: `sd_phylo()` already names the phylogenetic level — " *
+                        "use `sd($grpsym, phylogenetic) ~ …` for the canonical spelling."))
+                Base.depwarn("`sd_phylo(g) ~ …` is deprecated; use `sd(g, phylogenetic) ~ …` " *
+                             "(drmTMB: `sd(g, level = \"phylogenetic\")`).", :sd_phylo)
+                true
+            elseif length(flhs.args) == 2
+                lvl = flhs.args[2].sym
+                lvl in (:phylogenetic, :spatial, :animal, :relmat) ||
+                    throw(ArgumentError("bf: `sd($grpsym, $lvl)` — the dependence level must be " *
+                        "one of phylogenetic, spatial, animal, relmat."))
+                lvl === :phylogenetic ||
+                    throw(ArgumentError("bf: `sd(group, $lvl)` random-effect SD models are " *
+                        "planned but not implemented yet — `phylogenetic` is the supported level."))
+                true
+            else
+                false
+            end
+            key = Symbol(is_phylo ? "sdphy_" : "sd_", grpsym)
             any(p -> first(p) === key, forms) &&
-                throw(ArgumentError("bf: duplicate `$marker($(flhs.args[1].sym)) ~ …` formula."))
+                throw(ArgumentError("bf: duplicate `$marker($grpsym) ~ …` formula."))
             push!(forms, key => f.rhs)
             continue
         end

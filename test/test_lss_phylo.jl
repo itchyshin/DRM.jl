@@ -43,20 +43,26 @@ end
 @testset "sd_phylo: grammar and refusals" begin
     phy, dat = _qqq_sim()
     f = bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ x),
-           @formula(sd_phylo(species) ~ x))
+           @formula(sd(species, phylogenetic) ~ x))
     @test any(p -> first(p) === :sdphy_species, f.forms)
+    # deprecated legacy spelling still routes to the same part (like the twin)
+    flegacy = bf(@formula(y ~ x + phylo(1 | species)), @formula(sd_phylo(species) ~ x))
+    @test any(p -> first(p) === :sdphy_species, flegacy.forms)
+    # the level must be a known one, and only phylogenetic is implemented
+    @test_throws ArgumentError bf(@formula(y ~ x), @formula(sd(g, bogus) ~ 1))
+    @test_throws ArgumentError bf(@formula(y ~ x), @formula(sd(g, spatial) ~ 1))
     # sd_phylo without a phylo() mean marker
     @test_throws ArgumentError drm(bf(@formula(y ~ x + (1 | species)),
-                                      @formula(sd_phylo(species) ~ x)),
+                                      @formula(sd(species, phylogenetic) ~ x)),
                                    Gaussian(); data = dat, tree = phy)
     # sd_phylo naming a different grouping than the phylo marker
     @test_throws ArgumentError drm(bf(@formula(y ~ x + phylo(1 | species)),
-                                      @formula(sd_phylo(x) ~ 1)),
+                                      @formula(sd(x, phylogenetic) ~ 1)),
                                    Gaussian(); data = dat, tree = phy)
     # sd() and sd_phylo() together
     @test_throws ArgumentError drm(bf(@formula(y ~ x + phylo(1 | species)),
                                       @formula(sd(species) ~ 1),
-                                      @formula(sd_phylo(species) ~ 1)),
+                                      @formula(sd(species, phylogenetic) ~ 1)),
                                    Gaussian(); data = dat, tree = phy)
     # REML not yet wired on this route (ML is the Mizuno protocol's estimator)
     @test_throws ArgumentError drm(f, Gaussian(); data = dat, tree = phy, method = :REML)
@@ -65,7 +71,7 @@ end
 @testset "sd_phylo: QQQ fit matches drmTMB and recovers the mean" begin
     phy, dat = _qqq_sim()
     fit = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ x),
-                 @formula(sd_phylo(species) ~ x)), Gaussian(); data = dat, tree = phy)
+                 @formula(sd(species, phylogenetic) ~ x)), Gaussian(); data = dat, tree = phy)
     @test fit.converged
     @test isfinite(fit.loglik)
     # pinned against drmTMB on the identical fixture (agreement to 7 s.f.)
@@ -82,7 +88,7 @@ end
 @testset "sd_phylo: reduction invariant + #548 regression" begin
     phy, dat = _qqq_sim()
     f1 = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ x),
-                @formula(sd_phylo(species) ~ 1)), Gaussian(); data = dat, tree = phy)
+                @formula(sd(species, phylogenetic) ~ 1)), Gaussian(); data = dat, tree = phy)
     f0 = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ x)),
              Gaussian(); data = dat, tree = phy)
     @test f1.converged && f0.converged

@@ -1426,9 +1426,30 @@ function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothi
 
     gidx, G = _group_index(getproperty(data, grp))
     size(Kg) == (G, G) || return nothing
-    sds = re_sd(fit)
-    (sds isa AbstractDict && haskey(sds, grp)) || return nothing
-    sd_u = Float64(sds[grp])
+    # Location-scale-scale fits (#544/#545): the RE SD is per group,
+    # σ_g,k = exp(Z_k' α), so the draw scales each group's effect individually.
+    # For the PHYLO lss fit the α coefficients are defined against the
+    # NORMALISED correlation (that is what `_fit_structured_gaussian_lss`
+    # receives via `_phylo_correlation`), so the draw must use the correlation
+    # too — the raw-covariance SCALE TRAP note above applies to the scalar
+    # `re_sd` definition, not to this route.
+    lss_sd = _sd_parts(fit.formula); lss_phy = _sdphylo_parts(fit.formula)
+    sd_g = if !isempty(lss_sd) || !isempty(lss_phy)
+        (sgrp, srhs) = isempty(lss_phy) ? lss_sd[1] : lss_phy[1]
+        sgrp === grp || return nothing
+        if !isempty(lss_phy)
+            phy = tree isa AbstractString ? augmented_phy(tree) : tree
+            phy === nothing && return nothing
+            Kg = _phylo_correlation(phy)
+            size(Kg) == (G, G) || return nothing
+        end
+        Zg, _ = _sd_group_design(fit.formula.response, srhs, data, gidx, G, grp)
+        exp.(Zg * coef(fit, isempty(lss_phy) ? :sd : :sd_phylo))
+    else
+        sds = re_sd(fit)
+        (sds isa AbstractDict && haskey(sds, grp)) || return nothing
+        fill(Float64(sds[grp]), G)
+    end
     L = cholesky(Symmetric(Matrix{Float64}(Kg))).L
 
     # The FIXED-effect mean comes from `predict(fit, data)`, not from unpicking
@@ -1463,7 +1484,7 @@ function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothi
         sigma = Vector{Float64}(_scale_vector(fit, :sigma))
         n = length(mu_fixed)
         return function (rng)
-            u = sd_u .* (L * randn(rng, G))
+            u = sd_g .* (L * randn(rng, G))
             return mu_fixed .+ u[gidx] .+ sigma .* randn(rng, n)
         end
     end
@@ -1494,7 +1515,7 @@ function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothi
     eta_fixed === nothing && return nothing
     length(eta_fixed) == fit.nobs || return nothing
     return function (rng)
-        u = sd_u .* (L * randn(rng, G))
+        u = sd_g .* (L * randn(rng, G))
         mu_star = _mean_response(fit.family, eta_fixed .+ u[gidx])
         return _simulate_once(fit, rng; mu = mu_star)
     end
