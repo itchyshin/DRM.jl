@@ -59,12 +59,11 @@ using Test, Random, LinearAlgebra
 
     @testset "a partial (NaN) covariance is REPORTED, not raised" begin
         # Regression. `check_drm` used to throw `ArgumentError: matrix contains Infs
-        # or NaNs` from `isposdef`/`eigvals` for any fit whose vcov held a NaN — and
-        # that is the NORMAL state of the sparse phylo route, which computes the
-        # fixed-effect block and leaves the variance-component block NaN. So running
-        # the documented health check on a perfectly good phylo fit raised an
-        # exception instead of returning a report, which is backwards for a
-        # diagnostic whose entire purpose is to report trouble.
+        # or NaNs` from `isposdef`/`eigvals` for any fit whose vcov held a NaN —
+        # historically the NORMAL state of the sparse phylo route, which computed
+        # only the fixed-effect block. #556 fixed that route (its vcov is complete
+        # now), so this test synthesises the partial-vcov fixture instead: the
+        # check_drm contract — REPORT trouble, never raise — is route-independent.
         rng = MersenneTwister(5); G = 16; m = 5
         phy = random_balanced_tree(G; branch_length = 0.3)
         C = sigma_phy_dense(phy; σ²_phy = 1.0)
@@ -72,11 +71,23 @@ using Test, Random, LinearAlgebra
         n = G * m; species = repeat(1:G, inner = m); x = randn(rng, n)
         u = 0.9 .* (cholesky(Symmetric(K)).L * randn(rng, G))
         y = 0.2 .+ 0.5 .* x .+ u[species] .+ 0.4 .* randn(rng, n)
-        fit = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
-                  Gaussian(); data = (; y, x, species), tree = phy)
+        fit0 = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
+                   Gaussian(); data = (; y, x, species), tree = phy)
 
-        # the precondition this test is about — if the route ever starts returning a
-        # complete covariance, this test is no longer exercising the bug
+        # #556 closed the NATURAL source of a NaN vcov: the sparse phylo route
+        # now fills its variance block from the profiled curvature, so a healthy
+        # fit here has a COMPLETE covariance — assert that as the positive half.
+        @test !any(isnan, fit0.vcov)
+
+        # The check_drm contract under a partial vcov still needs testing, so
+        # poison a copy the way the old route used to leave it: mean block
+        # finite, variance block NaN.
+        Vnan = copy(fit0.vcov)
+        Vnan[end-1:end, :] .= NaN
+        Vnan[:, end-1:end] .= NaN
+        fit = DRM.DrmFit(fit0.family, fit0.blocks, fit0.coefnames, fit0.theta,
+                         Vnan, fit0.loglik, fit0.nobs, fit0.converged,
+                         fit0.means, fit0.obs, fit0.scales)
         @test any(isnan, fit.vcov)
 
         r = check_drm(fit)                      # must not throw
