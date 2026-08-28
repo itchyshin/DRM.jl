@@ -111,11 +111,11 @@ criterion_table(:Gaussian => fit_tail_gaussian, Symbol("Student-t") => fit_tail_
 
 The lower-criterion model is the better fit in this candidate set — but that is
 not a licence to ignore diagnostics. Check whether the fitted degrees of freedom
-`ν` is so large that the Student-t is effectively Gaussian (`ν` is on the log
-scale, so read it back through `exp`):
+`ν` is so large that the Student-t is effectively Gaussian (`ν` uses the logm2
+link `ν = 2 + exp(η)`, so read it back with `2 + exp(...)`):
 
 ```@example modsel
-exp(coef(fit_tail_student, :nu)[1])       # small ν ⇒ robustness is earning its keep
+2 + exp(coef(fit_tail_student, :nu)[1])   # small ν ⇒ robustness is earning its keep
 ```
 
 ## Structural zeros: NB2 vs zero-inflated NB2
