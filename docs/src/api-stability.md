@@ -1,14 +1,15 @@
 # API stability
 
-*The v1.0 promise, stated precisely. Machine-checked by `test/test_api_stability.jl`, which
+*The stability promise of the v0.7 line, stated precisely. Machine-checked by `test/test_api_stability.jl`, which
 classifies **every** exported name into exactly one tier and fails if a new export appears
 unclassified, a stable name vanishes, or a tier changes without a reviewed edit.*
 
 ## The promise
 
 *(Versioning twin-tracks drmTMB — D-181: the version communicates parity level with the R twin,
-so the twin-complete release is `v0.7.0`, and a formal SemVer `1.0` happens together with the
-twin. Julia's 0.x convention allows minor-version breakage; this page plus the test gate are the
+so the twin-complete release is `v0.7.0`, **registration in Julia General is planned at
+`v0.7.1`** mirroring the twin's own sequence (D-181), and a formal SemVer `1.0` happens together
+with the twin. Julia's 0.x convention allows minor-version breakage; this page plus the test gate are the
 promise that we will not use that allowance on the Stable tier.)*
 
 From `v0.7.0`, names in the **Stable** tier — the `bf()`/`drm()` grammar, the fourteen family

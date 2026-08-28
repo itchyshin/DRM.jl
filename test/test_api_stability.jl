@@ -8,7 +8,7 @@
 #
 #   STABLE        — the SemVer promise: these names, their meanings, and their
 #                   drmTMB-mirroring conventions (`sigma` never `tau`, `rho12`,
-#                   `meta_V`) do not break within 1.x.
+#                   `meta_V`) do not break within the 0.7 line.
 #   EXPERIMENTAL  — exported and usable, EXEMPT from the promise, and said so
 #                   in docs/src/api-stability.md: the R bridge (ledger
 #                   r_bridge_status experimental), the cross-family surface
