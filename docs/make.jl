@@ -42,6 +42,7 @@ makedocs(
             "tutorials/count-nbinom2.md",
             "tutorials/proportion-beta-binomial.md",
             "tutorials/bivariate-coscale.md",
+            "tutorials/bivariate-nongaussian.md",
             "tutorials/meta-analysis.md",
             "tutorials/structural-dependence.md",
             "tutorials/animal-models.md",
