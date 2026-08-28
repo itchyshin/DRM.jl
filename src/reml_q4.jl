@@ -201,7 +201,20 @@ function reml_ll_and_mode(prob::AugProblem, Q_cond::SparseMatrixCSC,
         beta_full = (mu1 = b_new.mu1, mu2 = b_new.mu2,
                      s1  = b_new.s1,  s2  = b_new.s2, rho = rho_coef)
         last_delta = delta_b
-        delta_b < 1e-6 && break   # joint convergence (strict loop exit)
+        delta_b < 1e-6 && break   # strict exit (kept)
+        # PERF (2026-08-28 speed grid): the strict exit was measured NEVER to
+        # fire at genuine optima -- delta_b sits in a flat ~6.2e-6 limit
+        # cycle -- so every objective evaluation burned all 15 alternations
+        # where ~2 suffice, and the q4 REML cell was the ONE route where
+        # engine="julia" lost to native TMB (0.46x). Also exit at the SAME
+        # calibrated relative criterion the #526 flag reports, after at least
+        # two alternations so a cold start cannot exit on its first,
+        # still-moving step.
+        if alt_it >= 2
+            bs = norm(beta_full.mu1) + norm(beta_full.mu2) +
+                 norm(beta_full.s1) + norm(beta_full.s2)
+            delta_b < 1e-4 * (1 + bs) && break
+        end
     end
     beta_scale = norm(beta_full.mu1) + norm(beta_full.mu2) +
                  norm(beta_full.s1) + norm(beta_full.s2)
