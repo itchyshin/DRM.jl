@@ -55,8 +55,7 @@ pushed). Remaining unlanded state is all PRE-ARC history, declared:
 | drmTMB deliberately-open PRs #406/#420 | y | y | open | CARRIED-OVER by design (scout #455); auto-merge DISARMED this session — leave open |
 | Scratchpad worktrees (`drmtmb-promote`, `drm-suite-wt`, diagnostic scripts) | n/a | n/a | n/a | disposable; `git worktree prune` in both repos when convenient |
 
-FINDINGS-OF-RECORD: seven, all landed on main and distilled —
-vault-note: [[2026-08-27-drm-completion-arc-distillation]].
+FINDING-OF-RECORD: the completion arc's seven findings (honest-flag-as-lever; sweep outputs not mechanisms; FD noise floors scale with n; assert invariants not outcomes on boundary fixtures; include≡drop; queue-timing artifacts; ASCII strings)  vault-note: [[2026-08-27-drm-completion-arc-distillation]]
 
 ## Next Immediate Steps
 
