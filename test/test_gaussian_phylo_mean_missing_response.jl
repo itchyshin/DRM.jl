@@ -249,6 +249,11 @@ using Test, Random, LinearAlgebra, Statistics
             err2 = e
         end
         @test err2 isa ArgumentError
+        # #527: pin WHICH gate fired — the missing-response ROUTE gate, not a
+        # tree/argument error thrown before it. Without this, the assertion
+        # would stay green if an unrelated earlier gate started intercepting
+        # the case and the mask gate silently stopped being exercised.
+        @test occursin("ROUTE-level", sprint(showerror, err2))
     end
 
     @testset "non-phylo Gaussian response masks are unaffected" begin
