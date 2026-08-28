@@ -448,3 +448,32 @@ using Test, Random, LinearAlgebra
     @test pbootstrap["upper"] == internal_sd_boot["upper"]
     @test pbootstrap["param"] == internal_sd_boot["param"]
 end
+
+@testset "keyed univariate `nu` is not a bivariate discriminator (#1090)" begin
+    # drmTMB's Workflow G robust-student cell marshals bf(y ~ x, sigma ~ 1,
+    # nu ~ 1) as KEYED parts. `:nu` sat in _BRIDGE_BIVARIATE_KEYS (it is
+    # threaded through for biv_student), so a plain univariate Student tripped
+    # the bivariate branch and died demanding mu1/mu2 — while univariate
+    # Student legitimately owns a `nu` formula. Only mu1/mu2/sigma1/sigma2/
+    # rho12 discriminate bivariate; `nu` must not.
+    Random.seed!(20260828)
+    n = 160
+    x = randn(n)
+    y = 0.4 .+ 0.7 .* x .+ 0.5 .* randn(n)
+    d = (; y, x)
+
+    r = DRM.drm_bridge(; formula = "mu = y ~ x; sigma = sigma ~ 1; nu = nu ~ 1",
+                       family = "student", data = d)
+    @test r["family"] == "student"
+    @test isfinite(Float64(r["loglik"]))
+    # mu intercept + mu x + sigma + nu — the keyed nu reached the UNIVARIATE
+    # Student bundle rather than tripping the bivariate branch.
+    @test length(r["coef_names"]) >= 4
+
+    # Bivariate Student still routes bivariate (mu1/mu2 discriminate, nu rides).
+    y2 = 0.1 .+ 0.4 .* x .+ 0.6 .* randn(n)
+    d2 = (; y1 = y, y2 = y2, x)
+    r2 = DRM.drm_bridge(; formula = "mu1 = y1 ~ x; mu2 = y2 ~ x; sigma1 = sigma1 ~ 1; sigma2 = sigma2 ~ 1; nu = nu ~ 1; rho12 = rho12 ~ 1",
+                        family = "biv_student", data = d2)
+    @test isfinite(Float64(r2["loglik"]))
+end
