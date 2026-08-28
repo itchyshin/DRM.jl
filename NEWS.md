@@ -6,6 +6,10 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## Unreleased
 
+(nothing yet)
+
+## v0.2.0 — 2026-08-28
+
 ### The completion arc (2026-08-24 → 2026-08-27, D-179)
 
 - **The R↔Julia capability ledger is COMPLETE** (drmTMB PRs #1085, #1087, and
