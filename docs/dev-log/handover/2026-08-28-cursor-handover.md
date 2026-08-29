@@ -61,8 +61,13 @@ finite SEs, Wald + profile + bootstrap CIs. Evidence:
 | `worktree-agent-a7df907e709972cb2`, `worktree-agent-af2df784265dc24cf` (1 unpushed commit each) | **PRE-EXISTING / NOT MINE** — authored 3 months ago (Student-t and LogNormal `(1+x\|g)` GHQ work). Not touched this session; left as found. |
 | `.codex/agents/shannon-coordinator.toml` (untracked) | **PROTECTED — never stage.** |
 
-**FINDINGS-OF-RECORD:** vault notes `~/shinichi-brain/memory/AGENT_LOG.md` entries
-`2026-08-28 (c)`, `(d)`, `(e)` (v0.7.0 tag · the lss arc and its four bugs · the Ayumi handoff).
+**FINDING-OF-RECORD:** the v0.7.0 parity closure under-admitted location–scale–scale (it was
+never a ledger row), and closing it surfaced four measured engine bugs — #548 (a shipped
+`converged=true` likelihood blow-up on Ayumi's own M5/M6 shape), #549 (Julia shared-boxed-variable
+closure race), #550 (BLAS oversubscription: threaded bootstrap 1.9× slower → 15× faster once
+pinned), #556 (variance-block SEs NaN by construction).
+**vault-note:** [[AGENT_LOG]] entries `2026-08-28 (c)` (v0.7.0 tagged), `(d)` (the lss arc and its
+four bugs), `(e)` (the Ayumi handoff), at `~/shinichi-brain/memory/AGENT_LOG.md`.
 
 ---
 
