@@ -373,15 +373,16 @@ Univariate Gaussian fits support fixed effects plus the structured-effect
 markers documented under [`phylo`](@ref), [`spatial`](@ref), [`animal`](@ref),
 [`relmat`](@ref), and [`meta_V`](@ref).
 
-## `algorithm` — solver selection
+## `algorithm` and `sparse` — solver selection
 
-`algorithm` (default `:auto`) chooses how the model is fit:
+`algorithm` (default `:auto`) and `sparse` choose how the model is fit:
 
 - `:auto` (default) — uses the all-node sparse L-BFGS route for the
-  Gaussian phylogenetic-mean cell: a single `phylo(1 | g)` structured mean
-  random effect (with `tree = …`) and a **constant** residual scale
-  (`sigma ~ 1`, no random effect on `sigma`). Other Gaussian cells keep their
-  cell-specific default fitters.
+  Gaussian phylogenetic-mean cell (`phylo(1 | g)` on mean with `sigma ~ 1`).
+  For phylogenetic location-scale-scale models (`sd(species, phylogenetic) ~ z`),
+  `:auto` selects the O(p) sparse augmented GMRF engine when G > 500 species
+  and the dense scaled-covariance engine for smaller trees. Other Gaussian cells
+  keep their cell-specific default fitters.
 - `:gls`, `:lbfgs` — legacy dense leaf-covariance fitters for the Gaussian
   phylogenetic-mean cell and aliases for the usual default fitters elsewhere.
 - `:em` — force the all-node sparse conjugate-EM route for the Gaussian
@@ -393,14 +394,13 @@ markers documented under [`phylo`](@ref), [`spatial`](@ref), [`animal`](@ref),
   inference. `re_sd(fit)` reports the EM's Brownian phylo SD `σ_phy` (a
   different scale from the GLS fit's correlation-matrix `σ_s`).
 - `:sparse` — force the verified sparse structured-Gaussian route where one is
-  implemented, including the two-structured `phylo + animal/relmat` sparse path.
-- `:sparse_lbfgs` — force the default all-node sparse L-BFGS route for the same
-  Gaussian phylogenetic-mean cell. It profiles the mean fixed effects by sparse
-  GLS at each variance trial, optimises the residual and phylogenetic SDs on the
-  log scale with exact Takahashi trace gradients, attaches a sparse
-  full-objective closure and gradient for profile intervals, and stores the
-  cheap fixed-effect covariance block. Variance-component uncertainty should
-  use profile or bootstrap intervals in this first slice.
+  implemented, including the two-structured `phylo + animal/relmat` sparse path
+  and the O(p) sparse phylogenetic location-scale-scale engine.
+- `:sparse_lbfgs` — force the default all-node sparse L-BFGS route for the
+  Gaussian phylogenetic-mean cell, or the O(p) augmented-state Takahashi selected
+  inverse engine for phylogenetic location-scale-scale models.
+- `sparse = true` — keyword alias to select sparse solvers (e.g. for whole-tree
+  phylogenetic LSS or two-structured Gaussian models).
 
 ```julia
 fit = drm(bf(y ~ x + phylo(1 | sp), sigma ~ 1), Gaussian();
@@ -415,12 +415,25 @@ phylogenetic engine.
 ## `method` — ML (default) or REML
 
 `method` (default `:ML`) selects the estimator. `:REML` is opt-in and is
-implemented for (a) the fixed-effect Gaussian location–scale cell and (b) a
-single Gaussian mean random intercept `(1 | g)` on the Woodbury spine (#439).
-σ-RE, random slopes, multi-ranef, structured / phylo / meta, and non-Gaussian
-REML stay rejected. REML likelihoods are not comparable across mean structures.
+implemented for:
+(a) the fixed-effect Gaussian location–scale cell,
+(b) a single Gaussian mean random intercept `(1 | g)` on the Woodbury spine (#439),
+(c) Location–Scale–Scale (LSS) models (`sd(g) ~ z`, `sd(species, phylogenetic) ~ z`,
+    and multi-component LSS models; #558), and
+(d) the bivariate q=4 PLSM Laplace engine (`reml_q4`).
+
+σ-RE, random slopes, and non-Gaussian REML stay rejected. REML likelihoods are
+not comparable across fixed-effect structures.
+
+## Missing response handling
+
+Incomplete responses (`missing` or `NaN` in `y`) are supported under the
+observed-rows pattern (matching `response = "include"` in the R bridge).
+For Location-Scale-Scale models (#559), the group index and scale design Z_g
+are parameterised over all G levels, while the likelihood is evaluated on
+observed rows.
 """
-function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false, phylo_coupled::Bool = false, penalty = nothing)
+function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false, phylo_coupled::Bool = false, penalty = nothing, sparse = nothing)
     algorithm in (:auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs) ||
         throw(ArgumentError("drm: `algorithm` must be one of :auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs (got :$algorithm)"))
     method in (:ML, :REML) ||
@@ -466,9 +479,6 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         isempty(sigma_re) ||
             throw(ArgumentError("drm: sd() submodels cannot be combined with a random effect " *
                 "on `sigma`."))
-        has_missing_response &&
-            throw(ArgumentError("drm: sd() submodels do not yet support missing responses — " *
-                "use `drm_listwise` to preprocess."))
         penalty === nothing ||
             throw(ArgumentError("drm: `penalty` is not wired for sd() submodel routes."))
         re_kinds_sd = [_re_kind(rl) for (rl, _) in re]
@@ -483,10 +493,11 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         elseif isempty(sdp) && isempty(re) && structured !== nothing && length(sdpp) == 1
             return _withformula(_drm_gaussian_lss_phylo(f, fam, sdpp, re, structured,
                 structured_sigma, sigma_re, metav, has_missing_response,
-                y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method, penalty), f)
+                y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method, penalty;
+                algorithm = algorithm, sparse = sparse), f)
         else
             return _withformula(_drm_gaussian_lss_multi(f, fam, sdp, sdpp, re, re_kinds_sd,
-                structured, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method), f)
+                structured, has_missing_response, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method), f)
         end
     end
     # σ-phylo location-scale (B0–B2): a structured phylo marker on `sigma` routes to
