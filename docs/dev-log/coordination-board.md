@@ -4,7 +4,25 @@ Check this before editing shared files (`src/DRM.jl`, `AGENTS.md`, `CLAUDE.md`,
 `ROADMAP.md`, `test/runtests.jl`, `docs/`). Record active branches + which files
 they touch so two agents don't collide.
 
-## Active-Lane-Split (2026-08-25 — Waves 1+2 landed on a branch; THREE PRs await the owner)
+## Active-Lane-Split (2026-08-28 — v0.7.0 TAGGED; the lss arc is MERGED; lane handed to Cursor)
+
+_**START HERE:** [`docs/dev-log/handover/2026-08-28-cursor-handover.md`](handover/2026-08-28-cursor-handover.md)._
+
+_| **Everything below the 2026-08-25 block is HISTORICAL.** Since then: `v0.7.0` tagged (merge commit
+`051bdc11`, twin-tracked to drmTMB 0.7.0 at pin `a6de6bb71`), and the **location–scale–scale arc**
+merged on both mains — DRM.jl #547 (carrying #554) + #553, drmTMB #1100. Capability ledger is now
+**12 rows** (`location_scale_scale` added as `partial`), CLOSURE: PASS._
+
+_| **ACTIVE LANE: Cursor**, on the "true parity + better" arc: **#558** lss REML → **#559** lss
+missing responses → **#551** sparse O(p) lss → ledger row 12 → `covered`. No other lane is live;
+DRM.jl `main` and drmTMB `main` are both clean. The scientific driver is
+`Ayumi-495/LS_ecogeographical-rules` (her issue **#28** is the user-facing contract)._
+
+_| **Owner gates in force:** D-164 (no CRAN) · D-111/D-181 (registration at v0.7.1, not before) ·
+interval-COVERAGE fences permanent (D-179 #4 / D-180 #2) · D-139 (the p=10,000 scaling run in #551
+needs a time estimate + owner approval before it runs)._
+
+## Historical — Active-Lane-Split (2026-08-25 — Waves 1+2 landed on a branch; THREE PRs await the owner)
 
 _**START HERE:** [`docs/dev-log/handover/2026-08-25-claude-handover-drmtmb-catchup.md`](handover/2026-08-25-claude-handover-drmtmb-catchup.md)._
 
