@@ -64,8 +64,12 @@ end
                                       @formula(sd(species) ~ 1),
                                       @formula(sd(species, phylogenetic) ~ 1)),
                                    Gaussian(); data = dat, tree = phy)
-    # REML not yet wired on this route (ML is the Mizuno protocol's estimator)
-    @test_throws ArgumentError drm(f, Gaussian(); data = dat, tree = phy, method = :REML)
+    # REML is supported on this route (#558)
+    fit_reml = drm(f, Gaussian(); data = dat, tree = phy, method = :REML)
+    @test fit_reml.converged
+    @test estimation_method(fit_reml) === :REML
+    @test isfinite(reml_loglik(fit_reml))
+    @test isfinite(ml_loglik(fit_reml))
 end
 
 @testset "sd_phylo: QQQ fit matches drmTMB and recovers the mean" begin

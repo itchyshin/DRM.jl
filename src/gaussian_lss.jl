@@ -29,6 +29,19 @@ targets the per-species phylogenetic SD (drmTMB:
 arguments, so the level is a bare symbol). Predictors must be constant
 within each group level. Univariate Gaussian only; coefficients appear as
 the `:sd` (iid) or `:sd_phylo` (phylogenetic) block.
+
+## Capabilities
+
+- **Estimators**: supports both Maximum Likelihood (`method = :ML`, default)
+  and Restricted Maximum Likelihood (`method = :REML`).
+- **Missing response**: incomplete responses (`missing` or `NaN` in `y`) are
+  fit via the observed-rows pattern (`response = "include"` in R bridge),
+  preserving group and phylogenetic structures across all G levels.
+- **Sparse scaling**: phylogenetic LSS models scale to large trees in O(p) time
+  via `sparse = true` (or `algorithm = :sparse_lbfgs`), automatically selected
+  when G > 500 species.
+- **Multi-component models**: combines multiple grouping factors or iid + phylogenetic
+  random-effect SD models.
 """
 sd(x) = x
 
@@ -87,9 +100,6 @@ function _drm_gaussian_lss(f::DrmFormula, fam::Gaussian, sdp, re, re_kinds, stru
         throw(ArgumentError("drm: `sd($sgrp)` cannot be combined with `meta_V(...)`."))
     isempty(sigma_re) ||
         throw(ArgumentError("drm: `sd($sgrp)` cannot be combined with a random effect on `sigma`."))
-    has_missing_response &&
-        throw(ArgumentError("drm: `sd($sgrp)` does not yet support missing responses — " *
-            "use `drm_listwise` to preprocess."))
     length(re) == 1 ||
         throw(ArgumentError("drm: `sd($sgrp)` requires exactly one `(1 | $sgrp)` random " *
             "intercept on the mean (got $(length(re)) random-effect terms)."))
@@ -102,6 +112,26 @@ function _drm_gaussian_lss(f::DrmFormula, fam::Gaussian, sdp, re, re_kinds, stru
             "the mean formula has `(1 | $grp)`."))
     gidx, G = _group_index(getproperty(data, grp))
     Zg, nmsd = _sd_group_design(f.response, srhs, data, gidx, G, grp)
+    if has_missing_response
+        observed = _observed_response_mask(y)
+        n_obs = count(observed)
+        pμ, pσ, psd = size(Xμ, 2), size(Xσ, 2), size(Zg, 2)
+        total_dof = pμ + pσ + psd
+        n_obs >= total_dof ||
+            throw(ArgumentError("drm (Gaussian sd): only $(n_obs) observed responses for a model with " *
+                "$(total_dof) parameters ($(pμ) mean + $(pσ) scale + $(psd) sd) — " *
+                "too few to fit. Use `drm_listwise` or supply more complete responses."))
+        n_obs > total_dof ||
+            @warn "drm (Gaussian sd): $(n_obs) observed responses equals the $(total_dof) model " *
+                  "parameters (residual dof 0); the fit is saturated and inference is unreliable."
+        @warn "drm: $(length(observed) - n_obs) of $(length(observed)) rows have a missing/NaN " *
+              "response and were dropped (observed-rows fit, like glmmTMB's default na.action). " *
+              "Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this."
+        y = Vector{Float64}(y[observed])
+        Xμ = Matrix{Float64}(Xμ[observed, :])
+        Xσ = Matrix{Float64}(Xσ[observed, :])
+        gidx = gidx[observed]
+    end
     return _fit_ranef_gaussian_lss(fam, y, Xμ, Xσ, Zg, gidx, G, nmμ, nmσ, nmsd, grp, g_tol;
                                    reml = method === :REML)
 end
@@ -265,7 +295,8 @@ _sdphylo_parts(f::DrmFormula) = Pair{Symbol,Any}[
 # dispatch the dense scaled-structure fitter.
 function _drm_gaussian_lss_phylo(f::DrmFormula, fam::Gaussian, sdpp, re, structured,
                                  structured_sigma, sigma_re, metav, has_missing_response,
-                                 y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method, penalty)
+                                 y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method, penalty;
+                                 algorithm::Symbol = :auto, sparse = nothing)
     length(sdpp) == 1 ||
         throw(ArgumentError("drm: one `sd_phylo(group) ~ …` formula per model (got $(length(sdpp)))."))
     sgrp, srhs = sdpp[1]
@@ -290,22 +321,43 @@ function _drm_gaussian_lss_phylo(f::DrmFormula, fam::Gaussian, sdpp, re, structu
     (isempty(re) && isempty(sigma_re)) ||
         throw(ArgumentError("drm: `sd_phylo($sgrp)` supports no additional random effects " *
             "beyond the phylo structured intercept."))
-    has_missing_response &&
-        throw(ArgumentError("drm: `sd_phylo($sgrp)` does not yet support missing responses — " *
-            "use `drm_listwise` to preprocess."))
     penalty === nothing ||
         throw(ArgumentError("drm: `penalty` is not wired for the sd_phylo route."))
-    method === :ML ||
-        throw(ArgumentError("drm: `sd_phylo($sgrp)` is ML-only for now (the Mizuno et al. " *
-            "protocol uses ML for AIC/LRT comparability); REML here is a follow-up."))
     tree === nothing && error("phylo(1 | $sgrp) needs `tree = …`")
     gidx, G = _group_index(getproperty(data, sgrp))
-    Kmat = _phylo_correlation(tree)
-    size(Kmat) == (G, G) ||
-        error("structured matrix must be $(G)×$(G) (the number of `$sgrp` levels)")
     Zg, nmsd = _sd_group_design(f.response, srhs, data, gidx, G, sgrp)
-    return _fit_structured_gaussian_lss(fam, y, Xμ, Xσ, Zg, gidx, G, Kmat, nmμ, nmσ, nmsd,
-                                        sgrp, g_tol)
+    if has_missing_response
+        observed = _observed_response_mask(y)
+        n_obs = count(observed)
+        pμ, pσ, psd = size(Xμ, 2), size(Xσ, 2), size(Zg, 2)
+        total_dof = pμ + pσ + psd
+        n_obs >= total_dof ||
+            throw(ArgumentError("drm (Gaussian sd_phylo): only $(n_obs) observed responses for a model with " *
+                "$(total_dof) parameters ($(pμ) mean + $(pσ) scale + $(psd) sd_phylo) — " *
+                "too few to fit. Use `drm_listwise` or supply more complete responses."))
+        n_obs > total_dof ||
+            @warn "drm (Gaussian sd_phylo): $(n_obs) observed responses equals the $(total_dof) model " *
+                  "parameters (residual dof 0); the fit is saturated and inference is unreliable."
+        @warn "drm: $(length(observed) - n_obs) of $(length(observed)) rows have a missing/NaN " *
+              "response and were dropped (observed-rows fit, like glmmTMB's default na.action). " *
+              "Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this."
+        y = Vector{Float64}(y[observed])
+        Xμ = Matrix{Float64}(Xμ[observed, :])
+        Xσ = Matrix{Float64}(Xσ[observed, :])
+        gidx = gidx[observed]
+    end
+
+    use_sparse = (sparse === true) || (algorithm in (:sparse, :sparse_lbfgs)) || (algorithm === :auto && G > 500)
+    if use_sparse
+        return _fit_phylo_gaussian_lss_sparse(fam, y, Xμ, Xσ, Zg, gidx, G, tree, nmμ, nmσ, nmsd,
+                                              sgrp, g_tol; reml = method === :REML)
+    else
+        Kmat = _phylo_correlation(tree)
+        size(Kmat) == (G, G) ||
+            error("structured matrix must be $(G)×$(G) (the number of `$sgrp` levels)")
+        return _fit_structured_gaussian_lss(fam, y, Xμ, Xσ, Zg, gidx, G, Kmat, nmμ, nmσ, nmsd,
+                                            sgrp, g_tol; reml = method === :REML)
+    end
 end
 
 # Marginal for the scaled-structure model, assembled DIRECTLY as
@@ -327,15 +379,18 @@ end
 # protocol (N ≈ 50–500) fit instantly. The whole-tree scope (~10⁴ species) needs
 # the sparse O(p) augmented-state spine — tracked as the follow-up on #545.
 function _fit_structured_gaussian_lss(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G, K,
-                                      nmμ, nmσ, nmsd, grp, g_tol; block::Symbol = :sd_phylo)
+                                      nmμ, nmσ, nmsd, grp, g_tol;
+                                      block::Symbol = :sd_phylo, reml::Bool = false)
     n = length(y)
     pμ, pσ, psd = size(Xμ, 2), size(Xσ, 2), size(Zg, 2)
+    const_2pi = 0.5 * n * log(2π)
+    const_pμ = 0.5 * pμ * log(2π)
     n ≤ 5000 || throw(ArgumentError("drm: the `sd_phylo` route assembles a dense $(n)×$(n) " *
         "marginal covariance and is limited to 5000 rows in this slice. The sparse O(p) " *
         "whole-tree engine is the follow-up on issue #545."))
     Ksym = Symmetric(Matrix{Float64}(K))
 
-    function nll(θ)
+    function nll_ml(θ)
         βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; α = θ[pμ+pσ+1:pμ+pσ+psd]
         ημ = Xμ * βμ; ησ = Xσ * βσ; ησa = Zg * α
         T = eltype(θ)
@@ -357,8 +412,34 @@ function _fit_structured_gaussian_lss(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G, K
         Vfac = cholesky(Symmetric(Vm); check = false)
         issuccess(Vfac) || return convert(T, 1e18)
         r = y .- ημ
-        return 0.5 * (logdet(Vfac) + dot(r, Vfac \ r) + n * log(2π))
+        return 0.5 * (logdet(Vfac) + dot(r, Vfac \ r)) + const_2pi
     end
+
+    function nll_reml(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; α = θ[pμ+pσ+1:pμ+pσ+psd]
+        ημ = Xμ * βμ; ησ = Xσ * βσ; ησa = Zg * α
+        T = eltype(θ)
+        σa = exp.(ησa)
+        Σa = (σa * σa') .* Ksym
+        Vm = Matrix{T}(undef, n, n)
+        @inbounds for j in 1:n, i in 1:n
+            Vm[i, j] = Σa[gidx[i], gidx[j]]
+        end
+        @inbounds for i in 1:n
+            Vm[i, i] += exp(2 * ησ[i])
+        end
+        Vfac = cholesky(Symmetric(Vm); check = false)
+        issuccess(Vfac) || return convert(T, 1e18)
+        r = y .- ημ
+        nll_ml_θ = 0.5 * (logdet(Vfac) + dot(r, Vfac \ r)) + const_2pi
+        A = Vfac \ Xμ
+        XtVinvX = Xμ' * A
+        chX = cholesky(Symmetric(XtVinvX); check = false)
+        issuccess(chX) || return nll_ml_θ + convert(T, REML_NONPD_PENALTY)
+        return nll_ml_θ + 0.5 * logdet(chX) - const_pμ
+    end
+
+    nll = reml ? nll_reml : nll_ml
 
     βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
     θ0 = zeros(pμ + pσ + psd)
@@ -374,8 +455,34 @@ function _fit_structured_gaussian_lss(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G, K
     means = Dict(:mu => Xμ * θ̂[1:pμ])
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n,
-                           Optim.converged(res), means, obs, scales), nll)
+    blup = let
+        βμ = θ̂[1:pμ]; βσ = θ̂[pμ+1:pμ+pσ]; α = θ̂[pμ+pσ+1:end]
+        ημ = Xμ * βμ; ησ = Xσ * βσ; ησa = Zg * α
+        σa = exp.(ησa)
+        Σa = (σa * σa') .* Ksym
+        Vm = Matrix{Float64}(undef, n, n)
+        @inbounds for j in 1:n, i in 1:n
+            Vm[i, j] = Σa[gidx[i], gidx[j]]
+        end
+        @inbounds for i in 1:n
+            Vm[i, i] += exp(2 * ησ[i])
+        end
+        Vfac = cholesky(Symmetric(Vm); check = false)
+        r = y .- ημ
+        Vinv_r = Vfac \ r
+        ZtVinv_r = zeros(G)
+        for i in 1:n
+            ZtVinv_r[gidx[i]] += Vinv_r[i]
+        end
+        Σa * ZtVinv_r
+    end
+    re = Dict(Symbol(grp) => blup)
+    fit = _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n,
+                                     Optim.converged(res), means, obs, scales), nll_ml), re)
+    if reml
+        return _withreml(fit, -nll_reml(θ̂), -nll_ml(θ̂))
+    end
+    return fit
 end
 
 # ---------------------------------------------------------------------------
@@ -403,15 +510,17 @@ struct _LssComp
 end
 
 function _fit_gaussian_lss_multi(fam::Gaussian, y, Xμ, Xσ, comps::Vector{_LssComp},
-                                 nmμ, nmσ, g_tol)
+                                 nmμ, nmσ, g_tol; reml::Bool = false)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    const_2pi = 0.5 * n * log(2π)
+    const_pμ = 0.5 * pμ * log(2π)
     n ≤ 5000 || throw(ArgumentError("drm: the multi-component sd() route assembles a dense " *
         "$(n)×$(n) marginal covariance and is limited to 5000 rows in this slice (#555)."))
     psds = [size(c.Zg, 2) for c in comps]
     offs = pμ + pσ .+ cumsum([0; psds])           # α_c = θ[offs[c]+1 : offs[c+1]]
 
-    function nll(θ)
+    function nll_ml(θ)
         βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
         ημ = Xμ * βμ; ησ = Xσ * βσ
         T = eltype(θ)
@@ -439,8 +548,45 @@ function _fit_gaussian_lss_multi(fam::Gaussian, y, Xμ, Xσ, comps::Vector{_LssC
         Vfac = cholesky(Symmetric(Vm); check = false)
         issuccess(Vfac) || return convert(T, 1e18)
         r = y .- ημ
-        return 0.5 * (logdet(Vfac) + dot(r, Vfac \ r) + n * log(2π))
+        return 0.5 * (logdet(Vfac) + dot(r, Vfac \ r)) + const_2pi
     end
+
+    function nll_reml(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]
+        ημ = Xμ * βμ; ησ = Xσ * βσ
+        T = eltype(θ)
+        Vm = zeros(T, n, n)
+        for (ci, c) in enumerate(comps)
+            α = θ[offs[ci]+1:offs[ci+1]]
+            σa = exp.(c.Zg * α)
+            if c.K === nothing
+                @inbounds for j in 1:n, i in 1:n
+                    if c.gidx[i] == c.gidx[j]
+                        Vm[i, j] += σa[c.gidx[i]]^2
+                    end
+                end
+            else
+                Σc = (σa * σa') .* c.K
+                @inbounds for j in 1:n, i in 1:n
+                    Vm[i, j] += Σc[c.gidx[i], c.gidx[j]]
+                end
+            end
+        end
+        @inbounds for i in 1:n
+            Vm[i, i] += exp(2 * ησ[i])
+        end
+        Vfac = cholesky(Symmetric(Vm); check = false)
+        issuccess(Vfac) || return convert(T, 1e18)
+        r = y .- ημ
+        nll_ml_θ = 0.5 * (logdet(Vfac) + dot(r, Vfac \ r)) + const_2pi
+        A = Vfac \ Xμ
+        XtVinvX = Xμ' * A
+        chX = cholesky(Symmetric(XtVinvX); check = false)
+        issuccess(chX) || return nll_ml_θ + convert(T, REML_NONPD_PENALTY)
+        return nll_ml_θ + 0.5 * logdet(chX) - const_pμ
+    end
+
+    nll = reml ? nll_reml : nll_ml
 
     βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
     m = length(comps)
@@ -477,8 +623,12 @@ function _fit_gaussian_lss_multi(fam::Gaussian, y, Xμ, Xσ, comps::Vector{_LssC
     means = Dict(:mu => Xμ * θ̂[1:pμ])
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, Vcov, -nll(θ̂), n,
-                           Optim.converged(res), means, obs, scales), nll)
+    fit = _withnll(DrmFit(fam, blocks, names, θ̂, Vcov, -nll(θ̂), n,
+                          Optim.converged(res), means, obs, scales), nll_ml)
+    if reml
+        return _withreml(fit, -nll_reml(θ̂), -nll_ml(θ̂))
+    end
+    return fit
 end
 
 # Build the component list from parsed formula parts and dispatch. Handles every
@@ -486,9 +636,7 @@ end
 # an RE without an sd() part (scalar, `~ 1`), and a phylo term without its own
 # sd() part alongside sd()-carrying iid REs.
 function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re_kinds,
-                                 structured, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method)
-    method === :ML ||
-        throw(ArgumentError("drm: multi-component sd() models are ML-only for now (#555)."))
+                                 structured, has_missing_response, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method)
     for (kind, _) in re_kinds
         kind === :intercept ||
             throw(ArgumentError("drm: sd() supports random INTERCEPT terms only."))
@@ -538,5 +686,32 @@ function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re
     end
     isempty(comps) &&
         throw(ArgumentError("drm: sd() formulas need matching random effects in the mean formula."))
-    return _fit_gaussian_lss_multi(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol)
+    if has_missing_response
+        observed = _observed_response_mask(y)
+        n_obs = count(observed)
+        pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+        psds = [size(c.Zg, 2) for c in comps]
+        total_dof = pμ + pσ + sum(psds)
+        n_obs >= total_dof ||
+            throw(ArgumentError("drm (Gaussian sd multi): only $(n_obs) observed responses for a model with " *
+                "$(total_dof) parameters ($(pμ) mean + $(pσ) scale + $(sum(psds)) sd) — " *
+                "too few to fit. Use `drm_listwise` or supply more complete responses."))
+        n_obs > total_dof ||
+            @warn "drm (Gaussian sd multi): $(n_obs) observed responses equals the $(total_dof) model " *
+                  "parameters (residual dof 0); the fit is saturated and inference is unreliable."
+        @warn "drm: $(length(observed) - n_obs) of $(length(observed)) rows have a missing/NaN " *
+              "response and were dropped (observed-rows fit, like glmmTMB's default na.action). " *
+              "Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this."
+        y = Vector{Float64}(y[observed])
+        Xμ = Matrix{Float64}(Xμ[observed, :])
+        Xσ = Matrix{Float64}(Xσ[observed, :])
+        comps = [_LssComp(c.gidx[observed], c.G, c.Zg, c.nm, c.K, c.label) for c in comps]
+    end
+    return _fit_gaussian_lss_multi(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol; reml = method === :REML)
+end
+
+function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re_kinds,
+                                 structured, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method)
+    return _drm_gaussian_lss_multi(f, fam, sdp, sdpp, re, re_kinds, structured, false,
+                                   y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method)
 end

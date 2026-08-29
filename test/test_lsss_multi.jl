@@ -70,10 +70,14 @@ end
     @test_throws ArgumentError drm(bf(@formula(y ~ x + (1 | species)),
                                       @formula(sd(study) ~ 1)),
                                    Gaussian(); data = dat)
-    # ML-only for the multi route
-    @test_throws ArgumentError drm(bf(@formula(y ~ x + (1 | species) + (1 | study)),
-                                      @formula(sd(species) ~ x), @formula(sd(study) ~ 1)),
-                                   Gaussian(); data = dat, method = :REML)
+    # REML supported on the multi route (#558)
+    fit_reml = drm(bf(@formula(y ~ x + (1 | species) + (1 | study)),
+                      @formula(sd(species) ~ x), @formula(sd(study) ~ 1)),
+                   Gaussian(); data = dat, method = :REML)
+    @test fit_reml.converged
+    @test estimation_method(fit_reml) === :REML
+    @test isfinite(reml_loglik(fit_reml))
+    @test isfinite(ml_loglik(fit_reml))
     # sd(g, phylogenetic) without a phylo() marker
     @test_throws ArgumentError drm(bf(@formula(y ~ x + (1 | species)),
                                       @formula(sd(species) ~ 1),
