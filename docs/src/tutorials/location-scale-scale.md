@@ -3,8 +3,9 @@
 !!! note "Status — Experimental"
     Mirrors drmTMB's [location-scale-scale](https://itchyshin.github.io/drmTMB/articles/location-scale-scale.html)
     vignette. **In DRM.jl today:** `sd(group) ~ z` on the iid `(1 | g)` random
-    effect (ML + REML), and `sd(group, phylogenetic) ~ z` on the per-species
-    phylogenetic SD (ML). Both are Experimental-tier
+    effect (ML + REML), `sd(group, phylogenetic) ~ z` on the per-species
+    phylogenetic SD (ML + REML, with dense and $O(p)$ sparse solvers), and
+    multi-component LSS models. Both are Experimental-tier
     ([API stability](../api-stability.md)); every number below is
     cross-verified against drmTMB on identical data.
 
@@ -139,18 +140,59 @@ drmTMB's native engine returns the same log-likelihood (−69.1373) and the same
 coefficients to seven significant figures — that cross-engine agreement is
 pinned in `test/test_lss_phylo.jl`.
 
-!!! note "Grammar notes"
+!!! note "Grammar and solver notes"
     - `sd(species, phylogenetic)` is the canonical spelling (drmTMB:
       `sd(species, level = "phylogenetic")`; `@formula` cannot parse keyword
       arguments, so the level is a bare symbol). The legacy `sd_phylo(species)`
       still works but is soft-deprecated on both sides.
     - The mean formula must carry the matching `phylo(1 | species)` marker, and
       `tree = …` is required.
-    - This route is ML-only (the Mizuno protocol uses ML for AIC/LRT
-      comparability) and assembles a dense marginal covariance, capped at 5000
-      species with a clear error. Family- and order-scope analyses fit
-      comfortably; the sparse whole-tree engine is tracked as
-      [#551](https://github.com/itchyshin/DRM.jl/issues/551).
+    - **ML and REML**: both `method = :ML` (default) and `method = :REML` are
+      supported on phylogenetic and iid LSS routes.
+    - **Sparse whole-tree scaling**: for large trees, `sparse = true` (or
+      `algorithm = :sparse_lbfgs`) invokes the exact $O(p)$ augmented-state
+      GMRF engine with Takahashi selected-inverse leaf variances, eliminating
+      $O(G^3)$ dense matrix storage. This sparse engine is selected automatically
+      when $G > 500$ species.
+
+## Missing response handling
+
+Like other Gaussian routes in DRM.jl, Location–Scale–Scale models support
+incomplete responses (`missing` or `NaN` in `y`), matching `response = "include"`
+in drmTMB:
+
+```@example lss
+# Mask some responses
+y_miss = Vector{Union{Float64, Missing}}(copy(dat.y))
+y_miss[1:5] .= missing
+dat_miss = (; y = y_miss, sex = dat.sex, id = dat.id)
+
+fit_miss = drm(bf(@formula(y ~ sex + (1 | id)),
+                  @formula(sigma ~ sex),
+                  @formula(sd(id) ~ sex)),
+               Gaussian(); data = dat_miss)
+nobs(fit_miss)   # count of observed rows
+```
+
+Group-level designs ($Z_g$, $D_a$, $G$) are constructed from the full grouping
+data so the random-effect scale is parameterised across all levels, while the
+likelihood is evaluated over observed rows.
+
+## REML on location–scale–scale models
+
+REML corrects small-sample bias in variance components:
+
+```@example lss
+fit_reml = drm(bf(@formula(y ~ sex + (1 | id)),
+                  @formula(sigma ~ sex),
+                  @formula(sd(id) ~ sex)),
+               Gaussian(); data = dat, method = :REML)
+
+reml_loglik(fit_reml)   # restricted log-likelihood
+```
+
+Both iid and phylogenetic LSS models support REML estimation with finite
+standard errors across mean, scale, and random-effect SD blocks.
 
 ## From R, with intervals
 

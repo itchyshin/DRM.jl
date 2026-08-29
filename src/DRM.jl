@@ -76,6 +76,7 @@ include("gaussian_lss.jl")   # #544: location-scale-scale sd(g) ~ x on the (1|g)
 include("aghq_1d.jl")            # #448: 1-D Liu–Pierce AGHQ around `_gauss_hermite`
 include("gaussian_meta.jl")
 include("gaussian_structured.jl")
+include("gaussian_sparse_lss.jl")
 include("phylo_interaction.jl")  # bipartite two-tree interaction RE: V = σ²(C_A⊗C_B) + σ_e²I
 include("location_only.jl")      # #12: opt-in conjugate-EM for the Gaussian phylo-mean cell
 include("student.jl")

@@ -47,12 +47,14 @@ Two ways to use DRM.jl from R, in increasing integration:
    [Rosetta](rosetta.md) phrasebook is the lookup table. Available today.
 2. **`engine = "julia"`** — keep writing ordinary `drmTMB(...)` R code; drmTMB
    marshals the formula and data across JuliaCall, calls DRM.jl to fit, and
-   returns a result object shaped like a native drmTMB fit. Experimental for
+   returns a result object shaped like a native drmTMB fit. Supported for
    Gaussian one-response and two-response models, the first Gaussian
-   `phylo(1 | species)` mean bridge with constant `sigma`, narrow
-   complete-response q=2 structured Gaussian fixtures, and the eleven
-   fixture-backed coefficient-scale cells listed above (Julia-side
-   `drm_bridge` gate; R-side Lovelace glue remains in the drmTMB repo).
+   `phylo(1 | species)` mean bridge with constant `sigma`, location–scale–scale
+   `sd(group)` / `sd(species, level = "phylogenetic")` models (ML, REML, sparse
+   scaling, and missing response inclusion), narrow complete-response q=2
+   structured Gaussian fixtures, and the eleven fixture-backed coefficient-scale
+   cells listed above (Julia-side `drm_bridge` gate; R-side Lovelace glue remains
+   in the drmTMB repo).
 
 ## The DRM.jl-side contract
 

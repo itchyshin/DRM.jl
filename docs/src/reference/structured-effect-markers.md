@@ -19,3 +19,11 @@ meta_V
 meta_vcov_bivariate
 MetaVcovBivariate
 ```
+
+## Location–scale–scale submodel markers
+
+```@docs
+sd
+sd_phylo
+```
+

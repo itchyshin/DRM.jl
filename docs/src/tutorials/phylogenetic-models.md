@@ -159,6 +159,9 @@ families.
 
 ## See also
 
+- [Location–scale–scale models](location-scale-scale.md) — predictors on the
+  phylogenetic standard deviation (`sd(species, phylogenetic) ~ x`, Mizuno et al.
+  macro-evolutionary framework).
 - [Known-matrix relatedness with relmat](relmat-known-matrices.md) — the same
   engine with a supplied matrix · [Animal models](animal-models.md)
 - [What can I fit today?](../model-guides/model-map.md)
