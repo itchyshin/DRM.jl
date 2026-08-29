@@ -20,15 +20,20 @@ Supplements the v0.7.0 handover (`2026-08-28-claude-handover-v070-tagged.md`).
 - **Outbound**: Ayumi-495/LS_ecogeographical-rules#28 posted on the owner's go (install + usage
   + multicore inference + thanks).
 
-## OWED next (fresh lane, any platform)
+## OWED next — the TRUE-PARITY arc (owner-adopted 2026-08-28, in order)
 
-1. **#551 — sparse O(p) lss engine**: lifts the 5000-species cap for the whole-tree scope; the
+1. **#558 — lss REML on the dense routes** (quick win): Ayumi's mass/tarsus/beak fits are REML;
+   Patterson–Thompson on the dense marginal, reduction + cross-engine gates. Do FIRST.
+2. **#559 — lss missing responses** (the lightness models): extend the #517 observed-rows +
+   full-tree convention to the lss engines.
+3. **#551 — sparse O(p) lss engine**: lifts the 5000-species cap for the whole-tree scope; the
    `D_a T` row-scaling preserves the sparse tree factor; #164 is the gradient-pattern precedent.
    Gates: FD-vs-exact ≤ 1e-6, dense-route logLik identity on the committed lsss fixtures,
    scaling run to p = 10,000 before any whole-tree claim.
-2. Ledger row 12 promotion price: one stamped SE cell in drmTMB's `parity-se.tsv` (docs page is
+4. Ledger row 12 promotion price: one stamped SE cell in drmTMB's `parity-se.tsv` (docs page is
    live at /dev/).
-3. v0.7.1 + Julia General registration (owner-gated, D-181).
+5. v0.7.1 + Julia General registration (owner-gated, D-181) — also gives Ayumi `Pkg.add`
+   instead of a clone.
 
 ## Known residue (deliberate)
 
@@ -41,5 +46,5 @@ Supplements the v0.7.0 handover (`2026-08-28-claude-handover-v070-tagged.md`).
 ## Resume prompt
 
 ```text
-Read AGENTS.md and docs/dev-log/handover/2026-08-28-claude-handover-lss-arc.md. Run lane preflight, reconcile with git state, then start OWED item 1 (#551 sparse O(p) lss) unless the owner redirects.
+Read AGENTS.md and docs/dev-log/handover/2026-08-28-claude-handover-lss-arc.md. Run lane preflight, reconcile with git state, then start OWED item 1 (#558 lss REML) unless the owner redirects.
 ```
