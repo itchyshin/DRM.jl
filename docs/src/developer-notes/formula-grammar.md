@@ -24,6 +24,8 @@ bf(y ~ x1 + x2, sigma ~ x1)
   | LHS name | Parameter | Link | Notes |
   |---|---|---|---|
   | `sigma` | scale σ | log | defaults to `~ 1` when omitted; **never `tau`** |
+  | `sd(g)` | random-effect SD $\sigma_{b,k}$ | log | location–scale–scale on iid `(1 \| g)` RE |
+  | `sd(sp, phylogenetic)` | phylogenetic SD $\sigma_{a,s}$ | log | location–scale–scale on `phylo(1 \| sp)` |
   | `nu`   | shape/df (e.g. Student-t) | — | family-dependent |
   | `zi`   | zero-inflation probability | — | |
   | `hu`   | hurdle probability | — | |

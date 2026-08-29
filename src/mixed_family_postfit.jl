@@ -87,7 +87,7 @@ length-`size(X_k, 1)` vector. The inverse link `g_k⁻¹` is the family's own
 (identity for Gaussian, exp for Poisson/NB2/Gamma, logistic for
 Binomial/Beta — see `_mf_mean`).
 
-NOTE: this is the conditional mean at `u = 0`, NOT the marginal mean E[y_k]
+NOTE: this is the conditional mean at `u = 0`, NOT the marginal mean `E[y_k]`
 (which for a non-identity link differs from `g_k⁻¹(Xβ)` by a Jensen term in the
 shared latent). The `u = 0` convention matches the link-scale linear predictor
 used everywhere else in the model.

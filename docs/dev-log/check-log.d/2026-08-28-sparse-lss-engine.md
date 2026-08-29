@@ -1,0 +1,1 @@
+| 2026-08-28 | **Sparse LSS engine** (#551 / Phase 1) | `test/test_lss_sparse.jl` + full LSS battery + check_test_deps | ✅ green; O(p) sparse exact marginal LSS engine matching dense to <=1e-5 across ML/REML/multi-α with up to 1094x speedup | Shannon (Noether, Karpinski, Curie) |

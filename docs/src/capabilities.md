@@ -63,6 +63,19 @@ A formula per distributional parameter is the core grammar (`bf(...)`,
 | Random effect on the **scale** axis (`sigma ~ (1\|g)`, Gauss–Hermite) | `src/gaussian_core.jl` | **Tested** — `test/test_sigma_re.jl` |
 | `sigma(fit)` / `corpairs(fit)` scale + correlation accessors | `src/summary.jl`, `src/gaussian_core.jl` | **Tested** — `test/test_sigma.jl`, `test/test_corpairs.jl` |
 
+## Location–scale–scale models (LSS, `sd()`)
+
+A third submodel putting a linear predictor on the log standard deviation of a random effect (`sd(group) ~ z` or `sd(species, phylogenetic) ~ z`, `src/gaussian_lss.jl`, `src/gaussian_sparse_lss.jl`).
+
+| Capability | Source | Status |
+|---|---|---|
+| Plain iid LSS `sd(group) ~ z` (ML + REML) | `src/gaussian_lss.jl` | **Tested** — `test/test_lss_group.jl`, `test/test_lss_reml.jl` |
+| Phylogenetic LSS `sd(species, phylogenetic) ~ z` (ML + REML, dense) | `src/gaussian_lss.jl` | **Tested** — `test/test_lss_phylo.jl`, `test/test_lss_reml.jl` |
+| Sparse $O(p)$ phylogenetic LSS engine (`sparse = true` / `algorithm = :sparse_lbfgs`) | `src/gaussian_sparse_lss.jl` | **Tested** — `test/test_lss_sparse.jl` (exact match to dense comparator on logLik, SEs, BLUPs) |
+| Multi-component LSS (e.g. multi-iid, iid + phylo) | `src/gaussian_lss.jl` | **Tested** — `test/test_lsss_multi.jl`, `test/test_lss_reml.jl` |
+| Incomplete response handling (`missing` / `NaN` in `y`, observed-rows pattern) | `src/gaussian_lss.jl` | **Tested** — `test/test_lss_missing_response.jl` |
+
+
 ## Random-effect structures
 
 ### Plain (unstructured) random effects on the mean
@@ -187,15 +200,18 @@ support.
 | Epsilon-method bias correction (`bias_correct`, TMB sdreport analogue) | `src/bias_correct.jl:97` | **Tested** — `test/test_bias_correct.jl` |
 | **χ̄² (chi-bar-square) boundary inference** (Self–Liang / Stram–Lee mixture) | `src/chibar.jl` | **Tested** — `test/test_chibar.jl` (corrects older audit text that listed this as Absent) |
 | REML on the q=4 Laplace model (`method = :REML`, `reml_q4`) | `src/reml_q4.jl` | **Tested** — wired into the module; `test/test_reml_q4_allaxes.jl` (corrects older audit text that left this in `experimental/`) |
+| REML on Location–Scale–Scale models (`method = :REML`, iid, phylo, multi) | `src/gaussian_lss.jl`, `src/gaussian_sparse_lss.jl` | **Tested** — `test/test_lss_reml.jl`, `test/test_lss_sparse.jl` |
 
 !!! warning "REML scope"
     `method=:REML` is opt-in. **ML is the default** (REML likelihoods are not
     comparable across fixed-effect structures). Wired cells: the fixed-effect
     Gaussian location–scale model (`test/test_reml.jl`); a single Gaussian mean
     intercept `(1 | g)` on the Woodbury spine (`test/test_reml_ordinary_ranef.jl`,
-    **not in the default suite yet**; #439); and the bivariate q=4 location–scale
-    engine (`test/test_reml_q4_allaxes.jl`). σ-RE, random slopes, multi-ranef,
-    and non-Gaussian REML stay rejected. This is not AI-REML.
+    **not in the default suite yet**; #439); Location–Scale–Scale models
+    (`sd(g) ~ z`, `sd(species, phylogenetic) ~ z`, and multi-component LSS;
+    `test/test_lss_reml.jl`, `test/test_lss_sparse.jl`; #558); and the
+    bivariate q=4 location–scale engine (`test/test_reml_q4_allaxes.jl`).
+    σ-RE, random slopes, and non-Gaussian REML stay rejected. This is not AI-REML.
 
     **Normalisation convention (#477, resolved 2026-08-25):** every REML route
     in DRM.jl now reports the **normalised** Patterson–Thompson restricted
