@@ -133,6 +133,8 @@ include("bridge.jl")
 include("introspection.jl")     # A4d-2: profile_targets + structured_effects (drmTMB post-fit inventories)
 include("missing_data.jl")       # #49: documented listwise-deletion preprocessing (no engine change)
 include("joint_missing_predictor.jl") # #563: prepared exact joint-model prototypes
+include("joint_missing_uncertainty.jl") # #563: native-shaped imputation summaries
+include("joint_missing_frontend.jl") # #563: two fixed-effect joint formula routes
 
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
@@ -183,7 +185,8 @@ export mf_coef, mf_aic, mf_bic, mf_fitted, mf_summary
 export PreparedJointModel, PreparedJointFit, prepared_joint_model,
        prepared_joint_rowloglik, prepared_joint_nll,
        prepared_joint_conditional_moments, fit_prepared_joint,
-       joint_missing_summary
+       joint_missing_summary, imputed, mi, miss_control, impute_model,
+       JointDrmFit, JointMissingControl, JointImputeModel
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare

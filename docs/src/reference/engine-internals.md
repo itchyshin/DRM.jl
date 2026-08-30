@@ -155,7 +155,8 @@ nuisance-parameter specification, using the prepared group indices.
 
 !!! warning "Limited developer interface"
     This prepared-array interface covers a Gaussian response and one Gaussian
-    or Bernoulli predictor. It is not yet admitted through `bf()`/`drm()` or
+    or Bernoulli predictor. The same likelihood is available through the
+    [joint formula frontend](@ref joint-predictor-formula), but not yet through
     R's `engine = "julia"`. Grouped predictors, further predictor families,
     REML, profile/bootstrap intervals and multiple-imputation draws remain
     outside this prototype. Conditional variance at fixed parameters is not
@@ -186,8 +187,10 @@ moments = prepared_joint_conditional_moments(model, theta)
 This example evaluates a supplied parameter vector; it does not fit its four
 rows. On an identifiable dataset, `fit_prepared_joint(model)` estimates the
 parameters. Inspect `joint_missing_summary(result).optimizer_status` and
-`.covariance_status` separately. Its `.uncertainty_status` remains
-`:not_implemented` for native missing-predictor uncertainty summaries.
+`.covariance_status` separately. Its `.uncertainty_status` is
+`:not_computed`: this low-level summary does not calculate standard errors.
+Use [`imputed`](@ref) for native-shaped imputation summaries and their own
+uncertainty status.
 
 ```@docs
 DRM.PreparedJointModel
@@ -201,6 +204,8 @@ DRM.JointMissingMetadata
 DRM.PreparedJointGaussian
 DRM.PreparedJointBernoulli
 DRM.prepared_joint_initial
+DRM._has_joint_mi
+DRM._fit_joint_formula
 ```
 
 ### [prepared_joint_nll](@id prepared_joint_nll)

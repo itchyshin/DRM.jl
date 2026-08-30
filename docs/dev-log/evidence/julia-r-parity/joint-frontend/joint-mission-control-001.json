@@ -1,0 +1,14 @@
+{
+  "url": "http://127.0.0.1:8823/p/drmTMB/status.json",
+  "matched_fields": [
+    "focus",
+    "next_safe_action",
+    "active_lane"
+  ],
+  "now": {
+    "focus": "Full Julia\u2013R parity programme remains active. Two direct-Julia joint missing-predictor routes now fit Gaussian responses with Gaussian or Bernoulli predictors. Supplied-parameter imputation summaries match native means, SEs, original rows and statuses; reviewed guards reject circular models. An old installed R imputation-mean failure is already repaired in current R source. Native default optimizer parity and all programme gates remain open.",
+    "next_safe_action": "Read the latest isolated DRM.jl LOOP/checkpoint.md and retained joint-frontend evidence. Complete matched public-fit verification, then extend the shared prepared contract and R bridge across the frozen missing-predictor denominator. Retain the Bernoulli native default tolerance failure; diagnostic restarts are not replacement baselines. Continue full capability manifest, original Claude/Cursor obligations, inference, measured performance, whole-site renders and safe recovery.",
+    "active_lane": "Codex Julia\u2013R full parity programme; coordinator with bounded Luna/low scouts, Terra/high builders and Sol/high review. Current slice: joint missing-predictor frontend and imputation uncertainty. Bounded Mac checks only; no remote campaign running."
+  },
+  "status": "PASS"
+}

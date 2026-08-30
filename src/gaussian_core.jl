@@ -433,11 +433,20 @@ For Location-Scale-Scale models (#559), the group index and scale design Z_g
 are parameterised over all G levels, while the likelihood is evaluated on
 observed rows.
 """
-function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false, phylo_coupled::Bool = false, penalty = nothing, sparse = nothing)
+function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false, phylo_coupled::Bool = false, penalty = nothing, sparse = nothing, impute = nothing, missing = nothing)
     algorithm in (:auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs) ||
         throw(ArgumentError("drm: `algorithm` must be one of :auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs (got :$algorithm)"))
     method in (:ML, :REML) ||
         throw(ArgumentError("drm: `method` must be :ML (default) or :REML (got :$method)"))
+    if _has_joint_mi(f)
+        return _fit_joint_formula(f, data; impute=impute,
+            missing=missing === nothing ? miss_control() : missing,
+            g_tol=g_tol, method=method, algorithm=algorithm, K=K, A=A,
+            tree=tree, coords=coords, profile_ci=profile_ci,
+            phylo_coupled=phylo_coupled, penalty=penalty, sparse=sparse)
+    end
+    (impute === nothing && missing === nothing) ||
+        throw(ArgumentError("drm: `impute` and `missing` controls currently require an additive mi(x) joint-model formula; they are not ignored on other routes"))
     rhs = Dict(f.forms)
     fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat/animal/phylo/spatial(1|g)
     fixed_sigma, sigma_re, _, structured_sigma = _split_ranef(rhs[:sigma])  # (1|g)→GHQ; structured_sigma = phylo(1|g) on σ

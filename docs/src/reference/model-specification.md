@@ -52,3 +52,58 @@ SkewNormal
 ```@docs
 cbind
 ```
+
+## [One modelled missing predictor](@id joint-predictor-formula)
+
+For a Gaussian response, `mi(x)` marks one additive predictor whose missing
+values are integrated out under a joint model. Observed predictor values inform
+the predictor distribution; missing predictors are not filled in before fitting.
+This initial route supports a Gaussian or Bernoulli predictor and complete
+remaining exogenous fixed-effect covariates: neither modelled variable may also
+appear in those fixed designs. Other response families, multiple modelled
+predictors, random effects, REML, profile/bootstrap intervals and the R bridge
+are still outside this admission. Full native fitted-result parity remains open.
+
+```@example joint_formula
+using DRM, LinearAlgebra
+BLAS.set_num_threads(1)
+n = 32
+z = collect(range(-1.2, 1.2; length=n))
+x_full = 0.15 .+ 0.65 .* z .+ 0.15 .* sin.(1:n)
+y_full = 0.3 .+ 0.4 .* z .+ 0.7 .* x_full .+ 0.18 .* cos.(1:n)
+data = (y = Union{Missing,Float64}[i in (4, 24) ? missing : y_full[i] for i in 1:n],
+        x = Union{Missing,Float64}[i in (8, 18, 24) ? missing : x_full[i] for i in 1:n], z=z)
+fit = drm(bf(@formula(y ~ z + mi(x)), @formula(sigma ~ 1)), Gaussian();
+    data=data, impute=(x=@formula(x ~ z),),
+    missing=miss_control(response="include", predictor="model"))
+@assert is_converged(fit)
+@assert isposdef(Symmetric(vcov(fit)))
+(coef(fit, :mu), coef(fit, :mi_x), coef(fit, :sigma_mi_x), imputed(fit))
+```
+
+For a binary predictor use
+`impute=(x=impute_model(@formula(x ~ z); family=Binomial()),)`.
+`miss_control(predictor="model")` retains the default `response="fail"` when
+the response is complete; request `response="include"` for missing responses.
+Unmarked incomplete predictors and unsupported options produce an error.
+
+`imputed(fit; rows=:all)` retains original row numbers and includes observed
+values, whose SEs are `missing`. Gaussian imputation SEs combine conditional
+variance with a first-order parameter-uncertainty correction. Bernoulli summaries
+return conditional probabilities and their Bernoulli SDs. These are neither
+multiple-imputation draws nor interval-coverage guarantees. Check
+`uncertainty_status`; `se=false` hides SEs without erasing a failure status.
+`coef(fit, :sigma_mi_x)` returns natural predictor SD; unqualified `coef(fit)` and
+`vcov(fit)` use the raw coordinates, including its log SD. Complete fixed-effect
+interactions/transforms are allowed; interactions involving `mi(x)` are not yet
+admitted.
+
+```@docs
+mi
+miss_control
+impute_model
+imputed
+JointDrmFit
+JointMissingControl
+JointImputeModel
+```

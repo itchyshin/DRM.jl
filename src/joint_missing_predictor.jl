@@ -69,8 +69,8 @@ end
     joint_missing_summary(fit::PreparedJointFit)
 
 Return a copy-safe named summary of prepared-row conditional moments and their
-data-only masks. The `std_error` and native `imputed()` uncertainty contracts
-are deliberately not implemented by this prototype.
+data-only masks. This summary contains no `std_error`: its moments condition on fitted
+parameters. Use [`imputed`](@ref) for native-shaped uncertainty summaries.
 """
 function joint_missing_summary(fit::PreparedJointFit)
     m = fit.metadata
@@ -405,7 +405,7 @@ function fit_prepared_joint(model::PreparedJointModel;
     metadata = JointMissingMetadata(model.predictor, copy(model.original_row), copy(model.row_state),
                                     copy(model.observed_y), copy(model.observed_x), Float64.(moments.mean),
                                     Float64.(moments.variance), copy(moments.status), length(model.y),
-                                    count(==( :x_observed_y_missing), model.row_state), :not_implemented,
+                                    count(==( :x_observed_y_missing), model.row_state), :not_computed,
                                     optimizer_status, covariance_status)
     return PreparedJointFit(base, model, metadata)
 end

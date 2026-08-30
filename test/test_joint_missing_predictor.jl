@@ -156,7 +156,7 @@ end
     @test fitted.fit.nobs == 28
     @test fitted.metadata.all_rows == 30
     @test fitted.metadata.predictor_only_rows == 2
-    @test fitted.metadata.uncertainty_status == :not_implemented
+    @test fitted.metadata.uncertainty_status == :not_computed
     @test fitted.fit.converged
     @test fitted.metadata.optimizer_status == :converged
     @test fitted.metadata.covariance_status == :observed_information_inverse
@@ -172,7 +172,7 @@ end
     summary = DRM.joint_missing_summary(fitted)
     summary.original_row[1] = -1
     @test fitted.metadata.original_row[1] == 101
-    @test summary.uncertainty_status == :not_implemented
+    @test summary.uncertainty_status == :not_computed
 end
 
 @testset "finite extremes and fail-closed input validation" begin

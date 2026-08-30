@@ -44,7 +44,7 @@ def check(ref,rec,root,native_parity=False):
         require(a.get("snapshot_isolated") is True,kind+": snapshot is not isolated")
         finite(a.get("theta"),kind+": theta nonfinite"); finite(a.get("gradient"),kind+": gradient nonfinite")
         require(math.isfinite(a.get("nll",math.nan)) and max(map(abs,a["gradient"]))<=1e-6,kind+": nll/gradient fails")
-        require(a.get("optimizer_status")=="converged" and a.get("covariance_status")=="observed_information_inverse" and a.get("uncertainty_status")=="not_implemented",kind+": status differs")
+        require(a.get("optimizer_status")=="converged" and a.get("covariance_status")=="observed_information_inverse" and a.get("uncertainty_status")=="not_computed",kind+": status differs")
         require(a.get("nobs")==sum(e["y_observed"]) and a.get("all_rows")==160,kind+": row counts differ")
         H,V=a.get("hessian"),a.get("covariance"); require(isinstance(H,list) and isinstance(V,list) and len(H)==n and len(V)==n and all(isinstance(r,list) and len(r)==n for r in H+V),kind+": Hessian/covariance shape")
         finite([z for r in H+V for z in r],kind+": Hessian/covariance nonfinite")

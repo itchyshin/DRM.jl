@@ -1,0 +1,1 @@
+| 2026-08-30 | **S9 joint frontend and imputation uncertainty** (#563) | 57+19 focused assertions; 320 supplied-parameter rows; 2 public ML fits; 14+17 damaged controls; strict52page124example source build | Bounded checks PASS; native Bernoulli theta FAIL1.0015e-5>4e-6; all programme gates open | Ada / Hopper / Rose / Melissa |
