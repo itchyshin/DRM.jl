@@ -12,13 +12,13 @@
 | S6 | todo | executable leaf + independent review |
 | S7 | todo | executable leaf + independent review |
 | S8 | todo | executable leaf + independent review |
-| S9 | doing | two prepared prototypes reviewed; Bernoulli native-fit parity red; frontend, bridge, uncertainty and remaining native obligations open |
+| S9 | doing | two direct-Julia joint routes + imputation uncertainty reviewed; Bern native-fit parity red; bridge and remaining24native obligations open |
 | S10 | doing | reviewed prediction components retained; remaining methods and native stopping discrepancies open |
 | S11 | todo | executable leaf + independent review |
 | S12 | todo | executable leaf + independent review |
 | S13 | doing | executable leaf + independent review |
 | S14 | todo | executable leaf + independent review |
 | S15 | todo | executable leaf + independent review |
-| S16 | todo | executable leaf + independent review |
-| S17 | todo | executable leaf + independent review |
+| S16 | doing | bounded Melissa checkpoints retained; final original-promise reconciliation remains open |
+| S17 | doing | ef05ad8 scoped status refreshed and served verified; keep current as programme progresses |
 | R1 | todo | executable leaf + independent review |

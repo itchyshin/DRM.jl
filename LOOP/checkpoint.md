@@ -1,3 +1,48 @@
+# Latest — S9 joint frontend and native uncertainty (2026-08-30)
+
+Local Julia commit e2554bec4162eafd1030146c0946b30b49cfddf7. Committed evidence63hashes and89sources verified. No push/merge.
+
+Read LOOP/GOAL.md and docs/dev-log/plans/2026-08-30-julia-r-parity.md.
+LOOP/ultra-plan.md is an inherited Poisson Cox–Reid plan, NOT this programme.
+Do not follow it for this lane; it is preserved untouched.
+
+Two direct-Julia Gaussian-response ML routes now share the prepared likelihood:
+one Gaussian/Bernoulli mi(x) predictor, complete exogenous designs. imputed()
+returns native-shaped Gaussian prediction-error/Bernoulli conditional SEs,
+row IDs and status. Formula/uncertainty57+19 assertions pass. Nine invalid
+self/cyclic/rawcontrol refusals first failed, then passed. Existing Gaussian/
+formula and63prepared assertions pass. Commonθ002 all320rows PASS; maxmean
+4.663e-15,SE5.829e-16. Publicfit001 bothconverged10.236s; independentLL/HV/J
+checks pass,17damagedcontrols normal/-O pass. NativeGaussianθ2.7546e-6 PASS,
+Bern1.0015094e-5 FAIL4e-6 remains. Diagnostic native restart≈1.077e-7 from
+Julia is NOT a replacement baseline. CurrentR fixes old installed staleimputed
+means; oldfailure+both exactrunner hashes retained. No duplicateRpatch.
+
+Rose approves bounded code/evidence; Melissa checked obligations and flagged
+resume drift, now corrected. Final strictdocs52pages124examples116.529sPASS,
+notrender/deploy. 89sourcehashes matchreceipt002/publicfit001. Both denied
+precisionfiles unchanged. RHEAD97b7eee anddirtyZOBwork untouched. S5redtest
+andinclude uncommitted. MissionControl ef05ad8 served3fieldsverified.
+
+NEXT: Rbridge admission through the same prepared contract, remaining24native
+missing-predictor obligations, S2manifest/S10methods/S11inference. Investigate
+native stopping mismatch without changingfrozenreference. Preserve required
+large-tree benchmark manifest, matched warmfullworkflow,1/2/4/8threads,
+automaticpolicy calibration/evaluation split,coldtimings. Totoro forpilot,
+DRACallocations for justifiedcampaign; no remotejob currentlyrunning.
+Continue originalClaude/Cursorrecovery, safe dispositions, whole-sitevisuals.
+AllG0–G8OPEN; reportvalidatorstructurepasses butprogrammeacceptanceexit1
+isexpected. Do not abandon gates to make thischeckpointgreen. No release,
+registration, publication, push, merge orcleanup. Activeagenthoursunmeasured.
+
+Evidence: docs/dev-log/evidence/julia-r-parity/joint-frontend/.
+Report: docs/dev-log/after-task/2026-08-30-parity-joint-frontend.md.
+Isolatedbranches codex/julia-r-parity remainCARRIED-OVER; resumehere.
+Leasecodex:01a05261-julia-r-parity validuntil~14:22MDT; refreshbeforeexpiry.
+No activefit/buildprocesses atcheckpoint. Continue programme appgoal.
+
+---
+
 # Latest — S9 prepared joint prototype (2026-08-30)
 
 Prepared Gaussian-response/Gaussian-or-Bernoulli-predictor engine now included,

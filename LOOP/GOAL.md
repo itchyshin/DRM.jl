@@ -2,6 +2,8 @@
 
 Approved by Shinichi in Codex task `01a05261-cd5c-7ca3-a654-cebea9f187fb`, 2026-08-30.
 Read this file and checkpoint.md at every continuation. The active app goal is the same programme.
+The approved execution plan is docs/dev-log/plans/2026-08-30-julia-r-parity.md.
+LOOP/ultra-plan.md is an inherited unrelated Cox-Reid plan; do not use it for this programme.
 
 All currently implemented native drmTMB capabilities must work directly in Julia and through
 `engine = "julia"`, with retained correctness evidence. Every registered warm full-workflow
