@@ -21,3 +21,24 @@ so a dead master cannot fall back to a new authenticated connection.
   exact source/build pins. Preserve evidence and dependency libraries on persistent storage.
 - Machine-hour allowance is not authorization for campaigns over 30 minutes: first measure
   a pilot, then obtain the established campaign approval.
+
+## Dispatch policy for the implementation pass
+
+- Keep this Mac responsive: bounded single-process debugging and reader previews;
+  stop an overrun and report it rather than silently starting a laptop campaign.
+- Totoro is the first CPU destination once a local fixture passes. Prepare isolated
+  R/Julia environments from recorded source revisions; the installed version string
+  alone is insufficient. Measure transfer/setup separately from warm full workflows.
+- Give either outer parallel jobs or each job's internal threads the core budget:
+  concurrent jobs multiplied by threads per job must remain at or below the shared
+  150-core cap. Start with 1/2/4/8-thread pilots and BLAS threads set to one; do not
+  assume that more threads are faster. Recheck shared load before each expansion.
+- Use DRAC allocations/arrays for replicated campaigns when pilot runtime, memory,
+  and queue cost justify them. Preserve raw failures, seeds, source hashes and run
+  metadata on persistent storage. Never count queue waits as active agent work.
+- Compare native R, direct Julia and the bridge on the same host under equal resource
+  limits. Keep Mac/Totoro/DRAC result sets separate. No GPU route is justified yet.
+
+At this checkpoint all completed fits were bounded Mac checks. Totoro and DRAC
+readiness is an earlier read-only observation, not a claim that a job has run or
+that either host's present capacity is reserved.
