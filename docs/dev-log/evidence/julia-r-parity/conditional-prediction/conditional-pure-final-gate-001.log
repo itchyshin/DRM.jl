@@ -1,0 +1,22 @@
+APPROVAL REQUIRED leaf-S10-conditional:G1
+    CHECK: Rscript -e "pkgload::load_all('/private/tmp/drm-parity-20260830/s10-conditional-candidate',quiet=TRUE,recompile=FALSE); testthat::test_file('/private/tmp/drm-parity-20260830/drmTMB/tests/testthat/test-julia-conditional-prediction.R',reporter='summary',stop_on_failure=TRUE); cat('CONDITIONAL_PURE_PASS')"
+    EXPECT: CONDITIONAL_PURE_PASS
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH=[local environment redacted; raw log retained in private task directory]
+    APPROVED: /Users/z3437171/.unlazy/approved/cb69b521d4d15f802332a33966873ce880137367b83cba17109b1cb9f9a47f05.json
+APPROVAL REQUIRED leaf-S10-conditional:G2
+    CHECK: Rscript -e "pkgload::load_all('/private/tmp/drm-parity-20260830/s10-conditional-candidate',quiet=TRUE,recompile=FALSE); for(f in c('test-julia-prediction-scales.R','test-julia-predict-newdata.R','test-julia-bridge.R')) testthat::test_file(file.path('/private/tmp/drm-parity-20260830/drmTMB/tests/testthat',f),reporter='summary',stop_on_failure=TRUE); cat('CONDITIONAL_NEIGHBOURS_PASS')"
+    EXPECT: CONDITIONAL_NEIGHBOURS_PASS
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH=[local environment redacted; raw log retained in private task directory]
+    APPROVED: /Users/z3437171/.unlazy/approved/9ae85343fc1a2b42573feace55e43860b8c1bb4b72db821093875b4211807ae7.json
+  RUN  leaf-S10-conditional:G1 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=[local environment redacted; raw log retained in private task directory]
+  RUN  leaf-S10-conditional:G2 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=[local environment redacted; raw log retained in private task directory]
+  PASS leaf-S10-conditional:G1: Validated typed payload returns conditional means; malformed maps are rejected
+       exit=0; EXPECT=matched; output=══ DONE ════════════════════════════════════════════════════════════════════════ | CONDITIONAL_PURE_PASS
+  PASS leaf-S10-conditional:G2: Existing bridge and prediction neighbour suites remain green
+       exit=0; EXPECT=matched; output=══ DONE ════════════════════════════════════════════════════════════════════════ | CONDITIONAL_NEIGHBOURS_PASS
+leaf-S10-conditional.md: 2 gates
+ALL MET (2 met)

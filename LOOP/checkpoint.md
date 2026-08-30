@@ -1,3 +1,40 @@
+# Latest — S10 conditional/native-state checkpoint (2026-08-30)
+
+R checkpoint `10a140c1594fe67f21e247aee3807d3c391af622` contains only reviewed native snapshot extraction,
+Gaussian ordinary RI conditional bridge payload, typed labels, tests and report.
+Executed isolated candidate hashes match committed R bytes. Unfinished ZOB work
+remains unstaged; denied Julia sparse conversion remains untouched.
+
+Final3case pilot19.423s,24/24dense adapter outputsPASS(max1.4433e-15),2/3
+independentfitcasesPASS. Varying-scale newdata mu remainsFAIL1.08595e-5>4e-6.
+Native8fit regressions (2MLcells/FEcontrol/REMLneighbour)PASS; pureconditional
+and3neighboursPASS,1liveskipexcluded. Native pre-fix state diagnostic shows
+post-SE storedmode perturbation~0.00177; clean snapshot equalsSEfalse exactly
+without mutating originalenv. Rose approves code and checker; independently
+reran8normal/optimized evidence-checker cases. All86Julia src hashes unchanged
+fromf47789646f27221ba4fad29a8ba1b3b8a790b521.
+
+FE stopping diagnostic supports native stopping explanation: oracleTMB/FDagree,
+all4defaultfits reproduceexactly; tightcontrols3singularconvergence, explicit
+restarts closer toJulia but not baseline substitution. Original factor
+prediction6.26097e-6>4e-6 remainsFAIL.
+
+Evidence: docs/dev-log/evidence/julia-r-parity/{conditional-prediction,stopping-diagnostic}/.
+Report: docs/dev-log/after-task/2026-08-30-parity-conditional-state.md.
+New runnable tools: parity_conditional_prediction.R, parity_conditional_native_state.R,
+parity_stopping_diagnostic.R, parity_stopping_negative.R,
+check_conditional_receipt.py, test_conditional_receipt.py.
+
+Next: investigate remaining native stopping/control parity without replacing
+frozen baselines; broaden post-fit payload cells only against independent oracles;
+continue S2manifest/S9/S13/recovery and MissionControl obligations. Protected Julia
+src denial still needs actual fresh human approval; do not reinterpret automatic
+continuation as approval. GoalG0–G8active/open, no push/release/cleanup/remotecompute.
+Lease `codex:01a05261-julia-r-parity` renewed bothrepos~10:22MDT for4h. No fitsrunning.
+Actualagenthours notinstrumented; rolesLuna/low Terra/high Sol/high explicit.
+
+---
+
 # Latest — S10 prediction checkpoint (2026-08-30)
 
 Rprediction-onlycandidate reviewed byRose; noZOBadmissionchangesincluded.

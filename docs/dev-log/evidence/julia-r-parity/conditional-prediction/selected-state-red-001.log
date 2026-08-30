@@ -1,0 +1,13 @@
+APPROVAL REQUIRED leaf-S10-selected-state:G1
+    CHECK: Rscript -e "pkgload::load_all('/private/tmp/drm-parity-20260830/s10-candidate',quiet=TRUE,recompile=FALSE); testthat::test_file('/private/tmp/drm-parity-20260830/drmTMB/tests/testthat/test-selected-state-prediction.R',reporter='summary',stop_on_failure=TRUE); cat('SELECTED_STATE_PASS\\n')"
+    EXPECT: SELECTED_STATE_PASS
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH=[local environment redacted; raw log retained in private task directory]
+    APPROVED: /Users/z3437171/.unlazy/approved/094856f9beefcdd72ea25c8ea36631a5642468723ce24adaa319ffffa50a17af.json
+  RUN  leaf-S10-selected-state:G1 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=[local environment redacted; raw log retained in private task directory]
+  FAIL leaf-S10-selected-state:G1: Stored ML/REML Gaussian predictions agree with dense conditioning and are invariant to requesting SEs
+       exit=1; EXPECT=not matched; output=selected-state-prediction: ..12...34....567. | ══ Failed ══════════════════════════════════════════════════════════════════════ | ── 1. Failure ('test-selected-state-prediction.R:35:5'): Gaussian conditional pr | Expected `predict(a, dpar = "mu")` to equal `predict(b, dpar = "mu")`. | Differences: | actual   | expected | ... | ! Test failures. | Execution halted
+leaf-S10-selected-state.md: 1 gates
+UNMET: 1 (met: 0)
+  leaf-S10-selected-state:G1
