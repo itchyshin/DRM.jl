@@ -1,6 +1,11 @@
 # Latest — S9 R joint bridge checkpoint (2026-08-30 13:33 MDT)
 
-Programme ACTIVE; all G0–G8 remain OPEN. Two Gaussian-response missing-predictor
+Programme ACTIVE; all G0–G8 remain OPEN.
+Local implementation commits: Julia bc0105701a637749ce88935f93c88b95090b40a2;
+R b2b0c3769. Working-source receipt reverified after commits.
+Unrelated R bridge diff remains exactly96insertions/10deletions; S5test/include
+remainuncommitted. No runningfit/build at thischeckpoint.
+ Two Gaussian-response missing-predictor
 routes now work through both direct Julia and R engine=julia: one Gaussian or
 Bernoulli predictor, fixed complete exogenous designs, ML. Public003 adapter
 checks and independent320row oracle PASS;20damage controls normal/-O PASS.
@@ -26,6 +31,17 @@ Bernoulli newdata needs fitted binary encoding before modelmatrix alignment.
 Retain frozenfailure receipts; then rerun unchanged4e-6 public comparisons.
 Continue missingpredictor remainingnativecells, S2manifest, S10postfit,S11inference,
 S12matchedwarmworkflows and automatic1/2/4/8policy, S13whole-sitevisuals, recovery.
+Melissa resume-obligation reconciliation: retain all24frozen native missing-
+predictor obligations, with no replacement baseline/tolerance. S2 must enumerate
+native capability/output and code/S3 denominators; missing/skipped/stale outputs
+fail. G5 requires EVERY registered warm workflow to win; retain all losses and
+calibrate the automatic policy separately from evaluation. G1 retirement needs
+restore-and-fresh-compare proof for commits, staged/unstaged/untracked/ignored
+payloads, modes and symlinks. Reconcile named LSS REML/masked fixtures, stamped SE
+receipts, inference matrixv2, final-head verification and10kpilot obligations;
+shared/multi-component sparse defects remain required. Preserve status and
+receipts for S9 independent Gaussian/density-normalization/quadrature-Jacobian
+kernel obligations rather than treating generic S9 wording as closure.
 Macshortchecks; TotoroCPU pilots <=150sharedcores; DRACallocations for justified
 campaigns. No remotejobs submitted/running; >30minneedsmeasuredpilot+approval.
 

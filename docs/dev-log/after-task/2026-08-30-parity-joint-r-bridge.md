@@ -75,7 +75,10 @@ three fields; served values verified. The second commit restores original
 formatting after unnecessary indentation churn. Golden Set: two frozen160row
 fixtures and focused neighbouring guards, not the full suite. Durable programme
 state is in LOOP and this report; no Codex memory files were changed. Melissa
-programme reconciliation remains open.
+programme reconciliation remains open. A bounded checkpoint reconciliation
+identified five compressed resume obligations (24native obligations, complete
+manifest, all-case warm wins, exact recovery proof, named LSS/S9 kernel evidence);
+the latest NEXT block now restores them explicitly. This is not G8 closure.
 
 ## 9. What Did Not Go Smoothly
 Native imputation summaries and stored prediction matrices disagree: finalizing
