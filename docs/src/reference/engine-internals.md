@@ -244,6 +244,60 @@ DRM.PreparedTwoJointGaussianFit
 DRM.JointTwoMissingMetadata
 ```
 
+### Ordinal and categorical predictor models
+
+The finite-state prepared interface accepts one ordinal or categorical predictor
+and a Gaussian response. It integrates over every possible state when the
+predictor is missing. Supply an `n × K × p` array containing the complete mean
+design for each row and state; ordinal contrasts and categorical dummy variables
+must already be encoded in this array. Direct `mi()` formula admission and R
+bridge transport for these two routes remain implementation work.
+
+```@example prepared_joint_finite
+using DRM
+levels = ["low", "middle", "high"]
+x = Union{Missing,String}["middle", missing, "high", missing]
+y = Union{Missing,Float64}[0.4, -0.3, missing, missing]
+z = [-0.6, 0.3, 0.8, -0.1]
+Xstate = zeros(4, 3, 2)
+for i in 1:4, k in 1:3
+    Xstate[i, k, :] = [1.0, k - 2.0]
+end
+model = prepared_joint_model(y, x, Xstate, ones(4, 1), reshape(z, 4, 1);
+    predictor = :ordinal, levels = levels, variable = :severity)
+# Mean coefficients, log-SD, predictor slope, first cut, log cut spacing.
+theta = [0.1, 0.5, log(0.7), 0.3, -0.6, log(1.2)]
+moments = prepared_joint_conditional_moments(model, theta)
+@assert prepared_joint_rowloglik(model, theta)[4] == 0.0
+@assert moments.mean[1] == 2.0
+moments.probabilities
+```
+
+This example evaluates parameters, without fitting four rows. For ordinal
+predictors, cumulative probabilities use `logistic(cutpoint - linear_predictor)`;
+the predictor design must not span an intercept. Raw parameters are mean
+coefficients, residual log-SD coefficients, predictor coefficients, then the first
+cutpoint and log positive spacings. The raw covariance uses these same coordinates.
+
+For `predictor = :categorical`, the first declared level is the baseline.
+Predictor coefficients are ordered by nonbaseline level, then design term; there
+is no cutpoint block. The prepared constructor accepts two or more states; that
+low-level admission does not replace native frontend restrictions.
+
+On identifiable datasets, `fit_prepared_joint(model)` returns state-weighted
+fitted means and retains posterior probabilities. Ordinal `imputed()` reports
+expected scores and conditional score SDs, without adding parameter uncertainty.
+Categorical `imputed()` reports the first modal category code; a metric SE is
+unavailable, with an explicit status. Fit covariance failures take precedence.
+Neither summary is a multiple-imputation draw or an interval-coverage claim.
+
+```@docs
+DRM.PreparedFiniteJointModel
+DRM.PreparedFiniteJointFit
+DRM.JointFiniteMissingMetadata
+DRM._finite_joint_ordinal_logprobabilities
+```
+
 ```@docs
 DRM.PreparedJointModel
 DRM.PreparedJointFit

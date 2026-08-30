@@ -1,3 +1,46 @@
+# Latest — finite-state prepared kernel; native-fit losses retained (2026-08-30)
+
+Programme ACTIVE; G0–G8 OPEN. Same isolated pair codex/julia-r-parity.
+Shared ordinal/categorical missing-predictor likelihood implemented for Gaussian
+response and one finite predictor. Direct Julia and R bridge admission remain
+required next. All24nativeobligations remain required; no wholecell closed.
+Source src/joint_missing_finite.jl SHA682bfff907800dc9d83a742a2e825c3955cb8b80926c84420ff5db74045ad78e.
+Targeted tests and48native fixedpoint checks pass; existing one/two predictor
+kernel/frontend/bridge neighbours pass. Independent native18 and fit17damages
+pass normal/-O. ActualSD/masks retained; independent FDH*V-I passes1e-4.
+Source developerpage executes3examples; no visual/fullsite/deployed claim.
+Rose Sol/high boundedprepared approval, Melissa Terra/high scope reconciliation.
+Seven slice gates met; one FAILED(defaultfits), noabandonments.
+
+Unchangednative4e-6: ordinaltheta2.163e-6 passes butprediction7.561e-6 and
+imputation5.124e-6 fail; categoricaltheta1.741e-5/prediction9.576e-6 fail.
+Do not change native defaults/tolerance or substitute a restarted comparator.
+Likelihood agreement does not waive the failed output requirements.
+Current evidence finite-state/finite-julia-002.toml,finite-fit-002.toml,
+finite-native-003.json. Earlier001/002native export metadata attempts retained;
+olderJulia001 receipts are historical. RealRDS retained in Rrepo only; Rreference commit07a588b45.
+Report docs/dev-log/after-task/2026-08-30-parity-finite-state.md.
+
+User reconnected remote hosts. Totoro previous committedsource f67eeb80 ran
+190assertions,1Julia/1BLASthread,Julia1.10.10,67seconds,exit0. Pilotcomplete,
+NOT warmperformance or currentfinite-source proof. Firconnected,nojobsubmitted.
+Remote evidence totoro-two-frontends/. No remote campaign currentlyrunning.
+MissionControl a9b449d served3fields verified; scoped vaultlease released.
+
+NEXT: wire ordinal/categorical directJulia andRbridge into sharedpreparedkernel;
+investigate these and earlier singlepredictor4e-6 losses. Continue complete
+S2/S3/S7/S8/S10/S11, LSSstampedSE/REML/masks/inferencematrix/10k/finalhead,
+everyregisteredwarmwin incl1/2/4/8policycalibration, originalClaude/Cursor
+recoverability, safeitemizedcleanup, whole-sitevisual/deployedproof, finalRose
+andMelissa. Approvedplan docs/dev-log/plans/2026-08-30-julia-r-parity.md;
+LOOP/ultra-plan.md is unrelated inherited material perLOOP/GOAL.md.
+S5test/include,RZOB96/10 and previouslydeniedsparsefiles preserved.
+No push/merge/release/registration/collaboratormessage or longcampaign.
+Actualagenthours uninstrumented; no inventedtotal. Macshortchecks,
+Totoro<=150sharedcores,DRACallocatedcompute; >30minpilot+approval.
+
+---
+
 # Latest — two-Gaussian direct formula and R bridge verified (2026-08-30)
 
 Programme ACTIVE; G0–G8 OPEN. Same isolated pair codex/julia-r-parity.

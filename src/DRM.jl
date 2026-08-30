@@ -135,6 +135,7 @@ include("missing_data.jl")       # #49: documented listwise-deletion preprocessi
 include("joint_missing_predictor.jl") # #563: prepared exact joint-model prototypes
 include("joint_missing_uncertainty.jl") # #563: native-shaped imputation summaries
 include("joint_missing_two_predictor.jl") # #563: exact two-Gaussian prepared kernel
+include("joint_missing_finite.jl") # #563: exact ordinal/categorical finite sums
 include("joint_missing_frontend.jl") # #563: two fixed-effect joint formula routes
 include("joint_missing_bridge.jl") # #563: primitive prepared-array transport
 
@@ -184,7 +185,7 @@ export mf_coef, mf_aic, mf_bic, mf_fitted, mf_summary
 
 # Prepared joint-model API. Formula/mi() and R-bridge admission are separate
 # programme obligations; these methods accept explicit numerical designs.
-export PreparedJointModel, PreparedJointFit, prepared_joint_model,
+export PreparedJointModel, PreparedJointFit, PreparedFiniteJointModel, PreparedFiniteJointFit, prepared_joint_model,
        prepared_joint_rowloglik, prepared_joint_nll,
        prepared_joint_conditional_moments, fit_prepared_joint,
        joint_missing_summary, imputed, mi, miss_control, impute_model,

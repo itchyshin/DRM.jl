@@ -49,3 +49,16 @@ of Julia's active BLAS count. Before timed work, explicitly set
 LinearAlgebra.BLAS.set_num_threads(1) in the loaded Julia session and record
 BLAS.get_num_threads(), Threads.nthreads(), and the comparator's thread controls.
 Earlier checks without runtime counts remain correctness probes only.
+
+## Refresh after reconnection — 2026-08-30 15:50 MDT
+
+Both existing SSH masters were verified without a fresh login. Totoro ran the
+committed two-Gaussian source f67eeb8046417c110c2f0ce7785bd3e70f2fcb1a under Julia
+1.10.10, one Julia thread and one BLAS thread: exit0, all190 assertions passed,
+67seconds total. Full pilot evidence and source bundle hash are retained in
+docs/dev-log/evidence/julia-r-parity/totoro-two-frontends/. This is a Linux
+correctness pilot, not a speed comparison or verification of later finite-state
+source. Its remote directory is /home/snakagaw/drm_parity_20260830_f67eeb80.
+The pilot finished; no remote campaign is running. Fir scheduler access was
+verified and no jobs were submitted. Mac checks remain bounded and singlethread.
+Existing no-compute statements above describe earlier checkpoints.

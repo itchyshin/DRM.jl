@@ -409,6 +409,7 @@ include("test_xfam_external_validation.jl")
 # Shared prepared joint missing-predictor likelihood and conditional moments.
 include("test_joint_missing_predictor.jl")
 include("test_joint_missing_two_predictor.jl")
+include("test_joint_missing_finite.jl")
 include("test_joint_missing_uncertainty.jl")
 include("test_joint_missing_frontend.jl")
 include("test_joint_missing_two_frontend.jl")

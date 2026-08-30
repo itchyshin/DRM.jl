@@ -13,8 +13,15 @@
     "all native missing-predictor cases"
   ],
   "next": [
-    "ordinal and categorical predictors through shared finite-state prepared likelihood",
-    "preserve and resolve earlier single-predictor4e-6 failures",
+    "direct Julia and R bridge ordinal/categorical admission through shared finite-state likelihood",
+    "investigate retained finite-state and earlier single-predictor4e-6 failures without altering native defaults or tolerance",
     "refresh current-source full-suite evidence before integration"
-  ]
+  ],
+  "finite_state_progress": {
+    "scope": "prepared Gaussian-response likelihood for one ordinal or categorical predictor; direct/R frontends remain required",
+    "native_reference": "finite-state/finite-native-003.json",
+    "fixed_point_receipt": "finite-state/finite-julia-002.toml",
+    "default_fit_receipt": "finite-state/finite-fit-002.toml",
+    "default_fit_parity": "both fail unchanged4e-6; no wholecell closed"
+  }
 }
