@@ -1,0 +1,27 @@
+{
+  "scope": "bounded source/pilot review only, no programme closure",
+  "root": "Codex coordinator; current session",
+  "builder": {
+    "agent": "s9_frontend_builder",
+    "dispatch_model": "gpt-5.6-terra",
+    "effort": "high",
+    "ownership": "joint_missing_frontend and twofinite testfiles",
+    "runtime": "root only"
+  },
+  "scout": {
+    "agent": "s1_recovery_census",
+    "dispatch_model": "gpt-5.6-luna",
+    "effort": "low",
+    "ownership": "stopping README only"
+  },
+  "reviewer": {
+    "agent": "rose_plan_gate",
+    "dispatch_model": "gpt-5.6-sol",
+    "effort": "high",
+    "verdict": "APPROVE finalsource/localfrozenoracle; remote proof collectedbyroot"
+  },
+  "reconciliation": "Melissa perspective reusedTerra; preserve directnewdata, typedfactors, rawpublic/transform/interval gaps,strictlosses/all24obligations",
+  "concurrency": "root+three children maximum; no newagents thisslice",
+  "actual_agent_hours": "not instrumented",
+  "runtime_model_introspection": "dispatch settings from existing lane receipts; no independent provider introspection"
+}

@@ -321,11 +321,19 @@ cutpoint coordinates; `cutpoints(fit)` returns constrained cutpoints separately.
 This differs from R's public coefficient table, which omits predictor cutpoints.
 The fitted likelihood is shared, but full accessor parity and the remaining
 native default-fit discrepancies are still programme requirements.
-No-intercept means with numeric fixed covariates use a full indicator for every
-predictor state. Direct Julia currently rejects a no-intercept mean that also
-contains another categorical fixed covariate: matching R's first-factor coding
-is still required work, not an excluded parity case. R-prepared bridge designs
-retain R's coding.
+No-intercept means follow R's first-factor coding: the first categorical main
+effect receives full indicators, and later factors use reduced contrasts.
+An ordinal missing predictor uses polynomial contrasts unless it is that first
+factor. Complete numeric, plain-string, symbol and Boolean covariates are admitted.
+Generated R state-expanded designs verify plain-string and Boolean factors
+and their interactions, including coefficient names; symbol-valued factors
+have not yet been separately checked against R.
+Package-specific categorical/ordered value types require a typed contrast contract
+and are refused when used in the mean formula. They remain required parity work.
+Interactions containing `mi()` remain unsupported. Direct Julia does not yet
+provide `predict(fit, newdata)` for this fit type; training fitted values are
+available with `fitted(fit)`. New-data prediction remains required API work.
+R-prepared bridge designs retain R's coding.
 
 ```@docs
 DRM.PreparedFiniteJointModel

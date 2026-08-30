@@ -1,0 +1,10 @@
+Error in `parse_drm_formula_entry()` at drmTMB/R/parse-formula.R:4:5:
+! `drm_formula()` inputs must be formulas; input 1 is not a formula.
+Backtrace:
+    ▆
+ 1. └─drmTMB::bf(as.formula(formulas[[id]]), sigma ~ 1)
+ 2.   └─drmTMB:::parse_drm_formula_entries(calls, names) at drmTMB/R/bf.R:43:3
+ 3.     └─drmTMB:::parse_drm_formula_entry(calls[[i]], names[[i]], i) at drmTMB/R/parse-formula.R:4:5
+ 4.       └─cli::cli_abort("{.fn drm_formula} inputs must be formulas; input {position} is not a formula.") at drmTMB/R/parse-formula.R:56:5
+ 5.         └─rlang::abort(...)
+Execution halted

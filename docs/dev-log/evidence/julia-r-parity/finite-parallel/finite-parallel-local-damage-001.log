@@ -1,0 +1,31 @@
+ERROR: LoadError: Some tests did not pass: 82 passed, 1 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/tools/run_finite_parallel_pilot.jl:64
+RUNTIME julia=1.10.0 threads=4 blas=1 source=/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl
+Test Summary:                              | Pass  Total   Time
+finite-state native factor coding contract |  109    109  20.9s
+FINITE_JOINT_FACTOR_CODING_TEST_READY
+Test Summary:                                                       | Pass  Total  Time
+finite-state direct formula frontend API and ordinal payload design |   33     33  4.8s
+Test Summary:                                          | Pass  Total  Time
+finite-state contrast construction and marker ordering |   16     16  1.2s
+Test Summary:                                    | Pass  Total  Time
+finite-state categorical direct formula frontend |   12     12  0.4s
+Test Summary:                                 | Pass  Total  Time
+finite-state direct frontend admission guards |   25     25  2.4s
+FINITE_JOINT_FRONTEND_TEST_READY
+FINITE_PARALLEL_DAMAGE_INJECTED coefficient
+finite fits in separate thread workspaces: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/tools/run_finite_parallel_pilot.jl:51
+  Expression: maximum(abs, output.coefficients - reference.coefficients) <= 1.0e-10
+   Evaluated: 0.010000000000000009 <= 1.0e-10
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/tools/run_finite_parallel_pilot.jl:51 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] finite_parallel_pilot()
+   @ Main /private/tmp/drm-parity-20260830/DRM.jl/tools/run_finite_parallel_pilot.jl:44
+Test Summary:                             | Pass  Fail  Total  Time
+finite fits in separate thread workspaces |   82     1     83  2.8s

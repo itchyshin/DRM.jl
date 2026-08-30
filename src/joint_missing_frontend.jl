@@ -3,6 +3,9 @@
 # The numerical likelihood lives in joint_missing_predictor.jl.  This file only
 # turns a validated, native StatsModels formula into that prepared representation.
 
+using StatsModels: DummyCoding, CategoricalTerm, ContinuousTerm, InteractionTerm,
+    MatrixTerm, InterceptTerm, ContrastsMatrix
+
 """
     mi(x)
 
@@ -356,15 +359,6 @@ function _joint_finite_levels(spec::JointImputeModel, values, variable::Symbol)
     return labels
 end
 
-function _joint_finite_nointercept_factor_guard(rhs, data)
-    for name in unique(reduce(vcat, (_joint_term_symbols(term) for term in _joint_frontend_terms(rhs)); init = Symbol[]))
-        values = _table_column(data, name)
-        any(value -> !_joint_frontend_missing(value) && (!(value isa Real) || value isa Bool), values) &&
-            throw(ArgumentError("joint missing-predictor frontend: no-intercept finite-state mean formulas currently require numeric fixed covariates; native first-factor full coding must be preserved"))
-    end
-    return nothing
-end
-
 function _joint_finite_predictor_design(data, variable::Symbol, rhs)
     n = length(_table_column(data, variable))
     # `_design` uses its LHS only to obtain a StatsModels schema/model matrix.
@@ -440,6 +434,195 @@ function _joint_finite_state_design(Xfixed::AbstractMatrix, variable::Symbol,
     return Xstate, term_names
 end
 
+function _joint_finite_state_rhs(rhs, variable::Symbol)
+    terms = _joint_frontend_terms(rhs)
+    rewritten = Any[]
+    replaced = false
+    for term in terms
+        if term isa FunctionTerm && term.f === mi
+            length(term.args) == 1 && term.args[1] isa Term && term.args[1].sym === variable ||
+                throw(ArgumentError("joint missing-predictor frontend: finite-state state design needs one bare `mi($variable)` term"))
+            push!(rewritten, Term(variable))
+            replaced = true
+        elseif _joint_contains_mi(term)
+            throw(ArgumentError("joint missing-predictor frontend: finite-state state design cannot expand interacted or nested `mi()`"))
+        else
+            push!(rewritten, term)
+        end
+    end
+    replaced || throw(ArgumentError("joint missing-predictor frontend: finite-state state design found no `mi($variable)` term"))
+    return length(rewritten) == 1 ? rewritten[1] : Tuple(rewritten)
+end
+
+function _joint_finite_state_data(data, variable::Symbol, labels::Vector{String})
+    columns = Tables.columntable(data)
+    names = Tuple(Symbol(name) for name in keys(columns))
+    variable in names || throw(ArgumentError("joint missing-predictor frontend: `$variable` is absent from state-design data"))
+    n = length(_table_column(data, variable))
+    K = length(labels)
+    values = map(names) do name
+        name === variable && return [labels[k] for _ in 1:n for k in 1:K]
+        column = collect(getproperty(columns, name))
+        length(column) == n || throw(ArgumentError("joint missing-predictor frontend: state-design columns have inconsistent lengths"))
+        return repeat(column; inner = K)
+    end
+    return NamedTuple{names}(Tuple(values))
+end
+
+function _joint_finite_state_column_map(Xstate::Array{Float64,3}, K::Int)
+    n, actual_K, p = size(Xstate)
+    actual_K == K || throw(ArgumentError("joint missing-predictor frontend: state-design dimension disagrees with predictor levels"))
+    state_for_column = Dict{Int,Int}()
+    for column in 1:p
+        any(state -> !all(@view(Xstate[:, state, column]) .== @view(Xstate[:, 1, column])), 2:K) || continue
+        energy = [sum(abs2, @view(Xstate[:, state, column])) for state in 1:K]
+        state = argmax(energy)
+        maximum(energy) > 0 || throw(ArgumentError("joint missing-predictor frontend: finite-state marker column is empty"))
+        for other in 1:K
+            target = other == state ? 1.0 : 0.0
+            maximum(abs, @view(Xstate[:, other, column]) .- target) <= 32 * eps(Float64) ||
+                throw(ArgumentError("joint missing-predictor frontend: state design must contain a bare additive marker without state interactions"))
+        end
+        haskey(state_for_column, state) &&
+            throw(ArgumentError("joint missing-predictor frontend: finite-state state design has duplicate marker columns"))
+        state_for_column[state] = column
+    end
+    length(state_for_column) in (K - 1, K) ||
+        throw(ArgumentError("joint missing-predictor frontend: finite-state state design has an unsupported marker rank"))
+    expected = length(state_for_column) == K ? collect(1:K) : collect(2:K)
+    all(haskey(state_for_column, state) for state in expected) ||
+        throw(ArgumentError("joint missing-predictor frontend: finite-state marker contrasts do not match declared levels"))
+    return [state_for_column[state] for state in expected], length(expected) == K
+end
+
+# StatsModels' display names separate a categorical variable and its level as
+# `"a: level"`, while R's model matrix uses `"alevel"`; interaction components
+# are then joined with `:`.  Rebuild only the structured categorical and
+# interaction names from the already-applied schema rather than stripping
+# punctuation from a rendered string.  Thus a genuine level such as
+# `"level: high & dry"` is preserved verbatim.
+_joint_finite_native_names(::InterceptTerm{true}) = ["(Intercept)"]
+_joint_finite_native_names(::InterceptTerm{false}) = String[]
+_joint_finite_native_names(term::ContinuousTerm) = [string(term.sym)]
+_joint_finite_native_level_name(level) = level isa Bool ? (level ? "TRUE" : "FALSE") : string(level)
+_joint_finite_native_names(term::CategoricalTerm) =
+    [string(term.sym, _joint_finite_native_level_name(level)) for level in term.contrasts.coefnames]
+_joint_finite_native_names(term::MatrixTerm) =
+    reduce(vcat, (_joint_finite_native_names(part) for part in term.terms); init = String[])
+
+function _joint_finite_native_names(term::InteractionTerm)
+    result = [""]
+    for part in term.terms
+        result = [isempty(prefix) ? name : string(prefix, ":", name)
+                  for name in _joint_finite_native_names(part) for prefix in result]
+    end
+    return result
+end
+
+_joint_finite_native_names(term) = String.(vec(coefnames(term)))
+
+function _joint_finite_state_hints(state_rhs, data, variable::Symbol,
+                                   labels::Vector{String})
+    hints = Dict{Symbol,Any}(variable => DummyCoding(levels = labels))
+    used = unique(reduce(vcat, (_joint_term_symbols(term) for term in _joint_frontend_terms(state_rhs)); init = Symbol[]))
+    for name in used
+        name === variable && continue
+        values = _table_column(data, name)
+        complete = [value for value in values if !_joint_frontend_missing(value)]
+        if all(value -> value isa Bool, complete)
+            # R treats logical fixed columns as a two-level factor even when
+            # this data slice observes only FALSE or only TRUE.  Julia
+            # Bool <: Real, so without this explicit two-level hint
+            # StatsModels would silently use a continuous 0/1 column.
+            # A `DummyCoding(levels = ...)` contrast hint still asks
+            # StatsModels to derive levels from the singleton data column.
+            # A concrete CategoricalTerm instead carries the native two-level
+            # contrast matrix into schema application unchanged.
+            hints[name] = CategoricalTerm(
+                name, ContrastsMatrix(DummyCoding(), Bool[false, true]))
+        elseif any(value -> !(value isa Real || value isa AbstractString || value isa Symbol), complete)
+            throw(ArgumentError(
+                "joint missing-predictor frontend: used fixed covariate `$name` has a non-plain categorical value; it needs a typed contrast contract (finite-state fixed designs currently admit numeric, plain strings, symbols, and Bool covariates)"))
+        end
+    end
+    return hints
+end
+
+"""
+    _joint_finite_native_state_design(formula, data, variable, levels, predictor)
+
+Construct the row-then-state mean design by evaluating the complete mean formula
+after replacing its bare `mi(variable)` marker with each declared state.  The
+single expanded StatsModels schema chooses no-intercept factor coding for all
+terms together: the first categorical term is full rank and later terms use
+treatment contrasts.  Ordinal marker columns are then replaced by the fixed
+polynomial contrasts unless that marker itself is the full-rank first factor.
+"""
+function _joint_finite_native_state_design(f::DrmFormula, data, variable::Symbol,
+                                           labels::Vector{String}, predictor::Symbol)
+    predictor in (:ordinal, :categorical) ||
+        throw(ArgumentError("joint missing-predictor frontend: unsupported finite-state predictor `$predictor`"))
+    rhs = Dict(f.forms)[:mu]
+    state_rhs = _joint_finite_state_rhs(rhs, variable)
+    hints = _joint_finite_state_hints(state_rhs, data, variable, labels)
+    expanded = _joint_finite_state_data(data, variable, labels)
+    # The declared finite-state labels are semantic model levels: in
+    # particular, the first label is the treatment baseline.  Plain `String`
+    # data would let StatsModels sort levels lexically, which changes both the
+    # baseline and the raw-coordinate meaning whenever declared order is not
+    # lexical.  Apply the ordinary full-rank formula schema with an explicit
+    # contrast hint for the marker and for formula-used Boolean fixed columns.
+    # Other complete exogenous terms retain their normal StatsModels coding and
+    # interaction behavior.
+    raw_response = _table_column(expanded, f.response)
+    y_response, observed_response = _coerce_response_column(raw_response)
+    design_data = all(observed_response) ? expanded :
+        _replace_table_column(expanded, f.response,
+                              ifelse.(observed_response, y_response, 0.0))
+    ft = FormulaTerm(Term(f.response), state_rhs)
+    ft = apply_schema(ft, schema(ft, design_data, hints), StatisticalModel)
+    _, X = modelcols(ft, design_data)
+    Xflat = X isa AbstractMatrix ? Matrix{Float64}(X) :
+        reshape(Float64.(collect(X)), :, 1)
+    names = _joint_finite_native_names(ft.rhs)
+    n = length(_table_column(data, variable))
+    K = length(labels)
+    size(Xflat, 1) == n * K || throw(ArgumentError("joint missing-predictor frontend: expanded state design has invalid row count"))
+    p = size(Xflat, 2)
+    length(names) == p || throw(ArgumentError(
+        "joint missing-predictor frontend: generated finite-state names disagree with the state design"))
+    Xstate = Array{Float64}(undef, n, K, p)
+    for i in 1:n, state in 1:K
+        Xstate[i, state, :] .= Xflat[(i - 1) * K + state, :]
+    end
+    marker_columns, full_marker = _joint_finite_state_column_map(Xstate, K)
+    physical_marker_columns = sort(marker_columns)
+    contiguous = physical_marker_columns == collect(first(physical_marker_columns):(first(physical_marker_columns) + length(physical_marker_columns) - 1))
+    contiguous || throw(ArgumentError("joint missing-predictor frontend: finite-state marker columns are unexpectedly interleaved"))
+    first_marker = first(physical_marker_columns)
+    permutation = vcat(collect(1:(first_marker - 1)), marker_columns,
+                       collect((last(physical_marker_columns) + 1):p))
+    Xstate = Xstate[:, :, permutation]
+    names = names[permutation]
+    marker_columns = first_marker:(first_marker + length(marker_columns) - 1)
+    marker_names = if full_marker
+        ["mi($(variable))$(label)" for label in labels]
+    elseif predictor === :ordinal
+        suffix = ["L", "Q", "C"]
+        [column <= length(suffix) ? "mi($(variable)).$(suffix[column])" : "mi($(variable))^$column" for column in 1:(K - 1)]
+    else
+        ["mi($(variable))$(labels[state])" for state in 2:K]
+    end
+    if predictor === :ordinal && !full_marker
+        contrast = _joint_finite_polynomials(K)
+        for state in 1:K, column in 1:(K - 1)
+            Xstate[:, state, marker_columns[column]] .= contrast[state, column]
+        end
+    end
+    names[marker_columns] = marker_names
+    return Xstate, names
+end
+
 function _joint_finite_mean_insertion(f::DrmFormula, data)
     rhs = Dict(f.forms)[:mu]
     terms = _joint_frontend_terms(rhs)
@@ -466,7 +649,7 @@ function _fit_finite_joint_formula(f::DrmFormula, data, variable::Symbol, fixed_
     any(.!observed_x) || throw(ArgumentError(
         "joint missing-predictor frontend: finite-state `$variable` admission requires at least one missing predictor row"))
 
-    y, Xfixed, fixed_names = _design(f.response, fixed_mu, data)
+    y, _, _ = _design(f.response, fixed_mu, data)
     missing.response === :fail && any(isnan, y) &&
         throw(ArgumentError("joint missing-predictor frontend: response has missing values; use `miss_control(response = \"include\", predictor = \"model\")`"))
     _, Xsigma, sigma_names = _design(f.response, rhs_sigma, data)
@@ -479,12 +662,11 @@ function _fit_finite_joint_formula(f::DrmFormula, data, variable::Symbol, fixed_
             predictor_names = predictor_names[keep]
         end
     end
-    full_states = !any(==("(Intercept)"), fixed_names)
-    full_states && _joint_finite_nointercept_factor_guard(fixed_mu, data)
-    pstate = size(Xfixed, 2) + (full_states ? length(labels) : length(labels) - 1)
+    Xstate, mu_names = _joint_finite_native_state_design(f, data, variable, labels, predictor)
+    pstate = size(Xstate, 3)
     pstate > 0 || throw(ArgumentError("joint missing-predictor frontend: finite-state mean design is empty"))
     n = length(y)
-    size(Xfixed, 1) == n && size(Xsigma, 1) == n && size(Xpredictor, 1) == n && length(raw_x) == n ||
+    size(Xstate, 1) == n && size(Xsigma, 1) == n && size(Xpredictor, 1) == n && length(raw_x) == n ||
         throw(ArgumentError("joint missing-predictor frontend: response and design rows must agree"))
     observed_count = count(observed_x)
     q = size(Xpredictor, 2)
@@ -492,13 +674,10 @@ function _fit_finite_joint_formula(f::DrmFormula, data, variable::Symbol, fixed_
     observed_count > needed || throw(ArgumentError(
         "joint missing-predictor frontend: `$variable` has $observed_count observed rows, insufficient for its $needed finite-state predictor parameters"))
 
-    insertion = _joint_finite_mean_insertion(f, data)
-    Xstate, state_names = _joint_finite_state_design(Xfixed, variable, labels, predictor;
-        insertion = insertion, full_states = full_states)
     kernel_x = Union{Missing,String}[observed_x[i] ? _joint_finite_label(raw_x[i]) : Base.missing for i in eachindex(raw_x)]
     prepared = prepared_joint_model(_joint_missing_vector(y), kernel_x, Xstate, Xsigma, Xpredictor;
         predictor = predictor, levels = labels, variable = variable,
-        mu_names = vcat(fixed_names[1:insertion], state_names, fixed_names[(insertion + 1):end]), sigma_names = sigma_names,
+        mu_names = mu_names, sigma_names = sigma_names,
         predictor_names = predictor_names, original_row = collect(1:n))
     return JointFiniteDrmFit(fit_prepared_joint(prepared; g_tol = g_tol), f, variable)
 end

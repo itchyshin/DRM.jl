@@ -1,0 +1,13 @@
+APPROVAL REQUIRED leaf-S9-finite-stopping:G1
+    CHECK: python3 tools/check_finite_stopping_diagnostic.py --check docs/dev-log/evidence/julia-r-parity/finite-stopping/diagnostic-001.json --damage
+    EXPECT: FINITE_STOPPING_DIAGNOSTIC_PASS
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg02PZEgp:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+    APPROVED: /Users/z3437171/.unlazy/approved/a611ac790ce938cbeedce02b3ebf77c040895d725f303bc9da33c58263197e47.json
+  RUN  leaf-S9-finite-stopping:G1 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=/opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg02PZEgp:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+  PASS leaf-S9-finite-stopping:G1: Frozen stopping diagnostic has independently reproduced gradients, curvature and explanation
+       exit=0; EXPECT=matched; output=FINITE_STOPPING_DIAGNOSTIC_PASS {'ordinal': {'native_max_gradient': 0.001573169705340634, 'julia_independent_max_gradient': 1.1368683772161601e-08, 'displacement_residual_max': 6.356001848094714e-11}, 'categorical': {'native_max_gradient': 
+leaf-S9-finite-stopping.md: 2 gates
+UNMET: 1 (met: 1)
+  leaf-S9-finite-stopping:G2

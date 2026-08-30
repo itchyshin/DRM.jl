@@ -1,0 +1,1 @@
+| 2026-08-30 | **Finite factor coding and concurrency** (#563) | 20 native designs;109factor+86frontend+83concurrent assertions; source005 public replay; native R covariance repair | Bounded local checks pass; strict native4e-6 FAIL; programme OPEN | Ada / Rose / Melissa |

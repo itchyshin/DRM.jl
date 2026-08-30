@@ -1,3 +1,66 @@
+# Current checkpoint — finite factor coding and bounded concurrency (2026-08-30)
+
+Programme ACTIVE; G0–G8 OPEN. Continue the approved plan at
+`docs/dev-log/plans/2026-08-30-julia-r-parity.md`, not the unrelated inherited
+`LOOP/ultra-plan.md`. Worktrees: /private/tmp/drm-parity-20260830/{DRM.jl,drmTMB},
+branch codex/julia-r-parity. Native R covariance fix is committed as 05cf5ee64;
+Julia final frontend SHA a5a01f74e8471bf158efb83fce0e5e52226596aa6d99da8b1372bce674f5870c.
+
+Verified bounded changes: complete state-expanded mean formula; native first-factor
+ranks, declared marker order, ordinal marker polynomial contrasts, native names,
+interactions and logical(FALSE/TRUE) coordinates, including singleton logicals.
+Twenty generated native designs retained; final109factor and86frontend assertions
+pass. Typed categorical/ordered exogenous values are explicitly refused only when
+used; this remains required parity work. Symbols are admitted but the20generated
+fixtures use strings/logicals. No universal factor claim.
+
+Parallel pilot: source tools/run_finite_parallel_pilot.jl; serial outputs copied
+before threads, eight concurrent fits compared to two frozen serial baselines,
+input/serial immutability and full output/status agreement.83assertions,278total
+with factor/frontend tests, pass on MacJulia1.10.0(32.03seconds) and
+TotoroJulia1.10.10(46seconds), fourJulia/oneBLASthread. These include startup and
+are NOT matched warm timings. A corrupted coefficient is rejected82PASS/1FAIL.
+First local001oracle lacked frozen outputs; retained historical. First Totoro001
+bundle missed a fixture and failed afterfive seconds; preserved. Corrected002
+bundle ac0f38a058385f4dbd7074b14f7098cb59f2392e4f4724afe4fa89d3028e94f4
+verified unchanged before/after; exit0. Remote jobs are terminal. DRAC only
+connectivity-probed(login1), nojob. Evidence finite-parallel/.
+
+Public005 is the current R bridge receipt: both adaptersPASS on unchanged source,
+27.5seconds including startup; independent17damage controls normally/-O pass.
+Both strict native4e-6 comparisons stillFAIL. Original finite003 is frozen as the
+stopping diagnostic input; do not overwrite. The independent Hessian/Newton
+calculation explains local stopping displacement to6.36e-11/2.00e-10 without
+changing native defaults, tolerance or comparator. Six damage controls pass.
+Native R regression covariance now resolves beta_mi/beta_mi2 slots;101newassertions
+and77ordinaryprofile/Waldassertions pass. Positive-scale/mixture covariance remains
+unavailable pending full Jacobian and interval-contract work.
+
+Required next: complete the native/direct/bridge finite operation and refusal
+contract, retain training schemas and implement direct finite newdata prediction;
+reconcile direct raw ordinal cutpoints versus R public coefficients/covariance;
+transform positive scales/mixture probabilities/random-predictor summaries on both
+covariance axes; reconcile native log-Wald versus bridge delta-Wald intervals.
+Direct JointFiniteDrmFit currently has NO predict(newdata) method. Then resolve
+strict default-fit losses without waivers. Keep all24original native obligations,
+full valid-case/output manifest, S2/S3/S7/S8/S10/S11, LSS stampedSE/REML/masks/
+inference/large-tree/final-head work, every registered warm win and automatic
+1/2/4/8 policy, Claude/Cursor recovery, safe itemized cleanup and full site proof.
+
+Current report: docs/dev-log/after-task/2026-08-30-parity-finite-factor-coding.md.
+Rose approved source and corrected local concurrency checker; Melissa's concrete
+gaps included. Two edited docs pages execute at docs/build/finite-doc-check.xVxrEP/
+output, not all-page visual/deployed proof. Whole-programme final-head integration
+remains open: receipts stamp tested development bytes, including preserved foreign
+R bridge changes. Neither source revision string nor elapsed time is a release claim.
+Mission Control commit a2382fe serves all four updated fields; verified by HTTP.
+The scoped vault lease is released. Preserve foreign S5 test/include and R ZOB96/10 edits, both denied
+sparse source files, other worktrees/stashes and unrelated vault dirt. No push,
+merge, release, registration, public deployment or collaborator message thisslice.
+No long campaign. Actual agent-hours uninstrumented. Keep goal ACTIVE.
+
+---
+
 # Current checkpoint — finite-state direct and R frontends (2026-08-30)
 
 Programme ACTIVE; G0-G8 OPEN. Worktrees remain /private/tmp/drm-parity-20260830/{DRM.jl,drmTMB}, branch codex/julia-r-parity.

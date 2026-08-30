@@ -1,0 +1,11 @@
+# Finite predictor factor coding
+
+The direct Julia mean design now expands the complete formula over every predictor state. This preserves R's first-factor coding without an intercept, declared marker level order, ordinal marker polynomial contrasts, interaction column order, and coefficient names. Boolean fixed covariates retain native FALSE/TRUE factor columns, even when only one value occurs. Plain strings, symbols, numeric and Boolean mean covariates are admitted; package-specific categorical/ordered value types used in the formula are explicitly refused until their contrast contract is implemented. Unused columns do not change the design.
+
+`native-design-002.json` and its generated TOML transport contain 20 native designs: ten formula order/interaction cases for each finite predictor family. The original14 cases in001 are preserved. The exporter lives in drmTMB at `tools/export-finite-factor-designs.R` and stamps R source before/after; it compares native preparation with independent R model.matrix expansion without fitting. The retained singleton-logical002 probe separately verifies native preparation's all-zero TRUE column for both families;001 failed because its first fixture mistakenly had no missing predictor.
+
+Final local tests pass109factor assertions and86existingfrontend assertions. The two/three factor admission fits verify execution and stored design, not convergence or numerical fit parity. A separate concurrency pilot uses the frozen native180-row cases and asserts convergence and complete-output agreement. Its evidence is in `../finite-parallel/`.
+
+The RED/mid-repair logs are retained: absent helper; lexical marker baseline; duplicated prefix; native naming; and the failed singleton contrast hint. Explicit categorical-term hints fixed the last issue. Rose independently checked source and generated arrays; the earlier incorrect assertion that R refuses singleton logicals was withdrawn after direct native probing.
+
+The prepared likelihood is unchanged. Strict4e-6 native fit parity still fails in both families. Direct newdata prediction, typed ordered exogenous factors, raw/public ordinal accessors and all other programme obligations remain required. These fixtures are not a speed benchmark or a full functional parity denominator.

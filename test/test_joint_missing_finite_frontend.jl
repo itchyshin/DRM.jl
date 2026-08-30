@@ -36,7 +36,6 @@ end
 @testset "finite-state direct formula frontend API and ordinal payload design" begin
     BLAS.set_num_threads(1)
     @test BLAS.get_num_threads() == 1
-    @test Threads.nthreads() == 1
     @test isdefined(DRM, :JointFiniteDrmFit)
     @test isdefined(DRM, :CategoricalLogit)
 
@@ -224,16 +223,15 @@ end
     factor_data = merge(data, (; habitat = repeat(["dry", "wet", "bog"], 60)))
     nointercept_factor = DRM.bf(@formula(y ~ 0 + habitat + mi(x)), @formula(sigma ~ 1))
     nointercept_factor_first = DRM.bf(@formula(y ~ 0 + mi(x) + habitat), @formula(sigma ~ 1))
-    # StatsModels' full-factor rule depends on the first factor in a no-intercept
-    # native formula.  The bounded frontend refuses both placements until it can
-    # retain that exact native coding rather than silently changing the model.
-    @test_throws ArgumentError drm(nointercept_factor, DRM.Gaussian(); data = factor_data,
-        impute = (x = ordinal,), missing = ctl)
-    @test_throws ArgumentError drm(nointercept_factor_first, DRM.Gaussian(); data = factor_data,
-        impute = (x = ordinal,), missing = ctl)
-    _, factor_fixed = DRM._joint_mean_parts(Dict(nointercept_factor.forms)[:mu])
-    wrapped_factor_data = merge(data, (; habitat = fill(_FiniteFrontendCategory("dry"), length(data.y))))
-    @test_throws ArgumentError DRM._joint_finite_nointercept_factor_guard(factor_fixed, wrapped_factor_data)
+    # Native no-intercept coding gives the first categorical term its full
+    # indicators and later factors treatment contrasts. Thus habitat-first has
+    # mi(x) treatment columns, while marker-first has full mi(x) indicators.
+    factor_fit = drm(nointercept_factor, DRM.Gaussian(); data = factor_data,
+        impute = (x = ordinal,), missing = ctl, g_tol = 1e-8)
+    factor_first_fit = drm(nointercept_factor_first, DRM.Gaussian(); data = factor_data,
+        impute = (x = ordinal,), missing = ctl, g_tol = 1e-8)
+    @test size(factor_fit.prepared.prepared.X_mu_state, 3) == 5
+    @test size(factor_first_fit.prepared.prepared.X_mu_state, 3) == 5
 end
 
 println("FINITE_JOINT_FRONTEND_TEST_READY")

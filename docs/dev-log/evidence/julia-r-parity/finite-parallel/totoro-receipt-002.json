@@ -1,0 +1,17 @@
+{
+  "scope": "two finite predictor cases, four-thread repeated-fit correctness only; not performance or fullG4/G5",
+  "host": "totoro",
+  "julia": "1.10.10",
+  "julia_threads": 4,
+  "blas_threads": 1,
+  "assertions": 278,
+  "elapsed_seconds_including_startup": 46,
+  "transport_exit": 0,
+  "status": "PASS",
+  "source": "finite-totoro-a5a01f74-002-manifest.json",
+  "source_tar_sha256": "ac0f38a058385f4dbd7074b14f7098cb59f2392e4f4724afe4fa89d3028e94f4",
+  "log_sha256": "a15127f6852ffc92fd732773ff2e2b1f06ea508909051829f3db803aad98b423",
+  "first_attempt": "retained001missingfixturefailure;5sec;no test result",
+  "source_unchanged_after": true,
+  "terminal_exit_status": 0
+}
