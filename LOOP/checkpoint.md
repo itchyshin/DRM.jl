@@ -1,5 +1,25 @@
 # Checkpoint — 2026-08-30
 
+## Latest continuation
+
+Reader slice committed locally e3e4169e, Rose approved. Final two-gate unlazy
+leaf actually executed eight inventory tests and nine first-fit examples through
+the two-page Vitepress Markdown writer. Full visual/theme/live G6 remains open.
+Historical draft S13a contains non-replayable commands and is unchecked; use
+leaf-S13-reader-final.md and retained docs-pilot-logs for the actual proof.
+
+R stash b0c5ed5 privately preserved/replayed. Rose found its work already landed
+in 414b0f95, ancestor of frozen main; recover no source hunks, retire nothing.
+Final probe uses explicit exceptions under python -O and a real damaged-file
+control. One-stash leaf passed through --reverify, not just checked-state reuse.
+
+Terra now owns the R-only zero_one_beta admission/prediction slice. Initial
+public prototype002 fails predict(zoi/coi); primitive003 likelihoods agree with
+native within4e-9. Apparent coefficient differences are block-order mismatch;
+adapter sorting currently puts coi first, breaking default-mu semantics. Actual
+public parity remains UNMET until names/order, predictions and refusals pass.
+No Julia source changes; S5a denial still awaits the user's explicit approval.
+
 ## Current delta (supersedes conflicting status below)
 
 - R article execution is committed locally as f3d872cd9: five converged fits,
