@@ -68,6 +68,11 @@ math, with no loosened assertions. Rose caught missing names, extreme-spacing
 arithmetic, wrong-error tests and weak covariance/SD receipt checks. Sandboxcache
 EPERM required scoped supervised runtime. Gatewrapper needed explicit checkout
 --cwd; failed first attempts retained. No long campaign was launched.
+The report structure validator passed, then its CLI unexpectedly began reverifying
+all programme ledgers. That process tree was stopped after about3minutes. It
+demoted fresh-output checks when existing output paths were reused; the two local
+commands now allocate fresh paths on each run and were reverified. This does not
+constitute full programme acceptance; older ledgers may be stale/unmet.
 
 ## 10. Known Residuals
 Prepared defaultfit parity remains failed and earlier singlepredictor failures

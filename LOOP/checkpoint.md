@@ -11,6 +11,9 @@ pass normal/-O. ActualSD/masks retained; independent FDH*V-I passes1e-4.
 Source developerpage executes3examples; no visual/fullsite/deployed claim.
 Rose Sol/high boundedprepared approval, Melissa Terra/high scope reconciliation.
 Seven slice gates met; one FAILED(defaultfits), noabandonments.
+ReportCLI unexpectedly reverifies allledgers: stoppeditsprocesstree; do notuse
+CLI as structureonlycheck. Broadergates remainopen/stale. Two localfresh-output
+commands nowallocate uniquepathsperrun. Nativepoint/fit receipts remaincurrent.
 
 Unchangednative4e-6: ordinaltheta2.163e-6 passes butprediction7.561e-6 and
 imputation5.124e-6 fail; categoricaltheta1.741e-5/prediction9.576e-6 fail.
