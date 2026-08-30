@@ -1,6 +1,31 @@
 # Checkpoint — 2026-08-30
 
-## Latest continuation — theme preview and S6 diagnostic
+## Latest continuation — comparison integrity and native oracles
+
+S4 complete-name comparator repairs reviewed by Rose. Eight legacy cases pass
+coefficient/loglik checks (33.50s); deliberate missing-coefficient control returns
+all8failures and exit1 (33.30s). Six publicbridge cases + two rawpayload cases;
+not fullparity. Artifacts: evidence/julia-r-parity/coefficient-contract-pilot/.
+Runtime BLAS count was not recorded; requested env1 is not proof. Explicitly
+set/get Julia BLAS threads before timed work. Rose found actualBLAS16 in the
+separate successful factor-profile test; preserve this caveat.
+
+S9 independent fixed-effect Gaussian/Bernoulli missing-predictor oracles pass
+numeric integration/mask tests and two nativefits at identicalparams (~1.5e-12).
+Final output003/log004 records actualdata, Rversion and loadedDLL/Rdbfingerprints.
+FirstGaussianoracle failure was our doubleexp of public sigma_mi_x; preserved.
+24nativeobligations mapped, notimplementedinJulia. No protectedsrcchanges.
+
+R S6/S10 three neighborrepairs Roseapproved: summary/Wald keymapping, raw/public
+profile termmapping, and nointerceptdesign. Actualfactorprofilefinite39s. Final
+native-default predictiongate remainsRED1.15e-5>4e-6. Rdiffuncommitted. Common
+nativeoptimizer has optinfallbackBFGS but no automaticgradientpolish; nextchoice
+needs a general accuracy/performance contract, not posthoc comparator substitution.
+
+Recovered child034d93823b retains unique bivariate/SEharness work; inspected and
+leftuntouched. Root continues S4/S9; no activefit jobs. FullG0–G8 remainopen.
+
+## Earlier continuation — theme preview and S6 diagnostic
 
 Two-page actual Vitepress desktop preview passed; Rose approved. Corrected broken
 summary rendering and doubled edit-link URL. v6 actually reran both reader gates.

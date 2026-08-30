@@ -1,0 +1,21 @@
+{
+  "source_hashes": {
+    "tools/parity_fixture.R": "1aaa2b12bbdc538644f487ed8eeaea72bdde3d9c2e89617d64a02f2bc3d1f093",
+    "tools/parity_numeric.R": "7f941b5c64b77fd0e94e698a35671e3d3fb3ce19c94cf2262ef1793cc5e9531d",
+    "tools/tests/test_parity_numeric.R": "9b7183645108d390c7723a678ec203ba156bfd4f30b744b228a2c6d727ae9ec4",
+    "tools/tests/test_parity_fixture_contract.R": "d2bffac49e0d58210812e5dc6ff0ee012ab5035afd1dbe3cc68a3b95729d5014"
+  },
+  "artifacts": {
+    "coefficient-contract-unlazy-v2.log.gz": "d5a1b7887282f5c530b7c3b457f9eb510350992ea732e9c621a2b292c6d02a37",
+    "coefficient-contract-unlazy.log.gz": "27b6314996c6e2fdd1098380f1806688f318d9e71fddd4c68a8a9bf9e9e11a8c",
+    "damaged-runner.R.txt": "97d0eaa33a15f4ea0904375ca2dc9b9547288b62a6046ba6562fb3eb3c7d2afa",
+    "negative-process-raw.json": "e917ce80d6e75eaa54bbe85746fc1ae0716f2eba50c53b8b3b638358d5507964",
+    "negative-process.json": "99fa7c8227c4633c1584cb66312a93e1bd4242e3d393d01fd5b25f8d00c630e4",
+    "negative-results.tsv": "99565825444ddce1abd02a15f88baa7c338b78a50fed776659b93170447a5310",
+    "negative-run.log.gz": "72560abd54b4a50dc54fb7ba22c11c0c82648d34142686125ef7d0b1faee47ad",
+    "positive-process-raw.json": "963a41a1ee2207800d50c25b64e5f0e4ff5632566d3818138d3a0b59ab1a72e6",
+    "positive-process.json": "6ca7caf6961af8eea9cd927418a68a60424451b332fa6434ec0b666e9fb491f6",
+    "positive-results.tsv": "21ca399970fa47fc6690d3f6a05879ff12346f297bc486595ed922d5a3da75a2",
+    "positive-run.log.gz": "3190e1f82a4b8abed67ba5e0232990bc6912af0eb1f9280398a32e614c413e7f"
+  }
+}

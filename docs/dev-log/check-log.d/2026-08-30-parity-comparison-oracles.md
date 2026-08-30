@@ -1,0 +1,1 @@
+| 2026-08-30 | **Comparison integrity and missing-predictor oracles** (#563) | Named-set negative controls; eight-case positive/negative runs; Gaussian quadrature/Bernoulli enumeration; two native mask probes | Bounded checks pass; full G0–G8, Julia missing-predictor implementation and performance remain open | Ada + Rose + Hopper |

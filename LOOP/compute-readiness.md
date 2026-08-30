@@ -42,3 +42,10 @@ so a dead master cannot fall back to a new authenticated connection.
 At this checkpoint all completed fits were bounded Mac checks. Totoro and DRAC
 readiness is an earlier read-only observation, not a claim that a job has run or
 that either host's present capacity is reserved.
+
+Runtime correction: Rose found a factor-profile check with Julia threads1 but
+BLAS threads16. An OPENBLAS_NUM_THREADS environment setting alone is not proof
+of Julia's active BLAS count. Before timed work, explicitly set
+LinearAlgebra.BLAS.set_num_threads(1) in the loaded Julia session and record
+BLAS.get_num_threads(), Threads.nthreads(), and the comparator's thread controls.
+Earlier checks without runtime counts remain correctness probes only.

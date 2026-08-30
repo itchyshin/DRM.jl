@@ -10,7 +10,7 @@
 #
 # Writes a TSV of results next to this script's --out argument (default below).
 
-source("tools/parity_numeric.R")
+source("tools/parity_numeric.R"); intact_comparator <- parity_numeric; parity_numeric <- function(reference, observed, atol) intact_comparator(reference, observed[-1], atol)
 suppressMessages(library(drmTMB))
 
 out_path <- "docs/dev-log/evidence/parity-fixtures.tsv"
