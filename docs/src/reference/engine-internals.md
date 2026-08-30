@@ -149,3 +149,62 @@ then delegates to the general-precision mean-effect Laplace fitter.
 
 Fits the crossed mean-effect Laplace objective for a supplied family and
 nuisance-parameter specification, using the prepared group indices.
+
+
+## Prepared missing-predictor prototype
+
+!!! warning "Limited developer interface"
+    This prepared-array interface covers a Gaussian response and one Gaussian
+    or Bernoulli predictor. It is not yet admitted through `bf()`/`drm()` or
+    R's `engine = "julia"`. Grouped predictors, further predictor families,
+    REML, profile/bootstrap intervals and multiple-imputation draws remain
+    outside this prototype. Conditional variance at fixed parameters is not
+    the native R `imputed()` standard error.
+
+Design matrices must be complete. Only `x` and `y` may contain `missing`.
+The parameter order is mean coefficients, the coefficient of `x`, residual
+log-SD coefficients, predictor coefficients, and (Gaussian only) predictor
+log-SD. This last coordinate is a log-SD, not R's natural-scale `sigma_mi_x`.
+
+```@example prepared_joint
+using DRM
+x = Union{Missing,Float64}[0.8, missing, 1.0, missing]
+y = Union{Missing,Float64}[1.7, -0.2, missing, missing]
+z = [-0.6, 0.3, 0.8, -0.1]
+X = hcat(ones(4), z)
+model = prepared_joint_model(y, x, X, ones(4, 1), X;
+    predictor = :gaussian, mu_names = ["(Intercept)", "z"],
+    predictor_names = ["(Intercept)", "z"], original_row = [17, 4, 81, 29])
+theta = [0.2, -0.35, 0.7, 0.1, 0.0, 0.25, log(0.9)]
+row_loglik = prepared_joint_rowloglik(model, theta)
+moments = prepared_joint_conditional_moments(model, theta)
+@assert row_loglik[4] == 0.0  # Both variables missing: integral equals one.
+@assert moments.mean[1] == x[1]
+(model.original_row, row_loglik, moments)
+```
+
+This example evaluates a supplied parameter vector; it does not fit its four
+rows. On an identifiable dataset, `fit_prepared_joint(model)` estimates the
+parameters. Inspect `joint_missing_summary(result).optimizer_status` and
+`.covariance_status` separately. Its `.uncertainty_status` remains
+`:not_implemented` for native missing-predictor uncertainty summaries.
+
+```@docs
+DRM.PreparedJointModel
+DRM.PreparedJointFit
+DRM.prepared_joint_model
+DRM.prepared_joint_rowloglik
+DRM.prepared_joint_conditional_moments
+DRM.fit_prepared_joint
+DRM.joint_missing_summary
+DRM.JointMissingMetadata
+DRM.PreparedJointGaussian
+DRM.PreparedJointBernoulli
+DRM.prepared_joint_initial
+```
+
+### [prepared_joint_nll](@id prepared_joint_nll)
+
+`prepared_joint_nll(model, theta)` returns the negative sum of row
+log-likelihoods, retaining predictor-only observations and the exact zero
+contribution of rows where both response and predictor are missing.

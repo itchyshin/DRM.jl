@@ -1,3 +1,31 @@
+# Latest — S9 prepared joint prototype (2026-08-30)
+
+Prepared Gaussian-response/Gaussian-or-Bernoulli-predictor engine now included,
+with all4masks, fixed-theta moments, snapshot-safe ML fit and guarded covariance.
+This is a partial S9 implementation, not formula or bridge admission.
+
+63focused assertionsPASS. Nativecommonθ002:2cases320rows640momentsPASS,
+maxnativeLLerror1.4211e-12. Fit002:2converged10.391s; independentLL/gradient/
+HessianchecksPASS;13targetednegativecontrolsnormal/-OPASS. NativeGaussianθ
+2.7546e-6PASS; Bern1.001509e-5FAIL4e-6, retained red. Do notreplacefrozennative
+baseline. FullDocumentersource:52pages123examples120.471sPASS, notdeployed.
+RosefinalREADYforboundedprototype, report/evidenceunderjoint-prototype.
+
+Onlyoriginalsrc/DRM.jlwiringchanged;85otheroriginalsourcesunchangedplusnewjointfile.
+ProtectedprecisioneditsremainDENIED; S5redtest/include unstaged. RZOBdirtywork
+untouched. RHEAD97b7eee remains. No fit/servercampaignrunning. No push/merge.
+
+NEXT: investigateBernnativefitstopping againstfrozen003; validateGaussian native
+imputedSE contract; thenextendsharedpreparedcontract/frontends across24native
+obligations. FinishS2denominator,S10postfit,S13visuals/recovery/MissionControl.
+AllG0–G8remainopen. MissionControlstillpriorcomponentcheckpoint, refreshscoped
+fieldsnext. Activeagenthoursnotinstrumented; do notsubstitutefit/buildseconds.
+Currentleasecodex:01a05261-julia-r-parityexpires~14:22MDT; refreshbeforeexpiry.
+LocalprogrammebranchesCARRIED-OVERbecausefullparityandpublicationgatesopen;
+resumeherein/private/tmp/drm-parity-20260830/DRM.jl, readnewaftertaskreport.
+
+---
+
 # Latest — S10 ordinary Gaussian components (2026-08-30)
 
 R local checkpoint `97b7eee37da93af11ae8fb1475ec05d2063a79bd`; committed bridge matches executed candidate.

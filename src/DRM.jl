@@ -132,6 +132,7 @@ include("chibar.jl")             # chi-bar-square boundary p-values for variance
 include("bridge.jl")
 include("introspection.jl")     # A4d-2: profile_targets + structured_effects (drmTMB post-fit inventories)
 include("missing_data.jl")       # #49: documented listwise-deletion preprocessing (no engine change)
+include("joint_missing_predictor.jl") # #563: prepared exact joint-model prototypes
 
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
@@ -176,6 +177,13 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
 # Public API — post-fit accessors for the cross-family bivariate fit
 # (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).
 export mf_coef, mf_aic, mf_bic, mf_fitted, mf_summary
+
+# Prepared joint-model API. Formula/mi() and R-bridge admission are separate
+# programme obligations; these methods accept explicit numerical designs.
+export PreparedJointModel, PreparedJointFit, prepared_joint_model,
+       prepared_joint_rowloglik, prepared_joint_nll,
+       prepared_joint_conditional_moments, fit_prepared_joint,
+       joint_missing_summary
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare

@@ -12,8 +12,8 @@
 | S6 | todo | executable leaf + independent review |
 | S7 | todo | executable leaf + independent review |
 | S8 | todo | executable leaf + independent review |
-| S9 | todo | executable leaf + independent review |
-| S10 | todo | executable leaf + independent review |
+| S9 | doing | two prepared prototypes reviewed; Bernoulli native-fit parity red; frontend, bridge, uncertainty and remaining native obligations open |
+| S10 | doing | reviewed prediction components retained; remaining methods and native stopping discrepancies open |
 | S11 | todo | executable leaf + independent review |
 | S12 | todo | executable leaf + independent review |
 | S13 | doing | executable leaf + independent review |

@@ -1,0 +1,11 @@
+Test Summary:                        | Pass  Total  Time
+prepared joint missing-predictor API |    7      7  0.0s
+Test Summary:                                       | Pass  Total  Time
+Gaussian predictor exact row likelihood and moments |   15     15  1.6s
+Test Summary:                                           | Pass  Total  Time
+Bernoulli predictor finite-state likelihood and moments |    5      5  0.0s
+Test Summary:                                 | Pass  Total  Time
+AD derivatives and observed-information guard |   11     11  6.9s
+Test Summary:                                    | Pass  Total  Time
+finite extremes and fail-closed input validation |   12     12  0.1s
+S9_JOINT_PURE_PASS

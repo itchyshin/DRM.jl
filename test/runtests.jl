@@ -405,3 +405,6 @@ include("test_mixed_family_postfit.jl")
 # the fixture is absent) + an independent Monte-Carlo population reference for the
 # genuinely mixed Gaussian × Poisson case + the Gaussian × Gaussian closed form.
 include("test_xfam_external_validation.jl")
+
+# Shared prepared joint missing-predictor likelihood and conditional moments.
+include("test_joint_missing_predictor.jl")
