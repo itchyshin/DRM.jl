@@ -3,7 +3,8 @@
 Programme ACTIVE; G0–G8 OPEN. Same isolated pair codex/julia-r-parity.
 Rose final bounded approval and Melissa reconciliation pass;7slice gates met.
 MissionControl eca0d56 served3fields verified; scoped vault lease released.
-R bridge implementation and receipts committed a9ca76a35.
+R bridge implementation and receipts committed a9ca76a35; Julia frontend027f9122.
+Postcommit savedreceipt oracle passes; R dispatch/binary-level neighbours pass.
 The shared verified kernel now has direct Julia two-mi formula admission and
 real R JuliaCall transport/adapters. Native default160row/all8mask fixture passes
 unchanged4e-6: theta1.13e-6, trainingprediction1.44e-6; imputedmeans/SEs pass.
