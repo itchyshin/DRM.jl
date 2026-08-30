@@ -1,0 +1,12 @@
+{
+  "created": "2026-08-30",
+  "thread_id": "01a05261-cd5c-7ca3-a654-cebea9f187fb",
+  "drmjl_base": "f47789646f27221ba4fad29a8ba1b3b8a790b521",
+  "drmtmb_base": "b35642b4560072cadba7e595e66e00209ebdeb40",
+  "drmjl_root": "/private/tmp/drm-parity-20260830/DRM.jl",
+  "drmtmb_root": "/private/tmp/drm-parity-20260830/drmTMB",
+  "lease_id": "codex:01a05261-julia-r-parity",
+  "status": "active",
+  "julia_manifest_sha256": "4a721cc319a60880e6b9ea3cbc53e9cd6b22e9930a841f72774366e59aff673c",
+  "umbrella_issue": "https://github.com/itchyshin/DRM.jl/issues/563"
+}
