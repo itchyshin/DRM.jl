@@ -1,3 +1,19 @@
+# Latest — S10 prediction checkpoint (2026-08-30)
+
+Rprediction-onlycandidate reviewed byRose; noZOBadmissionchangesincluded.
+26new+15existing+122bridgeassertionspass; oneexplicitliveskip. Crossfamilypurepass.
+FourliveGaussian cases32samecoefnativeoracleoutputsEXACT;3/4independentfitcases
+pass4e-6; factor6.260969e-6 FAIL. Negative+0.1faultrejects32/32.
+Final00319.455s; negative19.366s; Julia1/BLAS1 explicit. No remotecompute.
+Evidence: docs/dev-log/evidence/julia-r-parity/prediction-contract-pilot/report.md.
+Rselectedsourcehash9e7b2edad435d0fcd423866ef388426842002c67b40a288e5977fd05fc8d6ad1.
+RemainingWIP: otherRzero-one-beta changes; JuliaredS5tests. ProtectedJuliaedits
+stillawaitrequestedhumanapproval. Nativegradientfactor0.001533 suggestsstopping
+accuracyinvestigation, notpermissiontoweakenbaseline. FullG0–G8open.
+Rcheckpoint058bf6b2983df47af8cc8371d3ea5777cc84ff51localonly, bytesverified.
+NEXT: preserveJuliareceipts; resolveconditionalREpayloadcontract,
+remainingRpostfitcoverage and factoroptimizerdifferences. No release/push/merge.
+
 # Latest — production documentation S13 (2026-08-30)
 
 Production005 PASS52pages122examples111.082s, modules+fatalrefs, Julia1/BLAS1.
