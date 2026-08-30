@@ -1,0 +1,23 @@
+julia-conditional-prediction: ......1............
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Error ('test-julia-conditional-prediction.R:80:3'): conditional Gaussian p
+Error in `drm_julia_predict_conditional_gaussian_components(object, dpar)`: `predict()` cannot reconstruct a conditional stored `mu` prediction: the Julia bridge did not retain its validated ordinary Gaussian component payload.
+Backtrace:
+     ▆
+  1. ├─testthat::expect_error(...) at test-julia-conditional-prediction.R:80:3
+  2. │ └─testthat:::expect_condition_matching_(...)
+  3. │   └─testthat:::quasi_capture(...)
+  4. │     ├─testthat (local) .capture(...)
+  5. │     │ └─base::withCallingHandlers(...)
+  6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo))
+  7. ├─stats::predict(fit, dpar = "mu", type = "link")
+  8. └─drmTMB:::predict.drmTMB_julia(fit, dpar = "mu", type = "link")
+  9.   └─drmTMB:::drm_julia_predict_conditional_gaussian_components(object, dpar) at drmTMB/R/julia-bridge.R:4411:3
+ 10.     └─cli::cli_abort("{.fn predict} cannot reconstruct a conditional stored {.code mu} prediction: the Julia bridge did not retain its validated ordinary Gaussian component payload.") at drmTMB/R/julia-bridge.R:4247:5
+ 11.       └─rlang::abort(...)
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+julia-prediction-scales: ..........................
+
+══ DONE ════════════════════════════════════════════════════════════════════════

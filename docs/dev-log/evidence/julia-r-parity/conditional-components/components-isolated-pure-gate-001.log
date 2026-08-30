@@ -1,0 +1,2 @@
+gate-check: gate leaf-S10-components-isolated-pure:G1 CWD does not exist: /s10-components-candidate
+run gate-check.mjs --help for usage

@@ -1,0 +1,13 @@
+APPROVAL REQUIRED leaf-S10-components-live:G1
+    CHECK: cd /private/tmp/drm-parity-20260830/DRM.jl && Rscript tools/parity_conditional_components.R /private/tmp/drm-parity-20260830/s10-components-candidate /private/tmp/drm-parity-20260830/DRM.jl /private/tmp/drm-parity-20260830/components-green-001.json
+    EXPECT: COMPONENT_ADAPTER_PASS; LIKELIHOOD_PASS; FIT_PARITY_PASS
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH: [private runtime path omitted; bound by unlazy approval]
+    APPROVED: /Users/z3437171/.unlazy/approved/c10f8c24b779d35c85feebf15b7e380525a847155c780a703930dc2658c7be6a.json
+  RUN  leaf-S10-components-live:G1 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=[private runtime path omitted; bound by unlazy approval]
+  FAIL leaf-S10-components-live:G1: Four additional Gaussian component cases pass32prediction outputs and dense likelihood checks
+       exit=1; EXPECT=not matched; output=drmTMB_drm_bridge (generic function with 1 method) | ℹ Starting Julia (first call in a session takes ~30-60 s; later calls are | fast)... | Julia version 1.10.0 at location /Users/z3437171/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/bin will be used. | Loading setup script for JuliaCall... | Finish loading setup script for JuliaCall. | ... | Execution halted | Julia exit.
+leaf-S10-components-live.md: 1 gates
+UNMET: 1 (met: 0)
+  leaf-S10-components-live:G1

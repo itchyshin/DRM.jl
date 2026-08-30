@@ -1,3 +1,30 @@
+# Latest — S10 ordinary Gaussian components (2026-08-30)
+
+R local checkpoint `97b7eee37da93af11ae8fb1475ec05d2063a79bd`; committed bridge matches executed candidate.
+
+Four additional Gaussian ML cases pass all32 adapter/native prediction checks
+and4 dense likelihood checks,27.118s. Maximum adapter error3.553e-15, native
+difference1.896e-6<4e-6, likelihood error1.706e-13. Original3RIcases rerun19.457s:
+24adapterchecksPASS; same varying-scale newdata mu failure1.08595e-5 remains.
+Julia1thread/BLAS1. No remotecompute or performance claim.
+
+Rose approves sourceSHA1b43bcd7c3a57ef8125b191c155472f71b768e312bdd82f152fbddcb189aa3db.
+27newpure assertions and14normal/-Ocheckeroutcomes pass. Three pure acceptance
+gates rerun against exactisolatedcandidate. All86Julia src unchanged from
+f47789646f27221ba4fad29a8ba1b3b8a790b521. Retainedsetupfailure, damagedcontrols,
+provenance repair and all required remainingcomponentgaps in
+docs/dev-log/evidence/julia-r-parity/conditional-components/.
+
+Mission Control refreshed/servedverified; vaultlocalcommit14481a6. Full G0–G8
+remainopen. Denied twoJuliasourcechanges untouched; no bypass. RZOBdirtywork
+excluded. No worktree deletion, publication, release, registration or messages.
+Next: remaining S10 inference/row restoration, S2denominator and S9 joint-model
+work, S13allpagevisuals, recovery; investigate native stopping discrepancies
+without baseline substitution. Current leases valid until~14:22MDT. No fitsrunning.
+Actualagenthours notinstrumented. Local programmebranches remain carriedover.
+
+---
+
 # Latest — S10 conditional/native-state checkpoint (2026-08-30)
 
 R checkpoint `10a140c1594fe67f21e247aee3807d3c391af622` contains only reviewed native snapshot extraction,
