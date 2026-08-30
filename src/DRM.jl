@@ -135,6 +135,7 @@ include("missing_data.jl")       # #49: documented listwise-deletion preprocessi
 include("joint_missing_predictor.jl") # #563: prepared exact joint-model prototypes
 include("joint_missing_uncertainty.jl") # #563: native-shaped imputation summaries
 include("joint_missing_frontend.jl") # #563: two fixed-effect joint formula routes
+include("joint_missing_bridge.jl") # #563: primitive prepared-array transport
 
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,

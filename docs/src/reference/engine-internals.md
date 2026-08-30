@@ -151,16 +151,25 @@ Fits the crossed mean-effect Laplace objective for a supplied family and
 nuisance-parameter specification, using the prepared group indices.
 
 
-## Prepared missing-predictor prototype
+## Prepared missing-predictor development route
 
 !!! warning "Limited developer interface"
     This prepared-array interface covers a Gaussian response and one Gaussian
-    or Bernoulli predictor. The same likelihood is available through the
-    [joint formula frontend](@ref joint-predictor-formula), but not yet through
-    R's `engine = "julia"`. Grouped predictors, further predictor families,
-    REML, profile/bootstrap intervals and multiple-imputation draws remain
-    outside this prototype. Conditional variance at fixed parameters is not
-    the native R `imputed()` standard error.
+    or Bernoulli predictor. The same likelihood now has two **development** frontends: the [joint formula frontend](@ref joint-predictor-formula)
+    and `drmTMB(..., engine = "julia")` through `drm_bridge_joint`. They admit
+    a Gaussian identity-link response, one bare additive `mi(x)` term, and
+    complete fixed-effect exogenous designs. Grouped predictors, further
+    predictor families, random or structured effects, REML, and all other
+    missing-predictor models remain outside this route.
+
+    The R preparation route supports `response = "drop"` or `"include"` with
+    `predictor = "model"`; its response-drop preprocessing is deliberately not
+    presented as native-TMB response-policy parity. Profile and bootstrap
+    intervals are unavailable. Gaussian predictor-SD Wald intervals use a
+    delta transformation on the natural SD scale and may cross zero; they are
+    not a claim of native interval parity or interval coverage. Conditional
+    variance at fixed parameters is not the native R `imputed()` standard
+    error.
 
 Design matrices must be complete. Only `x` and `y` may contain `missing`.
 The parameter order is mean coefficients, the coefficient of `x`, residual
@@ -206,6 +215,7 @@ DRM.PreparedJointBernoulli
 DRM.prepared_joint_initial
 DRM._has_joint_mi
 DRM._fit_joint_formula
+DRM.drm_bridge_joint
 ```
 
 ### [prepared_joint_nll](@id prepared_joint_nll)

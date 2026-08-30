@@ -61,8 +61,10 @@ the predictor distribution; missing predictors are not filled in before fitting.
 This initial route supports a Gaussian or Bernoulli predictor and complete
 remaining exogenous fixed-effect covariates: neither modelled variable may also
 appear in those fixed designs. Other response families, multiple modelled
-predictors, random effects, REML, profile/bootstrap intervals and the R bridge
-are still outside this admission. Full native fitted-result parity remains open.
+predictors, random or structured effects, REML, and profile/bootstrap intervals
+are still outside this admission. The same narrow route is available as
+**development** through `drmTMB(..., engine = "julia")`; it does
+not establish full native fitted-result parity.
 
 ```@example joint_formula
 using DRM, LinearAlgebra
@@ -97,6 +99,17 @@ multiple-imputation draws nor interval-coverage guarantees. Check
 `vcov(fit)` use the raw coordinates, including its log SD. Complete fixed-effect
 interactions/transforms are allowed; interactions involving `mi(x)` are not yet
 admitted.
+
+For the R bridge, write the corresponding R formula and use
+`engine = "julia"`, `impute = list(x = x ~ z)` (or
+`impute = list(x = impute_model(x ~ z, family = binomial()))` for a binary
+predictor), and
+`missing = miss_control(response = "drop", predictor = "model")` or
+`miss_control(response = "include", predictor = "model")`.
+The R response-drop preprocessing differs from native-TMB behaviour and is not
+native parity. Its profile/bootstrap methods are explicitly unsupported. The
+Gaussian predictor-SD Wald interval is a natural-scale delta interval, can cross
+zero, and is neither native-interval parity nor coverage evidence.
 
 ```@docs
 mi

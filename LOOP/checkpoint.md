@@ -1,3 +1,74 @@
+# Latest — S9 R joint bridge checkpoint (2026-08-30 13:33 MDT)
+
+Programme ACTIVE; all G0–G8 remain OPEN. Two Gaussian-response missing-predictor
+routes now work through both direct Julia and R engine=julia: one Gaussian or
+Bernoulli predictor, fixed complete exogenous designs, ML. Public003 adapter
+checks and independent320row oracle PASS;20damage controls normal/-O PASS.
+Rose independently APPROVES checker76a6236a9a434c4c3d8f915e3dd46fec8d00744de9905d684e3dd60d8f1aca69
+for bounded adapters only. Native gate FAILS as required: stale training matrix
+errors0.93323784Gaussian/0.57181216Bernoulli, nativeBern newdata ERROR, Bern theta
+1.0015094e-5 >4e-6 (imputedmean5.1718677e-6 alsooutside). No tolerance change.
+Public003elapsed19.747s includesstartup+bothengines, NOT warmbenchmarkevidence.
+PureR39prep+44methods+8dispatch+registryneighbours and help PASS. Julia transport
+42assertions PASS. Finalstrictdocs52pages124examples124.488s PASS, notvisual/live.
+
+RDS nativefitobjects retained ONLY in Rrepo. Numerical evidence/reviews:
+docs/dev-log/evidence/julia-r-parity/joint-bridge/; full report:
+docs/dev-log/after-task/2026-08-30-parity-joint-r-bridge.md.
+MissionControl local commits e42a363+651f823, three semantic fields only,
+servedJSONverified. Other vault edits untouched; statuslease released.
+
+NEXT: nativepredictionrepair. R/methods.R drm_prediction_matrix returns stale
+model$X on trainingprediction, whereas finalization updates missing_data predictor
+values only. Restrict Gaussian-response conditionalmean repair carefully; do not
+substitute E[x] into nonlinear response and call it integrated prediction.
+Bernoulli newdata needs fitted binary encoding before modelmatrix alignment.
+Retain frozenfailure receipts; then rerun unchanged4e-6 public comparisons.
+Continue missingpredictor remainingnativecells, S2manifest, S10postfit,S11inference,
+S12matchedwarmworkflows and automatic1/2/4/8policy, S13whole-sitevisuals, recovery.
+Macshortchecks; TotoroCPU pilots <=150sharedcores; DRACallocations for justified
+campaigns. No remotejobs submitted/running; >30minneedsmeasuredpilot+approval.
+
+Protected src/gaussian_structured.jl and src/gaussian_sparse_lss.jl remain untouched
+followingdenials. Preserve unrelated S5 test/include and R zero-one-beta work.
+R evidence uses exactworking-source hashes including those ZOB edits, not clean
+committedRbuild. No release, registration, cleanup, push or merge thischeckpoint.
+Current branch/worktreepair codex/julia-r-parity in /private/tmp/drm-parity-20260830/.
+Approvedplan docs/dev-log/plans/2026-08-30-julia-r-parity.md; inherited LOOP/ultra-plan.md
+isunrelatedCox-Reidandmustnotberepurposed. Activeagenthoursunmeasured. Appgoalactive.
+
+---
+
+# Latest — S9 bridge boundary in progress (2026-08-30)
+
+User confirms wise use of this Mac, Totoro and DRAC. Mac is for bounded checks;
+Totoro pilots/CPU validation at 1/2/4/8 threads within 150 total cores; DRAC
+campaigns only through allocations. No remote campaign submitted or running.
+Over-30-minute campaigns still need measured pilot and approval.
+
+UNCOMMITTED Julia primitive bridge src/joint_missing_bridge.jl has Rose source
+approval SHA d801db8b8bd581b09ce74151adde4c788f8563761ce05bcb2302ea9c63a79b69.
+Revised test/test_joint_missing_bridge.jl reverified through unlazy: PASS,
+2 API +14 preparation +26 fit/gradient/Hessian assertions; final set12.6s.
+This proves transport and order, NOT native optimizer parity or R roundtrip.
+R worker delivered R/julia-joint-missing.R and focused tests:33 expectations
+reported PASS; independent root verification and R adapter wiring remain.
+Native contract receipt joint-native-public-contract-001.json corrected:
+public sigma_mi_x=0.6423297761 is ALREADY natural SD (native source exp(log_sigma_mi));
+scout's initial secondary exp() interpretation was wrong and is retained as superseded.
+Corrected receipt SHA327244319a00954b25a06523d7d10b39ba55bbd9838e1a001b2dc492a6443c70.
+
+NEXT: independently verify R preparation; implement R joint-result adapter and
+entry wiring preserving pre-existing dirty zero-one-beta work. Match public
+natural-scale predictor SD while preserving raw covariance coordinates; native
+nobs156 versus160 retained rows and conditional training prediction. Then real
+R/Julia roundtrip. Required native Bernoulli parameter tolerance still fails;
+do not widen tolerance or replace frozen comparator. All programme G0–G8 open.
+JuliaHEAD1ae5cdd0; RHEAD97b7eee. No commit/push/merge this boundary yet. Protected
+precision-file denials remain; preserve S5 tests/include and unrelated R edits.
+
+---
+
 # Latest — S9 joint frontend and native uncertainty (2026-08-30)
 
 Local Julia commit e2554bec4162eafd1030146c0946b30b49cfddf7. Committed evidence63hashes and89sources verified. No push/merge.

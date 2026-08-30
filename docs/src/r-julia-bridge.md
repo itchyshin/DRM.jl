@@ -70,6 +70,38 @@ Two ways to use DRM.jl from R, in increasing integration:
    cells listed above (Julia-side `drm_bridge` gate; R-side Lovelace glue remains
    in the drmTMB repo).
 
+### One modelled missing predictor — development admission
+
+The R bridge also has a deliberately narrow development route for one modelled
+missing predictor. It accepts a Gaussian identity-link response, exactly one
+bare additive `mi(x)` term in `mu`, complete fixed-effect exogenous designs,
+and either a Gaussian or Bernoulli fixed-effect predictor model. The direct
+Julia frontend and `drmTMB(..., engine = "julia")` use the same prepared joint
+likelihood; observed `x` values remain observed and missing `x` values are
+integrated rather than filled before fitting.
+
+Use `impute = list(x = x ~ z)` for a Gaussian predictor, or
+`impute = list(x = impute_model(x ~ z, family = binomial()))` for a binary
+predictor, with either `missing = miss_control(response = "drop", predictor =
+"model")` or `miss_control(response = "include", predictor = "model")`. The
+bridge response-drop path removes missing-response rows before preparation.
+That is a documented preprocessing choice, not native response-policy parity.
+
+This admission is not a general missing-data bridge. It rejects other response
+families, multiple `mi()` predictors, interactions or nesting involving `mi()`,
+random or structured effects, offsets, non-default controls, likelihood weights,
+and REML. `summary()` and Wald `confint()` are available only when the returned
+covariance is usable; profile and bootstrap intervals explicitly error. The
+Gaussian predictor-SD interval is a natural-scale delta-Wald interval, may cross
+zero, and is not claimed to match native intervals or to have established
+coverage.
+
+Two public bridge-adapter cases pass, but the full native comparator remains
+red: the native route retains a stale training matrix for a missing-predictor
+prediction check, its Bernoulli `newdata` comparator errors, and its retained
+Bernoulli parameter discrepancy is `1.0015e-5` against a `4e-6` gate. Therefore
+this route makes no full native-parity, speed, or coverage claim.
+
 ## The DRM.jl-side contract
 
 For the bridge to work, DRM.jl exposes a stable, marshalling-friendly surface:

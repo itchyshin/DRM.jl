@@ -1,0 +1,6 @@
+<environment: namespace:devtools>
+ADAPTER_PASS gaussian class=drmTMB_julia_joint,drmTMB_julia nobs=156 residual_na=4
+METHOD_PASS gaussian imputed_rows=160 newdata=2
+BERN_LEVEL_PASS bernoulli levels=0,1
+ADAPTER_PASS bernoulli class=drmTMB_julia_joint,drmTMB_julia nobs=156 residual_na=4
+METHOD_PASS bernoulli imputed_rows=160 newdata=2
