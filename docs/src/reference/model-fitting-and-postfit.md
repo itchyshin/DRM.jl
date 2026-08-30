@@ -53,12 +53,20 @@ residuals
 
 ### Predicting distributional parameters
 
+!!! warning "Prediction interpretation"
+    The embedded `predict_parameters` docstring above uses legacy wording about
+    integrating effects out. The current implementation sets random and
+    structured effects to zero. With a nonlinear link, these are different
+    predictions: for example, `exp(η)` differs from averaging `exp(η + b)` over
+    a non-degenerate random effect `b`. Use the fixed-effect interpretation here.
+
 [`predict`](@ref) returns the response (mean) prediction, but a distributional
 regression also models the scale and—bivariately—the correlation. Use
 [`predict_parameters`](@ref) to obtain the population-level value of **every**
 distributional parameter the model carries (`:mu`, `:sigma`, plus any family
-extras) at new covariate values, with random / structured effects integrated
-out. [`marginal_parameters`](@ref) is the cheap in-sample accessor that reads the
+extras) at new covariate values, with random / structured effects set to zero.
+This is an inverse-link transformation of the fixed-effect linear predictor,
+not response-scale integration over the random-effect distribution. [`marginal_parameters`](@ref) is the cheap in-sample accessor that reads the
 fitted per-observation parameters straight off the fit. [`prediction_grid`](@ref)
 builds the new-data table to sweep over (varying chosen predictors, holding the
 rest at a reference value).
@@ -130,6 +138,44 @@ deviance
 dof_residual
 ```
 
+## Fit summaries and route inventories
+
+```@docs
+Base.summary(::DrmFit)
+niterations
+profile_targets
+structured_effects
+```
+
+## Derived phylogenetic quantities and boundary comparisons
+
+```@docs
+gaussian_locscale_phylo_sds
+profile_sigma_a
+bootstrap_sigma_a
+repeatability
+lrt_boundary
+```
+
+## R bridge and preprocessing
+
+These entries document the Julia-side interface used by the optional R bridge.
+The [R ↔ Julia bridge](../r-julia-bridge.md) defines its admitted cells and
+refusals; these docstrings do not expand that contract.
+
+```@docs
+drm_bridge
+drm_bridge_inference
+drm_listwise
+```
+
+## Staged pair association diagnostics
+
+```@docs
+PairAssociation
+integration_diagnostics
+```
+
 ## Phylogenetic penalty (MAP)
 
 [`drm_phylo_penalty`](@ref) is the Julia twin of drmTMB's `drm_phylo_penalty()`:
@@ -185,13 +231,21 @@ coefficient table; the other `mf_*` helpers live beside it in the module.
 interfaces behind the q=4 PLSM path. Use `drm(...)` for ordinary model fitting;
 these bindings serve scripts that prepare engine inputs directly.
 
-- `AugProblem` holds the augmented-phylogeny data and q=4 design matrices used
-  by the sparse engine.
-- `make_problem(phy, y1, y2, X1, X2, Xs1, Xs2, Xr; species = 1:phy.n_leaves)`
-  builds that problem and its root-conditioned precision from a phylogeny.
-- `fit_q4_sparse_tmb(prob, Q_cond; θ0 = ..., ...)` runs the sparse q=4
-  optimisation on that prepared problem. Starting values must be supplied as
-  either `θ0` (the full parameter vector) or `β0` (the mean coefficients).
+### [AugProblem](@id AugProblem)
+
+`AugProblem` holds the augmented-phylogeny data and q=4 design matrices used
+by the sparse engine.
+
+### [make_problem](@id make_problem)
+
+`make_problem(phy, y1, y2, X1, X2, Xs1, Xs2, Xr; species = 1:phy.n_leaves)`
+builds that problem and its root-conditioned precision from a phylogeny.
+
+### [fit_q4_sparse_tmb](@id fit_q4_sparse_tmb)
+
+`fit_q4_sparse_tmb(prob, Q_cond; θ0 = ..., ...)` runs sparse q=4 optimisation.
+Starting values must be supplied as either `θ0` (the full parameter vector)
+or `β0` (the mean coefficients).
 
 The documented q=4 marginal evaluator and general-q coevolution bindings are
 listed below.

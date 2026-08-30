@@ -1,3 +1,17 @@
+# Latest — production documentation S13 (2026-08-30)
+
+Production005 PASS52pages122examples111.082s, modules+fatalrefs, Julia1/BLAS1.
+Preview004 theme6.94s;53HTML6378links476assets827fragments0failures.
+Five menus fit home/article1280x720 light/dark. Old routes preserved;109docstrings
+registered;7xref targets resolved. Rose approved bounded patch. Evidence/report:
+docs/dev-log/evidence/julia-r-parity/docs-production-pilot/report.md.
+No source edits. S5 protected-source approval still pending; original red tests
+remain unstaged. R parity gate still RED; fullG0–G8 open. No remote compute.
+Local-only checkpoint; no push/merge. Next: mobile/all-page visual and claims audit,
+R article deployment authority, remaining manifest contracts and nativeMI prototype.
+Keep denial in force; don't reattempt protectedsrc until human approval.
+Final local preview server port49536 (session57411). All builds terminal.
+
 # Checkpoint — 2026-08-30
 
 ## Latest continuation — nested/full documentation source execution

@@ -4,6 +4,8 @@
 # the exact selected pages/example count. Never claims whole-site coverage.
 using DRM, Documenter, DocumenterVitepress, LinearAlgebra
 
+include(joinpath(@__DIR__, "parity_docs_navigation.jl"))
+
 const REPO = realpath(joinpath(@__DIR__, ".."))
 const DOCS = joinpath(REPO, "docs")
 
@@ -11,11 +13,15 @@ function main(args)
     length(args) >= 4 && iseven(length(args)) || error("use --build-dir PATH with --page PATH or --pages-file PATH")
     build = nothing
     selected = String[]
+    navigation = "subset"
     for i in 1:2:length(args)
         flag, value = args[i:i+1]
         if flag == "--build-dir"
             isnothing(build) || error("duplicate build directory")
             build = abspath(value)
+        elseif flag == "--navigation"
+            value in ("subset", "production") || error("unknown navigation mode $value")
+            navigation = value
         elseif flag == "--page"
             push!(selected, value)
         elseif flag == "--pages-file"
@@ -39,11 +45,22 @@ function main(args)
     println("DOCS_RUNTIME julia=$(VERSION) threads=$(Threads.nthreads()) blas=$(BLAS.get_num_threads()) loaded_drm=$(pathof(DRM))")
     println("DOCS_SELECTED=$(join(selected, ','))")
     count_examples = sum(sum(startswith(strip(line), "```@example") for line in eachline(joinpath(DOCS,"src",page))) for page in selected)
+    pages = [splitext(basename(page))[1] => page for page in selected]
+    if navigation == "production"
+        all_source = sort([relpath(joinpath(dir,file), joinpath(DOCS,"src"))
+            for (dir,_,files) in walkdir(joinpath(DOCS,"src")) for file in files if endswith(file,".md")])
+        sort(selected) == all_source || error("production run must include every source page")
+        pages = production_navigation(read(joinpath(DOCS,"make.jl"), String))
+        paths = navigation_paths(pages)
+        length(paths) == length(unique(paths)) || error("duplicate production navigation route")
+        all(p -> p in selected, paths) || error("production navigation references a missing page")
+        println("DOCS_PRODUCTION_NAVIGATION visible=$(length(paths)) emitted=$(length(selected))")
+    end
     started = time()
     makedocs(; root=DOCS, source="src", build=relpath(build,DOCS), clean=true,
-        sitename="DRM.jl", pagesonly=true,
-        pages=[splitext(basename(page))[1] => page for page in selected],
-        warnonly=[:cross_references, :linkcheck, :footnote],
+        sitename="DRM.jl", authors="Shinichi Nakagawa", pagesonly=(navigation == "subset"),
+        pages=pages, modules=(navigation == "production" ? [DRM] : Module[]),
+        warnonly=(navigation == "subset" ? [:cross_references, :linkcheck, :footnote] : false),
         format=DocumenterVitepress.MarkdownVitepress(
             repo="github.com/itchyshin/DRM.jl", devbranch="main", devurl="dev",
             build_vitepress=false, install_npm=false))

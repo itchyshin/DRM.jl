@@ -1,0 +1,148 @@
+[ Info: SetupBuildDirectory: setting up build directory.
+[ Info: Doctest: running doctests.
+[ Info: ExpandTemplates: expanding markdown templates.
+WARNING: replacing module __atexample__named__fam.
+[ Info: CrossReferences: building cross-references.
+[ Info: CheckDocument: running document checks.
+┌ Error: 109 docstrings not included in the manual:
+│ 
+│     DRM.build_M :: Tuple{DRM.LocOnlyProblem, Float64, Float64}
+│     DRM.fit_q4_reml :: Tuple{AugProblem, SparseArrays.SparseMatrixCSC}
+│     DRM.fz_psi_to_theta :: Tuple{AugProblem, AbstractVector}
+│     DRM._aghq_1d_logint :: Tuple{Any, Real, Real}
+│     DRM._phylo_mean_laplace_hetero_fg :: Tuple{Any, Any, Int64, Vararg{Any, 6}}
+│     DRM._fit_poisson_crossed_laplace :: Tuple{Poisson, Vararg{Any, 5}}
+│     DRM.q4_marginal_diagnostic :: Tuple{AugProblem, SparseArrays.SparseMatrixCSC, AbstractVector{<:Real}}
+│     DRM.AGHQ
+│     DRM.fit_coevolution_q2_residual :: Tuple{CoevoProblem, SparseArrays.SparseMatrixCSC}
+│     DRM._phylo_mean_leaf_index :: Tuple{DRM.AugmentedPhy, Any}
+│     DRM._fit_sigma_axis_re :: Tuple{Any, Any, Any, Any, Any, Any, Any, Any, Any, String}
+│     DRM.fz_psi_len :: Tuple{AugProblem}
+│     DRM.gaussian_locscale_phylo_sds :: Tuple{DrmFit}
+│     DRM.augmented_phy :: Tuple{AbstractString}
+│     DRM.fz_marginal_nll :: Tuple{AugProblem, SparseArrays.SparseMatrixCSC, AbstractVector{Float64}}
+│     DRM.fit_phylo_interaction :: Tuple{AbstractVector, AbstractMatrix, AbstractMatrix, AbstractMatrix}
+│     DRM.phylo_tree_height :: Tuple{DRM.AugmentedPhy}
+│     Base.summary :: Tuple{DrmFit}
+│     DRM.coevo_pack :: Tuple{AbstractMatrix, AbstractMatrix, AbstractVector}
+│     DRM.theta_len :: Tuple{AugProblem}
+│     DRM.fz_marginal_and_grad :: Tuple{AugProblem, SparseArrays.SparseMatrixCSC, AbstractVector{Float64}}
+│     DRM.make_coevo_problem_from_precision :: Tuple{AbstractMatrix, AbstractMatrix, AbstractMatrix}
+│     DRM.structured_effects :: Tuple{DrmFit}
+│     DRM.profile_sigma_a :: Tuple{DrmFit}
+│     DRM._ls_profile_ci :: NTuple{8, Any}
+│     DRM.sigma_phy_dense :: Tuple{DRM.AugmentedPhy}
+│     DRM._fit_betabinomial_phylo_laplace :: NTuple{10, Any}
+│     DRM.coevo_unpack :: Union{Tuple{T}, Tuple{CoevoProblem, AbstractVector{T}}} where T
+│     DRM._mf_nparams :: Tuple{Any}
+│     DRM.make_phy :: Tuple{AbstractVector, Integer}
+│     DRM.lrt_boundary :: Tuple{DrmFit, DrmFit}
+│     DRM.unpack_theta :: Union{Tuple{T}, Tuple{AugProblem, AbstractVector{T}}} where T
+│     DRM._ls_marginal_nll :: Union{NTuple{7, Any}, NTuple{8, Any}, NTuple{9, Any}}
+│     DRM._fit_corr_locscale :: Tuple{Any, Any, Symbol, Any, Any, Any, Any, Any, Any, Any, Any, String}
+│     DRM.AugmentedPhy
+│     DRM.drm_listwise :: Tuple{Union{BivariateDrmFormula, DrmFormula}, Any}
+│     DRM.fz_R_chol :: Union{Tuple{AbstractVector{T}}, Tuple{T}} where T
+│     DRM.fit_coevolution_q2_reml :: Tuple{CoevoProblem, SparseArrays.SparseMatrixCSC}
+│     DRM.make_coevo_problem_from_covariance :: Tuple{AbstractMatrix, AbstractMatrix, AbstractMatrix}
+│     DRM._fit_poisson_spatial_coord :: Tuple{Poisson, Vararg{Any, 7}}
+│     DRM.lc_metric :: Tuple{AugProblem, SparseArrays.SparseMatrixCSC, AbstractVector, Any}
+│     DRM.bootstrap_sigma_a :: Tuple{DrmFit}
+│     DRM.Vinv_mul :: Tuple{DRM.LocOnlyProblem, Any, Float64, Any}
+│     DRM.integration_diagnostics :: Tuple{PairAssociation}
+│     DRM.fz_DRD :: Union{Tuple{AbstractVector{T}}, Tuple{T}} where T
+│     DRM._poisson_phylo_laplace_fg :: NTuple{7, Any}
+│     DRM.takahashi_selinv :: Tuple{SparseArrays.CHOLMOD.Factor{Float64}}
+│     DRM.Variational
+│     DRM.random_caterpillar_tree :: Tuple{Integer}
+│     DRM.SkewNormal
+│     DRM.Laplace
+│     DRM._general_cov_setup :: Tuple{AbstractMatrix, Any}
+│     DRM._fit_poisson_relmat_laplace :: Tuple{Poisson, Vararg{Any, 7}}
+│     DRM._bridge_dpars :: Tuple{DrmFit}
+│     DRM.fit_coevolution :: Tuple{CoevoProblem, SparseArrays.SparseMatrixCSC}
+│     DRM._bridge_meta_parts :: Tuple{DrmFit}
+│     DRM._vcov_from_hessian :: Tuple{AbstractMatrix}
+│     DRM._assoc_logdiffexp :: Tuple{Real, Real}
+│     DRM.exact_traces :: Tuple{DRM.LocOnlyProblem, Any}
+│     DRM.cov_to_lc :: Tuple{AbstractMatrix}
+│     DRM._fit_gaussian_locscale_phylo :: Tuple{Gaussian, Any, Any, Any, Any, Any, Any, Any, Any, String}
+│     DRM.LatentNormal
+│     DRM.make_problem_from_Q :: Tuple{AbstractMatrix, Vararg{Any, 7}}
+│     DRM._ls_marginal_grad :: Union{NTuple{8, Any}, NTuple{9, Any}, NTuple{10, Any}}
+│     DRM._fit_ranef_gaussian :: Tuple{Gaussian, Vararg{Any, 10}}
+│     DRM._bridge_trials :: Tuple{DrmFit}
+│     DRM._fit_nb2_relmat_laplace :: NTuple{10, Any}
+│     DRM.logdetV_val :: Tuple{DRM.LocOnlyProblem, Float64, Any, Any}
+│     DRM._reml_normalise :: Tuple{Any, Integer}
+│     DRM._poisson_crossed_laplace_fg :: NTuple{8, Any}
+│     DRM.phylo_interaction_nll :: NTuple{4, Any}
+│     DRM.MarginalMethod
+│     DRM.coevo_marginal_cov :: Tuple{CoevoProblem, SparseArrays.SparseMatrixCSC, AbstractMatrix, AbstractMatrix, AbstractMatrix}
+│     DRM.augmented_tree_precision :: Tuple{DRM.AugmentedPhy}
+│     DRM.niterations :: Tuple{DrmFit}
+│     DRM._poisson_group_aghq_logint :: Tuple{Any, Any, Any, Any, Any, Integer}
+│     DRM.phylo_correlation :: Tuple{Any}
+│     DRM.random_balanced_tree :: Tuple{Integer}
+│     DRM._fit_bivariate_q4_structured :: Tuple{BivariateDrmFormula, Gaussian, Vararg{Any, 7}}
+│     DRM.takahashi_diag :: Tuple{SparseArrays.CHOLMOD.Factor{Float64}}
+│     DRM.repeatability :: Tuple{DrmFit}
+│     DRM._ls_components :: Tuple{Any}
+│     DRM.pack_theta :: Tuple{Any, Any}
+│     DRM._ls_obs_information :: Union{NTuple{8, Any}, NTuple{9, Any}, NTuple{10, Any}}
+│     DRM.fit_q4_sparse_fisherz :: Tuple{AugProblem, SparseArrays.SparseMatrixCSC}
+│     DRM.fz_init_from_Sigma :: Tuple{AbstractMatrix}
+│     DRM.drm_bridge :: Tuple{}
+│     DRM._fit_poisson_phylo_laplace :: Tuple{Poisson, Vararg{Any, 7}}
+│     DRM.make_coevo_problem :: Tuple{Any, AbstractMatrix, AbstractMatrix}
+│     DRM.fit_mixed_family :: Tuple{}
+│     DRM.profile_targets :: Tuple{DrmFit}
+│     DRM._fit_beta_relmat_laplace :: NTuple{10, Any}
+│     DRM._fit_fixed_gaussian_reml :: Tuple{Gaussian, Vararg{Any, 6}}
+│     DRM._fit_gamma_relmat_laplace :: NTuple{10, Any}
+│     DRM._bridge_dpars_newdata :: Tuple{DrmFit, Any}
+│     DRM.marginal_and_exact_grad :: Tuple{AugProblem, SparseArrays.SparseMatrixCSC, Vector{Float64}}
+│     DRM.PairAssociation
+│     DRM._aghq_require_1d :: Tuple{Integer}
+│     DRM.fz_R :: Tuple{AbstractVector}
+│     DRM.beta_widths :: Tuple{AugProblem}
+│     DRM.drm_bridge_q2_phylo :: Tuple{}
+│     DRM.lc_len :: Tuple{Integer}
+│     DRM.simulate_coevolution :: Tuple{Any, AbstractMatrix, AbstractMatrix, AbstractVector}
+│     DRM.drm_bridge_q2_known_precision :: Tuple{}
+│     DRM._fit_locscale :: NTuple{7, Any}
+│     DRM.q2_reml_phi_len :: Tuple{}
+│     DRM.drm_bridge_inference :: Tuple{}
+│     DRM.fz_unpack_psi :: Tuple{AugProblem, AbstractVector}
+│     DRM._fit_betabinomial_crossed_laplace :: NTuple{8, Any}
+│ 
+│ These are docstrings in the checked modules (configured with the modules keyword)
+│ that are not included in canonical @docs or @autodocs blocks.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+[ Info: Populate: populating indices.
+ERROR: LoadError: `makedocs` encountered an error [:missing_docs] -- terminating build before rendering.
+Stacktrace:
+  [1] error(s::String)
+    @ Base ./error.jl:35
+  [2] runner(::Type{Documenter.Builder.RenderDocument}, doc::Documenter.Document)
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/builder_pipeline.jl:259
+  [3] dispatch(::Type{Documenter.Builder.DocumentPipeline}, x::Documenter.Document)
+    @ Documenter.Selectors ~/.julia/packages/Documenter/AXNMp/src/utilities/Selectors.jl:170
+  [4] #90
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:283 [inlined]
+  [5] withenv(::Documenter.var"#90#92"{Documenter.Document}, ::Pair{String, Nothing}, ::Vararg{Pair{String, Nothing}})
+    @ Base ./env.jl:256
+  [6] #89
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:282 [inlined]
+  [7] cd(f::Documenter.var"#89#91"{Documenter.Document}, dir::String)
+    @ Base.Filesystem ./file.jl:112
+  [8] #makedocs#88
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:281 [inlined]
+  [9] main(args::Vector{String})
+    @ Main /private/tmp/drm-parity-20260830/DRM.jl/tools/parity_docs_subset.jl:60
+ [10] top-level scope
+    @ /private/tmp/drm-parity-20260830/DRM.jl/tools/parity_docs_subset.jl:74
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/tools/parity_docs_subset.jl:74
+DOCS_RUNTIME julia=1.10.0 threads=1 blas=1 loaded_drm=/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl
+DOCS_SELECTED=api-stability.md,capabilities.md,changelog.md,cross-family.md,developer-notes/adding-families.md,developer-notes/formula-grammar.md,developer-notes/source-map.md,diagnostics-and-validation/exact-gaussian-diagnostics.md,diagnostics-and-validation/figure-gallery.md,diagnostics-and-validation/implementation-map.md,diagnostics-and-validation/prediction-and-postfit.md,diagnostics-and-validation/profile-likelihood.md,diagnostics-and-validation/simulation-plot-grammar.md,diagnostics-and-validation/small-sample-behaviour.md,diagnostics-and-validation/testing-likelihoods.md,families.md,get-started.md,getting-started.md,index.md,model-guides/convergence.md,model-guides/cross-family-methods.md,model-guides/distribution-families.md,model-guides/large-data.md,model-guides/marginal-la-vs-va.md,model-guides/meta-analysis.md,model-guides/model-map.md,model-guides/model-selection.md,model-guides/model-workflow.md,model-guides/which-scale.md,r-julia-bridge.md,reference/deprecated-marker-internals.md,reference/model-fitting-and-postfit.md,reference/model-specification.md,reference/package.md,reference/structured-effect-markers.md,reference/visualization.md,rosetta.md,tutorials/animal-models.md,tutorials/bivariate-coscale.md,tutorials/bivariate-nongaussian.md,tutorials/count-nbinom2.md,tutorials/location-scale-scale.md,tutorials/location-scale.md,tutorials/meta-analysis.md,tutorials/phylogenetic-models.md,tutorials/phylogenetic-spatial.md,tutorials/proportion-beta-binomial.md,tutorials/relmat-known-matrices.md,tutorials/robust-student.md,tutorials/spatial-models.md,tutorials/structural-dependence.md
+DOCS_PRODUCTION_NAVIGATION visible=50 emitted=51

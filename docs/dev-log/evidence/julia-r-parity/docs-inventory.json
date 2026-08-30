@@ -1,6 +1,42 @@
 {
   "findings": [
     {
+      "kind": "missing_local_target",
+      "line": 138,
+      "path": "reference/engine-internals.md",
+      "target": "@id _group_index"
+    },
+    {
+      "kind": "missing_local_target",
+      "line": 143,
+      "path": "reference/engine-internals.md",
+      "target": "@id _fit_phylo_mean_laplace_nuisance"
+    },
+    {
+      "kind": "missing_local_target",
+      "line": 148,
+      "path": "reference/engine-internals.md",
+      "target": "@id _fit_crossed_mean_laplace_nuisance"
+    },
+    {
+      "kind": "missing_local_target",
+      "line": 234,
+      "path": "reference/model-fitting-and-postfit.md",
+      "target": "@id AugProblem"
+    },
+    {
+      "kind": "missing_local_target",
+      "line": 239,
+      "path": "reference/model-fitting-and-postfit.md",
+      "target": "@id make_problem"
+    },
+    {
+      "kind": "missing_local_target",
+      "line": 244,
+      "path": "reference/model-fitting-and-postfit.md",
+      "target": "@id fit_q4_sparse_tmb"
+    },
+    {
       "detail": "Preserved transition URL; Documenter's default pagesonly=false build still emits this source page.",
       "kind": "legacy_transition_page_unlisted",
       "path": "get-started.md"
@@ -24,8 +60,13 @@
         "visible": true
       },
       {
-        "path": "api-stability.md",
-        "title": "API stability",
+        "path": "r-julia-bridge.md",
+        "title": "R \u2194 Julia bridge",
+        "visible": true
+      },
+      {
+        "path": "rosetta.md",
+        "title": "Rosetta (R \u2194 Julia)",
         "visible": true
       },
       {
@@ -81,6 +122,11 @@
       {
         "path": "model-guides/large-data.md",
         "title": "model-guides/large-data.md",
+        "visible": true
+      },
+      {
+        "path": "cross-family.md",
+        "title": "Cross-family bivariate",
         "visible": true
       },
       {
@@ -154,11 +200,6 @@
         "visible": true
       },
       {
-        "path": "cross-family.md",
-        "title": "Cross-family bivariate",
-        "visible": true
-      },
-      {
         "path": "diagnostics-and-validation/figure-gallery.md",
         "title": "diagnostics-and-validation/figure-gallery.md",
         "visible": true
@@ -199,21 +240,6 @@
         "visible": true
       },
       {
-        "path": "developer-notes/formula-grammar.md",
-        "title": "developer-notes/formula-grammar.md",
-        "visible": true
-      },
-      {
-        "path": "developer-notes/adding-families.md",
-        "title": "developer-notes/adding-families.md",
-        "visible": true
-      },
-      {
-        "path": "developer-notes/source-map.md",
-        "title": "developer-notes/source-map.md",
-        "visible": true
-      },
-      {
         "path": "reference/package.md",
         "title": "reference/package.md",
         "visible": true
@@ -244,13 +270,28 @@
         "visible": true
       },
       {
-        "path": "r-julia-bridge.md",
-        "title": "R \u2194 Julia bridge",
+        "path": "reference/engine-internals.md",
+        "title": "reference/engine-internals.md",
         "visible": true
       },
       {
-        "path": "rosetta.md",
-        "title": "Rosetta (R \u2194 Julia)",
+        "path": "developer-notes/formula-grammar.md",
+        "title": "developer-notes/formula-grammar.md",
+        "visible": true
+      },
+      {
+        "path": "developer-notes/adding-families.md",
+        "title": "developer-notes/adding-families.md",
+        "visible": true
+      },
+      {
+        "path": "developer-notes/source-map.md",
+        "title": "developer-notes/source-map.md",
+        "visible": true
+      },
+      {
+        "path": "api-stability.md",
+        "title": "API stability",
         "visible": true
       },
       {
@@ -264,12 +305,13 @@
       "get-started.md"
     ],
     "make_path": "docs/make.jl",
-    "make_sha256": "6a52e4dd5de05ffa5111a55416c06797546f366f2932a6a026a91cd2f6b1de7e",
+    "make_sha256": "8486164349a7ecdf24c822e7cfb3371aa19aff047171ac716cfa980caf378f2c",
     "nav_paths": [
       "index.md",
       "getting-started.md",
       "capabilities.md",
-      "api-stability.md",
+      "r-julia-bridge.md",
+      "rosetta.md",
       "model-guides/model-map.md",
       "model-guides/which-scale.md",
       "model-guides/distribution-families.md",
@@ -281,6 +323,7 @@
       "model-guides/cross-family-methods.md",
       "model-guides/meta-analysis.md",
       "model-guides/large-data.md",
+      "cross-family.md",
       "tutorials/location-scale.md",
       "tutorials/location-scale-scale.md",
       "tutorials/robust-student.md",
@@ -295,7 +338,6 @@
       "tutorials/spatial-models.md",
       "tutorials/relmat-known-matrices.md",
       "tutorials/phylogenetic-spatial.md",
-      "cross-family.md",
       "diagnostics-and-validation/figure-gallery.md",
       "diagnostics-and-validation/prediction-and-postfit.md",
       "diagnostics-and-validation/profile-likelihood.md",
@@ -304,17 +346,17 @@
       "diagnostics-and-validation/testing-likelihoods.md",
       "diagnostics-and-validation/simulation-plot-grammar.md",
       "diagnostics-and-validation/small-sample-behaviour.md",
-      "developer-notes/formula-grammar.md",
-      "developer-notes/adding-families.md",
-      "developer-notes/source-map.md",
       "reference/package.md",
       "reference/model-specification.md",
       "reference/structured-effect-markers.md",
       "reference/deprecated-marker-internals.md",
       "reference/model-fitting-and-postfit.md",
       "reference/visualization.md",
-      "r-julia-bridge.md",
-      "rosetta.md",
+      "reference/engine-internals.md",
+      "developer-notes/formula-grammar.md",
+      "developer-notes/adding-families.md",
+      "developer-notes/source-map.md",
+      "api-stability.md",
       "changelog.md"
     ],
     "unnavigated_pages": [
@@ -324,7 +366,8 @@
       "index.md",
       "getting-started.md",
       "capabilities.md",
-      "api-stability.md",
+      "r-julia-bridge.md",
+      "rosetta.md",
       "model-guides/model-map.md",
       "model-guides/which-scale.md",
       "model-guides/distribution-families.md",
@@ -336,6 +379,7 @@
       "model-guides/cross-family-methods.md",
       "model-guides/meta-analysis.md",
       "model-guides/large-data.md",
+      "cross-family.md",
       "tutorials/location-scale.md",
       "tutorials/location-scale-scale.md",
       "tutorials/robust-student.md",
@@ -350,7 +394,6 @@
       "tutorials/spatial-models.md",
       "tutorials/relmat-known-matrices.md",
       "tutorials/phylogenetic-spatial.md",
-      "cross-family.md",
       "diagnostics-and-validation/figure-gallery.md",
       "diagnostics-and-validation/prediction-and-postfit.md",
       "diagnostics-and-validation/profile-likelihood.md",
@@ -359,17 +402,17 @@
       "diagnostics-and-validation/testing-likelihoods.md",
       "diagnostics-and-validation/simulation-plot-grammar.md",
       "diagnostics-and-validation/small-sample-behaviour.md",
-      "developer-notes/formula-grammar.md",
-      "developer-notes/adding-families.md",
-      "developer-notes/source-map.md",
       "reference/package.md",
       "reference/model-specification.md",
       "reference/structured-effect-markers.md",
       "reference/deprecated-marker-internals.md",
       "reference/model-fitting-and-postfit.md",
       "reference/visualization.md",
-      "r-julia-bridge.md",
-      "rosetta.md",
+      "reference/engine-internals.md",
+      "developer-notes/formula-grammar.md",
+      "developer-notes/adding-families.md",
+      "developer-notes/source-map.md",
+      "api-stability.md",
       "changelog.md"
     ]
   },
@@ -1133,50 +1176,77 @@
       "unclosed_fence_blocks": 0
     },
     {
-      "closing_fence_markers": 1,
+      "closing_fence_markers": 2,
       "julia_examples_heuristic": 1,
       "local_targets": [
         {
           "exists": true,
           "kind": "link",
-          "line": 45,
-          "resolved": "get-started.md",
-          "target": "/get-started",
-          "target_type": "site_route",
+          "line": 35,
+          "resolved": "getting-started.md",
+          "target": "getting-started.md",
+          "target_type": "local_file",
           "within_docs_source": true
         },
         {
           "exists": true,
           "kind": "link",
-          "line": 46,
+          "line": 50,
+          "resolved": "getting-started.md",
+          "target": "getting-started.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 51,
           "resolved": "model-guides/model-map.md",
-          "target": "/model-guides/model-map",
-          "target_type": "site_route",
+          "target": "model-guides/model-map.md",
+          "target_type": "local_file",
           "within_docs_source": true
         },
         {
           "exists": true,
           "kind": "link",
-          "line": 62,
+          "line": 57,
+          "resolved": "capabilities.md",
+          "target": "capabilities.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 59,
+          "resolved": "diagnostics-and-validation/testing-likelihoods.md",
+          "target": "diagnostics-and-validation/testing-likelihoods.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 65,
           "resolved": "r-julia-bridge.md",
-          "target": "/r-julia-bridge",
-          "target_type": "site_route",
+          "target": "r-julia-bridge.md",
+          "target_type": "local_file",
           "within_docs_source": true
         },
         {
           "exists": true,
           "kind": "link",
-          "line": 63,
+          "line": 69,
           "resolved": "rosetta.md",
-          "target": "/rosetta",
-          "target_type": "site_route",
+          "target": "rosetta.md",
+          "target_type": "local_file",
           "within_docs_source": true
         }
       ],
-      "opening_fence_blocks": 1,
+      "opening_fence_blocks": 2,
       "path": "index.md",
       "r_examples_heuristic": 0,
-      "sha256": "9e368d048ff4c7a6d18bcbec10af23a2e9d116a5aa1fe8003adb3c7eab41f47e",
+      "sha256": "0148ab097afeb8b3f54c29b26613380c28d2937b9f04795e274e0a4a3d7c4f9d",
       "title": "y varies in BOTH its mean and its spread with x:",
       "unclosed_fence_blocks": 0
     },
@@ -2269,7 +2339,46 @@
       "unclosed_fence_blocks": 0
     },
     {
-      "closing_fence_markers": 15,
+      "closing_fence_markers": 7,
+      "julia_examples_heuristic": 0,
+      "local_targets": [
+        {
+          "exists": false,
+          "kind": "link",
+          "line": 138,
+          "resolved": "reference/@id _group_index",
+          "target": "@id _group_index",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": false,
+          "kind": "link",
+          "line": 143,
+          "resolved": "reference/@id _fit_phylo_mean_laplace_nuisance",
+          "target": "@id _fit_phylo_mean_laplace_nuisance",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": false,
+          "kind": "link",
+          "line": 148,
+          "resolved": "reference/@id _fit_crossed_mean_laplace_nuisance",
+          "target": "@id _fit_crossed_mean_laplace_nuisance",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 7,
+      "path": "reference/engine-internals.md",
+      "r_examples_heuristic": 0,
+      "sha256": "9680cd89330582e05ecd97d5ca94ddebbb297c24367d78d65888d56b959eafc4",
+      "title": "Engine internals and advanced constructors",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 19,
       "julia_examples_heuristic": 1,
       "local_targets": [
         {
@@ -2284,7 +2393,7 @@
         {
           "exists": null,
           "kind": "link",
-          "line": 56,
+          "line": 63,
           "resolved": null,
           "target": "@ref",
           "target_type": "documenter_reference",
@@ -2293,7 +2402,7 @@
         {
           "exists": null,
           "kind": "link",
-          "line": 58,
+          "line": 65,
           "resolved": null,
           "target": "@ref",
           "target_type": "documenter_reference",
@@ -2302,7 +2411,7 @@
         {
           "exists": null,
           "kind": "link",
-          "line": 61,
+          "line": 69,
           "resolved": null,
           "target": "@ref",
           "target_type": "documenter_reference",
@@ -2311,7 +2420,25 @@
         {
           "exists": null,
           "kind": "link",
-          "line": 62,
+          "line": 70,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 163,
+          "resolved": "r-julia-bridge.md",
+          "target": "../r-julia-bridge.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 181,
           "resolved": null,
           "target": "@ref",
           "target_type": "documenter_reference",
@@ -2320,7 +2447,7 @@
         {
           "exists": null,
           "kind": "link",
-          "line": 135,
+          "line": 182,
           "resolved": null,
           "target": "@ref",
           "target_type": "documenter_reference",
@@ -2329,7 +2456,7 @@
         {
           "exists": null,
           "kind": "link",
-          "line": 136,
+          "line": 183,
           "resolved": null,
           "target": "@ref",
           "target_type": "documenter_reference",
@@ -2338,7 +2465,7 @@
         {
           "exists": null,
           "kind": "link",
-          "line": 137,
+          "line": 185,
           "resolved": null,
           "target": "@ref",
           "target_type": "documenter_reference",
@@ -2347,7 +2474,7 @@
         {
           "exists": null,
           "kind": "link",
-          "line": 139,
+          "line": 198,
           "resolved": null,
           "target": "@ref",
           "target_type": "documenter_reference",
@@ -2356,7 +2483,7 @@
         {
           "exists": null,
           "kind": "link",
-          "line": 152,
+          "line": 200,
           "resolved": null,
           "target": "@ref",
           "target_type": "documenter_reference",
@@ -2365,7 +2492,7 @@
         {
           "exists": null,
           "kind": "link",
-          "line": 154,
+          "line": 200,
           "resolved": null,
           "target": "@ref",
           "target_type": "documenter_reference",
@@ -2374,32 +2501,50 @@
         {
           "exists": null,
           "kind": "link",
-          "line": 154,
+          "line": 225,
           "resolved": null,
           "target": "@ref",
           "target_type": "documenter_reference",
           "within_docs_source": null
         },
         {
-          "exists": null,
+          "exists": false,
           "kind": "link",
-          "line": 179,
-          "resolved": null,
-          "target": "@ref",
-          "target_type": "documenter_reference",
-          "within_docs_source": null
+          "line": 234,
+          "resolved": "reference/@id AugProblem",
+          "target": "@id AugProblem",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": false,
+          "kind": "link",
+          "line": 239,
+          "resolved": "reference/@id make_problem",
+          "target": "@id make_problem",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": false,
+          "kind": "link",
+          "line": 244,
+          "resolved": "reference/@id fit_q4_sparse_tmb",
+          "target": "@id fit_q4_sparse_tmb",
+          "target_type": "local_file",
+          "within_docs_source": true
         }
       ],
-      "opening_fence_blocks": 15,
+      "opening_fence_blocks": 19,
       "path": "reference/model-fitting-and-postfit.md",
       "r_examples_heuristic": 0,
-      "sha256": "3ac9c26195ae538fd5e5af5d87e43560379ff90de472af5f9cfb24988a33724b",
+      "sha256": "0d861ea47153a3fd9b11ce0ffd30bbfdaf92e469c22a60c4d682ba46f0ce9ddf",
       "title": "Model fitting and post-fit tools",
       "unclosed_fence_blocks": 0
     },
     {
-      "closing_fence_markers": 3,
-      "julia_examples_heuristic": 0,
+      "closing_fence_markers": 5,
+      "julia_examples_heuristic": 1,
       "local_targets": [
         {
           "exists": null,
@@ -2411,10 +2556,10 @@
           "within_docs_source": null
         }
       ],
-      "opening_fence_blocks": 3,
+      "opening_fence_blocks": 5,
       "path": "reference/model-specification.md",
       "r_examples_heuristic": 0,
-      "sha256": "16ba32d484408554d9b107e9b686f0aaa8cc529fbcafaaf2e819721c081d9022",
+      "sha256": "8abeda9850b3d27a303b5e2f2348a62c3ee15decf55f71604fe2bec793032ece",
       "title": "Model specification",
       "unclosed_fence_blocks": 0
     },
@@ -2430,7 +2575,7 @@
       "unclosed_fence_blocks": 0
     },
     {
-      "closing_fence_markers": 3,
+      "closing_fence_markers": 4,
       "julia_examples_heuristic": 0,
       "local_targets": [
         {
@@ -2443,10 +2588,10 @@
           "within_docs_source": null
         }
       ],
-      "opening_fence_blocks": 3,
+      "opening_fence_blocks": 4,
       "path": "reference/structured-effect-markers.md",
       "r_examples_heuristic": 0,
-      "sha256": "0cdf9392edc46bf75fa76d9377de77931a3d2751c684da03aa7f603547446542",
+      "sha256": "ee8f4a0459beb14b6aee1a64b3d42a5f7efe61510ca0fbec465e0480fb28b673",
       "title": "Structured-effect markers",
       "unclosed_fence_blocks": 0
     },

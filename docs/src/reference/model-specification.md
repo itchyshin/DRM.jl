@@ -29,6 +29,24 @@ Tweedie
 CumulativeLogit
 ```
 
+## Advanced family type
+
+`SkewNormal` is a Julia family type with its own docstring. Its presence here
+does not widen the supported-model matrix; consult the capability matrix before
+selecting a family and structure.
+
+The source docstring below uses a shorthand formula sketch. For a call with
+prepared data `dat`, use explicit Julia formula objects:
+
+```julia
+fit = drm(bf(@formula(y ~ x), @formula(sigma ~ 1), @formula(nu ~ 1)),
+          SkewNormal(); data = dat)
+```
+
+```@docs
+SkewNormal
+```
+
 ## Two-column response
 
 ```@docs
