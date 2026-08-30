@@ -1,6 +1,19 @@
 # Checkpoint — 2026-08-30
 
-## Latest continuation
+## Latest continuation — theme preview and S6 diagnostic
+
+Two-page actual Vitepress desktop preview passed; Rose approved. Corrected broken
+summary rendering and doubled edit-link URL. v6 actually reran both reader gates.
+Full-site/mobile/live G6 remains open. New report: after-task/2026-08-30-parity-theme-preview.md.
+
+R zero_one_beta adapter remains uncommitted and NOT ACCEPTED: pure tests pass,
+strict4e-6 prediction parity fails (numeric link1.15e-5; factor link2.6e-5).
+Native convergence0 still has gradient0.001414; Julia objective is slightly better.
+Independent objective/gradient refinement is diagnostic only, never a replacement
+for the frozen baseline or a reason to relax the gate. Terra owns this R slice.
+No protected Julia source edits; S5 approval still pending. No remote compute.
+
+## Earlier continuation
 
 Reader slice committed locally e3e4169e, Rose approved. Final two-gate unlazy
 leaf actually executed eight inventory tests and nine first-fit examples through

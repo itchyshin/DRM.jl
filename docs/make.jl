@@ -13,7 +13,7 @@ makedocs(
     modules = [DRM],
     warnonly = true,
     format = DocumenterVitepress.MarkdownVitepress(
-        repo = "https://github.com/itchyshin/DRM.jl",
+        repo = "github.com/itchyshin/DRM.jl",
         devbranch = "main",
         devurl = "dev",
     ),

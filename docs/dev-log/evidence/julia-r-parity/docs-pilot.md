@@ -1,9 +1,10 @@
 # First-reader Documenter pilot evidence
 
-This record is a source-render pilot, not a full documentation build, Vitepress
-theme build, deployment, link check, or live-site check.
+The initial pilot covered source rendering only. The subsequent check below adds
+a two-page desktop Vitepress preview. Neither establishes a full documentation
+build, whole-site link check, deployment, or live-site acceptance.
 
-## Current source anchor
+## v4 source anchor (before the visual corrections below)
 
 The static inventory generated on 2026-08-30 anchors the pilot inputs:
 
@@ -75,3 +76,28 @@ unlazy execution) are retained in `docs-pilot-logs/`; `manifest.json` records
 their original paths, uncompressed byte sizes and SHA-256 checksums. The v4
 writer log is the complete raw writer output for the final prose. v5 repeats
 that same source through the bound acceptance checker.
+
+## Subsequent actual-theme check and corrections
+
+A cached VitePress1.6.4/Node20 build revealed a broken summary Markdown table
+(unescaped vertical bars in its column label) and a doubled https prefix in
+Edit this page. The canonical example now captures the normal text/plain summary
+for its rendered output; numerical code is unchanged. The writer repo setting
+now omits the scheme, as its installed edit-link generator adds https itself.
+
+Fresh unlazy v6 reverified both current-source gates (two actually rerun). A
+private two-page theme build then passed in under five seconds with cached
+dependencies. Only that visual subset disables dead-link checking for the ten
+links to omitted pages; its title is DRM.jl, matching the normal make.jl. Full
+site link acceptance remains open. Initial dead-link failure and final build
+logs are compressed in docs-pilot-logs; source/build hashes and overrides are
+recorded in docs-theme-preview.json.
+
+The browser showed the corrected summary as formatted output and the valid
+https://github.com/itchyshin/DRM.jl/edit/main/docs/src/getting-started.md edit
+URL. Desktop light/dark viewports were inspected. A full-page screenshot showed
+stitching artifacts and is not accepted as layout proof; the retained viewport
+image is the relevant dark-mode check. Mobile, all other pages and the live site
+remain unverified. An attempted vitepress build --help unexpectedly ran against
+the repository root and failed on raw development Markdown; that attempt is not
+a documentation build result. No tracked source was changed by it.

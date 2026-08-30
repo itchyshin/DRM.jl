@@ -1,0 +1,26 @@
+{
+  "scope": "two-page cached Vitepress desktop preview only",
+  "vitepress": "1.6.4",
+  "node": "20.17.0",
+  "source_dir": "docs/build/parity-pilot-unlazy-v6/.documenter",
+  "visual_overrides": {
+    "ignoreDeadLinks": true,
+    "title": "DRM.jl"
+  },
+  "source_hashes": {
+    "docs/make.jl": "6a52e4dd5de05ffa5111a55416c06797546f366f2932a6a026a91cd2f6b1de7e",
+    "docs/src/getting-started.md": "d66bccd1e9a104938eb3562f7c39782b3e6fa48710b2b52234bfec771d827b18",
+    "tools/parity_docs_pilot.jl": "e2874eadc380e0b8e94ee96e7aabe6f40d8a3c8737177be7f9092ea013730b04"
+  },
+  "rendered_html_hashes": {
+    "404.html": "de9805f01d5c04d340dbd8eddc8780c50fbeb210da69537c8745b343061a1f33",
+    "getting-started.html": "3ad7a05a3d5606032cc8bd5ae2bd297723e20789ef3915a3c3fbc71538fde30f",
+    "r-julia-bridge.html": "deaee91cf4db49cd403f12b26253b4678b89aebfd24c9091f41bc2cbb7241f43"
+  },
+  "private_output_dir": "/private/tmp/drm-parity-20260830/docs-theme-pilot-v2/1",
+  "viewport_evidence": {
+    "path": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/reader-dark-intervals.jpg",
+    "sha256": "49acc66ba0d4f40f3ebed7b687bf6081576e5147928944cdf6a0288a5b8e6396",
+    "scope": "1280x720 desktop dark viewport; not mobile or full-page proof"
+  }
+}

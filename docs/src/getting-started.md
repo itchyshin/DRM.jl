@@ -113,6 +113,7 @@ an open parity obligation. Row names are prefixed with the parameter (`mu: …`,
 
 ```@example getstarted
 summary(fit)
+show(stdout, MIME"text/plain"(), summary(fit)); nothing # hide
 ```
 
 ## Confidence intervals

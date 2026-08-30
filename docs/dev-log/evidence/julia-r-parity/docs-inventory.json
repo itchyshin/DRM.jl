@@ -264,7 +264,7 @@
       "get-started.md"
     ],
     "make_path": "docs/make.jl",
-    "make_sha256": "9d48880dd4c8d613e273a23485acb1c8b94ac414b79af1b9bcb89f8fa308f73e",
+    "make_sha256": "6a52e4dd5de05ffa5111a55416c06797546f366f2932a6a026a91cd2f6b1de7e",
     "nav_paths": [
       "index.md",
       "getting-started.md",
@@ -1073,7 +1073,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 141,
+          "line": 142,
           "resolved": "model-guides/model-map.md",
           "target": "model-guides/model-map.md",
           "target_type": "local_file",
@@ -1082,7 +1082,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 157,
+          "line": 158,
           "resolved": "r-julia-bridge.md",
           "target": "r-julia-bridge.md",
           "target_type": "local_file",
@@ -1091,7 +1091,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 159,
+          "line": 160,
           "resolved": "rosetta.md",
           "target": "rosetta.md",
           "target_type": "local_file",
@@ -1100,7 +1100,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 160,
+          "line": 161,
           "resolved": "families.md",
           "target": "families.md",
           "target_type": "local_file",
@@ -1109,7 +1109,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 162,
+          "line": 163,
           "resolved": "model-guides/model-map.md",
           "target": "model-guides/model-map.md",
           "target_type": "local_file",
@@ -1118,7 +1118,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 163,
+          "line": 164,
           "resolved": "tutorials/location-scale.md",
           "target": "tutorials/location-scale.md",
           "target_type": "local_file",
@@ -1128,7 +1128,7 @@
       "opening_fence_blocks": 10,
       "path": "getting-started.md",
       "r_examples_heuristic": 0,
-      "sha256": "18aeef43b7f930e3bb86f6bdfdd25fead6256aed4b3ce584edb9bb9f414e6fa4",
+      "sha256": "d66bccd1e9a104938eb3562f7c39782b3e6fa48710b2b52234bfec771d827b18",
       "title": "Getting started",
       "unclosed_fence_blocks": 0
     },

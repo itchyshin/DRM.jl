@@ -1,0 +1,1 @@
+| 2026-08-30 | **Parity reader theme preview** (#563) | Two reader gates actually rerun; cached two-page Vitepress build; desktop light/dark and edit URL inspected | Bounded preview only; mobile, full-site links and live G6 remain open | Ada + Pat + Rose |
