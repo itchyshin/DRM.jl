@@ -1,0 +1,3207 @@
+{
+  "findings": [
+    {
+      "detail": "Preserved transition URL; Documenter's default pagesonly=false build still emits this source page.",
+      "kind": "legacy_transition_page_unlisted",
+      "path": "get-started.md"
+    }
+  ],
+  "navigation": {
+    "entries": [
+      {
+        "path": "index.md",
+        "title": "Home",
+        "visible": true
+      },
+      {
+        "path": "getting-started.md",
+        "title": "Getting started",
+        "visible": true
+      },
+      {
+        "path": "capabilities.md",
+        "title": "Capabilities",
+        "visible": true
+      },
+      {
+        "path": "api-stability.md",
+        "title": "API stability",
+        "visible": true
+      },
+      {
+        "path": "model-guides/model-map.md",
+        "title": "model-guides/model-map.md",
+        "visible": true
+      },
+      {
+        "path": "model-guides/which-scale.md",
+        "title": "model-guides/which-scale.md",
+        "visible": true
+      },
+      {
+        "path": "model-guides/distribution-families.md",
+        "title": "model-guides/distribution-families.md",
+        "visible": true
+      },
+      {
+        "path": "families.md",
+        "title": "families.md",
+        "visible": true
+      },
+      {
+        "path": "model-guides/model-workflow.md",
+        "title": "model-guides/model-workflow.md",
+        "visible": true
+      },
+      {
+        "path": "model-guides/model-selection.md",
+        "title": "model-guides/model-selection.md",
+        "visible": true
+      },
+      {
+        "path": "model-guides/convergence.md",
+        "title": "model-guides/convergence.md",
+        "visible": true
+      },
+      {
+        "path": "model-guides/marginal-la-vs-va.md",
+        "title": "model-guides/marginal-la-vs-va.md",
+        "visible": true
+      },
+      {
+        "path": "model-guides/cross-family-methods.md",
+        "title": "model-guides/cross-family-methods.md",
+        "visible": true
+      },
+      {
+        "path": "model-guides/meta-analysis.md",
+        "title": "model-guides/meta-analysis.md",
+        "visible": true
+      },
+      {
+        "path": "model-guides/large-data.md",
+        "title": "model-guides/large-data.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/location-scale.md",
+        "title": "tutorials/location-scale.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/location-scale-scale.md",
+        "title": "tutorials/location-scale-scale.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/robust-student.md",
+        "title": "tutorials/robust-student.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/count-nbinom2.md",
+        "title": "tutorials/count-nbinom2.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/proportion-beta-binomial.md",
+        "title": "tutorials/proportion-beta-binomial.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/bivariate-coscale.md",
+        "title": "tutorials/bivariate-coscale.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/bivariate-nongaussian.md",
+        "title": "tutorials/bivariate-nongaussian.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/meta-analysis.md",
+        "title": "tutorials/meta-analysis.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/structural-dependence.md",
+        "title": "tutorials/structural-dependence.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/animal-models.md",
+        "title": "tutorials/animal-models.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/phylogenetic-models.md",
+        "title": "tutorials/phylogenetic-models.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/spatial-models.md",
+        "title": "tutorials/spatial-models.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/relmat-known-matrices.md",
+        "title": "tutorials/relmat-known-matrices.md",
+        "visible": true
+      },
+      {
+        "path": "tutorials/phylogenetic-spatial.md",
+        "title": "tutorials/phylogenetic-spatial.md",
+        "visible": true
+      },
+      {
+        "path": "cross-family.md",
+        "title": "Cross-family bivariate",
+        "visible": true
+      },
+      {
+        "path": "diagnostics-and-validation/figure-gallery.md",
+        "title": "diagnostics-and-validation/figure-gallery.md",
+        "visible": true
+      },
+      {
+        "path": "diagnostics-and-validation/prediction-and-postfit.md",
+        "title": "diagnostics-and-validation/prediction-and-postfit.md",
+        "visible": true
+      },
+      {
+        "path": "diagnostics-and-validation/profile-likelihood.md",
+        "title": "diagnostics-and-validation/profile-likelihood.md",
+        "visible": true
+      },
+      {
+        "path": "diagnostics-and-validation/implementation-map.md",
+        "title": "diagnostics-and-validation/implementation-map.md",
+        "visible": true
+      },
+      {
+        "path": "diagnostics-and-validation/exact-gaussian-diagnostics.md",
+        "title": "diagnostics-and-validation/exact-gaussian-diagnostics.md",
+        "visible": true
+      },
+      {
+        "path": "diagnostics-and-validation/testing-likelihoods.md",
+        "title": "diagnostics-and-validation/testing-likelihoods.md",
+        "visible": true
+      },
+      {
+        "path": "diagnostics-and-validation/simulation-plot-grammar.md",
+        "title": "diagnostics-and-validation/simulation-plot-grammar.md",
+        "visible": true
+      },
+      {
+        "path": "diagnostics-and-validation/small-sample-behaviour.md",
+        "title": "diagnostics-and-validation/small-sample-behaviour.md",
+        "visible": true
+      },
+      {
+        "path": "developer-notes/formula-grammar.md",
+        "title": "developer-notes/formula-grammar.md",
+        "visible": true
+      },
+      {
+        "path": "developer-notes/adding-families.md",
+        "title": "developer-notes/adding-families.md",
+        "visible": true
+      },
+      {
+        "path": "developer-notes/source-map.md",
+        "title": "developer-notes/source-map.md",
+        "visible": true
+      },
+      {
+        "path": "reference/package.md",
+        "title": "reference/package.md",
+        "visible": true
+      },
+      {
+        "path": "reference/model-specification.md",
+        "title": "reference/model-specification.md",
+        "visible": true
+      },
+      {
+        "path": "reference/structured-effect-markers.md",
+        "title": "reference/structured-effect-markers.md",
+        "visible": true
+      },
+      {
+        "path": "reference/deprecated-marker-internals.md",
+        "title": "reference/deprecated-marker-internals.md",
+        "visible": true
+      },
+      {
+        "path": "reference/model-fitting-and-postfit.md",
+        "title": "reference/model-fitting-and-postfit.md",
+        "visible": true
+      },
+      {
+        "path": "reference/visualization.md",
+        "title": "reference/visualization.md",
+        "visible": true
+      },
+      {
+        "path": "r-julia-bridge.md",
+        "title": "R \u2194 Julia bridge",
+        "visible": true
+      },
+      {
+        "path": "rosetta.md",
+        "title": "Rosetta (R \u2194 Julia)",
+        "visible": true
+      },
+      {
+        "path": "changelog.md",
+        "title": "Changelog",
+        "visible": true
+      }
+    ],
+    "hidden_paths": [],
+    "legacy_unlisted_paths": [
+      "get-started.md"
+    ],
+    "make_path": "docs/make.jl",
+    "make_sha256": "9d48880dd4c8d613e273a23485acb1c8b94ac414b79af1b9bcb89f8fa308f73e",
+    "nav_paths": [
+      "index.md",
+      "getting-started.md",
+      "capabilities.md",
+      "api-stability.md",
+      "model-guides/model-map.md",
+      "model-guides/which-scale.md",
+      "model-guides/distribution-families.md",
+      "families.md",
+      "model-guides/model-workflow.md",
+      "model-guides/model-selection.md",
+      "model-guides/convergence.md",
+      "model-guides/marginal-la-vs-va.md",
+      "model-guides/cross-family-methods.md",
+      "model-guides/meta-analysis.md",
+      "model-guides/large-data.md",
+      "tutorials/location-scale.md",
+      "tutorials/location-scale-scale.md",
+      "tutorials/robust-student.md",
+      "tutorials/count-nbinom2.md",
+      "tutorials/proportion-beta-binomial.md",
+      "tutorials/bivariate-coscale.md",
+      "tutorials/bivariate-nongaussian.md",
+      "tutorials/meta-analysis.md",
+      "tutorials/structural-dependence.md",
+      "tutorials/animal-models.md",
+      "tutorials/phylogenetic-models.md",
+      "tutorials/spatial-models.md",
+      "tutorials/relmat-known-matrices.md",
+      "tutorials/phylogenetic-spatial.md",
+      "cross-family.md",
+      "diagnostics-and-validation/figure-gallery.md",
+      "diagnostics-and-validation/prediction-and-postfit.md",
+      "diagnostics-and-validation/profile-likelihood.md",
+      "diagnostics-and-validation/implementation-map.md",
+      "diagnostics-and-validation/exact-gaussian-diagnostics.md",
+      "diagnostics-and-validation/testing-likelihoods.md",
+      "diagnostics-and-validation/simulation-plot-grammar.md",
+      "diagnostics-and-validation/small-sample-behaviour.md",
+      "developer-notes/formula-grammar.md",
+      "developer-notes/adding-families.md",
+      "developer-notes/source-map.md",
+      "reference/package.md",
+      "reference/model-specification.md",
+      "reference/structured-effect-markers.md",
+      "reference/deprecated-marker-internals.md",
+      "reference/model-fitting-and-postfit.md",
+      "reference/visualization.md",
+      "r-julia-bridge.md",
+      "rosetta.md",
+      "changelog.md"
+    ],
+    "unnavigated_pages": [
+      "get-started.md"
+    ],
+    "visible_paths": [
+      "index.md",
+      "getting-started.md",
+      "capabilities.md",
+      "api-stability.md",
+      "model-guides/model-map.md",
+      "model-guides/which-scale.md",
+      "model-guides/distribution-families.md",
+      "families.md",
+      "model-guides/model-workflow.md",
+      "model-guides/model-selection.md",
+      "model-guides/convergence.md",
+      "model-guides/marginal-la-vs-va.md",
+      "model-guides/cross-family-methods.md",
+      "model-guides/meta-analysis.md",
+      "model-guides/large-data.md",
+      "tutorials/location-scale.md",
+      "tutorials/location-scale-scale.md",
+      "tutorials/robust-student.md",
+      "tutorials/count-nbinom2.md",
+      "tutorials/proportion-beta-binomial.md",
+      "tutorials/bivariate-coscale.md",
+      "tutorials/bivariate-nongaussian.md",
+      "tutorials/meta-analysis.md",
+      "tutorials/structural-dependence.md",
+      "tutorials/animal-models.md",
+      "tutorials/phylogenetic-models.md",
+      "tutorials/spatial-models.md",
+      "tutorials/relmat-known-matrices.md",
+      "tutorials/phylogenetic-spatial.md",
+      "cross-family.md",
+      "diagnostics-and-validation/figure-gallery.md",
+      "diagnostics-and-validation/prediction-and-postfit.md",
+      "diagnostics-and-validation/profile-likelihood.md",
+      "diagnostics-and-validation/implementation-map.md",
+      "diagnostics-and-validation/exact-gaussian-diagnostics.md",
+      "diagnostics-and-validation/testing-likelihoods.md",
+      "diagnostics-and-validation/simulation-plot-grammar.md",
+      "diagnostics-and-validation/small-sample-behaviour.md",
+      "developer-notes/formula-grammar.md",
+      "developer-notes/adding-families.md",
+      "developer-notes/source-map.md",
+      "reference/package.md",
+      "reference/model-specification.md",
+      "reference/structured-effect-markers.md",
+      "reference/deprecated-marker-internals.md",
+      "reference/model-fitting-and-postfit.md",
+      "reference/visualization.md",
+      "r-julia-bridge.md",
+      "rosetta.md",
+      "changelog.md"
+    ]
+  },
+  "pages": [
+    {
+      "closing_fence_markers": 0,
+      "julia_examples_heuristic": 0,
+      "local_targets": [],
+      "opening_fence_blocks": 0,
+      "path": "api-stability.md",
+      "r_examples_heuristic": 0,
+      "sha256": "eeb5309fc664b7a312bc210525d0154bb9252045139907665e704d7c3f71ddd6",
+      "title": "API stability",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 0,
+      "julia_examples_heuristic": 0,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 180,
+          "resolved": "model-guides/cross-family-methods.md",
+          "target": "model-guides/cross-family-methods.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 0,
+      "path": "capabilities.md",
+      "r_examples_heuristic": 0,
+      "sha256": "2a7136b376c60dad57ca56adb13b268fccf301a05529a3f90caead9a013e7797",
+      "title": "Capability matrix",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 0,
+      "julia_examples_heuristic": 0,
+      "local_targets": [],
+      "opening_fence_blocks": 0,
+      "path": "changelog.md",
+      "r_examples_heuristic": 0,
+      "sha256": "b06cca1b186ab634e3acd8fbf4fa61ac66f9aab7989ec7b2a79bb36e07b03393",
+      "title": "Changelog",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 12,
+      "julia_examples_heuristic": 6,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 9,
+          "resolved": "tutorials/bivariate-coscale.md",
+          "target": "tutorials/bivariate-coscale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 13,
+          "resolved": "tutorials/bivariate-coscale.md",
+          "target": "tutorials/bivariate-coscale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 68,
+          "resolved": "tutorials/bivariate-coscale.md",
+          "target": "tutorials/bivariate-coscale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 90,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 224,
+          "resolved": "tutorials/bivariate-coscale.md",
+          "target": "tutorials/bivariate-coscale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 226,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        }
+      ],
+      "opening_fence_blocks": 12,
+      "path": "cross-family.md",
+      "r_examples_heuristic": 0,
+      "sha256": "b8bdb1a2e0b32ee4e99c05e5f7a46f8ac3dc6b88a680513cf3ff28916548a099",
+      "title": "Cross-family bivariate dependence",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 3,
+      "julia_examples_heuristic": 3,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 4,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 99,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 104,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        }
+      ],
+      "opening_fence_blocks": 3,
+      "path": "developer-notes/adding-families.md",
+      "r_examples_heuristic": 0,
+      "sha256": "d3d23f5424b4c6f1a6c5c1aea780c287a69925c71ce27a4b8fa6d1cc22995517",
+      "title": "Adding distribution families",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 7,
+      "julia_examples_heuristic": 7,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 4,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 4,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 7,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 7,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 36,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 88,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 88,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        }
+      ],
+      "opening_fence_blocks": 7,
+      "path": "developer-notes/formula-grammar.md",
+      "r_examples_heuristic": 0,
+      "sha256": "bb6e5a773489ac956ea90eabb7dc2569fce8ba6cea5b33048b18436d10a5855f",
+      "title": "Formula grammar",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 0,
+      "julia_examples_heuristic": 0,
+      "local_targets": [],
+      "opening_fence_blocks": 0,
+      "path": "developer-notes/source-map.md",
+      "r_examples_heuristic": 0,
+      "sha256": "31e807b82ae25d1a0a4bc7c2518ba603a7d0af7aff76d4b55f43a6f1803287bc",
+      "title": "Implemented source map",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 2,
+      "julia_examples_heuristic": 0,
+      "local_targets": [],
+      "opening_fence_blocks": 2,
+      "path": "diagnostics-and-validation/exact-gaussian-diagnostics.md",
+      "r_examples_heuristic": 0,
+      "sha256": "505cbafa9e491f8485447b6fab0a6a716e703d0fcacbaae403ca70258f9eaab7",
+      "title": "Exact-Gaussian Diagnostics",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 3,
+      "julia_examples_heuristic": 3,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 93,
+          "resolved": "model-guides/model-workflow.md",
+          "target": "../model-guides/model-workflow.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 95,
+          "resolved": "tutorials/location-scale.md",
+          "target": "../tutorials/location-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 3,
+      "path": "diagnostics-and-validation/figure-gallery.md",
+      "r_examples_heuristic": 0,
+      "sha256": "a6e1c705d8b4191f1e6e943db3d77ed7d440249574770e5b45a9e4d93c3dc920",
+      "title": "Figure gallery",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 0,
+      "julia_examples_heuristic": 0,
+      "local_targets": [],
+      "opening_fence_blocks": 0,
+      "path": "diagnostics-and-validation/implementation-map.md",
+      "r_examples_heuristic": 0,
+      "sha256": "55676bf1b0c23df2839d61871fd952d2ae4373f7cd52737b8120d9e2acb4bb4a",
+      "title": "Implementation map",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 12,
+      "julia_examples_heuristic": 12,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 30,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 58,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 75,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 88,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 98,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 119,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 120,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 129,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 138,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 149,
+          "resolved": "tutorials/location-scale.md",
+          "target": "../tutorials/location-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 150,
+          "resolved": "rosetta.md",
+          "target": "../rosetta.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 151,
+          "resolved": "reference/model-fitting-and-postfit.md",
+          "target": "../reference/model-fitting-and-postfit.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 12,
+      "path": "diagnostics-and-validation/prediction-and-postfit.md",
+      "r_examples_heuristic": 0,
+      "sha256": "3b8e89deb42f00a5a39846c6a9f6caddb3ba09724302530a3fe40266e475a078",
+      "title": "Prediction, residuals & model comparison",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 10,
+      "julia_examples_heuristic": 9,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 6,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 7,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 70,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 98,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 136,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 137,
+          "resolved": "diagnostics-and-validation/figure-gallery.md",
+          "target": "figure-gallery.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 138,
+          "resolved": "diagnostics-and-validation/prediction-and-postfit.md",
+          "target": "prediction-and-postfit.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 142,
+          "resolved": "diagnostics-and-validation/prediction-and-postfit.md",
+          "target": "prediction-and-postfit.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 143,
+          "resolved": "model-guides/convergence.md",
+          "target": "../model-guides/convergence.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 143,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 144,
+          "resolved": "reference/model-fitting-and-postfit.md",
+          "target": "../reference/model-fitting-and-postfit.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 10,
+      "path": "diagnostics-and-validation/profile-likelihood.md",
+      "r_examples_heuristic": 0,
+      "sha256": "f2f479f779fbdba3eeed5fc6e0a1ecd2a6c632b4dbbb74e485f23b63307a6765",
+      "title": "Profile-likelihood intervals",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 3,
+      "julia_examples_heuristic": 3,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 4,
+          "resolved": "reference/visualization.md",
+          "target": "../reference/visualization.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 3,
+      "path": "diagnostics-and-validation/simulation-plot-grammar.md",
+      "r_examples_heuristic": 0,
+      "sha256": "cd915d0c3e98966bcd148990b5e2a16619c52a5af8bf377937de2471b3ef286e",
+      "title": "Simulation plot grammar",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 0,
+      "julia_examples_heuristic": 0,
+      "local_targets": [],
+      "opening_fence_blocks": 0,
+      "path": "diagnostics-and-validation/small-sample-behaviour.md",
+      "r_examples_heuristic": 0,
+      "sha256": "0752fa7956584a0941f36e5e824053bf563cc2cf694414fb52a338b8b544c702",
+      "title": "Small-sample behaviour of phylogenetic covariance estimates",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 1,
+      "julia_examples_heuristic": 1,
+      "local_targets": [],
+      "opening_fence_blocks": 1,
+      "path": "diagnostics-and-validation/testing-likelihoods.md",
+      "r_examples_heuristic": 0,
+      "sha256": "36f670a0f31e81147772898fa46ad8d52b77fef11d87be091a8914899e92f33c",
+      "title": "Testing likelihoods",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 12,
+      "julia_examples_heuristic": 12,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 7,
+          "resolved": "model-guides/distribution-families.md",
+          "target": "model-guides/distribution-families.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 242,
+          "resolved": "getting-started.md",
+          "target": "getting-started.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 243,
+          "resolved": "model-guides/distribution-families.md",
+          "target": "model-guides/distribution-families.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 245,
+          "resolved": "model-guides/model-map.md",
+          "target": "model-guides/model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 12,
+      "path": "families.md",
+      "r_examples_heuristic": 0,
+      "sha256": "0e91121a74d1a5ad23baa69bf0751b249e8f037b2b0c52d1411ffe7af7612fe4",
+      "title": "Response families",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 0,
+      "julia_examples_heuristic": 0,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 5,
+          "resolved": "getting-started.md",
+          "target": "getting-started.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 9,
+          "resolved": "getting-started.md",
+          "target": "getting-started.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 11,
+          "resolved": "r-julia-bridge.md",
+          "target": "r-julia-bridge.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 14,
+          "resolved": "rosetta.md",
+          "target": "rosetta.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 16,
+          "resolved": "model-guides/model-map.md",
+          "target": "model-guides/model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 0,
+      "path": "get-started.md",
+      "r_examples_heuristic": 0,
+      "sha256": "f9f378e01c8899322e3c364afe0094cf5e37476bfba5b2df49854a9ac42db3b5",
+      "title": "Get started",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 10,
+      "julia_examples_heuristic": 10,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 7,
+          "resolved": "r-julia-bridge.md",
+          "target": "r-julia-bridge.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 8,
+          "resolved": "rosetta.md",
+          "target": "rosetta.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 9,
+          "resolved": "model-guides/model-map.md",
+          "target": "model-guides/model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 141,
+          "resolved": "model-guides/model-map.md",
+          "target": "model-guides/model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 157,
+          "resolved": "r-julia-bridge.md",
+          "target": "r-julia-bridge.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 159,
+          "resolved": "rosetta.md",
+          "target": "rosetta.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 160,
+          "resolved": "families.md",
+          "target": "families.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 162,
+          "resolved": "model-guides/model-map.md",
+          "target": "model-guides/model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 163,
+          "resolved": "tutorials/location-scale.md",
+          "target": "tutorials/location-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 10,
+      "path": "getting-started.md",
+      "r_examples_heuristic": 0,
+      "sha256": "18aeef43b7f930e3bb86f6bdfdd25fead6256aed4b3ce584edb9bb9f414e6fa4",
+      "title": "Getting started",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 1,
+      "julia_examples_heuristic": 1,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 45,
+          "resolved": "get-started.md",
+          "target": "/get-started",
+          "target_type": "site_route",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 46,
+          "resolved": "model-guides/model-map.md",
+          "target": "/model-guides/model-map",
+          "target_type": "site_route",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 62,
+          "resolved": "r-julia-bridge.md",
+          "target": "/r-julia-bridge",
+          "target_type": "site_route",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 63,
+          "resolved": "rosetta.md",
+          "target": "/rosetta",
+          "target_type": "site_route",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 1,
+      "path": "index.md",
+      "r_examples_heuristic": 0,
+      "sha256": "9e368d048ff4c7a6d18bcbec10af23a2e9d116a5aa1fe8003adb3c7eab41f47e",
+      "title": "y varies in BOTH its mean and its spread with x:",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 2,
+      "julia_examples_heuristic": 2,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 4,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 15,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 47,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 76,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 76,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        }
+      ],
+      "opening_fence_blocks": 2,
+      "path": "model-guides/convergence.md",
+      "r_examples_heuristic": 0,
+      "sha256": "9fcb428c71bb82d3efd33ef6af86ce430e30d4692a0e947f7daf11faaecfb1d4",
+      "title": "Improving convergence",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 20,
+      "julia_examples_heuristic": 0,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 160,
+          "resolved": "model-guides/marginal-la-vs-va.md",
+          "target": "marginal-la-vs-va.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 498,
+          "resolved": "model-guides/distribution-families.md",
+          "target": "distribution-families.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 500,
+          "resolved": "model-guides/which-scale.md",
+          "target": "which-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 501,
+          "resolved": "model-guides/marginal-la-vs-va.md",
+          "target": "marginal-la-vs-va.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 20,
+      "path": "model-guides/cross-family-methods.md",
+      "r_examples_heuristic": 0,
+      "sha256": "0d6916038bdc7dbeb3e642aa532b93a92b61a715232af74506667ad7a1fc7b9c",
+      "title": "Cross-family dependence: statistical foundations",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 5,
+      "julia_examples_heuristic": 5,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 102,
+          "resolved": "tutorials/location-scale.md",
+          "target": "../tutorials/location-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 103,
+          "resolved": "tutorials/robust-student.md",
+          "target": "../tutorials/robust-student.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 104,
+          "resolved": "tutorials/count-nbinom2.md",
+          "target": "../tutorials/count-nbinom2.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 105,
+          "resolved": "tutorials/proportion-beta-binomial.md",
+          "target": "../tutorials/proportion-beta-binomial.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 106,
+          "resolved": "model-guides/model-map.md",
+          "target": "model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 5,
+      "path": "model-guides/distribution-families.md",
+      "r_examples_heuristic": 0,
+      "sha256": "41a30a844d23fb68e42ab73fce581f26b72e9c781d841cb6d486936c0c5963a8",
+      "title": "Choosing response families",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 0,
+      "julia_examples_heuristic": 0,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 38,
+          "resolved": "model-guides/model-map.md",
+          "target": "model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 65,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        }
+      ],
+      "opening_fence_blocks": 0,
+      "path": "model-guides/large-data.md",
+      "r_examples_heuristic": 0,
+      "sha256": "78e87f55464947cc6f083ca4d11fb5a33862c52bdcb27f242cc63f28f789d9bc",
+      "title": "Working with large data",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 4,
+      "julia_examples_heuristic": 1,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 167,
+          "resolved": "model-guides/which-scale.md",
+          "target": "which-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 167,
+          "resolved": "model-guides/convergence.md",
+          "target": "convergence.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 4,
+      "path": "model-guides/marginal-la-vs-va.md",
+      "r_examples_heuristic": 0,
+      "sha256": "6657aa816d5642f5365dfa7efd3d84ef70cae32d71efe23998ae666124d733fc",
+      "title": "Laplace vs variational marginals",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 9,
+      "julia_examples_heuristic": 5,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 182,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 183,
+          "resolved": "rosetta.md",
+          "target": "../rosetta.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 9,
+      "path": "model-guides/meta-analysis.md",
+      "r_examples_heuristic": 1,
+      "sha256": "cfccb499edac9ecbe274714db6183f3d631b8c9d4598b9c92997dec537ac901a",
+      "title": "Meta-analysis: known sampling variance, and the two correlations",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 2,
+      "julia_examples_heuristic": 2,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 13,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 27,
+          "resolved": "model-guides/which-scale.md",
+          "target": "which-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 33,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 53,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 58,
+          "resolved": "reference/model-specification.md",
+          "target": "../reference/model-specification.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 63,
+          "resolved": "model-guides/distribution-families.md",
+          "target": "distribution-families.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 69,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 70,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 71,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 72,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 73,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 74,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 75,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 76,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 77,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 78,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 79,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 80,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 81,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 97,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 98,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 99,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 100,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 101,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 121,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 122,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 122,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 123,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 123,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 123,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 123,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 124,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 124,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 125,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 125,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 126,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 126,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 128,
+          "resolved": "model-guides/model-workflow.md",
+          "target": "model-workflow.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 129,
+          "resolved": "model-guides/which-scale.md",
+          "target": "which-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 136,
+          "resolved": "get-started.md",
+          "target": "../get-started.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 137,
+          "resolved": "model-guides/distribution-families.md",
+          "target": "distribution-families.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 138,
+          "resolved": "model-guides/which-scale.md",
+          "target": "which-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 139,
+          "resolved": "model-guides/model-workflow.md",
+          "target": "model-workflow.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 140,
+          "resolved": "model-guides/convergence.md",
+          "target": "convergence.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 141,
+          "resolved": "model-guides/large-data.md",
+          "target": "large-data.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 142,
+          "resolved": "model-guides/marginal-la-vs-va.md",
+          "target": "marginal-la-vs-va.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 143,
+          "resolved": "tutorials/location-scale.md",
+          "target": "../tutorials/location-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 144,
+          "resolved": "tutorials/location-scale-scale.md",
+          "target": "../tutorials/location-scale-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 145,
+          "resolved": "tutorials/bivariate-coscale.md",
+          "target": "../tutorials/bivariate-coscale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 146,
+          "resolved": "tutorials/robust-student.md",
+          "target": "../tutorials/robust-student.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 147,
+          "resolved": "tutorials/count-nbinom2.md",
+          "target": "../tutorials/count-nbinom2.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 148,
+          "resolved": "tutorials/proportion-beta-binomial.md",
+          "target": "../tutorials/proportion-beta-binomial.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 149,
+          "resolved": "tutorials/phylogenetic-models.md",
+          "target": "../tutorials/phylogenetic-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 149,
+          "resolved": "tutorials/spatial-models.md",
+          "target": "../tutorials/spatial-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 149,
+          "resolved": "tutorials/animal-models.md",
+          "target": "../tutorials/animal-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 150,
+          "resolved": "tutorials/meta-analysis.md",
+          "target": "../tutorials/meta-analysis.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 151,
+          "resolved": "reference/model-specification.md",
+          "target": "../reference/model-specification.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 151,
+          "resolved": "reference/model-fitting-and-postfit.md",
+          "target": "../reference/model-fitting-and-postfit.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 2,
+      "path": "model-guides/model-map.md",
+      "r_examples_heuristic": 0,
+      "sha256": "1fdc7d9baa9497aa145f358c19a822cc34bdbd74e6fc70d1433bdb8c22950cdf",
+      "title": "What can I fit today?",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 9,
+      "julia_examples_heuristic": 8,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 6,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 6,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 7,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 7,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 23,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 24,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 92,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 156,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 172,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 188,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 193,
+          "resolved": "model-guides/model-workflow.md",
+          "target": "model-workflow.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 194,
+          "resolved": "model-guides/convergence.md",
+          "target": "convergence.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 194,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 195,
+          "resolved": "diagnostics-and-validation/prediction-and-postfit.md",
+          "target": "../diagnostics-and-validation/prediction-and-postfit.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 9,
+      "path": "model-guides/model-selection.md",
+      "r_examples_heuristic": 0,
+      "sha256": "071ff207c8139f1beef34f4cd6c79305fa81ea5bf7ac539192f5e5ae251e1bde",
+      "title": "Model selection with AIC and BIC",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 8,
+      "julia_examples_heuristic": 8,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 49,
+          "resolved": "model-guides/which-scale.md",
+          "target": "which-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 105,
+          "resolved": "get-started.md",
+          "target": "../get-started.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 105,
+          "resolved": "tutorials/location-scale.md",
+          "target": "../tutorials/location-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 8,
+      "path": "model-guides/model-workflow.md",
+      "r_examples_heuristic": 0,
+      "sha256": "e678ef9c903e9e4a55bc8ee6f4f417becad5e649e9c479457f711742fa7fa369",
+      "title": "Checking and using fitted models",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 2,
+      "julia_examples_heuristic": 2,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 47,
+          "resolved": "tutorials/location-scale.md",
+          "target": "../tutorials/location-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 62,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 67,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 71,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 73,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 92,
+          "resolved": "get-started.md",
+          "target": "../get-started.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 92,
+          "resolved": "model-guides/model-map.md",
+          "target": "model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 2,
+      "path": "model-guides/which-scale.md",
+      "r_examples_heuristic": 0,
+      "sha256": "6799797590107e5feb04d52c396d90ae0fa5fa77fbd5b45651c17d8d03a05e2a",
+      "title": "Which scale are you modelling?",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 0,
+      "julia_examples_heuristic": 0,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 54,
+          "resolved": "rosetta.md",
+          "target": "rosetta.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 61,
+          "resolved": "rosetta.md",
+          "target": "rosetta.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 78,
+          "resolved": "developer-notes/formula-grammar.md",
+          "target": "developer-notes/formula-grammar.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 0,
+      "path": "r-julia-bridge.md",
+      "r_examples_heuristic": 0,
+      "sha256": "915a7ff7a84ee471a88ba4f486a4830cbeb6c5d9bd69f07a7c38ce2a5004e049",
+      "title": "R \u2194 Julia bridge",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 0,
+      "julia_examples_heuristic": 0,
+      "local_targets": [],
+      "opening_fence_blocks": 0,
+      "path": "reference/deprecated-marker-internals.md",
+      "r_examples_heuristic": 0,
+      "sha256": "4a257a098a9e180cfec55bc491726fb46e47b13877c994fd2596b021db25ec92",
+      "title": "Deprecated marker internals",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 16,
+      "julia_examples_heuristic": 1,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 4,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 56,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 58,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 61,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 62,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 135,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 136,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 137,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 139,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 152,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 154,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 154,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 179,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        }
+      ],
+      "opening_fence_blocks": 16,
+      "path": "reference/model-fitting-and-postfit.md",
+      "r_examples_heuristic": 0,
+      "sha256": "fe5aaf4d8c08b2381f56d96810dd32ce4afec56749e6bf818647fdd740f2e9a0",
+      "title": "Model fitting and post-fit tools",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 3,
+      "julia_examples_heuristic": 0,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 4,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        }
+      ],
+      "opening_fence_blocks": 3,
+      "path": "reference/model-specification.md",
+      "r_examples_heuristic": 0,
+      "sha256": "16ba32d484408554d9b107e9b686f0aaa8cc529fbcafaaf2e819721c081d9022",
+      "title": "Model specification",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 1,
+      "julia_examples_heuristic": 0,
+      "local_targets": [],
+      "opening_fence_blocks": 1,
+      "path": "reference/package.md",
+      "r_examples_heuristic": 0,
+      "sha256": "91774e06016a6d3298986b8580eb9a8859358046cdfcf832893b8e4b3e1035e4",
+      "title": "Package",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 3,
+      "julia_examples_heuristic": 0,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 4,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        }
+      ],
+      "opening_fence_blocks": 3,
+      "path": "reference/structured-effect-markers.md",
+      "r_examples_heuristic": 0,
+      "sha256": "0cdf9392edc46bf75fa76d9377de77931a3d2751c684da03aa7f603547446542",
+      "title": "Structured-effect markers",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 3,
+      "julia_examples_heuristic": 1,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 4,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        }
+      ],
+      "opening_fence_blocks": 3,
+      "path": "reference/visualization.md",
+      "r_examples_heuristic": 0,
+      "sha256": "d627f2e682ed5842bf6c8ade3be8a4c63dfecc128c1e03bb5820431c079f6e87",
+      "title": "Visualization",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 4,
+      "julia_examples_heuristic": 2,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 98,
+          "resolved": "model-guides/meta-analysis.md",
+          "target": "model-guides/meta-analysis.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 178,
+          "resolved": "r-julia-bridge.md",
+          "target": "r-julia-bridge.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 4,
+      "path": "rosetta.md",
+      "r_examples_heuristic": 2,
+      "sha256": "f13f9a74f09139441a48cb3bac6de4478f721a5685c74ac785563a2c2fee9334",
+      "title": "Rosetta \u2014 R \u2194 Julia",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 6,
+      "julia_examples_heuristic": 5,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 7,
+          "resolved": "tutorials/relmat-known-matrices.md",
+          "target": "relmat-known-matrices.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 8,
+          "resolved": "tutorials/phylogenetic-models.md",
+          "target": "phylogenetic-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 26,
+          "resolved": "tutorials/phylogenetic-models.md",
+          "target": "phylogenetic-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 26,
+          "resolved": "tutorials/relmat-known-matrices.md",
+          "target": "relmat-known-matrices.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 41,
+          "resolved": "tutorials/phylogenetic-models.md",
+          "target": "phylogenetic-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 114,
+          "resolved": "tutorials/relmat-known-matrices.md",
+          "target": "relmat-known-matrices.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 115,
+          "resolved": "tutorials/phylogenetic-models.md",
+          "target": "phylogenetic-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 116,
+          "resolved": "model-guides/model-map.md",
+          "target": "../model-guides/model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 6,
+      "path": "tutorials/animal-models.md",
+      "r_examples_heuristic": 0,
+      "sha256": "f8e2833ab0a502960ff73a990042b0863caa92e1e2b06e4a495370da2d192506",
+      "title": "Animal models and additive relatedness",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 4,
+      "julia_examples_heuristic": 4,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 93,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 94,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 131,
+          "resolved": "tutorials/location-scale.md",
+          "target": "location-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 4,
+      "path": "tutorials/bivariate-coscale.md",
+      "r_examples_heuristic": 0,
+      "sha256": "21f056e40538693da1b04a3256dc14371ade6d607707db09db2515e02d10d007",
+      "title": "Changing residual coupling with rho12",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 8,
+      "julia_examples_heuristic": 7,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 7,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 8,
+          "resolved": "api-stability.md",
+          "target": "../api-stability.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 12,
+          "resolved": "tutorials/bivariate-coscale.md",
+          "target": "bivariate-coscale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 22,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 84,
+          "resolved": "tutorials/bivariate-coscale.md",
+          "target": "bivariate-coscale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 148,
+          "resolved": "api-stability.md",
+          "target": "../api-stability.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 158,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 186,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 213,
+          "resolved": "tutorials/bivariate-coscale.md",
+          "target": "bivariate-coscale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 216,
+          "resolved": "tutorials/robust-student.md",
+          "target": "robust-student.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 218,
+          "resolved": "cross-family.md",
+          "target": "../cross-family.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 220,
+          "resolved": "api-stability.md",
+          "target": "../api-stability.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 8,
+      "path": "tutorials/bivariate-nongaussian.md",
+      "r_examples_heuristic": 0,
+      "sha256": "74d06f50743362e032d4b19a87017d45192f3dcefdb3db6c6fe198cbc0b62bf7",
+      "title": "Bivariate non-Gaussian models: joint or staged",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 8,
+      "julia_examples_heuristic": 8,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 155,
+          "resolved": "model-guides/model-map.md",
+          "target": "../model-guides/model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 156,
+          "resolved": "model-guides/distribution-families.md",
+          "target": "../model-guides/distribution-families.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 8,
+      "path": "tutorials/count-nbinom2.md",
+      "r_examples_heuristic": 0,
+      "sha256": "5e6025360f77eaf8ecc403e8678fd38ee1db626767392ac8e1d7918ac2f365ac",
+      "title": "Count abundance and extra zeros",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 9,
+      "julia_examples_heuristic": 6,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 9,
+          "resolved": "api-stability.md",
+          "target": "../api-stability.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 12,
+          "resolved": "tutorials/location-scale.md",
+          "target": "location-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 220,
+          "resolved": "tutorials/location-scale.md",
+          "target": "location-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 221,
+          "resolved": "tutorials/phylogenetic-models.md",
+          "target": "phylogenetic-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 223,
+          "resolved": "api-stability.md",
+          "target": "../api-stability.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 9,
+      "path": "tutorials/location-scale-scale.md",
+      "r_examples_heuristic": 1,
+      "sha256": "0b58649045a14bc680898a09174368081d840c6d55e39cc92602e3cceb85cefe",
+      "title": "When variance carries signal, Part 2: location\u2013scale\u2013scale",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 4,
+      "julia_examples_heuristic": 4,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 6,
+          "resolved": "tutorials/location-scale-scale.md",
+          "target": "location-scale-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 52,
+          "resolved": "model-guides/model-workflow.md",
+          "target": "../model-guides/model-workflow.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 54,
+          "resolved": "diagnostics-and-validation/prediction-and-postfit.md",
+          "target": "../diagnostics-and-validation/prediction-and-postfit.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 81,
+          "resolved": "tutorials/location-scale-scale.md",
+          "target": "location-scale-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 83,
+          "resolved": "get-started.md",
+          "target": "../get-started.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 84,
+          "resolved": "tutorials/bivariate-coscale.md",
+          "target": "bivariate-coscale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 4,
+      "path": "tutorials/location-scale.md",
+      "r_examples_heuristic": 0,
+      "sha256": "6acbe6f6aa7589c2660ea42b0bdc0f26726d057aec9eb2e7cce2e0743d0e6e43",
+      "title": "When variance carries signal, Part 1: location\u2013scale",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 5,
+      "julia_examples_heuristic": 4,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 72,
+          "resolved": "model-guides/model-workflow.md",
+          "target": "../model-guides/model-workflow.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 77,
+          "resolved": "model-guides/which-scale.md",
+          "target": "../model-guides/which-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 5,
+      "path": "tutorials/meta-analysis.md",
+      "r_examples_heuristic": 0,
+      "sha256": "2db505189cb527571b8bdd66adc6a932dfeceaac140c08c9eef24a9828916d45",
+      "title": "Mean effects and residual heterogeneity",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 6,
+      "julia_examples_heuristic": 6,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 138,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 162,
+          "resolved": "tutorials/location-scale-scale.md",
+          "target": "location-scale-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 165,
+          "resolved": "tutorials/relmat-known-matrices.md",
+          "target": "relmat-known-matrices.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 166,
+          "resolved": "tutorials/animal-models.md",
+          "target": "animal-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 167,
+          "resolved": "model-guides/model-map.md",
+          "target": "../model-guides/model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 6,
+      "path": "tutorials/phylogenetic-models.md",
+      "r_examples_heuristic": 0,
+      "sha256": "499123d7ab0b909bde0f0d0cbbfd208521fa4691a61a83e898dece842923ab7d",
+      "title": "Phylogenetic structured effects",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 2,
+      "julia_examples_heuristic": 1,
+      "local_targets": [
+        {
+          "exists": null,
+          "kind": "link",
+          "line": 25,
+          "resolved": null,
+          "target": "@ref",
+          "target_type": "documenter_reference",
+          "within_docs_source": null
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 26,
+          "resolved": "tutorials/phylogenetic-models.md",
+          "target": "phylogenetic-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 27,
+          "resolved": "tutorials/spatial-models.md",
+          "target": "spatial-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 2,
+      "path": "tutorials/phylogenetic-spatial.md",
+      "r_examples_heuristic": 0,
+      "sha256": "62dcd2450f5227b4a689a92ea65b3584776a070134dbef23c1b911c35dc74f78",
+      "title": "Structural dependence details",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 5,
+      "julia_examples_heuristic": 5,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 101,
+          "resolved": "model-guides/distribution-families.md",
+          "target": "../model-guides/distribution-families.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 102,
+          "resolved": "model-guides/model-map.md",
+          "target": "../model-guides/model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 5,
+      "path": "tutorials/proportion-beta-binomial.md",
+      "r_examples_heuristic": 0,
+      "sha256": "34d277ba95f0b4cb1cbd9b37a8520c452278f6b6bb40480610b6f90eee1680f9",
+      "title": "Proportions and success rates",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 2,
+      "julia_examples_heuristic": 2,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 49,
+          "resolved": "model-guides/which-scale.md",
+          "target": "../model-guides/which-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 50,
+          "resolved": "model-guides/model-map.md",
+          "target": "../model-guides/model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 2,
+      "path": "tutorials/relmat-known-matrices.md",
+      "r_examples_heuristic": 0,
+      "sha256": "1cf4c8c5638fae5eba7773fade5094fe7d03e0b6bc44243e79cf27d90cf5cbf1",
+      "title": "Known-matrix relatedness with relmat",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 2,
+      "julia_examples_heuristic": 2,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 54,
+          "resolved": "tutorials/location-scale.md",
+          "target": "location-scale.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 55,
+          "resolved": "model-guides/model-map.md",
+          "target": "../model-guides/model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 2,
+      "path": "tutorials/robust-student.md",
+      "r_examples_heuristic": 0,
+      "sha256": "bce66d8e71796594112912032abf8ecd4cc68888112181ef60aaee755150c90e",
+      "title": "Robust continuous responses",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 2,
+      "julia_examples_heuristic": 2,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 59,
+          "resolved": "tutorials/phylogenetic-models.md",
+          "target": "phylogenetic-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 60,
+          "resolved": "tutorials/relmat-known-matrices.md",
+          "target": "relmat-known-matrices.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 61,
+          "resolved": "model-guides/model-map.md",
+          "target": "../model-guides/model-map.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 2,
+      "path": "tutorials/spatial-models.md",
+      "r_examples_heuristic": 0,
+      "sha256": "e773aaa713e8a1e21c9f6efa25ff749769e85c59278ba70ab4b88bd216d5de5d",
+      "title": "Coordinate-spatial structured effects",
+      "unclosed_fence_blocks": 0
+    },
+    {
+      "closing_fence_markers": 0,
+      "julia_examples_heuristic": 0,
+      "local_targets": [
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 23,
+          "resolved": "tutorials/relmat-known-matrices.md",
+          "target": "relmat-known-matrices.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 24,
+          "resolved": "tutorials/animal-models.md",
+          "target": "animal-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 25,
+          "resolved": "tutorials/phylogenetic-models.md",
+          "target": "phylogenetic-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        },
+        {
+          "exists": true,
+          "kind": "link",
+          "line": 26,
+          "resolved": "tutorials/spatial-models.md",
+          "target": "spatial-models.md",
+          "target_type": "local_file",
+          "within_docs_source": true
+        }
+      ],
+      "opening_fence_blocks": 0,
+      "path": "tutorials/structural-dependence.md",
+      "r_examples_heuristic": 0,
+      "sha256": "2056deb40c8093facb03742c276bfbc583924051a672b7e19cee5a83d5c971ed",
+      "title": "Structural dependence overview",
+      "unclosed_fence_blocks": 0
+    }
+  ],
+  "schema_version": 2,
+  "scope": "static Documenter source inventory only; no rendered, build, deployment, or live-site claim",
+  "source_root": "docs/src"
+}

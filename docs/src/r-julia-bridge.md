@@ -1,11 +1,16 @@
 # R ↔ Julia bridge
 
 !!! note "Status — Experimental bridge + fixture-backed coefficient-scale gate (#370/#383/#385) + measured timing (#372/#389)"
-    DRM.jl exposes `drm_bridge()`, a marshalling-friendly entry point for the R-side `drmTMB(formula, ..., engine = "julia")` glue. The companion R glue lives in the **drmTMB R repository** via [JuliaCall](https://github.com/JuliaInterop/JuliaCall).
+    DRM.jl exposes `drm_bridge()`, a marshalling-friendly entry point used by
+    the optional `drmTMB(formula, ..., engine = "julia")` backend for supported
+    models. The companion R glue lives in the **drmTMB R repository** via
+    [JuliaCall](https://github.com/JuliaInterop/JuliaCall); the default
+    `engine = "tmb"` does not require Julia.
 
-    **Admitted fixture-backed coefficient-scale parity** (opt-in `DRM_PARITY_TESTS=1`, via `drm_bridge` + committed drmTMB generated numbers only).
-    All eleven cells below record **drmTMB 0.6.0** in `expected.meta.toml`
-    (#392 re-anchored the original six; #383/#385 already used 0.6.0):
+    **Admitted fixture-backed coefficient-scale parity** (opt-in
+    `DRM_PARITY_TESTS=1`, via `drm_bridge` + committed drmTMB generated
+    numbers only). The eleven cells below all record **drmTMB 0.7.0** in their
+    `expected.meta.toml` files:
 
     Original six (#370 / refresh #392):
 
@@ -27,16 +32,25 @@
 
     - `nbinom2-dispersion` (`y ~ x; sigma ~ x`)
 
-    **Measured warm wall-clock** (local machine; Julia `drm_bridge` vs installed
-    drmTMB **0.6.0**; BLAS/OMP threads = 1; 1 warmup + 5 timed reps):
+    A separate seven-cell `bridge-*` formula-construct cohort also records
+    0.7.0, but it tests formula translation rather than expanding this
+    coefficient-scale cohort. Across all 18 `test/parity/fixtures/*/expected.meta.toml`
+    files that name drmTMB, the version is 0.7.0. Those files do **not** record
+    a comparator build string or source hash, so 0.7.0 is a package-version
+    anchor, not a unique drmTMB source-build pin.
+
+    **Historical measured warm wall-clock** (local machine; Julia `drm_bridge`
+    vs installed drmTMB **0.6.0** at the time; BLAS/OMP threads = 1; 1 warmup +
+    5 timed reps):
 
     - Original six (#372) — median R/Julia ratios ≈ **4.8×–46×**; retained in
       `docs/dev-log/evidence/2026-08-03-372-six-cell-timing.md`.
     - +4 FE + `nbinom2-dispersion` (#389) — median R/Julia ratios ≈ **11.4×–59.6×**;
       retained in `docs/dev-log/evidence/2026-08-05-389-plus5-bridge-timing.md`.
 
-    Neither artifact is a general “Nx faster for all drmTMB models” claim, and
-    neither is the verified q=4 PLSM 2.18× cell (`report/comparison-grid.md`).
+    The timing artifacts were not re-measured on the 0.7.0 fixture anchor. They
+    are neither a general “Nx faster for all drmTMB models” claim nor the
+    verified q=4 PLSM 2.18× cell (`report/comparison-grid.md`).
     For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
 
 ## The idea

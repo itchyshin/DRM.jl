@@ -1,5 +1,31 @@
 # Checkpoint — 2026-08-30
 
+## Current delta (supersedes conflicting status below)
+
+- R article execution is committed locally as f3d872cd9: five converged fits,
+  seven checked output/runtime/likelihood groups, 41 expressions executed and
+  three explicit setup expressions supplied. Rose approved the bounded evidence;
+  the article leaf was actually rerun by unlazy (1/1 met). No full parity claim.
+- Mission Control curated status is refreshed in local-only vault commit c32302e;
+  served status and runtime were checked. Original R origin/main was fetched to
+  b35642b45, without changing its checkout or working files. No remote compute.
+- Original LSS obligations are mapped in original-obligations.md. PR547's
+  historical acceptance matrix is not evidence for the later REML/missing work.
+  Recovery of unique dirty/stashed work and final-source LSS evidence remain open.
+- Documenter inventory: 51 source pages, one duplicate first-reader route now a
+  preserved transition URL. A two-page Vitepress Markdown pilot executes nine
+  canonical examples; actual theme/mobile/live validation remains open. Rose is
+  reviewing this bounded source repair. Failed pilot logs are retained.
+- S5a protected-source denial remains in force; no source edits or workaround.
+  The deliberately red allocation tests remain unstaged. User approval pending.
+- S6 next candidate: zero_one_beta fixed-effect R admission. Julia already has
+  the likelihood. Verify four parameter links, atom probabilities, interior vs
+  unconditional means, inference and refusal neighbours before any admission.
+- Current committed Julia HEAD b1c357d0; R HEAD f3d872cd9. Neither pushed/merged.
+  Root owns checkpoint/evidence; Terra owns the docs pilot; Rose read-only review.
+
+## Earlier checkpoint history
+
 IN PROGRESS: Wave A inventory and first documentation repair; S5a original-source regression.
 DONE: verified live SSH main refs; no live foreign repository leases; explicit scoped programme
 leases granted for both repos, identity codex:01a05261-julia-r-parity (renew before 4h expiry).

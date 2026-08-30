@@ -1,0 +1,38 @@
+[
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/failed-all-pages-vitepress.log.gz",
+    "original_path": "docs/build/parity-pilot/pilot.log",
+    "uncompressed_sha256": "2ffdd8f42cebcf799bd8cab529270bd6f9a8bd1d78ea5540fd262032f5d0f164",
+    "uncompressed_bytes": 250800
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/failed-source-precheck.log.gz",
+    "original_path": "docs/build/pilot-pagesonly-html-precheck-failed.log",
+    "uncompressed_sha256": "68ffcec5cbf913e4cb2487bed0fedff75db6f12c1226083e4eea828355c9f68a",
+    "uncompressed_bytes": 664
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/failed-crossrefs-html.log.gz",
+    "original_path": "docs/build/parity-pilot-pagesonly-html/pilot.log",
+    "uncompressed_sha256": "902884684ac48f92d00c210d38ee66d0df853b9479fb6fe209966cd19236091a",
+    "uncompressed_bytes": 5636
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/passed-html-v2.log.gz",
+    "original_path": "docs/build/parity-pilot-pagesonly-html-v2/pilot.log",
+    "uncompressed_sha256": "670f402879836f8d74bf81cdd20ea957ee6809ca355712c1dfe03b856caaab5c",
+    "uncompressed_bytes": 5065
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/passed-vitepress-v4.log.gz",
+    "original_path": "docs/build/parity-pilot-vitepress-pagesonly-markdown-v4/pilot.log",
+    "uncompressed_sha256": "c6e5eef2ce5ec4dd9aab6d5f766e1293d9925cb383b535f2cce01280bc5113ed",
+    "uncompressed_bytes": 6774
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/unlazy-reader-v5.log.gz",
+    "original_path": "docs/build/unlazy-reader-v5.log",
+    "uncompressed_sha256": "f1d25536ccea7d4fc068c5512f4962f6ea6982faca22466518952f2075b73d11",
+    "uncompressed_bytes": 4851
+  }
+]
