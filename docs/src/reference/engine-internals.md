@@ -156,9 +156,9 @@ nuisance-parameter specification, using the prepared group indices.
 !!! warning "Limited developer interface"
     This prepared-array interface covers a Gaussian response with one Gaussian
     or Bernoulli predictor, or two independent Gaussian predictors. The
-    **one-predictor** likelihood has two **development** frontends: the [joint formula frontend](@ref joint-predictor-formula)
+    likelihood has two **development** frontends: the [joint formula frontend](@ref joint-predictor-formula)
     and `drmTMB(..., engine = "julia")` through `drm_bridge_joint`. They admit
-    a Gaussian identity-link response, one bare additive `mi(x)` term, and
+    a Gaussian identity-link response, one or two bare additive `mi()` terms, and
     complete fixed-effect exogenous designs. Grouped predictors, further
     predictor families, random or structured effects, REML, and all other
     missing-predictor models remain outside this route.
@@ -206,8 +206,8 @@ uncertainty status.
 
 The two-predictor array interface uses an `n × 2` predictor matrix and a tuple
 of two complete predictor designs. It shares the prepared likelihood operations
-above. **Direct formula and R bridge admission for two predictors are still
-pending**; this kernel is not a claim of full native-R parity.
+above. Direct formula and R bridge admission use this same kernel; the bounded
+route does not establish full native-R parity.
 
 Independent predictor models can produce correlated conditional imputations:
 when both predictors are missing, the observed response informs their joint

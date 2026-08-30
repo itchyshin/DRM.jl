@@ -188,7 +188,7 @@ export PreparedJointModel, PreparedJointFit, prepared_joint_model,
        prepared_joint_rowloglik, prepared_joint_nll,
        prepared_joint_conditional_moments, fit_prepared_joint,
        joint_missing_summary, imputed, mi, miss_control, impute_model,
-       JointDrmFit, JointMissingControl, JointImputeModel
+       JointDrmFit, JointTwoDrmFit, JointMissingControl, JointImputeModel
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare

@@ -1,0 +1,20 @@
+{
+  "scope": "Current progress against frozen native axis obligations; not the final valid-case denominator",
+  "baseline": "missing-predictor-obligations.json is an immutable initial audit; its absence-of-engine statement is historical.",
+  "programme_gates": "G0-G8 OPEN",
+  "verified_case": "mp-gaussian-gaussian-k2-indep: fixed Gaussian response, two independent fixed Gaussian predictor models, ML, all8masks; direct Julia and real R JuliaCall route on retained160rowfixture",
+  "receipt": "two-frontends/two-public-002.json",
+  "native_tolerance": 4e-06,
+  "not_proven": [
+    "full axis output/argument coverage",
+    "recovery/coverage",
+    "profile/bootstrap",
+    "warm workflow performance",
+    "all native missing-predictor cases"
+  ],
+  "next": [
+    "ordinal and categorical predictors through shared finite-state prepared likelihood",
+    "preserve and resolve earlier single-predictor4e-6 failures",
+    "refresh current-source full-suite evidence before integration"
+  ]
+}

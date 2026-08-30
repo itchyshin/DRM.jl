@@ -1,4 +1,4 @@
-# joint_missing_frontend.jl — narrow formula admission for one missing predictor.
+# joint_missing_frontend.jl — narrow formula admission for one or two missing predictors.
 #
 # The numerical likelihood lives in joint_missing_predictor.jl.  This file only
 # turns a validated, native StatsModels formula into that prepared representation.
@@ -67,6 +67,20 @@ struct JointDrmFit
     variable::Symbol
 end
 
+"""
+    JointTwoDrmFit
+
+Formula-facing wrapper for the prepared two-independent-Gaussian-predictor
+kernel. Raw coefficients and `vcov` preserve the kernel order
+`beta, b1, b2, delta, alpha1, logtau1, alpha2, logtau2`; natural predictor
+SDs are exposed only through `coef(fit, :sigma_mi_<variable>)`.
+"""
+struct JointTwoDrmFit
+    prepared::PreparedTwoJointGaussianFit
+    formula::DrmFormula
+    variables::NTuple{2,Symbol}
+end
+
 _joint_frontend_terms(rhs) = rhs isa Tuple ? collect(rhs) : Any[rhs]
 
 function _joint_mi_count(term)
@@ -120,6 +134,14 @@ function _joint_require_exogenous(rhs, response::Symbol, predictor::Symbol, labe
     return nothing
 end
 
+function _joint_require_exogenous(rhs, response::Symbol, predictors::NTuple{2,Symbol}, label::AbstractString)
+    for term in _joint_frontend_terms(rhs), name in _joint_term_symbols(term)
+        (name === response || name in predictors) && throw(ArgumentError(
+            "joint missing-predictor frontend: $label must use exogenous covariates; `$name` is a modelled response or predictor"))
+    end
+    return nothing
+end
+
 function _joint_validate_fixed_term(term, label::AbstractString)
     if term isa FunctionTerm
         forbidden = term.f === mi || term.f === (|) || term.f === meta_V ||
@@ -166,6 +188,30 @@ function _joint_mean_parts(rhs)
     return marked[1].args[1].sym, fixed_rhs
 end
 
+function _joint_two_mean_parts(rhs)
+    terms = _joint_frontend_terms(rhs)
+    total = sum(_joint_mi_count, terms)
+    total == 2 || throw(ArgumentError("joint missing-predictor frontend: two-predictor mean formula needs exactly two bare additive `mi(x)` terms (found $total)"))
+    variables = Symbol[]
+    fixed = Any[]
+    for term in terms
+        if term isa FunctionTerm && term.f === mi
+            length(term.args) == 1 && term.args[1] isa Term ||
+                throw(ArgumentError("joint missing-predictor frontend: `mi()` must have one bare predictor name, e.g. `mi(x)`"))
+            push!(variables, term.args[1].sym)
+        elseif _joint_contains_mi(term)
+            throw(ArgumentError("joint missing-predictor frontend: `mi(x)` must be a bare additive term; nested or interacted markers are not implemented"))
+        else
+            _joint_validate_fixed_term(term, "mean formula")
+            push!(fixed, term)
+        end
+    end
+    length(unique(variables)) == 2 ||
+        throw(ArgumentError("joint missing-predictor frontend: the two `mi()` terms must mark distinct predictors"))
+    fixed_rhs = isempty(fixed) ? ConstantTerm(1) : length(fixed) == 1 ? fixed[1] : Tuple(fixed)
+    return (variables[1], variables[2]), fixed_rhs
+end
+
 function _joint_impute_spec(impute, variable::Symbol)
     impute isa NamedTuple ||
         throw(ArgumentError("joint missing-predictor frontend: `impute` must be a one-entry named tuple, e.g. `(x = @formula(x ~ z),)`"))
@@ -181,6 +227,27 @@ function _joint_impute_spec(impute, variable::Symbol)
     return spec
 end
 
+function _joint_two_impute_specs(impute, variables::NTuple{2,Symbol})
+    impute isa NamedTuple ||
+        throw(ArgumentError("joint missing-predictor frontend: `impute` must be a two-entry named tuple for the marked predictors"))
+    names = Tuple(keys(impute))
+    length(names) == 2 && Set(names) == Set(variables) ||
+        throw(ArgumentError("joint missing-predictor frontend: `impute` must contain exactly `$(variables[1])` and `$(variables[2])`"))
+    specs = ntuple(2) do j
+        variable = variables[j]
+        spec = getproperty(impute, variable)
+        spec = spec isa FormulaTerm ? impute_model(spec) : spec
+        spec isa JointImputeModel ||
+            throw(ArgumentError("joint missing-predictor frontend: `$variable` must map to `@formula($variable ~ ...)` or `impute_model(...)`"))
+        spec.formula.lhs isa Term && spec.formula.lhs.sym === variable ||
+            throw(ArgumentError("joint missing-predictor frontend: imputation formula lhs must be `$variable`"))
+        spec.family isa Gaussian ||
+            throw(ArgumentError("joint missing-predictor frontend: two-predictor admission requires Gaussian() for both predictor models"))
+        spec
+    end
+    return specs
+end
+
 function _joint_missing_vector(values)
     return Union{Missing,Float64}[value isa AbstractFloat && isnan(value) ? missing : Float64(value) for value in values]
 end
@@ -194,13 +261,83 @@ function _joint_refuse_nondefault(method, algorithm, K, A, tree, coords, profile
     return nothing
 end
 
+function _fit_two_joint_formula(f::DrmFormula, data;
+                                impute,
+                                missing,
+                                g_tol::Real,
+                                method::Symbol,
+                                algorithm::Symbol,
+                                K,
+                                A,
+                                tree,
+                                coords,
+                                profile_ci::Bool,
+                                phylo_coupled::Bool,
+                                penalty,
+                                sparse)
+    f.response2 === nothing || throw(ArgumentError("joint missing-predictor frontend: bivariate responses are not implemented"))
+    _joint_refuse_nondefault(method, algorithm, K, A, tree, coords, profile_ci, phylo_coupled, penalty, sparse)
+    missing isa JointMissingControl ||
+        throw(ArgumentError("joint missing-predictor frontend: `missing` must be created with miss_control(...)"))
+    missing.response in (:fail, :include) ||
+        throw(ArgumentError("joint missing-predictor frontend: response control must be :fail or :include"))
+    missing.predictor === :model ||
+        throw(ArgumentError("joint missing-predictor frontend: use `missing = miss_control(predictor = \"model\")`"))
+    isfinite(g_tol) && g_tol > 0 || throw(ArgumentError("joint missing-predictor frontend: `g_tol` must be finite and positive"))
+
+    rhs = Dict(f.forms)
+    Set(keys(rhs)) == Set((:mu, :sigma)) ||
+        throw(ArgumentError("joint missing-predictor frontend: only `mu` and `sigma` formulas are implemented"))
+    variables, fixed_mu = _joint_two_mean_parts(rhs[:mu])
+    f.response in variables && throw(ArgumentError(
+        "joint missing-predictor frontend: response and modelled predictors must be different variables"))
+    _joint_contains_mi(rhs[:sigma]) &&
+        throw(ArgumentError("joint missing-predictor frontend: `mi()` is valid on the mean formula only, not `sigma`"))
+    _joint_require_exogenous(fixed_mu, f.response, variables, "the mean design")
+    _joint_require_exogenous(rhs[:sigma], f.response, variables, "the sigma design")
+    _joint_validate_fixed_rhs(rhs[:sigma], "sigma formula")
+    _joint_require_complete_rhs(fixed_mu, data, "the mean design")
+    _joint_require_complete_rhs(rhs[:sigma], data, "the sigma design")
+
+    specs = _joint_two_impute_specs(impute, variables)
+    for j in 1:2
+        rhsj = specs[j].formula.rhs
+        _joint_require_exogenous(rhsj, f.response, variables, "predictor design for `$(variables[j])`")
+        _joint_validate_fixed_rhs(rhsj, "predictor model for `$(variables[j])`")
+        _joint_require_complete_rhs(rhsj, data, "predictor design for `$(variables[j])`")
+    end
+
+    y, Xmu, mu_names = _design(f.response, fixed_mu, data)
+    missing.response === :fail && any(isnan, y) &&
+        throw(ArgumentError("joint missing-predictor frontend: response has missing values; use `miss_control(response = \"include\", predictor = \"model\")`"))
+    _, Xsigma, sigma_names = _design(f.response, rhs[:sigma], data)
+    x1, Xpredictor1, predictor_names1 = _design(variables[1], specs[1].formula.rhs, data)
+    x2, Xpredictor2, predictor_names2 = _design(variables[2], specs[2].formula.rhs, data)
+    size(Xmu, 2) > 0 ||
+        throw(ArgumentError("joint missing-predictor frontend: removing the two `mi()` terms leaves a zero-width mean design, which the prepared engine does not support"))
+    n = length(y)
+    length(x1) == n && length(x2) == n && size(Xmu, 1) == n && size(Xsigma, 1) == n &&
+        size(Xpredictor1, 1) == n && size(Xpredictor2, 1) == n ||
+        throw(ArgumentError("joint missing-predictor frontend: response and design rows must agree"))
+    x = hcat(_joint_missing_vector(x1), _joint_missing_vector(x2))
+    prepared = prepared_joint_model(_joint_missing_vector(y), x, Xmu, Xsigma,
+                                    (Xpredictor1, Xpredictor2);
+                                    predictor = :gaussian, predictor_variables = variables,
+                                    mu_names = mu_names, sigma_names = sigma_names,
+                                    predictor_names = (predictor_names1, predictor_names2),
+                                    original_row = collect(1:n))
+    return JointTwoDrmFit(fit_prepared_joint(prepared; g_tol = g_tol), f, variables)
+end
+
 """
     _fit_joint_formula(f, data; impute, missing, ...)
 
 Build a prepared exact joint model from one Gaussian response formula containing
-one bare `mi(x)` mean term. This is a deliberately partial frontend: fixed
-Gaussian ML response, complete remaining covariates, and Gaussian or Bernoulli
-predictor models only. It neither drops rows nor fills x before fitting.
+one or two bare additive `mi(x)` mean terms. This deliberately partial frontend
+admits fixed Gaussian ML responses with complete remaining covariates. The
+one-predictor route permits Gaussian or Bernoulli predictor models; the
+two-predictor route requires two independent Gaussian predictor models. It
+neither drops rows nor fills modelled predictors before fitting.
 """
 function _fit_joint_formula(f::DrmFormula, data;
                             impute = nothing,
@@ -216,6 +353,13 @@ function _fit_joint_formula(f::DrmFormula, data;
                             phylo_coupled::Bool = false,
                             penalty = nothing,
                             sparse = nothing)
+    rhs_for_route = Dict(f.forms)
+    if haskey(rhs_for_route, :mu) && _joint_mi_count(rhs_for_route[:mu]) == 2
+        return _fit_two_joint_formula(f, data; impute = impute, missing = missing,
+            g_tol = g_tol, method = method, algorithm = algorithm, K = K, A = A,
+            tree = tree, coords = coords, profile_ci = profile_ci,
+            phylo_coupled = phylo_coupled, penalty = penalty, sparse = sparse)
+    end
     f.response2 === nothing || throw(ArgumentError("joint missing-predictor frontend: bivariate responses are not implemented"))
     _joint_refuse_nondefault(method, algorithm, K, A, tree, coords, profile_ci, phylo_coupled, penalty, sparse)
     missing isa JointMissingControl ||
@@ -304,4 +448,40 @@ function imputed(fit::JointDrmFit; variable = nothing, rows = :missing, se::Bool
     requested === nothing || requested === fit.variable ||
         throw(ArgumentError("joint missing-predictor frontend: this fit models `$(fit.variable)`, not `$variable`"))
     return _imputed_joint(fit.prepared, fit.variable; rows = rows, se = se)
+end
+
+"""All raw fitted coefficients in the two-predictor prepared-engine order."""
+coef(fit::JointTwoDrmFit) = coef(fit.prepared.fit)
+
+function coef(fit::JointTwoDrmFit, parameter::Symbol)
+    for variable in fit.variables
+        mi_name = Symbol(:mi_, variable)
+        raw_sd_name = Symbol(:logsd_mi_, variable)
+        natural_sd_name = Symbol(:sigma_mi_, variable)
+        if parameter === mi_name || parameter === raw_sd_name
+            return coef(fit.prepared.fit, parameter)
+        elseif parameter === natural_sd_name
+            return exp.(coef(fit.prepared.fit, raw_sd_name))
+        end
+    end
+    return coef(fit.prepared.fit, parameter)
+end
+
+# Keep the covariance on raw coordinates. In particular, logtau coordinates
+# are not delta-transformed merely because `coef(..., :sigma_mi_*)` is natural.
+vcov(fit::JointTwoDrmFit) = vcov(fit.prepared.fit)
+loglik(fit::JointTwoDrmFit) = loglik(fit.prepared.fit)
+nobs(fit::JointTwoDrmFit) = nobs(fit.prepared.fit)
+is_converged(fit::JointTwoDrmFit) = is_converged(fit.prepared.fit)
+niterations(fit::JointTwoDrmFit) = niterations(fit.prepared.fit)
+family(::JointTwoDrmFit) = Gaussian()
+
+"""Conditional imputation for one explicitly selected two-predictor marker variable."""
+function imputed(fit::JointTwoDrmFit; variable = nothing, rows = :missing, se::Bool = true)
+    requested = variable isa AbstractString ? Symbol(variable) : variable
+    requested isa Symbol ||
+        throw(ArgumentError("joint missing-predictor frontend: two-predictor fits require `variable`"))
+    requested in fit.variables ||
+        throw(ArgumentError("joint missing-predictor frontend: this fit models `$(fit.variables[1])` and `$(fit.variables[2])`, not `$variable`"))
+    return imputed(fit.prepared; variable = requested, rows = rows, se = se)
 end

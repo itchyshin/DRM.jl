@@ -53,15 +53,16 @@ SkewNormal
 cbind
 ```
 
-## [One modelled missing predictor](@id joint-predictor-formula)
+## [Modelled missing predictors](@id joint-predictor-formula)
 
-For a Gaussian response, `mi(x)` marks one additive predictor whose missing
+For a Gaussian response, `mi(x)` marks an additive predictor whose missing
 values are integrated out under a joint model. Observed predictor values inform
 the predictor distribution; missing predictors are not filled in before fitting.
-This initial route supports a Gaussian or Bernoulli predictor and complete
-remaining exogenous fixed-effect covariates: neither modelled variable may also
-appear in those fixed designs. Other response families, multiple modelled
-predictors, random or structured effects, REML, and profile/bootstrap intervals
+This route supports one Gaussian or Bernoulli predictor, or two independent
+Gaussian predictor models, with complete remaining exogenous fixed-effect
+covariates. Neither the response nor either modelled predictor may appear in
+those fixed designs. Other response families, three or more predictors, mixed
+predictor families, random or structured effects, REML, and profile/bootstrap intervals
 are still outside this admission. The same narrow route is available as
 **development** through `drmTMB(..., engine = "julia")`; it does
 not establish full native fitted-result parity.
@@ -111,12 +112,48 @@ native parity. Its profile/bootstrap methods are explicitly unsupported. The
 Gaussian predictor-SD Wald interval is a natural-scale delta interval, can cross
 zero, and is neither native-interval parity nor coverage evidence.
 
+With two Gaussian predictors, mark each separately and provide both predictor
+models. The `impute` entry order does not change which model belongs to which
+variable. Their prior distributions are conditionally independent given their
+covariates; conditioning on an observed response can correlate their missing
+values. The prepared fit retains that full conditional covariance.
+
+```@example joint_formula_two
+using DRM, Random, LinearAlgebra
+BLAS.set_num_threads(1)
+rng = MersenneTwister(9302)
+n = 64
+z = collect(range(-1, 1; length=n))
+x1 = 0.2 .+ 0.4z .+ 0.5randn(rng, n)
+x2 = -0.1 .+ 0.3z .+ 0.6randn(rng, n)
+y = 0.3 .+ 0.6x1 .- 0.4x2 .+ 0.2z .+ 0.5randn(rng, n)
+data = (y=Union{Missing,Float64}[i % 13 == 0 ? missing : y[i] for i in 1:n],
+        x1=Union{Missing,Float64}[i % 5 == 0 ? missing : x1[i] for i in 1:n],
+        x2=Union{Missing,Float64}[i % 7 == 0 ? missing : x2[i] for i in 1:n], z=z)
+fit = drm(bf(@formula(y ~ z + mi(x1) + mi(x2))), Gaussian(); data=data,
+    impute=(x2=@formula(x2 ~ z), x1=@formula(x1 ~ z)),
+    missing=miss_control(response="include", predictor="model"))
+@assert is_converged(fit)
+(coef(fit, :sigma_mi_x1), coef(fit, :sigma_mi_x2),
+ imputed(fit; variable=:x2))
+```
+
+With two predictors, `imputed` requires `variable`. Direct Julia returns raw
+coefficients and covariance in the prepared order: exogenous mean coefficients,
+the two marker slopes in formula order, residual scale coefficients, then each
+predictor's coefficients and log SD. Natural-SD accessors do not change that raw
+covariance convention. The R bridge instead restores native model-matrix column
+order and transforms both predictor SDs and their full covariance to public
+natural scales. In R use `impute=list(x1=x1~z, x2=x2~z)` and
+`imputed(fit, variable="x2")`.
+
 ```@docs
 mi
 miss_control
 impute_model
 imputed
 JointDrmFit
+JointTwoDrmFit
 JointMissingControl
 JointImputeModel
 ```

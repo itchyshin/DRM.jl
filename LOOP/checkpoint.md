@@ -1,3 +1,37 @@
+# Latest — two-Gaussian direct formula and R bridge verified (2026-08-30)
+
+Programme ACTIVE; G0–G8 OPEN. Same isolated pair codex/julia-r-parity.
+Rose final bounded approval and Melissa reconciliation pass;7slice gates met.
+MissionControl eca0d56 served3fields verified; scoped vault lease released.
+R bridge implementation and receipts committed a9ca76a35.
+The shared verified kernel now has direct Julia two-mi formula admission and
+real R JuliaCall transport/adapters. Native default160row/all8mask fixture passes
+unchanged4e-6: theta1.13e-6, trainingprediction1.44e-6; imputedmeans/SEs pass.
+Real public002 has finalsource/runtime hashes, fullconditionalcovariance retained,
+correct raw and publicSD covariance, rowmasks, predictions, summary/Wald execution and rowcounts only.
+Independent denseoracle and21damages normal/-O pass. Existing onepredictor neighbours,
+fullyobserved refusal controls, fitted nonmonotonic permutation/H*V checks pass.
+Two edited docs pages execute examples; no visual/deployed/fullsite claim.
+Public002 elapsed28.924s includesstartup, NOT warmperformance evidence.
+Evidence docs/dev-log/evidence/julia-r-parity/two-frontends/;
+report docs/dev-log/after-task/2026-08-30-parity-two-frontends.md.
+Progress map missing-predictor-progress.json distinguishes current admissions from
+immutable missing-predictor-obligations.json initialaudit. No wholecell closed.
+
+NEXT: ordinal/categorical missingpredictors through shared finite-state contract.
+All24nativeobligations still required; earlier singlepredictor4e-6 failures remain
+red. Refresh current-source integration evidence; older receipts remain historical.
+Continue completeS2/S3/S7/S8/S10/S11, LSSstampedSE/REML/masks/inferencematrix/10k/finalhead,
+allregisteredwarmwins with retainedlosses and separatepolicycalibration, original
+Claude/Cursorrecoverability, whole-sitevisual/deployedproof, finalRose/Melissa.
+No scope reduced, no newremotejobs, no cleanup/release/registration/push/merge.
+S5test/include and RZOB96/10 edits preserved; deniedsparsefiles untouched.
+Macshortchecks; Totoro<=150sharedcores; DRACallocatedcampaigns; >30minpilot+approval.
+Actualagenthours uninstrumented. Currentturn subordinate checks pass; broader
+programme is NOT complete. Approvedplan unchanged.
+
+---
+
 # Latest — two-Gaussian prepared kernel verified (2026-08-30)
 
 Programme ACTIVE; all G0–G8 remain OPEN. Same isolated pair/branch
