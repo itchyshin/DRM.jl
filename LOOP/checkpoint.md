@@ -1,3 +1,43 @@
+# Current checkpoint — finite-state direct and R frontends (2026-08-30)
+
+Programme ACTIVE; G0-G8 OPEN. Worktrees remain /private/tmp/drm-parity-20260830/{DRM.jl,drmTMB}, branch codex/julia-r-parity.
+One ordinal/categorical missing predictor now reaches the shared unchanged prepared
+likelihood through direct Julia formulas and real R JuliaCall. Frozen public003
+passes both adapters with independently replayed likelihood, covariance, actual
+imputation/SD/probabilities, cutpoints and newdata predictions. Rose approved source
+and final checker;17corruptions rejected normally/-O. Native4e-6 remains FAILED
+bothfamilies; earlier singlepredictor losses remain required. No wholecell closed.
+
+Current public receipt: docs/dev-log/evidence/julia-r-parity/finite-frontends/finite-public-003.json.
+Current report: docs/dev-log/after-task/2026-08-30-parity-finite-frontends.md.
+Source frontend0be947213e7bb6458415f8cc751dba6c4899ae375af450954a38fa944ff038c3;
+checker2a3a13bb45441f6138f39d3a5ddec4958788008ea9856c14cc1248825d10c239.
+Targeted Julia/R tests pass; two edited documentation pages execute. No allsite
+render/deployedproof. RDS staysRrepoonly. Old001/002 receipts andfailedlogsretained.
+DirectJulia rawcoef/vcov includesordinalcuts; R publiccoef/vcov omits them.
+That accessor/coordinate mismatch is REQUIRED reconciliation, not silentlyclosed.
+No-interceptdirectmean withnumericcovariates usesK fullindicators. Additional
+categoricalcovariates explicitlyrefuse pendingnativefirst-factorcoding, also REQUIRED.
+
+NEXT: investigate retained4e-6 nativefit losses without comparator/default/tolerance
+changes; implement no-interceptcategoricalcovariatecoding; reconcile raw/public
+accessors. Continue all24nativeobligations, frozenvalidcase/outputmanifest,
+S2/S3/S7/S8/S10/S11, originalLSSstampedSE/REML/masks/inferencematrix/large-tree/finalhead,
+everyregisteredwarmwin and1/2/4/8automaticpolicy, Claude/Cursorunfinishedwork,
+itemizedrecoverablecleanup, whole-sitevisual/deployedproof andfinalRose/Melissa.
+Approvedplan docs/dev-log/plans/2026-08-30-julia-r-parity.md unchanged.
+
+Both existingSSHsockets reverified (Totoro=>totoro,Fir=>login1); nofreshlogin or
+newremotejob. PriorTotoro67second190assertionpilot is OLDf67eeb80source evidence,
+notcurrentfinite-state orwarmtiming. Macboundedchecks;Totoro<=150sharedcores;
+DRACcomputeallocationsonly;>30minpilot+approval. MissionControl8fd4ace serves
+updatedthreefields;vaultlease released. Unrelatedvault21paths untouched.
+ProtectedS5test/include,RZOB96/10 and previouslydeniedsparsefilespreserved.
+No push/merge/release/registration/publicdeployment/collaboratormessage.
+Actualagenthours uninstrumented. Programme is not complete.
+
+---
+
 # Latest — finite-state prepared kernel; native-fit losses retained (2026-08-30)
 
 Programme ACTIVE; G0–G8 OPEN. Same isolated pair codex/julia-r-parity.

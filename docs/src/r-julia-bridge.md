@@ -75,7 +75,7 @@ Two ways to use DRM.jl from R, in increasing integration:
 The R bridge also has a deliberately narrow development route for one modelled
 missing predictor. It accepts a Gaussian identity-link response, exactly one
 bare additive `mi(x)` term in `mu`, complete fixed-effect exogenous designs,
-and either a Gaussian or Bernoulli fixed-effect predictor model. The direct
+and a Gaussian, Bernoulli, ordinal or categorical fixed-effect predictor model. The direct
 Julia frontend and `drmTMB(..., engine = "julia")` use the same prepared joint
 likelihood; observed `x` values remain observed and missing `x` values are
 integrated rather than filled before fitting.
@@ -88,7 +88,7 @@ bridge response-drop path removes missing-response rows before preparation.
 That is a documented preprocessing choice, not native response-policy parity.
 
 This admission is not a general missing-data bridge. It rejects other response
-families, multiple `mi()` predictors, interactions or nesting involving `mi()`,
+families, interactions or nesting involving `mi()`,
 random or structured effects, offsets, non-default controls, likelihood weights,
 and REML. `summary()` and Wald `confint()` are available only when the returned
 covariance is usable; profile and bootstrap intervals explicitly error. The
@@ -100,7 +100,29 @@ Two public bridge-adapter cases pass. Training prediction and binary
 `newdata` handling have been repaired and checked independently. Full numerical
 parity remains open: small differences in native optimizer stopping affect
 coefficients and predictions beyond the declared tolerance. This route makes
-no full native-parity, speed, or interval-coverage claim.
+no full native-parity, speed, or interval-coverage claim. A separate development
+route also admits two independent Gaussian predictors; this does not admit
+arbitrary combinations of missing-predictor families.
+
+For an ordered predictor, use an ordered R factor and
+`impute_model(x ~ z, family = cumulative_logit())`; for a nominal predictor,
+use a factor and `impute_model(x ~ z, family = categorical())`. Both finite-state
+routes require at least three observed levels. The ordered predictor model
+removes its intercept because its cutpoints already supply location parameters.
+The response mean still follows its own formula's intercept convention.
+
+Finite-state predictions average the fitted mean over posterior states.
+`imputed()` returns expected category scores and conditional score SDs for an
+ordered predictor, or the first modal category code for a nominal predictor.
+Nominal metric standard errors are unavailable. These are conditional summaries,
+not multiple-imputation draws. Ordered-predictor cutpoints are retained in
+`fit$missing_data$predictors$x$cutpoints`; ordinary R `coef()` and `vcov()` exclude
+them. The bridge retains all raw covariance coordinates internally.
+
+The two retained finite-state bridge cases pass transport and public-operation
+checks, including new-data predictions. Native numerical parity remains open
+at the unchanged `4e-6` tolerance; these checks establish neither faster warm
+workflows nor the full native missing-data interface.
 
 ## The DRM.jl-side contract
 

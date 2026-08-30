@@ -1,0 +1,26 @@
+Test Summary:                            | Pass  Total   Time
+joint missing-predictor formula frontend |   45     45  15.3s
+Test Summary:                                  | Pass  Total  Time
+joint public routing refuses ignored arguments |    3      3  0.3s
+JOINT_FRONTEND_PUBLIC_PASS
+Test Summary:                                      | Pass  Total  Time
+joint model requires exogenous complete covariates |    9      9  0.7s
+JOINT_EXOGENOUS_REFUSALS_PASS
+Test Summary:                                          | Pass  Total   Time
+two Gaussian missing-predictor direct formula frontend |   43     43  13.9s
+Test Summary:                         | Pass  Total  Time
+two Gaussian direct frontend refusals |   19     19  0.8s
+TWO_JOINT_FRONTEND_TEST_READY
+Test Summary:             | Pass  Total  Time
+prepared joint bridge API |    2      2  0.0s
+Test Summary:                              | Pass  Total  Time
+prepared joint bridge validation and masks |   14     14  1.3s
+Test Summary:                                              | Pass  Total  Time
+two joint bridge fits retain native ordering and summaries |   26     26  6.2s
+JOINT_BRIDGE_KERNEL_PASS
+Test Summary:                      | Pass  Total  Time
+two Gaussian primitive preparation |   22     22  1.1s
+Test Summary:                               | Pass  Total   Time
+two Gaussian primitive fit and native order |   23     23  13.1s
+TWO_BRIDGE_NEW_PASS
+FINITE_JULIA_NEIGHBOURS_PASS

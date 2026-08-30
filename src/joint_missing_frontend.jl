@@ -42,22 +42,42 @@ function miss_control(; response = "fail", predictor = "fail")
     )
 end
 
+"""Predictor-only multinomial-logit marker for finite categorical imputation."""
+struct CategoricalLogit end
+
 """Formula and family for the one predictor distribution in a joint fit."""
-struct JointImputeModel{F}
+struct JointImputeModel{F,L}
     formula::FormulaTerm
     family::F
+    levels::L
 end
 
+# Source compatibility for callers that constructed the original two-field
+# wrapper directly before finite-state predictor families were admitted.
+JointImputeModel(formula::FormulaTerm, family) = JointImputeModel(formula, family, nothing)
+
 """
-    impute_model(formula; family = Gaussian())
+    impute_model(formula; family = Gaussian(), levels = nothing)
 
 Wrap a predictor model when its distribution is not the default Gaussian.
-The bounded frontend currently admits Gaussian and Bernoulli (`Binomial()`) x.
+The bounded frontend admits Gaussian, Bernoulli (`Binomial()`), ordinal
+(`CumulativeLogit()`), and categorical (`CategoricalLogit()`) predictors.
+`levels` is required for textual ordinal data, recommended for categorical
+data, and rejected for Gaussian/Bernoulli predictors.
 """
-function impute_model(formula::FormulaTerm; family = Gaussian())
-    family isa Gaussian || family isa Binomial ||
-        throw(ArgumentError("impute_model: `family` must be Gaussian() or Binomial()"))
-    return JointImputeModel(formula, family)
+function impute_model(formula::FormulaTerm; family = Gaussian(), levels = nothing)
+    family isa Gaussian || family isa Binomial || family isa CumulativeLogit || family isa CategoricalLogit ||
+        throw(ArgumentError("impute_model: `family` must be Gaussian(), Binomial(), CumulativeLogit(), or CategoricalLogit()"))
+    (family isa Gaussian || family isa Binomial) && levels !== nothing &&
+        throw(ArgumentError("impute_model: `levels` applies only to CumulativeLogit() or CategoricalLogit() predictor models"))
+    if levels !== nothing
+        labels = string.(collect(levels))
+        length(labels) >= 3 || throw(ArgumentError("impute_model: finite-state predictors require at least three declared levels"))
+        all(!isempty, labels) && length(unique(labels)) == length(labels) ||
+            throw(ArgumentError("impute_model: `levels` must be distinct nonempty labels"))
+        return JointImputeModel(formula, family, labels)
+    end
+    return JointImputeModel(formula, family, nothing)
 end
 
 """User-facing wrapper around the prepared exact joint fit."""
@@ -79,6 +99,20 @@ struct JointTwoDrmFit
     prepared::PreparedTwoJointGaussianFit
     formula::DrmFormula
     variables::NTuple{2,Symbol}
+end
+
+"""
+    JointFiniteDrmFit
+
+Formula-facing wrapper for one ordinal or categorical missing predictor.  Its
+raw coefficient vector and covariance keep the kernel order `beta, delta,
+alpha, cutraw`; ordinal raw cutpoints are deliberately separate from the
+predictor-logit coefficients and `cutpoints(fit)` returns their natural scale.
+"""
+struct JointFiniteDrmFit
+    prepared::PreparedFiniteJointFit
+    formula::DrmFormula
+    variable::Symbol
 end
 
 _joint_frontend_terms(rhs) = rhs isa Tuple ? collect(rhs) : Any[rhs]
@@ -261,6 +295,214 @@ function _joint_refuse_nondefault(method, algorithm, K, A, tree, coords, profile
     return nothing
 end
 
+_joint_finite_family(family) = family isa CumulativeLogit || family isa CategoricalLogit
+
+function _joint_finite_label(value)
+    value isa Real && isfinite(Float64(value)) && isinteger(value) && return string(Int(value))
+    return string(value)
+end
+
+function _joint_finite_observed(values, variable::Symbol)
+    observed = Any[]
+    for value in values
+        _joint_frontend_missing(value) && continue
+        push!(observed, value)
+    end
+    isempty(observed) && throw(ArgumentError(
+        "joint missing-predictor frontend: `$variable` needs observed finite-state predictor values"))
+    return observed
+end
+
+function _joint_finite_numeric_levels(observed, variable::Symbol)
+    # Numeric finite predictors use the native integer-code convention.  Do not
+    # let non-integral or non-finite numbers slip into categorical lexical
+    # labels (for example, `1.5` must not become the level "1.5").
+    all(value -> value isa Real, observed) || return nothing
+    all(value -> isfinite(Float64(value)) && isinteger(value), observed) ||
+        throw(ArgumentError("joint missing-predictor frontend: inferred numeric `$variable` codes must be finite integers 1:K"))
+    codes = Int.(observed)
+    K = maximum(codes)
+    unique_codes = sort(unique(codes))
+    # `length(unique_codes) == K` proves exact 1:K coverage after the minimum
+    # check, without materializing a potentially huge proposed range first.
+    (K >= 3 && minimum(codes) == 1 && length(unique_codes) == K) ||
+        throw(ArgumentError("joint missing-predictor frontend: inferred numeric `$variable` codes must be contiguous 1:K with K >= 3"))
+    return string.(1:K)
+end
+
+function _joint_finite_levels(spec::JointImputeModel, values, variable::Symbol)
+    observed = _joint_finite_observed(values, variable)
+    labels = if spec.levels !== nothing
+        copy(spec.levels)
+    elseif spec.family isa CumulativeLogit
+        inferred = _joint_finite_numeric_levels(observed, variable)
+        inferred === nothing &&
+            throw(ArgumentError("joint missing-predictor frontend: textual ordinal `$variable` requires explicit ordered `levels`"))
+        inferred
+    else
+        # Categorical labels have no scientific ordering.  Sorting their printed
+        # form gives a reproducible baseline for labels. Numeric codes instead
+        # use the native 1:K convention, never lexical order such as 1,10,2.
+        inferred = _joint_finite_numeric_levels(observed, variable)
+        inferred === nothing ? sort(unique(_joint_finite_label.(observed))) : inferred
+    end
+    length(labels) >= 3 || throw(ArgumentError(
+        "joint missing-predictor frontend: finite-state `$variable` requires K >= 3 levels"))
+    observed_labels = _joint_finite_label.(observed)
+    all(label -> label in labels, observed_labels) || throw(ArgumentError(
+        "joint missing-predictor frontend: observed `$variable` values are not all in declared `levels`"))
+    all(label -> any(==(label), observed_labels), labels) || throw(ArgumentError(
+        "joint missing-predictor frontend: every declared `$variable` level must occur among observed predictor rows"))
+    return labels
+end
+
+function _joint_finite_nointercept_factor_guard(rhs, data)
+    for name in unique(reduce(vcat, (_joint_term_symbols(term) for term in _joint_frontend_terms(rhs)); init = Symbol[]))
+        values = _table_column(data, name)
+        any(value -> !_joint_frontend_missing(value) && (!(value isa Real) || value isa Bool), values) &&
+            throw(ArgumentError("joint missing-predictor frontend: no-intercept finite-state mean formulas currently require numeric fixed covariates; native first-factor full coding must be preserved"))
+    end
+    return nothing
+end
+
+function _joint_finite_predictor_design(data, variable::Symbol, rhs)
+    n = length(_table_column(data, variable))
+    # `_design` uses its LHS only to obtain a StatsModels schema/model matrix.
+    # The finite predictor can be textual or missing, so install a local numeric
+    # dummy rather than coercing its observed state labels through the response
+    # path.  The original table is never modified.
+    design_data = _replace_table_column(data, variable, zeros(Float64, n))
+    _, X, names = _design(variable, rhs, design_data)
+    return X, names
+end
+
+function _joint_finite_polynomials(K::Int)
+    scores = collect(1.0:1.0:K)
+    centered = scores .- mean(scores)
+    # Keep the polynomial domain fixed on [-1, 1]. Dividing by its norm makes
+    # high powers artificially tiny before re-orthogonalization.
+    scaled = centered ./ maximum(abs, centered)
+    basis = Vector{Vector{Float64}}()
+    push!(basis, ones(Float64, K) ./ sqrt(K))
+    for degree in 1:(K - 1)
+        vector = scaled .^ degree
+        # Twice-repeated modified Gram--Schmidt retains orthogonality for
+        # K > 3 without making the contrast signs depend on QR/BLAS details.
+        for _ in 1:2, previous in basis
+            vector .-= dot(previous, vector) .* previous
+        end
+        scale = norm(vector)
+        scale > sqrt(eps(Float64)) || throw(ArgumentError(
+            "joint missing-predictor frontend: could not construct ordinal polynomial contrasts"))
+        vector ./= scale
+        # Fix the QR/Gram-Schmidt sign convention independently of BLAS: the
+        # leading (highest-score) coefficient is positive, giving .L/.Q signs
+        # used by the generated parity payload.
+        vector[end] < 0 && (vector .*= -1)
+        push!(basis, vector)
+    end
+    return hcat(basis[2:end]...)
+end
+
+function _joint_finite_state_design(Xfixed::AbstractMatrix, variable::Symbol,
+                                    labels::Vector{String}, predictor::Symbol;
+                                    insertion::Integer = size(Xfixed, 2),
+                                    full_states::Bool = false)
+    n, p = size(Xfixed)
+    0 <= insertion <= p || throw(ArgumentError("joint missing-predictor frontend: invalid finite-state mean insertion"))
+    K = length(labels)
+    nstate = full_states ? K : K - 1
+    contrast = if full_states
+        Matrix{Float64}(I, K, K)
+    elseif predictor === :ordinal
+        _joint_finite_polynomials(K)
+    else
+        C = zeros(Float64, K, K - 1)
+        for k in 2:K
+            C[k, k - 1] = 1.0
+        end
+        C
+    end
+    Xstate = Array{Float64}(undef, n, K, p + nstate)
+    for i in 1:n, k in 1:K
+        insertion > 0 && (Xstate[i, k, 1:insertion] .= Xfixed[i, 1:insertion])
+        Xstate[i, k, (insertion + 1):(insertion + nstate)] .= contrast[k, :]
+        insertion < p && (Xstate[i, k, (insertion + nstate + 1):end] .= Xfixed[i, (insertion + 1):end])
+    end
+    term_names = if full_states
+        ["mi($(variable))$(label)" for label in labels]
+    elseif predictor === :ordinal
+        suffix = ["L", "Q", "C"]
+        [j <= length(suffix) ? "mi($(variable)).$(suffix[j])" : "mi($(variable))^$j" for j in 1:(K - 1)]
+    else
+        ["mi($(variable))$(labels[k])" for k in 2:K]
+    end
+    return Xstate, term_names
+end
+
+function _joint_finite_mean_insertion(f::DrmFormula, data)
+    rhs = Dict(f.forms)[:mu]
+    terms = _joint_frontend_terms(rhs)
+    marker = findfirst(term -> term isa FunctionTerm && term.f === mi, terms)
+    marker === nothing && throw(ArgumentError("joint missing-predictor frontend: no finite `mi()` marker found"))
+    prefix = Any[]
+    # Keep the original explicit intercept convention even when a constant sits
+    # after the marker; StatsModels otherwise reinstates an implicit intercept.
+    append!(prefix, (term for term in terms if term isa ConstantTerm))
+    append!(prefix, (term for term in terms[1:(marker - 1)] if !(term isa ConstantTerm)))
+    prefix_rhs = isempty(prefix) ? ConstantTerm(1) : length(prefix) == 1 ? prefix[1] : Tuple(prefix)
+    _, Xprefix, _ = _design(f.response, prefix_rhs, data)
+    return size(Xprefix, 2)
+end
+
+function _fit_finite_joint_formula(f::DrmFormula, data, variable::Symbol, fixed_mu, rhs_sigma,
+                                   spec::JointImputeModel;
+                                   missing::JointMissingControl,
+                                   g_tol::Real)
+    predictor = spec.family isa CumulativeLogit ? :ordinal : :categorical
+    raw_x = _table_column(data, variable)
+    labels = _joint_finite_levels(spec, raw_x, variable)
+    observed_x = BitVector(!_joint_frontend_missing(value) for value in raw_x)
+    any(.!observed_x) || throw(ArgumentError(
+        "joint missing-predictor frontend: finite-state `$variable` admission requires at least one missing predictor row"))
+
+    y, Xfixed, fixed_names = _design(f.response, fixed_mu, data)
+    missing.response === :fail && any(isnan, y) &&
+        throw(ArgumentError("joint missing-predictor frontend: response has missing values; use `miss_control(response = \"include\", predictor = \"model\")`"))
+    _, Xsigma, sigma_names = _design(f.response, rhs_sigma, data)
+    Xpredictor, predictor_names = _joint_finite_predictor_design(data, variable, spec.formula.rhs)
+    if predictor === :ordinal
+        intercept = findfirst(==("(Intercept)"), predictor_names)
+        if intercept !== nothing
+            keep = setdiff(1:length(predictor_names), intercept)
+            Xpredictor = Xpredictor[:, keep]
+            predictor_names = predictor_names[keep]
+        end
+    end
+    full_states = !any(==("(Intercept)"), fixed_names)
+    full_states && _joint_finite_nointercept_factor_guard(fixed_mu, data)
+    pstate = size(Xfixed, 2) + (full_states ? length(labels) : length(labels) - 1)
+    pstate > 0 || throw(ArgumentError("joint missing-predictor frontend: finite-state mean design is empty"))
+    n = length(y)
+    size(Xfixed, 1) == n && size(Xsigma, 1) == n && size(Xpredictor, 1) == n && length(raw_x) == n ||
+        throw(ArgumentError("joint missing-predictor frontend: response and design rows must agree"))
+    observed_count = count(observed_x)
+    q = size(Xpredictor, 2)
+    needed = predictor === :ordinal ? q + length(labels) - 1 : q * (length(labels) - 1)
+    observed_count > needed || throw(ArgumentError(
+        "joint missing-predictor frontend: `$variable` has $observed_count observed rows, insufficient for its $needed finite-state predictor parameters"))
+
+    insertion = _joint_finite_mean_insertion(f, data)
+    Xstate, state_names = _joint_finite_state_design(Xfixed, variable, labels, predictor;
+        insertion = insertion, full_states = full_states)
+    kernel_x = Union{Missing,String}[observed_x[i] ? _joint_finite_label(raw_x[i]) : Base.missing for i in eachindex(raw_x)]
+    prepared = prepared_joint_model(_joint_missing_vector(y), kernel_x, Xstate, Xsigma, Xpredictor;
+        predictor = predictor, levels = labels, variable = variable,
+        mu_names = vcat(fixed_names[1:insertion], state_names, fixed_names[(insertion + 1):end]), sigma_names = sigma_names,
+        predictor_names = predictor_names, original_row = collect(1:n))
+    return JointFiniteDrmFit(fit_prepared_joint(prepared; g_tol = g_tol), f, variable)
+end
+
 function _fit_two_joint_formula(f::DrmFormula, data;
                                 impute,
                                 missing,
@@ -388,8 +630,17 @@ function _fit_joint_formula(f::DrmFormula, data;
     _joint_require_exogenous(spec.formula.rhs, f.response, variable, "the predictor design")
     _joint_validate_fixed_rhs(spec.formula.rhs, "the predictor model")
     _joint_require_complete_rhs(spec.formula.rhs, data, "the predictor design")
+    if _joint_finite_family(spec.family)
+        return _fit_finite_joint_formula(f, data, variable, fixed_mu, rhs[:sigma], spec;
+            missing = missing, g_tol = g_tol)
+    end
     predictor = spec.family isa Gaussian ? :gaussian : spec.family isa Binomial ? :bernoulli :
         throw(ArgumentError("joint missing-predictor frontend: predictor family must be Gaussian() or Binomial()"))
+    if predictor === :bernoulli
+        observed_labels = _joint_finite_label.(_joint_finite_observed(_table_column(data, variable), variable))
+        length(unique(observed_labels)) <= 2 || throw(ArgumentError(
+            "joint missing-predictor frontend: Bernoulli `$variable` permits at most two observed predictor levels"))
+    end
 
     y, Xmu, mu_names = _design(f.response, fixed_mu, data)
     missing.response === :fail && any(isnan, y) &&
@@ -484,4 +735,55 @@ function imputed(fit::JointTwoDrmFit; variable = nothing, rows = :missing, se::B
     requested in fit.variables ||
         throw(ArgumentError("joint missing-predictor frontend: this fit models `$(fit.variables[1])` and `$(fit.variables[2])`, not `$variable`"))
     return imputed(fit.prepared; variable = requested, rows = rows, se = se)
+end
+
+"""All raw fitted finite-state coefficients in `beta, delta, alpha, cutraw` order."""
+coef(fit::JointFiniteDrmFit) = coef(fit.prepared.fit)
+
+function coef(fit::JointFiniteDrmFit, parameter::Symbol)
+    parameter === Symbol(:mi_, fit.variable) && return coef(fit.prepared.fit, parameter)
+    parameter === Symbol(:rawcut_, fit.variable) || return coef(fit.prepared.fit, parameter)
+    fit.prepared.prepared.predictor === :ordinal ||
+        throw(ArgumentError("joint missing-predictor frontend: categorical `$(fit.variable)` has no ordinal cutpoints"))
+    return coef(fit.prepared.fit, parameter)
+end
+
+"""
+    cutpoints(fit::JointFiniteDrmFit)
+
+Natural cumulative-logit cutpoints for an ordinal finite predictor.  This is a
+separate transformed view of raw `coef(fit, :rawcut_<variable>)`; `vcov(fit)`
+continues to use the raw kernel coordinates.
+"""
+function cutpoints(fit::JointFiniteDrmFit)
+    model = fit.prepared.prepared
+    model.predictor === :ordinal ||
+        throw(ArgumentError("joint missing-predictor frontend: categorical `$(fit.variable)` has no ordered cutpoints"))
+    raw = coef(fit.prepared.fit, Symbol(:rawcut_, fit.variable))
+    result = similar(raw)
+    result[1] = raw[1]
+    for j in 2:length(raw)
+        result[j] = result[j - 1] + exp(raw[j])
+    end
+    return result
+end
+
+# Raw covariance is intentionally not delta-transformed for `cutpoints`.
+vcov(fit::JointFiniteDrmFit) = vcov(fit.prepared.fit)
+loglik(fit::JointFiniteDrmFit) = loglik(fit.prepared.fit)
+nobs(fit::JointFiniteDrmFit) = nobs(fit.prepared.fit)
+is_converged(fit::JointFiniteDrmFit) = is_converged(fit.prepared.fit)
+niterations(fit::JointFiniteDrmFit) = niterations(fit.prepared.fit)
+family(::JointFiniteDrmFit) = Gaussian()
+fitted(fit::JointFiniteDrmFit) = fitted(fit.prepared.fit)
+joint_missing_summary(fit::JointFiniteDrmFit) = joint_missing_summary(fit.prepared)
+
+"""Conditional finite-state imputation for the marker variable in a formula-based fit."""
+function imputed(fit::JointFiniteDrmFit; variable = nothing, rows = :missing, se::Bool = true)
+    requested = variable isa AbstractString ? Symbol(variable) : variable
+    requested === nothing || requested isa Symbol ||
+        throw(ArgumentError("joint missing-predictor frontend: `variable` must be a Symbol, String, or nothing"))
+    requested === nothing || requested === fit.variable ||
+        throw(ArgumentError("joint missing-predictor frontend: this fit models `$(fit.variable)`, not `$variable`"))
+    return imputed(fit.prepared; variable = fit.variable, rows = rows, se = se)
 end

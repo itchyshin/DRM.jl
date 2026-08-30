@@ -291,6 +291,42 @@ Categorical `imputed()` reports the first modal category code; a metric SE is
 unavailable, with an explicit status. Fit covariance failures take precedence.
 Neither summary is a multiple-imputation draw or an interval-coverage claim.
 
+The direct formula frontend uses this same kernel. Supply declared levels for
+textual ordered data; declaring nominal levels fixes the baseline explicitly:
+
+```@example finite_formula
+using DRM, Random
+rng = MersenneTwister(563)
+labels = ["low", "medium", "high"]
+codes = repeat(1:3, 30)
+z = randn(rng, 90)
+x = Union{Missing,String}[labels[k] for k in codes]
+y = Union{Missing,Float64}[0.2 + 0.3*z[i] + 0.4*codes[i] + 0.5*randn(rng) for i in 1:90]
+x[7:7:84] .= missing
+y[14] = missing
+data = (; y, x, z)
+form = bf(@formula(y ~ z + mi(x)), @formula(sigma ~ 1))
+predictor = impute_model(@formula(x ~ z);
+    family = CumulativeLogit(), levels = ["low", "medium", "high"])
+fit = drm(form, Gaussian(); data,
+    impute = (x = predictor,),
+    missing = miss_control(response = "include", predictor = "model"))
+@assert isfinite(loglik(fit))
+(cutpoints(fit), imputed(fit; rows = :missing))
+```
+
+Use `CategoricalLogit()` for a nominal predictor. In direct Julia, `coef(fit)`
+and `vcov(fit)` retain the prepared **raw** parameter order, including ordinal
+cutpoint coordinates; `cutpoints(fit)` returns constrained cutpoints separately.
+This differs from R's public coefficient table, which omits predictor cutpoints.
+The fitted likelihood is shared, but full accessor parity and the remaining
+native default-fit discrepancies are still programme requirements.
+No-intercept means with numeric fixed covariates use a full indicator for every
+predictor state. Direct Julia currently rejects a no-intercept mean that also
+contains another categorical fixed covariate: matching R's first-factor coding
+is still required work, not an excluded parity case. R-prepared bridge designs
+retain R's coding.
+
 ```@docs
 DRM.PreparedFiniteJointModel
 DRM.PreparedFiniteJointFit

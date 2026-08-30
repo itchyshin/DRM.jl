@@ -138,6 +138,7 @@ include("joint_missing_two_predictor.jl") # #563: exact two-Gaussian prepared ke
 include("joint_missing_finite.jl") # #563: exact ordinal/categorical finite sums
 include("joint_missing_frontend.jl") # #563: two fixed-effect joint formula routes
 include("joint_missing_bridge.jl") # #563: primitive prepared-array transport
+include("joint_missing_finite_bridge.jl") # #563: ordinal/categorical state transport
 
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
@@ -189,7 +190,8 @@ export PreparedJointModel, PreparedJointFit, PreparedFiniteJointModel, PreparedF
        prepared_joint_rowloglik, prepared_joint_nll,
        prepared_joint_conditional_moments, fit_prepared_joint,
        joint_missing_summary, imputed, mi, miss_control, impute_model,
-       JointDrmFit, JointTwoDrmFit, JointMissingControl, JointImputeModel
+       JointDrmFit, JointTwoDrmFit, JointFiniteDrmFit, JointMissingControl, JointImputeModel,
+       CategoricalLogit, cutpoints
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare

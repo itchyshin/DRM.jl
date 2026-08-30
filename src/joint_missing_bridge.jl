@@ -29,6 +29,7 @@ end
 function _prepare_joint_bridge(payload)
     d = _joint_bridge_dict(payload,"payload")
     get(d,"schema",nothing) == "joint_missing_two_gaussian_v1" && return _prepare_two_joint_bridge(d)
+    get(d,"schema",nothing) == "joint_missing_finite_v1" && return _prepare_finite_joint_bridge(d)
     required = Set(["schema","predictor","variable","y","x","observed_y","observed_x",
         "X_mu","X_sigma","X_predictor","mu_col","mu_names","sigma_names","predictor_names","original_row","options"])
     Set(keys(d)) == required || throw(ArgumentError("joint bridge: payload fields differ from joint_missing_v1"))
@@ -83,6 +84,7 @@ does not add new family, weighting, REML, profile or bootstrap admissions.
 function drm_bridge_joint(payload)
     prepared=_prepare_joint_bridge(payload)
     prepared.model isa PreparedTwoJointGaussianModel && return _fit_two_joint_bridge(prepared)
+    prepared.model isa PreparedFiniteJointModel && return _fit_finite_joint_bridge(prepared)
     fit=fit_prepared_joint(prepared.model;g_tol=prepared.g_tol)
     out=_bridge_flatten(fit.fit;family="gaussian")
     k=length(prepared.mu_names);r=length(prepared.sigma_names);q=length(prepared.predictor_names)
