@@ -1,3 +1,53 @@
+# Latest — two-Gaussian prepared kernel verified (2026-08-30)
+
+Programme ACTIVE; all G0–G8 remain OPEN. Same isolated pair/branch
+/private/tmp/drm-parity-20260830/{DRM.jl,drmTMB}, codex/julia-r-parity.
+New shared prepared overload admits an n-by-2 matrix of independent Gaussian
+predictors with separate masks/designs. It retains full conditional covariance,
+observed predictor densities, first-order imputation uncertainty and fit status.
+Direct two-marker formula and R bridge admission are NOT wired yet: they are
+required next, not excluded. Source kernel SHA fec1668bb4f6266d7580fbcbc162ae48a1b6202cf614335b97da02ca705ec7bc.
+
+Native default160row8mask reference:0.618s. Independent dense3DNormal oracle
+passes3points and25damagecontrols normal/-O. Julia prepared defaultfit passes
+strictunchanged4e-6 (max theta1.127707e-6,gradient2.93e-9);17receipt damagecontrols
+pass normal/-O. Runner21.788s includes compilation/evaluations, NOT warmtiming.
+Targeted kernel+existingonepredictor tests PASS; editeddeveloperpage2examples
+PASS8.487s. Rose Sol/high approves boundedpreparedkernel; no broader parityclaim.
+Evidence: docs/dev-log/evidence/julia-r-parity/two-gaussian/.
+Report: docs/dev-log/after-task/2026-08-30-parity-two-gaussian-kernel.md.
+Bounded Melissa reconciliation passes; programme G8 stays OPEN. Mission Control
+6265320 records the next frontend/bridge work; three fields verified in served
+JSON and scoped vault lease released.
+Native reference/exporter committed in R as f8b901c3d.
+NativeRDS stays only in Rrepo evidence; generated numerical outputs in Julia.
+
+Stopping investigation: Rose found NO demonstrated native defaultsolver defect.
+Earlier singlepredictor default4e-6 failures remain required/red; do not loosen
+thresholds, change defaults or substitute diagnostic restarts to hide them.
+Full current-source bridge evidence must be regenerated at final integration;
+old receipts remain immutable historical evidence after this module change.
+
+NEXT: extend direct frontend and R prepared transport/adapters to twoGaussian
+predictors, using the verified kernel. Restore native formula order, full theta/V
+permutations, two naturalSD blocks and variable-specific imputed summaries.
+Test refusals for mixed/thirdpredictor, interactions, dependencies and unimplemented
+options. Then continue all24native missing-predictor obligations, full S2code/S3/
+output denominator, S7/S8/S10/S11, LSS REML/masks/stampedSE/matrixv2/final-head/10k,
+allregisteredwarmwins with retainedlosses/separate1/2/4/8policy calibration,
+originalClaude/Cursor obligations, restore-and-compare cleanup, whole-sitevisual/
+deployedproof and finalRose/Melissa reconciliation. Scope is unchanged.
+
+No new remotejobs, cleanup, release, registration, push or merge. Macshortchecks;
+TotoroCPU<=150sharedcores; DRACallocations for justifiedcampaigns. >30minneeds
+measuredpilot andapproval. Denied sparsefiles remainuntouched, as do unrelated
+S5test/include andRZOBchanges. Agent-hours uninstrumented. Worker observation
+handles were lost twice; authoritativeps confirmedterminal before root took
+exclusive runtime supervision; partialoutputs are NOT fullpass evidence.
+Approvedplan remains docs/dev-log/plans/2026-08-30-julia-r-parity.md.
+
+---
+
 # Latest — native prediction repair verified (2026-08-30)
 
 Programme ACTIVE; all G0–G8 OPEN. R implementation localcommit80f168acb.

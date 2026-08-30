@@ -154,8 +154,9 @@ nuisance-parameter specification, using the prepared group indices.
 ## Prepared missing-predictor development route
 
 !!! warning "Limited developer interface"
-    This prepared-array interface covers a Gaussian response and one Gaussian
-    or Bernoulli predictor. The same likelihood now has two **development** frontends: the [joint formula frontend](@ref joint-predictor-formula)
+    This prepared-array interface covers a Gaussian response with one Gaussian
+    or Bernoulli predictor, or two independent Gaussian predictors. The
+    **one-predictor** likelihood has two **development** frontends: the [joint formula frontend](@ref joint-predictor-formula)
     and `drmTMB(..., engine = "julia")` through `drm_bridge_joint`. They admit
     a Gaussian identity-link response, one bare additive `mi(x)` term, and
     complete fixed-effect exogenous designs. Grouped predictors, further
@@ -171,8 +172,8 @@ nuisance-parameter specification, using the prepared group indices.
     variance at fixed parameters is not the native R `imputed()` standard
     error.
 
-Design matrices must be complete. Only `x` and `y` may contain `missing`.
-The parameter order is mean coefficients, the coefficient of `x`, residual
+Design matrices must be complete. Only the modelled predictors and `y` may
+contain `missing`. For the one-predictor interface, the parameter order is mean coefficients, the coefficient of `x`, residual
 log-SD coefficients, predictor coefficients, and (Gaussian only) predictor
 log-SD. This last coordinate is a log-SD, not R's natural-scale `sigma_mi_x`.
 
@@ -200,6 +201,48 @@ parameters. Inspect `joint_missing_summary(result).optimizer_status` and
 `:not_computed`: this low-level summary does not calculate standard errors.
 Use [`imputed`](@ref) for native-shaped imputation summaries and their own
 uncertainty status.
+
+### Two independent Gaussian predictor models
+
+The two-predictor array interface uses an `n × 2` predictor matrix and a tuple
+of two complete predictor designs. It shares the prepared likelihood operations
+above. **Direct formula and R bridge admission for two predictors are still
+pending**; this kernel is not a claim of full native-R parity.
+
+Independent predictor models can produce correlated conditional imputations:
+when both predictors are missing, the observed response informs their joint
+values. The returned covariance retains this dependence.
+
+```@example prepared_joint_two
+using DRM
+x = Union{Missing,Float64}[0.8 missing; missing missing; 1.0 0.3; missing missing]
+y = Union{Missing,Float64}[1.7, -0.2, missing, missing]
+z = [-0.6, 0.3, 0.8, -0.1]
+X = hcat(ones(4), z)
+model = prepared_joint_model(y, x, X, ones(4, 1), (X, X);
+    predictor_variables = (:x1, :x2),
+    mu_names = ["(Intercept)", "z"],
+    predictor_names = (["(Intercept)", "z"], ["(Intercept)", "z"]))
+# beta, b1, b2, residual log-SD, alpha1, logtau1, alpha2, logtau2
+theta = [0.2, -0.35, 0.7, -0.4, 0.1, 0.0, 0.25, log(0.9), -0.2, 0.15, log(0.8)]
+moments = prepared_joint_conditional_moments(model, theta)
+@assert prepared_joint_rowloglik(model, theta)[4] == 0.0
+@assert moments.covariance[2, 1, 2] > 0  # Opposite response slopes.
+(moments.mean, moments.covariance[2, :, :])
+```
+
+This is a parameter-point calculation, not a fit of four observations.
+On an identifiable dataset, `fit_prepared_joint(model)` fits the same prepared
+model. Select a predictor explicitly with `imputed(result; variable = :x1)` or
+`:x2`. Its Gaussian imputation SE combines conditional variance with first-order
+parameter uncertainty using the full fitted covariance; it does not establish
+interval coverage or provide multiple-imputation draws.
+
+```@docs
+DRM.PreparedTwoJointGaussianModel
+DRM.PreparedTwoJointGaussianFit
+DRM.JointTwoMissingMetadata
+```
 
 ```@docs
 DRM.PreparedJointModel
