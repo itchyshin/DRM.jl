@@ -1,0 +1,27 @@
+ℹ Testing drmTMB
+julia-joint-binary-levels: .........
+julia-joint-methods: ..............................1............
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Error ('test-julia-joint-methods.R:234:3'): joint Julia Bernoulli predicti
+Error in `drm_prediction_binary_values(value[observed], variable, levels)`: New prediction data contains unknown binary predictor level for `x_var`.
+i Unknown level: "other".
+i Fitted levels: "no" and "yes".
+Backtrace:
+     ▆
+  1. ├─testthat::expect_error(...) at test-julia-joint-methods.R:234:3
+  2. │ └─testthat:::expect_condition_matching_(...)
+  3. │   └─testthat:::quasi_capture(...)
+  4. │     ├─testthat (local) .capture(...)
+  5. │     │ └─base::withCallingHandlers(...)
+  6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo))
+  7. └─drmTMB:::predict.drmTMB_julia_joint(fit, newdata = unknown_data)
+  8.   └─drmTMB:::drm_julia_joint_binary_data(...) at drmTMB/R/julia-joint-methods.R:430:5
+  9.     └─drmTMB:::drm_prediction_binary_values(value[observed], variable, levels) at drmTMB/R/julia-joint-methods.R:282:3
+ 10.       └─cli::cli_abort(...) at drmTMB/R/methods.R:5200:7
+ 11.         └─rlang::abort(...)
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+Error:
+! Test failures.
+Execution halted

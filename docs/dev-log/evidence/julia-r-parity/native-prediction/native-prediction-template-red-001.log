@@ -1,0 +1,25 @@
+ℹ Testing drmTMB
+missing-predictor-prediction: ................................12.3.
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Error ('test-missing-predictor-prediction.R:316:3'): Bernoulli newdata sur
+Error in `drm_fixed_effect_basis(object, newdata = newdata, dpar = dpar)`: Could not align the "mu" design matrix with fitted coefficients.
+i Check that factor levels and predictor columns match the fitted model.
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_equal(...) at test-missing-predictor-prediction.R:316:3
+ 2. │ └─testthat::quasi_label(enquo(object), label)
+ 3. │   └─rlang::eval_bare(expr, quo_get_env(quo))
+ 4. ├─stats::predict(fit, newdata = factor_data, dpar = "mu")
+ 5. └─drmTMB:::predict.drmTMB(fit, newdata = factor_data, dpar = "mu")
+ 6.   └─drmTMB:::drm_fixed_effect_basis(object, newdata = newdata, dpar = dpar) at drmTMB/R/methods.R:2834:3
+ 7.     └─cli::cli_abort(...) at drmTMB/R/methods.R:5426:5
+ 8.       └─rlang::abort(...)
+
+── 2. Failure ('test-missing-predictor-prediction.R:333:5'): ambiguous parsed nu
+Expected `drmTMB:::drm_prepare_prediction_newdata(...)` to throw a error.
+
+── 3. Failure ('test-missing-predictor-prediction.R:333:5'): ambiguous parsed nu
+Expected `drmTMB:::drm_prepare_prediction_newdata(...)` to throw a error.
+
+══ DONE ════════════════════════════════════════════════════════════════════════

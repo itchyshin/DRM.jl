@@ -96,11 +96,11 @@ Gaussian predictor-SD interval is a natural-scale delta-Wald interval, may cross
 zero, and is not claimed to match native intervals or to have established
 coverage.
 
-Two public bridge-adapter cases pass, but the full native comparator remains
-red: the native route retains a stale training matrix for a missing-predictor
-prediction check, its Bernoulli `newdata` comparator errors, and its retained
-Bernoulli parameter discrepancy is `1.0015e-5` against a `4e-6` gate. Therefore
-this route makes no full native-parity, speed, or coverage claim.
+Two public bridge-adapter cases pass. Training prediction and binary
+`newdata` handling have been repaired and checked independently. Full numerical
+parity remains open: small differences in native optimizer stopping affect
+coefficients and predictions beyond the declared tolerance. This route makes
+no full native-parity, speed, or interval-coverage claim.
 
 ## The DRM.jl-side contract
 

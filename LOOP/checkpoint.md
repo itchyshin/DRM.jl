@@ -1,3 +1,60 @@
+# Latest — native prediction repair verified (2026-08-30)
+
+Programme ACTIVE; all G0–G8 OPEN. R implementation localcommit80f168acb.
+ Native missing-predictor training prediction
+now uses finalized numeric summaries or probability-weighted finite-state
+designs. Binary newdata preserves fitted levels, numeric raw1/2 or2/3 encoding,
+storage without model frames, and exact character aliases such as01/1.
+R Julia bridge shares the decoder. No Julia likelihood source changed.
+
+40native+12binary+44bridge-method+39preparation+8dispatch assertions pass;
+15existing prediction-grid/fixed-basis/selected-state tests pass. Independent
+retained2case oracle and14damages pass. Fresh3native neighbours (ordinal,
+categorical,twoGaussian) pass at<=8.882e-16 in3.002s. Not recovery or speed proof.
+Rose Sol/high approves bounded implementation; no optimizer/covariance approval.
+Bounded Melissa reconciliationPASS,no materialomission; programmeG8stillOPEN.
+Matchedpublic004:2adapters/320rows oracle+20damages normal/-O PASS, elapsed19.853s
+including startup/bothengines, NOT warmbenchmark. Required native gate FAIL:
+Gaussiantraining5.306703e-6; Berntraining7.389749e-6,theta1.001509e-5,imputedmean
+5.171868e-6 > frozen4e-6. Large stale-X errors and Bernnewdata exception repaired.
+
+Evidence: docs/dev-log/evidence/julia-r-parity/native-prediction/.
+NativeRDS retainedonlyinRrepo, numericalJSON/logsinJulia. Report:
+docs/dev-log/after-task/2026-08-30-parity-native-prediction.md.
+MissionControl3cb0951,3semanticfields verifiedthroughservedJSON;lease released.
+Source/runner fingerprints current in public004 and neighbours002. Historical
+public001–003 remain unchanged and require their olderRsource forsourcechecks.
+
+NEXT: investigate native optimizer stopping precision without weakening the
+4e-6 gate, substituting diagnostic restarts, or relabelling historical failures.
+Native nlminb reports relativeconvergence; independentNLLscore~2.87e-4Gaussian,
+6.70e-4Bern. Diagnostic thetaNative−VJulia*score approachesJulia at~1e-10; this
+isNOTarefit orpermission toreplacebaseline. Audit solver/acceptance contracts
+before any default-control/API decision; preserve explicitusercontrols.
+
+All24frozen native missing-predictor obligations remain required. S2 must map
+complete capability/code/S3/output denominators; missing,skipped,stale outputs
+fail. Continue S7/S8 engines, S9 remainingkernels andnormalization/quadrature-
+Jacobian evidence, S10postfit andS11inference. Preserve LSS REML/maskedfixtures,
+stampedSE receipts,inference matrixv2,final-head and10kpilot obligations.
+G5 requires EVERY registered warmworkflow towin; retain losses andseparate auto-
+policy calibration/evaluation at1/2/4/8threads, pluscoldtimings. G1 retirement
+requires restore-and-fresh-compare ofcommits/staged/unstaged/untracked/ignored
+payloads,modes,symlinks; preserve originalClaude/Cursor obligations. Whole-site
+visuals/deployedcontent andfinalRose/Melissa reconciliation remainopen.
+
+Macshortchecks; TotoroCPU pilots<=150sharedcores;DRACallocations forjustified
+campaigns. No remotejobs submitted/running. >30minneedsmeasuredpilot+approval.
+Protected src/gaussian_structured.jl andsrc/gaussian_sparse_lss.jl remainunchanged
+followingdenials. UnrelatedRZOB96insertions/10deletions andS5test/include remain
+uncommitted/preserved. No release,registration,cleanup,pushor merge. Source docs
+prose corrected; no new whole-sitebuild/visualclaim thisslice. Agent-hoursnot
+instrumented. Resumeisolated /private/tmp/drm-parity-20260830/ pair, branch
+codex/julia-r-parity. Approvedplan docs/dev-log/plans/2026-08-30-julia-r-parity.md;
+LOOP/ultra-plan.md isunrelatedCox-Reid,preserveuntouched. Appgoalactive.
+
+---
+
 # Latest — S9 R joint bridge checkpoint (2026-08-30 13:33 MDT)
 
 Programme ACTIVE; all G0–G8 remain OPEN.
