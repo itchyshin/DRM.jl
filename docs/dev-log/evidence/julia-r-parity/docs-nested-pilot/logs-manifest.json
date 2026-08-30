@@ -1,0 +1,104 @@
+{
+  "generated": "2026-08-30",
+  "entries": [
+    {
+      "name": "nested-contract-final.log",
+      "status": "copied",
+      "original_size": 5335,
+      "original_sha256": "bbb6d99480261fe6e91437672c006140db46d73fc5f5b63f5cb3fc052a15d44b",
+      "sanitized_size": 5335,
+      "sanitized_sha256": "bbb6d99480261fe6e91437672c006140db46d73fc5f5b63f5cb3fc052a15d44b",
+      "sanitized": false
+    },
+    {
+      "name": "nested-three-pages-final.log",
+      "status": "copied",
+      "original_size": 6717,
+      "original_sha256": "0f1bc00b083eb1471155255f42157ef69b4fa90231680df83f1f7d8dd7cf9d4e",
+      "sanitized_size": 6717,
+      "sanitized_sha256": "0f1bc00b083eb1471155255f42157ef69b4fa90231680df83f1f7d8dd7cf9d4e",
+      "sanitized": false
+    },
+    {
+      "name": "nested-docs-gates-003.log",
+      "status": "copied",
+      "original_size": 5262,
+      "original_sha256": "3d3e4b6df5ee0f38257312f0cad62c9dd93a8b70a3d5ab55ec7b427196b5d21d",
+      "sanitized_size": 5262,
+      "sanitized_sha256": "3d3e4b6df5ee0f38257312f0cad62c9dd93a8b70a3d5ab55ec7b427196b5d21d",
+      "sanitized": false
+    },
+    {
+      "name": "full-docs-source-001.log",
+      "status": "copied",
+      "original_size": 8464,
+      "original_sha256": "6c33ce9d335daa406915c5025b5050286443cd4fca312fe556d8f4155795ae82",
+      "sanitized_size": 8464,
+      "sanitized_sha256": "6c33ce9d335daa406915c5025b5050286443cd4fca312fe556d8f4155795ae82",
+      "sanitized": false
+    },
+    {
+      "name": "full-docs-gate-001.log",
+      "status": "copied",
+      "original_size": 2582,
+      "original_sha256": "7ef20453cbc5f863382ba849c814bcb1fbe655bcb6e0bc4711ef3dad42af0cc7",
+      "sanitized_size": 2582,
+      "sanitized_sha256": "7ef20453cbc5f863382ba849c814bcb1fbe655bcb6e0bc4711ef3dad42af0cc7",
+      "sanitized": false
+    },
+    {
+      "name": "full-docs-source-002.log",
+      "status": "copied",
+      "original_size": 6049,
+      "original_sha256": "a24a8c82b5f740be2491c87678481c7e7088eef665fee51a4fd432af9388bbc5",
+      "sanitized_size": 6049,
+      "sanitized_sha256": "a24a8c82b5f740be2491c87678481c7e7088eef665fee51a4fd432af9388bbc5",
+      "sanitized": false
+    },
+    {
+      "name": "full-docs-gate-002.log",
+      "status": "copied",
+      "original_size": 3053,
+      "original_sha256": "f72fab7745fca598e3a35842f071242bd4e150dd0fc46dadf70808c2bff6e124",
+      "sanitized_size": 3053,
+      "sanitized_sha256": "f72fab7745fca598e3a35842f071242bd4e150dd0fc46dadf70808c2bff6e124",
+      "sanitized": false
+    },
+    {
+      "name": "nested-probe-001.log",
+      "status": "copied",
+      "original_size": 5371,
+      "original_sha256": "1a7babd194486311f1c4c629849aa4820d81910c07cc3f8a864b8f87a52159fa",
+      "sanitized_size": 5371,
+      "sanitized_sha256": "1a7babd194486311f1c4c629849aa4820d81910c07cc3f8a864b8f87a52159fa",
+      "sanitized": false
+    },
+    {
+      "name": "nested-probe-002.log",
+      "status": "copied",
+      "original_size": 10070,
+      "original_sha256": "8c75c6510c7ea6a2626d546d3474db75045ede08dff8c69488ec39cde65488d7",
+      "sanitized_size": 3313,
+      "sanitized_sha256": "e476d5a15e4a9515b8399b2a6186148608c5b9a0b2947cc3d87b021778abaabc",
+      "sanitized": true
+    },
+    {
+      "name": "nested-docs-gates-001.log",
+      "status": "copied",
+      "original_size": 5578,
+      "original_sha256": "426353ec7cf0be6c6a3eb906b1da2f79c8f7239e3863af2cdfd45210b7fa05a8",
+      "sanitized_size": 5578,
+      "sanitized_sha256": "426353ec7cf0be6c6a3eb906b1da2f79c8f7239e3863af2cdfd45210b7fa05a8",
+      "sanitized": false
+    },
+    {
+      "name": "nested-docs-gates-002.log",
+      "status": "copied",
+      "original_size": 2506,
+      "original_sha256": "d94ca26b2b67765a387408a5305f7b3f94e102e44a71f464c085ccb125379e32",
+      "sanitized_size": 2506,
+      "sanitized_sha256": "d94ca26b2b67765a387408a5305f7b3f94e102e44a71f464c085ccb125379e32",
+      "sanitized": false
+    }
+  ]
+}

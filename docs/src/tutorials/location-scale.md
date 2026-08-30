@@ -59,7 +59,8 @@ When the *spread* itself varies across many groups (sites, individuals,
 studies), put a **random intercept on `σ`** rather than a fixed level per group.
 Because the random effect enters σ nonlinearly there is no closed-form marginal,
 so DRM.jl integrates each group's effect out with per-group **Gauss–Hermite
-quadrature** (drmTMB uses Laplace; for a 1-D effect these agree):
+quadrature**. drmTMB uses Laplace: both target the same marginal model, but
+their numerical approximations need not be identical.
 
 ```@example ls
 Random.seed!(13)
@@ -70,7 +71,7 @@ yr = exp.(log(0.5) .+ bg[grp]) .* randn(ng)
 datre = (; y = yr, grp)
 
 fitre = drm(bf(@formula(y ~ 1), @formula(sigma ~ 1 + (1 | grp))), Gaussian(); data = datre)
-re_sd(fitre)[:grp]      # recovered SD of the group-level dispersion (≈ 0.5)
+re_sd(fitre)[:grp_logsigma]  # recovered log-σ group-effect SD (≈ 0.5)
 ```
 
 `re_sd` returns the scale-RE SD; `coef(fitre, :sigma)` is the population

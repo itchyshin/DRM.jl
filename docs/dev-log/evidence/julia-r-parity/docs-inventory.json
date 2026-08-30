@@ -1281,7 +1281,7 @@
       "opening_fence_blocks": 20,
       "path": "model-guides/cross-family-methods.md",
       "r_examples_heuristic": 0,
-      "sha256": "0d6916038bdc7dbeb3e642aa532b93a92b61a715232af74506667ad7a1fc7b9c",
+      "sha256": "c7ac31ef232503f5546b476af4e63b6628a6d826bcc10b39e898e60e16432f60",
       "title": "Cross-family dependence: statistical foundations",
       "unclosed_fence_blocks": 0
     },
@@ -1379,7 +1379,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 167,
+          "line": 177,
           "resolved": "model-guides/which-scale.md",
           "target": "which-scale.md",
           "target_type": "local_file",
@@ -1388,7 +1388,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 167,
+          "line": 177,
           "resolved": "model-guides/convergence.md",
           "target": "convergence.md",
           "target_type": "local_file",
@@ -1398,7 +1398,7 @@
       "opening_fence_blocks": 4,
       "path": "model-guides/marginal-la-vs-va.md",
       "r_examples_heuristic": 0,
-      "sha256": "6657aa816d5642f5365dfa7efd3d84ef70cae32d71efe23998ae666124d733fc",
+      "sha256": "074afe6e39249bdd6b566a9b8f4d048a4136eab3462613b0a4511518fd2939e4",
       "title": "Laplace vs variational marginals",
       "unclosed_fence_blocks": 0
     },
@@ -2269,7 +2269,7 @@
       "unclosed_fence_blocks": 0
     },
     {
-      "closing_fence_markers": 16,
+      "closing_fence_markers": 15,
       "julia_examples_heuristic": 1,
       "local_targets": [
         {
@@ -2390,10 +2390,10 @@
           "within_docs_source": null
         }
       ],
-      "opening_fence_blocks": 16,
+      "opening_fence_blocks": 15,
       "path": "reference/model-fitting-and-postfit.md",
       "r_examples_heuristic": 0,
-      "sha256": "fe5aaf4d8c08b2381f56d96810dd32ce4afec56749e6bf818647fdd740f2e9a0",
+      "sha256": "3ac9c26195ae538fd5e5af5d87e43560379ff90de472af5f9cfb24988a33724b",
       "title": "Model fitting and post-fit tools",
       "unclosed_fence_blocks": 0
     },
@@ -2865,7 +2865,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 81,
+          "line": 82,
           "resolved": "tutorials/location-scale-scale.md",
           "target": "location-scale-scale.md",
           "target_type": "local_file",
@@ -2874,7 +2874,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 83,
+          "line": 84,
           "resolved": "get-started.md",
           "target": "../get-started.md",
           "target_type": "local_file",
@@ -2883,7 +2883,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 84,
+          "line": 85,
           "resolved": "tutorials/bivariate-coscale.md",
           "target": "bivariate-coscale.md",
           "target_type": "local_file",
@@ -2893,7 +2893,7 @@
       "opening_fence_blocks": 4,
       "path": "tutorials/location-scale.md",
       "r_examples_heuristic": 0,
-      "sha256": "6acbe6f6aa7589c2660ea42b0bdc0f26726d057aec9eb2e7cce2e0743d0e6e43",
+      "sha256": "fcbe1f87cdfe6ebd5b4def6f56b5578f295d65b7d332394f371a5586944c9c8a",
       "title": "When variance carries signal, Part 1: location\u2013scale",
       "unclosed_fence_blocks": 0
     },
@@ -2934,7 +2934,7 @@
         {
           "exists": null,
           "kind": "link",
-          "line": 138,
+          "line": 145,
           "resolved": null,
           "target": "@ref",
           "target_type": "documenter_reference",
@@ -2943,7 +2943,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 162,
+          "line": 169,
           "resolved": "tutorials/location-scale-scale.md",
           "target": "location-scale-scale.md",
           "target_type": "local_file",
@@ -2952,7 +2952,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 165,
+          "line": 172,
           "resolved": "tutorials/relmat-known-matrices.md",
           "target": "relmat-known-matrices.md",
           "target_type": "local_file",
@@ -2961,7 +2961,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 166,
+          "line": 173,
           "resolved": "tutorials/animal-models.md",
           "target": "animal-models.md",
           "target_type": "local_file",
@@ -2970,7 +2970,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 167,
+          "line": 174,
           "resolved": "model-guides/model-map.md",
           "target": "../model-guides/model-map.md",
           "target_type": "local_file",
@@ -2980,7 +2980,7 @@
       "opening_fence_blocks": 6,
       "path": "tutorials/phylogenetic-models.md",
       "r_examples_heuristic": 0,
-      "sha256": "499123d7ab0b909bde0f0d0cbbfd208521fa4691a61a83e898dece842923ab7d",
+      "sha256": "59b729edb6275e83f6c0b1dd4ca4397b58a902f46f32158a5ce7bc6d62edc70d",
       "title": "Phylogenetic structured effects",
       "unclosed_fence_blocks": 0
     },
@@ -3159,7 +3159,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 23,
+          "line": 25,
           "resolved": "tutorials/relmat-known-matrices.md",
           "target": "relmat-known-matrices.md",
           "target_type": "local_file",
@@ -3168,7 +3168,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 24,
+          "line": 26,
           "resolved": "tutorials/animal-models.md",
           "target": "animal-models.md",
           "target_type": "local_file",
@@ -3177,7 +3177,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 25,
+          "line": 27,
           "resolved": "tutorials/phylogenetic-models.md",
           "target": "phylogenetic-models.md",
           "target_type": "local_file",
@@ -3186,7 +3186,7 @@
         {
           "exists": true,
           "kind": "link",
-          "line": 26,
+          "line": 28,
           "resolved": "tutorials/spatial-models.md",
           "target": "spatial-models.md",
           "target_type": "local_file",
@@ -3196,7 +3196,7 @@
       "opening_fence_blocks": 0,
       "path": "tutorials/structural-dependence.md",
       "r_examples_heuristic": 0,
-      "sha256": "2056deb40c8093facb03742c276bfbc583924051a672b7e19cee5a83d5c971ed",
+      "sha256": "eb3b44dd4487fda9558243bd6e3aa80fdca3fbd0e972951052a913a7bdf887b5",
       "title": "Structural dependence overview",
       "unclosed_fence_blocks": 0
     }

@@ -3,7 +3,8 @@
 !!! note "Status — Stable (Gaussian + non-Gaussian mean; NB2/Gamma location–scale)"
     Mirrors drmTMB's [Phylogenetic structured effects](https://itchyshin.github.io/drmTMB/articles/phylogenetic-models.html).
     **In DRM.jl today:** `phylo(1 | species)` on the **mean** — a phylogenetic
-    random intercept. For Gaussian it is fit in closed form; for the non-Gaussian
+    random intercept. For Gaussian responses, the latent effects integrate out exactly and covariance
+    parameters are estimated numerically; for the non-Gaussian
     families (Poisson, NB2, Binomial, Gamma, Beta, BetaBinomial) it is fit by the
     sparse augmented-state Laplace engine (constant `sigma` by default).
     **Non-Gaussian phylogenetic location–scale** (#202) ships for
@@ -15,8 +16,10 @@
 
 Related species are not independent: closely related species have correlated
 trait values. `phylo(1 | species)` adds a random intercept with the
-**phylogenetic** correlation built from a tree, `u ~ N(0, σ_phylo² C)`. For a
-Gaussian mean the marginal is Gaussian, so the fit is closed-form.
+**phylogenetic** covariance built from a tree, `u ~ N(0, σ_phylo² C)`. For
+Gaussian responses with these effects on the mean, the marginal likelihood is
+available exactly; fitting the covariance parameters still requires numerical
+optimization.
 
 Pass the tree via `tree =` (an `AugmentedPhy` from `random_balanced_tree` /
 `augmented_phy`, or a Newick string). Species in the data align to the tree's
@@ -29,27 +32,28 @@ Random.seed!(7)
 G = 64
 phy = random_balanced_tree(G; branch_length = 0.3)     # a tree over G species
 C = sigma_phy_dense(phy; σ²_phy = 1.0)                 # phylogenetic covariance
-d = sqrt.(diag(C)); K = C ./ (d * d')
 
 m = 4; n = G * m
 species = repeat(1:G, inner = m)
 x = randn(n)
-u = 0.9 .* (cholesky(Symmetric(K)).L * randn(G))       # phylogenetic effect
+u = 0.9 .* (cholesky(Symmetric(C)).L * randn(G))       # phylogenetic effect
 y = 0.2 .+ 0.5 .* x .+ u[species] .+ 0.4 .* randn(n)
 
 fit = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
           Gaussian(); data = (; y, x, species), tree = phy)
 
-re_sd(fit)[:species]      # phylogenetic SD (≈ 0.9)
+re_sd(fit)[:species]      # estimated raw-tree SD coefficient; simulation value 0.9
 ```
 
 ```@example phy
 exp(coef(fit, :sigma)[1])     # residual SD (≈ 0.4)
 ```
 
-The phylogenetic correlation comes straight from the verified engine's
-`sigma_phy_dense`; the closed-form GLS then estimates the phylogenetic SD and the
-residual SD jointly.
+`sigma_phy_dense` supplies the raw-tree covariance `C`. The coefficient
+`σ_phylo²` multiplies this covariance: the phylogenetic effect’s SD at tip `i` is
+`σ_phylo * sqrt(C[i, i])`, not necessarily `σ_phylo`. Both the simulation and
+`re_sd` above use that raw-tree scale. Fitting estimates the phylogenetic and
+residual SD parameters jointly using the exact Gaussian marginal likelihood.
 
 ## Non-Gaussian responses (counts, proportions, …)
 
@@ -72,7 +76,7 @@ Random.seed!(20260603)
 
 G = 32                                              # species
 phy = random_balanced_tree(G; branch_length = 0.20)
-m = 8                                               # replicates per species (≥ 2)
+m = 8                                               # replicates per species
 species = repeat(1:G, inner = m)
 n = length(species)
 x = randn(n)
@@ -98,6 +102,8 @@ the known-trials response and constant overdispersion via `sigma ~ 1`
 (`φ = 1/σ²`, #166):
 
 ```@example phybb
+using DRM, Random, LinearAlgebra
+import Distributions
 Random.seed!(20260802)
 G2 = 24
 phy2 = random_balanced_tree(G2; branch_length = 0.20)
@@ -121,10 +127,11 @@ re_sd(fitbb_phy)[:species2]        # phylogenetic SD on the logit mean (≈ 0.35
 
 A few things worth knowing:
 
-- **Replicates matter.** Use at least two observations per species (`m ≥ 2`
-  above). With a single observation per tip the scale of the latent effect is not
-  identified — this is a modelling constraint, not a solver limit (see
-  `HANDOVER.md` §6).
+- **Replication helps** distinguish within-species variation from phylogenetic
+  variation. One observation per species does not automatically make a mean-only
+  phylogenetic model unidentified; information depends on the family, tree, and
+  model. Random effects on dispersion need their own identification checks; see
+  `HANDOVER.md` §6 for the location–scale setting.
 - **Mean-only phylo keeps constant dispersion.** The default non-Gaussian phylo
   route varies the **mean** with predictors and the structured effect and keeps
   `sigma ~ 1`. Fixed predictors on `sigma` (#164) are separate. For a *structured*

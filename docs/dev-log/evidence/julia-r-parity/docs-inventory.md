@@ -7,8 +7,8 @@ This is a **static source** audit. It makes no rendered-site, Documenter-build, 
 - Unnavigated pages: 1
 - Visible navigation entries: 50
 - Hidden navigation entries: 0
-- Opening fenced code blocks (heuristic): 230
-- Closing fence markers: 230
+- Opening fenced code blocks (heuristic): 229
+- Closing fence markers: 229
 - Unclosed fenced blocks: 0
 - Julia examples (opening-fence heuristic): 160
 - R examples (opening-fence heuristic): 4

@@ -179,21 +179,24 @@ chibar_pvalue
 Accessors for a `fit_mixed_family` result. [`mf_coef`](@ref) is the tidy
 coefficient table; the other `mf_*` helpers live beside it in the module.
 
-```@docs
-mf_coef
-```
-
 ## Engine constructors (q=4 and coevolution)
 
-These are the exported constructors and types behind the verified q=4 PLSM
-engine and the general-q coevolution block. They are public because the
-engine is the package's selling point, not because a typical `drm()` user
-needs to call them.
+`AugProblem`, `make_problem`, and `fit_q4_sparse_tmb` are low-level exported
+interfaces behind the q=4 PLSM path. Use `drm(...)` for ordinary model fitting;
+these bindings serve scripts that prepare engine inputs directly.
+
+- `AugProblem` holds the augmented-phylogeny data and q=4 design matrices used
+  by the sparse engine.
+- `make_problem(phy, y1, y2, X1, X2, Xs1, Xs2, Xr; species = 1:phy.n_leaves)`
+  builds that problem and its root-conditioned precision from a phylogeny.
+- `fit_q4_sparse_tmb(prob, Q_cond; θ0 = ..., ...)` runs the sparse q=4
+  optimisation on that prepared problem. Starting values must be supplied as
+  either `θ0` (the full parameter vector) or `β0` (the mean coefficients).
+
+The documented q=4 marginal evaluator and general-q coevolution bindings are
+listed below.
 
 ```@docs
-AugProblem
-make_problem
-fit_q4_sparse_tmb
 marginal_nll
 CoevoProblem
 lc_to_cov

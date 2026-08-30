@@ -1,0 +1,58 @@
+[ Info: SetupBuildDirectory: setting up build directory.
+[ Info: Doctest: running doctests.
+[ Info: ExpandTemplates: expanding markdown templates.
+[ Info: CrossReferences: building cross-references.
+[ Info: CheckDocument: running document checks.
+[ Info: Populate: populating indices.
+[ Info: RenderDocument: rendering document.
+[ Info: DocumenterVitepress: rendering MarkdownVitepress pages.
+┌ Warning: Documenter could not auto-detect the building environment. Skipping deployment.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/deployconfig.jl:93
+[ Info: Bases that will be built: [""]
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/mathjax-plugin.ts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/julia-repl-transformer.ts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/index.ts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/style.css` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/docstrings.css` file. Substituting in the default file.
+[ Info: Base is "" and ENV["CI"] is not set so this is a local build. Not adding any additional base prefix based on the repository or deploy url and instead using absolute path "/" to facilitate serving docs locally.
+┌ Warning: DocumenterVitepress: No logo.png file found in `docs/src/assets`.  Skipping logo replacement.
+└ @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/vitepress_config.jl:148
+┌ Warning: DocumenterVitepress: No favicon.ico file found in `docs/src/assets`.  Skipping favicon replacement.
+└ @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/vitepress_config.jl:162
+┌ Info: DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
+│ You can view it yourself by running the following in the `docs` folder:
+│ ```
+│ npm run docs:dev
+│ ```
+│ and if you haven't run `npm` in this repo before, install all packages by running `npm install`.
+│ 
+└ All emitted markdown can be found in `/private/tmp/drm-parity-20260830/DRM.jl/docs/build/jl_Rpapla/build/.documenter`.
+WARNING: replacing module __atexample__named__nested.
+NESTED_PROBE_ROOT=/private/tmp/drm-parity-20260830/DRM.jl/docs/build/jl_Rpapla broken=false
+Copied: /private/tmp/drm-parity-20260830/DRM.jl/docs/build/jl_Rpapla/build/.documenter/components/AuthorBadge.vue
+Copied: /private/tmp/drm-parity-20260830/DRM.jl/docs/build/jl_Rpapla/build/.documenter/components/Authors.vue
+Copied: /private/tmp/drm-parity-20260830/DRM.jl/docs/build/jl_Rpapla/build/.documenter/components/SidebarDrawerToggle.vue
+Copied: /private/tmp/drm-parity-20260830/DRM.jl/docs/build/jl_Rpapla/build/.documenter/components/VersionPicker.vue
+NESTED_PROBE_ROOT=/private/tmp/drm-parity-20260830/DRM.jl/docs/build/jl_Zi0Nxu broken=true
+┌ Info: SetupBuildDirectory: setting up build directory.
+└ @ Documenter /Users/z3437171/.julia/packages/Documenter/AXNMp/src/builder_pipeline.jl:75
+┌ Info: Doctest: running doctests.
+└ @ Documenter /Users/z3437171/.julia/packages/Documenter/AXNMp/src/builder_pipeline.jl:209
+┌ Info: ExpandTemplates: expanding markdown templates.
+└ @ Documenter /Users/z3437171/.julia/packages/Documenter/AXNMp/src/builder_pipeline.jl:223
+┌ Error: failed to run `@example` block in docs/build/jl_Zi0Nxu/src/nested/probe.md:3-5
+│ ```@example nested
+│ error("DELIBERATE_NESTED_FAILURE")
+│ ```
+│   exception = (ErrorException("DELIBERATE_NESTED_FAILURE"), Union{Ptr{Nothing}, Base.InterpreterIP}[Ptr{Nothing} @0x0000000128f90db7, Ptr{Nothing} @0x00000001296d5447, Ptr{Nothing} @0x0000000109d99afb, Ptr{Nothing} @0x0000000109db423f, Ptr{Nothing} @0x0000000109db2a3b, Ptr{Nothing} @0x0000000109db305b, Base.InterpreterIP in top-level CodeInfo for Main.__atexample__named__nested at statement 0, Ptr{Nothing} @0x0000000109dcb2b3, Ptr{Nothing} @0x0000000109dcb07b, Ptr{Nothing} @0x0000000109dcbf63, Ptr{Nothing} @0x000000010ce0c11f, Ptr{Nothing} @0x000000010ce140c7, Ptr{Nothing} @0x000000010ce2443f, Ptr{Nothing} @0x000000010ce246a3, Ptr{Nothing} @0x0000000109d99afb, Ptr{Nothing} @0x00000001294f6a8b, Ptr{Nothing} @0x000000010cdcc91b, Ptr{Nothing} @0x000000010cdccafb, Ptr{Nothing} @0x0000000109d99afb, Ptr{Nothing} @0x000000010cdc4163, Ptr{Nothing} @0x000000010cdc41c3, Ptr{Nothing} @0x0000000109d99afb, Ptr{Nothing} @0x000000010cd2b1ff])
+└ @ Documenter /Users/z3437171/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+┌ Info: CrossReferences: building cross-references.
+└ @ Documenter /Users/z3437171/.julia/packages/Documenter/AXNMp/src/builder_pipeline.jl:230
+┌ Info: CheckDocument: running document checks.
+└ @ Documenter /Users/z3437171/.julia/packages/Documenter/AXNMp/src/builder_pipeline.jl:237
+┌ Info: Populate: populating indices.
+└ @ Documenter /Users/z3437171/.julia/packages/Documenter/AXNMp/src/builder_pipeline.jl:247
+Test Summary:                        | Pass  Total  Time
+Nested Documenter execution contract |    4      4  3.7s
+NESTED_DOCUMENTATION_CONTRACT_PASS

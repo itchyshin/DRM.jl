@@ -1,5 +1,23 @@
 # Checkpoint — 2026-08-30
 
+## Latest continuation — nested/full documentation source execution
+
+Final S13 source003 gate actually PASS:51pages,122examples,111.795s,Julia1/BLAS1.
+Six docs repaired (quadrature/exact integration, tree scale, replication, imports,
+reference registration). Rose required edits applied; source inventory8tests/pass.
+Evidence: docs/dev-log/evidence/julia-r-parity/docs-nested-pilot/report.md, hashes,
+logs and emittedzip. Historical002 countmismatch retained; original119 excluded
+three indented examples. Three-page light/dark desktoppreview only; NOT production
+nav or fullsite. Source runner warns on4indexlinks, repeatedfam and missingicons.
+
+NEXT: preserve production hierarchy50visible/51emitted from docs/make.jl for a
+strict production build. Terra corrected its proposed helper: pagelist2str(nothing,...)
+is INVALID because42unnamed pages need doc.blueprint headings. Do not use it.
+Prefer a bounded source rerun with real production pages over a guessed rewrite.
+The measured fullsource cost is112s. Audit aicc/formaltest
+wording in location-scale tutorial. FullG0–G8open, S5protectededitapprovalstillpending,
+RpredictiongateRED. All checks terminal, no remotecompute; localhostpreview8768.
+
 ## Latest continuation — comparison integrity and native oracles
 
 S4 complete-name comparator repairs reviewed by Rose. Eight legacy cases pass
