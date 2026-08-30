@@ -7,7 +7,7 @@ Created two isolated worktrees; original main/R feature checkout and protected f
 DONE: isolated programme checkpoint commit 5e8e39ce; umbrella issue DRM.jl#563;
 native source snapshot (751 overlapping ledger rows, 393 implemented; 59 exports, 90 S3 methods).
 S2 is a structural snapshot, NOT a finished parity harness. Rose caught six false-success gaps;
-17 repaired checker tests pass; Rose accepts structural snapshot with numerical limitations.
+18 repaired checker tests pass; Rose accepts structural snapshot with numerical limitations.
 No numerical parity receipts admitted.
 S1 census version2 now tests actual temporary Git repositories including newline paths, rename,
 foreign linkage and missing worktrees; recollection/verification pass (153worktrees,18stashes).
@@ -31,4 +31,12 @@ complete S2 operation-specific model contracts and baseline S4 fixtures. Full do
 original Claude/Cursor obligation recovery, S3 and Mission Control remain open.
 OPEN GATES: full G0–G8; long compute, destructive retirement and ungranted publication/merge actions.
 STATUS: active, not complete. Bounded local regression run only; no campaign or remote fit.
+CARRIED-OVER: branch codex/julia-r-parity in both worktrees. Julia checkpoint4c3c8532;
+R article checkpoint08db05ac1. No push or merge. Unfinished S5 regression edits remain
+test/runtests.jl and test/test_sparse_precision_storage.jl, deliberately red on original source.
+S5 proposal and strengthened oracle receipts are retained in evidence/julia-r-parity/s5a.md.
+The final verifier repair allows unrelated R documentation commits while still requiring
+every frozen technical source blob to match; 18tests pass, including this regression.
+RESUME: cd /private/tmp/drm-parity-20260830/DRM.jl; read this checkpoint and s5a.md;
+check/renew both lane leases, then apply the exact S5 proposal only after fresh user approval.
 READ: GOAL.md -> ../docs/dev-log/plans/2026-08-30-julia-r-parity.md -> .unlazy/julia-r-parity/GATES.md.

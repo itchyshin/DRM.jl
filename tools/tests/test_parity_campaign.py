@@ -121,6 +121,12 @@ class ManifestFixture(unittest.TestCase):
         self.write_manifest(payload)
         self.assertNotEqual(self.verify().returncode, 0)
 
+    def test_unrelated_doc_commit_preserves_frozen_source_verification(self) -> None:
+        (self.r_repo / "README.md").write_text("Documentation only\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(self.r_repo), "add", "README.md"], check=True)
+        subprocess.run(["git", "-C", str(self.r_repo), "commit", "-qm", "docs"], check=True)
+        self.assertEqual(self.verify().returncode, 0)
+
     def test_zero_gap_scaffold_still_refuses_parity_success(self) -> None:
         spec = importlib.util.spec_from_file_location("parity_campaign_test", SCRIPT)
         module = importlib.util.module_from_spec(spec)

@@ -39,7 +39,7 @@ denominators separate; preserve the measured-pilot gate for long campaigns.
 Source main pins verified through SSH refs. Julia loaded from isolated source. Census
 recollection records153worktrees,18stashes,136usable,33dirty,6missing,11brokenlink;
 `verify` and actual temporary-Git `self-test` pass. Native manifest structure passes;
-17-test verifier suite passes after final negative-control repairs (16.384seconds).
+18-test verifier suite passes after final negative-control repairs (18.611seconds).
 R article parse and render pass; `git diff --check` passed.
 Original-source allocation regression is RED:35,519,760bytes at1024tips and
 138,256,064bytes at2048tips exceed declared linear-storage thresholds. No fix verified.

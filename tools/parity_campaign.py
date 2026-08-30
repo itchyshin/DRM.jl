@@ -406,7 +406,7 @@ def verify_manifest(manifest: dict[str, Any], repo: Path, manifest_path: Path) -
     drm_git_sha = source.get("drm_git_sha")
     if not isinstance(git_sha, str) or not isinstance(ref, str) or not isinstance(drm_git_sha, str):
         raise ManifestError("manifest source pin lacks git_sha, drm_git_sha, or drmtmb_ref")
-    if git_rev_parse(repo, "HEAD") != git_sha or git_rev_parse(repo, ref) != git_sha:
+    if git_rev_parse(repo, ref) != git_sha:
         raise ManifestError("drmTMB git pin no longer matches the manifest")
     files = source.get("files")
     if not isinstance(files, dict):
