@@ -42,7 +42,8 @@ _grad_ok(ga, gfd; tol = 1e-4) = maximum(abs.(ga .- gfd)) < tol * (1 + maximum(ab
         f = θ -> DRM._ls_fit_nll(Val(:nb2), y, Xμ, Xψ, gidx, G, Q, θ)
         ga = DRM._ls_marginal_grad(Val(:nb2), y, Xμ, Xψ, gidx, G, Q, θ)
         gfd = _fd_grad(f, θ)
-        @test all(ga .!= 0)              # mode converged, gradient populated
+        @test all(isfinite, ga) && all(ga .!= 0)  # finite, populated gradient
+        @test all(isfinite, gfd)
         @test _grad_ok(ga, gfd)
     end
 
@@ -63,7 +64,8 @@ _grad_ok(ga, gfd; tol = 1e-4) = maximum(abs.(ga .- gfd)) < tol * (1 + maximum(ab
         f = θ -> DRM._ls_fit_nll(Val(:gamma), y, Xμ, Xψ, gidx, G, Q, θ)
         ga = DRM._ls_marginal_grad(Val(:gamma), y, Xμ, Xψ, gidx, G, Q, θ)
         gfd = _fd_grad(f, θ)
-        @test all(ga .!= 0)
+        @test all(isfinite, ga) && all(ga .!= 0)
+        @test all(isfinite, gfd)
         @test _grad_ok(ga, gfd)
     end
 
@@ -87,7 +89,8 @@ _grad_ok(ga, gfd; tol = 1e-4) = maximum(abs.(ga .- gfd)) < tol * (1 + maximum(ab
         f = θ -> DRM._ls_fit_nll(Val(:nb2), y, Xμ, Xψ, gidx, G, Q, θ)
         ga = DRM._ls_marginal_grad(Val(:nb2), y, Xμ, Xψ, gidx, G, Q, θ)
         gfd = _fd_grad(f, θ)
-        @test all(ga .!= 0)
+        @test all(isfinite, ga) && all(ga .!= 0)
+        @test all(isfinite, gfd)
         @test _grad_ok(ga, gfd)
     end
 end

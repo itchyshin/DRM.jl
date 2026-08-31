@@ -134,6 +134,42 @@ DRM._vcov_from_hessian
 DRM.q2_reml_phi_len
 ```
 
+### Location-scale inner-mode acceptance
+
+For the non-Gaussian location-scale Laplace engine, a positive-definite latent
+Hessian alone does not certify a mode. The inner solver must also return finite
+coordinates and a fresh finite gradient satisfying
+`norm(gradient) <= tol * (1 + norm(a))`. The default remains `tol = 1e-9` with
+at most 200 iterations. Failure to meet this condition is a failed inner solve,
+not an accepted likelihood evaluation.
+
+Near a mode, objective rounding can hide a useful Newton step. A separate local
+polishing check permits a full, undamped step with an objective increase of at
+most four units in the last place (ULPs), provided the actual displacement is small,
+the gradient strictly decreases and meets the same stationarity criterion,
+and the trial Hessian is finite and positive definite.
+
+For NB2 and Gamma, a larger rounding discrepancy can trigger a second check
+under the same safeguards. It estimates the objective change from directional
+derivatives and a quadrature integral, avoiding subtraction of two nearly equal
+objective values. The prior contribution retains multiplication and summation
+residuals; its discarded rounding terms are tracked alongside the existing data
+and quadrature error estimates. The estimated change plus its numerical error
+margin must be negative. This fallback is unavailable at or across the kernels'
+predictor-clamp boundaries, or when the tracked arithmetic risks overflow or
+underflow. An unavailable or inconclusive estimate leaves ordinary backtracking
+in place. The margin is an engineering estimate, not a proven error bound.
+
+Neither polishing check guarantees exact objective descent or a global optimum.
+Other steps retain the ordinary descent check; coordinate-identical trials do
+not count as progress.
+
+This helper is internal and has no stability guarantee.
+
+```@docs
+DRM._ls_inner_estimated_change
+```
+
 ### Phylogenetic group-index internals (no stability guarantee)
 
 ```@docs

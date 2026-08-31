@@ -201,3 +201,63 @@ contains no working source, test or reader-page files; embedded source snapshots
 are explicitly unaccepted evidence. Her clarity comment about dense/sparse state
 checks versus actual CSC traversal was incorporated above. The global programme
 and the new candidate's acceptance remain open.
+
+### Tracked arithmetic and original regression verification
+
+Frozen source `7f9571e7` implements the independently reviewed tracked prior
+arithmetic. Final focused test `59fb2c45` passes 78 existing and 32 new assertions.
+The new controls include a nonzero discarded tail and show that setting its
+bound to zero invalidates the certificate. Rose independently reviewed the source
+and final test addition. Tolerances, iteration budget, data envelopes and all
+mode acceptance safeguards remain unchanged.
+
+The independent 48-case grid passes 294 assertions in3.53s; its one-percent
+corruption is rejected (96 failures,198 passes) in4.47s. A new independent
+explicit-likelihood oracle checks all six fixed diagnosed states under dense/CSC,
+row/group permutations and opposite steps:96 variations,480 passes in12.51s.
+All96 deliberately corrupted comparisons fail the relative criterion; there are
+184 failed assertions and296 passes in13.74s. Some conservative error margins
+cover a1% error, so the negative-control count is184 rather than192. Each probe,
+source and serialized-state hash remains unchanged. The captured Gamma base and
+trial come from the retained old trace, not from refitting with new source.
+
+The actual Unlazy local G0–G4 commands now pass. The original inner/gradient/NB2
+module passes155 assertions plus2 runner checks in34.21s; perturbations pass
+150 plus2 in5.64s. One-thread profiles pass194 plus2 in19.25s, four-thread
+profiles198 plus2 in18.95s. Gamma no longer fails at covariance construction.
+One pre-existing Optim early-termination/NaN-Hessian warning remains in the
+passing smoke module; these results do not establish universal convergence.
+LocalG5 verifies the immutable Rose receipt against current source/test hashes;
+its stale-hash negative control fails. The gate checker reports ALL MET(6).
+The first run was denied access to its standard approval registry and executed
+no checks; the authorized retry is retained separately. Local gate numbers do
+not close identically numbered global programme gates.
+
+Mission Control commit `03933b3` updates only the two claimed status fields;
+served fields were checked and the lease released. No remote jobs, allocations,
+publication, main merge, release or worktree retirement occurred. The fresh
+52-page documentation source build is running with a240second cap; rendered
+verification, source checkpoint and wider programme work remain pending.
+
+### Fresh documentation verification
+
+Build004 failed on a missing canonical manual entry for the new helper. The
+owned reference now includes that entry. Build005 passed document checks but
+failed during rendering when the sandbox refused Julia's package-usage lock;
+its receipt is retained. Authorized build006 passes52pages/134executable
+examples in147.18s, with all source hashes unchanged. Fresh Vitepress HTML
+rendering passes in8.54s with emitted inputs unchanged; cached dependencies
+were reused without a package installation. The changed reference expressly
+labels the helper internal and without a stability guarantee. Pat approves the
+prose and claim boundaries; visual review of the fresh reference is in progress.
+No live-site deployment or whole-site visual verdict follows from these checks.
+
+### Fresh visual closeout
+
+Root recovered the in-app browser after Pat's recorded unavailable attempt and
+visually inspected fresh desktop light and390x844phone light/dark screenshots.
+Phone page width equals viewport390; main width342. Text and inline formulas
+wrap. Direct section fragments hide their heading beneath sticky navigation
+(P2), retained for the site-layout slice. The raw audit retains106missing
+deployment-metadata links across53pages. No G6/all-site visual pass is claimed.
+The viewport was reset, owned tab closed and temporary server89140stopped.

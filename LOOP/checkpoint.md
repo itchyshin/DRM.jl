@@ -1,6 +1,55 @@
+# Current — verified inner repair ready for scoped source checkpoint
+
+Programme ACTIVE; all global G0–G8 remain OPEN. Evidence checkpoint c4e44a3e;
+accepted source baseline still5daa1593, R9007338e5. Frozen uncommitted inner
+source7f9571e7/focusedtest59fb2c45 are under integration validation, not accepted.
+
+Rose reviewed source and the final discarded-tail corruption test. Focused
+checks pass78+32. Root independent48-case NLL grid passes294; one-percent damage
+fails96checks. Root96variations of all6immutable failure states pass480checks,
+including opposite directions, dense/CSC states and row/group order changes.
+Its negative control fails184checks (296pass); all96 corrupted cases violate
+the relative-error criterion. All source/probe/state hashes remained unchanged.
+The sixth Gamma target is retained trace003 base/trial, not recomputed by the
+new solver. It now has negative margin with unchanged convergence contracts.
+
+Root actual Unlazy G0–G5 now ALL MET(6): originalNB2/gradient155+2passes,
+perturbations150+2, one-threadprofiles194+2 andfour-threadprofiles198+2. Gamma
+covariance failure is fixed in these regressions; OptimNaNHessianwarning remains
+inpassingNB2smoke. Session5910terminalexit1wasmanualRosegatepending; subsequent
+tracked003checkerexit0closesonlylocalreviewfreshnessgate. No globalgateclosed.
+
+Fresh docs006 sourcebuildPASS52pages134examples147.18s; HTMLrenderPASS8.54s,
+source/emittedinputsunchanged.004missing-docentry and005PkgmetadataEPERM failures
+retained;006authorizedmetadataaccess. Pat proseapproved; rootimplementedexplicit
+internal/no-stabilityguaranteenotice. Build/renderprocesses terminal.
+
+Fresh visual review finished by root after Pat browser unavailability. Retained
+screenshots desktop-light/phone-light/phone-dark; phone390px has no horizontal
+page overflow. Direct fragment headings are hidden under sticky navigation (P2)
+and the raw53-page audit retains106deployment-metadata links. These remain G6
+work, not numerical blockers. Viewport reset, tab2closed, server89140stopped.
+
+NEXT: scoped reviewed source checkpoint, Mission Control reconciliation, then
+canonical profile threading (minimalproductionfile src/inference.jl, new lease
+required). Preserve independent per-coefficient warm states/serial endpoint arms.
+Unwired test/test_locscale_profile_threads.jl is explicitly CARRIED-OVER and
+excluded from this numerical source checkpoint. No remotejobs/allocations.
+MissionControl03933b3was served verified; update stale documentation-building
+wording after this milestone using exact-file lease. No publication.
+
+Local G0–G5 are distinct from programme G0–G8. In particular local numerical
+recovery tests do not prove global worktree/stash recoverability. Preserve
+all original obligations and the protected tutorial/two-Gaussian-file denials.
+Root owns docs/evidence; builder owns source/test/ignoredledger, is finished
+and has authorized root to execute/update the existing gate ledger. Never
+relax tolerances or registered cases. No push/deployment/release/retirement.
+
+---
+
 # Current — NB2 recovery restored; Gamma covariance still unresolved
 
-Programme ACTIVE; every global G0–G8 remains OPEN. Evidence-only HEAD2de4435c;
+Programme ACTIVE; every global G0–G8 remains OPEN. Evidence-only HEADc4e44a3e;
 accepted source baseline remains5daa1593 (profile implementationde4620c7),
 R9007338e5. Prior candidate source2c534141/test194b91bd is retained, NOT integrated.
 Builder is now implementing the reviewed tracked-prior arithmetic candidate;
@@ -14,6 +63,10 @@ OriginalG1nowpasses123test+2runnerchecks including NB2recovery,34.66s. G4passes
 150+2checks,5.72s. G2/G3each76pass1Gamma covarianceerror beforeprofile,15.10/14.23s.
 Inputs unchanged. One OptimNaNHessianwarning remains inpassingG1. Allrootruns
 terminal, including Unlazy session76494exit1; no fresh fullsuite/docsbuild yet.
+
+The G0–G5 numbers in the preceding paragraph are LOCAL inner-repair gates,
+not programme G0–G8. In particular local G1 numerical recovery is unrelated
+to global G1 worktree/stash recoverability; no global gate was closed by it.
 
 Exact Gamma mismatch is resolved: publicfit.theta covariance tail is in recovery
 order, whereas_vcovusesengineorder. Correctedtrace003andactualreplayagree.
