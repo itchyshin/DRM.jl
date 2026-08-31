@@ -1,3 +1,80 @@
+# Current — suffix passed; slow profiles running; threading repair in progress
+
+Programme ACTIVE, G0–G8 OPEN. Three unfinished original files now passed on
+frozen 479f1e06: 55 assertions, four testsets, 126 seconds, exit 0, all 327 hashes
+matched immutable Git objects and were unchanged remotely. Earlier 15 structured
+files passed 228 assertions; capped location-scale group passed 1,611 assertions
+in ten tested files but skipped both profile testsets. Preserve its exit 124
+and two NaN-gradient warnings. No full-suite or parity claim.
+
+ACTIVE Totoro: locscale-slow-profile-pilot-001, PID 3590042, on source copy
+/home/snakagaw/drm_parity_blas_c0675b16_001, DRM_SLOW_TESTS=1, one Julia/BLAS thread,
+estimate 5–15 minutes / cap 900 seconds. Inspect pid.txt, exit-status.txt and logs;
+do not duplicate. This is the unchanged baseline, not the pending threading fix.
+Additional frozen-source batch: family-re-continuation-001, 15 ordinary family
+files, estimate 2–5 minutes / cap 300 seconds, one Julia/BLAS thread. No DRAC
+job. Root owns evidence and MC; builder s9_frontend_builder has the exact
+src/inference.jl, focused test, runtests and unlazy lease for coefficient threading.
+Rose reviews receipts. The two denied Gaussian files remain untouched.
+
+NEXT: collect terminal slow-profile receipt, verify builder red/green checks,
+request source review and fresh source-bound threaded comparisons. MC was updated and served-verified at b5e2099, including the correct paired
+integration resume paths. Its old prompt pointed at the preserved original tree. No release/publication/merge/retirement/messages.
+
+---
+
+# Current — location-scale suffix running; profile threading repair assigned
+
+Programme ACTIVE; all global G0–G8 gates OPEN. Frozen source 479f1e06 passed
+15 structured files / 228 assertions in 50 seconds on Totoro. The following
+location-scale group reached its 300-second cap (301 seconds, exit 124): ten
+files ran 1,611 passing assertions; both substantive profile testsets were
+skipped. Structured location-scale was incomplete; sigma-axis and nonconstant
+sigma tests did not start. All 327 input hashes were unchanged. These are
+partial package checks, not full-suite or cross-engine parity evidence.
+
+NEXT RUN: locscale-suffix-pilot-001 on the same frozen Totoro source copy,
+three unfinished files only, estimate 3–10 minutes / cap 600 seconds, one Julia
+and BLAS thread. Inspect its terminal receipt; do not duplicate it.
+
+Builder s9_frontend_builder owns only the canonical location-scale profiling
+branch in src/inference.jl, a new focused test and its runtests include. It will
+honour threads=true across coefficients with private profile caches. This is
+within S11; no change to estimator or endpoint-arm threading. The two previously
+denied Gaussian files remain untouched. Root owns evidence and checkpoint;
+Rose reviews completed/partial receipts, scout audits exact remaining gates.
+
+Mission Control 7e41d05 is served but needs the new timeout/skip result. Recheck
+its exact-file lease before updating. No DRAC compute, release, publication,
+main merge, worktree retirement or collaborator message. Slow profile tests,
+full native-R/direct/bridge parity, performance wins, cleanup and final reviews
+remain open.
+
+---
+
+# Current — structured tests passed; location-scale group near its cap
+
+Programme ACTIVE; all global gates OPEN. Source479f1e06 unchanged. Structured
+family group completed15files/228assertions/50seconds onTotoro, all327hashes
+matched. Evidence in structured-continuation-20260831. MissionControl queued
+update was applied after leasecleared; vault7e41d05 servedverified, otherstaging
+untouched. Currentsourcecopy drm_parity_blas_c0675b16_001 remainsvalid.
+
+ACTIVE: remote locscale-core-pilot-001, PID3584668, estimate2–5min/cap300s,
+oneJulia/BLASthread. Last observed4:38, starting test_locscale_frontend.jl after
+completing phylo_e2e. Do not restart; inspect exit-status/log aftercap. Preserve
+all completedfiles, partialfiles and warnings. test_locscale_profile.jl included
+but BOTH substantive testsets skipped under defaultDRM_SLOW_TESTS=0; notpassed.
+
+Next collectterminalreceipt, isolate unfinishedsuffix withfreshestimate, then
+schedule fullslowprofilevalidation separately (sourcecomments~8+min, not measured
+oncurrentTotoro). Remainingdefaultsuite andwholeprogrammeobligations stayopen.
+Builderreadonlyauditingthreadedobjectiveclosureownership; scoutauditinghidden
+per-fileenvironmentgates. No coreedits authorized beyondalreadycommittedrepair.
+Two deniedGaussianfiles andknownLSSboundaryfailures remainuntouched.
+
+---
+
 # Current — verified BLAS repair; next default-suite group
 
 Programme ACTIVE; all G0–G8 gates remain OPEN. The BLAS scope repair is verified:

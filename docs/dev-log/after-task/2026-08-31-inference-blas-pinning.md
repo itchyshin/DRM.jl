@@ -98,3 +98,9 @@ its overlap/nesting/error lifetimes, and the named focused regressions at four
 Julia threads. It does NOT cover all engines, arbitrary external BLAS mutations,
 all platforms, full-suite completion, native-R parity, calibrated coverage,
 Ayumi's full tree, or performance wins. All programme G0–G8 gates remain open.
+
+
+Post-checkpoint status update: the dashboard lease later cleared. The queued
+Mission Control change was rebased and applied in vault commit7e41d05, with the
+served JSON verified. The earlier queued receipt remains historical; the applied
+receipt is in structured-continuation-20260831/mission-control-applied.json.
