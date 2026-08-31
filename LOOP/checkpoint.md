@@ -1,3 +1,55 @@
+# Current checkpoint — integration and joint prediction labels (2026-08-31)
+
+Programme ACTIVE. G0–G8 OPEN. Continue in the clean paired worktrees:
+`/private/tmp/drm-parity-20260830/integration/{DRM.jl,drmTMB}`, branch
+`codex/parity-integration-20260831`. Original programme and label-verification
+worktrees are preserved; foreign ZOB/S5 changes remain only in original trees.
+Do not return to the old source branch by accident.
+
+Upstream merges: Julia567fec06, R06518a5a; no numerical source changes from
+those merges. R helper repair source fb5ca0e6 preserves native joint-model
+factor labels; regression test d9bce44d, independently approved by Rose.
+Final pure-R subset:1019pass/1explicit live skip,23files,14.55s.
+Ordinary Rscript startup+selected profile:PASS28.705s,4Julia/1BLAS.
+One-session004:8casesPASS49.9s, ordinary fits before/after identical;6joint
+routes include a real punctuated-factor fit. Scope is routing/metadata/newdata
+and explicit inference refusals, NOT numerical covariance/imputation/parity.
+Checker5b3572fe:13damages rejected normal/-O; exact current source set/hashes.
+Harness hashes are honest post-run observations (not a pre-run manifest).
+TotoroJulia1.10.10:1798pass/2known broken,14files,124s,1/1threads;
+separate4Julia/1BLAS bootstrap check62pass31s.419remote source/test hashes
+match local. No remote jobs or fits running at checkpoint.
+
+Both evidence directories `integration-20260831/` retain failed exporter,
+failed categorical harness, corrected run004, checker controls, source
+manifests and remote logs. After-task/check-log written. R code/evidence commit acfbcd0d matches tested source bytes; Julia evidence
+commit follows this checkpoint. Source manifest rechecked after R commit.
+Mission Control localcommit3b1adbd now points to this integration pair; allfour
+served values verified and vault lease released.42expanded foreign entries preserved.
+Melissa bounded reconciliation passed; this checkpoint and evidence are included
+in the Julia evidence commit. Verify git log for its exact revision. No whole-
+programme closure claim.
+
+NEXT: full package/integration and Documenter validation, then reviewable PR
+integration under CI pacing. No matching programme PR existed at latest check.
+Julia PR workflow publishes previews; do not treat a PR as build-only when
+publication authority is unresolved. NativeR full CI historically44–47minutes:
+measure a pilot and obtain required >30minute campaign approval before any
+long validation campaign. No long run has been started. Accumulated changes
+span46Julia/22Rcommits before upstream merges, not just this tiny repair.
+
+All original obligations retained:24missing-predictor cells, strict4e-6losses,
+LSSSE/REML/masks/largetree/final-head evidence, whole-treeprofile/bootstrap,
+complete functional parity,1/2/4/8thread automatic policy andwarm performance,
+cleanup, whole-site Documenter visuals/live verification and finalMelissa.
+Protected denied files src/gaussian_sparse_lss.jl andsrc/gaussian_structured.jl
+MUST NOT be edited, retried or bypassed without fresh authorization. No releases,
+registration, collaborator messages, retirement, main merge or deployment.
+RootactualSol/medium; Terra/highbuilder; Sol/highRose; Luna/lowscout.
+Activeagent-hours not instrumented; measured Totoro wall155seconds total.
+
+---
+
 # Current checkpoint — verified label patch committed locally
 
 Programme ACTIVE. All programme G0–G8 remain OPEN; the five bounded coefficient-
