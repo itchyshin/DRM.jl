@@ -1,3 +1,55 @@
+# Current checkpoint — labels and sparse-profile cost (2026-08-30)
+
+Programme ACTIVE; G0–G8 remain OPEN. Isolated twin worktrees and approved plan
+remain authoritative. Reviewed label slice committed: Julia193877e1 and
+R136be71d2. All5 leaf-phylo-labels gates pass;4executable checks reverified.
+Rose approves source/public002/checker512a61bb; Melissa finds no scope drop.
+These commits are CARRIED-OVER on codex/julia-r-parity for whole-programme
+integration, not merged/deployed. Resume in the same isolated worktrees; no
+whole-programme landing/acceptance claim. Full handoff gate was not rerun here
+because it would execute every historical programme ledger; this is an active
+same-task checkpoint, not a cross-platform handoff. All unlanded state is explicit.
+
+Julia parser569ee4fc supports lossless quoted labels and rejects literal NUL;
+final focused30assertions, R14 (exact reversed-edge order/encoding), Julia
+polytomy/height69 and Rpolytomy33. Public002 at R twin
+`docs/dev-log/evidence/julia-r-parity/phylo-labels/public-002.json` passes8checks
+in28.395sec, all136sourcehashes match and before=after. Independent Rose scalar
+Cholesky agrees <=5.7e-14; coefficients within4e-6; bridge/direct exact. Direct
+input is deliberately tree-tip ordered; arbitrary-row directLSS NOT qualified.
+Documenter r-julia-bridge page executes2examples; no visual/deployed-site claim.
+
+Profile-cost/depth6,7,8-001 receipts:64/128/256tips;15coefficients;14nuisanceparams.
+Finite differences use29NLLcalls/gradient+1 exactly,4148/58204/79548totalcalls.
+Constrained times0.546/4.672/11.115sec include first-use compilation. Last solve
+hits1000iterations and reportsfalseconvergence. Independent dense likelihood
+oracle passes; this is diagnostics NOT validinference/warmworkflow comparison.
+Normal/-O checker each rejects6damages. Retainfailedsolve and alloldreceipts.
+
+NEXT required frontend slice: two phylogenetic `_group_index` calls in
+src/gaussian_lss.jl (dedicated~327,multi~668) usefirstseenroworder ratherthan
+leafnames. Test repeated shuffledrows and groupSDcovariates on asymmetrictree,
+then repairboth mappings without alteringIID or estimatorsemantics. Draft
+ignoredgateleaf-lss-tip-identity.md is not approvedexecutableevidence yet.
+No files in this nextslice modified. Do not touch/bypass previously denied
+src/gaussian_structured.jl or src/gaussian_sparse_lss.jl.
+
+Preserve foreignRZOB96+/10- (reconstructedpriorfileSHAa57b7aa7) and JuliaS5
+include/test. Label-only stagedRblobSHA c9b8f907 excludesforeignhunks. Runtime
+receipts use developmentbytes, notcleanfinalhead; integrationmustrequalify.
+Keep all24native missingpredictorobligations, strict4e-6losses, LSSstampedSE/
+REML/masks/largetree/finalhead,profile/bootstrapstatuses,allregisteredwarmwins,
+automatic1/2/4/8policy,recoverycleanupandwholeDocumenteropen. No exclusions.
+
+Totoro/Fir existingSSHmasters verifiedlive; Totoroload~30/31/31, JuliaoutsidePATH
+at/home/snakagaw/.juliaup/bin/julia (1.10.10/1.12.6installed). No remotejobs,
+transfers/installations,release/registration/deployment/collaboratormessage.
+MissionControlce43ef2 (semanticupdate71feb1e) fourservedfieldsverified; vaultlease
+released. ParentactualSol/medium(planrequestedhigh),Terra/high,Sol/highRose,
+Luna/lowscout. Agenthoursunmeasured. Fullprogramme notdone.
+
+---
+
 # Current checkpoint — Ayumi reports and bridge follow-up (2026-08-30)
 
 Programme ACTIVE; all G0–G8 remain OPEN. Continue the approved plan in
