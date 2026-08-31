@@ -1,8 +1,14 @@
 # Current — bounded stable-comparison implementation authorized
 
-Programme ACTIVE; allglobalgatesOPEN. The accepted source baseline remains
+Programme ACTIVE; allglobalgatesOPEN. Evidence-only checkpoint `2b015936`
+is retained and independently approved by Melissa; it does not accept the
+uncommitted solver changes. The accepted source baseline remains
 5daa1593(de4620c7 profile-status implementation) with R9007338e5. Current
-inner source572f46bb/test8799bb89 remains unaccepted pending fit/inferencefix.
+preserved inner source572f46bb/test8799bb89 remains unaccepted. The working
+candidate is moving: first estimated-comparison candidate781da0ae passed66
+focused checks, but failed Rose review of cancellation accounting and has a
+preliminary Gamma oracle discrepancy above1e-4. Builder is correcting these;
+no refits until the corrected source freezes and the five-step pilot passes.
 
 Root/Rose approved finite estimated-error fallback after BigFloatdiagnostics
 and stable-identity prototype. BuilderTerra/high is IMPLEMENTING within owned
@@ -22,8 +28,10 @@ from prototypequadratureagreement. BigFloattrigamma is unsupported and retained.
 Root is checkpointing evidence only; source/test/docs-page WIP is CARRIED-OVER,
 not staged as a finishedfix. Existing protectedGaussian edits remain denied and
 untouched. No infer/fit sourceownership expansion, push/PRpublication/mainmerge,
-release,worktree retirement or collaborator messages. MissionControl5ff5553
-serves activeinnerrepair; update next_safe_action after implementationverdict.
+release,worktree retirement or collaborator messages. Mission Control commit
+`56bdd946` is served and reports active inner repair. Its exact-file lease is
+released. Update next_safe_action after the implementation verdict. All six
+existing compute connections were verified at 14:02 UTC; no remote job started.
 
 ---
 

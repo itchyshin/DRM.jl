@@ -1,3 +1,8 @@
+> Current status: unresolved implementation, not a completed repair. The numbered
+> sections preserve the initial investigation; dated/continuing checkpoints below
+> record subsequent candidates. Evidence commit `2b015936` is accepted as a
+> checkpoint only. No inner-solver candidate has passed integrated acceptance.
+
 ## 1. Goal
 
 Require an actually stationary inner mode before reporting a successful non-Gaussian location-scale Laplace solve, within programme #563.
@@ -90,3 +95,28 @@ silently downgraded. Quadrature agreement is an error estimate, not a rigorous
 bound. Rose agrees the approved programme requires finite numerical validation,
 not a newly invented universal libm proof; a bounded estimated-error contract
 is being prepared before any production comparison change.
+
+### Implementation checkpoint: estimated comparison under review
+
+The builder implemented the bounded fallback and reported 66 focused assertions
+passing on candidate `781da0ae`. This is not the five-step independent oracle
+campaign or the original fit/profile regression suite. A two-state preliminary
+check returns negative estimated margins, but the Gamma estimate differs from
+the earlier high-precision reference by approximately `3.7e-4` relative, above
+the frozen `1e-4` criterion. The exact discrepancy remains under investigation;
+neither the criterion nor the margin constants have been relaxed.
+
+Rose found that the first scale calculation loses cancellation inside loading
+products and the NB2/Gamma gradient expressions. The builder is correcting that
+scale, including predictor construction, before freezing a new candidate. This
+is a concrete implementation gap, not a request for formal interval proof.
+
+Melissa independently approved evidence-only checkpoint `2b015936`, retaining
+all failures and open gates. Mission Control commit `56bdd946` was checked at
+the served URL; its exact-file lease is released. Existing connections to Totoro
+and all five DRAC hosts were verified without starting compute or a new login.
+
+Root added duplicate-label refusal and exclusive log creation to the three
+private regression runners. Invoking each with an existing label exits before
+Julia starts; previous log and receipt hashes remain unchanged. Copies and the
+verification receipt are retained under `retained-runner-guards/`.
