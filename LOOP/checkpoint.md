@@ -1,3 +1,27 @@
+# Current continuation — K/A/tree/coords inference forwarding verified
+
+Pending integration source is based on Julia fd4985e6 and R761941c95. Resolve
+containing commits with `git log -1 -- src/inference.jl` and `git log -1 --
+R/julia-bridge.R` after checkpoint. Final hashes, red/green receipts, actual R
+logs and reviews live under `docs/dev-log/evidence/julia-r-parity/bootstrap-provider-forwarding-20260831/`.
+
+All Julia bootstrap surfaces preserve coords as well as K/A/tree. Coordinate
+marginal simulation reconstructs the fitted exponential covariance. Final
+provider test19/19 at4Julia/1BLAS with serial/thread equality; existing structured
+neighbours green. R retains/forwards the exact provider into profile and both
+bootstrap branches; pure routing48checks. Actual source-loaded R relmat profile
+and bootstrap (B2/2) equal direct Julia exactly. Rose PASS; Melissa pending final
+reconciliation. No live numerical process and no remote job.
+
+This is provider plumbing, not native-R parity, calibration, coverage, or
+performance. Live R animal/converted-spatial and non-Gaussian provider cells
+remain. Next exercise those, then coherent Gamma public-scale normalization.
+Preserve 24 missing-predictor cells, original LSS SE/REML/mask/large-tree/final-
+head evidence, strict4e-6 losses, docs, recovery and all programme G0-G8 OPEN.
+No release, registration, public deployment, main merge or worktree retirement.
+
+---
+
 # Current continuation — real R tree bootstrap verified
 
 Julia base 4fe48c123fecfe35029d9998d4e7211e8ee1dbcf; R base
@@ -19,8 +43,9 @@ Mission Control two-field update verified served, locally committed 5cf820c,
 and exact status-file lease released. Totoro and Fir/Narval/Rorqual/Trillium/
 Killarney existing sockets verified; no remote jobs. No live numerical runs.
 
-Next: other admitted structured inference targets and K/A/coords forwarding,
-then full Gamma public-scale normalization. Preserve 24 missing-predictor
+Superseded next step: K/A/coords forwarding is completed in the newer checkpoint
+above. Continue actual R animal/spatial and a non-Gaussian K route, then full
+Gamma public-scale normalization. Preserve 24 missing-predictor
 cells, original LSS SE/REML/mask/large-tree/final-head evidence, strict 4e-6
 losses, full parity/performance, documentation, recovery and reconciliation.
 Native Gamma parity and interval coverage are not proved by this B=2 case.

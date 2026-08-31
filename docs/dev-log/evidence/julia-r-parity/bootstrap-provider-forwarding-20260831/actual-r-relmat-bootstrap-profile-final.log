@@ -1,0 +1,75 @@
+ℹ Starting Julia (first call in a session takes ~30-60 s; later calls are
+  fast)...
+Julia version 1.10.0 at location /Users/z3437171/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/bin will be used.
+Loading setup script for JuliaCall...
+Finish loading setup script for JuliaCall.
+drmTMB_drm_bridge (generic function with 1 method)
+  
+drmTMB_drm_bridge_conditional_gaussian_ri (generic function with 1 method)
+  
+drmTMB_drm_bridge_q2_phylo (generic function with 1 method)
+  
+drmTMB_drm_bridge_inference (generic function with 1 method)
+  
+drmTMB_drm_bridge_fixef_inference (generic function with 1 method)
+  
+drmTMB_drm_bridge_structured (generic function with 1 method)
+  
+drmTMB_mixed_family (generic function with 1 method)
+  
+drmTMB_direct_provider_inference (generic function with 1 method)
+  
+drmTMB_direct_provider_profile (generic function with 1 method)
+  
+$source
+[1] "/private/tmp/drm-parity-20260830/integration/drmTMB"
+
+$drm_path
+[1] "/private/tmp/drm-parity-20260830/integration/DRM.jl/src/DRM.jl"
+
+$payload_kwarg
+[1] "K"
+
+$observed
+[1] 0.4523700 0.4385318 0.4651790
+
+$expected
+[1] 0.4523700 0.4385318 0.4651790
+
+$difference
+[1] 0 0 0
+
+$ci
+        parm level     lower    upper scale   transformation tmb_parameter
+1 fixef:mu:x  0.95 0.4385318 0.465179  link linear_predictor          mu_x
+  index    method profile.engine conf.status profile.boundary
+1     2 bootstrap           <NA>   bootstrap            FALSE
+        profile.message julia.threaded julia.workers julia.threads
+1 2/2 successful refits          FALSE             1             1
+  julia.blas_threads julia.elapsed bootstrap.n bootstrap.failed
+1                  1   0.005985708           2                0
+  bootstrap.parallel bootstrap.workers
+1               none                 1
+
+$observed_profile
+[1] 0.3586806 0.5438303
+
+$expected_profile
+[1] 0.3586806 0.5438303
+
+$profile_difference
+[1] 0 0
+
+$profile_ci
+        parm level     lower     upper scale   transformation tmb_parameter
+1 fixef:mu:x  0.95 0.3586806 0.5438303  link linear_predictor          mu_x
+  index  method       profile.engine conf.status profile.boundary
+1     2 profile julia_profile_result     profile            FALSE
+           profile.message julia.threaded julia.workers julia.threads
+1 profile_result completed          FALSE             1             1
+  julia.blas_threads julia.elapsed
+1                  1      1.217062
+
+ACTUAL_R_RELMAT_BOOTSTRAP_PROFILE_PASS
+Julia exit.
+  Activating project at `/private/tmp/drm-parity-20260830/integration/DRM.jl`

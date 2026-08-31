@@ -1,0 +1,38 @@
+ℹ Testing drmTMB
+julia-bootstrap-tree: ................
+julia-inference: ..........................................<drmTMB Julia-engine fit summary>
+observations: 30
+logLik: -123.4
+convergence: converged
+uncertainty: ok
+
+Fixed effects (link scale):
+  dpar        term estimate std.error statistic      p.value   conf.low
+    mu (Intercept)      0.5 0.2000000   2.50000 1.241933e-02  0.1080072
+    mu           x      0.4 0.1000000   4.00000 6.334248e-05  0.2040036
+ sigma (Intercept)     -0.3 0.1414214  -2.12132 3.389485e-02 -0.5771808
+   conf.high conf.level
+  0.89199280       0.95
+  0.59599640       0.95
+ -0.02281924       0.95
+
+Random effects (SD, response scale):
+ dpar               term       sd
+   mu phylo(1 | species) 2.404163
+..............................................................SSSS..............
+julia-structured-inference: ................................................
+
+══ Skipped ═════════════════════════════════════════════════════════════════════
+1. confint() profiles and bootstraps an ordinary fixed effect on a live Julia phylo fit ('test-julia-inference.R:618:3') - Reason: DRM.jl phylo engine not available
+
+2. confint(method = 'bootstrap') works for a non-Gaussian (Poisson) fixed effect ('test-julia-inference.R:743:7') - Reason: Poisson fixed-effect bootstrap round-trip unavailable: ! in callr subprocess.
+Caused by error in `drm_julia_setup()` at julia-bridge.R:1180:3:
+! `engine = "julia"` needs a local DRM.jl checkout, and none was found.
+i One-time: `git clone https://github.com/itchyshin/DRM.jl` then `julia --project=DRM.jl -e 'using Pkg; Pkg.instantiate()'`.
+i Per session (before the first julia call): `Sys.setenv(DRM_JL_PATH = "/path/to/DRM.jl")` or `options(drmTMB.DRM.jl.path = ...)`.
+
+3. confint(method = 'bootstrap') works for a phylo non-Gaussian fixed effect ('test-julia-inference.R:765:3') - Reason: DRM.jl phylo engine not available
+
+4. confint() on a Poisson phylo Julia fit returns finite Wald CIs ('test-julia-inference.R:857:3') - Reason: DRM.jl phylo engine not available
+
+══ DONE ════════════════════════════════════════════════════════════════════════

@@ -155,6 +155,7 @@ end
 
 """
     drm_bridge_inference(; formula, family, data, tree = nothing,
+                         K = nothing, A = nothing, coords = nothing,
                          options = Dict(), method = "profile",
                          level = 0.95, B = 199, seed = nothing,
                          threads = false, parm = nothing)
@@ -172,11 +173,13 @@ the same primitive `DRM.profile_result` / `DRM.bootstrap_result` calls the R
 bridge previously had to reach by calling DRM.jl's underscore-prefixed
 marshalling internals directly (see #475); this kwarg is the supported route
 that replaces that qualified-internal call. Returns the same payload shape
-either way. For an explicit phylogenetic fixed-effect target, `tree` is reused
-for both the initial fit and every bootstrap refit, including non-Gaussian fits.
+either way. For an explicit structured fixed-effect target, the supplied
+covariance provider (`tree`, `K`, `A`, or `coords`) is reused for the initial
+fit, marginal simulation, and every bootstrap refit.
 """
 function drm_bridge_inference(; formula, family::AbstractString, data,
-        tree = nothing, options = Dict{String,Any}(), method::AbstractString = "profile",
+        tree = nothing, K = nothing, A = nothing, coords = nothing,
+        options = Dict{String,Any}(), method::AbstractString = "profile",
         level::Real = 0.95, B::Integer = 199, seed = nothing,
         threads::Bool = false, parm = nothing)
     dat = _bridge_data(data)
@@ -195,8 +198,8 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     # previous qualified-internal call, which never set this option either.
     (!is_biv && target === nothing && bridge_method == "profile") && (opts[:profile_ci] = true)
     tree_obj = tree === nothing ? nothing : _bridge_tree(tree)
-    fit = _bridge_fit(bundle, fam, dat; tree = tree_obj, K = nothing,
-                      A = nothing, coords = nothing, options = opts)
+    fit = _bridge_fit(bundle, fam, dat; tree = tree_obj, K = K,
+                      A = A, coords = coords, options = opts)
     rawtarget = target === nothing ? nothing : _bridge_raw_fixef_target(fit, labels, target)
 
     # Bivariate q=4 phylogenetic fit: the uncertainty target is the four among-axis
@@ -241,12 +244,14 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
             # tree for the marginal sampler and every non-Gaussian refit.
             bootstrap_result(
                 fit; data = dat, B = Int(B), level = level, rng = rng,
-                tree = tree_obj, threads = threads, failures = :skip, check_converged = true,
+                tree = tree_obj, K = K, A = A, coords = coords, threads = threads,
+                failures = :skip, check_converged = true,
             )
         else
             bootstrap_result(
                 fit; data = dat, B = Int(B), level = level, rng = rng,
-                tree = tree_obj, threads = threads, failures = :skip,
+                tree = tree_obj, K = K, A = A, coords = coords,
+                threads = threads, failures = :skip,
                 # #459: a percentile CI must not be computed over refits that did not
                 # converge. This was `false`, which was harmless only while the
                 # simulator was conditional -- every replicate then re-used the fitted

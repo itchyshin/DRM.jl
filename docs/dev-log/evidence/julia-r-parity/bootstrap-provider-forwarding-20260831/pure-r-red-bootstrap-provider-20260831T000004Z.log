@@ -1,0 +1,12 @@
+ℹ Testing drmTMB
+julia-structured-inference: ...............................................1
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Failure ('test-julia-structured-inference.R:160:3'): generated bootstrap r
+Expected `length(gregexpr(forwarded, setup_source, fixed = TRUE)[[1L]])` to be identical to 2L.
+Differences:
+  `actual`: 1
+`expected`: 2
+
+
+══ DONE ════════════════════════════════════════════════════════════════════════

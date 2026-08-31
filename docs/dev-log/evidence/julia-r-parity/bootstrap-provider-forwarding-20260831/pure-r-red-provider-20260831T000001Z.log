@@ -1,0 +1,65 @@
+ℹ Testing drmTMB
+julia-structured-inference: 123..4567.8
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Failure ('test-julia-structured-inference.R:88:3'): univariate structured 
+Expected `fit$bridge_payload$kwarg` to be identical to "K".
+Differences:
+`actual` is NULL
+`expected` is a character vector ('K')
+
+
+── 2. Failure ('test-julia-structured-inference.R:89:3'): univariate structured 
+Expected `fit$bridge_payload$matrix` to be identical to `case$payload$matrix`.
+Differences:
+`actual` is NULL
+`expected` is a double vector (1, 0.2, 0.1, 0.2, 1, ...)
+
+
+── 3. Failure ('test-julia-structured-inference.R:91:3'): univariate structured 
+Expected `all(targets$profile_ready)` to be TRUE.
+Differences:
+`actual`:   FALSE
+`expected`: TRUE 
+
+
+── 4. Failure ('test-julia-structured-inference.R:141:7'): structured providers 
+Expected `sent[[6L]]` to be identical to `expected_K`.
+Differences:
+`actual` is NULL
+`expected` is a double vector (1, 0.2, 0.1, 0.2, 1, ...)
+
+
+── 5. Failure ('test-julia-structured-inference.R:142:7'): structured providers 
+Expected `sent[[7L]]` to be identical to `expected_A`.
+Differences:
+`actual` is a character vector ('profile')
+`expected` is NULL
+
+
+── 6. Failure ('test-julia-structured-inference.R:143:7'): structured providers 
+Expected `sent[[8L]]` to be identical to `expected_coords`.
+Differences:
+`actual` is a double vector (0.95)
+`expected` is NULL
+
+
+── 7. Failure ('test-julia-structured-inference.R:144:7'): structured providers 
+Expected `sent[[10L]]` to be identical to `method`.
+Differences:
+`actual` is an integer vector (4001)
+`expected` is a character vector ('profile')
+
+
+── 8. Error ('test-julia-structured-inference.R:131:7'): structured providers re
+Error in ``$<-.data.frame`(`*tmp*`, "bootstrap.n", value = integer(0))`: replacement has 0 rows, data has 1
+Backtrace:
+    ▆
+ 1. ├─stats::confint(...) at test-julia-structured-inference.R:131:7
+ 2. └─drmTMB:::confint.drmTMB_julia(...)
+ 3.   └─drmTMB:::drm_julia_fixef_inference_confint_row(...) at drmTMB/R/julia-bridge.R:2918:5
+ 4.     ├─base::`$<-`(`*tmp*`, "bootstrap.n", value = `<int>`) at drmTMB/R/julia-bridge.R:3349:5
+ 5.     └─base::`$<-.data.frame`(`*tmp*`, "bootstrap.n", value = `<int>`) at drmTMB/R/julia-bridge.R:3349:5
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+No one gets it right on their first try

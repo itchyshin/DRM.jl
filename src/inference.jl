@@ -1256,14 +1256,15 @@ function _profile_row_result(
 end
 
 """
-    bootstrap_ci(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, algorithm = :auto, g_tol = 1e-8)
-    bootstrap_ci(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, algorithm = :auto, g_tol = 1e-8)
+    bootstrap_ci(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, coords =, algorithm = :auto, g_tol = 1e-8)
+    bootstrap_ci(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, coords =, algorithm = :auto, g_tol = 1e-8)
 
 Parametric bootstrap confidence intervals: fit the model, then `simulate` `B`
 replicate responses, refit each, and take percentile intervals per coefficient.
 Univariate-response models (fixed / random-effect / meta / structured). Same row
 shape as [`confint`](@ref). Set `threads = true` to refit bootstrap replicates
-in parallel. Pass through the structured-matrix keywords (`K` / `A` / `tree`)
+in parallel. Pass through the structured-provider keywords (`K` / `A` / `tree` /
+`coords`)
 and, for Gaussian fits, the solver controls (`algorithm` / `g_tol`) exactly as
 to [`drm`](@ref). Use `bootstrap_result` when you need attempted/used/failed
 counts and per-replicate failure messages. If you already have
@@ -1280,6 +1281,7 @@ function bootstrap_ci(
     K=nothing,
     A=nothing,
     tree=nothing,
+    coords=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
@@ -1296,6 +1298,7 @@ function bootstrap_ci(
         K,
         A,
         tree,
+        coords,
         threads,
         failures,
         check_converged,
@@ -1306,7 +1309,7 @@ function bootstrap_ci(
 end
 
 # Family-agnostic parametric bootstrap — any family `simulate` supports.
-# #480: K/A/tree ARE forwardable here — #479 established that the non-Gaussian
+# #480: K/A/tree/coords ARE forwardable here — #479 established that the non-Gaussian
 # bootstrap can thread a structured covariance; the guard was a one-sided
 # plumbing gap, not a real restriction. Same row shape as the Gaussian method
 # and `confint`.
@@ -1320,12 +1323,13 @@ function bootstrap_ci(
     K=nothing,
     A=nothing,
     tree=nothing,
+    coords=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
 )
     rows = bootstrap_summary(
-        formula, family; data, B, level, rng, K, A, tree, threads, failures,
+        formula, family; data, B, level, rng, K, A, tree, coords, threads, failures,
         check_converged
     )
     return _bootstrap_ci_rows(rows)
@@ -1340,12 +1344,13 @@ function bootstrap_ci(
     K=nothing,
     A=nothing,
     tree=nothing,
+    coords=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
 )
     rows = bootstrap_summary(
-        fit; data, B, level, rng, K, A, tree, threads, failures, check_converged
+        fit; data, B, level, rng, K, A, tree, coords, threads, failures, check_converged
     )
     return _bootstrap_ci_rows(rows)
 end
@@ -1359,6 +1364,7 @@ function bootstrap_ci(
     K=nothing,
     A=nothing,
     tree=nothing,
+    coords=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
@@ -1374,6 +1380,7 @@ function bootstrap_ci(
         K,
         A,
         tree,
+        coords,
         threads,
         failures,
         check_converged,
@@ -1384,8 +1391,8 @@ function bootstrap_ci(
 end
 
 """
-    bootstrap_summary(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, algorithm = :auto, g_tol = 1e-8)
-    bootstrap_summary(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, algorithm = :auto, g_tol = 1e-8)
+    bootstrap_summary(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, coords =, algorithm = :auto, g_tol = 1e-8)
+    bootstrap_summary(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, coords =, algorithm = :auto, g_tol = 1e-8)
 
 Parametric bootstrap coefficient summaries in one pass: point estimate,
 bootstrap standard error, and percentile confidence interval. This is the
@@ -1406,6 +1413,7 @@ function bootstrap_summary(
     K=nothing,
     A=nothing,
     tree=nothing,
+    coords=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
@@ -1422,6 +1430,7 @@ function bootstrap_summary(
         K,
         A,
         tree,
+        coords,
         threads,
         failures,
         check_converged,
@@ -1431,7 +1440,7 @@ function bootstrap_summary(
     return result.summary
 end
 
-# Family-agnostic summary method — any family `simulate` supports. #480: K/A/tree
+# Family-agnostic summary method — any family `simulate` supports. #480: K/A/tree/coords
 # thread through to `bootstrap_result`, which forwards them to `drm(...)` only
 # when supplied — see the comment there for why they are not Gaussian-only.
 function bootstrap_summary(
@@ -1444,12 +1453,13 @@ function bootstrap_summary(
     K=nothing,
     A=nothing,
     tree=nothing,
+    coords=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
 )
     result = bootstrap_result(
-        formula, family; data, B, level, rng, K, A, tree, threads, failures,
+        formula, family; data, B, level, rng, K, A, tree, coords, threads, failures,
         check_converged
     )
     return result.summary
@@ -1464,12 +1474,13 @@ function bootstrap_summary(
     K=nothing,
     A=nothing,
     tree=nothing,
+    coords=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
 )
     result = bootstrap_result(
-        fit; data, B, level, rng, K, A, tree, threads, failures, check_converged
+        fit; data, B, level, rng, K, A, tree, coords, threads, failures, check_converged
     )
     return result.summary
 end
@@ -1483,6 +1494,7 @@ function bootstrap_summary(
     K=nothing,
     A=nothing,
     tree=nothing,
+    coords=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
@@ -1498,6 +1510,7 @@ function bootstrap_summary(
         K,
         A,
         tree,
+        coords,
         threads,
         failures,
         check_converged,
@@ -1508,8 +1521,8 @@ function bootstrap_summary(
 end
 
 """
-    bootstrap_result(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, failures = :error, check_converged = false, K =, A =, tree =, algorithm = :auto, g_tol = 1e-8)
-    bootstrap_result(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, failures = :error, check_converged = false, K =, A =, tree =, algorithm = :auto, g_tol = 1e-8)
+    bootstrap_result(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, failures = :error, check_converged = false, K =, A =, tree =, coords =, algorithm = :auto, g_tol = 1e-8)
+    bootstrap_result(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, failures = :error, check_converged = false, K =, A =, tree =, coords =, algorithm = :auto, g_tol = 1e-8)
 
 Auditable parametric bootstrap. Returns a `NamedTuple` with:
 
@@ -1541,6 +1554,7 @@ function bootstrap_result(
     K=nothing,
     A=nothing,
     tree=nothing,
+    coords=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
@@ -1548,9 +1562,9 @@ function bootstrap_result(
     g_tol::Real=1e-8,
 )
     _check_bootstrap_failure_mode(failures)
-    fit0 = drm(formula, family; data, K, A, tree, algorithm, g_tol)
-    refit = datab -> drm(formula, family; data=datab, K, A, tree, algorithm, g_tol)
-    simulate_fn = _marginal_simulator(fit0, data; K, A, tree)
+    fit0 = drm(formula, family; data, K, A, tree, coords, algorithm, g_tol)
+    refit = datab -> drm(formula, family; data=datab, K, A, tree, coords, algorithm, g_tol)
+    simulate_fn = _marginal_simulator(fit0, data; K, A, tree, coords)
     return _bootstrap_result(
         fit0, formula, data, B, level, rng, threads, refit;
         failures, check_converged, simulate_fn
@@ -1566,6 +1580,7 @@ function bootstrap_result(
     K=nothing,
     A=nothing,
     tree=nothing,
+    coords=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
@@ -1575,7 +1590,7 @@ function bootstrap_result(
     # Bivariate q=4 phylogenetic fit (also a DrmFit{<:Gaussian}): no scalar SD
     # block to refit-and-recoef — the quantities of interest are the among-axis
     # SDs sqrt.(diag(Σ_a)). Route to the dedicated parametric bootstrap, which
-    # gives boundary-honest percentile CIs. K/A/tree are carried by the fit.
+    # gives boundary-honest percentile CIs. Covariance providers are carried by the fit.
     if fit.formula isa BivariateDrmFormula && fit.ranef isa NamedTuple &&
        haskey(fit.ranef, :Sigma_a)
         return bootstrap_sigma_a(fit; data = data, B = B, level = level, rng = rng,
@@ -1593,9 +1608,9 @@ function bootstrap_result(
     else
         (;)
     end
-    refit = datab -> drm(formula, fit.family; data=datab, K, A, tree, algorithm, g_tol, refit_options...)
+    refit = datab -> drm(formula, fit.family; data=datab, K, A, tree, coords, algorithm, g_tol, refit_options...)
     # #459: redraw the random effects rather than conditioning on the fitted BLUPs.
-    simulate_fn = _marginal_simulator(fit, data; K=K, A=A, tree=tree)
+    simulate_fn = _marginal_simulator(fit, data; K=K, A=A, tree=tree, coords=coords)
     return _bootstrap_result(
         fit, formula, data, B, level, rng, threads, refit;
         failures, check_converged, simulate_fn
@@ -1612,6 +1627,7 @@ function bootstrap_result(
     K=nothing,
     A=nothing,
     tree=nothing,
+    coords=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
@@ -1631,11 +1647,12 @@ function bootstrap_result(
     tree !== nothing && (extra[:tree] = tree)
     K !== nothing && (extra[:K] = K)
     A !== nothing && (extra[:A] = A)
+    coords !== nothing && (extra[:coords] = coords)
     fit0 = drm(formula, family; data, extra...)
     refit = datab -> drm(formula, family; data=datab, extra...)
     # #459/#479: redraw the random effects rather than conditioning on the
     # fitted BLUPs, so a variance-component bootstrap CI is not degenerate.
-    simulate_fn = _marginal_simulator(fit0, data; K=K, A=A, tree=tree)
+    simulate_fn = _marginal_simulator(fit0, data; K=K, A=A, tree=tree, coords=coords)
     return _bootstrap_result(
         fit0, formula, data, B, level, rng, threads, refit;
         failures, check_converged, simulate_fn
@@ -1651,6 +1668,7 @@ function bootstrap_result(
     K=nothing,
     A=nothing,
     tree=nothing,
+    coords=nothing,
     threads::Bool=false,
     failures::Symbol=:error,
     check_converged::Bool=false,
@@ -1660,7 +1678,7 @@ function bootstrap_result(
     # Route to the dedicated parametric bootstrap (boundary-honest percentile CIs).
     if fit.formula isa BivariateDrmFormula && fit.ranef isa NamedTuple &&
        haskey(fit.ranef, :Sigma_a)
-        # K/A/tree are carried by the fit (fit.ranef.phy) — accept and ignore them.
+        # Covariance providers are carried by the fit (fit.ranef.phy) — accept and ignore them.
         return bootstrap_sigma_a(fit; data = data, B = B, level = level, rng = rng,
                                  failures = (failures === :error ? :error : :warn),
                                  check_converged = check_converged)
@@ -1671,7 +1689,7 @@ function bootstrap_result(
     # spatial Laplace) do NOT stash the tree/K/A on the fit the way the bivariate
     # q=4 route stashes `fit.ranef.phy` -- `_fit_poisson_general_laplace` et al.
     # never call `_withranef`. So, exactly like the Gaussian method just above,
-    # the caller re-supplies the same K/A/tree used to produce `fit`; a mismatch
+    # the caller re-supplies the same K/A/tree/coords used to produce `fit`; a mismatch
     # (or an unsupported family/route) is caught loudly by `drm(...)`'s own
     # per-family checks (e.g. "relmat(1 | g) needs K = …") rather than silently
     # refitting an unstructured model.
@@ -1679,8 +1697,10 @@ function bootstrap_result(
     tree !== nothing && (extra[:tree] = tree)
     K !== nothing && (extra[:K] = K)
     A !== nothing && (extra[:A] = A)
+    coords !== nothing && (extra[:coords] = coords)
     refit = datab -> drm(formula, fit.family; data=datab, extra...)
-    simulate_fn = _marginal_simulator(fit, data; K=K, A=A, tree=tree)   # #459 / #479
+    simulate_fn = _marginal_simulator(fit, data; K=K, A=A, tree=tree,
+                                      coords=coords)   # #459 / #479
     return _bootstrap_result(
         fit, formula, data, B, level, rng, threads, refit;
         failures, check_converged, simulate_fn
@@ -1850,6 +1870,21 @@ function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothi
             phy = tree isa AbstractString ? augmented_phy(tree) : tree
             phy === nothing && return nothing
             (g, sigma_phy_dense(phy; σ²_phy = 1.0))
+        elseif structured[1] === :spatial && K === nothing && coords !== nothing
+            cmat = Matrix{Float64}(coords)
+            size(cmat, 1) == G0 ||
+                throw(ArgumentError("spatial bootstrap coords must have one row per `$g` level (G = $G0)"))
+            size(cmat, 2) >= 1 ||
+                throw(ArgumentError("spatial bootstrap coords need at least one coordinate column"))
+            ρ = exp(only(coef(fit, :range)))
+            isfinite(ρ) && ρ > 0 ||
+                throw(ArgumentError("spatial bootstrap requires a positive finite fitted range"))
+            D = [sqrt(sum(abs2, @view(cmat[k, :]) .- @view(cmat[l, :])))
+                 for k in 1:G0, l in 1:G0]
+            # Match the coordinate-spatial fitting routes exactly: the random
+            # effect SD is defined against exp(-distance / fitted range), with
+            # the same numerical diagonal jitter used during fitting.
+            (g, exp.(-D ./ ρ) + 1e-8I)
         else
             (g, _resolve_structured_matrix(structured[1], g, G0;
                                            K=K, A=A, tree=tree, coords=coords))
