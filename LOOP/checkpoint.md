@@ -1,3 +1,62 @@
+# Current checkpoint — prediction, uncertainty and Ayumi report (2026-08-30)
+
+Programme ACTIVE; all G0–G8 OPEN.
+Lifecycle gate flags this long session for a fresh context; this is the saved
+resume point, not programme completion. Routing telemetry reports parent Sol/medium
+(the plan requested high); Terra/high builder and Sol/high review were explicit.
+No claim that requested parent effort was applied.
+ Approved plan remains
+`docs/dev-log/plans/2026-08-30-julia-r-parity.md`; unrelated LOOP/ultra-plan.md is
+NOT this programme. Work in /private/tmp/drm-parity-20260830/{DRM.jl,drmTMB}.
+Branch codex/julia-r-parity. Julia prediction/evidence committed5ee209c1. R uncertainty repair committed6ca8f9377; refreshed live evidence569e091ba.
+Mission Control94deff1 verified all four served fields; vault lease released.
+
+Direct finite known-state prediction is implemented with retained mean/sigma
+schemas.51prediction+86frontend+109factor=246PASS;3/3leaf gates reverified.
+Positive-definite covariance is required for finite direct newdata SEs; no
+new-response conditioning; unknown/missing x explicitly refuses; sigma needsonly
+its own columns. Current source SHA34e715491f4b967ed119a22bd2abce5a76095d69ebfaeca99910d0585fcd4964.
+Rose approved; Melissa reconciled known-state scope and all residual obligations.
+R transformed uncertainty442checksPASS; both covariance axes and raw-log-Wald
+SD intervals corrected. Native joint bootstrap now refuses incomplete response-only
+simulation/refits; full joint implementation remains required. Julia joint profile
+still unavailable. Neither change establishes interval coverage.
+
+Current source-stamped joint-public006+direct joint-frontend-fit-wald001 and finite
+public006 pass independent adapter oracles.21joint/17finite damage controls reject
+normally and underPython-O. ALL FOUR strict4e-6native comparisons stillFAIL:
+Gaussian trainingmean5.307e-6;Bernoulli theta1.002e-5;ordinal prediction7.561e-6,
+imputation5.124e-6;categorical theta1.741e-5,prediction9.576e-6. No defaults,
+comparator,tolerance or likelihood changed. Finite003 remains immutable stopping
+input. Receipts in evidence/finite-prediction/ and finite-frontends/;RDS Rrepoonly.
+These stamp tested development bytes including foreign Rbridgework, NOT a clean
+final integrated commit qualification. Sandbox/setup failures retained.
+
+Ayumi-san reports good Julia-engine point estimates but concern about profile and
+bootstrap; her model/issue is pending. Do not conflate with our native joint defect.
+Polytomy independently REPRODUCED: native accepts (a:1,b:1,c:1); Rbridge serializer
+and Julia constructor rejectbinary-only. Evidence/polytomy/admission-001.json.
+Next topology slice must preserve branch lengths/root covariance, supportstar and
+mixedmultifurcations with independent Brownian oracles, validate topology, and
+avoid arbitrary binary resolution. R/julia-bridge.R contains foreign edits: resolve
+ownership before modifying. src/sparse_phy.jl binary checks are localconstructor
+candidates; no implementation yet. Denied gaussian_structured.jl and
+ gaussian_sparse_lss.jl must NOT be retried or bypassed.
+
+Keep all24native obligations,S2/S3denominators,typedfactor/rawcutpoint/accessor/
+missingnewdata work,LSS stampedSE/REML/masks/p=10k/finalhead,inference,all1/2/4/8
+warmperformancewins and automaticpolicy,recovery/cleanup,wholeDocumenter/siteproof.
+One edited docpage5examplesPASS20.890sec; no newvisual/deploymentproof. No new
+remotecompute; priorTotoro278pilot used older source and is NOT currentproof.
+DRAC nojob. Mac correctnessruns bounded;>30mincampaign requirespilot+approval.
+
+Report: docs/dev-log/after-task/2026-08-30-parity-prediction-uncertainty.md.
+Preserve foreign Julia S5 include/test,R ZOB96/10 and unrelatedvaultdirt. No release,
+registration,publicdeployment or collaborator message. Actualagenthours unmeasured.
+Continue programme; final firstpass or completedleaf is not programmecompletion.
+
+---
+
 # Current checkpoint — finite factor coding and bounded concurrency (2026-08-30)
 
 Programme ACTIVE; G0–G8 OPEN. Continue the approved plan at
