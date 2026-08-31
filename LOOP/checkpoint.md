@@ -1,3 +1,69 @@
+# Current checkpoint — profile status verified; gradient edit needs authorization
+
+Programme ACTIVE. All programme G0–G8 and the original strict 4e-6 coefficient
+parity gate remain OPEN. Use only the twin worktrees under
+`/private/tmp/drm-parity-20260830`, branch `codex/julia-r-parity`.
+
+## Verified profile slice
+
+Source and evidence: Julia `bf7504a7`, R `6c25d5d82`. All six bounded
+`leaf-profile-nuisance-status` gates are met, including three executable checks
+rerun after review. Final combined002 passed 212 checks with four Julia and one
+BLAS thread. docs001 executed 19 examples on three guide pages. Their 100/101
+input hashes were unchanged and matched current files.
+
+Ordinary Rscript public004 passed the independent Gaussian ML profile oracle
+and 15 injected public-interface transport cases in 20.899 seconds. checker003
+verified all 141 source hashes and rejected 12 damaged receipts. Rose repeated
+that verification independently. Generic nuisance solves now require a finite
+minimizer, finite reevaluated objective and successful Optim termination. Arm
+failure, method, fallback and reason reach intervals, plots and the selected R
+row. This is not a score, global optimum, first-crossing, coverage, specialized
+profiler or speed guarantee. Every failed and superseded receipt is retained.
+
+## Next safe work
+
+Read `docs/dev-log/evidence/julia-r-parity/profile-gradient-next-slice.md`.
+Single-component sparse Gaussian ML LSS computes an exact gradient while fitting
+but does not attach it to the fit. The historical pilot measured 29 likelihood
+calls per 14-dimensional finite-difference nuisance gradient. Attaching the
+existing gradient requires the previously denied `src/gaussian_sparse_lss.jl`.
+**Do not edit, retry or bypass that denial without fresh explicit authorization.**
+No code was changed for this proposed slice. REML, dense/multi-component LSS and
+other structured routes remain separate. Proposed depth-six pilot: at most
+120 seconds, with an independent dense oracle and serial/concurrent callback
+checks. Do not infer a speed improvement before measurement.
+
+## Preservation and open obligations
+
+CARRIED-OVER: all execution commits remain unmerged and undeployed. Preserve the
+foreign Julia S5 include/test and R ZOB changes (96 additions/10 deletions), plus
+its untracked test/evidence. The R run used these development bytes; final
+integration must requalify a clean source. No full Pkg.test claim. No worktree
+retirement, stash deletion or denied engine edit was performed.
+
+Bootstrap evidence (187 checks, public004 with six/four refits) remains historical
+after profile source changes. Requalify it at the final revision. Strict boundary
+coefficient differences 4.5298009477 and 0.8610680164 remain unresolved despite
+near-identical named-covariance likelihoods. Do not relax their tolerance.
+
+Melissa retains all 24 native missing-predictor cells; stamped LSS SE, REML,
+mask, large-tree and final-revision evidence; cross-engine intervals/coverage;
+profile gradients/workspaces; registered warm-workflow wins; automatic
+1/2/4/8-thread policy; worktree/stash preservation and cleanup; whole-site visual
+and deployment checks; and final reconciliation. This slice closes none of the
+broader programme gates.
+
+Mission Control `06b199b` was verified through the served four-field update;
+the scoped vault lease is released.
+The live R menu correction remains undeployed. Root actual Sol/medium;
+Terra/high builder and Melissa; Sol/high Rose; Luna/low scout. Active agent-hours
+were not instrumented. No new remote compute, release, registration, deployment
+or collaborator message. Remote authentication checks are historical. Any
+campaign over 30 minutes still needs a measured pilot and approval.
+
+---
+
 # Current checkpoint — bootstrap leaf verified; profile status repair active
 
 Programme ACTIVE; all programme G0–G8 and the strict coefficient gate remain

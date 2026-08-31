@@ -99,5 +99,7 @@ This does NOT cover every native capability, interval coverage, shared sparse
 workspaces, registered warm-workflow wins,1/2/4/8threadpolicy, all24native missing-
 predictor cells, worktree/stash cleanup, whole-site visual/deployment or clean
 integration. No new remote compute, release, registration or publication.
-Mission Control profile update is prepared; served verification and scoped
-commits are integration housekeeping, not a broader completion claim.
+Mission Control058f16f four-field update is served and verified. Scoped
+source/evidence commits: Julia bf7504a7, R6c25d5d82, CARRIED-OVER on the isolated
+branch, unmerged/undeployed. Next sparse ML gradient attachment needs fresh
+authorization for the previously denied file; see profile-gradient-next-slice.md.
