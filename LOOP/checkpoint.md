@@ -1,3 +1,30 @@
+# Current continuation — conditional simulation repaired, joint sampler building
+
+BaseHEAD0b35ad61 before the pending conditional-simulator-only commit. Root
+sourcegaussian_coreeafb80c0/test6b20ba84: baseline5numericalfailures, corrected14/14;
+existing Gaussian/Poisson neighbours32/32. Rose reviewed. Both original failures
+andsupport errors retained under locscale-bootstrap-20260831. Generic NB2 size
+is now sigma^-2; Gamma recognizes the existing coupled shape-valued slot.
+Private sigma override keeps each fit's slot convention and does not mutate it.
+
+Joint sampler is NOT complete. Corrected public-shaped IID/relmat baseline
+195735Z9pass2capabilityfail0error. Workerprofile_threading_builder owns only
+src/locscale_simulate.jl andtest/test_locscale_bootstrap_simulator.jl; root owns
+module/inference/core/wiring. Worker is implementing after the retained red.
+See /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/contract.md. Integration
+hook/include and joint validation/refits are pending, do not claim green.
+
+Required new parity debt: coupled Gamma exposes logshape/shape under sigma;
+normalization needs negative-half fixedscale, D Lambda D, entire outer Jacobian,
+inverse objective/profile maps, and decreasing endpoint reversal. No partial
+normalization selected. Full programme G0-G8 remains OPEN, including bootstrap,
+R parity, performance, docs and recovery. No remote/long campaign or publication.
+
+Root lease renewed4h; all current numerical sessions terminal. Goal remainsactive.
+Earlier committed profile milestone46c345c0 and its finalsource checks stand.
+
+---
+
 # Landed local milestone — resume bootstrap distribution contract
 
 Production source and tests committed locally as46c345c09991a85ce7bc0d4bda2dce4d6df0d930.

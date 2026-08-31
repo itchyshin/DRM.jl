@@ -1,0 +1,14 @@
+ERROR: LoadError: ParseError:
+# Error @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_simulate_scale_conventions.jl:45:9
+            end
+        end for i in 1:fit.nobs]
+#       └ ── Expected `]`
+Stacktrace:
+ [1] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_simulate_scale_conventions.jl:45
+ [2] include(fname::String)
+   @ Base.MainInclude ./client.jl:489
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/scales-20260831T194757Z.jl:2
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_simulate_scale_conventions.jl:45
+in expression starting at /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/scales-20260831T194757Z.jl:2
