@@ -1,0 +1,83 @@
+ERROR: LoadError: InterruptException:
+Stacktrace:
+  [1] _log(x::Float64, base::Val{:ℯ}, func::Symbol)
+    @ Base.Math ./special/log.jl:270
+  [2] log
+    @ ./special/log.jl:267 [inlined]
+  [3] _logabsgamma_pos(x::Float64, ix::UInt32)
+    @ SpecialFunctions ~/.julia/packages/SpecialFunctions/MPNkH/src/logabsgamma/e_lgamma_r.jl:130
+  [4] _logabsgamma(x::Float64)
+    @ SpecialFunctions ~/.julia/packages/SpecialFunctions/MPNkH/src/logabsgamma/e_lgamma_r.jl:115
+  [5] logabsgamma
+    @ ~/.julia/packages/SpecialFunctions/MPNkH/src/gamma.jl:624 [inlined]
+  [6] _loggamma
+    @ ~/.julia/packages/SpecialFunctions/MPNkH/src/gamma.jl:662 [inlined]
+  [7] loggamma
+    @ ~/.julia/packages/SpecialFunctions/MPNkH/src/gamma.jl:659 [inlined]
+  [8] _ls_nll(::Val{:nb2}, y::Float64, η::Float64, ψ::Float64)
+    @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_kernels.jl:60
+  [9] _ls_joint(kind::Val{:nb2}, y::Vector{Float64}, η0::Vector{Float64}, ψ0::Vector{Float64}, gidx::Vector{Int64}, a::Vector{Float64}, P::SparseArrays.SparseMatrixCSC{Float64, Int64}, Zη::Matrix{Float64}, Zψ::Matrix{Float64})
+    @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_inner.jl:81
+ [10] _ls_inner_mode(kind::Val{:nb2}, y::Vector{Float64}, η0::Vector{Float64}, ψ0::Vector{Float64}, gidx::Vector{Int64}, G::Int64, P::SparseArrays.SparseMatrixCSC{Float64, Int64}, Zη::Matrix{Float64}, Zψ::Matrix{Float64}; a0::Vector{Float64}, maxiter::Int64, tol::Float64)
+    @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_inner.jl:180
+ [11] _ls_inner_mode
+    @ /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_inner.jl:158 [inlined]
+ [12] _ls_marginal_nll(kind::Val{:nb2}, y::Vector{Float64}, η0::Vector{Float64}, ψ0::Vector{Float64}, gidx::Vector{Int64}, G::Int64, P::SparseArrays.SparseMatrixCSC{Float64, Int64}, Zη::Matrix{Float64}, Zψ::Matrix{Float64}; a0::Vector{Float64})
+    @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_marginal.jl:31
+ [13] _ls_marginal_nll
+    @ /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_marginal.jl:28 [inlined]
+ [14] (::DRM.var"#f#1022"{Matrix{Float64}, Matrix{Float64}, Base.RefValue{Union{Nothing, Vector{Float64}}}, Val{:nb2}, Vector{Float64}, Matrix{Float64}, Matrix{Float64}, Vector{Int64}, Int64, SparseArrays.SparseMatrixCSC{Float64, Int64}, DRM.var"#build#1021"{Vector{Float64}, Int64, Float64, Vector{Int64}}, Int64, Int64})(θf::Vector{Float64})
+    @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_profile.jl:51
+ [15] value!!(obj::NLSolversBase.OnceDifferentiable{Float64, Vector{Float64}, Vector{Float64}}, x::Vector{Float64})
+    @ NLSolversBase ~/.julia/packages/NLSolversBase/n7XXO/src/interface.jl:9
+ [16] value!(obj::NLSolversBase.OnceDifferentiable{Float64, Vector{Float64}, Vector{Float64}}, x::Vector{Float64})
+    @ NLSolversBase ~/.julia/packages/NLSolversBase/n7XXO/src/interface.jl:28
+ [17] value!(obj::Optim.ManifoldObjective{NLSolversBase.OnceDifferentiable{Float64, Vector{Float64}, Vector{Float64}}}, x::Vector{Float64})
+    @ Optim ~/.julia/packages/Optim/gmigl/src/Manifolds.jl:31
+ [18] (::LineSearches.var"#ϕ#1"{Optim.ManifoldObjective{NLSolversBase.OnceDifferentiable{Float64, Vector{Float64}, Vector{Float64}}}, Vector{Float64}, Vector{Float64}, Vector{Float64}})(α::Float64)
+    @ LineSearches ~/.julia/packages/LineSearches/2BCHN/src/LineSearches.jl:22
+ [19] (::LineSearches.BackTracking{Float64, Int64})(ϕ::LineSearches.var"#ϕ#1"{Optim.ManifoldObjective{NLSolversBase.OnceDifferentiable{Float64, Vector{Float64}, Vector{Float64}}}, Vector{Float64}, Vector{Float64}, Vector{Float64}}, αinitial::Float64, ϕ_0::Float64, dϕ_0::Float64)
+    @ LineSearches ~/.julia/packages/LineSearches/2BCHN/src/backtracking.jl:119
+ [20] (::LineSearches.BackTracking{Float64, Int64})(ϕ::LineSearches.var"#ϕ#1"{Optim.ManifoldObjective{NLSolversBase.OnceDifferentiable{Float64, Vector{Float64}, Vector{Float64}}}, Vector{Float64}, Vector{Float64}, Vector{Float64}}, αinitial::Float64, ϕ_0::Float64, dϕ_0::Float64)
+    @ LineSearches ~/.julia/packages/LineSearches/2BCHN/src/backtracking.jl:34 [inlined]
+ [21] (::LineSearches.BackTracking{Float64, Int64})(ϕ::LineSearches.var"#ϕ#1"{Optim.ManifoldObjective{NLSolversBase.OnceDifferentiable{Float64, Vector{Float64}, Vector{Float64}}}, Vector{Float64}, Vector{Float64}, Vector{Float64}}, αinitial::Float64, ϕ_0::Float64, dϕ_0::Float64)
+    @ LineSearches ~/.julia/packages/LineSearches/2BCHN/src/backtracking.jl:24 [inlined]
+ [22] perform_linesearch!(state::Optim.LBFGSState{Vector{Float64}, Vector{Vector{Float64}}, Vector{Vector{Float64}}, Float64, Vector{Float64}}, method::Optim.LBFGS{Nothing, LineSearches.InitialStatic{Float64}, LineSearches.BackTracking{Float64, Int64}, Returns{Nothing}}, d::Optim.ManifoldObjective{NLSolversBase.OnceDifferentiable{Float64, Vector{Float64}, Vector{Float64}}})
+    @ Optim ~/.julia/packages/Optim/gmigl/src/utilities/perform_linesearch.jl:58
+ [23] update_state!(d::NLSolversBase.OnceDifferentiable{Float64, Vector{Float64}, Vector{Float64}}, state::Optim.LBFGSState{Vector{Float64}, Vector{Vector{Float64}}, Vector{Vector{Float64}}, Float64, Vector{Float64}}, method::Optim.LBFGS{Nothing, LineSearches.InitialStatic{Float64}, LineSearches.BackTracking{Float64, Int64}, Returns{Nothing}})
+    @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/solvers/first_order/l_bfgs.jl:220
+ [24] optimize(d::NLSolversBase.OnceDifferentiable{Float64, Vector{Float64}, Vector{Float64}}, initial_x::Vector{Float64}, method::Optim.LBFGS{Nothing, LineSearches.InitialStatic{Float64}, LineSearches.BackTracking{Float64, Int64}, Returns{Nothing}}, options::Optim.Options{Float64, Nothing}, state::Optim.LBFGSState{Vector{Float64}, Vector{Vector{Float64}}, Vector{Vector{Float64}}, Float64, Vector{Float64}})
+    @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:65
+ [25] optimize(d::NLSolversBase.OnceDifferentiable{Float64, Vector{Float64}, Vector{Float64}}, initial_x::Vector{Float64}, method::Optim.LBFGS{Nothing, LineSearches.InitialStatic{Float64}, LineSearches.BackTracking{Float64, Int64}, Returns{Nothing}}, options::Optim.Options{Float64, Nothing}, state::Optim.LBFGSState{Vector{Float64}, Vector{Vector{Float64}}, Vector{Vector{Float64}}, Float64, Vector{Float64}})
+    @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:43 [inlined]
+ [26] #optimize#79
+    @ ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:301 [inlined]
+ [27] optimize
+    @ ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:289 [inlined]
+ [28] _ls_profile_nll(kind::Val{:nb2}, y::Vector{Float64}, Xμ::Matrix{Float64}, Xψ::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseArrays.SparseMatrixCSC{Float64, Int64}, θ̂::Vector{Float64}, idx::Int64, val::Float64; Zη::Matrix{Float64}, Zψ::Matrix{Float64}, x0::Vector{Float64}, mwarm::Base.RefValue{Union{Nothing, Vector{Float64}}})
+    @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_profile.jl:69
+ [29] _ls_profile_nll
+    @ /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_profile.jl:39 [inlined]
+ [30] (::DRM.var"#evalh#1028"{Int64, Matrix{Float64}, Matrix{Float64}, Val{:nb2}, Vector{Float64}, Matrix{Float64}, Matrix{Float64}, Vector{Int64}, Int64, SparseArrays.SparseMatrixCSC{Float64, Int64}, Vector{Float64}, Base.RefValue{Union{Nothing, Vector{Float64}}}, Base.RefValue{Union{Nothing, Vector{Float64}}}, Vector{Int64}, Int64, Float64})(val::Float64)
+    @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_profile.jl:167
+ [31] _ls_profile_root(evalh::DRM.var"#evalh#1028"{Int64, Matrix{Float64}, Matrix{Float64}, Val{:nb2}, Vector{Float64}, Matrix{Float64}, Matrix{Float64}, Vector{Int64}, Int64, SparseArrays.SparseMatrixCSC{Float64, Int64}, Vector{Float64}, Base.RefValue{Union{Nothing, Vector{Float64}}}, Base.RefValue{Union{Nothing, Vector{Float64}}}, Vector{Int64}, Int64, Float64}, x0::Float64; dir::Float64, init::Float64, maxexpand::Int64, maxnewton::Int64, ftol::Float64, xtol::Float64)
+    @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_profile.jl:117
+ [32] _ls_profile_root
+    @ /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_profile.jl:91 [inlined]
+ [33] _ls_profile_ci(kind::Val{:nb2}, y::Vector{Float64}, Xμ::Matrix{Float64}, Xψ::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseArrays.SparseMatrixCSC{Float64, Int64}, θ̂::Vector{Float64}; idx::Int64, level::Float64, nll_min::Float64, se::Float64, Zη::Matrix{Float64}, Zψ::Matrix{Float64})
+    @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_profile.jl:181
+ [34] macro expansion
+    @ /private/tmp/drm-parity-20260830/integration/DRM.jl/src/inference.jl:458 [inlined]
+ [35] macro expansion
+    @ ./timing.jl:395 [inlined]
+ [36] _ls_profile_result(fit::DrmFit{NegBinomial2}; level::Float64, parm::Symbol)
+    @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/inference.jl:453
+ [37] _ls_profile_result
+    @ /private/tmp/drm-parity-20260830/integration/DRM.jl/src/inference.jl:444 [inlined]
+ [38] profile_result(fit::DrmFit{NegBinomial2}; level::Float64, threads::Bool, parm::Symbol)
+    @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/inference.jl:231
+ [39] include(fname::String)
+    @ Base.MainInclude ./client.jl:489
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:35
+Test Summary:                                          | Pass  Total     Time
+canonical location-scale profile coefficient threading |    1      1  6m54.9s

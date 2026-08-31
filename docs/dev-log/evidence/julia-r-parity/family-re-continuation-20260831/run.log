@@ -1,0 +1,71 @@
+2026-08-31T11:55:23Z
+9c958c8f83243bc4664ea272f5ebfcf3f1369cc34a5084afbd8a2619b84b460f  Project.toml
+3352aa55d3cca25d17195987efaaa5e5e6050f064dbf5036ab53e5808e51e899  test/Project.toml
+b1fc84ff68aab61a70d58db505fc5041a43af20cf91dc749290b2a50ac57f51e  test/Manifest.toml
+ec86d784577ed42473e55ebe43794916454d5c4b2e30c7bff0a0dd30ae47c4a9  family-re-continuation-001/run.jl
+3dca5366ccd9464fc6849bd3b651685f4f244db4c00049d50536fa7c39ddd76f  family-re-continuation-001/run.sh
+RUNTIME julia=1.10.10 JuliaThreads=1 BLAS=1
+START_FILE test_nbinom2_slope_re.jl
+Test Summary:                                  | Pass  Total   Time
+NB2 correlated random slope (1+x|g) — recovery |    4      4  12.8s
+COMPLETE_FILE test_nbinom2_slope_re.jl
+START_FILE test_beta_slope_re.jl
+Test Summary:                                   | Pass  Total  Time
+Beta correlated random slope (1+x|g) — recovery |    4      4  6.5s
+COMPLETE_FILE test_beta_slope_re.jl
+START_FILE test_gamma_slope_re.jl
+Test Summary:                                    | Pass  Total  Time
+Gamma correlated random slope (1+x|g) — recovery |    4      4  5.3s
+COMPLETE_FILE test_gamma_slope_re.jl
+START_FILE test_nbinom2_re.jl
+Test Summary:                         | Pass  Total  Time
+NB2 random intercept (1|g) — recovery |    5      5  1.5s
+COMPLETE_FILE test_nbinom2_re.jl
+START_FILE test_beta_re.jl
+Test Summary:                          | Pass  Total  Time
+Beta random intercept (1|g) — recovery |    4      4  1.6s
+COMPLETE_FILE test_beta_re.jl
+START_FILE test_gamma_re.jl
+Test Summary:                           | Pass  Total  Time
+Gamma random intercept (1|g) — recovery |    4      4  1.6s
+COMPLETE_FILE test_gamma_re.jl
+START_FILE test_student_re.jl
+Test Summary:                               | Pass  Total  Time
+Student-t random intercept (1|g) — recovery |    5      5  2.3s
+COMPLETE_FILE test_student_re.jl
+START_FILE test_student_slope_re.jl
+Test Summary:                                        | Pass  Total  Time
+Student-t correlated random slope (1+x|g) — recovery |    6      6  4.9s
+COMPLETE_FILE test_student_slope_re.jl
+START_FILE test_lognormal_re.jl
+Test Summary:                               | Pass  Total  Time
+LogNormal random intercept (1|g) — recovery |    4      4  1.5s
+COMPLETE_FILE test_lognormal_re.jl
+START_FILE test_lognormal_slope_re.jl
+Test Summary:                                        | Pass  Total  Time
+LogNormal correlated random slope (1+x|g) — recovery |    4      4  2.8s
+COMPLETE_FILE test_lognormal_slope_re.jl
+START_FILE test_betabinomial_re.jl
+Test Summary:                                   | Pass  Total  Time
+Beta-binomial random intercept (1|g) — recovery |    5      5  3.5s
+COMPLETE_FILE test_betabinomial_re.jl
+START_FILE test_betabinomial_slope_re.jl
+Test Summary:                                            | Pass  Total   Time
+Beta-binomial correlated random slope (1+x|g) — recovery |    6      6  12.0s
+COMPLETE_FILE test_betabinomial_slope_re.jl
+START_FILE test_binomial.jl
+Test Summary:                               | Pass  Total  Time
+Binomial cbind(s, f) ~ x — logit β recovery |    5      5  1.6s
+Test Summary:                                   | Pass  Total  Time
+Binomial 0/1 Bernoulli y ~ x — logit β recovery |    6      6  0.6s
+COMPLETE_FILE test_binomial.jl
+START_FILE test_binomial_re.jl
+Test Summary:                               | Pass  Total  Time
+Binomial logistic GLMM (1|g) — σ_b recovery |    7      7  1.7s
+COMPLETE_FILE test_binomial_re.jl
+START_FILE test_summary.jl
+Test Summary:                     | Pass  Total  Time
+DrmFit summary (show + coeftable) |   18     18  4.2s
+COMPLETE_FILE test_summary.jl
+FAMILY_RE_COMPLETE
+ELAPSED_SECONDS 65

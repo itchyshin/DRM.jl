@@ -1,3 +1,43 @@
+# Current — profile failure disclosure takes priority over threading
+
+Programme ACTIVE, all G0–G8 OPEN. Evidence commit 42042586 retains reviewed
+structured/location-scale checks. A further family batch passed 15 files and
+91 assertions in 65 seconds; its reviewed evidence is included in this checkpoint commit.
+
+Confirmed existing correctness defect: _ls_profile_root on quadratic gap t²−1,
+exact slope2t, init1e20 returns ~9.31e10 after its default iteration budget despite
+true root1; failed refinements also return uncertified finite limits. The public
+LS adapter hardcodes failed=0. Rose reproduced this with pure no-fit probes.
+Builder s9_frontend_builder (Terra/high) now owns src/locscale_profile.jl,
+src/inference.jl canonical LS branch and focused tests under verified persistent
+lease codex:01a05261-profile-failure-builder. Rose approved the explicit endpoint/nuisance status contract with required
+wrapper, fresh-gradient, failure-flag and diagnostic protections. Pure TDD and
+implementation are now in progress; no passing repair is claimed yet. Root owns docs/evidence.
+No likelihood or optimizer-budget change; denied Gaussian files untouched.
+
+Threading remains OPEN: Gamma fixture behavioral red12pass4fail in62s shows
+threads=true ignored, with two additional bad finite-only test expectations.
+First NB2 fixture timed out; rawlog retained but exact overwritten bytes missing.
+No threading source change. Preserve and resume after failure reporting is sound.
+
+TERMINAL Totoro baseline: locscale-slow-profile-pilot-001,901s,exit124.
+DRM_SLOW_TESTS=1, sourcecopy drm_parity_blas_c0675b16_001; all327hashes matched
+immutable479f1e06. First testset incomplete, second not reached; zero completed
+summaries does not mean zero executed assertions. Rawlogs and Rose review are
+in locscale-slow-profile-20260831. No remote fit job remains; no DRAC job.
+Do not rerun the completed groups or automatically extend the slow test.
+Mission Control02142fb is applied and served-verified with this priority and the
+correct paired integration resume paths. Full programme estimate remains a
+low-confidence80–150workinghours; immediateprofile repair4–8h includes review.
+
+CARRIED OVER: builder-owned uncommitted status tests/source on the same integration
+branch; no commit of that work until its red/green tests and Rose review pass.
+Root owns docs/evidence and has not staged those edits. Resume by checking the
+existing child, then reviewing source and focused tests; threading red remains
+queued behind correctness. No release/publication/main merge/retirement/messages.
+
+---
+
 # Current — suffix passed; slow profiles running; threading repair in progress
 
 Programme ACTIVE, G0–G8 OPEN. Three unfinished original files now passed on
@@ -11,8 +51,9 @@ ACTIVE Totoro: locscale-slow-profile-pilot-001, PID 3590042, on source copy
 /home/snakagaw/drm_parity_blas_c0675b16_001, DRM_SLOW_TESTS=1, one Julia/BLAS thread,
 estimate 5–15 minutes / cap 900 seconds. Inspect pid.txt, exit-status.txt and logs;
 do not duplicate. This is the unchanged baseline, not the pending threading fix.
-Additional frozen-source batch: family-re-continuation-001, 15 ordinary family
-files, estimate 2–5 minutes / cap 300 seconds, one Julia/BLAS thread. No DRAC
+The additional family-re-continuation-001 completed 15 original files and
+91 assertions in 65 seconds, exit 0; all 327 immutable source hashes agree.
+Do not rerun it. Only the slow-profile Totoro job remains active. No DRAC
 job. Root owns evidence and MC; builder s9_frontend_builder has the exact
 src/inference.jl, focused test, runtests and unlazy lease for coefficient threading.
 Rose reviews receipts. The two denied Gaussian files remain untouched.
