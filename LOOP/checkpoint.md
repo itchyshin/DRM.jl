@@ -1,3 +1,160 @@
+# Current — coefficient-label patch validated; scoped commits next
+
+Programme ACTIVE, all programmeG0–G8OPEN. No fits running. Finalsource269937e0
+and test33390330 frozen. Owned-only paired checkouts label-verification/{DRM.jl,
+drmTMB} are current: combined0051061assertions/89.3627s/108unchangedinputs;
+public00817pointcases+12operations/49.48s; Rchecker13damages; Pythonexplicit-error
+checker11damages undernormal/-O; ownedRpure62tests. Rose independentlyapproved
+source,evidenceandchecker; Melissa reconciliationrecorded andfindingsaddressed.
+Allfive coefficient-label leafgates met; broaderprogramme remainsopen.
+
+Rootreports,RESULT,ACCEPTANCE,check-logandallfinal/failedlogsretained inrepo
+coefficient-labels evidence directories. SourceR bridgeownedreconstruction at
+coefficient-labels/owned-julia-bridge.R or verifiedR/R/julia-bridge.R. Stage ONLY
+itsfourhunks viaindexblob, plusnewhelper/tests/tools/docs/evidence. Julia stage
+verifiedruntestswithoutforeignS5include. PreserveoriginalforeignZOB/S5 bytes.
+Next: scopedcommits, verifyHEADsourceblobsequalownedsnapshots, currentMCupdate;
+then resume programme work (integration/PRchecks andnextunblockedcapability).
+No release/deployment/retirement/collaboratormessage. Two deniedGaussianengine
+filesremainuntouched. MissionControlf24b9c4stillreportsreviewpending; updateafter
+scopedcommits. Pairedverificationworktreesretained/recoverable, no cleanupyet.
+
+---
+
+# Current resume — final unary-negation neighbour (2026-08-31)
+
+Programme ACTIVE, all G0–G8 OPEN. No rootfitprocesses active. Terra/high builder
+owns src/bridge.jl and test_bridge_formula_labels.jl; after801/49passing candidate
+ca322e19, Rose found unary ! spacing and a degenerate & fixture. Builder repaired
+prefix! (binary!= unchanged); conditionalRfixture now13rows (old4preservedv1),
+including nondegenerate logical/negation cases. A quoted-string probe failed in
+StatsModels itself, was kept as an out-of-admission log, and speculative source
+support was removed. Wait finalfreeze/hashes, then Rose finalboundedreview.
+
+IMPORTANT: paired label-verification checkouts currently carry OLDER ca322e19
+source and olderRrunner/fixture copies. Refresh exactown Julia source/test/docs/
+tools+all4currentTSVfixtures; rebuildruntests withoutforeignS5include; synclatest
+R runner/checker (17pointcases +12inferenceops +13damagecontrols). OwnedRbridge
+fourhunks/newhelper already there;62puretests pass. No root public008/combined005
+has started. Use180seccaps, estimate~2minutes. LeafG2–G4 bindings now pointto
+label-verificationpair; alluncheckedpendingcurrentevidence. Preservehistorical
+receipts/unlazy001; sourcecurrentupdatesmake public007/combined004 historical.
+
+MissionControlf24b9c4fourfieldsverifiedserved; vaultleasereleased. Rootaftertask
+structurecheckpasses but reportisDRAFT; no labelcodecommits yet. ForeignZOB/S5
+andtwo deniedGaussianenginefiles untouched. Ownedsetupreceipt/documents at
+coefficient-labels/owned-validation-setup.json explain reusedDLL notfreshnative
+build. Needed aftertests: Rose, Mellissa obligationreconciliation, source/evidence
+matching, scopedcommit excludingforeignhunks, checkpoint andcurrentMC. Do not
+mark programmecomplete orblocked; plenty of reversible work remains.
+
+---
+
+# Verification setup and Mission Control delta (2026-08-31)
+
+Mission Control local-only commit f24b9c4 updates exactly four owned NOW fields;
+served values match; vault lease released. Twenty-one foreign vault paths left
+untouched. Paired detached checkouts at label-verification/{DRM.jl,drmTMB} created
+from5cd6e6fd/6c25d5d82 for owned-only validation, not new programme lanes. R source
+contains only four labelpatchhunks+newhelper and62puretests passed. ExistingR DLL
+reused solely to loadpackage (hash in owned-validation-setup.json); NOT anewnative
+buildclaim. JuliaManifestcopied; builder sourceNOTyetoverlaid. Originalforeign
+ZOB/S5 remainuntouched. Waitbuilderfreeze, overlayexactown Juliafiles then run
+public008/combined005 with180secondcaps; do not launchwhilebuilderwrites.
+
+---
+
+# Latest delta — scalar provenance neighbour remains open
+
+All programme gates OPEN. Frozen cb1039fe passed public007 (12 point cases,
+12 inference operations,44.462s),13 damaged receipts rejected, and combined004
+(987 assertions,76.634s,106unchanged inputs). These remain historical candidates.
+Rose found nested scale() still loses parentheses in public names and atom_scope
+is not applied to scale materialization. Terra/high owns class-wide scalar source
+provenance repair in src/bridge.jl +test_bridge_formula_labels.jl; root supplied
+native-scalar-labels.tsv12 independentR label/value rows. Allfitprocesses terminal.
+G2/G3 leaf gates reopened; no finalapproval/commit yet. Deniedfiles untouched.
+Next: freeze correctedsource, public008 expandedcases +combined005, Rose,
+cleanowned-head validation excluding foreignZOB/S5, then scopedintegration.
+Runner now handles --help without fits; accidental invocation preserved unchanged
+as combined003 with provenance note. MissionControlstill eec6cd2; updateatclose.
+
+---
+
+# Latest delta — nested scalar context and exact source labels
+
+Programme ACTIVE; all programme gates remain OPEN. public006 passed ten point
+cases plus twelve inference operations in43.706s; Rose independently approved
+its current-source checker and thirteen damaged-receipt controls. combined002
+passed952assertions plus the reader example in71.606s,105unchanged inputs.
+These are bounded historical source59b7a888, not final label approval.
+
+Terra/high now owns the last exposed class: exact nested scalar-function source
+labels, including redundant parentheses. Native ten-expression labels+value
+fixture also exposed formula ^expansion inside sqrt(); root approved a narrow
+scalar-context repair in src/bridge.jl with formula-level behavior preserved.
+Rose is reviewing context boundaries, including subtraction and structured
+markers. No denied Gaussian engine edits. No fits are currently running.
+
+After builder freeze: run public007 (twelve point cases, same twelve inference
+operations and13damages) and combined003, then source review and unlazy gates.
+Root actual LSS transformed-SD/direct-Julia comparison passed10checks13.9s;
+newtest is wired and included in combined002. Native numeric317rowgrid passes.
+R and Julia final reports/commits remain pending; foreignZOB/S5 untouched.
+Mission Control eec6cd2 served fourfields correctly; vault lease released.
+
+---
+
+# Latest delta — review still active; do not certify the label slice
+
+public005 passed ten Gaussian cases, retained fullV transport/Hessianchecks,
+and twelve inference operations in43.561seconds. Finalchecker nowalsoanchors
+fullbeta to mean/likelihood and rejects13damages; nextpublicreceipt is006.
+combined001 terminal301PASS1ERROR at71.91seconds,103unchangedinputs: nested
+log1p(1+I(x^2)) was incorrectlyrejected by newlabelrendering. Builderownsrepair.
+Numericlabelthresholdfix0f6b0ed0 is not final: generated317Rnumericlabelgrid
+(native-numeric-labels.tsv) nowcoversgeneralwidth/precision/exponents. Builder
+alsofixing distinct Ispellings across differentparameterblocks (mustnotreject).
+Alljobs terminal; nofitcurrentlyactive. Do notedit sourceuntilbuilderreports
+freeze; thenrunpublic006/combined002,13damagechecker,Rose andleafchecks.
+NewRunit/neighbourpasses62assertions andinferenceunitspasswith4liveskips.
+Mission Control local commit eec6cd2 now reports the active label review;
+the four served fields match and the scoped vault lease is released.
+AllprogrammeG0–G8anddeniedtwoenginefilesremainunchanged/open.
+
+---
+
+# Current checkpoint — coefficient-label implementation under final review
+
+Programme ACTIVE; all G0–G8 remain OPEN. Preserve all earlier obligations below.
+Latest user links to Ayumi issue29/comment5472354858 were reread live; timestamps
+and findings match ayumi-20260830.md. No 5000-species ceiling: her sparse fit ran
+10970tips; whole-tree profile timeout122minutes remains collaborator-reported.
+
+Uncommitted active slice: src/bridge.jl plus new formula-label/collision tests;
+R helper/wrapper/tools and documentation in isolated twin worktrees only.
+Public004 passes ten Gaussian point cases and twelve profile/bootstrap operations
+in42.486seconds (max named beta error3.30e-14). This is historical candidate
+b9c50315, NOT final covariance qualification. Rose found scientific numeric-label
+spelling boundaries; Terra/high builder is repairing them. Root public005 runner
+now retains full primitive/public coefficients and V, with independent observed-
+Hessian inverse checks and eleven damaged-receipt controls. No005 run yet.
+R metadata+prediction62purechecks pass; inference neighbours pass with4live skips.
+Source/test/doc verification tool tools/run_coefficient_label_checks.py is ready
+but not yet run. It caps the combined neighbour+reader-example check at180seconds.
+
+Next: finish numeric spelling repair, freeze source, run public005 and combined
+checks with existing Julia cache permission, run independent receipt verifier,
+Rose review, executable leaf gates, scoped commits and Melissa reconciliation.
+Final kernel/newdata docs are drafts until these pass. All failed/superseded logs
+remain in coefficient-labels evidence directories. Preserve foreign JuliaS5
+include/test and RZOB96+/10- changes; exclude them from scoped staging.
+Do not edit/retry/bypass denied gaussian_sparse_lss.jl or gaussian_structured.jl.
+Mission Control still has previous profile checkpoint; preflight shows no lease
+on its specific status file, but claim it before updating. Remote compute unused.
+
+---
+
 # Current checkpoint — profile status verified; gradient edit needs authorization
 
 Programme ACTIVE. All programme G0–G8 and the original strict 4e-6 coefficient

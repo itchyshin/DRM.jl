@@ -1,0 +1,92 @@
+┌ Warning: drm: this tree's maximum tip height is 0.8, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 0.894427 = sqrt(0.8) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/0.8 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:713
+┌ Warning: sparse-Laplace vcov: finite-difference Hessian is not positive definite at the optimum; reported SEs are not trustworthy.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl:146
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 1.5397113383375382e-9
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 2.054422580978017e-9
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     7
+│   rcond = 3.677651316026714e-21
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 2.054422580978017e-9
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 5.681511417025606e-18
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 4.804558811702185e-18
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+poly() is landed, and its shape guards are narrow (#492): Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_translation.jl:105
+  Expression: occursin("may only appear as a model term", sprint(showerror, e))
+   Evaluated: occursin("may only appear as a model term", "ArgumentError: drm_bridge: cannot render scalar source `log1p(poly(x1, 2))` as an R coefficient label")
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_translation.jl:105 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_translation.jl:74 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_translation.jl:25
+Test Summary:                                                           | Pass  Fail  Total   Time
+bridge: R formula operator translation                                  |   48     1     49  41.2s
+  valid formulas still fit                                              |    3            3  17.6s
+  R `:` interaction + phylo no longer crashes                           |    3            3   7.0s
+  R `*` crossing: valid fits, nested bans still caught                  |    4            4   0.2s
+  poly() is landed, and its shape guards are narrow (#492)              |   11     1     12  10.0s
+  scale()/I()/factor() are now landed                                   |    9            9   3.4s
+  (...)^k crossing expands to main effects + interactions               |    3            3   1.8s
+  general `- term` removal (mechanical)                                 |    5            5   0.8s
+  `-` term removal combined with unexpanded `*` is refused, not guessed |    2            2   0.0s
+  `^` misuse still rejected                                             |    2            2   0.0s
+  scale()/factor()/I() argument-shape guards                            |    5            5   0.0s
+  R `- 1` drops the intercept                                           |    1            1   0.0s
+ERROR: LoadError: Some tests did not pass: 48 passed, 1 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_translation.jl:24

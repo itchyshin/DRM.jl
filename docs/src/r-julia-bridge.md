@@ -232,12 +232,36 @@ exactly.
 
 ### Materialised columns and `newdata`
 
-`I()`, `scale()`, `factor()` and `poly()` become synthetic columns (`__bridge_<kind>_<n>`),
-which is why bridge coefficient names differ from R's term text — the model is the same, only
-the label differs. Those columns are **not** reconstructed for `newdata`: a formula using them
-together with `newdata` **fails loudly** with a missing column rather than silently
-re-deriving a different basis. For `poly()` that matters more than for the others, since
-recomputing the QR on fresh rows would produce a genuinely different basis.
+`I()`, `scale()`, `factor()` and `poly()` use temporary columns internally. The
+development bridge retains the corresponding formula labels and an explicit
+mapping to the fitted coordinates. Use the returned public coefficient name,
+such as `I(x^2)`, in `parm = "fixef:mu:I(x^2)"`; do not guess a temporary column
+number. Existing data columns are never replaced by a generated column.
+
+The companion R adapter uses the original training terms for supported
+fixed-effect `predict(..., newdata = ...)` calls. In particular, `scale()` keeps
+the training mean and standard deviation, and `poly()` keeps its training
+orthogonal basis. Rebuilding either basis on the new rows would change the
+prediction. This R adapter behavior does not imply that a direct Julia
+`DrmFit` can reconstruct arbitrary materialised columns for new data.
+
+These changes require the matching development versions of both packages.
+Legacy bridge objects without label metadata keep their existing names.
+Ambiguous or incomplete label metadata is rejected. This is a coefficient
+identity contract; it does not establish interval coverage or large-tree
+profile performance.
+
+```@example bridge_coefficient_labels
+using DRM
+x_labels = collect(range(-1.5, 1.5; length = 48))
+y_labels = 0.2 .+ 0.4 .* x_labels .- 0.1 .* x_labels.^2 .+
+           0.15 .* sin.(collect(1:48))
+label_fit = drm_bridge(formula = "y ~ x + I(x^2); sigma ~ 1",
+    family = "gaussian", data = (; y = y_labels, x = x_labels))
+@assert "mu_I(x^2)" in label_fit["coef_names"]
+@assert label_fit["coef_names"] == label_fit["vcov_names"]
+label_fit["coef_names"]
+```
 
 ## Coefficient-scale parity gate (#370 / #383 / #385)
 

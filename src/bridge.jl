@@ -4,6 +4,9 @@
 # side deliberately boring for JuliaCall: strings, column tables, plain arrays,
 # and dictionaries cross the boundary; DRM.jl objects stay on the Julia side.
 
+import StatsModels
+using Printf: @sprintf
+
 # `nu` is deliberately NOT here (#1090): univariate Student owns a keyed `nu`
 # formula too, so it cannot discriminate bivariate — mu1/mu2/sigma1/sigma2/
 # rho12 do. The bivariate branch still threads a keyed `nu` through to
@@ -49,12 +52,13 @@ function drm_bridge(; formula, family::AbstractString, data, tree = nothing,
         K = nothing, A = nothing, coords = nothing, newdata = nothing,
         options = Dict{String,Any}())
     dat = _bridge_data(data)
-    bundle, dat = _bridge_formula(formula, family, dat)
+    bundle, dat, labels = _bridge_formula(formula, family, dat; labels = true)
     fam = _bridge_family(family)
     opts = _bridge_options(options)
     fit = _bridge_fit(bundle, fam, dat; tree = tree, K = K, A = A,
                       coords = coords, options = opts)
-    return _bridge_flatten(fit; family = String(family), newdata = newdata)
+    return _bridge_flatten(fit; family = String(family), newdata = newdata,
+                           labels = labels)
 end
 
 """
@@ -175,7 +179,7 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
         level::Real = 0.95, B::Integer = 199, seed = nothing,
         threads::Bool = false, parm = nothing)
     dat = _bridge_data(data)
-    bundle, dat = _bridge_formula(formula, family, dat)
+    bundle, dat, labels = _bridge_formula(formula, family, dat; labels = true)
     fam = _bridge_family(family)
     opts = _bridge_options(options)
     bridge_method = lowercase(strip(String(method)))
@@ -192,6 +196,7 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     tree_obj = tree === nothing ? nothing : _bridge_tree(tree)
     fit = _bridge_fit(bundle, fam, dat; tree = tree_obj, K = nothing,
                       A = nothing, coords = nothing, options = opts)
+    rawtarget = target === nothing ? nothing : _bridge_raw_fixef_target(fit, labels, target)
 
     # Bivariate q=4 phylogenetic fit: the uncertainty target is the four among-axis
     # SDs sqrt.(diag(Σ_a)), not a single SD row. The boundary makes the q4 profile
@@ -205,12 +210,13 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     if bridge_method == "profile"
         # Preserve the implicit SD target set, but an explicit fixed-effect
         # request must profile only that coefficient, not its entire block.
-        profile_parm = target === nothing ? [:resd_sigma, :resd, :resd_mu] :
-                                           target.param => target.coef
+        profile_parm = rawtarget === nothing ? [:resd_sigma, :resd, :resd_mu] :
+                                              rawtarget.param => rawtarget.coef
         result = profile_result(fit; level = level, threads = threads, parm = profile_parm)
         row = target === nothing ? _bridge_pick_sd_row(result.ci) :
-                                    _bridge_pick_fixef_row(result.ci, target)
+                                    _bridge_pick_fixef_row(result.ci, rawtarget)
         outcome = _bridge_profile_outcome(result, row)
+        target === nothing || (row = merge(row, (coef = target.coef,)))
         return _bridge_inference_flatten(
             row;
             method = "profile",
@@ -255,7 +261,8 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
             )
         end
         row = target === nothing ? _bridge_pick_sd_row(result.summary) :
-                                    _bridge_pick_fixef_row(result.summary, target)
+                                    _bridge_pick_fixef_row(result.summary, rawtarget)
+        target === nothing || (row = merge(row, (coef = target.coef,)))
         return _bridge_inference_flatten(
             row;
             method = "bootstrap",
@@ -433,7 +440,23 @@ function _bridge_family(family::AbstractString)
     throw(ArgumentError("drm_bridge: unsupported family `$family`"))
 end
 
-function _bridge_formula(formula, family::AbstractString, data)
+"""Internal, typed provenance for bridge-only public coefficient labels.
+
+`atoms` maps collision-safe materialised Julia symbols to their exact R term
+spellings. `function_labels` retains source spelling for every admitted scalar
+function term, including redundant parentheses. Neither changes a formula,
+matrix, or fit.
+"""
+struct _BridgeFormulaLabels
+    data
+    atoms::Dict{Symbol,String}
+    # A translated scalar AST can be identical in two distributional parts
+    # while the R source deliberately differs only by redundant parentheses.
+    # Keep those labels per fitted formula parameter, never in a global map.
+    function_labels::Dict{Symbol,Dict{String,String}}
+end
+
+function _bridge_formula(formula, family::AbstractString, data; labels::Bool = false)
     ctx = _BridgeXlateCtx(data)
     parts = _bridge_formula_parts(formula)
     parsed = map(p -> _bridge_parse_formula_part(p, ctx), parts)
@@ -441,34 +464,35 @@ function _bridge_formula(formula, family::AbstractString, data)
         throw(ArgumentError("drm_bridge: could not parse formula specification"))
 
     keyed = Dict{Symbol,Any}()
+    keyed_labels = Dict{Symbol,Dict{String,String}}()
     positional = Any[]
+    positional_labels = Dict{String,String}[]
     lss = Any[]                # `sd(g) ~ …` / `sd_phylo(s) ~ …` parts (#546):
+    lss_labels = Dict{String,String}[]
                                # marker-keyed, so they belong to NEITHER bucket and
                                # must not trip the keyed-vs-positional guard below.
     for item in parsed
-        key, form = item
+        key, (form, function_labels) = item
         if key === nothing
             if form.lhs isa FunctionTerm && (form.lhs.f === sd || form.lhs.f === sd_phylo)
                 push!(lss, form)
+                push!(lss_labels, function_labels)
             else
                 push!(positional, form)
+                push!(positional_labels, function_labels)
             end
         else
             keyed[key] = form
+            keyed_labels[key] = function_labels
         end
     end
 
     bundle = if any(k -> k in _BRIDGE_BIVARIATE_KEYS, keys(keyed))
         (isempty(positional) && haskey(keyed, :mu1) && haskey(keyed, :mu2)) ||
             throw(ArgumentError("drm_bridge: bivariate formulas need keyed `mu1` and `mu2` entries"))
-        # `nu` is threaded through for `biv_student`; omitted (not defaulted) for
-        # every other bivariate family so their bundles stay unchanged.
-        bf(; mu1 = keyed[:mu1],
-             mu2 = keyed[:mu2],
-             sigma1 = get(keyed, :sigma1, nothing),
-             sigma2 = get(keyed, :sigma2, nothing),
-             nu = get(keyed, :nu, nothing),
-             rho12 = get(keyed, :rho12, nothing))
+        bf(; mu1 = keyed[:mu1], mu2 = keyed[:mu2],
+             sigma1 = get(keyed, :sigma1, nothing), sigma2 = get(keyed, :sigma2, nothing),
+             nu = get(keyed, :nu, nothing), rho12 = get(keyed, :rho12, nothing))
     elseif !isempty(keyed)
         isempty(positional) ||
             throw(ArgumentError("drm_bridge: do not mix keyed and positional univariate formulas"))
@@ -479,9 +503,6 @@ function _bridge_formula(formula, family::AbstractString, data)
             haskey(keyed, p) && push!(ordered, keyed[p])
         end
         append!(ordered, lss)
-        # An unrecognised key must ERROR, never be dropped: a silently ignored
-        # part returns a DIFFERENT MODEL wearing the requested model's name
-        # (the issue-#2 class).
         for k in keys(keyed)
             k in (:mu, :sigma, :nu, :zi, :hu, :zoi, :coi) ||
                 throw(ArgumentError("drm_bridge: unknown univariate formula part `$k`. " *
@@ -494,12 +515,39 @@ function _bridge_formula(formula, family::AbstractString, data)
         bf(positional..., lss...)
     end
 
-    # `ctx.extra` collects the columns materialised by `I(...)`, `scale(...)`,
-    # and `factor(...)` (see `_bridge_xlate` below). Merge them into the data
-    # ONLY when something was actually materialised, so a formula that uses
-    # none of these constructs gets back the exact `data` it was given.
+    # Bind source provenance after `bf` assigns the canonical parameter keys.
+    # Positional and LSS formula parts preserve their established bundle order.
+    by_param = Dict{Symbol,Dict{String,String}}()
+    positional_i = 1
+    lss_i = 1
+    for (param, _) in bundle.forms
+        if haskey(keyed_labels, param)
+            by_param[param] = keyed_labels[param]
+        elseif _bridge_lss_form_key(param) !== nothing
+            if lss_i <= length(lss_labels)
+                by_param[param] = lss_labels[lss_i]
+                lss_i += 1
+            else
+                # Family-internal coordinates such as ordinal cutpoints have
+                # no user RHS and therefore no formula-source provenance.
+                by_param[param] = Dict{String,String}()
+            end
+        elseif positional_i <= length(positional_labels)
+            by_param[param] = positional_labels[positional_i]
+            positional_i += 1
+        else
+            # Do not invent a label for a non-formula coordinate. The export
+            # path keeps it raw/identity unless a family has its own mapping.
+            by_param[param] = Dict{String,String}()
+        end
+    end
+    positional_i == length(positional_labels) + 1 || error("drm_bridge: unused positional label provenance")
+    lss_i == length(lss_labels) + 1 || error("drm_bridge: unused LSS label provenance")
+
     augmented = isempty(ctx.extra) ? data : merge(_bridge_ctx_cols!(ctx), NamedTuple(ctx.extra))
-    return bundle, augmented
+    return labels ? (bundle, augmented,
+                     _BridgeFormulaLabels(augmented, copy(ctx.labels), by_param)) :
+                    (bundle, augmented)
 end
 
 # Render one keyed part as a parsable string. Location-scale-scale entries
@@ -536,7 +584,11 @@ end
 # STRING level, before `Meta.parse`. A model-formula string never contains `::`.
 function _bridge_translate_r_ops(part::AbstractString)
     occursin("::", part) && return part        # defensive: leave qualified names alone
-    return replace(part, ':' => '&')
+    # R accepts whitespace between `I` and its call parenthesis; Julia parses
+    # that spelling as implicit multiplication. Normalize only that admitted
+    # materializer before `Meta.parse`, retaining the original text for labels.
+    translated = replace(String(part), r"\bI\s+\(" => "I(")
+    return replace(translated, ':' => '&')
 end
 
 # R formula constructs that `@formula` cannot evaluate as the R user intends,
@@ -568,9 +620,15 @@ mutable struct _BridgeXlateCtx
     cols::Union{Nothing,NamedTuple}
     extra::Dict{Symbol,Any}
     cache::Dict{String,Symbol}
+    labels::Dict{Symbol,String}
+    i_labels::Dict{String,String}
+    part_function_labels::Dict{String,String}
+    function_labels::Dict{String,String}
     n::Int
 end
-_BridgeXlateCtx(data) = _BridgeXlateCtx(data, nothing, Dict{Symbol,Any}(), Dict{String,Symbol}(), 0)
+_BridgeXlateCtx(data) = _BridgeXlateCtx(data, nothing, Dict{Symbol,Any}(),
+    Dict{String,Symbol}(), Dict{Symbol,String}(), Dict{String,String}(),
+    Dict{String,String}(), Dict{String,String}(), 0)
 
 function _bridge_ctx_cols!(ctx::_BridgeXlateCtx)
     ctx.cols === nothing && (ctx.cols = Tables.columntable(ctx.data))
@@ -588,15 +646,269 @@ end
 # Materialise (and cache) a new data column, returning the `Symbol` that now
 # refers to it. Identical `kind`+source-expression pairs reuse the same
 # synthesised column instead of recomputing it.
-function _bridge_materialize!(ctx::_BridgeXlateCtx, kind::AbstractString, key_expr, compute::Function)
+function _bridge_materialize!(ctx::_BridgeXlateCtx, kind::AbstractString, key_expr,
+        compute::Function, label::AbstractString)
     key = kind * "::" * repr(key_expr)
     cached = get(ctx.cache, key, nothing)
     cached === nothing || return cached
-    ctx.n += 1
-    name = Symbol("__bridge_", kind, "_", ctx.n)
+    cols = _bridge_ctx_cols!(ctx)
+    name = Symbol("")
+    while true
+        ctx.n += 1
+        candidate = Symbol("__bridge_", kind, "_", ctx.n)
+        # A user column can legitimately have the old synthetic spelling.  Do
+        # not overwrite it: retain the real design column and allocate another
+        # private name whose exact raw spelling is recorded below.
+        if !(haskey(cols, candidate) || haskey(ctx.extra, candidate))
+            name = candidate
+            break
+        end
+    end
     ctx.extra[name] = compute()
     ctx.cache[key] = name
+    ctx.labels[name] = String(label)
     return name
+end
+
+_bridge_r_label_piece(x::Symbol) = (String(x), 5, :atom)
+_bridge_r_label_piece(x::Number) = (string(x), 5, :atom)
+function _bridge_r_label_piece(e::Expr)
+    e.head === :call || throw(ArgumentError("drm_bridge: cannot render formula expression $(repr(e)) as a public coefficient label"))
+    f = e.args[1]
+    f isa Symbol || throw(ArgumentError("drm_bridge: cannot render formula expression $(repr(e)) as a public coefficient label"))
+    if f === :+ && length(e.args) == 2
+        return _bridge_r_label_piece(e.args[2])
+    elseif f === :- && length(e.args) == 2
+        inner, iprec, _ = _bridge_r_label_piece(e.args[2])
+        return (string("-", iprec < 3 ? "(" * inner * ")" : inner), 3, :unary)
+    elseif f in (:+, :-, :*, :/, :^) && length(e.args) >= 3
+        prec = f in (:+, :-) ? 1 : f in (:*, :/) ? 2 : 4
+        op = f === :* ? " * " : f in (:+, :-) ? " $(f) " : string(f)
+        left, lprec, _ = _bridge_r_label_piece(e.args[2])
+        for arg in e.args[3:end]
+            right, rprec, _ = _bridge_r_label_piece(arg)
+            # Parenthesize precisely where omitting a group changes the
+            # arithmetic expression.  This is label-only; the materialised
+            # vector was already evaluated from the same safe AST.
+            (lprec < prec || (f === :^ && lprec == prec)) && (left = "(" * left * ")")
+            (rprec < prec || (f in (:-, :/, :^) && rprec == prec)) && (right = "(" * right * ")")
+            left = left * op * right
+            lprec = prec
+        end
+        return (left, prec, f)
+    end
+    return (string(f, "(", join((first(_bridge_r_label_piece(a)) for a in e.args[2:end]), ", "), ")"), 5, :atom)
+end
+
+_bridge_r_label(x) = first(_bridge_r_label_piece(x))
+
+function _bridge_r_float_label(value::AbstractFloat)
+    v = Float64(value)
+    isfinite(v) || throw(ArgumentError("drm_bridge: non-finite numeric value cannot be rendered as an R coefficient label"))
+    v == 0 && return "0"       # R does not retain a signed zero literal here.
+    # R's model-matrix labels retain 15 significant digits, then choose the
+    # shorter fixed or scientific spelling (fixed on ties).  A magnitude
+    # threshold is insufficient: 100000 becomes 1e+05, but 100001 and
+    # 1000000.1 remain fixed decimal.  Derive both candidates from ONE rounded
+    # scientific representation so the choice never changes the numeric value.
+    mantissa, exponent_text = split(@sprintf("%.14e", v), 'e'; limit = 2)
+    exponent = parse(Int, exponent_text)
+    sign = startswith(mantissa, "-") ? "-" : ""
+    mantissa = sign == "-" ? mantissa[nextind(mantissa, firstindex(mantissa)):end] : mantissa
+    scientific = sign * _bridge_trim_fractional_zeros(mantissa) *
+                 "e" * @sprintf("%+03d", exponent)
+    fixed = sign * _bridge_fixed_from_scientific(mantissa, exponent)
+    return ncodeunits(fixed) <= ncodeunits(scientific) ? fixed : scientific
+end
+
+function _bridge_trim_fractional_zeros(text::AbstractString)
+    value = String(text)
+    occursin('.', value) || return value
+    while endswith(value, "0")
+        value = value[1:prevind(value, lastindex(value))]
+    end
+    endswith(value, ".") && (value = value[1:prevind(value, lastindex(value))])
+    return value
+end
+
+function _bridge_fixed_from_scientific(mantissa::AbstractString, exponent::Integer)
+    digits = replace(String(mantissa), "." => "")
+    decimal = Int(exponent) + 1
+    value = if decimal <= 0
+        "0." * repeat("0", -decimal) * digits
+    elseif decimal >= ncodeunits(digits)
+        digits * repeat("0", decimal - ncodeunits(digits))
+    else
+        digits[1:decimal] * "." * digits[decimal+1:end]
+    end
+    return _bridge_trim_fractional_zeros(value)
+end
+
+function _bridge_r_number_label(token::AbstractString)
+    value = tryparse(Float64, token)
+    value === nothing && throw(ArgumentError("drm_bridge: cannot render numeric literal `$token` as an R coefficient label"))
+    return _bridge_r_float_label(value)
+end
+
+# Canonicalise only the small arithmetic grammar admitted by `I(...)`.  Unlike
+# reparsing/pretty-printing an AST, this retains explicit parentheses and unary
+# `+`, which R's model-matrix labels retain even when algebra could remove them.
+function _bridge_r_scalar_source_label(text::AbstractString)
+    s = String(text)
+    out = IOBuffer()
+    i = firstindex(s)
+    previous_atom = false
+    while i <= lastindex(s)
+        c = s[i]
+        if isspace(c)
+            i = nextind(s, i)
+        elseif isletter(c) || c == '_'
+            j = nextind(s, i)
+            while j <= lastindex(s) && (isletter(s[j]) || isdigit(s[j]) || s[j] == '_')
+                j = nextind(s, j)
+            end
+            print(out, s[i:prevind(s, j)])
+            previous_atom = true
+            i = j
+        elseif isdigit(c) || c == '.'
+            j = i
+            while j <= lastindex(s) && (isdigit(s[j]) || s[j] in ('.', 'e', 'E', '+', '-'))
+                # A sign belongs to an exponent only; otherwise it begins the
+                # next arithmetic token.
+                if s[j] in ('+', '-') && j != i && s[prevind(s, j)] ∉ ('e', 'E')
+                    break
+                end
+                j = nextind(s, j)
+            end
+            print(out, _bridge_r_number_label(s[i:prevind(s, j)]))
+            previous_atom = true
+            i = j
+        elseif c == '('
+            print(out, c)
+            previous_atom = false
+            i = nextind(s, i)
+        elseif c == ')'
+            print(out, c)
+            previous_atom = true
+            i = nextind(s, i)
+        elseif c == ','
+            print(out, ", ")
+            previous_atom = false
+            i = nextind(s, i)
+        elseif c in ('<', '>', '!', '=', '&', '|')
+            # Generic scalar transforms already admit R-style comparisons and
+            # boolean combinations.  Canonicalize their spacing only; this
+            # scanner never evaluates or rewrites their formula semantics.
+            j = nextind(s, i)
+            if j <= lastindex(s) && s[j] == '=' && c in ('<', '>', '!', '=')
+                op = string(c, '=')
+                j = nextind(s, j)
+                print(out, " ", op, " ")
+            elseif j <= lastindex(s) && s[j] == c && c in ('&', '|')
+                op = string(c, c)
+                j = nextind(s, j)
+                print(out, " ", op, " ")
+            elseif c == '!'
+                # `!` is prefix in R's deparsed formula labels. Keep `!=`
+                # above binary and leave this form adjacent to its operand.
+                print(out, '!')
+            else
+                print(out, " ", c, " ")
+            end
+            previous_atom = false
+            i = j
+        elseif c in ('+', '-', '*', '/', '^')
+            binary = previous_atom
+            if c == '*' || (c in ('+', '-') && binary)
+                print(out, " ", c, " ")
+            else
+                print(out, c)
+            end
+            previous_atom = false
+            i = nextind(s, i)
+        else
+            throw(ArgumentError("drm_bridge: cannot render scalar source `$text` as an R coefficient label"))
+        end
+    end
+    return String(take!(out))
+end
+
+function _bridge_call_end(s::AbstractString, open::Integer)
+    s[open] == '(' || throw(ArgumentError("drm_bridge: internal call scanner expected `(`"))
+    depth = 1
+    i = nextind(s, open)
+    while i <= lastindex(s) && depth > 0
+        s[i] == '(' && (depth += 1)
+        s[i] == ')' && (depth -= 1)
+        i = nextind(s, i)
+    end
+    depth == 0 || throw(ArgumentError("drm_bridge: unclosed scalar formula function"))
+    return prevind(s, i)
+end
+
+# Scan the original R-side source before translation.  Parsed Julia ASTs do
+# not retain redundant groups, unary `+`, or R's literal spelling, so public
+# names must come from this restricted source provenance rather than pretty
+# printing a transformed expression.
+function _bridge_register_source_labels!(ctx::_BridgeXlateCtx, part::AbstractString)
+    s = String(part)
+    i = firstindex(s)
+    while i <= lastindex(s)
+        if isletter(s[i]) || s[i] == '_'
+            start = i
+            i = nextind(s, i)
+            while i <= lastindex(s) && (isletter(s[i]) || isdigit(s[i]) || s[i] == '_')
+                i = nextind(s, i)
+            end
+            name = s[start:prevind(s, i)]
+            open = i
+            while open <= lastindex(s) && isspace(s[open])
+                open = nextind(s, open)
+            end
+            open <= lastindex(s) && s[open] == '(' || continue
+            close = _bridge_call_end(s, open)
+            source = s[start:close]
+            parsed = Meta.parse(_bridge_translate_r_ops(source))
+            if name == "I"
+                length(parsed.args) == 2 || throw(ArgumentError("drm_bridge: `I(...)` takes exactly one expression."))
+                key = repr(parsed.args[2])
+                label = "I(" * _bridge_r_scalar_source_label(s[nextind(s, open):prevind(s, close)]) * ")"
+                old = get(ctx.i_labels, key, nothing)
+                (old === nothing || old == label) || throw(ArgumentError(
+                    "drm_bridge: repeated `I(...)` expressions with different public spellings are ambiguous"))
+                ctx.i_labels[key] = label
+            else
+                f = Symbol(name)
+                # Formula operators and bridge DSL markers retain their own
+                # grammar; only genuine scalar calls get source provenance.
+                if !(f in _BRIDGE_DSL_CALLS || f in _BRIDGE_TERM_OPS || f in (:scale, :factor, :poly)) &&
+                   !_bridge_contains_poly(parsed)
+                    # The established xlate guard gives `poly()` under a
+                    # scalar call its precise model-shape error. Do not let
+                    # label provenance preempt that rejection.
+                    key = repr(parsed)
+                    label = _bridge_r_scalar_source_label(source)
+                    old = get(ctx.part_function_labels, key, nothing)
+                    (old === nothing || old == label) || throw(ArgumentError(
+                        "drm_bridge: repeated scalar transforms with different public spellings are ambiguous"))
+                    ctx.part_function_labels[key] = label
+                end
+            end
+        else
+            i = nextind(s, i)
+        end
+    end
+    return ctx
+end
+
+function _bridge_record_scalar_label!(ctx::_BridgeXlateCtx, translated, label)
+    label === nothing && return translated
+    key = repr(translated)
+    old = get(ctx.function_labels, key, nothing)
+    (old === nothing || old == label) || throw(ArgumentError(
+        "drm_bridge: scalar transform public labels collide within one formula part"))
+    ctx.function_labels[key] = label
+    return translated
 end
 
 # `I(expr)`: evaluate `expr` against the data through a SAFE, restricted
@@ -684,6 +996,8 @@ end
 # `-` and `(...)^k` are absent because they have their own branches above and
 # flatten `+` themselves before doing term algebra.
 const _BRIDGE_TERM_OPS = (:+, :&, :*, :~)
+const _BRIDGE_DSL_CALLS = Set((:phylo, :relmat, :animal, :spatial, :sd,
+    :sd_phylo, :meta_V, :cbind, :corpair, :|))
 
 _bridge_contains_star(e) = false
 function _bridge_contains_star(e::Expr)
@@ -760,25 +1074,34 @@ end
 # `factor` into real columns, and reject the constructs that cannot be made
 # faithful. Markers (phylo/relmat/animal/spatial/meta_V/cbind) and StatsModels
 # transforms (log/exp/…) pass through unchanged.
-_bridge_xlate(x, ctx::_BridgeXlateCtx) = x
-function _bridge_xlate(e::Expr, ctx::_BridgeXlateCtx)
+_bridge_xlate(x, ctx::_BridgeXlateCtx; scalar_context::Bool = false,
+    atom_scope::Union{Nothing,String} = nothing) = x
+function _bridge_xlate(e::Expr, ctx::_BridgeXlateCtx;
+        scalar_context::Bool = false, atom_scope::Union{Nothing,String} = nothing)
     e.head === :call || return e
     f = e.args[1]
     if f === :-
-        if length(e.args) == 3 && e.args[3] === 1
-            return Expr(:call, :+, 0, _bridge_xlate(e.args[2], ctx))   # `… - 1` → drop intercept
+        if scalar_context
+            return Expr(:call, f, (_bridge_xlate(a, ctx;
+                scalar_context = true, atom_scope = atom_scope) for a in e.args[2:end])...)
+        elseif length(e.args) == 3 && e.args[3] === 1
+            return Expr(:call, :+, 0, _bridge_xlate(e.args[2], ctx;
+                atom_scope = atom_scope))   # `… - 1` → drop intercept
         elseif length(e.args) == 3 && e.args[3] === 0
-            return _bridge_xlate(e.args[2], ctx)                        # `… - 0` → keep intercept
+            return _bridge_xlate(e.args[2], ctx; atom_scope = atom_scope) # `… - 0` → keep intercept
         elseif length(e.args) == 3
-            lhs = _bridge_xlate(e.args[2], ctx)
-            rhs = _bridge_xlate(e.args[3], ctx)
+            lhs = _bridge_xlate(e.args[2], ctx; atom_scope = atom_scope)
+            rhs = _bridge_xlate(e.args[3], ctx; atom_scope = atom_scope)
             (_bridge_contains_star(lhs) || _bridge_contains_star(rhs)) &&
                 throw(ArgumentError("drmTMB(engine=\"julia\"): R term removal `-` combined with unexpanded `*` crossing is unsupported (the removed term could be hiding inside the `*`); expand the crossing explicitly (e.g. `a + b + a&b`) before removing a term."))
             return _bridge_terms_to_sum(_bridge_remove_terms(lhs, rhs))
         end
         throw(ArgumentError("drmTMB(engine=\"julia\"): R term removal with `-` is unsupported; list the terms you want explicitly."))
     elseif f === :^
-        if length(e.args) == 3 && e.args[3] isa Integer && e.args[3] >= 1
+        if scalar_context
+            return Expr(:call, f, (_bridge_xlate(a, ctx;
+                scalar_context = true, atom_scope = atom_scope) for a in e.args[2:end])...)
+        elseif length(e.args) == 3 && e.args[3] isa Integer && e.args[3] >= 1
             # MEASURED 2026-08-25: `poly()` is NOT safe under `(...)^k`, and this is
             # the one place the `+`-group rewrite breaks. R treats `poly(x, 2)` as a
             # SINGLE term, so `(x + poly(x, 2))^2` crosses two terms and never forms
@@ -793,7 +1116,7 @@ function _bridge_xlate(e::Expr, ctx::_BridgeXlateCtx)
                 "rewrite expands poly into k separate terms, which would add those extra interactions " *
                 "(measured: R 6 columns vs 7 here for `(x + poly(x, 2))^2`). Expand the crossing explicitly, " *
                 "or precompute the basis in R and pass the columns as covariates."))
-            inner = _bridge_xlate(e.args[2], ctx)
+            inner = _bridge_xlate(e.args[2], ctx; atom_scope = atom_scope)
             _bridge_contains_star(inner) &&
                 throw(ArgumentError("drmTMB(engine=\"julia\"): R crossing `(...)^k` over an expression that already contains unexpanded `*` crossing is unsupported; expand explicitly."))
             return _bridge_terms_to_sum(_bridge_expand_power(_bridge_formula_terms(inner), Int(e.args[3])))
@@ -802,7 +1125,16 @@ function _bridge_xlate(e::Expr, ctx::_BridgeXlateCtx)
     elseif f === :I
         length(e.args) == 2 ||
             throw(ArgumentError("drmTMB(engine=\"julia\"): `I(...)` takes exactly one expression."))
-        return _bridge_materialize!(ctx, "I", e.args[2], () -> _bridge_eval_I(e.args[2], ctx))
+        label = get(ctx.i_labels, repr(e.args[2]), "I($(_bridge_r_label(e.args[2])))")
+        # The same evaluated I() expression can legitimately appear with
+        # distinct R spellings in different dpar formulas, e.g. `I(x^2)` for
+        # mu and `I((x^2))` for sigma.  It therefore receives distinct bridge
+        # atoms unless its exact public spelling also matches.  Within one
+        # formula part `_bridge_register_i_labels!` still rejects ambiguous
+        # repeated spellings before a collinear duplicate can be created.
+        return _bridge_materialize!(ctx, "I", (e.args[2], label, atom_scope),
+            () -> _bridge_eval_I(e.args[2], ctx),
+            label)
     elseif f === :poly
         # `poly(x, k)` expands to k model-matrix columns, so unlike `scale()` this
         # returns a `+` GROUP of materialised symbols rather than one symbol. That
@@ -822,7 +1154,8 @@ function _bridge_xlate(e::Expr, ctx::_BridgeXlateCtx)
             "(got `$(deg)`)."))
         degi = Int(deg)
         basis = _bridge_eval_poly(arg, degi, ctx)
-        syms = [_bridge_materialize!(ctx, "poly$(degi)c$(j)", arg, () -> basis[:, j]) for j in 1:degi]
+        syms = [_bridge_materialize!(ctx, "poly$(degi)c$(j)", arg,
+            () -> basis[:, j], "poly($(_bridge_r_label(arg)), $(degi))$(j)") for j in 1:degi]
         return Expr(:call, :+, syms...)
     elseif f === :scale
         length(e.args) == 2 ||
@@ -830,7 +1163,8 @@ function _bridge_xlate(e::Expr, ctx::_BridgeXlateCtx)
         arg = e.args[2]
         arg isa Symbol ||
             throw(ArgumentError("drmTMB(engine=\"julia\"): `scale(...)` only supports a bare column reference (e.g. `scale(x)`), not a general expression; precompute the standardized column and pass it as a covariate."))
-        return _bridge_materialize!(ctx, "scale", arg, () -> _bridge_eval_scale(arg, ctx))
+        return _bridge_materialize!(ctx, "scale", (arg, atom_scope),
+            () -> _bridge_eval_scale(arg, ctx), "scale($(_bridge_r_label(arg)))")
     elseif f === :factor
         length(e.args) == 2 ||
             throw(ArgumentError("drmTMB(engine=\"julia\"): `factor(...)` with extra arguments is unsupported via engine=\"julia\"; precompute the factor column and pass it as a covariate."))
@@ -842,8 +1176,9 @@ function _bridge_xlate(e::Expr, ctx::_BridgeXlateCtx)
         # the ORIGINAL values (numeric order preserved, not string order) —
         # exactly R's `factor()` default levels, giving `contr.treatment`
         # dummy coding against the same (lowest) baseline level.
-        return _bridge_materialize!(ctx, "factor", arg,
-            () -> Any[v for v in _bridge_lookup_column(ctx, arg)])
+        return _bridge_materialize!(ctx, "factor", (arg, atom_scope),
+            () -> Any[v for v in _bridge_lookup_column(ctx, arg)],
+            "factor($(_bridge_r_label(arg)))")
     elseif !(f isa Symbol)
         throw(ArgumentError("drmTMB(engine=\"julia\"): unsupported formula function `$(f)`; precompute it as a covariate column."))
     elseif haskey(_BRIDGE_REJECT_CALLS, f)
@@ -858,13 +1193,27 @@ function _bridge_xlate(e::Expr, ctx::_BridgeXlateCtx)
             "would apply it to their sum — one column instead of k, silently. Precompute the transformed " *
             "basis in R and pass the columns as covariates."))
     end
-    # Recurse into EVERY remaining call's arguments (`~`, `+`, `&`, `*`, `log`,
-    # `phylo`, …) so a rejected construct nested at ANY depth is still caught, not
-    # only when it sits directly under `~`/`+`/`&`.
-    return Expr(:call, f, (_bridge_xlate(a, ctx) for a in e.args[2:end])...)
+    # Recurse into EVERY remaining call's arguments. Formula operators retain
+    # their existing term algebra; true scalar functions keep arithmetic `-`
+    # and `^` rather than being mistaken for term removal/crossing. DSL marker
+    # calls deliberately remain formula context, never arbitrary scalar calls.
+    scalar_child = scalar_context || !(f in _BRIDGE_TERM_OPS || f in _BRIDGE_DSL_CALLS)
+    source_label = scalar_child ? get(ctx.part_function_labels, repr(e), nothing) : nothing
+    nested_scope = atom_scope === nothing ? source_label : atom_scope
+    translated = Expr(:call, f, (_bridge_xlate(a, ctx;
+        scalar_context = scalar_child, atom_scope = nested_scope) for a in e.args[2:end])...)
+    return _bridge_record_scalar_label!(ctx, translated, source_label)
 end
 
 function _bridge_parse_formula_part(part::AbstractString, ctx::_BridgeXlateCtx)
+    # I() spelling provenance is scoped to a single R formula part.  A single
+    # context still owns all materialised data, but dpar formulas must not
+    # reject each other merely because their same-valued transform is written
+    # differently for a public coefficient selector.
+    empty!(ctx.i_labels)
+    empty!(ctx.part_function_labels)
+    empty!(ctx.function_labels)
+    _bridge_register_source_labels!(ctx, part)
     expr = Meta.parse(_bridge_translate_r_ops(part))
     if expr isa Expr && expr.head === :(=)
         length(expr.args) == 2 || return nothing
@@ -872,11 +1221,11 @@ function _bridge_parse_formula_part(part::AbstractString, ctx::_BridgeXlateCtx)
         key isa Symbol || return nothing
         form = _bridge_formula_from_expr(expr.args[2], ctx)
         form === nothing && return nothing
-        return key => form
+        return key => (form, copy(ctx.function_labels))
     end
     form = _bridge_formula_from_expr(expr, ctx)
     form === nothing && return nothing
-    return nothing => form
+    return nothing => (form, copy(ctx.function_labels))
 end
 
 function _bridge_formula_from_expr(expr, ctx::_BridgeXlateCtx)
@@ -885,9 +1234,11 @@ function _bridge_formula_from_expr(expr, ctx::_BridgeXlateCtx)
     return eval(Expr(:macrocall, Symbol("@formula"), LineNumberNode(0), expr))
 end
 
-function _bridge_flatten(fit; family::AbstractString, newdata = nothing)
-    cnames, cvals = _bridge_coef_vector(fit)
+function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
+        labels::Union{Nothing,_BridgeFormulaLabels} = nothing)
+    cnames, cvals, raw_cnames, public_to_raw = _bridge_coef_vector(fit; labels = labels)
     V = Matrix{Float64}(vcov(fit))
+    _bridge_validate_coordinate_axes(fit.blocks, fit.coefnames, length(cvals), V)
     out = Dict{String,Any}(
         "family" => String(family),
         "coef_names" => cnames,
@@ -913,6 +1264,14 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing)
         "corpairs" => _bridge_plain(corpairs(fit)),
         "dpars" => _bridge_dpars(fit),
     )
+    if labels !== nothing
+        # `coef_names`/`vcov_names` are the public R spelling.  Retain the exact
+        # Julia coordinate names and a bijection for the bridge inference route;
+        # no numeric coordinate, value, or covariance entry is rewritten.
+        out["coef_label_contract"] = "bridge_formula_labels_v1"
+        out["raw_coef_names"] = raw_cnames
+        out["coef_name_map"] = public_to_raw
+    end
     trials = _bridge_trials(fit)
     trials === nothing || (out["trials"] = trials)
     meta = _bridge_meta_parts(fit)
@@ -935,22 +1294,316 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing)
     return out
 end
 
-function _bridge_coef_vector(fit)
+function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = nothing)
     θ = coef(fit)
     namemap = Dict(p => ns for (p, ns) in fit.coefnames)
-    names = String[]
+    raw_names = String[]
     vals = Float64[]
+    indices = Int[]
     for (param, r) in fit.blocks
-        haskey(namemap, param) || continue
+        haskey(namemap, param) || error("drm_bridge: no coefficient names for parameter block `$param`")
         pnames = namemap[param]
         length(pnames) == length(r) ||
             error("drm_bridge: coefficient-name mismatch for `$param`")
         for (nm, idx) in zip(pnames, r)
-            push!(names, "$(param)_$(nm)")
+            push!(raw_names, "$(param)_$(nm)")
             push!(vals, θ[idx])
+            push!(indices, idx)
         end
     end
-    return names, vals
+    _bridge_validate_coordinate_axes(fit.blocks, fit.coefnames, length(θ), nothing)
+    length(raw_names) == length(θ) || error("drm_bridge: coefficient blocks do not cover every raw coordinate")
+    indices == collect(1:length(θ)) ||
+        error("drm_bridge: coefficient blocks must cover raw coordinates in covariance order")
+    length(unique(raw_names)) == length(raw_names) ||
+        error("drm_bridge: raw coefficient labels are not unique")
+    if labels === nothing
+        return raw_names, vals, raw_names, Dict{String,String}(n => n for n in raw_names)
+    end
+    public_to_raw = _bridge_public_to_raw_coef_map(fit, labels, raw_names)
+    raw_to_public = Dict(raw => public for (public, raw) in public_to_raw)
+    names = String[raw_to_public[raw] for raw in raw_names]
+    length(unique(names)) == length(names) || error("drm_bridge: public coefficient labels are not unique")
+    Set(values(public_to_raw)) == Set(raw_names) ||
+        error("drm_bridge: public coefficient map does not cover every raw coordinate")
+    return names, vals, raw_names, public_to_raw
+end
+
+function _bridge_validate_coordinate_axes(blocks, names, p::Integer,
+        V::Union{Nothing,AbstractMatrix})
+    length(blocks) == length(names) ||
+        error("drm_bridge: coefficient blocks and coefficient-name blocks differ in length")
+    seen = Int[]
+    for ((param, r), (name_param, ns)) in zip(blocks, names)
+        param === name_param || error("drm_bridge: coefficient blocks and names disagree on parameter identity")
+        length(r) == length(ns) || error("drm_bridge: coefficient-name mismatch for `$param`")
+        append!(seen, r)
+    end
+    seen == collect(1:Int(p)) ||
+        error("drm_bridge: coefficient blocks must be the ordered raw-coordinate partition 1:$p")
+    V === nothing || size(V) == (p, p) ||
+        error("drm_bridge: covariance matrix must be $p×$p in coefficient-coordinate order")
+    return nothing
+end
+
+# `coefnames` records raw matrix columns.  Render public R spellings from the
+# typed, schema-applied RHS instead of parsing those strings: factor levels may
+# themselves contain `:`/spaces, so text substitution would corrupt them.
+function _bridge_public_to_raw_coef_map(fit, labels::_BridgeFormulaLabels,
+        raw_names::Vector{String})
+    raw_to_public = Dict{String,String}(raw => raw for raw in raw_names)
+    form = hasproperty(fit, :formula) ? fit.formula : nothing
+    form === nothing && return Dict{String,String}(raw => raw for raw in raw_names)
+    forms = hasproperty(form, :forms) ? form.forms : Pair{Symbol,Any}[]
+    block_names = Dict(p => ns for (p, ns) in fit.coefnames)
+    for (param, rhs) in forms
+        _bridge_lss_form_key(param) === nothing || continue
+        haskey(block_names, param) || continue
+        rendered = _bridge_render_formula_block(form, param, rhs, labels)
+        rendered === nothing && continue
+        raw, public = rendered
+        if fit isa DrmFit{<:CumulativeLogit} && param === :mu
+            # Proportional-odds cutpoints absorb the location intercept.  The
+            # ordinal fitter drops it after `_design` but deliberately retains
+            # the user formula for prediction, so bridge label rendering must
+            # make the same known family-specific projection.
+            intercept = findfirst(==("(Intercept)"), raw)
+            intercept === nothing || (deleteat!(raw, intercept); deleteat!(public, intercept))
+        end
+        expected = block_names[param]
+        raw == expected || error("drm_bridge: typed schema labels do not match fitted raw columns for `$param`")
+        length(public) == length(raw) || error("drm_bridge: public label width mismatch for `$param`")
+        for (rawname, publicname) in zip(raw, public)
+            raw_to_public["$(param)_$(rawname)"] = "$(param)_$(publicname)"
+        end
+    end
+    _bridge_lss_public_to_raw!(raw_to_public, form, block_names, labels)
+    public_to_raw = Dict{String,String}()
+    for raw in raw_names
+        public = raw_to_public[raw]
+        haskey(public_to_raw, public) && error("drm_bridge: ambiguous public coefficient label `$public`")
+        public_to_raw[public] = raw
+    end
+    return public_to_raw
+end
+
+_bridge_lss_form_key(param::Symbol) = startswith(String(param), "sdphy_") ? :sd_phylo :
+                                      startswith(String(param), "sd_") ? :sd : nothing
+
+function _bridge_lss_public_to_raw!(raw_to_public, form, block_names,
+        labels::_BridgeFormulaLabels)
+    for (key, rhs) in form.forms
+        block = _bridge_lss_form_key(key)
+        block === nothing && continue
+        haskey(block_names, block) || continue
+        group = String(key)[block === :sd ? length("sd_") + 1 : length("sdphy_") + 1:end]
+        rendered = _bridge_render_formula_block(form, block, rhs, labels; label_scope = key)
+        rendered === nothing && continue
+        raw, public = rendered
+        pnames = block_names[block]
+        prefix = group * ": "
+        qualified = filter(name -> startswith(name, prefix), pnames)
+        if pnames == raw
+            # The single-component routes store only their local sd formula
+            # columns.  Multi-IID routes prefix each represented component by
+            # group; unmapped scalar components intentionally remain identity.
+            for (rawname, publicname) in zip(raw, public)
+                raw_to_public["$(block)_$(rawname)"] = "$(block)_$(publicname)"
+            end
+        else
+            isempty(qualified) && error(
+                "drm_bridge: cannot align the `$block` group-level formula labels for `$group`")
+            local_raw = String[name[nextind(name, firstindex(name), length(prefix)):end] for name in qualified]
+            local_raw == raw || error("drm_bridge: grouped `$block` labels for `$group` do not match the typed schema")
+            for (rawname, publicname) in zip(qualified, public)
+                raw_to_public["$(block)_$(rawname)"] = "$(block)_$(prefix)$(publicname)"
+            end
+        end
+    end
+    return raw_to_public
+end
+
+function _bridge_render_formula_block(form, param::Symbol, rhs,
+        labels::_BridgeFormulaLabels; label_scope::Symbol = param)
+    response = if form isa DrmFormula
+        form.response
+    elseif form isa BivariateDrmFormula
+        param in (:mu1, :sigma1, :rho12, :nu) ? form.response1 : form.response2
+    else
+        return nothing
+    end
+    # Random/structured pieces never become ordinary coefficient columns.  The
+    # fixed part is what `_design` used for their associated fixed-effect block.
+    fixed_rhs = try
+        first(_split_ranef(rhs))
+    catch
+        rhs
+    end
+    schema_data = _bridge_label_schema_data(response, labels.data)
+    ft = FormulaTerm(Term(response), fixed_rhs)
+    ft = apply_schema(ft, schema(ft, schema_data), StatisticalModel)
+    raw = String.(vec(coefnames(ft.rhs)))
+    public = _bridge_public_term_labels(
+        ft.rhs, labels.atoms, _bridge_formula_symbol_order(fixed_rhs),
+        get(labels.function_labels, label_scope, Dict{String,String}()))
+    if length(public) != length(raw)
+        _bridge_term_uses_atoms(ft.rhs, labels.atoms) && error(
+            "drm_bridge: cannot render the public coefficient labels for a formula term containing a bridge materialisation")
+        return raw, raw
+    end
+    return raw, public
+end
+
+function _bridge_formula_symbol_order(rhs)
+    order = Dict{Symbol,Int}()
+    function visit(t)
+        if hasproperty(t, :sym) && getproperty(t, :sym) isa Symbol
+            sym = getproperty(t, :sym)
+            haskey(order, sym) || (order[sym] = length(order) + 1)
+        end
+        hasproperty(t, :terms) && foreach(visit, getproperty(t, :terms))
+        hasproperty(t, :args) && foreach(visit, getproperty(t, :args))
+        return nothing
+    end
+    rhs isa Tuple ? foreach(visit, rhs) : visit(rhs)
+    return order
+end
+
+function _bridge_label_schema_data(response::Symbol, data)
+    raw_response = _table_column(data, response)
+    y, observed = _coerce_response_column(raw_response)
+    return all(observed) ? data :
+           _replace_table_column(data, response, ifelse.(observed, y, 0.0))
+end
+
+function _bridge_term_uses_atoms(t, atoms::Dict{Symbol,String})
+    hasproperty(t, :sym) && getproperty(t, :sym) isa Symbol &&
+        haskey(atoms, getproperty(t, :sym)) && return true
+    hasproperty(t, :terms) && return any(tt -> _bridge_term_uses_atoms(tt, atoms), getproperty(t, :terms))
+    hasproperty(t, :args) && return any(tt -> _bridge_term_uses_atoms(tt, atoms), getproperty(t, :args))
+    return false
+end
+
+function _bridge_raw_term_labels(t)
+    raw = coefnames(t)
+    return raw isa AbstractString ? [String(raw)] : String.(vec(raw))
+end
+
+function _bridge_one_public_term_label(t, atoms::Dict{Symbol,String},
+        order::Dict{Symbol,Int}, function_labels::Dict{String,String})
+    labels = _bridge_public_term_labels(t, atoms, order, function_labels)
+    length(labels) == 1 || error(
+        "drm_bridge: a scalar formula function cannot safely render a multi-column argument")
+    return only(labels)
+end
+
+function _bridge_public_term_labels(t::StatsModels.ConstantTerm,
+        atoms::Dict{Symbol,String}, order::Dict{Symbol,Int},
+        function_labels::Dict{String,String} = Dict{String,String}())
+    n = t.n
+    return [n isa AbstractFloat ? _bridge_r_float_label(n) : string(n)]
+end
+
+function _bridge_public_term_labels(t::StatsModels.Term,
+        atoms::Dict{Symbol,String}, order::Dict{Symbol,Int},
+        function_labels::Dict{String,String} = Dict{String,String}())
+    return [get(atoms, t.sym, String(t.sym))]
+end
+
+function _bridge_public_term_labels(t::StatsModels.FunctionTerm,
+        atoms::Dict{Symbol,String}, order::Dict{Symbol,Int},
+        function_labels::Dict{String,String} = Dict{String,String}())
+    # Do not rewrite generic StatsModels terms that contain no bridge atom.
+    # Their native raw label remains the established public spelling.  When a
+    # materialised atom occurs below a scalar function, recursively render the
+    # typed argument tree so `log1p(1 + __bridge_I_1)` becomes
+    # `log1p(1 + I(x^2))` without changing its evaluated column.
+    source_label = get(function_labels, repr(t.exorig), nothing)
+    source_label === nothing || return [source_label]
+    _bridge_term_uses_atoms(t, atoms) || return _bridge_raw_term_labels(t)
+    args = [_bridge_one_public_term_label(arg, atoms, order, function_labels) for arg in t.args]
+    f = t.f
+    if f === (+)
+        return [length(args) == 1 ? "+" * only(args) : join(args, " + ")]
+    elseif f === (-)
+        return [length(args) == 1 ? "-" * only(args) : join(args, " - ")]
+    elseif f === (*)
+        return [join(args, " * ")]
+    elseif f === (/)
+        return [join(args, "/")]
+    elseif f === (^)
+        return [join(args, "^")]
+    end
+    fname = try
+        String(nameof(f))
+    catch
+        throw(ArgumentError(
+            "drm_bridge: cannot render scalar formula function containing a bridge materialisation"))
+    end
+    return [fname * "(" * join(args, ", ") * ")"]
+end
+
+function _bridge_public_term_labels(t, atoms::Dict{Symbol,String},
+        order::Dict{Symbol,Int} = Dict{Symbol,Int}(),
+        function_labels::Dict{String,String} = Dict{String,String}())
+    if t isa StatsModels.InterceptTerm
+        return String.(vec(coefnames(t)))
+    elseif t isa StatsModels.ContinuousTerm
+        return [get(atoms, t.sym, String(t.sym))]
+    elseif t isa StatsModels.CategoricalTerm
+        raw = String.(vec(coefnames(t)))
+        base = get(atoms, t.sym, String(t.sym))
+        prefix = "$(t.sym): "
+        all(startswith(name, prefix) for name in raw) || error(
+            "drm_bridge: categorical schema labels for `$(t.sym)` have an unexpected spelling")
+        typed = t.contrasts.coefnames
+        length(typed) == length(raw) || error("drm_bridge: categorical contrast labels have an unexpected width")
+        return [base * _bridge_r_factor_level_label(level) for level in typed]
+    elseif t isa StatsModels.InteractionTerm
+        terms = collect(t.terms)
+        # R composes an interaction in the order each variable first appeared
+        # in the formula.  The parser's local `x & g` order alone is therefore
+        # insufficient for `g + x:g` and declared-level factor interactions.
+        term_rank(tt) = hasproperty(tt, :sym) &&
+                        haskey(order, getproperty(tt, :sym)) ?
+                        order[getproperty(tt, :sym)] : typemax(Int)
+        # `kron_insideout` must retain the original component order: it is the
+        # raw model-matrix coordinate order.  Reorder only the strings inside
+        # each displayed interaction tuple, otherwise two multi-column factors
+        # would receive each other's public labels.
+        orderperm = sortperm(term_rank.(terms))
+        pieces = (_bridge_public_term_labels(tt, atoms, order, function_labels) for tt in terms)
+        return String.(StatsModels.kron_insideout(
+            (args...) -> join(args[orderperm], ":"), pieces...))
+    elseif t isa StatsModels.MatrixTerm
+        return reduce(vcat, (_bridge_public_term_labels(tt, atoms, order, function_labels) for tt in t.terms); init = String[])
+    end
+    raw = _bridge_raw_term_labels(t)
+    _bridge_term_uses_atoms(t, atoms) && error(
+        "drm_bridge: unsupported schema term containing a bridge materialisation; cannot safely render public labels")
+    return raw
+end
+
+_bridge_r_factor_level_label(level::Bool) = level ? "TRUE" : "FALSE"
+_bridge_r_factor_level_label(level::Integer) = string(level)
+function _bridge_r_factor_level_label(level::AbstractFloat)
+    # R uses the same decimal/scientific boundary for numeric factor levels as
+    # for literals inside `I(...)`.  Avoid `Int(level)`: it overflows for
+    # admitted finite levels such as `2e20`.
+    return _bridge_r_float_label(level)
+end
+_bridge_r_factor_level_label(level) = String(level)
+
+function _bridge_raw_fixef_target(fit, labels::_BridgeFormulaLabels, target)
+    _, _, _, public_to_raw = _bridge_coef_vector(fit; labels = labels)
+    public_full = "$(target.param)_$(target.coef)"
+    raw_full = get(public_to_raw, public_full, nothing)
+    raw_full === nothing && throw(ArgumentError(
+        "drm_bridge_inference: no public coefficient named `fixef:$(target.param):$(target.coef)`"))
+    prefix = "$(target.param)_"
+    startswith(raw_full, prefix) || error("drm_bridge_inference: malformed public-to-raw coefficient map")
+    raw_coef = raw_full[nextind(raw_full, firstindex(raw_full), length(prefix)):end]
+    return (param = target.param, coef = raw_coef)
 end
 
 function _bridge_q4_point_export(fit; family::AbstractString)
