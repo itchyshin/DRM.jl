@@ -1,0 +1,11 @@
+ERROR: LoadError: type NamedTuple has no field data
+Stacktrace:
+ [1] getproperty
+   @ ./Base.jl:37 [inlined]
+ [2] exact_design(retained::@NamedTuple{kind::Symbol, fixture_sha256::String, before::Dict{String, String}, after::Dict{String, String}, unchanged::Bool, fit_converged::Bool, theta_engine::Vector{Float64}, public_se::Vector{Float64}, cold_nll::Float64, profile::@NamedTuple{ci::Vector{@NamedTuple{param::Symbol, coef::String, estimate::Float64, lower::Float64, upper::Float64}}, stats::Vector{@NamedTuple{param::Symbol, coef::String, evaluations::Int64, gradient_evaluations::Int64, bracket_expansions::Int64, root_iterations::Int64, lower_unbounded::Bool, upper_unbounded::Bool, nonmonotone::Bool, lower_endpoint_failed::Bool, upper_endpoint_failed::Bool, lower_nuisance_method::Symbol, upper_nuisance_method::Symbol, lower_nuisance_fallback::Bool, upper_nuisance_fallback::Bool, lower_nuisance_reason::Symbol, upper_nuisance_reason::Symbol}}, attempted::Int64, used::Int64, failed::Int64, endpoint_diagnostics::Vector{NamedTuple}, threaded::Bool, worker_threads::Int64, julia_threads::Int64, blas_threads::Int64, blas_oversubscribed::Bool, elapsed::Float64, autodiff::Symbol, level::Float64}, endpoints::Vector{NamedTuple}, design::@NamedTuple{kind::Val{:gamma}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}}, source::String})
+   @ Main /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-prototype/solver/diagnose.jl:26
+ [3] main()
+   @ Main /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-prototype/solver/diagnose.jl:91
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-prototype/solver/diagnose.jl:96
+in expression starting at /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-prototype/solver/diagnose.jl:96

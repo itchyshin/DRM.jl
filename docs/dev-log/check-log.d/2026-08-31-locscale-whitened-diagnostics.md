@@ -1,0 +1,1 @@
+| 2026-08-31 | **Location-scale whitening diagnostics** (#563 / S11) | matrix action; frozen-point256bit; four moderate derivative cells; bounded solver prototype | Partial: arithmetic and moderate derivative checks pass; boundary solver/inference obligations remain open; no production patch | Ada / Rose |

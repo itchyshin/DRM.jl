@@ -1,3 +1,50 @@
+# Current checkpoint — whitening diagnostics; production inference still open
+
+Goal ACTIVE; global G0–G8 OPEN. Julia HEAD0b88a01c before this evidence-only
+checkpoint; RHEAD9007338e5 unchanged. Integration branchcodex/parity-integration-20260831.
+No new production edit in this slice. Carried source/tests retain previous hashes:
+inner94f54c74, gradc0369528, focusedtestf363e912, precisiontest60d13d50,
+precisionfixture8c117983, runtests2399b16f, unwiredprofilethreadtestca1d9db8.
+Original finite-profile gate175604Z remains12pass4fail. No threading implemented.
+
+New receipts under docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831:
+- precision-components181130Z6.642s: directP improves entries but worsens actions;
+  no construction-only production patch justified.
+- whitened-fixed-point181517Z7.699s: intended L/Q surrogate errors<6e-15 versus
+  original up to1.705e-9; conditionedHz2–5. Fixedpoint only, no mode proof.
+- whitened-gradient artifact182400Z6.983s: four moderate Gamma/NB2 cells, generalQ/Z,
+  seven-coordinate three-step FD and oldengineagreement pass. Scratchdenseinverse.
+- whitened-prototype/solver182505Z6.816s: mapped/implicit certificates pass but
+  actual returned-a Big certificate FAILS3/4. Not pinned-thread evidence; embedded
+  script/post-run snapshot only. Failed schemaattempt182205Z retained; its original
+  script snapshot unavailable. Source unchanged, no outer fit.
+- whitened-return-neighbors182759Z3.334s: all4 fullBiggradient bounds pass after
+  <=1ULP coordinate changes. Lower-slope norm1.43675e-9 vsbound1.48640e-9 is narrow.
+  Correctly rounding trueL*savedz alone still fails2points. No Hessian check at
+  selectedneighbor yet; do not call this complete mode or inference evidence.
+
+NEXT: independent undampedHessian/objective checks at selectedneighbors (no solve),
+then128/256-bit boundary-mode/objective and all6theta derivative references using
+current175800Z data/theta. Reference math can proceed independently of production
+outputmapping design. Rose found derivative contract correct and supports these
+bounded diagnostics; no production whitening/neighborselection approved by review.
+Do not transfer groupwise neighbor minimization to generalQ: current proof assertsQ=I.
+Do not loosen thresholds, suppress requestedSEs or change originalCIfixture.
+
+Read whitened-prototype/contract.md, latestaftertaskreport, and exact receipts.
+Neighbor inputSHAc007a27a; solverinputSHAb841698c; designSHAfabf3e4c. Existing
+independentGammaoracle405f2811 remains usable as definition-only import at top level;
+avoid world-age/helper-main execution. Gammaψclamp30, otherfamiliesdiffer.
+Empty scratchwhitened-return-certificates directory is preparation only, not a run.
+
+MissionControl localcommit98bde473: exacttwofields updated, servedfieldsverified,
+foreignstagingpreserved and leaseRELEASED. Root integrationleases still active;
+othercodexbranch untouched. No remotecompute or freshSSHreceipt this slice.
+No live numerical process remains. Diagnostic failures/limitations are retained.
+Fullprogramme remainsactive; finalsource suites, RoseandMelissa gates remainopen.
+
+---
+
 # Current checkpoint — arithmetic repaired locally; finite profiles still fail
 
 Goal ACTIVE; global G0-G8 OPEN. Integration branchcodex/parity-integration-20260831,

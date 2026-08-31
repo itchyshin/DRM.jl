@@ -1,0 +1,19 @@
+{
+  "command": [
+    "julia",
+    "--project=.",
+    "--startup-file=no",
+    "--history-file=no",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-fixed-point/diagnose.jl"
+  ],
+  "hard_cap_seconds": 30,
+  "kind": "whitened_fixed_point_foreground_cap",
+  "log": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-fixed-point/whitened-fixed-point-20260831T181517Z.log",
+  "pid": 44269,
+  "process_group": 44269,
+  "returncode": 0,
+  "script": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-fixed-point/diagnose.jl",
+  "stamp": "20260831T181517Z",
+  "timed_out": false,
+  "wall_seconds": 7.69913125038147
+}
