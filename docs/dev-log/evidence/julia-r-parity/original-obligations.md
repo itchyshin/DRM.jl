@@ -40,3 +40,12 @@ separately to locate tree conversion versus kernel restrictions. Preserve branch
 length/covariance meaning rather than silently resolving a polytomy with arbitrary
 positive-length branches. These obligations join the existing inference/valid-case
 manifest; neither point-estimate agreement nor this report proves parity.
+
+## Polytomy follow-up (2026-08-30)
+
+Positive-length rooted multifurcations are now admitted by both constructors and
+the Rserializer. Retainedstar/mixed GaussianML cases pass native/direct/bridge
+checks; see polytomy/public-003.json. This repairs that admission restriction, not
+all tree/inference scope. Zeroedges,unary/singletip/general-label cases,all-family
+qualification and Ayumi's unspecified profile/bootstrap report remain required.
+Previousmissing-predictor losses and all24native obligations are unchanged.

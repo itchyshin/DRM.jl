@@ -70,6 +70,32 @@ Two ways to use DRM.jl from R, in increasing integration:
    cells listed above (Julia-side `drm_bridge` gate; R-side Lovelace glue remains
    in the drmTMB repo).
 
+### Trees with polytomies
+
+A polytomy is an internal node with more than two immediate children. The development
+bridge accepts these nodes without resolving them into invented binary branches.
+The tree must still have positive branch lengths, simple unique tip labels, and
+at least two children at every internal node. The R bridge currently requires an
+ultrametric tree for its correlation-scale convention. Zero-length branches,
+unary nodes and wider label support remain separate parity work.
+
+Direct Julia keeps the supplied Brownian branch-length scale and can represent
+unequal tip depths:
+
+```@example polytomy_tree
+using DRM
+phy = augmented_phy("((A:1,B:2,C:3):4,D:5,E:6);")
+@assert phy.n_leaves == 5 && phy.n_total == 7
+@assert phylo_tree_height(phy) == 7
+# Small diagnostic only: a dense tip covariance is unsuitable for large trees.
+sigma_phy_dense(phy)
+```
+
+For an ultrametric tree of height `h`, Julia's raw phylogenetic SD multiplied by
+`sqrt(h)` is on the correlation scale used by the R bridge. One height cannot
+standardize a tree whose tip depths differ. Accepting a topology does not itself
+verify every response family, profile interval or bootstrap workflow.
+
 ### One modelled missing predictor — development admission
 
 The R bridge also has a deliberately narrow development route for one modelled

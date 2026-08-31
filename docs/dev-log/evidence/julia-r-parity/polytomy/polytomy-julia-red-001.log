@@ -1,0 +1,394 @@
+ERROR: LoadError: Some tests did not pass: 3 passed, 17 failed, 4 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:6
+Newick star retains each supplied branch length: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+  Got exception outside of a @test
+  tree is not binary (got 4 nodes for 3 leaves; expected 5)
+  Stacktrace:
+    [1] error(s::String)
+      @ Base ./error.jl:35
+    [2] augmented_phy(newick::String)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:247
+    [3] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:8 [inlined]
+    [4] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [5] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:8 [inlined]
+    [6] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [7] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+    [8] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [9] top-level scope
+      @ none:1
+   [10] eval
+      @ Core ./boot.jl:385 [inlined]
+   [11] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [12] _start()
+      @ Base ./client.jl:552
+mixed multifurcation gives shared-path covariance: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:21
+  Got exception outside of a @test
+  tree is not binary (got 7 nodes for 5 leaves; expected 9)
+  Stacktrace:
+    [1] error(s::String)
+      @ Base ./error.jl:35
+    [2] augmented_phy(newick::String)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:247
+    [3] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:24 [inlined]
+    [4] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [5] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:24 [inlined]
+    [6] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [7] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+    [8] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [9] top-level scope
+      @ none:1
+   [10] eval
+      @ Core ./boot.jl:385 [inlined]
+   [11] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [12] _start()
+      @ Base ./client.jl:552
+edge order and root id do not alter rooted covariance: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:49
+  Got exception outside of a @test
+  edge list spans 7 nodes but n_leaves = 5 implies 9 total nodes
+  Stacktrace:
+    [1] error(s::String)
+      @ Base ./error.jl:35
+    [2] make_phy(edges::Vector{Tuple{Int64, Int64, Float64}}, n_leaves::Int64; root_index::Int64, leaf_names::Vector{String})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:324
+    [3] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:54 [inlined]
+    [4] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [5] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:52 [inlined]
+    [6] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [7] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+    [8] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [9] top-level scope
+      @ none:1
+   [10] eval
+      @ Core ./boot.jl:385 [inlined]
+   [11] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [12] _start()
+      @ Base ./client.jl:552
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70
+  Expression: DRM.make_phy([(1000000, 1, 1.0), (1000000, 2, 1.0)], 2)
+    Expected: ArgumentError
+      Thrown: ErrorException
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:72
+  Expression: DRM.make_phy([(5, 1, 1.0), (5, 2, 1.0), (5, 3, 1.0)], 3)
+    Expected: ArgumentError
+      Thrown: ErrorException
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:72 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:74
+  Expression: DRM.make_phy([(3, 1, 1.0), (4, 2, 1.0)], 2)
+    Expected: ArgumentError
+      Thrown: ErrorException
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:74 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:75
+  Expression: DRM.make_phy([(3, 1, 1.0), (3, 2, 1.0), (1, 2, 1.0)], 2)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:75 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:77
+  Expression: DRM.make_phy([(5, 4, 1.0), (5, 2, 1.0), (5, 3, 1.0), (4, 1, 1.0)], 3)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:77 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:79
+  Expression: DRM.make_phy([(3, 1, 1.0), (3, 2, 1.0), (3, 2, 1.0)], 2)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:79 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:81
+  Expression: DRM.make_phy([(3, 3, 1.0), (3, 1, 1.0), (3, 2, 1.0)], 2)
+    Expected: ArgumentError
+      Thrown: ErrorException
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:81 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:83
+  Expression: DRM.make_phy([(5, 4, 1.0), (4, 5, 1.0), (5, 1, 1.0), (5, 2, 1.0), (5, 3, 1.0)], 3)
+    Expected: ArgumentError
+      Thrown: ErrorException
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:83 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:87
+  Expression: DRM.make_phy([(3, 1, bad), (3, 2, 1.0)], 2)
+    Expected: ArgumentError
+      Thrown: ErrorException
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:87 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:87
+  Expression: DRM.make_phy([(3, 1, bad), (3, 2, 1.0)], 2)
+    Expected: ArgumentError
+      Thrown: ErrorException
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:87 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:87
+  Expression: DRM.make_phy([(3, 1, bad), (3, 2, 1.0)], 2)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:87 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:87
+  Expression: DRM.make_phy([(3, 1, bad), (3, 2, 1.0)], 2)
+    Expected: ArgumentError
+      Thrown: ErrorException
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:87 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:87
+  Expression: DRM.make_phy([(3, 1, bad), (3, 2, 1.0)], 2)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:87 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:89
+  Expression: DRM.augmented_phy("(A:1.0,A:2.0,C:3.0);")
+    Expected: ArgumentError
+      Thrown: ErrorException
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:89 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:90
+  Expression: DRM.augmented_phy("(:1.0,B:2.0,C:3.0);")
+    Expected: ArgumentError
+      Thrown: ErrorException
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:90 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:91
+  Expression: DRM.make_phy([(3, 1, 1.0), (3, 2, 1.0)], 2; leaf_names = ["A", "A"])
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:91 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+topology, branch, and tip-label validation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:93
+  Expression: DRM.make_phy([(3, 1, 1.0), (3, 2, 1.0)], 2; leaf_names = ["A"])
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:93 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:70 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+many-tip star height is linear in nodes and edges: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:97
+  Got exception outside of a @test
+  edge list spans 4097 nodes but n_leaves = 4096 implies 8191 total nodes
+  Stacktrace:
+    [1] error(s::String)
+      @ Base ./error.jl:35
+    [2] make_phy(edges::Vector{Tuple{Int64, Int64, Float64}}, n_leaves::Int64; root_index::Int64, leaf_names::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:324
+    [3] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:99 [inlined]
+    [4] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [5] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:98 [inlined]
+    [6] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [7] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_polytomy.jl:7
+    [8] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [9] top-level scope
+      @ none:1
+   [10] eval
+      @ Core ./boot.jl:385 [inlined]
+   [11] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [12] _start()
+      @ Base ./client.jl:552
+Test Summary:                                           | Pass  Fail  Error  Total  Time
+rooted multifurcating phylogenies                       |    3    17      4     24  2.0s
+  Newick star retains each supplied branch length       |                 1      1  0.6s
+  mixed multifurcation gives shared-path covariance     |                 1      1  0.0s
+  binary behavior is unchanged                          |    3                   3  0.8s
+  edge order and root id do not alter rooted covariance |                 1      1  0.1s
+  topology, branch, and tip-label validation            |         17            17  0.5s
+  many-tip star height is linear in nodes and edges     |                 1      1  0.0s
