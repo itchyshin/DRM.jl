@@ -1,0 +1,112 @@
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 1.1333327030555286e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 5.97564381642706e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse LSS phylo"
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 6.775109676031435e-21
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     6
+│   rcond = 4.051460891631831e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     6
+│   rcond = 2.267387912725702e-19
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: drm: 8 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:394
+┌ Warning: drm: 8 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:394
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 1.1333327030555286e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+ERROR: LoadError: Some tests did not pass: 301 passed, 2 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:121
+dedicated dense named covariance is invariant to first-seen order: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:131
+  Expression: maximum(abs.(fit_shuffled.theta - fit_ordered.theta)) <= 4.0e-6
+   Evaluated: 4.529800947716613 <= 4.0e-6
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:131 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:123 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:122
+multi-component scalar phylogenetic SD retains named covariance: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:173
+  Expression: maximum(abs.(fit_shuffled.theta - fit_ordered.theta)) <= 4.0e-6
+   Evaluated: 0.8610680163514175 <= 4.0e-6
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:173 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:164 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:122
+Test Summary:                                                       | Pass  Fail  Total   Time
+Gaussian LSS phylogenetic tip identity                              |  301     2    303  30.2s
+  dedicated dense named covariance is invariant to first-seen order |   50     1     51  15.8s
+  dedicated sparse and Newick inputs use the same named tree        |   47           47   1.6s
+  multi-component phylogenetic covariance remains named             |   51           51   3.7s
+  multi-component scalar phylogenetic SD retains named covariance   |   49     1     50   2.4s
+  REML and a wholly missing response tip retain full tree identity  |   51           51   5.3s
+  integer positions, and invalid full-input labels                  |   53           53   1.3s

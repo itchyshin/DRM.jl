@@ -62,7 +62,9 @@ end
 
 # Group-level design for the sd() submodel: build the n-row design from the full
 # data, require every predictor constant within each group level (drmTMB errors
-# the same way), and compress to one row per group in `_group_index` order.
+# the same way), and compress to one row per group in the supplied `gidx` order.
+# IID callers use `_group_index`'s first-seen order; phylogenetic callers supply
+# the tree-tip order through `_lss_phylo_group_index` below.
 function _sd_group_design(response::Symbol, rhs, data, gidx::Vector{Int}, G::Int, grp::Symbol)
     _, Zfull, nm = _design(response, rhs, data)
     q = size(Zfull, 2)
@@ -291,6 +293,56 @@ _sdphylo_parts(f::DrmFormula) = Pair{Symbol,Any}[
     Symbol(String(first(p))[(length("sdphy_")+1):end]) => last(p)
     for p in f.forms if startswith(String(first(p)), "sdphy_")]
 
+"""
+    _lss_phylo_group_index(tree, labels, grp) -> phy, gidx, G
+
+Resolve a Gaussian LSS phylogenetic grouping column against its tree.  Integer
+labels are positional leaf indices `1:p`; text labels match `phy.leaf_names`
+exactly.  The full input must contain every leaf before any missing response is
+removed, so an all-missing response tip remains a prior-only tree state instead
+of changing the covariance dimension.  This helper deliberately accepts only
+the shipped `AugmentedPhy` and Newick-string tree contracts; arbitrary
+`sigma_phy_dense` providers are not qualified for labelled LSS identity.
+"""
+function _lss_phylo_group_index(tree, labels, grp::Symbol)
+    phy = if tree isa AugmentedPhy
+        tree
+    elseif tree isa AbstractString
+        augmented_phy(tree)
+    else
+        throw(ArgumentError("drm: phylo LSS `$grp` requires an AugmentedPhy or Newick string tree"))
+    end
+    values = collect(labels)
+    isempty(values) && throw(ArgumentError("drm: phylo LSS grouping `$grp` is empty"))
+    any(ismissing, values) &&
+        throw(ArgumentError("drm: phylo LSS grouping `$grp` contains a missing tree-tip label"))
+    p = phy.n_leaves
+    gidx = if all(value -> value isa Integer, values)
+        all(value -> 1 <= value <= p, values) ||
+            throw(ArgumentError("drm: integer phylo LSS labels for `$grp` must be positional tips in 1:$p"))
+        Int.(values)
+    elseif all(value -> applicable(String, value), values)
+        by_name = Dict(name => i for (i, name) in enumerate(phy.leaf_names))
+        index = Vector{Int}(undef, length(values))
+        for (row, value) in enumerate(values)
+            name = String(value)
+            haskey(by_name, name) ||
+                throw(ArgumentError("drm: phylo LSS group label `$name` for `$grp` is not a tree tip name"))
+            index[row] = by_name[name]
+        end
+        index
+    else
+        throw(ArgumentError("drm: phylo LSS grouping `$grp` must use all integer tip positions or text values with exact tree-tip names"))
+    end
+    present = falses(p)
+    present[gidx] .= true
+    if !all(present)
+        absent = join(phy.leaf_names[findall(.!present)], ", ")
+        throw(ArgumentError("drm: phylo LSS full input for `$grp` must contain all tree tips; absent: $absent"))
+    end
+    return phy, gidx, p
+end
+
 # Router leg for sd_phylo: validate against the parsed Gaussian model and
 # dispatch the dense scaled-structure fitter.
 function _drm_gaussian_lss_phylo(f::DrmFormula, fam::Gaussian, sdpp, re, structured,
@@ -324,7 +376,7 @@ function _drm_gaussian_lss_phylo(f::DrmFormula, fam::Gaussian, sdpp, re, structu
     penalty === nothing ||
         throw(ArgumentError("drm: `penalty` is not wired for the sd_phylo route."))
     tree === nothing && error("phylo(1 | $sgrp) needs `tree = …`")
-    gidx, G = _group_index(getproperty(data, sgrp))
+    phy, gidx, G = _lss_phylo_group_index(tree, getproperty(data, sgrp), sgrp)
     Zg, nmsd = _sd_group_design(f.response, srhs, data, gidx, G, sgrp)
     if has_missing_response
         observed = _observed_response_mask(y)
@@ -349,10 +401,10 @@ function _drm_gaussian_lss_phylo(f::DrmFormula, fam::Gaussian, sdpp, re, structu
 
     use_sparse = (sparse === true) || (algorithm in (:sparse, :sparse_lbfgs)) || (algorithm === :auto && G > 500)
     if use_sparse
-        return _fit_phylo_gaussian_lss_sparse(fam, y, Xμ, Xσ, Zg, gidx, G, tree, nmμ, nmσ, nmsd,
+        return _fit_phylo_gaussian_lss_sparse(fam, y, Xμ, Xσ, Zg, gidx, G, phy, nmμ, nmσ, nmsd,
                                               sgrp, g_tol; reml = method === :REML)
     else
-        Kmat = _phylo_correlation(tree)
+        Kmat = _phylo_correlation(phy)
         size(Kmat) == (G, G) ||
             error("structured matrix must be $(G)×$(G) (the number of `$sgrp` levels)")
         return _fit_structured_gaussian_lss(fam, y, Xμ, Xσ, Zg, gidx, G, Kmat, nmμ, nmσ, nmsd,
@@ -665,8 +717,8 @@ function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re
             throw(ArgumentError("drm: sd() submodels with `$kind(1 | $pgrp)` are not " *
                 "supported — the structured scale level is `phylogenetic` only (#555)."))
         tree === nothing && error("phylo(1 | $pgrp) needs `tree = …`")
-        gidx, G = _group_index(getproperty(data, pgrp))
-        Kmat = _phylo_correlation(tree)
+        phy, gidx, G = _lss_phylo_group_index(tree, getproperty(data, pgrp), pgrp)
+        Kmat = _phylo_correlation(phy)
         size(Kmat) == (G, G) ||
             error("structured matrix must be $(G)×$(G) (the number of `$pgrp` levels)")
         if !isempty(sdpp)

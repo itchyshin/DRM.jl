@@ -140,6 +140,31 @@ drmTMB's native engine returns the same log-likelihood (−69.1373) and the same
 coefficients to seven significant figures — that cross-engine agreement is
 pinned in `test/test_lss_phylo.jl`.
 
+Species rows need not follow tree-tip order when fitting an LSS model. String
+labels match `phy.leaf_names` exactly; integer labels are positions in `1:G`,
+not arbitrary group identifiers. Every tip must be represented in the full
+input, even if all responses for a tip are missing. Scale predictors must still
+be constant within each species.
+
+```@example lss
+row_order = randperm(rng2, G)
+datq_shuffled = (; y = datq.y[row_order], x = datq.x[row_order],
+                  species = datq.species[row_order])
+fitq_shuffled = drm(bf(@formula(y ~ x + phylo(1 | species)),
+                      @formula(sigma ~ x),
+                      @formula(sd(species, phylogenetic) ~ x)),
+                   Gaussian(); data = datq_shuffled, tree = phy)
+@assert isapprox(loglik(fitq_shuffled), loglik(fitq); atol = 1e-7, rtol = 0)
+@assert isapprox(coef(fitq_shuffled, :sd_phylo), coef(fitq, :sd_phylo);
+                 atol = 4e-6, rtol = 0)
+coef(fitq_shuffled, :sd_phylo)
+```
+
+!!! warning "Bootstrap validation is separate"
+    The marginal bootstrap simulator still needs its own tree-tip mapping
+    repair for unsorted LSS input. The fitting example above does not establish
+    correct bootstrap draws or intervals for that input order.
+
 !!! note "Grammar and solver notes"
     - `sd(species, phylogenetic)` is the canonical spelling (drmTMB:
       `sd(species, level = "phylogenetic")`; `@formula` cannot parse keyword
@@ -151,8 +176,8 @@ pinned in `test/test_lss_phylo.jl`.
       supported on phylogenetic and iid LSS routes.
     - **Sparse whole-tree scaling**: for large trees, `sparse = true` (or
       `algorithm = :sparse_lbfgs`) invokes the exact $O(p)$ augmented-state
-      GMRF engine with Takahashi selected-inverse leaf variances, eliminating
-      $O(G^3)$ dense matrix storage. This sparse engine is selected automatically
+      GMRF engine with Takahashi selected-inverse leaf variances, avoiding
+      $O(G^2)$ dense matrix storage and $O(G^3)$ dense factorization. This sparse engine is selected automatically
       when $G > 500$ species.
 
 ## Missing response handling
@@ -180,7 +205,7 @@ likelihood is evaluated over observed rows.
 
 ## REML on location–scale–scale models
 
-REML corrects small-sample bias in variance components:
+REML accounts for estimating fixed effects when fitting covariance parameters:
 
 ```@example lss
 fit_reml = drm(bf(@formula(y ~ sex + (1 | id)),
