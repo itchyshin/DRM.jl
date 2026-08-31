@@ -1,0 +1,12 @@
+{
+  "classification": "All four endpoints failed nuisance convergence; none reported unbounded",
+  "fit_converged": false,
+  "profile_failed_coefficients": 2,
+  "profile_elapsed_seconds": 0.5731595,
+  "diagnostic_wall_seconds": 14.604774,
+  "exit_code": 0,
+  "source_test_unchanged": true,
+  "code_change": false,
+  "original_wrapper_bytes": "Overwritten before archival; raw log and SHA survive. Do not claim original runner retained.",
+  "future_work": "Diagnose original fit and nuisance termination without changed numerical contracts; threading and finite-interval case remain required."
+}

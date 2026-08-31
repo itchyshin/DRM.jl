@@ -1,0 +1,14 @@
+{
+  "source_commit": "2f16c5446e433563de484623758d998d203a0d1f",
+  "numerical_source_baseline": "c7e5b823fb3977bf5488c98f112089eb11772ecb",
+  "inference_sha256": "8f483d5bd679ed6cc4f5f368920204b1093322cd8f170db82371abac6bee9f3c",
+  "carried_test_sha256": "ca1d9db86c33fb8046028c0e9833d1e0cc0af095509d5580b48375a390bd7ad4",
+  "threading_implemented": false,
+  "numerical_mechanism": "Allfour constrained targets stopped by failed backtracking line search; evaluator precision cause remains unproven",
+  "global_gates": "G0-G8 OPEN",
+  "doc_anchor_local_fix": "Fresh build/render and actual four screenshots verified; source committed after Rose review",
+  "mission_control_commit": "614036816e46f9e88062d23d1747dd757849879e",
+  "compute": "No remotejobs/allocations; local diagnostics all terminal under60s caps",
+  "next": "Rose contract approved; Terra/high child builds two-point capped independent whitened oracle, no outer fit or production edit",
+  "carried_test_archive_sha256": "ca1d9db86c33fb8046028c0e9833d1e0cc0af095509d5580b48375a390bd7ad4"
+}

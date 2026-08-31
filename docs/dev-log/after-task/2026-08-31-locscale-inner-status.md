@@ -1,7 +1,10 @@
-> Current status: unresolved implementation, not a completed repair. The numbered
-> sections preserve the initial investigation; dated/continuing checkpoints below
-> record subsequent candidates. Evidence commit `2b015936` is accepted as a
-> checkpoint only. No inner-solver candidate has passed integrated acceptance.
+> Current status: the bounded inner-arithmetic repair is reviewed and committed
+> locally in `c7e5b823`; all six local repair gates passed on the committed source.
+> This does not establish general fit/profile convergence or programme completion.
+> The numbered sections below preserve the **initial investigation**, followed by
+> chronological candidate and verification receipts; their older failure/status
+> statements are historical, not the current verdict. A different Gamma fixture
+> now exposes nonconverged fit/nuisance solves in the profile-threading slice.
 
 ## 1. Goal
 

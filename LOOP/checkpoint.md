@@ -1,3 +1,65 @@
+# Current — documentation anchor fixed; Gamma nuisance line-search diagnosis open
+
+Programme ACTIVE. Global G0–G8 remain OPEN. Julia HEAD2f16c5446e433563de484623758d998d203a0d1f
+contains the reviewed GENERAL document-heading anchor fix. Numerical source remains
+c7e5b823 (inner7f957). R9007338e5 unchanged. No push/merge/deploy/release/retirement.
+
+Docs anchor: fresh52-page134-example build157.07s, HTML9.57s, inputs unchanged.
+Default style/docstrings emitted bytes match resolved DocumenterVitepress0.3.4.
+Three authored themefiles preserve upstreamindex+overrideimport andMITlicense.
+Root inspected desktoplight, phonelight/dark, unrelatedh2: headings clear nav,
+phonepagewidth390. Raw106deploymentmetadata failures EXACTLY unchanged; G6open.
+Rose approves boundedLOCALcommit. Previewtabclosed/viewportreset/server37053stopped.
+Sourceindex retains three whitespace lines from unchanged upstreamtemplate;
+scoped commit checks locallyauthoredchanges and asserts exactupstreambody.
+
+S11 threading remains UNIMPLEMENTED. Unwired test/test_locscale_profile_threads.jl
+is retained outsidecommits; sourceinference8f483d5b/testca1d9db8 unchanged. Original
+pilot12pass4fail (two missingthreadmetadata, two finiteendpointfailures). Initial
+looseexpected-redclassifierfalsepositive caught; rawlog/SHAretained but oldwrapper
+bytes overwritten (disclosed). Stricterclassifier rejectsbadlog withoutfit.
+
+Exact Gamma32row/4group fixture: fit.converged=false. Bothmeanintervals have failed
+ends, NOT unbounded ends. Four unchangedLBFGS replays stop13–41iterations with
+ls_failed=true and NoXChange, allotherflagsfalse; finitegradientabove1e-7.
+NoXChange alone doesnotproveunrepresentablesteps. Frozenstate+fourOptimresults
+file .../locscale-profile-threads-20260831/profile-nuisance-corrected-replay-20260831T160339Z.jls
+SHAd8727b67ae76c66fcc76cdd9f672b1f2bed72c165bf47e526caf50f769998434.
+All numericaldiagnostics completednormallyunder60scaps; no processcurrentlylive.
+
+Cold/copiedmodefixedpointchecks agree; simple2x2identities nearlymatch256bit,
+but completegradientaccuracy NOTproved. Directionalladder has no stable finite-
+differenceagreementrange. No tolerance/budget/seed/fixturechange authorized; original
+finiteintervalcase staysrequired. Do NOT replacefailureexpectations withunbounded.
+
+ACTIVE: /root/profile_threading_builder (explicitTerra/high) implementing an
+independent whitenedFIXED-OUTER Gamma Laplace oracle in/tmp only, after completed
+Sol/highRose mathematicalreview. Fullcontract is retained at
+locscale-profile-threads-20260831/whitened-oracle-contract.md. No outerfit,
+productionedit/dependencyinstall. Firstpilotonlytwo points (savedboundary plus
+labelledmoderate-Lcontrol),128/256bits, zero/transformedstarts; residualgates
+1e-25/1e-50, crossprecisionobjective1e-20, undampedPD andfurtherNewtoncorrection.
+Runtimeunmeasured; cap180s feasibility already stated to user. Do notexpand
+untilevidence+timecostreview. OriginalserializedartifacthasNOlatentmode; separatelycapturecurrentproductioninner
+modeatfixedouterparameters onlyassecondseed (<=15sestimate/cap30s), labelnewnot
+historical. Referenceevaluatormustremainindependent; seecontractclarification.
+Neworaclechecks mustdetectdeliberatedamage before
+usingresultasauthority. Allfouroriginalterminals remainrequired.
+
+NEXT: receivepilot/sourcefreeze, independently revieworaclederivatives/normalization
+andprecisioncontrols; then boundedactualperturbation andsymmetricBigFloatdirection
+matrix toseparateobjectivefromgradienterror. Onlythenproposeproductionfix, verify
+finiteCIs andimplementthreading. Old901sbenchmark mustnotrestart. Estimateallfits;
+>30mincampaignapprovalgate remains. Originalfiniteintervaltestnowalsoarchived
+ascarried-test-unwired.jl; workingtestremainsunwired/untrackedandnot sourcecommit.
+
+Root owns docs/evidence andruntestswiring; no wiring yet. Allchildsourceleases
+released. MissionControl614036816e46f9e88062d23d1747dd757849879e servedverified and
+statuslease released; foreignClaude tools lease untouched. Connectivity lastverified
+15:47UTC: Totoro+allfiveDRAC; nojobs/allocations. Threeprotectedpathdenials unchanged.
+
+---
+
 # Current — numerical repair committed; bounded profile-threading implementation active
 
 Programme ACTIVE; global G0–G8 remain OPEN. Julia local source checkpoint
