@@ -1,3 +1,136 @@
+# Current — gradient reference passes; Wald stencil diagnosis required
+
+Programme ACTIVE, global G0-G8 OPEN. Julia HEAD67bf51c5 before this evidence
+checkpoint; R9007338e5 unchanged. Pending source gradc0369528, newtest60d13d50,
+fixture8c117983, runtestsf01119b0 are CARRIED-OVER on codex/parity-integration-20260831
+in /private/tmp/drm-parity-20260830/integration/DRM.jl. Do not merge or call the
+inference slice complete. Original profile threading testca1d9db8 unchanged,
+untracked/unwired; no coefficient-threading implementation.
+
+All-four independent reference51.816s PASS; immutable outputd650f848, TOML
+fixture includes R_h values and all coordinate/provenance checks. Initial RED
+8pass4fail then24/24; Rose extreme-overflow RED24pass4fail then hardened28/28,
+10.572s. Source algebra reviewed; upstream covariance representability remains
+limited. New source/test/fixture/wiring snapshots and immutable reference/output
+artifacts retained under locscale-profile-threads-20260831/.
+
+Inner neighbour modulecovgrad001 PASS34.945s on pre-hardening3025e2e2; rerun at
+final head still required. Profile-status1/4threads each76pass1error,14.45/14.11s:
+_ls_vcov tries to invert nonfinite Hessian. Original finite-CI fixture170646Z on
+hardened source0pass1error11.906s, same pre-profile SE failure. Strict classifier
+correctly rejects it and historical12pass4fail. Cache EPERM receipts retained.
+
+COMPLETED Wald discriminator171108Z:11.873s, cap30, status0, inputs unchanged.
+Result25084fd2 and all raw scripts/logs/JLS retained under evidence/.../
+wald-stencil-diagnostic/. Initial namespace support error stopped before fit;
+corrected DRM.Gamma() run only. The se=false diagnostic returns converged=false;
+base COLD solve rejected, objective Inf failure sentinel, gradient nonfinite.
+Seven of12 +/-1e-5 probes finite; H nonfinite. This is NOT proof of mathematical
+infeasibility or absence of a valid warm-start mode. Next inspect exact returned
+point cold versus stored mode without outer refit, then repair fit/inference;
+merely returning no SE does not close finite-profile requirements.
+No diagnostic child remains running. No source patch after c0369528.
+
+Latest user supplied three location-scale papers; exact intake PDF paths absent.
+Public primary equivalents read by Terra/high; Rose reviewed conceptual note:
+docs/dev-log/2026-08-31-location-scale-literature.md. Residual random scale differs
+from covariate-dependent variance of mean random effects; logVar=2logSD. Quadratic
+association is an extension, residual variance conditions on random scale. Papers
+are Gaussian MELS and do not validate this Gamma shape inference or generic R2.
+No new API/estimator promised. Paper response reports the reviewed public-source synthesis; no Gaussian-to-Gamma inference claim.
+
+Mission Control6979fea9 is locally committed and served fields verified; lease released.
+Next: inspect cold-versus-stored-mode at retained point, without refitting;
+commit completed evidence/reading only while declaring numerical source carried.
+Then continue inference repair with pre-edit path lease, failing test and review;
+reverify all neighbours and original finiteCI before threading. Global remaining
+scope unchanged. No remote compute, publication, cleanup or protected-path edits.
+Efficiency checker reports day-wide lifecycle failures in prior persisted/guardian
+sessions; it is not a clean gate. This disk-goaled programme uses checkpoint-and-roll
+continuation. Do not report that lifecycle verification passed.
+Codex goal tool confirms active; no memory used/edited.
+
+---
+
+# Historical checkpoints (status superseded by the entry above)
+
+# Current — four-point reference passed; covariance-gradient regression next
+
+Programme ACTIVE; global G0–G8 OPEN. Julia HEAD67bf51c500a7a7a424c1caeed90a9464e788c9ba;
+R9007338e5 unchanged. NO numerical production edits this turn. Working original
+profile-threading test remains unwired/untracked (ca1d9db8). New evidence/report
+files are currently uncommitted; source remains c7e5b823 with docs2f16c544.
+
+Two root diagnostics at all4 frozen terminal points completed6.53s and4.94s:
+`covariance-contraction-20260831T162920Z` and `covariance-direct-20260831T163125Z`.
+Retained scripts/logs/JSON/manifest/review are in locscale-profile-threads-20260831/.
+Lifting identical Float64 intermediates before Mk construction/contractions changes
+L21 by3.9e-6…7.8e-4, including2sign reversals. Direct analytic derivatives of
+L^{-T}L^{-1} plus exact normalizationG*(1,0,1) reduce those arithmetic discrepancies
+to about1e-8. This is not yet independent true-gradient proof. Rose reviewed
+contractions/direct derivative algebra; production source remains unchanged.
+
+Independent whitened same-Gamma-Laplace pilot now PASSES BOTH ORIGINAL POINTS:
+163817Z,7.73s, snapshot405f28114a2d665cf40bc8c4ec46ec324422a00a141250849e35bead4dace73d.
+128/256bits andzero/newlycapturedseed starts; final residual/undampedPD/clamp pass;
+Mprecision differences9.4e-31 and4.46e-29. ScalarFD, independentErlang density,
+B0 andsharednonzero-BGaussian normalization controls pass; deliberate missing/full
+logdet variants rejected. Installedtrigamma(BigFloat) missing: independent
+Richardson derivative ofdigamma with h/halving gates suppliesapproximateHessian.
+Raw failures retained (stdlib/Optimimports, parse/stencilerrors, unsupported
+trigamma, unglobalizedinterior). Armijo avoidsbadsteps; damping fallback untested.
+SupplementarypilotcaseJLS is DERIVED_FROM_LOG_STRING, NOT original binary BigFloat.
+Rawlog authoritative; retainfreeze_passing_pilot.jl. Fullpilotcopies under
+.../locscale-profile-threads-20260831/whitened-oracle/.
+
+ALL-FOUR REFERENCE NOW PASS: corrected164725Z,51.816s normalexitunder60scap.
+Outputd650f848231c2d7da2d135092720c96c5875dc83621d3e4a45404e6e6bd0baf2;
+snapshot159fa7e5. Correctcandidate.job_k andallcoordinateasserts. All4Richardson
+stability≤2.21e-16; symmetricnumeratorprecision≤4.4e-30. Roseapprovesreversible
+regression+direct-dPpatch. Final no-fit check: verify symmetricplus/minusM values
+individually acrossprecision≤1e-20 inexistingJLS (numeratorsalreadychecked).
+Childexporting locscale_gamma_l21.toml withliteraldata/thetas/expectedL21 andhashes.
+Rootwrotetest/test_locscale_precision_derivatives.jl (notyetwired/runs) and
+/tmp/.../profile-threads-s11/run_covariance_regression.py (30scap). No production
+edit until recordedtrueRED baseline. ExpectedL21 values3.183879498746665e-7,
+1.6937716095561815e-5,-5.781103294140610e-6,4.954428387500133e-6.
+
+Earlier expansion sequence (historical, superseded by PASS above):
+ACTIVE /root/profile_threading_builder (Terra/high): corrected all4terminal L21
+reference expansion in /tmp/.../profile-threads-s11/whitened-oracle/.
+First expansion164428Z FAILED16.79s onJulia globalscope before first case was
+serialized; zero completedterminals. ROOT ALSO CAUGHT hardcodedfixedindex1:
+slope endpoints MUST usecandidate.job_k andcorrespondingfreeindices. Nevertrust
+that draft's slopecoordinates. Builder instructed toassert all4 reconstructed
+vectors beforeevaluation, fixmain scope andpin passinghelperSHA. Preservefailed
+snapshot. Correctedrunauthorized≤60s HARD CAP:104evaluations/208two-startsolves;
+128/256 baselines, symmetricBigFloat L21 h=1e-4,5e-5,2.5e-5, plusseparateactual
+Float64coordinates. Numeratorandbaselineprecisiongates1e-20; Richardsonstability
+1e-10. Incremental in-runserializedBigFloat evidence; noouterfit/sourcepatch.
+If timeout, preservepartials/re-estimate, do notsilentlyrun180s. Needlastchild
+handle/status beforepoll; do notrestarta livemodecheck.
+
+Root prepared .unlazy/locscale-covariance-gradient.md BEFOREimplementation, all
+LOCALgatesUNMET. New leasecodex:01a05261-covariance-gradient covers only
+src/locscale_grad.jl,test/test_locscale_precision_derivatives.jl,
+test/fixtures/locscale_precision/ andthatledger. Registrywriteinitiallysandbox
+blocked despitefalseGRANTED print; specificescalatedclaim succeeded andactual
+leasefile readverified. ToolPLATFORMfieldunknown; explicitLANEidentifiesCodex.
+Root existinglease stillcovers docs/evidence,runtests andotheroldpaths. Preflight
+srcgrad examinedolddivergentrefs: no direct-precisionfix; newestwouldrestorezero
+failuregradients; preservecurrentNaNguards andgeneralizedloadings. Board'soldCursor
+handover superseded byuserapprovedcurrentprogramme, nootherfilesclaimed.
+
+NEXT: corrected4pointreference+TOMLfixture; write true failing production-gradient
+regression, then minimaldirectprecision-derivative patch. Re-run originalfiniteCI
+fixture and existinginner/gradient/profile status suites; no tolerance/seedchange.
+Only then coefficientthreading. Globalparity/bootstrap/performance/docs/recovery
+stillrequired. MC6140368 unchanged (line-searchdiagnosisnextactionstillvalid),
+no remotejob/allocation launched. Compute lastverified15:47UTC sixhosts. Protected
+threepathdenials remain; neverretrythem. No publicpush/merge/deploy/release/cleanup.
+
+---
+
 # Current — documentation anchor fixed; Gamma nuisance line-search diagnosis open
 
 Programme ACTIVE. Global G0–G8 remain OPEN. Julia HEAD2f16c5446e433563de484623758d998d203a0d1f

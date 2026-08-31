@@ -1,0 +1,32 @@
+{
+  "label": "extreme-red",
+  "command": [
+    "julia",
+    "--startup-file=no",
+    "--project=/private/tmp/drm-parity-20260830/integration/DRM.jl",
+    "-e",
+    "include(\"test/test_locscale_precision_derivatives.jl\"); println(\"LOCSCALE_PRECISION_REFERENCE_OK\")"
+  ],
+  "cwd": "/private/tmp/drm-parity-20260830/integration/DRM.jl",
+  "log": "/private/tmp/drm-parity-20260830/profile-threads-s11/covariance-regression-extreme-red-20260831T170437Z.log",
+  "status": 1,
+  "timed_out": false,
+  "cap_seconds": 30,
+  "seconds": 7.516651083016768,
+  "before": {
+    "src/locscale_grad.jl": "3025e2e2c6da11660a00f47b76a76dd030909b7c2ea587bb9acbf55d97b0cf10",
+    "src/locscale_inner.jl": "7f9571e775cef5cced81ab124a77f284225b85f57a4a054e565b36ddfe04fae0",
+    "src/inference.jl": "8f483d5bd679ed6cc4f5f368920204b1093322cd8f170db82371abac6bee9f3c",
+    "test/test_locscale_precision_derivatives.jl": "d7468578d14b132426ec0217983177b3366c54500957fc27cf2ef1974c1f0323",
+    "test/fixtures/locscale_precision/locscale_gamma_l21.toml": "8c117983397f05ad6d4c9201702cd8d0b2282a26f68f696395d00ed558ceae73",
+    "test/test_locscale_profile_threads.jl": "ca1d9db86c33fb8046028c0e9833d1e0cc0af095509d5580b48375a390bd7ad4"
+  },
+  "after": {
+    "src/locscale_grad.jl": "3025e2e2c6da11660a00f47b76a76dd030909b7c2ea587bb9acbf55d97b0cf10",
+    "src/locscale_inner.jl": "7f9571e775cef5cced81ab124a77f284225b85f57a4a054e565b36ddfe04fae0",
+    "src/inference.jl": "8f483d5bd679ed6cc4f5f368920204b1093322cd8f170db82371abac6bee9f3c",
+    "test/test_locscale_precision_derivatives.jl": "d7468578d14b132426ec0217983177b3366c54500957fc27cf2ef1974c1f0323",
+    "test/fixtures/locscale_precision/locscale_gamma_l21.toml": "8c117983397f05ad6d4c9201702cd8d0b2282a26f68f696395d00ed558ceae73",
+    "test/test_locscale_profile_threads.jl": "ca1d9db86c33fb8046028c0e9833d1e0cc0af095509d5580b48375a390bd7ad4"
+  }
+}

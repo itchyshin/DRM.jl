@@ -48,3 +48,30 @@ Hessian, mode acceptance and 128/256-bit results stay independently implemented.
 Both zero and transformed newly captured starts must independently pass the
 same precision and agreement gates. If acquisition fails, that start gate stays
 unmet; partial feasibility results cannot become a full oracle pass.
+
+## Diagnostic support and globalization, 2026-08-31
+
+Installed SpecialFunctions has no BigFloat trigamma method. The independent
+reference may approximate it by a fourth-order Richardson derivative of BigFloat
+digamma, with fixed steps1e-8/1e-16 at128/256bits. Require h-versus-h/2 agreement
+within1e-27/1e-55 and retain the independent scalar-NLL derivative checks. This
+is approximate Hessian support, not a full-domain special-function accuracy claim.
+
+Required controls include the independent Erlang density anchor (shape3,rate2,
+y4 gives NLL8-log64), B=0 prior identity, and a nonzero-B Gaussian exact marginal
+using the SAME Laplace composition helper. For B=[2 0;1 1],y=[1,2],unit noise,
+the exact marginal is log(2pi)+log(11)/2+15/22. Deliberately omitted and doubled
+logdet corrections must fail. Write explicit multiplication in derivative
+stencils: Julia's `8f1` is a Float32 literal, not `8 * f1`.
+
+The first lower-terminal reference passed both precisions and starts, but the
+unchanged moderate-L control encountered an indefinite Hessian during the search.
+Do not replace that control or infer that its final mode is indefinite. A bounded
+damped-Newton/Armijo search is authorized for the independent reference J:
+positive-definite step matrix H+delta*I, descent direction, unchanged J in Armijo,
+strict clamp checks. Damping NEVER enters final H/logdet/M. Near roundoff a full
+undamped Newton step may use a tiny-step, bounded-objective-change acceptance
+with strict residual decrease. Record this explicitly. Preserve100iterations,
+both starts, residual tolerances, final undampedPD and crossprecision gates.
+Do not swallow special-function or derivative-control assertions as rejected
+line-search trials. This solver change has no effect on production code.

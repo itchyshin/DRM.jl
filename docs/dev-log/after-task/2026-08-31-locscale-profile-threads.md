@@ -1,6 +1,127 @@
+# Current assessment: precision gradient improved; inference gate remains open
+
+## 1. Goal
+
+Resume programme#563/S11 without weakening the original finite-profile fixture;
+read the three supplied location-scale papers for terminology and model scope.
+
+## 2. Implemented
+
+Pending numerical source change: direct log-Cholesky precision derivatives with
+exact normalization G*(1,0,1), hardened against unnecessary intermediate overflow.
+Independent four-terminal Gamma reference fixture and regression are written and
+wired into test/runtests.jl. These source/test edits are CARRIED-OVER, not accepted
+for integration: neighbouring profile tests still error before profiling.
+Coefficient threading itself is not implemented.
+
+Completed reading note: ../2026-08-31-location-scale-literature.md. Supplied local
+PDF paths were absent; public primary versions were read instead. The note maps
+residual-scale random effects and covariate-dependent group-effect variance,
+log variance versus log SD, and the Gaussian scope of the R-squared literature.
+Rose reviewed and two wording/conditioning corrections were applied.
+
+## 3a. Decisions and Rejected Alternatives
+
+Preserve the estimator, seed, formula, parameter layout, original convergence
+criteria, requested standard errors, and original finite-CI test. No optimizer
+budget increase, false unbounded-interval claim, or se=false test substitution.
+A se=false diagnostic may isolate point fitting from covariance construction;
+it cannot satisfy the requested-inference gate.
+
+## 4. Files Touched
+
+Pending: src/locscale_grad.jl, test/test_locscale_precision_derivatives.jl,
+test/fixtures/locscale_precision/locscale_gamma_l21.toml, test/runtests.jl.
+Durable reading, references, scripts, logs, review and source snapshots are under
+docs/dev-log/. LOOP/checkpoint.md records current state. The original threading
+test is unchanged/untracked/unwired. Protected Gaussian and tutorial paths were
+not edited; drmTMB source remains unchanged.
+
+## 5. Checks Run
+
+Independent all-four directional expansion:51.816s, normal exit,128/256-bit,
+two starts, Richardson halving and individual +/- objective checks retained.
+Initial production regression:8pass4fail0error. Direct derivative green:24/24.
+Rose's extreme-zero-c regression:24pass4fail before hardening; hardened green
+28/28 in10.572s (sourcec0369528,test60d13d50, fixture8c117983).
+
+Neighbour inner/marginal/gradient/fit module passed in34.945s at pre-hardening
+source3025e2e2. It must be rerun at final source. Serial and four-thread profile
+status suites each76pass1error in _ls_vcov,14.450s/14.112s. The unchanged original
+finite-CI fixture on hardened source errors in the same SE path,11.906s,0pass1error.
+Cache EPERM attempts were retained as support failures, never counted as passes.
+No full suite, benchmark, remote campaign or performance win is claimed.
+
+## 6. Tests of the Tests
+
+Both numerical regressions failed before their respective patches. Independent
+reference uses a separate whitened likelihood and controls for density, prior,
+normalization and finite differences; deliberate missing/full-logdet damage is
+rejected. The new finite-profile classifier accepts only the two named missing
+thread metadata failures and rejects the original12pass4fail log, extra failures,
+wrong totals and runtime errors. Current profile error is correctly rejected.
+
+## 7a. Issue Ledger
+
+Programme#563, S11, local covariance repair gates and globalG0-G8 remain open.
+No issue was closed and no collaborator was messaged.
+
+## 8. Consistency Audit
+
+Independent gradient accuracy at four fixed states is not proof of successful
+fitting or inference. The current SE exception predates this patch in an earlier
+retained run; a changed outer terminal point may expose it again. No conclusion
+about final fit validity follows without the bounded stencil diagnostic.
+The papers describe Gaussian MELS models, not validation of Gamma log-shape.
+
+## 9. What Did Not Go Smoothly
+
+Retained oracle support/stencil/globalization failures and the corrected
+expansion coordinate packing remain in the evidence. Rose caught intermediate
+overflow despite a passing initial regression. The profile fixture now stops
+earlier in Wald covariance construction; this is an open failure, not progress
+on its finite-CI acceptance. Sandbox cache errors required narrowly approved
+cache-writing checks. Initial Mission Control preflight used a repository name
+instead of a directory; corrected full-path preflight ran before the lease.
+
+## 10. Known Residuals
+
+Diagnose base fit versus Hessian finite-difference probes. Repair inference only
+under a reviewed contract; then rerun exact current-source neighbours and original
+finite CIs. Threading, bootstrap, bridge/native parity, performance, documentation
+publication and repository recovery still remain. No release/integration claim.
+
+## 11. Team Learning
+
+Requested builders/readers Terra/high, independent Rose review Sol/high through
+explicit native briefs. Actual active agent-hours are not instrumented. The
+literature's scale distinction is useful for public documentation, but does not
+license importing equations into an unrelated non-Gaussian inference route.
+
+Golden Set: unchanged Gamma fixture, four frozen nuisance states and the extreme
+zero-c finite derivative case. Reference tolerances were not relaxed.
+
+Memory receipt: no Codex memory files were used or edited. Evidence and reading
+are retained in the repository; Mission Control has a separately leased local
+status update and served-content verification.
+
+## 12. Cross-Product Coverage
+
+This work does NOT close native-R/direct-Julia/bridge parity, calibrated profile
+or bootstrap inference, threading, all-workflow performance, documentation
+publication, worktree cleanup or the programme. No public push/merge/release.
+
+---
+
+## Historical progress receipts (superseded status wording preserved)
+
 > Current status: S11 threading implementation is not yet made. The original
 > carried Gamma fixture failed numerical expectations before the code change.
 > This report records the pilot and diagnosis, not a completed inference repair.
+> Current advance: covariance-gradient construction shows large roundoff errors
+> at all four retained endpoints; a direct analytic formula is promising.
+> The independent high-precision reference now passes both pilot points.
+> All-four-endpoint directional comparisons are the next required check.
 
 ## 1. Goal
 
@@ -115,3 +236,54 @@ Separate documentation source commit2f16c544 repairs the general anchor heading
 P2 after fresh build/render and actual browser checks. MissionControl6140368
 is locally committed and its served fields match; the exact status lease was
 released. No numerical source edit, deployment or remote job occurred.
+
+### Four-endpoint covariance arithmetic diagnosis
+
+The retained `covariance-arithmetic-review.md`, scripts, logs and JSON receipts
+separate downstream arithmetic error from true-gradient validation. First check
+6.53s; direct-derivative comparison4.94s. Both normal exit, no outer fits,
+production sources unchanged. L21 discrepancies from lifting fixed Float64
+intermediates range3.9e-6 to7.8e-4. Direct analytic precision derivatives reduce
+Float64-vs256-bit recombination discrepancies to about1e-8 on these cases.
+Rose confirms the contraction algebra and limits: upstream mode/inverse errors
+remain, and this alone is not independent marginal-gradient validation.
+
+The independent whitened reference now passes density, derivative, prior and
+nonzero-B Laplace normalization controls (including deliberate missing/full
+logdet damage), plus lower-terminal128/256-bit/two-start checks. Its moderate-L
+interior control exposed nonPD Hessian during the undamped search, before final
+mode acceptance. Keep that control; add independent dampedNewton/Armijo
+globalization, preserving final undampedPD, residual gates,100iterations and
+crossprecision comparison. No production solver/tolerance/fixture change.
+Earlier support failures (missing imports, parse ambiguity, missing BigFloat
+trigamma) and the failed numeric stencil are retained, not successful runs.
+
+### Independent two-point reference accepted for bounded expansion
+
+The retained163817Z run exits0 in7.73s. Both pilot points pass all controls,
+zero/production-seed starts, undampedPD, residual and128/256-bit gates. Largest
+objective precision difference4.46e-29; largest logdet mode-correction3.33e-30.
+Rose independently reviewed snapshot405f28114a2d665cf40bc8c4ec46ec324422a00a141250849e35bead4dace73d
+and authorizes bounded all-four-L21 directional comparisons. The accepted
+iterations used backtracking but never needed damping: damping is not tested
+by this pilot. The supplementary case-receipt JLS is DERIVED_FROM_LOG_STRING,
+not an original in-run binary BigFloat artifact. The raw log is authoritative;
+the upcoming expansion serializes numerical objects within the executed script.
+No production-gradient accuracy or profile-repair claim follows yet.
+
+### Wald discriminator: completed, failure mechanism remains open
+
+One support attempt stopped before fitting because bare Gamma() was ambiguous;
+its script/log/status remain retained. Corrected run171108Z exits0 in11.873s
+under30s cap, input hashes unchanged; result25084fd208dbbe9f863331b19b70c2ed7f3407d2135095a8cc0e07dcda3647a3.
+This is a diagnostic pass, NOT a successful model-fit or inference gate.
+The se=false diagnostic fit returns converged=false. At the exact engine point
+[0.6370343555,0.2441002825,1.4752130749,-1.6628786423,-0.0960812841,-9.1260347739],
+the cold inner solve fails, objective reports its Inf failure sentinel, and
+gradient is nonfinite. Seven of twelve +/-1e-5 probes are finite; H is nonfinite.
+
+Do not equate this solver failure with a mathematically infinite marginal or
+proof that no acceptable warm-start mode exists. Next inspect cold versus the
+stored fit mode at the exact point (no outer refit), then repair returned-fit
+and inference handling under the existing contract. Suppressing the covariance
+exception alone would not satisfy convergence/finite-profile requirements.
