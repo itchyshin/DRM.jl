@@ -26,6 +26,7 @@
     "refit-b2.jl": "5769e3ad9e149d4bdbb06e6d8832010b6e4ab509c06b0c5604d97e7303c46e64",
     "final-threads4-20260831T202151Z-test_simulate_scale_conventions.jl": "6b20ba841249e35784a075c17cae0991b19d9a9198b6474e00fd22c0defd2cf2",
     "final-threads1-20260831T202023Z-test_locscale_bootstrap_simulator.jl": "6a462f7d4a778250f9258f80f02f3dd9e7b6dbf66649574641e9d8c56d1a148c",
+    "melissa-review.md": "0f20c359b0191e6e7f3e43c91060580641645d4bdce5c1a4acef08b0b2e51040",
     "sampler-threads1-20260831T201234Z.json": "f26a89fa9f0325d92e7de2dcb4b45c923d497dd7011011d1f20b35730f787f40",
     "run_refit.py": "e136a4de2e770766f0145dbafb3e67a9669471424ccff6d97dc934b8fc3ae9f8",
     "final-threads4-20260831T202151Z.json": "1b0d078c3a9a2cf28c6037317101a53615a7b4397b4077ccc09f198026cb53d7",
@@ -65,7 +66,7 @@
     "sampler-threads1-20260831T201121Z-test_locscale_bootstrap_simulator.jl": "7351133fab75073ec147ff307041d87ebd5f126fec19339cbe40cceb642e9768",
     "mechanical-review.md": "0b18ccda9b43d66b32e0420567baa83ba70eb23d1d901b00d1d2c4a94488f5f9",
     "diagnostic-threads4-20260831T201529Z.json": "ea1de51edfa6c2c084d1536199ccb72f9b09508e401cf16acb5d58f1a4005d4d",
-    "review.md": "b869604d10b5f3bf4ef35cba7f75563d9a8cc28affa09b874990e41fdb92b6eb",
+    "review.md": "783720ba47f6afda8fce5bff0ea32f205ee1b31437767864cfcb01bb13c7d433",
     "run_diagnostic.py": "2b722e0b7506900f296173616b2258bab363a0c576c4863a460818358b581447",
     "final-threads4-20260831T202151Z.log": "7a81cbbdc123458dace9fe3382506d16377b570cb9625979580e3a8a4435040b",
     "refit-refine.jl": "02deca0e644ba97dc4f5ac68495a1ba9f3e0c87bc887d11d6e4c65189c132560",
@@ -75,5 +76,6 @@
     "final-threads4-20260831T202151Z-test_simulate.jl": "1ea74c4692aeaa02f3a1b6708c20c42f16fc83a84767136d58815bced9252325",
     "sampler-threads1-20260831T201234Z.jl": "2bc05a2f4b9fd6764d98b61a99ae27337de3ebadadf2bad57e31b7128f191473"
   },
-  "scope": "Sampler/refit regression only; programme G0-G8 OPEN"
+  "scope": "Sampler/refit regression only; programme G0-G8 OPEN",
+  "source_commit": "98a6f90c9968003bb6256ed065d7eddfecd2dbf4"
 }

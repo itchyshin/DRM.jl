@@ -44,6 +44,8 @@ Both had a60s estimate/cap and unchanged before/after source hashes. Each includ
 32 conditional/neighbour checks,101 joint sampler checks and12 public refit checks.
 The existing finite-profile fixture also passed16/16,14.147s,4Julia threads.
 Unlazy actually executed G1 and G2 successfully; broader G3/G4 remain open.
+G0 is a manual retained-red and independent-review sign-off recorded after that
+execution; its earlier UNMET line is preserved, not represented as an automated pass.
 
 ## 6. Tests of the Tests
 
@@ -56,7 +58,7 @@ Q^-2 and omitted permutation alternatives. Altered rows, designs, groups and
 precision are rejected. Shared-closure serial/thread draws agree for fixed seeds.
 The initial real Gamma B2 run used1/2 in each mode; preserve its failing counts.
 The third initial assertion failure was NaN equality, corrected to isequal for
-bookkeeping only. Independent gradient checks reject the original failed point
+bookkeeping only. Fresh gradient checks, independent of the convergence flag, reject the original failed point
 (maxabs1.006e-5) and accept the repaired point under the unchanged1e-8 criterion.
 
 ## 7a. Issue Ledger
@@ -68,7 +70,9 @@ normalization, performance, documentation or recovery obligations.
 ## 8. Consistency Audit
 
 Rose independently reviewed sampler and continuation; exact hashes in review.md.
-Runtime receipts confirm current-source tests. Static review alone was never
+Runtime receipts confirm current-source tests. Melissa found that review.md
+mistakenly called an earlier test hash final; the note now distinguishes the
+snapshots. Rose subsequently reviewed the final test delta explicitly. Static review alone was never
 counted as a passing numerical run. There is no speedup or coverage headline.
 
 ## 9. What Did Not Go Smoothly
@@ -86,17 +90,22 @@ status command and actual execution were then run. Raw failures remain intact.
 
 Next: reproduce and repair omitted tree forwarding in non-Gaussian fixed-target
 bridge bootstrap, then test phylo/relmat/animal/spatial and other families end to
-end through direct Julia and actual R JuliaCall. Generic fit-based bootstrap
+end through direct Julia and the public R `engine = "julia"` interface via JuliaCall.
+This evidence set does not validate that R-facing workflow. Generic fit-based bootstrap
 still lacks coords forwarding. Beta endpoint failures can bias retained draws
 if frequent; measure failures in the retained evidence campaign. B2 intervals
 are not statistically useful. Gamma scale normalization needs the full Jacobian,
 inverse objective/profile maps and decreasing endpoint reversal, not one slot fix.
+Mission Control's two-field update was locally committed and verified as served;
+this status update does not close the full programme's Mission Control obligation.
 All original capability/performance/documentation/recovery obligations persist.
 
 ## 11. Team Learning
 
-Root continued under its active runtime; no claim of the planned high-effort
-routing. Original builder Terra/high failed; Rose Sol/high reviewed; Luna/low
+Root ran Sol/medium, rather than claiming the planned high effort. The
+milestone efficiency checker exited1 on persisted day-wide compaction/guardian
+limits; it is not a passing gate or billing evidence. This approved disk-goaled
+programme continues by checkpoint-and-roll; no new user-owned task was created. Original builder Terra/high failed; Rose Sol/high reviewed; Luna/low
 traced the Beta-Binomial response adapter. No new expensive model escalation.
 Recorded seconds are command wall times, not active agent-hours; total active
 hours and programme completion time remain unmeasured. No Codex memory edits,
@@ -106,6 +115,6 @@ release, registration, public deployment or collaborator messages.
 
 This does NOT cover general inference parity, reliable interval coverage, the
 performance manifest, other provider/family refits, completed documentation or
-worktree retirement. No required programme gate was abandoned or redefined.
+worktree retirement, the public R `engine = "julia"` workflow or full Mission Control closure. No required programme gate was abandoned or redefined.
 All numerical processes are terminal at this checkpoint. Continue from LOOP;
 reviewable local code/evidence is carried forward, never treated as programme completion.

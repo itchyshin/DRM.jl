@@ -1,3 +1,16 @@
+# Local source checkpoint
+
+Sampler, fitter continuation and tests committed as
+`98a6f90c9968003bb6256ed065d7eddfecd2dbf4`; source hashes still match final runs.
+Mission Control update locally committed as`bee46c514570065cd513fcf802472b40536fb810`
+and verified served; its exact-file lease released. This is a status update,
+not closure of the full Mission Control programme obligation.
+Melissa caught an earlier refit-test hash mislabeled as final; the review note
+now separates the snapshots. G0 is manual retained-red/review evidence, not an
+automated pass. G3 (including public R `engine = "julia"`) remains OPEN.
+
+---
+
 # Current continuation — coupled sampler and Gamma B2 repaired
 
 Implementation is based on HEAD8a7b41a2885f2c8d5d81734eee66832356c2a6ba.
