@@ -1,3 +1,51 @@
+# Current checkpoint — named LSS identity repaired, strict gate open (2026-08-30)
+
+Programme ACTIVE; G0-G8 remain OPEN. Approved plan and issue #563 unchanged.
+Julia mapping/evidence commit **9b46edc3**; R public-parity tools/evidence
+**0f54b438c**. Both CARRIED-OVER on codex/julia-r-parity, unmerged and undeployed.
+Same isolated worktrees under /private/tmp/drm-parity-20260830. Never use the
+main Dropbox checkouts for execution. No full-goal or clean final-head claim.
+
+Two frontend phylogenetic mappings now use tree-tip identity before group SD
+construction and missing-response filtering. Shipped Newick/AugmentedPhy,
+integer positions and exact String-convertible labels (including Symbols)
+qualified. IID first-seen order preserved. Source SHA2564465956f8786436b72827366032178f1a81f0b76582df7f232d155ed624191f9.
+
+Final leaf-lss-tip-identity: **7 met, 1 unmet**, five executable checks reran.
+G8 remains OPEN: dedicated six-tip log-SD coefficient difference4.52980 and
+scalar-multi difference0.86107 fail unchanged4e-6. Default401pass/2broken;
+strict401pass/2fail. Other blocks agree closely, phylo SDs are nearly zero;
+that is evidence for investigation, NOT completed boundary diagnosis.
+Existing161LSS +35including threaded profile/bootstrap pass. Seven tutorial
+examples pass (20.865 build seconds); no visual/deployed proof.
+Public native/direct/bridge on12tips72shuffledrows:8checks pass, maxcoefficient
+error1.00642e-6, independently named covariance likelihood errors<7e-14.
+Before repair allconverged but fourchecks failed. Currentchecker rejects12damages.
+Detailed report/evidence: docs/dev-log/after-task/2026-08-30-lss-tip-identity.md
+and docs/dev-log/evidence/julia-r-parity/lss-tip-identity/. Keep every RED/error.
+Rose approved bounded mapping source; Melissa found no omitted obligations.
+
+NEXT: diagnose two strict failures via objectives/scores/named covariance;
+Terra/high owns only new tools/lss_boundary_diagnostic.jl and its evidence dir.
+Root inference work first checks18missing src/inference.jl refs (Luna/low scout).
+Bootstrap still uses first-seen phylo simulation, may omit multi-components,
+and Gaussian refits omit original estimation_method. Profile nuisance optimizer
+status and gradient reuse remain open. These need separate tests and repairs.
+Do not edit/bypass denied src/gaussian_structured.jl or src/gaussian_sparse_lss.jl.
+
+Foreign JuliaS5 include/test and RZOB96+/10- preserved unstaged. Runtime Rreceipts
+include those developmentbytes; full integration must requalify a clean source.
+All24native missingpredictor cells/prior4e-6losses, LSSstampedSE/REML/masks/
+largetree/finalhead, fullinference, automatic1/2/4/8performance, worktree/stash
+recoverability/cleanup and wholeDocumenter remain required with no exclusions.
+MissionControl localcommitf4c4a7d served verified; vaultlease released. No remote
+compute this leaf; prior existingTotoro/Firmaster verification is historical.
+Root actualSol/medium(requestedhigh); builderTerra/high; RoseSol/high;
+scoutLuna/low. Agenthours uninstrumented. No release/registration/messages.
+Active same-task checkpoint; no cross-platform handoff or full ledger rerun.
+
+---
+
 # Current checkpoint — labels and sparse-profile cost (2026-08-30)
 
 Programme ACTIVE; G0–G8 remain OPEN. Isolated twin worktrees and approved plan
