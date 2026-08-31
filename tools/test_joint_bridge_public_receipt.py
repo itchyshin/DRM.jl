@@ -2,6 +2,8 @@
 """Damage retained outputs to establish that the public bridge oracle fails."""
 import copy
 import json
+import math
+import statistics
 import sys
 import tomllib
 from pathlib import Path
@@ -15,7 +17,16 @@ receipt = json.loads(receipt_path.read_text())
 reference = tomllib.loads(ref_path.read_text())
 direct = tomllib.loads(direct_path.read_text())
 check(receipt, reference, direct, rroot, jroot)
+def restore_delta_wald(receipt):
+    case = receipt["cases"]["gaussian"]
+    theta, cov = case["raw_theta"], case["raw_covariance"]
+    estimate = math.exp(theta[-1])
+    width = statistics.NormalDist().inv_cdf(.975) * estimate * math.sqrt(cov[-1][-1])
+    case["wald"][-1].update(lower=estimate-width, upper=estimate+width, transformation="exp")
+
+
 damages = [
+    ("old delta-Wald mislabeled as log-Wald", restore_delta_wald),
     ("source", lambda x: x["source_before"].clear()),
     ("runtime", lambda x: x["runtime"].update(threads=8)),
     ("denominator", lambda x: x["cases"].pop("bernoulli")),

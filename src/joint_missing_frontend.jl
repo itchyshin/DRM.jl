@@ -104,6 +104,31 @@ struct JointTwoDrmFit
     variables::NTuple{2,Symbol}
 end
 
+# Applied schemas and state-coordinate metadata retained by a direct finite
+# formula fit.  New data must be evaluated against these objects: building a
+# schema from a singleton factor batch would otherwise change no-intercept and
+# treatment coordinates before multiplication by the fitted beta block.
+struct _JointFiniteStatePredictionPlan{F}
+    formula::F
+    variable::Symbol
+    levels::Vector{String}
+    predictor::Symbol
+    permutation::Vector{Int}
+    marker_columns::UnitRange{Int}
+    full_marker::Bool
+    names::Vector{String}
+end
+
+struct _JointFiniteSigmaPredictionPlan{F}
+    formula::F
+    names::Vector{String}
+end
+
+struct _JointFinitePredictionPlan{M,S}
+    mean::M
+    sigma::S
+end
+
 """
     JointFiniteDrmFit
 
@@ -111,12 +136,19 @@ Formula-facing wrapper for one ordinal or categorical missing predictor.  Its
 raw coefficient vector and covariance keep the kernel order `beta, delta,
 alpha, cutraw`; ordinal raw cutpoints are deliberately separate from the
 predictor-logit coefficients and `cutpoints(fit)` returns their natural scale.
+Direct formula fits retain applied mean and sigma schemas for known-state
+new-data prediction; the three-argument constructor remains available for
+manually wrapped prepared fits but those fits cannot predict new data.
 """
-struct JointFiniteDrmFit
+struct JointFiniteDrmFit{P}
     prepared::PreparedFiniteJointFit
     formula::DrmFormula
     variable::Symbol
+    prediction::P
 end
+
+JointFiniteDrmFit(prepared::PreparedFiniteJointFit, formula::DrmFormula, variable::Symbol) =
+    JointFiniteDrmFit(prepared, formula, variable, nothing)
 
 _joint_frontend_terms(rhs) = rhs isa Tuple ? collect(rhs) : Any[rhs]
 
@@ -558,8 +590,8 @@ terms together: the first categorical term is full rank and later terms use
 treatment contrasts.  Ordinal marker columns are then replaced by the fixed
 polynomial contrasts unless that marker itself is the full-rank first factor.
 """
-function _joint_finite_native_state_design(f::DrmFormula, data, variable::Symbol,
-                                           labels::Vector{String}, predictor::Symbol)
+function _joint_finite_state_prediction_plan(f::DrmFormula, data, variable::Symbol,
+                                              labels::Vector{String}, predictor::Symbol)
     predictor in (:ordinal, :categorical) ||
         throw(ArgumentError("joint missing-predictor frontend: unsupported finite-state predictor `$predictor`"))
     rhs = Dict(f.forms)[:mu]
@@ -604,7 +636,7 @@ function _joint_finite_native_state_design(f::DrmFormula, data, variable::Symbol
                        collect((last(physical_marker_columns) + 1):p))
     Xstate = Xstate[:, :, permutation]
     names = names[permutation]
-    marker_columns = first_marker:(first_marker + length(marker_columns) - 1)
+    marker_range = first_marker:(first_marker + length(marker_columns) - 1)
     marker_names = if full_marker
         ["mi($(variable))$(label)" for label in labels]
     elseif predictor === :ordinal
@@ -616,11 +648,37 @@ function _joint_finite_native_state_design(f::DrmFormula, data, variable::Symbol
     if predictor === :ordinal && !full_marker
         contrast = _joint_finite_polynomials(K)
         for state in 1:K, column in 1:(K - 1)
-            Xstate[:, state, marker_columns[column]] .= contrast[state, column]
+            Xstate[:, state, marker_range[column]] .= contrast[state, column]
         end
     end
-    names[marker_columns] = marker_names
+    names[marker_range] = marker_names
+    plan = _JointFiniteStatePredictionPlan(ft, variable, copy(labels), predictor,
+        permutation, marker_range, full_marker, copy(names))
+    return Xstate, names, plan
+end
+
+function _joint_finite_native_state_design(f::DrmFormula, data, variable::Symbol,
+                                           labels::Vector{String}, predictor::Symbol)
+    Xstate, names, _ = _joint_finite_state_prediction_plan(f, data, variable, labels, predictor)
     return Xstate, names
+end
+
+# Unlike the finite mean design, sigma never contains the modelled predictor in
+# this admission.  It still needs an applied schema so a singleton factor in
+# `newdata` uses the fitted coordinate system rather than learning a new one.
+function _joint_finite_sigma_prediction_plan(response::Symbol, rhs, data)
+    raw_response = _table_column(data, response)
+    y_response, observed_response = _coerce_response_column(raw_response)
+    design_data = all(observed_response) ? data :
+        _replace_table_column(data, response,
+                              ifelse.(observed_response, y_response, 0.0))
+    ft = FormulaTerm(Term(response), rhs)
+    ft = apply_schema(ft, schema(ft, design_data), StatisticalModel)
+    _, X = modelcols(ft, design_data)
+    Xmat = X isa AbstractMatrix ? Matrix{Float64}(X) :
+        reshape(Float64.(collect(X)), :, 1)
+    names = String.(vec(coefnames(ft.rhs)))
+    return Xmat, names, _JointFiniteSigmaPredictionPlan(ft, copy(names))
 end
 
 function _joint_finite_mean_insertion(f::DrmFormula, data)
@@ -652,7 +710,7 @@ function _fit_finite_joint_formula(f::DrmFormula, data, variable::Symbol, fixed_
     y, _, _ = _design(f.response, fixed_mu, data)
     missing.response === :fail && any(isnan, y) &&
         throw(ArgumentError("joint missing-predictor frontend: response has missing values; use `miss_control(response = \"include\", predictor = \"model\")`"))
-    _, Xsigma, sigma_names = _design(f.response, rhs_sigma, data)
+    Xsigma, sigma_names, sigma_plan = _joint_finite_sigma_prediction_plan(f.response, rhs_sigma, data)
     Xpredictor, predictor_names = _joint_finite_predictor_design(data, variable, spec.formula.rhs)
     if predictor === :ordinal
         intercept = findfirst(==("(Intercept)"), predictor_names)
@@ -662,7 +720,7 @@ function _fit_finite_joint_formula(f::DrmFormula, data, variable::Symbol, fixed_
             predictor_names = predictor_names[keep]
         end
     end
-    Xstate, mu_names = _joint_finite_native_state_design(f, data, variable, labels, predictor)
+    Xstate, mu_names, mean_plan = _joint_finite_state_prediction_plan(f, data, variable, labels, predictor)
     pstate = size(Xstate, 3)
     pstate > 0 || throw(ArgumentError("joint missing-predictor frontend: finite-state mean design is empty"))
     n = length(y)
@@ -679,7 +737,9 @@ function _fit_finite_joint_formula(f::DrmFormula, data, variable::Symbol, fixed_
         predictor = predictor, levels = labels, variable = variable,
         mu_names = mu_names, sigma_names = sigma_names,
         predictor_names = predictor_names, original_row = collect(1:n))
-    return JointFiniteDrmFit(fit_prepared_joint(prepared; g_tol = g_tol), f, variable)
+    fit = fit_prepared_joint(prepared; g_tol = g_tol)
+    prediction = _JointFinitePredictionPlan(mean_plan, sigma_plan)
+    return JointFiniteDrmFit(fit, f, variable, prediction)
 end
 
 function _fit_two_joint_formula(f::DrmFormula, data;
@@ -956,6 +1016,208 @@ niterations(fit::JointFiniteDrmFit) = niterations(fit.prepared.fit)
 family(::JointFiniteDrmFit) = Gaussian()
 fitted(fit::JointFiniteDrmFit) = fitted(fit.prepared.fit)
 joint_missing_summary(fit::JointFiniteDrmFit) = joint_missing_summary(fit.prepared)
+
+function _joint_finite_retained_prediction_plan(fit::JointFiniteDrmFit)
+    plan = fit.prediction
+    plan isa _JointFinitePredictionPlan || throw(ArgumentError(
+        "joint missing-predictor frontend: this manually wrapped finite fit did not retain applied schemas for `newdata` prediction"))
+    return plan
+end
+
+function _joint_finite_prediction_table(newdata)
+    columns = try
+        Tables.columntable(newdata)
+    catch err
+        throw(ArgumentError(
+            "joint missing-predictor frontend: `newdata` must be a Tables-compatible column table ($(sprint(showerror, err)))"))
+    end
+    names = Tuple(Symbol(name) for name in keys(columns))
+    isempty(names) && throw(ArgumentError(
+        "joint missing-predictor frontend: `newdata` must contain at least one column"))
+    n = try
+        length(getproperty(columns, names[1]))
+    catch err
+        throw(ArgumentError(
+            "joint missing-predictor frontend: every `newdata` column must be a vector ($(sprint(showerror, err)))"))
+    end
+    for name in names
+        length(getproperty(columns, name)) == n || throw(ArgumentError(
+            "joint missing-predictor frontend: `newdata` columns have inconsistent lengths"))
+    end
+    return NamedTuple{names}(Tuple(getproperty(columns, name) for name in names)), n
+end
+
+function _joint_finite_prediction_response_data(data::NamedTuple, response::Symbol, n::Int)
+    names = Tuple(keys(data))
+    response in names && return _replace_table_column(data, response, zeros(Float64, n))
+    return merge(data, NamedTuple{(response,)}((zeros(Float64, n),)))
+end
+
+function _joint_finite_known_state_rows(data::NamedTuple,
+                                        plan::_JointFiniteStatePredictionPlan)
+    variable = plan.variable
+    variable in keys(data) || throw(ArgumentError(
+        "joint missing-predictor frontend: mu prediction requires known `$variable` values in `newdata`"))
+    raw = getproperty(data, variable)
+    states = Vector{Int}(undef, length(raw))
+    for i in eachindex(raw)
+        value = raw[i]
+        _joint_frontend_missing(value) && throw(ArgumentError(
+            "joint missing-predictor frontend: mu prediction requires nonmissing `$variable` values; new-data imputation is not implemented"))
+        state = findfirst(==(_joint_finite_label(value)), plan.levels)
+        state === nothing && throw(ArgumentError(
+            "joint missing-predictor frontend: `$variable` value `$(value)` is not one of the fitted finite-state levels"))
+        states[i] = state
+    end
+    return states
+end
+
+function _joint_finite_prediction_matrix(plan::_JointFiniteStatePredictionPlan,
+                                         data::NamedTuple, response::Symbol)
+    states = _joint_finite_known_state_rows(data, plan)
+    n = length(states)
+    expanded = _joint_finite_state_data(data, plan.variable, plan.levels)
+    design_data = _joint_finite_prediction_response_data(expanded, response, n * length(plan.levels))
+    Xflat = try
+        _, values = modelcols(plan.formula, design_data)
+        values isa AbstractMatrix ? Matrix{Float64}(values) :
+            reshape(Float64.(collect(values)), :, 1)
+    catch err
+        throw(ArgumentError(
+            "joint missing-predictor frontend: `newdata` does not match the retained mean schema ($(sprint(showerror, err)))"))
+    end
+    K = length(plan.levels)
+    p = length(plan.names)
+    size(Xflat, 1) == n * K || throw(ArgumentError(
+        "joint missing-predictor frontend: retained mean schema produced an invalid row count"))
+    size(Xflat, 2) == p || throw(ArgumentError(
+        "joint missing-predictor frontend: retained mean schema changed its coefficient coordinates"))
+    length(plan.permutation) == p || throw(ArgumentError(
+        "joint missing-predictor frontend: retained mean coordinate permutation is invalid"))
+    Xflat = Xflat[:, plan.permutation]
+    Xstate = Array{Float64}(undef, n, K, p)
+    for i in 1:n, state in 1:K
+        Xstate[i, state, :] .= Xflat[(i - 1) * K + state, :]
+    end
+    if plan.predictor === :ordinal && !plan.full_marker
+        contrast = _joint_finite_polynomials(K)
+        length(plan.marker_columns) == K - 1 || throw(ArgumentError(
+            "joint missing-predictor frontend: retained ordinal marker coordinates are invalid"))
+        for state in 1:K, column in 1:(K - 1)
+            Xstate[:, state, plan.marker_columns[column]] .= contrast[state, column]
+        end
+    end
+    X = Matrix{Float64}(undef, n, p)
+    for i in 1:n
+        X[i, :] .= Xstate[i, states[i], :]
+    end
+    all(isfinite, X) || throw(ArgumentError(
+        "joint missing-predictor frontend: retained mean schema produced a non-finite new-data design"))
+    return X
+end
+
+function _joint_finite_prediction_matrix(plan::_JointFiniteSigmaPredictionPlan,
+                                         data::NamedTuple, response::Symbol)
+    n = length(first(values(data)))
+    design_data = _joint_finite_prediction_response_data(data, response, n)
+    X = try
+        _, values = modelcols(plan.formula, design_data)
+        values isa AbstractMatrix ? Matrix{Float64}(values) :
+            reshape(Float64.(collect(values)), :, 1)
+    catch err
+        throw(ArgumentError(
+            "joint missing-predictor frontend: `newdata` does not match the retained sigma schema ($(sprint(showerror, err)))"))
+    end
+    size(X, 1) == n || throw(ArgumentError(
+        "joint missing-predictor frontend: retained sigma schema produced an invalid row count"))
+    size(X, 2) == length(plan.names) || throw(ArgumentError(
+        "joint missing-predictor frontend: retained sigma schema changed its coefficient coordinates"))
+    all(isfinite, X) || throw(ArgumentError(
+        "joint missing-predictor frontend: retained sigma schema produced a non-finite new-data design"))
+    return X
+end
+
+function _joint_finite_prediction_se(X::AbstractMatrix, V::AbstractMatrix,
+                                     range::UnitRange{Int})
+    size(V, 1) == size(V, 2) || throw(ArgumentError(
+        "joint missing-predictor frontend: covariance has invalid dimensions"))
+    last(range) <= size(V, 1) || throw(ArgumentError(
+        "joint missing-predictor frontend: covariance lacks the requested parameter block"))
+    all(isfinite, V) || throw(ArgumentError(
+        "joint missing-predictor frontend: covariance is unavailable for new-data standard errors"))
+    isapprox(V, transpose(V); rtol = 1e-8, atol = 0.0) || throw(ArgumentError(
+        "joint missing-predictor frontend: covariance must be symmetric for new-data standard errors"))
+    try
+        cholesky(Symmetric(V); check = true)
+    catch err
+        throw(ArgumentError(
+            "joint missing-predictor frontend: covariance must be positive definite for new-data standard errors ($(sprint(showerror, err)))"))
+    end
+    Vblock = view(V, range, range)
+    size(X, 2) == length(range) || throw(ArgumentError(
+        "joint missing-predictor frontend: prediction design and covariance block disagree"))
+    result = Vector{Float64}(undef, size(X, 1))
+    for i in axes(X, 1)
+        row = view(X, i, :)
+        variance = dot(row, Vblock, row)
+        isfinite(variance) || throw(ArgumentError(
+            "joint missing-predictor frontend: new-data prediction variance is non-finite"))
+        # A symmetric observed-information inverse can acquire a negative
+        # quadratic only through floating-point cancellation at this scale.
+        # Preserve that roundoff allowance, but never turn a material negative
+        # variance into a public zero standard error.
+        scale = dot(abs.(row), abs.(Vblock) * abs.(row))
+        isfinite(scale) || throw(ArgumentError(
+            "joint missing-predictor frontend: prediction-variance scale is non-finite"))
+        variance < -128 * eps(Float64) * scale && throw(ArgumentError(
+            "joint missing-predictor frontend: covariance gives a materially negative prediction variance"))
+        result[i] = sqrt(max(0.0, variance))
+    end
+    all(isfinite, result) || throw(ArgumentError(
+        "joint missing-predictor frontend: new-data standard errors are non-finite"))
+    return result
+end
+
+"""
+    predict(fit::JointFiniteDrmFit, newdata; dpar = :mu, type = :response, se = false)
+
+Known-state plug-in prediction for a formula-fitted ordinal or categorical
+missing predictor.  Mean predictions require every new-data marker value to be
+an observed fitted level and are evaluated with the retained formula schema;
+they never condition on a supplied new response.  Sigma predictions use their
+own retained schema and therefore do not require the marker column.  Missing
+new-data marker values and unknown levels remain outside this bounded route.
+"""
+function predict(fit::JointFiniteDrmFit, newdata;
+                 dpar = :mu, type = :response, se = false)
+    dpar isa Symbol && dpar in (:mu, :sigma) || throw(ArgumentError(
+        "joint missing-predictor frontend: `dpar` must be :mu or :sigma"))
+    type isa Symbol && type in (:response, :link) || throw(ArgumentError(
+        "joint missing-predictor frontend: `type` must be :response or :link"))
+    se isa Bool || throw(ArgumentError(
+        "joint missing-predictor frontend: `se` must be Bool"))
+    retained = _joint_finite_retained_prediction_plan(fit)
+    data, _ = _joint_finite_prediction_table(newdata)
+    plan = dpar === :mu ? retained.mean : retained.sigma
+    X = _joint_finite_prediction_matrix(plan, data, fit.formula.response)
+    η = X * coef(fit.prepared.fit, dpar)
+    all(isfinite, η) || throw(ArgumentError(
+        "joint missing-predictor frontend: new-data linear predictor is non-finite"))
+    prediction = dpar === :sigma && type === :response ? exp.(η) : η
+    all(isfinite, prediction) || throw(ArgumentError(
+        "joint missing-predictor frontend: new-data prediction is non-finite"))
+    se || return prediction
+
+    fit.prepared.metadata.covariance_status === :observed_information_inverse || throw(ArgumentError(
+        "joint missing-predictor frontend: covariance status does not support new-data standard errors"))
+    V = vcov(fit.prepared.fit)
+    range = _block_range(fit.prepared.fit, dpar)
+    link_se = _joint_finite_prediction_se(X, V, range)
+    result_se = dpar === :sigma && type === :response ? exp.(η) .* link_se : link_se
+    all(isfinite, result_se) || throw(ArgumentError(
+        "joint missing-predictor frontend: new-data standard errors are non-finite"))
+    return (; prediction, se = result_se)
+end
 
 """Conditional finite-state imputation for the marker variable in a formula-based fit."""
 function imputed(fit::JointFiniteDrmFit; variable = nothing, rows = :missing, se::Bool = true)

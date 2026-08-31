@@ -1,0 +1,16 @@
+ERROR: LoadError: Some tests did not pass: 42 passed, 1 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:89
+finite-state direct newdata prediction contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:218
+  Expression: DRM.predict(tiny_negative_fit, categorical_new; se = true)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:218 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:90
+Test Summary:                                   | Pass  Fail  Total   Time
+finite-state direct newdata prediction contract |   42     1     43  39.6s

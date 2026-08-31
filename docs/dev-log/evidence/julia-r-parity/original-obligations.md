@@ -28,3 +28,15 @@ Recovery of dirty Rose-nit/stash work remains separate. Nothing has been discard
 The Aug24 handover retains owner-held #420/#406 residue; compare actual content and
 restore a preservation copy before proposing any disposition. This note does NOT
 constitute a complete Claude/Cursor history or unregistered-clone audit.
+
+## Ayumi-san follow-up reported by Shinichi (2026-08-30)
+
+User-reported lead, not yet a reproduced verdict: point estimates appear good
+through `engine = "julia"`; profile intervals and bootstrap require investigation.
+Ayumi-san also reports native R accepts polytomous trees while the Julia route
+refuses them. Her issue is forthcoming; do not invent an issue number or wait
+for it to begin a minimal reproduction. Track direct Julia and the R bridge
+separately to locate tree conversion versus kernel restrictions. Preserve branch
+length/covariance meaning rather than silently resolving a polytomy with arbitrary
+positive-length branches. These obligations join the existing inference/valid-case
+manifest; neither point-estimate agreement nor this report proves parity.

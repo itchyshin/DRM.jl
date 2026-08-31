@@ -330,10 +330,28 @@ and their interactions, including coefficient names; symbol-valued factors
 have not yet been separately checked against R.
 Package-specific categorical/ordered value types require a typed contrast contract
 and are refused when used in the mean formula. They remain required parity work.
-Interactions containing `mi()` remain unsupported. Direct Julia does not yet
-provide `predict(fit, newdata)` for this fit type; training fitted values are
-available with `fitted(fit)`. New-data prediction remains required API work.
-R-prepared bridge designs retain R's coding.
+Interactions containing `mi()` remain unsupported. R-prepared bridge designs
+retain R's coding.
+
+For new rows, `predict(fit, newdata)` uses the fitted design and its factor
+contrasts. Supply a known predictor state; missing or unknown states are refused.
+The prediction does not condition on a supplied new response. Training fitted
+values remain available with `fitted(fit)`.
+
+```@example finite_formula
+newdata = (; z = [0.0, 0.5], x = ["low", "high"])
+predict(fit, newdata)
+# Residual SD needs only the columns used by the sigma formula.
+predict(fit, (; z = [0.0, 0.5]); dpar = :sigma)
+```
+
+Use `type = :link` for the linear predictor or `type = :response` for the
+response scale (the default). `se = true` returns predictions and delta-method
+standard errors when the retained observed-information covariance is finite,
+symmetric and positive definite. It refuses unavailable or invalid covariance;
+point predictions with `se = false` remain available. This is not a prediction
+interval, profile interval, or bootstrap. General missing-state new-data
+integration and complete R accessor parity remain separate requirements.
 
 ```@docs
 DRM.PreparedFiniteJointModel

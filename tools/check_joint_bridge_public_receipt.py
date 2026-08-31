@@ -85,8 +85,15 @@ def check(receipt, reference, direct, rroot, jroot, native=False):
                 require(abs(s.get("statistic", math.inf)-z) <= 1e-9 and abs(s.get("p.value", math.inf)-pvalue) <= 1e-10, kind + ": summary tests")
             require(w.get("parm") == "fixef:"+label and w.get("tmb_parameter") == label and w.get("index") == j+1, kind + ": interval labels")
             require(w.get("level") == 0.95 and w.get("method") == "wald" and w.get("conf.status") == "ok", kind + ": interval status")
-            require(w.get("scale") == ("response" if natural else "linear_predictor") and w.get("transformation") == ("exp_delta" if natural else "identity"), kind + ": interval scale")
-            require(abs(w.get("lower", math.inf)-(public_theta[j]-critical*sd)) <= 1e-9 and abs(w.get("upper", math.inf)-(public_theta[j]+critical*sd)) <= 1e-9, kind + ": interval values")
+            require(w.get("scale") == ("response" if natural else "linear_predictor") and w.get("transformation") == ("exp" if natural else "identity"), kind + ": interval scale")
+            # Native positive-scale Wald intervals use raw log coordinates;
+            # summary SEs and public covariance above still use the full Jacobian.
+            if natural:
+                raw_sd = math.sqrt(cov[j][j])
+                lower, upper = math.exp(theta[j]-critical*raw_sd), math.exp(theta[j]+critical*raw_sd)
+            else:
+                lower, upper = public_theta[j]-critical*sd, public_theta[j]+critical*sd
+            require(abs(w.get("lower", math.inf)-lower) <= 1e-9 and abs(w.get("upper", math.inf)-upper) <= 1e-9, kind + ": interval values")
         for i, row in enumerate(rows):
             require(row.get("original_row") == frozen["original_row"][i] and row.get("model_row") == i+1, kind + ": row identity")
             require(row.get("observed") is frozen["x_observed"][i] and row.get("variable") == "x", kind + ": predictor identity")

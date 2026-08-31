@@ -1,0 +1,1 @@
+| 2026-08-30 | **Finite prediction / uncertainty coordinates** (#563) | 246 Julia checks;442 native/adapter/neighbour checks;3/3prediction leaf gates;21joint/17finite damage controls normal/-O;5doc examples | Bounded checks PASS;4strict native workflows FAIL;polytomy restriction reproduced;programme OPEN | Ada / Rose / Melissa |
