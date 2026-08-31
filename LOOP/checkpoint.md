@@ -1,3 +1,25 @@
+# Landed local milestone — resume bootstrap distribution contract
+
+Production source and tests committed locally as46c345c09991a85ce7bc0d4bda2dce4d6df0d930.
+All14source/test blobs match the final tested hash manifest. This metadata-only
+checkpoint records that commit; no source changed afterwards. No live compute.
+MissionControlc7b25f0ba730b6977a332e003aa8c88497849c0c served verified; lease released.
+Rose and bounded Melissa review pass; corrected four-thread status total181.
+All local whitening gates pass; GLOBAL programme G0-G8 remain OPEN.
+
+Next: implement the canonical joint marginal bootstrap simulator described below
+and in retained next-bootstrap-finding.md; no implementation started yet. Preserve
+both random-effect axes and their covariance. First a no-fit failing sampler
+contract; then small refits and bridge/tree checks. Original approved goal remains
+active, using its disk-goaled checkpoint-and-roll continuation exception.
+
+The initial local commit attempt rejected whitespace in two raw logs and a
+literal git patch. Their hashes/bytes were preserved; source/docs whitespace
+checks passed with only those exact artifacts excluded. No guard bypass or
+source modification, no public push/merge. No worktree retirement.
+
+---
+
 # Current checkpoint — paired finite profiles pass; bootstrap simulator next
 
 Goal ACTIVE; programme G0-G8 OPEN. BaseHEAD16e00719ddd7a93d2d76d3590bf5264cc3e7b27b
