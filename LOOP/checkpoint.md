@@ -1,3 +1,55 @@
+# Current checkpoint — Ayumi reports and bridge follow-up (2026-08-30)
+
+Programme ACTIVE; all G0–G8 remain OPEN. Continue the approved plan in
+`docs/dev-log/plans/2026-08-30-julia-r-parity.md` in the isolated twin worktrees.
+Committed Julia repair/evidence abf85cb7; R repair/evidence 54366baaa.
+These remain CARRIED-OVER on codex/julia-r-parity for whole-programme integration,
+not merged/deployed; do not discard foreign dependencies or claim clean final-head
+qualification. Resume: cd /private/tmp/drm-parity-20260830/DRM.jl and read this
+checkpoint plus the approved plan and Ayumi intake.
+Ayumi sources and full obligation map: `docs/dev-log/evidence/julia-r-parity/ayumi-20260830.md`.
+Her case is Gaussian phylogenetic LSS M6q, NOT joint missing predictors.
+She reports N=10970 sparse fits (withdraws5000ceiling), N343 all7profile targets
+agree4–5digits, R20matched unconditional bootstrap agrees after TMBpolish.
+Whole-tree mu:temp_z profile stopped2h02withoutresult. These are collaborator
+reports, not independently reproduced here. No long campaign started.
+
+Current bounded fixes: ordinary Rscript no longer inferred CRAN; actual marked
+R4.6/macOS check test child still aborts before Julia startup. Both bridge paths
+use an exact coefficient selector rather than profile an entire block. Julia
+36target assertions (intercept,x,z; analyticGaussianML oracle; serial/threaded),
+132existing bridge assertions; R7new+34guard assertions. Public-green-001:
+12checksPASS20.557sec, ordinary batch without opt-ins, actualgeneratedwrapper+
+confint, one requested x target, Julia1.10.0/4threads/1BLAS, sourcebefore=after.
+Report `docs/dev-log/after-task/2026-08-30-ayumi-bridge-followup.md`.
+All five leaf-ayumi-target gates now pass: four executable checks re-ran, then
+Rose approved the final R/Julia owned hunks and source-stamped public receipt.
+Melissa reconciled the bounded scope and all remaining programme obligations.
+
+Source-only R article setup guidance corrected; no new article render proof.
+Retained JuliaRED6fail16pass and RpublicREDthreeattemptedtargets. Startupworker
+originalRED was not retained and failed onnewargument, so NOT cleanTDDproof;
+posthocoldHEADbehavior damagecheck is retained separately. Sandboxcachefailure,
+harnesswrongtargetinventory and checkprobeDESCRIPTIONfailure all retained.
+ForeignZOB96+/10- and JuliaS5include/test preserved. Denied gaussian_sparse_lss.jl
+and gaussian_structured.jl untouched: do not retry/bypass. Tested development
+bytes include foreignRwork; fresh cleanfinalhead qualification still required.
+
+NEXT: bounded profile-scaling pilot design using actualM6q route, with counts for
+nuisance iterations, value/gradient calls and factorization; avoid unapprovedlong
+runs. Sparse fit has analyticgradient but doesnotretainit forprofiling; generic
+finite-difference path and repeatedbridgefit remaincostrisks. Exacttargetfix is
+NOT proof of whole2h02cause or large-tree speed. Keep losslessspace-containingtip
+labels, transformednames, controls, gradient/endpoint diagnostics and larger
+bootstrapvalidation open. Keep jointmissingprofile+jointsimulation requirements,
+all24native obligations, strict4e-6losses, fullmanifest,LSSstampedSE/REML/masks/
+p10k/finalhead,1/2/4/8automaticperformancepolicy,recovery/cleanup/wholeDocumenter.
+No release/registration/deployment/collaboratormessage. MissionControla28417c
+fourservedfieldsverified, vaultlease released. ParentactualSol/medium
+(planrequestedhigh), Terra/highbuilder+Melissa, Sol/highRose. Agenthoursunmeasured.
+
+---
+
 # Current checkpoint — polytomy repair verified (2026-08-30)
 
 Programme ACTIVE; G0–G8 remain OPEN. Continue the approved plan in
