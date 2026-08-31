@@ -22,6 +22,12 @@ DRM._assoc_logdiffexp
 DRM._poisson_group_aghq_logint
 ```
 
+### Profile nuisance-status internals (no stability guarantee)
+
+```@docs
+DRM._ProfileNuisanceResult
+```
+
 ## Augmented phylogeny and sparse linear algebra
 
 ```@docs
@@ -38,6 +44,13 @@ DRM.takahashi_selinv
 DRM.theta_len
 DRM.unpack_theta
 DRM.pack_theta
+```
+
+### Newick and topology parser internals (no stability guarantee)
+
+```@docs
+DRM._phy_validate_topology
+DRM._parse_label!
 ```
 
 ## q=4 and Fisher-z evaluators
@@ -91,6 +104,12 @@ DRM.fit_mixed_family
 DRM._mf_nparams
 ```
 
+### Bridge label metadata internals (no stability guarantee)
+
+```@docs
+DRM._BridgeFormulaLabels
+```
+
 ## Location-scale and structured-fit kernels
 
 ```@docs
@@ -112,6 +131,12 @@ DRM._phylo_mean_leaf_index
 DRM._reml_normalise
 DRM._vcov_from_hessian
 DRM.q2_reml_phi_len
+```
+
+### Phylogenetic group-index internals (no stability guarantee)
+
+```@docs
+DRM._lss_phylo_group_index
 ```
 
 ## Non-Gaussian sparse-Laplace kernels
@@ -250,8 +275,9 @@ The finite-state prepared interface accepts one ordinal or categorical predictor
 and a Gaussian response. It integrates over every possible state when the
 predictor is missing. Supply an `n × K × p` array containing the complete mean
 design for each row and state; ordinal contrasts and categorical dummy variables
-must already be encoded in this array. Direct `mi()` formula admission and R
-bridge transport for these two routes remain implementation work.
+must already be encoded in this array. The direct `mi()` formula frontend and R
+bridge construct this state design for their bounded finite-state routes; they
+do not establish full native-R prediction or accessor parity.
 
 ```@example prepared_joint_finite
 using DRM
@@ -358,6 +384,12 @@ DRM.PreparedFiniteJointModel
 DRM.PreparedFiniteJointFit
 DRM.JointFiniteMissingMetadata
 DRM._finite_joint_ordinal_logprobabilities
+```
+
+### Finite-state retained-prediction internals (no stability guarantee)
+
+```@docs
+DRM._joint_finite_state_prediction_plan
 ```
 
 ```@docs

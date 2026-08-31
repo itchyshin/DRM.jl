@@ -95,6 +95,21 @@ predict_parameters(fit, grid; type = :link)[:mu]
 marginal_parameters(fit)            # == predict_parameters(fit, data) in-sample
 ```
 
+## Formula-fitted finite-state missing predictors
+
+For one ordinal or categorical missing predictor in the bounded Gaussian joint
+route, construct the predictor model with `impute_model`; use
+`CategoricalLogit()` for nominal states. `JointFiniteDrmFit` retains the raw
+kernel coefficients and covariance. For ordinal predictors, `cutpoints(fit)`
+provides the constrained cutpoints separately. See the engine-internals
+reference for the prepared-state design and route limits.
+
+```@docs
+DRM.CategoricalLogit
+DRM.JointFiniteDrmFit
+DRM.cutpoints
+```
+
 ## Inference
 
 ```@docs

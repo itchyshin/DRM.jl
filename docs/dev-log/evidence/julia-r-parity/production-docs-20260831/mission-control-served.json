@@ -1,0 +1,9 @@
+{
+  "fields": {
+    "focus": true,
+    "next_safe_action": true,
+    "lane": true,
+    "active_lane": true
+  },
+  "local_sha256": "97447dd433372e0ce0c17722da394cda8372ed85c659df3ec7cc7e3feae3fb74"
+}

@@ -1,0 +1,50 @@
+....FFF
+======================================================================
+FAIL: test_quoted_css_import_is_checked (tools.tests.test_parity_rendered_docs_audit.RenderedDocsFixture.test_quoted_css_import_is_checked)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/integration/DRM.jl/tools/tests/test_parity_rendered_docs_audit.py", line 135, in test_quoted_css_import_is_checked
+    self.assertTrue(any(
+    ~~~~~~~~~~~~~~~^^^^^
+        item["kind"] == "missing_asset" and item.get("target") == "missing-theme.css"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        for item in report["failures"]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ))
+    ^^
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_source_page_through_outside_directory_symlink_is_not_covered (tools.tests.test_parity_rendered_docs_audit.RenderedDocsFixture.test_source_page_through_outside_directory_symlink_is_not_covered)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/integration/DRM.jl/tools/tests/test_parity_rendered_docs_audit.py", line 111, in test_source_page_through_outside_directory_symlink_is_not_covered
+    self.assertTrue(any(
+    ~~~~~~~~~~~~~~~^^^^^
+        item["kind"] == "missing_rendered_source_page" and item.get("page") == "guide/topic.md"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        for item in report["failures"]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ))
+    ^^
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_svg_href_fragment_is_checked (tools.tests.test_parity_rendered_docs_audit.RenderedDocsFixture.test_svg_href_fragment_is_checked)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/integration/DRM.jl/tools/tests/test_parity_rendered_docs_audit.py", line 125, in test_svg_href_fragment_is_checked
+    self.assertTrue(any(
+    ~~~~~~~~~~~~~~~^^^^^
+        item["kind"] == "missing_fragment" and item.get("target") == "/assets/icons.svg#missing"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        for item in report["failures"]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ))
+    ^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.115s
+
+FAILED (failures=3)

@@ -1,3 +1,72 @@
+# Current — reviewed local documentation checks ready for commit
+
+Programme ACTIVE,G0–G8OPEN. Strict52sourcepages/134exampleblocksPASS142.177647s;
+HTMLrenderPASS8.803446s. Rawrender002 preserved with106missingversionmetadata
+references. Separatepreview003 genuinehelpermetadata2.166862s;182originalfiles
+byteidentical. Finalpreviewaudit53HTML/52sourcepages/0localfailures,436external/
+embeddedtargetsreportednotchecked. Eightdesktop/mobile/light/darkscreenshots.
+RoseindependentAPPROVEtool573c50a5/teste52bc707 after12negative/positive tests;
+unlazyreverify12testsandactualpreviewauditPASS,3boundedlocalgatesmet. GlobalG6
+notcomplete: allpagevisual/accessibility/external/deploymentproofremainrequired.
+
+Previewserver127.0.0.1:51129 execsession24191; rawserver50253stopped. No fits.
+Report/checklog/review/LOCAL-GATES/failed+passingreceipts retained in
+production-docs-20260831. Sourcebuild153inputhashes unchangedafterchecks.
+MissionControllocalcommita1e100bservedverified,42foreignvaultfilespreserved;
+statusreflectsfinalreviewedpreviewandnextboundedtests;vaultleasereleased. Rootownsreviewed
+filesforcommit; nochildwriters. No newRcode. IntegrationHEADprecommit5d56524b;
+R61218f18. No push/mainmerge/deployment/release/collaboratormessages.
+
+NEXT: scopecommitverifieddocumentation/evidence, refreshMC, thenboundedTotoro
+profile/REMLtests afterincomplete301sdefaultsuitepilot. Do not restartentirepilot
+becauseithittimelimit. Exactnextfiles/testenvironmentinfull-suite-pilot-001;
+location-onlyREMLfilewasinterruptedandstillrequirescompletion. Alloriginal
+parity/performance/recovery/cleanupanddeniedsourceobligations preservedbelow.
+
+---
+
+# Current delta — production HTML and visual evidence; auditor repair pending
+
+HTMLrender001PASS8.803446s. Actual localpreview server127.0.0.1:50253 running,
+root raw docs/build/integration-production-002/1, execsession87484; no fits.
+Seven screenshots retained; sampled desktop/mobile light/dark layouts inspected.
+All52sourcepages map to53HTMLincl404. All-page auditor003RED106missing version
+metadata assets. Preserve rawrender002. Rosefound3auditorfalse-success cases;
+Terra owns only tools/parity_rendered_docs_audit.py and corresponding tests,
+repairing sourcepathcontainment/SVGhref/CSSquotedimports. Root lease excludes tools.
+After repair askRosefinalreview; keep missingmetadata failures until provenance-
+correct handling, no silent exemptions or deploymentclaim. Sourcebuild153inputs
+freshlyhashcheckedunchanged. MissionControl localcommit36f6286 servedverified;
+42foreignvaultfilesunchanged, vaultleasereleased. Reportdraft exists passesstructure
+but must incorporate finalauditorresults. Source/docs/evidencenotyetcommitted.
+ProgrammeG0–G8OPEN; previousdenialsandbroaderobligations unchangedbelow.
+
+---
+
+# Current delta — Ayumi reports refreshed; strict docs source GREEN
+
+Programme ACTIVE; all global G0–G8 OPEN. Live issue29 and issue28 comment5472354858
+rechecked2026-08-31, obligation delta appended to evidence/ayumi-20260830.md.
+No collaborator message sent. Local startup/tree/label repairs remain unpublished;
+controls, R-facing score, canonical-tree profile feasibility and larger bootstrap
+remain open. Ayumi explicitly superseded5000limit: sparseN10970fit worked.
+
+Strict all52pages/134example production-navigation Documenter source build now
+PASS142.177647s after two docs-only reference repairs (9missing bindings).
+Uncommitted docs hashes def0cc3c(engine-internals),a3123f20(model-fitting-and-postfit).
+Rose read-only review requested. Actual HTML/render/mobile/dark/live checks pending.
+GREEN/RED receipts retained in production-docs-20260831 evidence directory.
+
+Totoro five-minute default-suite pilot endedexit124 after301s; source unchanged.
+INCOMPLETE, never a full-suite pass. Logs/hashes copied locally; no automatic rerun.
+No local docs fit/build running. Source HEAD remains5d56524b (Julia), R61218f18.
+NEXT: collect Rose review, render emitted production002 Vitepress with existing
+Node20/dependencies, inspect local browser, write scoped report and commit docs/
+evidence. Preserve all prior scope and denied-file prohibitions below. This is
+an explicit carried-over checkpoint, not completion or a delivered fix.
+
+---
+
 # Current checkpoint — integration and joint prediction labels (2026-08-31)
 
 Programme ACTIVE. G0–G8 OPEN. Continue in the clean paired worktrees:

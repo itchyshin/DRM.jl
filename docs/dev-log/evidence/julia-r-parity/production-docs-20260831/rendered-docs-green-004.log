@@ -1,0 +1,20 @@
+..F.
+======================================================================
+FAIL: test_missing_css_url_asset_is_reported (tools.tests.test_parity_rendered_docs_audit.RenderedDocsFixture.test_missing_css_url_asset_is_reported)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/integration/DRM.jl/tools/tests/test_parity_rendered_docs_audit.py", line 93, in test_missing_css_url_asset_is_reported
+    self.assertTrue(any(
+    ~~~~~~~~~~~~~~~^^^^^
+        item["kind"] == "missing_asset" and item.get("target") == "missing-font.woff2"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        for item in report["failures"]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ))
+    ^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.057s
+
+FAILED (failures=1)

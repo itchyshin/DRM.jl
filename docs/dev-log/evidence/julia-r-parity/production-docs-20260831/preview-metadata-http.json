@@ -1,0 +1,12 @@
+{
+  "siteinfo.js": {
+    "status": 200,
+    "content_type": "text/javascript",
+    "body": "var DOCUMENTER_CURRENT_VERSION = \"dev\";\nvar DOCUMENTER_IS_DEV_VERSION = true;\n"
+  },
+  "versions.js": {
+    "status": 200,
+    "content_type": "text/javascript",
+    "body": "var DOC_VERSIONS = [\n];\n"
+  }
+}
