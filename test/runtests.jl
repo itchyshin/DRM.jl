@@ -68,6 +68,9 @@ include("test_lss_reml.jl")    # #558 location-scale-scale REML
 include("test_lss_missing_response.jl") # #559 location-scale-scale missing responses
 include("test_inference.jl")
 include("test_profile_ci.jl")
+include("test_profile_nuisance_status.jl")
+include("test_profile_acceptance_oracles.jl")
+include("test_bridge_profile_status.jl")
 include("test_check_drm.jl")
 include("test_bias_correct.jl")
 include("test_visualization.jl")

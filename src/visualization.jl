@@ -4,6 +4,14 @@
 # correlations) so any backend (Makie/Plots/…) can render them with a few lines.
 # The drmTMB-named plot_* wrappers are documented to call these.
 
+function _profile_plot_deviance(value, reference, caller::AbstractString, location)
+    comparison = _profile_reference_difference(value, reference)
+    comparison.status === :accepted || throw(ArgumentError(
+        "$caller: profiled objective at $location is $(comparison.status)",
+    ))
+    return max(2 * comparison.difference, 0.0)
+end
+
 """
     profile_curve(fit, k; npoints = 41, span = 3.0, level = 0.95) -> NamedTuple
 
@@ -35,6 +43,7 @@ function profile_curve(
     nll = fit.nll
     nllgrad = fit.nllgrad
     nllhat = nll(θ̂)
+    isfinite(nllhat) || throw(ArgumentError("profile_curve: fitted objective is non-finite"))
     autodiff = _profile_autodiff_mode(nll, nllgrad, θ̂)
     se = stderror(fit)
     s = (isfinite(se[k]) && se[k] > 0) ? se[k] : max(abs(θ̂[k]), 1.0)
@@ -48,13 +57,23 @@ function profile_curve(
     u0 = θ̂[[i for i in 1:p if i != k]]
     dev[mid] = 0.0
     for idx in (mid + 1):npoints
-        f, u0 = _profiled_nll(nll, θ̂, k, x[idx], u0; autodiff, nllgrad)
-        dev[idx] = max(0.0, 2 * (f - nllhat))
+        result = _profile_nuisance_result(nll, θ̂, k, x[idx], u0; autodiff, nllgrad)
+        result.accepted || throw(ArgumentError(
+            "profile_curve: nuisance solve failed at grid index $idx " *
+            "($(result.method), $(result.reason))",
+        ))
+        u0 = result.minimizer
+        dev[idx] = _profile_plot_deviance(result.value, nllhat, "profile_curve", "grid index $idx")
     end
     u0 = θ̂[[i for i in 1:p if i != k]]
     for idx in (mid - 1):-1:1
-        f, u0 = _profiled_nll(nll, θ̂, k, x[idx], u0; autodiff, nllgrad)
-        dev[idx] = max(0.0, 2 * (f - nllhat))
+        result = _profile_nuisance_result(nll, θ̂, k, x[idx], u0; autodiff, nllgrad)
+        result.accepted || throw(ArgumentError(
+            "profile_curve: nuisance solve failed at grid index $idx " *
+            "($(result.method), $(result.reason))",
+        ))
+        u0 = result.minimizer
+        dev[idx] = _profile_plot_deviance(result.value, nllhat, "profile_curve", "grid index $idx")
     end
     param, cname = _coef_metadata(fit, k)
     return (
@@ -100,6 +119,7 @@ function parameter_surface(fit::DrmFit, k1::Int, k2::Int; npoints::Int=25, span:
     nllgrad = fit.nllgrad
     θ̂ = copy(fit.theta)
     nllhat = nll(θ̂)
+    isfinite(nllhat) || throw(ArgumentError("parameter_surface: fitted objective is non-finite"))
     autodiff = _profile_autodiff_mode(nll, nllgrad, θ̂)
     se = stderror(fit)
     s1 = (isfinite(se[k1]) && se[k1] > 0) ? se[k1] : max(abs(θ̂[k1]), 1.0)
@@ -116,7 +136,13 @@ function parameter_surface(fit::DrmFit, k1::Int, k2::Int; npoints::Int=25, span:
                 θ = copy(θ̂)
                 θ[k1] = x[i]
                 θ[k2] = y[j]
-                z[i, j] = max(0.0, 2 * (nll(θ) - nllhat))
+                value = try
+                    nll(θ)
+                catch err
+                    err isa InterruptException && rethrow()
+                    throw(ArgumentError("parameter_surface: objective failed at grid ($i, $j): $(typeof(err))"))
+                end
+                z[i, j] = _profile_plot_deviance(value, nllhat, "parameter_surface", "grid ($i, $j)")
             else
                 function obj(u)
                     θ = Vector{eltype(u)}(undef, p)
@@ -145,9 +171,15 @@ function parameter_surface(fit::DrmFit, k1::Int, k2::Int; npoints::Int=25, span:
                 else
                     nothing
                 end
-                res = _profile_optimize(obj, ustart, autodiff; grad! = grad_u!)
-                ustart = Optim.minimizer(res)
-                z[i, j] = max(0.0, 2 * (Optim.minimum(res) - nllhat))
+                result = _profile_optimize_result(obj, ustart, autodiff; (grad!)=grad_u!)
+                result.accepted || throw(ArgumentError(
+                    "parameter_surface: nuisance solve failed at grid ($i, $j) " *
+                    "($(result.method), $(result.reason))",
+                ))
+                ustart = result.minimizer
+                z[i, j] = _profile_plot_deviance(
+                    result.value, nllhat, "parameter_surface", "grid ($i, $j)",
+                )
             end
         end
     end

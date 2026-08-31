@@ -236,8 +236,10 @@ boot = bootstrap_result(fit_reml; data = dat, B = 4,
 Four replicates keep this example quick; they are too few for an interval you
 would report. Choose the number of replicates for your analysis and retain
 `boot.failures`, which records failed replicate seeds and messages. For a
-phylogenetic model, also pass the original `tree`. Profile nuisance-convergence
-checks and performance on large trees remain separate validation work.
+phylogenetic model, also pass the original `tree`. For profiles, inspect
+`profile_result(...).stats`: the generic path records nuisance termination and
+failed endpoints separately from limits of the searched range. These checks
+do not establish interval coverage or practical performance on large trees.
 
 ## From R, with intervals
 

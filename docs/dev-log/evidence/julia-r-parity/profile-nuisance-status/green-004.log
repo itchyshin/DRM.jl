@@ -1,0 +1,7 @@
+┌ Warning: profile confidence interval has failed endpoint arm(s); failed side(s) are reported as signed Inf
+│   failed =
+│    1-element Vector{String}:
+│     "mu:θ1"
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:165
+Test Summary:                                  | Pass  Total  Time
+generic profile nuisance acceptance and status |   55     55  6.4s

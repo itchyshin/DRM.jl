@@ -65,8 +65,31 @@ const _ProfileStatsRow = NamedTuple{
         # the profile never crosses within the search range).
         :lower_endpoint_failed,
         :upper_endpoint_failed,
+        # Generic-profile nuisance solves are auditable independently for each
+        # endpoint.  These are intentionally status-only additions: CI rows
+        # retain their established five-field public shape.
+        :lower_nuisance_method,
+        :upper_nuisance_method,
+        :lower_nuisance_fallback,
+        :upper_nuisance_fallback,
+        :lower_nuisance_reason,
+        :upper_nuisance_reason,
     ),
-    Tuple{Symbol,String,Int,Int,Int,Int,Bool,Bool,Bool,Bool,Bool},
+    Tuple{Symbol,String,Int,Int,Int,Int,Bool,Bool,Bool,Bool,Bool,
+          Symbol,Symbol,Bool,Bool,Symbol,Symbol},
+}
+
+"""
+Internal result of one fixed-coordinate nuisance solve.
+
+`accepted` is deliberately stronger than a finite optimizer-reported minimum:
+the optimizer must have terminated successfully, its minimizer must be finite,
+and the objective is evaluated again at that minimizer.  We do not impose a
+separate score threshold here; Optim termination is not a proof of stationarity.
+"""
+const _ProfileNuisanceResult = NamedTuple{
+    (:value, :minimizer, :accepted, :method, :fallback, :reason),
+    Tuple{Float64,Vector{Float64},Bool,Symbol,Bool,Symbol},
 }
 
 function _worker_threads(active::Bool, ntasks::Int)
@@ -116,9 +139,10 @@ Confidence intervals for every coefficient, as a vector of
   guaranteed correctness, far fewer inner re-optimisations than cold-started
   bisection. Endpoint validity assumes an accurate inner nuisance solve: the
   `:finite` autodiff path can leave the profiled NLL slightly non-monotone. When
-  that is detected the bracket is reset to `[0, t]` and pure bisection is used so
-  the FIRST (conservative) LR crossing is returned, and a `nonmonotone` flag is
-  set on the profile stats row so callers can see the assumption was violated.
+  that is detected the bracket is reset to `[0, t]` and pure bisection is used.
+  This is a guarded local search, not a guarantee of the globally first LR
+  crossing; a `nonmonotone` flag is set on the profile stats row so callers can
+  inspect that limitation.
   Pass `threads = true` to profile coefficients in parallel when the fitted
   objective is thread-safe; if only one coefficient is profiled, its lower and
   upper endpoint searches are run in parallel instead. (Threading is not yet used
@@ -133,7 +157,15 @@ function confint(
     fit::DrmFit; level::Real=0.95, method::Symbol=:wald, threads::Bool=false, parm=nothing
 )
     method === :wald && return _wald_ci(fit, level, parm)
-    method === :profile && return profile_result(fit; level, threads, parm).ci
+    if method === :profile
+        result = profile_result(fit; level, threads, parm)
+        if result.failed > 0
+            failed = ["$(s.param):$(s.coef)" for s in result.stats if
+                      s.lower_endpoint_failed || s.upper_endpoint_failed]
+            @warn "profile confidence interval has failed endpoint arm(s); failed side(s) are reported as signed Inf" failed
+        end
+        return result.ci
+    end
     throw(ArgumentError("confint: method must be :wald or :profile (got :$method)"))
 end
 
@@ -200,6 +232,7 @@ function profile_result(fit::DrmFit; level::Real=0.95, threads::Bool=false, parm
     nllgrad = fit.nllgrad
     θ̂ = copy(fit.theta)
     nllhat = nll(θ̂)
+    isfinite(nllhat) || throw(ArgumentError("profile intervals require a finite fitted objective"))
     autodiff = _profile_autodiff_mode(nll, nllgrad, θ̂)
     half = quantile(Chisq(1), level) / 2
     se = stderror(fit)
@@ -434,6 +467,12 @@ function _ls_profile_result(fit::DrmFit; level::Real=0.95, parm=nothing)
                 # it has no analogous bracket-collapse failure mode.
                 lower_endpoint_failed=false,
                 upper_endpoint_failed=false,
+                lower_nuisance_method=:specialized,
+                upper_nuisance_method=:specialized,
+                lower_nuisance_fallback=false,
+                upper_nuisance_fallback=false,
+                lower_nuisance_reason=:not_checked,
+                upper_nuisance_reason=:not_checked,
             )
         end
     end
@@ -534,6 +573,12 @@ function _loconly_profile_row_result(
         # rather than claim a check that was not made.
         lower_endpoint_failed=false,
         upper_endpoint_failed=false,
+        lower_nuisance_method=:specialized,
+        upper_nuisance_method=:specialized,
+        lower_nuisance_fallback=false,
+        upper_nuisance_fallback=false,
+        lower_nuisance_reason=:not_checked,
+        upper_nuisance_reason=:not_checked,
     )
     return row, stats
 end
@@ -644,6 +689,7 @@ function _profile_autodiff_mode(nll, nllgrad, θ̂::Vector{Float64})
         ForwardDiff.gradient(nll, θ̂)
         return :forward
     catch err
+        err isa InterruptException && rethrow()
         # Some fitted objectives are exact on Float64 but not dual-number safe
         # because they solve an inner sparse/Laplace mode with Float64 work
         # arrays. Keep profiling valid by using finite-difference nuisance
@@ -657,7 +703,25 @@ function _profile_autodiff_mode(nll, nllgrad, θ̂::Vector{Float64})
     end
 end
 
-function _profiled_nll(
+# Compare profile and reference NLLs at their represented scale.  We retain an
+# eight-ULP cancellation allowance, but no relative-to-NLL tolerance: adding a
+# huge constant to an objective must not make a real one-unit discrepancy pass.
+function _profile_reference_difference(value::Real, reference::Real)
+    (isfinite(value) && isfinite(reference)) || return (
+        status=:nonfinite_objective, difference=NaN, cancellation=NaN,
+    )
+    cancellation = 8 * max(eps(abs(Float64(value))), eps(abs(Float64(reference))))
+    difference = Float64(value) - Float64(reference)
+    isfinite(difference) && isfinite(2 * difference) || return (
+        status=:insufficient_precision, difference=difference, cancellation=cancellation,
+    )
+    difference < -max(1e-10, cancellation) && return (
+        status=:below_reference, difference=difference, cancellation=cancellation,
+    )
+    return (status=:accepted, difference=difference, cancellation=cancellation)
+end
+
+function _profile_nuisance_result(
     nll,
     θ̂::Vector{Float64},
     k::Int,
@@ -665,10 +729,23 @@ function _profiled_nll(
     u0::Vector{Float64};
     autodiff::Symbol=:forward,
     nllgrad=nothing,
+    primary_iterations::Union{Nothing,Int}=nothing,
+    fallback_iterations::Union{Nothing,Int}=nothing,
+    primary_attempt=nothing,
 )
     p = length(θ̂)
     idx = [i for i in 1:p if i != k]
-    isempty(idx) && return (nll([float(v)]), Float64[])
+    if isempty(idx)
+        value = try
+            Float64(nll([float(v)]))
+        catch err
+            err isa InterruptException && rethrow()
+            NaN
+        end
+        return (value=value, minimizer=Float64[], accepted=isfinite(value),
+                method=:direct, fallback=false,
+                reason=isfinite(value) ? :accepted : :nonfinite_objective)
+    end
     function obj(u)
         θ = Vector{eltype(u)}(undef, p)
         θ[k] = convert(eltype(u), v)
@@ -694,48 +771,122 @@ function _profiled_nll(
     else
         nothing
     end
-    res = _profile_optimize(obj, u0, autodiff; (grad!)=grad_u!)
-    return (Optim.minimum(res), Optim.minimizer(res))
+    return _profile_optimize_result(
+        obj, u0, autodiff;
+        (grad!)=grad_u!, primary_iterations, fallback_iterations,
+        primary_attempt,
+    )
 end
 
-function _profile_optimize(obj, u0::Vector{Float64}, autodiff::Symbol; (grad!)=nothing)
-    if grad! !== nothing
-        try
+function _profile_attempt(obj, u0, method::Symbol, autodiff::Symbol;
+                          (grad!)=nothing, iterations::Union{Nothing,Int}=nothing,
+                          fallback::Bool=false)
+    res = try
+        if method === :lbfgs_stored
             od = Optim.OnceDifferentiable(obj, grad!, u0)
-            # DRM.jl#494: `BackTracking()`'s own default `iterations` is 1_000,
-            # uncapped by the `Optim.Options(iterations=40)` below (that only
-            # bounds outer LBFGS steps). When a trial step drives the profiled
-            # nuisance parameters to extreme values (measured: the bivariate q4
-            # among-axis log-Cholesky diagonal pushed to (-45.2, 61.6) vs. the
-            # fit's own ~(-2.6, 0.36)), a single bad outer step could retry the
-            # line search up to 1_000 times, each retry a full cold-started
-            # inner mode solve — the mechanism behind the rho12 profile runaway
-            # (measured 10-20x wall-clock inflation on seed 181; up to 17 min
-            # reported). Capping it here removes that multiplier.
-            method = Optim.LBFGS(; linesearch=Optim.LineSearches.BackTracking(; iterations=20))
-            return Optim.optimize(
-                od, u0, method, Optim.Options(; iterations=40, g_tol=1e-6, x_abstol=1e-8)
+            ls = Optim.LineSearches.BackTracking(; iterations=20)
+            Optim.optimize(
+                od, u0, Optim.LBFGS(; linesearch=ls),
+                Optim.Options(; iterations=something(iterations, 40), g_tol=1e-6, x_abstol=1e-8),
             )
-        catch
-            # Previously no `Optim.Options` here, so this inherited Optim's own
-            # default `iterations = 1_000` (25x the primary path's 40), each
-            # needing a full finite-difference gradient. Match the primary
-            # path's budget so this fallback can't reintroduce the same runaway.
-            return Optim.optimize(
-                obj, u0, Optim.LBFGS(), Optim.Options(; iterations=40, g_tol=1e-6, x_abstol=1e-8);
-                autodiff=:finite,
-            )
+        elseif method === :nelder_mead
+            iterations === nothing ? Optim.optimize(obj, u0, Optim.NelderMead()) :
+                Optim.optimize(
+                    obj, u0, Optim.NelderMead(), Optim.Options(; iterations, x_abstol=1e-8),
+                )
+        else
+            # The pre-slice forward/finite path intentionally used Optim's
+            # defaults (rather than the capped stored-gradient budget). Keep
+            # that policy unless a private test override requests a budget.
+            iterations === nothing ?
+                Optim.optimize(obj, u0, Optim.LBFGS(); autodiff) :
+                Optim.optimize(
+                    obj, u0, Optim.LBFGS(),
+                    Optim.Options(; iterations, g_tol=1e-6, x_abstol=1e-8);
+                    autodiff,
+                )
         end
-    end
-    try
-        return Optim.optimize(obj, u0, Optim.LBFGS(); autodiff)
     catch err
-        autodiff === :finite || rethrow()
-        # Finite-difference gradients can occasionally produce a failed line
-        # search on sparse-Laplace profiles. The profile value is what matters;
-        # retry with a value-only method instead of failing the interval.
-        return Optim.optimize(obj, u0, Optim.NelderMead())
+        err isa InterruptException && rethrow()
+        return (value=NaN, minimizer=Float64[], accepted=false, method=method,
+                fallback=fallback, reason=:exception)
     end
+    minimizer = try
+        Float64.(Optim.minimizer(res))
+    catch err
+        err isa InterruptException && rethrow()
+        Float64[]
+    end
+    all(isfinite, minimizer) || return (
+        value=NaN, minimizer=minimizer, accepted=false, method=method,
+        fallback=fallback, reason=:nonfinite_minimizer,
+    )
+    value = try
+        Float64(obj(minimizer))
+    catch err
+        err isa InterruptException && rethrow()
+        NaN
+    end
+    isfinite(value) || return (
+        value=value, minimizer=minimizer, accepted=false, method=method,
+        fallback=fallback, reason=:nonfinite_objective,
+    )
+    Optim.converged(res) || return (
+        value=value, minimizer=minimizer, accepted=false, method=method,
+        fallback=fallback, reason=fallback ? :fallback_not_converged : :not_converged,
+    )
+    return (value=value, minimizer=minimizer, accepted=true, method=method,
+            fallback=fallback, reason=:accepted)
+end
+
+function _profile_optimize_result(obj, u0::Vector{Float64}, autodiff::Symbol;
+                                  (grad!)=nothing, primary_iterations::Union{Nothing,Int}=nothing,
+                                  fallback_iterations::Union{Nothing,Int}=nothing,
+                                  primary_attempt=nothing)
+    primary_method = grad! === nothing ?
+        (autodiff === :finite ? :lbfgs_finite : :lbfgs_forward) : :lbfgs_stored
+    primary = primary_attempt === nothing ?
+        _profile_attempt(obj, u0, primary_method, autodiff;
+                         (grad!)=grad!, iterations=primary_iterations) :
+        primary_attempt(obj, u0, primary_method, autodiff, grad!)
+    primary.accepted && return primary
+
+    # Preserve the shipping fallback policy.  A stored-gradient construction
+    # exception first retries finite-difference LBFGS; a finite-difference
+    # exception can retry value-only Nelder--Mead.  Mere non-convergence is a
+    # rejected solve, not permission to start an additional expensive method.
+    if grad! !== nothing && primary.reason === :exception
+        return _profile_attempt(obj, u0, :lbfgs_finite, :finite;
+                                iterations=something(primary_iterations, 40), fallback=true)
+    elseif grad! === nothing && autodiff === :finite && primary.reason === :exception
+        return _profile_attempt(obj, u0, :nelder_mead, :finite;
+                                iterations=fallback_iterations, fallback=true)
+    end
+    return primary
+end
+
+# Backward-compatible pair helper for existing internal callers.  New generic
+# profiling must use `_profile_nuisance_result` to retain a rejected-solve status.
+function _profiled_nll(
+    nll, θ̂::Vector{Float64}, k::Int, v::Real, u0::Vector{Float64};
+    autodiff::Symbol=:forward, nllgrad=nothing,
+)
+    result = _profile_nuisance_result(nll, θ̂, k, v, u0; autodiff, nllgrad)
+    result.accepted || throw(ArgumentError(
+        "profile nuisance solve failed ($(result.method), $(result.reason))",
+    ))
+    return result.value, result.minimizer
+end
+
+# Historical internal entry point.  It remains for callers outside the generic
+# profiler; the generic route uses `_profile_optimize_result` and validates the
+# candidate before accepting it.
+function _profile_optimize(obj, u0::Vector{Float64}, autodiff::Symbol; (grad!)=nothing)
+    result = _profile_optimize_result(obj, u0, autodiff; (grad!)=grad!)
+    result.accepted || throw(ArgumentError(
+        "profile nuisance solve failed ($(result.method), $(result.reason))",
+    ))
+    return result
 end
 
 # Analytic slope of the PROFILED nll in θ[k], by the envelope theorem: at the
@@ -781,42 +932,86 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
     û = copy(u0)
     evaluations = 0
     gradient_evaluations = 0
-    # h(t) and its derivative h'(t); updates û in place for warm-starting.
+    # h(t) and its derivative h'(t).  A failed solve deliberately does not
+    # update `û`, so a bad arm cannot warm-start its next point from an invalid
+    # nuisance state.
     function heval(t)
-        f, unew = _profiled_nll(nll, θ̂, k, θ̂[k] + dir * t, û; autodiff, nllgrad)
-        isempty(unew) || (û = unew)
+        nuisance = _profile_nuisance_result(
+            nll, θ̂, k, θ̂[k] + dir * t, û; autodiff, nllgrad,
+        )
         evaluations += 1
+        nuisance.accepted || return (ok=false, h=NaN, hp=NaN, nuisance=nuisance)
+        isempty(nuisance.minimizer) || (û = nuisance.minimizer)
         hp = if nidx == 0 || autodiff === :finite
             NaN
         else
-            gradient_evaluations += 1
-            dir * _profile_slope(nll, nllgrad, θ̂, k, θ̂[k] + dir * t, û)
+            try
+                gradient_evaluations += 1
+                dir * _profile_slope(nll, nllgrad, θ̂, k, θ̂[k] + dir * t, û)
+            catch err
+                err isa InterruptException && rethrow()
+                NaN
+            end
         end
-        return (f - target, hp)
+        reference = _profile_reference_difference(nuisance.value, nllhat)
+        if reference.status !== :accepted
+            nuisance = merge(nuisance, (accepted=false, reason=reference.status))
+            return (ok=false, h=NaN, hp=NaN, cancellation=reference.cancellation, nuisance=nuisance)
+        end
+        h = reference.difference - half
+        isfinite(h) || begin
+            nuisance = merge(nuisance, (accepted=false, reason=:insufficient_precision))
+            return (ok=false, h=NaN, hp=NaN, cancellation=reference.cancellation, nuisance=nuisance)
+        end
+        return (ok=true, h=h, hp=hp, cancellation=reference.cancellation, nuisance=nuisance)
+    end
+    function failed_arm(nuisance, root_iterations=0, bracket_expansions=0, nonmonotone=false)
+        value = dir < 0 ? -Inf : Inf
+        stats = (
+            evaluations=evaluations,
+            gradient_evaluations=gradient_evaluations,
+            bracket_expansions=bracket_expansions,
+            root_iterations=root_iterations,
+            unbounded=false,
+            nonmonotone=nonmonotone,
+            endpoint_failed=true,
+            nuisance_method=nuisance.method,
+            nuisance_fallback=nuisance.fallback,
+            nuisance_reason=nuisance.reason,
+        )
+        return value, stats
     end
     # Bracket: expand until h > 0. h(t) is assumed increasing (LR profile), but an
     # inexactly-solved inner nuisance optimisation can make it slightly non-monotone
-    # (dip below `target` then rise). If that happens, `tlo` may have advanced past
-    # the TRUE first crossing, so the guarded root-find below would converge to a
-    # LATER crossing and report an anticonservative (too-tight) endpoint. We track
-    # non-monotonicity and, when detected, reset `tlo = 0` so the root-find brackets
-    # the full [0, thi] span (h(0) = −half < 0, h(thi) > 0) and returns the FIRST
-    # crossing — the conservative endpoint. `nonmonotone` is surfaced in the stats.
+    # (dip below `target` then rise). We track this and reset `tlo = 0` so
+    # bisection works over the full observed bracket. This guarded local search
+    # does not establish that the returned crossing is globally first.
     tlo = 0.0
     thi = s
-    (hhi, _) = heval(thi)
+    evalhi = heval(thi)
+    evalhi.ok || return failed_arm(evalhi.nuisance)
+    hhi = evalhi.h
     hprev = hhi
     nonmonotone = false
     iters = 0
     while hhi < 0 && iters < 40
         tlo = thi
         thi *= 1.6
-        (hhi, _) = heval(thi)
+        evalhi = heval(thi)
+        evalhi.ok || return failed_arm(evalhi.nuisance, 0, iters, nonmonotone)
+        hhi = evalhi.h
         hhi < hprev - 1e-12 && (nonmonotone = true)
         hprev = hhi
         iters += 1
     end
     if hhi < 0
+        # A searched-range limit is meaningful only when the profiled value is
+        # separated from the LR target by more than its represented-NLL
+        # cancellation.  Otherwise the sign itself is unresolved.
+        if hhi + evalhi.cancellation >= 0
+            uncertain = merge(evalhi.nuisance, (reason=:insufficient_precision,))
+            return failed_arm(uncertain, 0, iters, nonmonotone)
+        end
         value = dir < 0 ? -Inf : Inf
         stats = (
             evaluations=evaluations,
@@ -826,10 +1021,13 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
             unbounded=true,
             nonmonotone=nonmonotone,
             endpoint_failed=false,
+            nuisance_method=evalhi.nuisance.method,
+            nuisance_fallback=evalhi.nuisance.fallback,
+            nuisance_reason=evalhi.nuisance.reason,
         )
         return value, stats
     end
-    nonmonotone && (tlo = 0.0)   # conservative: bracket the full span to the first crossing
+    nonmonotone && (tlo = 0.0)   # guarded local bisection over the full observed bracket
     # Guarded Newton on [tlo, thi]; if the profile is non-monotone fall back to pure
     # bisection (Newton can jump past the first crossing on a noisy slope).
     t = (tlo + thi) / 2
@@ -859,28 +1057,42 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
     # The two populations are separated by magnitude, not by exit route:
     #   legitimate bisection exit   abs(ht) ~ 1e-7 .. 1e-8
     #   genuinely trapped surface   abs(ht) ~ 2.0 .. 1e4   (>= `half` itself)
-    # so the discriminator is `abs(ht)` against the LR target `half` (1.92 at
-    # 95%). `ABSTOL_REL * half` ~ 1.9e-4 sits ~1900x above the loosest legitimate
-    # exit and ~10000x below the tightest genuine trap. Six orders of margin on
-    # each side; nothing observed in between across ~500 endpoints.
-    ABSTOL_REL = 1e-4
+    # so endpoint certification compares its residual plus represented-NLL
+    # cancellation against `max(1e-9, 1e-4 * half)`.  A profile whose NLL scale
+    # cannot resolve that bound is reported as `:insufficient_precision`.
     converged = false
     ht = NaN
+    final_nuisance = evalhi.nuisance
+    final_cancellation = evalhi.cancellation
+    endpoint_tolerance = max(1e-9, 1e-4 * abs(half))
     for _ in 1:60
         root_iterations += 1
-        (ht, hp) = heval(t)
+        t_eval = t
+        ev = heval(t_eval)
+        ev.ok || return failed_arm(ev.nuisance, root_iterations, iters, nonmonotone)
+        ht, hp = ev.h, ev.hp
+        final_nuisance = ev.nuisance
+        final_cancellation = ev.cancellation
+        # Preserve the original accurate normal-root criterion.  The looser
+        # cancellation-aware certificate is only for a bracket-collapse exit.
         if abs(ht) < 1e-9
+            if final_cancellation > endpoint_tolerance
+                uncertain = merge(final_nuisance, (reason=:insufficient_precision,))
+                return failed_arm(uncertain, root_iterations, iters, nonmonotone)
+            end
             converged = true
+            t = t_eval
             break
         end
-        ht < 0 ? (tlo = t) : (thi = t)
-        tn = (!nonmonotone && isfinite(hp) && hp > 0) ? t - ht / hp : (tlo + thi) / 2   # Newton, else bisect
+        ht < 0 ? (tlo = t_eval) : (thi = t_eval)
+        tn = (!nonmonotone && isfinite(hp) && hp > 0) ? t_eval - ht / hp : (tlo + thi) / 2   # Newton, else bisect
         t = (tlo < tn < thi) ? tn : (tlo + thi) / 2                     # guard into bracket
         if thi - tlo < 1e-8
             # Bracket collapsed. That is a genuine root iff the residual is small
             # relative to the target; otherwise the surface never crossed and the
             # step is fabricated (DRM.jl#493).
-            converged = isfinite(ht) && abs(ht) < ABSTOL_REL * half
+            converged = isfinite(ht) && abs(ht) + final_cancellation <= endpoint_tolerance
+            converged && (t = t_eval)
             break
         end
     end
@@ -889,6 +1101,13 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
     # it were a real root; `endpoint_failed` distinguishes it from a genuine
     # unbounded profile so callers can tell "doesn't cross" from "solver could
     # not tell where it crosses".
+    # `t` is updated to the next trial after evaluating `ht`; return only the
+    # coordinate that was actually evaluated and met the residual criterion.
+    # A bracket-collapse acceptance retains the evaluated midpoint for the same
+    # reason, rather than reporting an unevaluated next Newton step.
+    if !converged && final_cancellation > endpoint_tolerance
+        final_nuisance = merge(final_nuisance, (reason=:insufficient_precision,))
+    end
     value = converged ? θ̂[k] + dir * t : (dir < 0 ? -Inf : Inf)
     stats = (
         evaluations=evaluations,
@@ -898,6 +1117,9 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
         unbounded=false,
         nonmonotone=nonmonotone,
         endpoint_failed=!converged,
+        nuisance_method=final_nuisance.method,
+        nuisance_fallback=final_nuisance.fallback,
+        nuisance_reason=final_nuisance.reason,
     )
     return value, stats
 end
@@ -944,6 +1166,12 @@ function _profile_row_result(
         nonmonotone=lstats.nonmonotone || rstats.nonmonotone,
         lower_endpoint_failed=lstats.endpoint_failed,
         upper_endpoint_failed=rstats.endpoint_failed,
+        lower_nuisance_method=lstats.nuisance_method,
+        upper_nuisance_method=rstats.nuisance_method,
+        lower_nuisance_fallback=lstats.nuisance_fallback,
+        upper_nuisance_fallback=rstats.nuisance_fallback,
+        lower_nuisance_reason=lstats.nuisance_reason,
+        upper_nuisance_reason=rstats.nuisance_reason,
     )
     return row, stats
 end

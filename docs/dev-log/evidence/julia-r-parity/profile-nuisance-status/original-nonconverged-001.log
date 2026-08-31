@@ -1,0 +1,5 @@
+ERROR: LoadError: syntax: invalid keyword argument syntax "(grad != rosenbrock_grad!)" around /private/tmp/drm-parity-20260830/DRM.jl/docs/dev-log/evidence/julia-r-parity/profile-nuisance-status/probe_original_nonconverged.jl:43
+Stacktrace:
+ [1] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/docs/dev-log/evidence/julia-r-parity/profile-nuisance-status/probe_original_nonconverged.jl:43
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/docs/dev-log/evidence/julia-r-parity/profile-nuisance-status/probe_original_nonconverged.jl:43

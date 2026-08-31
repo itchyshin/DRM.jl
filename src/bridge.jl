@@ -210,10 +210,11 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
         result = profile_result(fit; level = level, threads = threads, parm = profile_parm)
         row = target === nothing ? _bridge_pick_sd_row(result.ci) :
                                     _bridge_pick_fixef_row(result.ci, target)
+        outcome = _bridge_profile_outcome(result, row)
         return _bridge_inference_flatten(
             row;
             method = "profile",
-            status = "profile",
+            status = outcome.status,
             attempted = result.attempted,
             used = result.used,
             failed = result.failed,
@@ -222,7 +223,7 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
             worker_threads = result.worker_threads,
             julia_threads = result.julia_threads,
             blas_threads = result.blas_threads,
-            message = "profile_result completed",
+            message = outcome.message,
         )
     elseif bridge_method == "bootstrap"
         rng = seed === nothing ? Random.default_rng() :
@@ -1550,6 +1551,43 @@ function _bridge_first_param_row(rows, param::Symbol)
         row.param === param && return row
     end
     throw(ArgumentError("drm_bridge_inference: result has no `$param` row"))
+end
+
+# The bridge returns one selected row even when a profile call produced several.
+# Describe that row's endpoint diagnostics, not an unrelated row's aggregate
+# failure. Older/stored results without per-row stats retain a conservative
+# aggregate fallback. Infinite endpoints alone do not imply optimization failure.
+function _bridge_profile_outcome(result, row)
+    selected = filter(s -> s.param === row.param && s.coef == row.coef, result.stats)
+    if isempty(selected)
+        return result.failed > 0 ?
+            (status="profile_failed", message="profile solve failed; per-row diagnostics unavailable") :
+            (status="profile", message="profile_result completed")
+    end
+    s = only(selected)
+    if s.lower_endpoint_failed || s.upper_endpoint_failed
+        arms = String[]
+        for arm in (:lower, :upper)
+            getproperty(s, Symbol(arm, :_endpoint_failed)) || continue
+            reason = Symbol(arm, :_nuisance_reason)
+            method = Symbol(arm, :_nuisance_method)
+            fallback = Symbol(arm, :_nuisance_fallback)
+            detail = String(arm)
+            if hasproperty(s, reason)
+                detail *= " (nuisance=" * string(getproperty(s, reason))
+                hasproperty(s, method) && (detail *= "; " * string(getproperty(s, method)))
+                hasproperty(s, fallback) && (detail *= "; fallback=" * string(getproperty(s, fallback)))
+                detail *= ")"
+            end
+            push!(arms, detail)
+        end
+        return (status="profile_failed",
+            message="profile endpoint solve failed: " * join(arms, " and "))
+    end
+    if s.lower_unbounded || s.upper_unbounded
+        return (status="profile", message="profile did not cross threshold within searched range")
+    end
+    return (status="profile", message="profile_result completed")
 end
 
 function _bridge_inference_flatten(row; method::AbstractString,
