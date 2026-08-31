@@ -203,11 +203,10 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     end
 
     if bridge_method == "profile"
-        # Profile ONLY the requested block: the bridge's implicit SD target
-        # (`_bridge_pick_sd_row`'s set) when no `parm` was given, or the single
-        # fixed-effect block named by `parm` — never the full parameter vector,
-        # which would be wasted re-optimisation (#202 bridge perf).
-        profile_parm = target === nothing ? [:resd_sigma, :resd, :resd_mu] : target.param
+        # Preserve the implicit SD target set, but an explicit fixed-effect
+        # request must profile only that coefficient, not its entire block.
+        profile_parm = target === nothing ? [:resd_sigma, :resd, :resd_mu] :
+                                           target.param => target.coef
         result = profile_result(fit; level = level, threads = threads, parm = profile_parm)
         row = target === nothing ? _bridge_pick_sd_row(result.ci) :
                                     _bridge_pick_fixef_row(result.ci, target)

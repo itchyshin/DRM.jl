@@ -198,6 +198,7 @@ include("test_summary_method.jl")
 include("test_predict_parameters.jl")
 include("test_prediction_grid.jl")
 include("test_bridge.jl")
+include("test_bridge_profile_target.jl")
 include("test_bridge_q2_direct_export.jl")
 include("test_bridge_q4_direct_export.jl")
 # Missing-data handling (#49): documents that raw missing/NaN responses ERROR
