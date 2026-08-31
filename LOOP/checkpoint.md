@@ -9,7 +9,7 @@ passed all 52 pages in152.17s. No new HTML visual or deployment claim.
 
 R integration HEAD9007338e5 retains the separately reviewed 14-assertion public
 status-forwarding regression (mocked inference, no production R change).
-Julia status repair is prepared for a scoped local commit. Relevant evidence:
+Julia status repair is locally committed at de4620c7. Melissa Terra/high independently approved this bounded checkpoint. Mission Control3e80247 is committed and served-verified. Relevant evidence:
 docs/dev-log/evidence/julia-r-parity/locscale-profile-status-20260831/.
 Neither denied Gaussian source file changed. Canonical profiling stays serial;
 its deferred test/test_locscale_profile_threads.jl is intentionally not in the
@@ -32,8 +32,7 @@ profile timeout; do not automatically restart or extend it.
 
 No push, PR publication, main merge, release, registration, worktree retirement
 or collaborator message. Root owns bridge/docs/evidence; builder's current lease
-covers profiler/inference/tests only. Renew/transfer exact paths before the next
-inner-mode slice. Full parity, certified inference, performance, cleanup, docs
+covers profiler/inference/tests only. Builder lease codex:01a05261-profile-failure-builder now owns only src/locscale_inner.jl, test/test_locscale_inner_status.jl, test/runtests.jl and .unlazy/locscale-inner-status.md; that next slice is active. The four preflight refs were checked: foundational changes are already present, with no existing exhaustion fix to reuse. Full parity, certified inference, performance, cleanup, docs
 visual/deployment and Melissa programme reconciliation are still outstanding.
 
 ---
