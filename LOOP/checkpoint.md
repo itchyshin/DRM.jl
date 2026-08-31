@@ -1,3 +1,51 @@
+# Current checkpoint — bootstrap leaf verified; profile status repair active
+
+Programme ACTIVE; all programme G0–G8 and the strict coefficient gate remain
+OPEN. Work only in isolated twin worktrees /private/tmp/drm-parity-20260830,
+branch codex/julia-r-parity. No releases/deployment or collaborator messages.
+
+Bootstrap source714cc2fd:187/187 checks and8 executable tutorial examples pass.
+R tools/evidence f58878ee4: ordinary Rscript public004, shuffled32-tip/128-row
+REML, mean and phylogenetic-SD fixed-effect targets6/6 refits, whole-tip masked
+companion4/4/nobs124. Bridge/direct endpoints agree exactly. Rose approved;
+Terra Melissa retains every programme obligation. Six bootstrap leaf gates met,
+including current143source-hash verification and six damaged receipt rejections.
+This is bounded dispatch evidence, not coverage/native-R interval parity or a
+large-tree performance result. Masked payload mapping was runtime-asserted only.
+Later source changes invalidate a claim of current-source qualification; retain
+these receipts as historical and rerun when final source stabilizes.
+
+Boundary diagnostic d7f3ab94/be54fcf9 retains run006 and all raw logs. Original
+raw coefficients still differ4.5298009477/0.8610680164 despite near-identical
+named covariance likelihoods and tiny phylogenetic covariance contributions.
+Rose approves that limited diagnosis, not a waiver or general identifiability
+claim. Do not change strict4e-6 tolerances.
+
+ACTIVE next slice: Terra/high owns generic profiling in src/inference.jl,
+src/visualization.jl, test/test_profile_nuisance_status.jl and dedicated evidence.
+Root owns src/bridge.jl, narrow R wrapper integration, test wiring and gates.
+Rose Sol/high reviewed the contract: finite, successfully terminated nuisance
+solves only; failed arms distinct from searched-range no crossing; plots expose
+failure; final endpoint evaluated at the returned coordinate. Preserve fallback
+metadata and interrupts. Specialized loconly/locscale not silently qualified.
+No source edits to denied gaussian_structured.jl/gaussian_sparse_lss.jl.
+
+Mission Control29828a3 served four fields correctly, lease released. Live R
+article still says Julia engine (future support) at recorded03:02Z HTTP check;
+source correction is not deployed correction. Keep whole-site visual/deployment
+work required. Foreign JuliaS5 include/test and R ZOB96+/10- edits preserved.
+
+CARRIED-OVER: all execution commits remain unmerged/undeployed. No clean-head
+or full-suite claim. Resume this file and profile-nuisance-status evidence/gates;
+do not rerun completed bootstrap fits merely for orientation. Root actual
+Sol/medium, Terra/high, RoseSol/high, scoutLuna/low; agent-hours uninstrumented.
+No new remote compute; >30minute campaigns still need measured pilot/approval.
+All24native missing-predictor cells, stamped LSSSE/REML/masks/large-tree/final-head
+evidence, registered warm-workflow wins,1/2/4/8threadpolicy, preservation/cleanup,
+Documenter work and final reconciliation remain required.
+
+---
+
 # Current checkpoint — named LSS identity repaired, strict gate open (2026-08-30)
 
 Programme ACTIVE; G0-G8 remain OPEN. Approved plan and issue #563 unchanged.

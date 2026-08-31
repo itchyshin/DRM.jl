@@ -48,8 +48,11 @@ threaded results. A small formula-versus-fit comparison uses the same marginal m
 Docs001 executes eight examples in25.186 build seconds (27.15 process seconds),
 including an auditable four-replicate bootstrap with convergence checking. This is
 local executable-Markdown proof, not a whole-site visual or deployed-page verdict.
-The public R bootstrap comparison is pending at report creation; no success is
-inferred from the source-only bridge call-path audit.
+Public004 now verifies ordinary Rscript with the development opt-in unset: shuffled
+32-tip/128-row REML input, mean and phylogenetic-SD fixed-effect targets, six
+refits each, and a whole-tip missing-response companion with four refits/nobs124.
+Intervals exactly match direct Julia reconstructed from the bridge payload.
+Elapsed31.791seconds; all143 source hashes match before/after and current files.
 
 ## 6. Tests of the Tests
 Corrected RED003 retained13passes/9failures, including wrong species/component
@@ -66,7 +69,7 @@ No implementation change was needed for that test correction.
 
 ## 7a. Issue Ledger
 Programme #563 remains open. The collector repair also fulfills the approved S5
-safe-bootstrap-flags item at this bounded scope. Public R integration, profile
+safe-bootstrap-flags item at this bounded scope. Broader public R integration, profile
 nuisance status/gradients, sparse simulation/refits, complete registered performance,
 all original24 missing-predictor obligations and all prior strict losses remain
 required. No issue was closed and no collaborator message was sent.
@@ -78,7 +81,11 @@ metadata/finite-value guards and test-runner wiring are present. Golden Set:
 known nonzero component draws against a hand-written covariance; same-group IID
 and phylo effects; scalar components; actual missing and NaN; metadata refusals;
 manual REML refits; serial/threaded reproducibility; independent collector bookkeeping.
-Final Melissa and public R receipts remain pending at report creation.
+Rose independently approves public004 at its bounded integration scope; Terra
+Melissa retains every original programme obligation. The saved masked receipt
+contains runtime row/mask assertions, not a reconstructable masked payload.
+The actual simulated REML manual refit supplements source-unit estimator tests;
+it does not compare coefficients against retained bootstrap draws.
 
 ## 9. What Did Not Go Smoothly
 The fixture shadowed a formula marker; the first flag probe aligned worker chunks
@@ -97,8 +104,9 @@ log-SD curvature alone does not establish structural nonidentifiability, because
 variance is exp(2a). Neither diagnosis nor covariance agreement waives the raw
 coefficient gate. Profile nuisance convergence/status and analytic-gradient reuse
 remain open, including the previously failed256-tip constrained solve.
-The public R bootstrap wrappers still need runtime verification and richer failure
-reporting; native-R interval parity/coverage and large-tree efficiency are not proved.
+The two tested public R LSS fixed-effect bootstrap targets have runtime evidence;
+broader wrapper admission and failure reporting remain open. Native-R interval
+parity/coverage and large-tree efficiency are not proved.
 
 ## 11. Team Learning
 Parallel flags need independent physical storage, not merely distinct logical
@@ -117,8 +125,15 @@ package installation, release, registration, deployment or collaborator message.
 Mission Control61d8f47 was locally committed, four served fields verified, lease released.
 
 ## Acceptance checkpoint
-The executable unlazy commands were re-run after the final test correction:
-G2 and G3 pass. Current leaf state is4met/2unmet (G4 finalMelissa andG6publicR
-receipt pending). No gate was abandoned. Rose approves the final source/test
-checkpoint; mechanical audit finds all100final-test and95docreceipt hashes
-match current files. MissionControl61d8f47 records the same pending scope.
+At the bootstrap source checkpoint, all six leaf gates pass: G2/G3 were rerun
+against the final implementation, G6 recomputes public004 against143 current
+source hashes and rejects six damaged receipts. G4 records Rose and Melissa.
+See gates-002.log. This is closure of this bounded bootstrap contract only;
+all programme G0–G8 and strict coefficient losses remain OPEN.
+
+Mission Control29828a3 records the reviewed public result and next profile work;
+all four served fields match, and the vault lease is released. Diagnostic
+run006 and its raw logs are retained in d7f3ab94/be54fcf9. Raw logs required
+explicit scoped staging because the repository ignores *.log by default.
+Subsequent profile edits require fresh source qualification; do not reuse this
+current-source receipt as if it covered later source revisions.

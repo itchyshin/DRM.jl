@@ -1,0 +1,33 @@
+{
+  "url": "https://itchyshin.github.io/drmTMB/articles/julia-engine.html?parity_audit=20260830",
+  "status": 200,
+  "fetched_utc": "2026-08-31T03:02:46.882577+00:00",
+  "sha256": "ee96b44afd9ba4d4ba1c88ebdb88975f2f5d7e29666bc1dbedcb915a9ebb4d19",
+  "title": "Accelerating models with the Julia engine \u2022 drmTMB",
+  "future_support": true,
+  "optional_backend": true,
+  "headers": {
+    "Connection": "close",
+    "Content-Length": "42376",
+    "Server": "GitHub.com",
+    "Content-Type": "text/html; charset=utf-8",
+    "Last-Modified": "Sun, 30 Aug 2026 19:42:52 GMT",
+    "Access-Control-Allow-Origin": "*",
+    "ETag": "\"6a9487bc-a588\"",
+    "expires": "Mon, 31 Aug 2026 03:12:45 GMT",
+    "Cache-Control": "max-age=600",
+    "x-proxy-cache": "MISS",
+    "X-GitHub-Request-Id": "A316:2D6DB7:4877F40:4937E21:6A94EED5",
+    "x-github-edge-region": "fra",
+    "Accept-Ranges": "bytes",
+    "Age": "0",
+    "Date": "Mon, 31 Aug 2026 03:02:46 GMT",
+    "Via": "1.1 varnish",
+    "X-Served-By": "cache-sin-wsat1880077-SIN",
+    "X-Cache": "MISS",
+    "X-Cache-Hits": "0",
+    "X-Timer": "S1788145365.291585,VS0,VE1487",
+    "Vary": "Accept-Encoding",
+    "X-Fastly-Request-ID": "d80b0328f5996ba07b8a2fa5f48cb30e9f2fa46e"
+  }
+}
