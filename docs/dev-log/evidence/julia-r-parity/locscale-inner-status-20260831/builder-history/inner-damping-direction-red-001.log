@@ -1,0 +1,42 @@
+ERROR: LoadError: Some tests did not pass: 49 passed, 2 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:127
+unchanged undamped step still tries damping directions: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:251
+  Expression: a[2] != _INNER_DAMPING_A0[2]
+   Evaluated: 1.0 != 1.0
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:251 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:244 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:128
+unchanged undamped step still tries damping directions: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:252
+  Expression: f1 < f0
+   Evaluated: 0.0 < 0.0
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:252 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:244 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:128
+Test Summary:                                            | Pass  Fail  Total  Time
+location-scale inner-mode stationarity acceptance        |   49     2     51  5.8s
+  synthetic strictly convex controls                     |   26           26  0.0s
+  guarded ULP-scale Newton polish                        |   14           14  0.0s
+  unchanged undamped step still tries damping directions |    2     2      4  5.6s
+  actual Gamma kernel reports only a certified mode      |    7            7  0.1s

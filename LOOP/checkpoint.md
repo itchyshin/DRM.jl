@@ -1,3 +1,131 @@
+# Current — bounded stable-comparison implementation authorized
+
+Programme ACTIVE; allglobalgatesOPEN. The accepted source baseline remains
+5daa1593(de4620c7 profile-status implementation) with R9007338e5. Current
+inner source572f46bb/test8799bb89 remains unaccepted pending fit/inferencefix.
+
+Root/Rose approved finite estimated-error fallback after BigFloatdiagnostics
+and stable-identity prototype. BuilderTerra/high is IMPLEMENTING within owned
+src/locscale_inner.jl, focusedtest,runtests,ignoredledger only. Read exactfrozen
+contract: docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/
+estimated-comparison-contract.md. Estimate numericalpilot<=3min/cap180; no
+refits until sourcefreeze. No rootcompute or remotejobs. Do not duplicate.
+
+The error margin is an engineering estimate, not a rigorousupperbound. Formal
+libm proof is NOT a newglobalgate. Preserve4ULPfastpath,tol1e-9,budget200,
+computedmodecertificate,locality/PDguards. Ambiguous or clamp-crossing fallback
+refuses only thatcomparison; ordinarysolver and registereddenominator remain.
+Allfive diagnosedpairs plus varied/controlcases need independentBigFloatNLL
+validation, then unchanged originalrecovery/profile regressions. No finalclaim
+from prototypequadratureagreement. BigFloattrigamma is unsupported and retained.
+
+Root is checkpointing evidence only; source/test/docs-page WIP is CARRIED-OVER,
+not staged as a finishedfix. Existing protectedGaussian edits remain denied and
+untouched. No infer/fit sourceownership expansion, push/PRpublication/mainmerge,
+release,worktree retirement or collaborator messages. MissionControl5ff5553
+serves activeinnerrepair; update next_safe_action after implementationverdict.
+
+---
+
+# Current — arithmetic sign loss confirmed; stable comparison prototype active
+
+ProgrammeACTIVE; allglobalgatesOPEN. No newaccepted sourcecommit. JuliaHEAD
+5daa1593/R9007338e5 remain reviewedbaseline. Uncommittedsource572f46bb and
+test8799bb89 pass51focusedcontrols and Rose source review, but NB2recovery and
+Gamma covariance are unresolved. They must not be marked done.
+
+Exactfailedfit diagnostics identified certified nearby Newton trials rejected
+at28ULP(NB2) and11ULP(Gamma). Read-only arithmetic probe retained endpointstates:
+FULL lifted-input128/256bit re-evaluation gives negativeDeltaNB-4.6745030396e-19,
+Gamma-4.5657663369e-20. High-precision sums of already-roundedFloatterms stay
+positive, so both term/predictor arithmetic and accumulation matter. Reversing
+rows/additiveconstant controls agree; segments are insideclamps. See evidence
+locscale-inner-status-20260831/arithmetic-diagnostic and outer-fit-diagnostic.
+All those runs are terminal. No production tolerance/budget/ULP change.
+
+ACTIVE NEXT: builderTerra/high read-only stable-integral difference prototype
+on savedstates, estimated<60s/cap120s, NOrefits; RoseSol/high reviews its error
+contract. Identity and constraints in rose-stable-comparison-contract.md.
+Do not equate quadrature agreement with a rigorous errorbound. No production
+comparison implementation authorized until numerical/mathematical review.
+Rootowns evidence/docs/checkpoint; builderowns inner/source+focusedtest+runtests+
+ledger only. No infer/fit ownership, deniedGaussianfiles untouched.
+
+Roothistorical negativecontrol is complete:150checks,138pass12expectedfail,
+9.18s, explicit2ab0in-processoverride, source/probehashesunchanged. This verifies
+the30perturbation harness detects priorfailures. Old608c greenreceipts do not
+transfer to current572. Ledger gates resetpending; preserve all oldlabels.
+
+No remotejobs/allocations; no push/PRpublication/mainmerge/release/retirement or
+collaboratormessages. MissionControl5ff5553 remainsservedactiveinnerrepair.
+Efficiencygate reports day-wide guardianthresholds; use existing disk-goaled
+checkpoint-and-roll exception, do not invent a new usertask or weakenpermission.
+
+---
+
+# Current — gradient perturbations restored; fit/inference still fail
+
+Programme ACTIVE; all global gates OPEN. No new accepted source commit.
+Julia HEAD5daa1593 / R9007338e5 remain the reviewed baseline.
+Candidate608c24c8 passed47focusedchecks, all30exactgradientperturbations
+(150assertions+2harnesschecks,5.60s), and originalgradienttests9assertions.
+Broader G1 reached NB2recovery but failed gmax48.7476 and SDmu0.3;
+8smoke+4recoveryassertions passed,2recoveryfailed. Both profile batches still
+error in Gamma covariance construction (76assertionspass,1error each).
+All inputhashes matched and all rootruns are terminal. These failures remain
+in unlazy-runtime-round001 and corresponding module/perturbation receipts.
+
+Rose then caught premature exit from the entire damping search on an unchanged
+trial. Builder repaired it with a consistent anisotropic-quadratic red/green:
+49pass2fail ->51pass. Current source572f46bb / test8799bb89; Rose approves
+this narrow source repair, NOT integration. All gates need fresh source evidence.
+
+ACTIVE: Terra builder read-only diagnostic of the exact failedNB2/Gamma fits,
+including real warmstarts and h1e-5 outer-Hessian perturbations. Estimate30–90s,
+cap120s. Do not duplicate. No rootfit or remotejob/allocation. No sourceedits
+pending except owned diagnostic/ledger state; infer/fit sources are not owned
+for edits. Next identify exact inner rejection mechanism before changingpolicy.
+Do not loosen tolerance,budget,4ULP allowance or skip failed fixtures blindly.
+
+New neighbour follow-up: sparse_aug_plsm._estep_robust exposes no final
+stationarity status; a production failure has NOT been reproduced. Recorded
+separately, no expansion yet. Denied Gaussian sources untouched. Threading,
+fullparity, performancewins, docs/cleanup remainopen. MissionControl5ff5553
+serves active inner repair; update when next diagnostic resolves state.
+
+---
+
+# Current — inner certificate exposes rounding plateaux; repair under review
+
+Programme ACTIVE; all global G0–G8 remain OPEN. Julia HEAD5daa1593 and R
+HEAD9007338e5 retain the reviewed profile-status checkpoint. The uncommitted
+inner-certificate candidate2ab0c168 is NOT accepted:33 focused assertions pass,
+but the original Gamma IID and NB2 phylogenetic gradient checks fail, and both
+one/four-thread profile batches error before profiling in covariance construction.
+All root runs terminated; receipts include unchanged source/test hashes.
+
+Read-only exact-fixture diagnostic completed in8.9s: three perturbed inner solves
+stall just above the unchanged1e-9 scaled tolerance, with finite states/gradients,
+positive-definite undamped Hessians and tiny accepted steps at equal represented
+objective values. Their existing failure sentinel contaminates finite differences.
+This diagnoses the gradient regressions; it does not yet prove the profile
+covariance failure has the same cause. Evidence:locscale-inner-status-20260831/
+rounding-diagnostic. Existing NaN!=0 preliminary assertions are inadequate.
+
+NEXT: Rose Sol/high reviews a bounded rounding-aware line-search contract;
+builder Terra/high prepares candidate diagnostics/tests, without further source
+edits yet. Preserve tolerance,budget,likelihood and strict final certificate.
+Root owns evidence/checkpoint. Builder owns only src/locscale_inner.jl,
+test/test_locscale_inner_status.jl,test/runtests.jl,.unlazy/locscale-inner-status.md.
+No ownership of locscale_fit.jl or locscale_infer.jl. Denied Gaussian sources
+remain untouched. Threading remains queued and serial today; retain its red test.
+
+No remote jobs or allocations. No publication,merge,release,retirement or
+collaborator messages. Mission Control5ff5553 is locally committed and served-verified with the failed
+inner regressions and active bounded repair. Its exact-file lease is released.
+
+---
+
 # Current — profile-status repair verified; inner-mode convergence is next
 
 Programme ACTIVE. All global G0–G8 remain OPEN. The bounded profile-status

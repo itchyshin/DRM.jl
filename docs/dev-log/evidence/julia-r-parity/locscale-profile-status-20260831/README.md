@@ -23,3 +23,14 @@ full native/direct/bridge parity, bootstrap calibration or speed claim follows.
 The 002 receipt's started_utc was written at completion by the early runner;
 read it as completion time. Its elapsed duration uses a monotonic clock. Later
 runner revisions record separate start/end timestamps and actual DRM sourcepath.
+
+Later module-1threads-inner001 and module-4threads-inner002 receipts belong to
+the subsequent uncommitted inner-mode candidate2ab0c168. Both error during the
+Gamma fit. They do not change the historical de4620c7 verdict, and demonstrate
+why that verdict cannot be inherited by later engine changes. See the separate
+locscale-inner-status-20260831 investigation.
+
+The later `module-1threads-round001` and `module-4threads-round002` receipts
+also belong to the unaccepted inner-engine candidate608c24c8. Both fail before
+profiling during Gamma covariance construction. They are not passing evidence
+for the accepted de4620c7 profile-status source. See the inner-status directory.

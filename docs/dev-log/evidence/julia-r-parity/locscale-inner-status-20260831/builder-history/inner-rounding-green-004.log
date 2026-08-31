@@ -1,0 +1,36 @@
+ERROR: LoadError: Some tests did not pass: 46 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:112
+synthetic strictly convex controls: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:159
+  Test threw exception
+  Expression: issuccess(ch_bad_gradient)
+  MethodError: no method matching issuccess(::Nothing)
+  
+  Closest candidates are:
+    issuccess(!Matched::SparseArrays.UMFPACK.UmfpackLU)
+     @ SparseArrays ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/SparseArrays/src/solvers/umfpack.jl:929
+    issuccess(!Matched::SparseArrays.CHOLMOD.Factor)
+     @ SparseArrays ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/SparseArrays/src/solvers/cholmod.jl:1774
+    issuccess(!Matched::BunchKaufman)
+     @ LinearAlgebra ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/LinearAlgebra/src/bunchkaufman.jl:281
+    ...
+  
+  Stacktrace:
+   [1] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:159 [inlined]
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:159 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:114 [inlined]
+   [6] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [7] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:113
+Test Summary:                                       | Pass  Error  Total  Time
+location-scale inner-mode stationarity acceptance   |   46      1     47  3.2s
+  synthetic strictly convex controls                |   25      1     26  3.1s
+  guarded ULP-scale Newton polish                   |   14            14  0.0s
+  actual Gamma kernel reports only a certified mode |    7             7  0.1s

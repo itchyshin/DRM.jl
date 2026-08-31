@@ -1,0 +1,30 @@
+{
+  "locscale-inner-status-20260831/module-1threads-round001.json": {
+    "exit_code": 1,
+    "elapsed_seconds": 35.148872915888205,
+    "timed_out": false,
+    "inputs_unchanged": true,
+    "source_sha256": "608c24c8d187b5dfe8a5f4e337685af5eeeac11ed5a89e653dd09fb2204cac87"
+  },
+  "locscale-profile-status-20260831/module-1threads-round001.json": {
+    "exit_code": 1,
+    "elapsed_seconds": 14.008809000020847,
+    "timed_out": false,
+    "inputs_unchanged": true,
+    "source_sha256": "608c24c8d187b5dfe8a5f4e337685af5eeeac11ed5a89e653dd09fb2204cac87"
+  },
+  "locscale-profile-status-20260831/module-4threads-round002.json": {
+    "exit_code": 1,
+    "elapsed_seconds": 15.462551624979824,
+    "timed_out": false,
+    "inputs_unchanged": true,
+    "source_sha256": "608c24c8d187b5dfe8a5f4e337685af5eeeac11ed5a89e653dd09fb2204cac87"
+  },
+  "locscale-inner-status-20260831/perturbations-1threads-round001.json": {
+    "exit_code": 0,
+    "elapsed_seconds": 5.599384542088956,
+    "timed_out": false,
+    "inputs_unchanged": true,
+    "source_sha256": "608c24c8d187b5dfe8a5f4e337685af5eeeac11ed5a89e653dd09fb2204cac87"
+  }
+}

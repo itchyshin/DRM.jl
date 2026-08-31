@@ -1,0 +1,71 @@
+synthetic strictly convex controls: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:35
+  Expression: !ok_zero
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:35 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:32 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:31
+synthetic strictly convex controls: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:42
+  Expression: !ok_default
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:42 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:32 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:31
+synthetic strictly convex controls: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:52
+  Expression: norm([a_final[1] ^ 3 + a_final[1], a_final[2]]) <= 1.0e-9 * (1 + norm(a_final))
+   Evaluated: 3.0951297223486565 <= 2.230769230769231e-9
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:52 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:32 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:31
+synthetic strictly convex controls: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:59
+  Expression: !ok_nonfinite
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:59 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:32 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:31
+Test Summary:                                       | Pass  Fail  Total  Time
+location-scale inner-mode stationarity acceptance   |   11     4     15  3.6s
+  synthetic strictly convex controls                |   10     4     14  2.7s
+  actual Gamma kernel reports only a certified mode |    1            1  0.9s
+ERROR: LoadError: Some tests did not pass: 11 passed, 4 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:30

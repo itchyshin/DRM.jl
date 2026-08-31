@@ -1,0 +1,87 @@
+ERROR: LoadError: Some tests did not pass: 42 passed, 4 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:112
+guarded ULP-scale Newton polish: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:186
+  Expression: accepted == zeros(2)
+   Evaluated: [1.2924697071141057e-26, 0.0] == [0.0, 0.0]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:186 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:181 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:113
+reject large: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:197
+  Expression: !ok
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:197 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:195 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:181 [inlined]
+ [7] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [8] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:113
+reject backtracked: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:197
+  Expression: !ok
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:197 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:195 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:181 [inlined]
+ [7] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [8] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:113
+guarded ULP-scale Newton polish: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:218
+  Expression: _INNER_ROUNDING_CALLS[] < 100
+   Evaluated: 749 < 100
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:218 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:181 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:113
+Test Summary:                                       | Pass  Fail  Total  Time
+location-scale inner-mode stationarity acceptance   |   42     4     46  3.2s
+  synthetic strictly convex controls                |   26           26  0.0s
+  guarded ULP-scale Newton polish                   |    9     4     13  3.0s
+    reject over                                     |    1            1  0.0s
+    reject large                                    |          1      1  0.0s
+    reject nonstationary                            |    1            1  0.0s
+    reject indefinite                               |    1            1  0.0s
+    reject damped                                   |    1            1  0.0s
+    reject backtracked                              |          1      1  0.0s
+  actual Gamma kernel reports only a certified mode |    7            7  0.1s
