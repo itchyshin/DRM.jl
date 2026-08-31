@@ -1,3 +1,31 @@
+# Current continuation — live R provider cross-product verified
+
+Julia source remains at b656e6a8 and R source at 6487ad728; no production
+source changed in this slice. Retained evidence is under
+`docs/dev-log/evidence/julia-r-parity/provider-crossproduct-live-20260831/`.
+The verifier passes the final artifact set and rejects a deliberate one-byte
+corruption.
+
+Actual source-loaded R `engine = "julia"` fixed-effect profiles and B=2
+bootstraps now pass for animal(A), Gaussian spatial(coords) through the
+established R coords-to-K/relmat conversion, and Poisson relmat(K), at one and
+four Julia threads with BLAS1. Every public result matches direct same-engine
+Julia exactly and every bootstrap records 2/2 refits. Identity-provider damage
+changes all three profiles, so the fixtures are provider-sensitive. Boundary
+Hessian/pseudo-inverse warnings are retained. Rose and Melissa bounded PASS. No
+live numerical process or remote job.
+
+This supersedes the older instruction to run actual R animal/spatial and one
+non-Gaussian K cell; those bounded plumbing cells are now measured. It does not
+close native-R parity, calibration/coverage, performance or full S10/S11.
+Next implement coherent Gamma public-scale normalization: fixed scale mapping,
+D-Lambda-D covariance, full Jacobian, inverse profile maps, and decreasing
+endpoint reversal as one contract. Preserve 24 missing-predictor cells, original
+LSS obligations, strict 4e-6 losses, docs, recovery, cleanup, Mission Control
+and all global G0-G8 OPEN. No release, registration, deployment or main merge.
+
+---
+
 # Current continuation — K/A/tree/coords inference forwarding verified
 
 Pending integration source is based on Julia fd4985e6 and R761941c95. Resolve
