@@ -1,22 +1,34 @@
-# Current — isolated Newton-REML test running
+# Current — nine package files complete; no remote fit running
 
-Programme ACTIVE; all G0–G8 gates OPEN. Documentation commit 5e9d5883 is reviewed.
-Four unchanged test files completed on Totoro: 602 + 20 + 36 + 12 = 670 assertions.
-The following Newton file was incomplete at the previous group's 300-second cap;
-34 partial assertions do not count as a completed file. Rose verified this
-classification and all 326 source/test hashes against retained logs.
+Programme ACTIVE; all G0–G8 gates OPEN. Documentation commit 5e9d5883 and initial
+reviewed package receipts d9d29ef4 are local. Latest continuation: isolated
+Newton-REML passed 39 assertions in 107 seconds; bootstrap/spatial/prediction
+group passed 79 assertions in 41 seconds. Nine completed files contain 788
+assertions. The earlier 34 partial assertions overlap; never add them again.
+All 326 Julia source/test hashes match and before/after manifests are identical.
+Earlier full-suite/group timeouts and emitted boundary warnings remain retained.
+Mission Control 4acc1e5 reflects this terminal state; served JSON verified and
+42 foreign vault files unchanged. Rose independently approved both new receipts.
 
-The isolated whole Newton file is now running under the same existing Totoro
-connection, Julia 1.10.10, one Julia/BLAS thread. Estimate 2–4 minutes; cap 300 s.
-Remote: /home/snakagaw/drm_parity_integration_567fec06_001/newton-reml-pilot-001
-Launch PID: 3571051. Inspect exit-status.txt/run.log; never duplicate a run because
-an observation times out. Local runners: integration/newton-reml-pilot-001.
+No remote fitting job is running. Terminal evidence is in
+`docs/dev-log/evidence/julia-r-parity/package-continuation-20260831/`.
+Current tests use Totoro Julia 1.10.10, one Julia/BLAS thread. Last job directories:
+/home/snakagaw/drm_parity_integration_567fec06_001/newton-reml-pilot-001
+/home/snakagaw/drm_parity_integration_567fec06_001/bootstrap-next-pilot-001
+Both exit 0 with all completion markers; do not restart either group.
 
-Next: collect terminal evidence, then continue remaining default-suite files in
-suite order. Update Mission Control with terminal results and commit scoped
-receipts. No full-suite, native-R parity, coverage or performance claim.
-Two previously denied source files remain untouched. Other worktrees, stashes,
-releases, public deployment and collaborator messages remain untouched.
+NEXT: estimate and run the next original default-suite files beginning with
+`test_predict_response.jl`, `test_ranef.jl`, `test_correlated_re.jl`,
+`test_multi_re.jl`, then the sigma/family files. Use the existing Totoro socket,
+source hash checks and explicit cap. Retain each outcome before proceeding.
+The full suite, opt-in native-R parity, canonical-tree profile/bootstrap,
+coverage, all native capabilities and registered warm timing still need work.
+
+Continue only in paired integration worktrees, codex/parity-integration-20260831;
+Julia and R original worktrees and foreign changes remain preserved. Denied
+source files remain untouched. No release, push/main merge, public deployment,
+worktree retirement or collaborator message. Global plan and original promises
+remain binding; this completed regression slice is not programme completion.
 
 ---
 

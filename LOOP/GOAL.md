@@ -36,7 +36,15 @@ Totoro CPU <=150 cores, BLAS=1; DRAC allocated jobs only. No campaigns in GitHub
 All required unlazy gates reverified on final sources; Rose independent verdict; Melissa reconciles
 original promises plus this plan. First-pass completion is not programme completion.
 
-## Execution locations
+## Current execution locations (integration continuation)
+
+Continue in `/private/tmp/drm-parity-20260830/integration/DRM.jl` and sibling
+`drmTMB`, both on `codex/parity-integration-20260831`. These are the active paired
+integration worktrees. The original worktrees listed below are preserved; do not
+resume edits there. The latest operational state is in `LOOP/checkpoint.md`.
+
+## Original execution locations (preserved history)
+
 - Julia: `/private/tmp/drm-parity-20260830/DRM.jl`, branch `codex/julia-r-parity`.
 - R: `/private/tmp/drm-parity-20260830/drmTMB`, branch `codex/julia-r-parity`.
 - Preserve these branches as durable checkpoints. `/private/tmp` itself is not durable storage.

@@ -1,5 +1,9 @@
 # Bounded package continuation — 31 August 2026
 
+Current result: **nine complete files, 788 passing assertions**. The sections
+below retain the interrupted runs and subsequent completions in order. No
+full-suite, native-R parity, coverage or performance gate is closed.
+
 The earlier full-suite pilot stopped after 301 seconds (exit 124) while running
 `test_location_only_reml_mme.jl`. It did not pass the full suite.
 
@@ -49,3 +53,27 @@ All programme G0–G8 gates remain open. These checks do not replace the full su
 R/direct-Julia/bridge parity, Ayumi's canonical-tree workflow, interval coverage,
 or the registered warm-workflow performance denominator. No DRAC job or long
 campaign was launched.
+
+## Isolated Newton-REML result
+
+The unchanged whole `test_reml_newton_sigma_phylo.jl` completed in 107 seconds,
+exit 0, with both completion markers: 39 passing assertions across eight testsets.
+All 326 input hashes matched, and before/after source manifests were identical.
+The last testset checks boundary profile intervals through `confint` and the
+bridge; missing-response composition also passed. These are small fixtures, not
+Ayumi's full-tree workflow. Five completed files now contain 709 assertions;
+the earlier 34 partial assertions overlap and must not be added again.
+The original timeout remains retained. No full-suite or performance gate closes.
+
+## Bootstrap, spatial and prediction continuation
+
+The next four original files completed in 41 seconds, exit 0, with every file
+marker and the group marker present: bootstrap (46 assertions), marginal
+bootstrap (25), spatial Gaussian (4), prediction (4). All 326 source hashes
+matched and remained unchanged. Boundary-Hessian and untrustworthy-SE warnings
+were retained, not suppressed. These regressions check random-effect redraws,
+raw covariance scaling, degeneracy status and prediction behavior.
+
+This adds 79 assertions: nine completed files now contain 788 assertions. The
+initial whole-suite and later group timeouts remain incomplete historical runs.
+No calibrated-coverage, native-R parity, full-suite or warm-speed claim follows.
