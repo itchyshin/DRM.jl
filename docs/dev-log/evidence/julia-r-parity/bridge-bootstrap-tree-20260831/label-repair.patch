@@ -1,0 +1,18 @@
+diff --git a/src/bridge.jl b/src/bridge.jl
+index d16b5c3a..9141ab48 100644
+--- a/src/bridge.jl
++++ b/src/bridge.jl
+@@ -1359,6 +1359,13 @@ function _bridge_public_to_raw_coef_map(fit, labels::_BridgeFormulaLabels,
+     for (param, rhs) in forms
+         _bridge_lss_form_key(param) === nothing || continue
+         haskey(block_names, param) || continue
++        # Coupled location-scale fits build their fixed columns after removing
++        # `(1 | tag | group)`. The ordinary random-effect splitter does not
++        # handle that nested tag syntax; use the fitter's own projection so
++        # neither the tag nor the structured group becomes a data column.
++        if fit isa DrmFit && fit.nll isa LocScaleObjective && param in (:mu, :sigma)
++            rhs = first(_ls_parse_coupled(rhs))
++        end
+         rendered = _bridge_render_formula_block(form, param, rhs, labels)
+         rendered === nothing && continue
+         raw, public = rendered

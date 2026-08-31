@@ -1,3 +1,35 @@
+# Current continuation — real R tree bootstrap verified
+
+Julia base 4fe48c123fecfe35029d9998d4e7211e8ee1dbcf; R base
+9007338e5975fa14ec19915c07dada880250ed01. Source checkpoint commits are
+resolved with git log -1 -- src/bridge.jl and git log -1 -- R/julia-bridge.R
+in the paired integration worktrees on codex/parity-integration-20260831.
+Final hashes and retained red/green are in
+ docs/dev-log/evidence/julia-r-parity/bridge-bootstrap-tree-20260831/.
+
+Direct Julia and actual R engine=julia coupled Gamma mu-slope bootstrap pass
+at one/four Julia threads: 18/18 Julia, 16 pure-R assertions, 2/2 actual R
+draws within unchanged 1e-12, 858 neighbouring checks. Source hashes unchanged.
+Rose and Melissa bounded PASS; five local gates met. R source committed
+48e362e96, report correction761941c95. CSV round-trip failure retained; exact binary copies of original
+inputs repair transport, not tolerances. R cache handles both family orders.
+Local G3 is now closed for this case only. All programme G0-G8 remain OPEN.
+
+Mission Control two-field update verified served, locally committed 5cf820c,
+and exact status-file lease released. Totoro and Fir/Narval/Rorqual/Trillium/
+Killarney existing sockets verified; no remote jobs. No live numerical runs.
+
+Next: other admitted structured inference targets and K/A/coords forwarding,
+then full Gamma public-scale normalization. Preserve 24 missing-predictor
+cells, original LSS SE/REML/mask/large-tree/final-head evidence, strict 4e-6
+losses, full parity/performance, documentation, recovery and reconciliation.
+Native Gamma parity and interval coverage are not proved by this B=2 case.
+No release, registration, deployment, main merge or worktree retirement.
+Completed edits are carried on this integration branch for programme review;
+do not erase prior receipts or repeat the resolved label/tree discovery.
+
+---
+
 # Local source checkpoint
 
 Sampler, fitter continuation and tests committed as

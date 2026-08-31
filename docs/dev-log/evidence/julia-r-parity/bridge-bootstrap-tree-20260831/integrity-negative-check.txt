@@ -1,0 +1,1 @@
+One byte of fixture/y.f64le was flipped in an isolated scratch copy. verify.py exited nonzero naming fixture/y.f64le. Original evidence was not modified. DAMAGED_FIXTURE_REJECTED

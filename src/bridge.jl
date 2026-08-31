@@ -172,7 +172,8 @@ the same primitive `DRM.profile_result` / `DRM.bootstrap_result` calls the R
 bridge previously had to reach by calling DRM.jl's underscore-prefixed
 marshalling internals directly (see #475); this kwarg is the supported route
 that replaces that qualified-internal call. Returns the same payload shape
-either way.
+either way. For an explicit phylogenetic fixed-effect target, `tree` is reused
+for both the initial fit and every bootstrap refit, including non-Gaussian fits.
 """
 function drm_bridge_inference(; formula, family::AbstractString, data,
         tree = nothing, options = Dict{String,Any}(), method::AbstractString = "profile",
@@ -235,13 +236,12 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
         rng = seed === nothing ? Random.default_rng() :
               Random.MersenneTwister(Int(seed))
         result = if target !== nothing && !(fit isa DrmFit{<:Gaussian})
-            # DRM.jl's generic (non-Gaussian) `bootstrap_result` method rejects any
-            # non-`nothing` `tree`/`algorithm`/`g_tol` keyword; only the
-            # Gaussian-specific method accepts them. The SD-target path below never
-            # hits this branch (target === nothing), so its behaviour is unchanged.
+            # The generic method accepts the covariance provider but not the
+            # Gaussian-specific algorithm/g_tol controls. Preserve the original
+            # tree for the marginal sampler and every non-Gaussian refit.
             bootstrap_result(
                 fit; data = dat, B = Int(B), level = level, rng = rng,
-                threads = threads, failures = :skip, check_converged = true,
+                tree = tree_obj, threads = threads, failures = :skip, check_converged = true,
             )
         else
             bootstrap_result(
@@ -1359,6 +1359,13 @@ function _bridge_public_to_raw_coef_map(fit, labels::_BridgeFormulaLabels,
     for (param, rhs) in forms
         _bridge_lss_form_key(param) === nothing || continue
         haskey(block_names, param) || continue
+        # Coupled location-scale fits build their fixed columns after removing
+        # `(1 | tag | group)`. The ordinary random-effect splitter does not
+        # handle that nested tag syntax; use the fitter's own projection so
+        # neither the tag nor the structured group becomes a data column.
+        if fit isa DrmFit && fit.nll isa LocScaleObjective && param in (:mu, :sigma)
+            rhs = first(_ls_parse_coupled(rhs))
+        end
         rendered = _bridge_render_formula_block(form, param, rhs, labels)
         rendered === nothing && continue
         raw, public = rendered

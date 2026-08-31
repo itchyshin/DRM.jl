@@ -1,0 +1,6 @@
+DIRECT_TREE_BOOTSTRAP (2, 2, 0) failures=@NamedTuple{replicate::Int64, seed::UInt64, message::String}[]
+BRIDGE_TREE_BOOTSTRAP Dict{String, Any}("threaded" => false, "method" => "bootstrap", "param" => "mu", "used" => 2, "coef" => "x", "elapsed" => 0.2239165, "estimate" => 0.26665500458261565, "upper" => 0.7503840651384253, "failed" => 0, "julia_threads" => 1, "worker_threads" => 1, "attempted" => 2, "status" => "bootstrap", "message" => "2/2 successful refits", "lower" => -0.04353129835504113, "blas_threads" => 1)
+BRIDGE_TREE_BOOTSTRAP Dict{String, Any}("threaded" => false, "method" => "bootstrap", "param" => "mu", "used" => 2, "coef" => "x", "elapsed" => 0.221271417, "estimate" => 0.26665500458261565, "upper" => 0.7503840651384253, "failed" => 0, "julia_threads" => 1, "worker_threads" => 1, "attempted" => 2, "status" => "bootstrap", "message" => "2/2 successful refits", "lower" => -0.04353129835504113, "blas_threads" => 1)
+Test Summary:                | Pass  Total   Time
+bounded bootstrap regression |   18     18  21.5s
+BOOTSTRAP_SLICE_PASS
