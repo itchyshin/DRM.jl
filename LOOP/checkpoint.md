@@ -1,3 +1,74 @@
+# Current checkpoint — arithmetic repaired locally; finite profiles still fail
+
+Goal ACTIVE; global G0-G8 OPEN. Integration branchcodex/parity-integration-20260831,
+JuliaHEADdeac84cd before this evidence-only checkpoint; RHEAD9007338e5 unchanged.
+All source/test changes below are CARRIED-OVER, not committed production code:
+- src/locscale_inner.jl94f54c74: reviewed tracked objective+gradient specializations.
+- src/locscale_grad.jlc0369528: previous direct precision derivatives.
+- test/test_locscale_compensated_gradient.jlf363e912:14checks, now wired.
+- precisiontest60d13d50, fixture8c117983; runtests2399b16f wires both newtests.
+- originalprofilethreadtestca1d9db8 remains unchanged, untracked and unwired.
+No coefficient-profile threading implementation. Protected Gaussian/tutorial files
+untouched. Do not bypass their previous denied edits.
+
+Retained four-process experiment supports objective+gradient compensation at the
+same P/controls. Objective-only and combined each independently certify4starts;
+baseline and gradient-only cold fail. Combined recovers all3Newton descent signs.
+Production checks:14/14 focused,28/28 independent precision reference,155/155
+inner/neighbour module. Serial/four-thread expected-status suites completed with194/198 displayed
+checks; these admit documented failed-profile statuses, not finite-CI evidence.
+Original finiteCI gate175604Z FAIL12pass4fail0error:2finitebounds+2threadmetadata.
+The earlier SE exception is absent, but this is still not a valid converged
+default-SE/finite-profile workflow.
+
+NEXT: use post-compensation-profile/post-compensation-profile-20260831T175800Z.jls
+under docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/.
+This fresh public default-SE fit reports converged=false, theta_engine:
+[.6370343864363128,.24410010854321965,1.4752150450061565,-1.6628472381509574,
+ -.09607985455078398,-9.024495255997751]. Three nuisance endpoints fail stationarity
+(maxfreegradient1.2134e-5,6.8149e-7,1.6714e-7 vs1e-7); slope-lower endpoint fails
+its inner solve and optimizer. Exact fulltheta/coldmode/gradient/P eigenvalues
+are saved. Diagnose precision representation/near-boundary optimizer arithmetic;
+do not loosen tolerances, suppressSEs, replacefixtures, or call failures unbounded.
+Whitening remains a reviewed but unselected alternative, not an implemented fix.
+
+Rose reviewed source94f54c74 with no blocker; suggested generalQ/loadings primal
+check now passes in14test suite. Global Melissa reconciliation remains open.
+MissionControl localcommite6d6e6a verified served; exactstatuslease released.
+Root owns integration leases; children idle. No running numerical process remains.
+No remote campaign this slice; historical connected-host receipt is not refreshed.
+Resume in the integration checkout; read this block and latest after-task report,
+then saved postcompensation profile state. Do not rerun completed diagnostics merely
+to rediscover their results. Final-source suite reruns required before acceptance.
+
+---
+
+# Latest evidence — objective rounding rejects a certified Newton step
+
+Goal ACTIVE; global gates OPEN. HEADdeac84cd before this evidence update.
+No production inner source edit. Pending gradientc0369528 and its test/fixture/
+runtests wiring remain CARRIED-OVER. New compensated-gradient test is unwired,
+red1pass3fail. Existing modulecovgrad002 passes155/155 on pending gradient.
+
+Independent exacttheta reference172237Z proves a valid fixedP64 representable
+point exists. Gradient-only process-local experiment173220Z improves arithmetic
+but fails cold zero atL2=7.19e-6; no successful remedy claim. Objective-direction
+174337Z runs4.054s, source unchanged, actual override4calls/fallback0. FullNewton
+step produces raw Float objective +1.97822e-10 vs independent fixedP256 objective
+-5.73358e-13; its independent L2residual2.74793e-10 passes bound1.32258e-9.
+Step lies outside current terminal-polish radius. Half/quarter objective signs
+also reversed. Keep raw support failure173804Z (world-age, missing installation).
+
+Current next action: prepare/review process-local full-objective compensation
+experiment (baseline/gradient/objective/both at same four starts), no outerfits,
+frozen P/kernels/predictors/Hessian/tolerance/controls. Builder owns only new
+scratch compensated-objective-experiment directory; Rose independently reviews.
+No production acceptance yet; precision construction is a separate open concern.
+Then required default-SE, finiteCI, profile threading and programme gates remain.
+
+
+---
+
 # Current — gradient reference passes; Wald stencil diagnosis required
 
 Programme ACTIVE, global G0-G8 OPEN. Julia HEAD67bf51c5 before this evidence

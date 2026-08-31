@@ -1,0 +1,31 @@
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+DRM_SOURCE /private/tmp/drm-parity-20260830/integration/DRM.jl/src/DRM.jl
+Test Summary:                                     | Pass  Total  Time
+location-scale inner-mode stationarity acceptance |   78     78  0.2s
+Test Summary:                        | Pass  Total  Time
+tracked prior directional arithmetic |   32     32  0.0s
+FILE_COMPLETE test/test_locscale_inner_status.jl
+Test Summary:                            | Pass  Total  Time
+location–scale Λ log-Cholesky round-trip |    9      9  0.0s
+Test Summary:                                           | Pass  Total   Time
+location–scale inner joint: grad/Hessian vs ForwardDiff |    4      4  20.6s
+Test Summary:                                        | Pass  Total  Time
+location–scale inner mode reaches a stationary point |    3      3  0.3s
+FILE_COMPLETE test/test_locscale_inner.jl
+Test Summary:                                                       | Pass  Total  Time
+location–scale Laplace marginal vs 2-D Gauss–Hermite (single group) |    4      4  0.4s
+Test Summary:                                                      | Pass  Total  Time
+location–scale marginal: multi-group i.i.d. factorises over groups |    2      2  0.0s
+FILE_COMPLETE test/test_locscale_marginal.jl
+Test Summary:                                       | Pass  Total  Time
+location–scale exact gradient vs finite differences |    9      9  1.8s
+FILE_COMPLETE test/test_locscale_grad.jl
+Test Summary:                                            | Pass  Total  Time
+location–scale fit: i.i.d. groups (NB2) end-to-end smoke |    5      5  2.8s
+Test Summary:                                                | Pass  Total  Time
+location–scale fit: phylogenetic tree (NB2) end-to-end smoke |    3      3  0.3s
+Test Summary:                                                   | Pass  Total  Time
+location–scale fit: gradient-based convergence + recovery (NB2) |    6      6  0.7s
+FILE_COMPLETE test/test_locscale_fit.jl
+MODULE_INNER_STATUS_OK

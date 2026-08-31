@@ -1,61 +1,111 @@
 [
   {
-    "path": "run_wald_stencil_diagnostic.sh",
+    "path": "wald-stencil-diagnostic/exact-theta-reference-rounding-20260831T171851Z.log",
+    "sha256": "0492087e1ba5c7ae89aea31a3238ccf1937733682ddeb463206e4da6b127f7e5",
+    "bytes": 1023
+  },
+  {
+    "path": "wald-stencil-diagnostic/exact-theta-reference-rounding-20260831T171851Z.runner-snapshot.sh",
+    "sha256": "b25cfb4b4f7888e964ea7b5aa11794c6079bf1e4f979a74cd54552cd63cab57d",
+    "bytes": 1557
+  },
+  {
+    "path": "wald-stencil-diagnostic/exact-theta-reference-rounding-20260831T171851Z.script-snapshot.jl",
+    "sha256": "220058177fa3db102d8c941a6b6167e81ba0f36b8e4f790b9c224afb6c4666a9",
+    "bytes": 9508
+  },
+  {
+    "path": "wald-stencil-diagnostic/exact-theta-reference-rounding-20260831T171851Z.status.json",
+    "sha256": "00933c11c070418c7fe0f4995203507c87b8dbdeff1444e6d16878c0527b9e98",
+    "bytes": 417
+  },
+  {
+    "path": "wald-stencil-diagnostic/exact-theta-reference-rounding-20260831T172237Z.jls",
+    "sha256": "1001c0ac0a3aa691518d20c6e0b57f316f7c4271474b228c299e7ec0771071d4",
+    "bytes": 16539
+  },
+  {
+    "path": "wald-stencil-diagnostic/exact-theta-reference-rounding-20260831T172237Z.log",
+    "sha256": "b536b1331411a362bf7cc6a5713141dcf88584b91b3821baaec6ec6ea873e279",
+    "bytes": 478
+  },
+  {
+    "path": "wald-stencil-diagnostic/exact-theta-reference-rounding-20260831T172237Z.runner-snapshot.sh",
+    "sha256": "b25cfb4b4f7888e964ea7b5aa11794c6079bf1e4f979a74cd54552cd63cab57d",
+    "bytes": 1557
+  },
+  {
+    "path": "wald-stencil-diagnostic/exact-theta-reference-rounding-20260831T172237Z.script-snapshot.jl",
+    "sha256": "3fa75977287f657fe096b233dc455dfab819f0636747e2b19daa36bc471c5d65",
+    "bytes": 11364
+  },
+  {
+    "path": "wald-stencil-diagnostic/exact-theta-reference-rounding-20260831T172237Z.status.json",
+    "sha256": "b9bc98953d346ad2bd4d7584a377ba7157e8291ce71dacbdc3d2b42f71b385b1",
+    "bytes": 417
+  },
+  {
+    "path": "wald-stencil-diagnostic/exact_theta_reference_rounding.jl",
+    "sha256": "3fa75977287f657fe096b233dc455dfab819f0636747e2b19daa36bc471c5d65",
+    "bytes": 11364
+  },
+  {
+    "path": "wald-stencil-diagnostic/run_wald_stencil_diagnostic.sh",
     "sha256": "0eb36f2a3b5ff1b66cf55fb7c30c4f5a40e39ed5707abe279dbc4a42403146a4",
     "bytes": 1583
   },
   {
-    "path": "wald-stencil-20260831T170000Z.launcher.log",
+    "path": "wald-stencil-diagnostic/wald-stencil-20260831T170000Z.launcher.log",
     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "bytes": 0
   },
   {
-    "path": "wald-stencil-20260831T170000Z.log",
+    "path": "wald-stencil-diagnostic/wald-stencil-20260831T170000Z.log",
     "sha256": "4d79fb6d80c411fde3ecb3d3a65305eff058949e0d7e516e1e6f612a6005ff6a",
     "bytes": 558
   },
   {
-    "path": "wald-stencil-20260831T170000Z.runner-snapshot.sh",
+    "path": "wald-stencil-diagnostic/wald-stencil-20260831T170000Z.runner-snapshot.sh",
     "sha256": "6837446e33bc3ee9f5cc5001af8055d35b104dd69237eb6afd9010350754db20",
     "bytes": 1483
   },
   {
-    "path": "wald-stencil-20260831T170000Z.script-snapshot.jl",
+    "path": "wald-stencil-diagnostic/wald-stencil-20260831T170000Z.script-snapshot.jl",
     "sha256": "2fb10a67d3022f7d90ad7adc76b87b25d6c494cece0d5b1d43839f93a71421c8",
     "bytes": 4766
   },
   {
-    "path": "wald-stencil-20260831T170000Z.status.json",
+    "path": "wald-stencil-diagnostic/wald-stencil-20260831T170000Z.status.json",
     "sha256": "cb072a451417b916a37125f907d28fa838b36093a16e360af1ce06ced187dd1c",
     "bytes": 392
   },
   {
-    "path": "wald-stencil-20260831T171108Z.jls",
+    "path": "wald-stencil-diagnostic/wald-stencil-20260831T171108Z.jls",
     "sha256": "25084fd208dbbe9f863331b19b70c2ed7f3407d2135095a8cc0e07dcda3647a3",
     "bytes": 7213
   },
   {
-    "path": "wald-stencil-20260831T171108Z.log",
+    "path": "wald-stencil-diagnostic/wald-stencil-20260831T171108Z.log",
     "sha256": "8e7a42583c2797166f915b4d86efdb65105ee45affa9349e33358903abfd9859",
     "bytes": 421
   },
   {
-    "path": "wald-stencil-20260831T171108Z.runner-snapshot.sh",
+    "path": "wald-stencil-diagnostic/wald-stencil-20260831T171108Z.runner-snapshot.sh",
     "sha256": "0eb36f2a3b5ff1b66cf55fb7c30c4f5a40e39ed5707abe279dbc4a42403146a4",
     "bytes": 1583
   },
   {
-    "path": "wald-stencil-20260831T171108Z.script-snapshot.jl",
+    "path": "wald-stencil-diagnostic/wald-stencil-20260831T171108Z.script-snapshot.jl",
     "sha256": "2a7e8249ccbcd2e7d235d79143c58e96e0fedea2313014170fc03325f734dab1",
     "bytes": 4811
   },
   {
-    "path": "wald-stencil-20260831T171108Z.status.json",
+    "path": "wald-stencil-diagnostic/wald-stencil-20260831T171108Z.status.json",
     "sha256": "56b08e03c493ce6948a3f6a4098b04cc70ec0a2e87a1d04caf800776cc0f483a",
     "bytes": 392
   },
   {
-    "path": "wald_stencil_diagnostic.jl",
+    "path": "wald-stencil-diagnostic/wald_stencil_diagnostic.jl",
     "sha256": "2a7e8249ccbcd2e7d235d79143c58e96e0fedea2313014170fc03325f734dab1",
     "bytes": 4811
   }
