@@ -1,3 +1,50 @@
+# Current checkpoint — polytomy repair verified (2026-08-30)
+
+Programme ACTIVE; G0–G8 remain OPEN. Continue the approved plan in
+`docs/dev-log/plans/2026-08-30-julia-r-parity.md`, not unrelated LOOP/ultra-plan.md.
+Worktrees: /private/tmp/drm-parity-20260830/{DRM.jl,drmTMB}, branch
+codex/julia-r-parity. Julia implementation/evidence8b80ff12; R serializer/evidence
+af02b4038; Mission Controlc1a1801, four served fields verified and vault lease released.
+
+Both constructors and the R serializer now accept positive-length rooted
+multifurcations without inventing branches. Topology and finite precision are
+validated; height traversal uses a cursor queue. Julia source SHA
+18c72189e6eddc6ee325f8ce70e26d7055bbdf7492fe303bcdc8c988941bcfff.
+Rose approved; both new tests are wired. Julia55+22+14=91 and R33+122=155
+assertions pass. All five leaf-polytomy gates pass final re-verification.
+Two12-tip star/mixed GaussianML workflows,60shuffled/repeated rows each, pass
+native/direct/bridge4e-6, independent covariance/likelihood/conditional-row oracles.
+Sixteen damaged receipts reject normally and underPython-O. Finalpublic003 elapsed
+21.399sec includes startup, nativeDLL/source/runtime stamped. No warm speed claim.
+q2 has exact Gaussian likelihood evidence; q4 only fixed-state Hessian/normalization
+and dimension evidence, not fitting/mode/coverage. Two docs pages executeoneexample;
+no new visual/deployed-site proof. Evidence: docs/dev-log/evidence/julia-r-parity/polytomy/.
+
+Only two Rserializer lines were staged. Removing them from the pre-commitworking
+file reconstructed all foreignZOBbytes exactly; aftercommit foreigndiff remains96/10.
+No active competing lease or serializerhunk was found; dirtywriter identity was
+not inferred from Git authorship. Preserve foreign JuliaS5include/test, RZOB files
+and unrelatedvaultdirt. Both denied Gaussian sparse source files remain untouched:
+never retry or bypass their denial. No new Totoro/DRAC job; no release/deployment,
+registration or collaborator message. Source receipts are development-byte evidence,
+not a clean final integrated-head qualification. Earlier whole-source receipts
+are historical after this source change; refresh required evidence at integration.
+
+NEXT: continue registered direct/bridge profile and joint simulation/bootstrap
+contracts. Ayumi's profile/bootstrap report is UNSPECIFIED, pending her example;
+do not call it a joint missing-predictor defect. Known joint gaps can proceed
+independently without waiting for her. Zero-length/unary/single-tip/general-label
+and all-family tree qualification remain required. DirectJulia raw covariance
+supports unequal depths; Rcorrelation-scale bridge still requires ultrametricity.
+Retain all24native missing-predictor obligations and prior strict4e-6losses,
+complete valid-case/output manifest, LSS stampedSE/REML/masks/p=10k/final-head,
+every registered warm win/automatic1/2/4/8policy, recovery/cleanup and whole site.
+No threshold/default/comparator waiver. Melissa reconciled these residuals.
+Actualagenthours uninstrumented; parentactualSol/medium (planrequestedhigh),
+Terra/highbuilder/reconciler, Sol/highreview, Luna/lowscout. Fullprogramme notdone.
+
+---
+
 # Current checkpoint — prediction, uncertainty and Ayumi report (2026-08-30)
 
 Programme ACTIVE; all G0–G8 OPEN.
