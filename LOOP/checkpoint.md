@@ -1,3 +1,53 @@
+# Current checkpoint — private helper passes; paired production wiring next
+
+Goal ACTIVE; programme G0–G8 OPEN. Source HEAD18f66f863d5c7aaba7f19419bb3f4303517d44bb
+before this evidence checkpoint. RHEAD9007338e5 unchanged; branch
+codex/parity-integration-20260831. No publish/release/retirement or remote run.
+
+New independent references: four saved endpoints,128/256-bit modes and all6
+outer derivatives, two starts/three FDsteps, allpass. Legacy numerical baseline
+184655Z remains7pass2fail. Private helper first focused185530Z247pass1fail;
+structural-zero loss for an unobserved group exposed by dense-inverse comparison.
+Repaired helper190401Z252/252pass,12.363s,cap60,Julia/BLAS1/1. Current helper
+SHA1baf3baf1ef4eea4ad4d539e0c2da4d616978a7ad94b4852694aee3ac8a3f0ec;
+test4226d2a690567a860cb2e50263f0022b8f78202d4499d1f3e98b81d7f97a82dc.
+Newsource/test remain CARRIED-OVER/unwired; no production profile repair claimed.
+Original public finite-profile175604Z remains12pass4fail. No coefficient threading.
+Both red and green snapshots/logs/status retained in whitened-state-runner/.
+Local .unlazy/locscale-whitened.md G0/G1 pass; G2/G3/G4 remain open.
+
+NEXT: acquire exact integration ownership before changing consumers; pair value,
+gradient and observed-information without globally redirecting legacy functions.
+Keep raw _ls_fit_nll/_ls_marginal_grad/_ls_obs_information for sigma/corr routes.
+Review LocScaleObjective and locscale_frontend: current objective stores canonical
+loadings only; corr passes generalZ to _fit_locscale and later uses raw inference.
+Use explicit private route selection rather than silently changing those callers.
+Wire src/DRM.jl include after infer/before profile. Every newtheta is solved and
+certified; typed seeds carry no acceptance. Each information +/- evaluation and
+profile coefficient job owns its state. Preserve finalV/defaultSEs and optimizer,
+status/sentinel/finiteendpoint contracts. Then run original numerical gate, only
+then implement coefficient threading. Detailed read-only caller map is retained
+in the current review note. No new integration leases or consumer edits yet.
+
+New user steering: read Leckie school models, Zhang/Hedeker R-squared, MIXREGLS.
+Exact attached intake paths were missing; public papers read instead, no intake
+scan. docs/dev-log/research/2026-08-31-location-scale-literature-crosswalk.md
+records terminology, logvariance vs logSD conversion, randomscale vs groupSD,
+conditional vs marginal summaries and non-equivalence of MCMC/quadrature/Laplace.
+Do not add a new R-squared API solely from this reading or claim CI validation.
+Rose reviewed crosswalk and252receipt; production integration stays unreviewed.
+
+MissionControl localcommit54232e7434ca25967dd38fa5ae620e2b88d2a3bc updates
+exacttwofields; served values verified, foreign staging preserved, lease released.
+
+Prior carried files retain inner94f54c74,gradc0369528,runtests2399b16f,
+compensatedtestf363e912,precisiontest60d13d50,precisionfixture8c117983,
+unwiredthreadtestca1d9db8. Protected Gaussian/tutorial paths remain untouched.
+Evidence checkpoint excludes all production source/tests. Active goal supplies
+continuation; no final programme verdict, no new long campaign authorization.
+
+---
+
 # Current checkpoint — whitening diagnostics; production inference still open
 
 Goal ACTIVE; global G0–G8 OPEN. Julia HEAD0b88a01c before this evidence-only
