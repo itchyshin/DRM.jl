@@ -1,0 +1,7 @@
+┌ Info: canonical location-scale profile status fixture
+│   attempted = 1
+│   failed = 1
+│   lower_reason = :not_converged
+└   upper_reason = :not_converged
+Test Summary:                          | Pass  Total   Time
+location-scale profile endpoint status |   65     65  34.6s

@@ -126,6 +126,7 @@ DRM._ls_marginal_grad
 DRM._ls_marginal_nll
 DRM._ls_obs_information
 DRM._ls_profile_ci
+DRM._ls_profile_ci_result
 DRM._phylo_mean_laplace_hetero_fg
 DRM._phylo_mean_leaf_index
 DRM._reml_normalise

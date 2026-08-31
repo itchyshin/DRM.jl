@@ -1,0 +1,57 @@
+legacy and structured CI helpers retain doc bindings: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:29
+  Test threw exception
+  Expression: Base.Docs.hasdoc(DRM, :_ls_profile_ci)
+  UndefVarError: `hasdoc` not defined
+  Stacktrace:
+   [1] getproperty(x::Module, f::Symbol)
+     @ Base ./Base.jl:31
+   [2] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:29 [inlined]
+   [3] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [4] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:29 [inlined]
+   [5] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [6] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:29 [inlined]
+   [7] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [8] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:28
+legacy and structured CI helpers retain doc bindings: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:30
+  Test threw exception
+  Expression: Base.Docs.hasdoc(DRM, :_ls_profile_ci_result)
+  UndefVarError: `hasdoc` not defined
+  Stacktrace:
+   [1] getproperty(x::Module, f::Symbol)
+     @ Base ./Base.jl:31
+   [2] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:30 [inlined]
+   [3] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [4] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:30 [inlined]
+   [5] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [6] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:29 [inlined]
+   [7] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [8] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:28
+┌ Info: canonical location-scale profile status fixture
+│   attempted = 1
+│   failed = 1
+│   lower_reason = :not_converged
+└   upper_reason = :not_converged
+Test Summary:                                               | Pass  Error  Total   Time
+location-scale profile endpoint status                      |   87      2     89  36.0s
+  legacy and structured CI helpers retain doc bindings      |           2      2   2.1s
+  iteration limits are not certified endpoints              |   14            14   0.1s
+  valid roots and no-crossing remain distinct               |   45            45   0.3s
+  absolute-NLL cancellation cannot certify a root           |    7             7   0.1s
+  finite exhausted nuisance solution is rejected            |    8             8   3.1s
+  public canonical result propagates failed-arm diagnostics |   13            13  30.2s
+ERROR: LoadError: Some tests did not pass: 87 passed, 0 failed, 2 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:27

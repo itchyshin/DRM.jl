@@ -112,6 +112,18 @@ DRM.cutpoints
 
 ## Inference
 
+Check the status as well as the bounds of a profile interval. A signed infinite
+bound can mean that no crossing was found within the searched range, or that an
+endpoint solve failed. `profile_result` distinguishes these outcomes in `stats`
+and `failed`; `confint` warns about failed endpoint solves.
+
+For coupled non-Gaussian location–scale fits, `endpoint_diagnostics` also records
+why each endpoint search stopped, its last evaluated candidate and its residual.
+A candidate from a failed search is diagnostic information, not a confidence
+limit. Through R's `engine = "julia"`, inspect `conf.status` and `profile.message`
+in the returned interval table. A failed result must not be read as evidence of
+an unbounded interval.
+
 ```@docs
 confint
 stderror

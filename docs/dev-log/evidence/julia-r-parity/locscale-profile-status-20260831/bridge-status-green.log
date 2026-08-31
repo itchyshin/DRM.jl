@@ -1,0 +1,5 @@
+FUNCTION_SHA256 2b613293cc653987d3c7c4fdcb1ebc92f2316dfafb097d3613843f29d495d6cc
+TEST_SHA256 df961a611e59d3024fd4ab56639c9dfb21bb2dd44437326624c611cfe7dac589
+Test Summary:                           | Pass  Total  Time
+bridge exposes selected profile failure |   17     17  0.4s
+EXIT 0 ELAPSED 0.7828514999710023

@@ -1,3 +1,86 @@
+# Current — profile-status repair verified; inner-mode convergence is next
+
+Programme ACTIVE. All global G0–G8 remain OPEN. The bounded profile-status
+slice now passes its four local Unlazy gates: 90 focused assertions; actual
+module 196 assertions at one thread (39.22s) and 200 at four (39.00s); all
+source/test hashes unchanged and current. Rose approved production and the
+outcome-independent test. Strict production-navigation Documenter source build
+passed all 52 pages in152.17s. No new HTML visual or deployment claim.
+
+R integration HEAD9007338e5 retains the separately reviewed 14-assertion public
+status-forwarding regression (mocked inference, no production R change).
+Julia status repair is prepared for a scoped local commit. Relevant evidence:
+docs/dev-log/evidence/julia-r-parity/locscale-profile-status-20260831/.
+Neither denied Gaussian source file changed. Canonical profiling stays serial;
+its deferred test/test_locscale_profile_threads.jl is intentionally not in the
+suite and remains CARRIED-OVER, with prior RED retained.
+
+NEXT: repair src/locscale_inner.jl convergence on iteration exhaustion. Rose
+and root reproduced false ok=true despite large latent gradients at the zero
+and default200-iteration budgets, using an exact extracted solver and strictly
+convex synthetic objective. Keep defaultbudget/tolerance; require finite state,
+finite gradient, existing stationarity criterion and successful unregularized
+factorization, including genuine convergence on the last update. Evidence and
+next contract are in locscale-inner-investigation-20260831/. This is not proof
+that inner exhaustion caused the observed Gamma failures. Rerun profile-status
+gates after any inner-engine change; do not inherit this source verdict.
+
+No fits remain running; all local checks terminated. No remote fit, DRAC job or
+allocation. Existing sockets to five DRAC CPUclusters and Totoro were verified
+on2026-08-31. No reason to launch an unmeasured campaign. Retain the901s slow
+profile timeout; do not automatically restart or extend it.
+
+No push, PR publication, main merge, release, registration, worktree retirement
+or collaborator message. Root owns bridge/docs/evidence; builder's current lease
+covers profiler/inference/tests only. Renew/transfer exact paths before the next
+inner-mode slice. Full parity, certified inference, performance, cleanup, docs
+visual/deployment and Melissa programme reconciliation are still outstanding.
+
+---
+
+# Current — reviewed R checkpoint; Julia endpoint and inner-mode repairs
+
+Programme ACTIVE, all G0–G8 OPEN. Paired integration trees remain the only active
+implementation lane. R HEAD9007338e5 locally commits the Rose-approved mocked
+public profile-status test/report/check-log:14assertions,6expected failures in
+damaged-adapter control. No R production change or live JuliaCall evidence.
+Julia HEAD643b584a; source repair still uncommitted and builder-owned.
+
+Candidate status source passed actual-module1thread check:65status+17bridge+
+17BLAS assertions and1final restoration,41.71s,unchangedinputs. First attempt
+failed beforetests because sandbox blocked normal Julia precompile-cache write;
+escalated bounded attempt passed. These are pre-review candidate results.
+Rose found four blockers: cancellation-aware NLL difference/certification,
+ordinary callback exception handling, finite coordinate validation, and lost
+compatibility-wrapper doc binding. Builder Terra/high is repairing these with
+newredcontrols, deterministic forwarding checks, and executableunlazygates.
+Do not run final1/4threadchecks until sourcefreeze. Rootrunner exists at
+../run_profile_status_module.py with90s cap and allsource/testhashes.
+
+NEW confirmed nextobligation: src/locscale_inner.jl exhaustion returnsok from
+Hessian factorization alone withoutstationarity. Rose reproduced with exact
+extractedsolver and strictlyconvex synthetic objective atzero/default200budget.
+This does not establish the realGamma failurecause. Rose is retaining theprobe
+in docs/dev-log/evidence/julia-r-parity/locscale-inner-investigation-20260831/.
+Keepinnerrepair separate; finishendpointstatusreview, then preservebudget/tolerance
+and verifyfinalinnerstationarity before coefficientthreading. No permission
+change for denied gaussian_sparse_lss.jl or gaussian_structured.jl; untouched.
+
+FiveDRACCPUclusters(Fir,Nibi,Rorqual,Trillium,Narval) and Totoro connected via
+existingControlMasters at12:14UTC2026-08-31; noallocation/joblaunched. No remote
+fit remains. Do not extend/restart901sslowprofiletimeout automatically.
+MissionControl9950396 is committedlocalonly and servedverified:reviewedcandidate
+status, no certifiedGammaendpoints, andcomputeavailability. MClease released.
+Rootownsbridge/test/evidence/docs;builder ownsprofiler/canonicalinferencebranch/
+status+threadtests/runtests. ThreadingRED remainsdeferred,notdropped.
+
+Next: sourcefreeze -> root1/4threadfocusedchecks -> Rosefinalreview -> retain
+receipts/doccheck/report and scopedlocalcommit -> innerstationarityrepair.
+Allglobalparity/performance/docs/recoveryobligationsremain. No push,PRpublication,
+release,mainmerge,cleanupretirementorcollaboratormessage.
+
+---
+
 # Current — profile failure disclosure takes priority over threading
 
 Programme ACTIVE, all G0–G8 OPEN. Evidence commit 42042586 retains reviewed

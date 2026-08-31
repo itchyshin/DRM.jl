@@ -1,0 +1,15 @@
+{
+  "scope": "Historical extracted inner-mode flag control on a synthetic strictly convex joint; no full model or response-family fit; not a Gamma-failure cause diagnosis",
+  "source_path": "src/locscale_inner.jl",
+  "source_sha256": "7915b9cc780e723cd9928b2a71c3f22884d21df5f0b57c1ea1f0e2db334f8bcb",
+  "production_source_unchanged": true,
+  "exit_status": 0,
+  "zero_budget_nonstationary_false_success": true,
+  "default_200_iteration_nonstationary_false_success": true,
+  "stationary_positive_control": true,
+  "files": {
+    "probe.py": "2da9fb97ff6d9d3237207e824a7a49e15b9647319caa4ec56d51843e2b6d0198",
+    "source-locscale-inner.jl": "7915b9cc780e723cd9928b2a71c3f22884d21df5f0b57c1ea1f0e2db334f8bcb",
+    "probe-001.log": "d9c3ff8ad6d896873c7d86ac4d3d14b65e968593562f5450c7c04e47654a3b17"
+  }
+}

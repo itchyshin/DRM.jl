@@ -1,0 +1,15 @@
+{
+  "julia_base_head": "643b584a28b04daeb8c62cb2539123d2a661f1e9",
+  "r_base_head": "61218f18ea0b2943408b4f599e94120595fbc4a6",
+  "input_hashes": {
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl/src/bridge.jl": "34970249a7fc1ca233554f704200a7a326d944019aeaee189903894114be078b",
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_bridge_profile_status.jl": "df961a611e59d3024fd4ab56639c9dfb21bb2dd44437326624c611cfe7dac589",
+    "/private/tmp/drm-parity-20260830/integration/drmTMB/R/julia-bridge.R": "fb5ca0e67afa9696b42457e771baac0d318318b38b0160db0fb252cda7570701",
+    "/private/tmp/drm-parity-20260830/integration/drmTMB/tests/testthat/test-julia-inference.R": "e0cab79134dc89092597dc45fa8e77b4efb7a86cef281befd51164784a7887b3"
+  },
+  "bridge_pure_red": "14pass3fail, old extracted helper",
+  "bridge_pure_green": "17pass, current extracted helper",
+  "r_pure_green": "14pass, no skips; current R code loaded with pkgload, no recompile",
+  "r_negative_control": "6fail when both R row adapters deliberately erase status/messages; process exit1 expected",
+  "scope": "Helper and mocked public R conversion only; not live JuliaCall/fullmodel/nativeparity/performance; actual-module Julia check pending"
+}

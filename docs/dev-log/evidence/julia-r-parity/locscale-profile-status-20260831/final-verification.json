@@ -1,0 +1,22 @@
+{
+  "module-1threads-final003": {
+    "assertions": 196,
+    "elapsed_seconds": 39.22279924992472,
+    "exit_code": 0,
+    "inputs_match_current": true,
+    "standalone_assertions": [
+      "DRM module source path",
+      "final BLAS restoration"
+    ]
+  },
+  "module-4threads-final004": {
+    "assertions": 200,
+    "elapsed_seconds": 38.996953665977344,
+    "exit_code": 0,
+    "inputs_match_current": true,
+    "standalone_assertions": [
+      "DRM module source path",
+      "final BLAS restoration"
+    ]
+  }
+}

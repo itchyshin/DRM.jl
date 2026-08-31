@@ -22,6 +22,21 @@ using DRM, Test
     outcome = DRM._bridge_profile_outcome((stats=[searched],failed=0), row)
     @test outcome.status == "profile"
     @test occursin("searched range",outcome.message)
+    # Location-scale root diagnostics must reach the R-facing message, separately
+    # from the nuisance solver's reason, and only for the selected coefficient.
+    root_lower = (reason=:max_iterations, candidate=-3.0, residual=4.0)
+    unrelated = (param=:mu, coef="y", lower=(reason=:unrelated_failure,))
+    root_row = (param=:mu, coef="x", lower=root_lower)
+    root_result = (stats=[detailed, good], failed=1,
+                   endpoint_diagnostics=[unrelated, root_row])
+    root_outcome = DRM._bridge_profile_outcome(root_result, row)
+    @test root_outcome.status == "profile_failed"
+    @test occursin("endpoint=max_iterations", root_outcome.message)
+    @test occursin("candidate=-3.0", root_outcome.message)
+    @test occursin("residual=4.0", root_outcome.message)
+    @test occursin("nuisance=not_converged", root_outcome.message)
+    @test !occursin("unrelated_failure", root_outcome.message)
+    @test DRM._bridge_profile_outcome(root_result, merge(row,(coef="y",))).status == "profile"
     # A missing per-row diagnostic must not erase an aggregate failure.
     @test DRM._bridge_profile_outcome((stats=NamedTuple[], failed=1),row).status == "profile_failed"
     @test DRM._bridge_profile_outcome((stats=NamedTuple[], failed=0),row).status == "profile"

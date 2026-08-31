@@ -144,7 +144,6 @@ end
 # never evidence of an unbounded interval. A finite negative gap after the bounded
 # expansion budget is instead reported as `:no_crossing` in the searched range.
 function _ls_profile_root_result(evalh, x0; dir::Float64, init::Float64,
-                                 cancellation::Float64 = 0.0,
                                  maxexpand::Int = 40, maxnewton::Int = 30,
                                  ftol::Float64 = 1e-7, xtol::Float64 = 1e-8)
     evaluations = Ref(0)
@@ -152,120 +151,70 @@ function _ls_profile_root_result(evalh, x0; dir::Float64, init::Float64,
     terminal_nuisance = Ref{Any}(nothing)
     function evaluate(t)
         evaluations[] += 1
-        candidate = x0 + dir * t
-        isfinite(candidate) ||
-            return (gap=NaN, slope=NaN, ok=false, reason=:nonfinite_candidate,
-                    cancellation=cancellation)
-        raw = try
-            evalh(candidate)
-        catch err
-            err isa InterruptException && rethrow()
-            return (gap=NaN, slope=NaN, ok=false, reason=:exception, cancellation=NaN)
-        end
-        gap, slope, ok = try
-            raw
-        catch err
-            err isa InterruptException && rethrow()
-            return (gap=NaN, slope=NaN, ok=false, reason=:invalid_evaluation,
-                    cancellation=NaN)
-        end
+        raw = evalh(x0 + dir * t)
+        gap, slope, ok = raw
         raw isa NamedTuple && haskey(raw, :nuisance) &&
             (terminal_nuisance[] = raw.nuisance)
         reason = raw isa NamedTuple && haskey(raw, :reason) ? raw.reason : :evaluation_failed
-        allowance = raw isa NamedTuple && haskey(raw, :cancellation) ?
-                    raw.cancellation : cancellation
-        (isfinite(allowance) && allowance >= 0) ||
-            return (gap=NaN, slope=NaN, ok=false, reason=:nonfinite_cancellation,
-                    cancellation=NaN)
-        !ok && return (gap=NaN, slope=NaN, ok=false, reason=reason,
-                       cancellation=Float64(allowance))
+        !ok && return (gap=NaN, slope=NaN, ok=false, reason=reason)
         !isfinite(gap) && return (gap=gap, slope=slope, ok=false,
-                                  reason=:nonfinite_evaluation,
-                                  cancellation=Float64(allowance))
+                                  reason=:nonfinite_evaluation)
         isfinite(slope) && (gradient_evaluations[] += 1)
-        return (gap=Float64(gap), slope=Float64(slope), ok=true, reason=:accepted,
-                cancellation=Float64(allowance))
+        return (gap=gap, slope=slope, ok=true, reason=:accepted)
     end
     make_result(value, accepted, unbounded, endpoint_failed, reason,
-                bracket_expansions, root_iterations, candidate, residual, allowance=NaN) = (
+                bracket_expansions, root_iterations, candidate, residual) = (
         value=Float64(value), accepted=accepted, unbounded=unbounded,
         endpoint_failed=endpoint_failed, reason=reason,
         bracket_expansions=bracket_expansions, root_iterations=root_iterations,
         evaluations=evaluations[], gradient_evaluations=gradient_evaluations[],
         candidate=Float64(candidate), residual=Float64(residual),
-        cancellation=Float64(allowance),
         nuisance=terminal_nuisance[],
     )
-    (isfinite(x0) && isfinite(dir) && isfinite(init)) ||
-        return make_result(dir > 0 ? Inf : -Inf, false, false, true,
-                           :nonfinite_initialization, 0, 0, NaN, NaN, cancellation)
-    init > 0 ||
-        return make_result(dir > 0 ? Inf : -Inf, false, false, true,
-                           :invalid_initialization, 0, 0, NaN, NaN, cancellation)
-    dir != 0 ||
-        return make_result(Inf, false, false, true, :invalid_direction, 0, 0, NaN, NaN,
-                           cancellation)
-    (isfinite(cancellation) && cancellation >= 0) ||
-        return make_result(dir > 0 ? Inf : -Inf, false, false, true,
-                           :nonfinite_cancellation, 0, 0, NaN, NaN, cancellation)
     tlo = 0.0                                   # h(tlo) < 0 (feasible by construction)
     thi = init
     maxexpand > 0 ||
         return make_result(dir > 0 ? Inf : -Inf, false, false, true, :invalid_search_budget,
-                           0, 0, NaN, NaN, cancellation)
-    current = (gap=NaN, slope=NaN, ok=false, reason=:not_evaluated, cancellation=NaN)
+                           0, 0, NaN, NaN)
+    current = (gap=NaN, slope=NaN, ok=false, reason=:not_evaluated)
     expansions = 0
     for _ in 1:maxexpand
         current = evaluate(thi)
         current.ok || return make_result(dir > 0 ? Inf : -Inf, false, false, true,
-                                         current.reason, expansions, 0, x0 + dir * thi, current.gap,
-                                         current.cancellation)
-        abs(current.gap) < ftol && abs(current.gap) + current.cancellation <= ftol &&
+                                         current.reason, expansions, 0, x0 + dir * thi, current.gap)
+        abs(current.gap) < ftol &&
             return make_result(x0 + dir * thi, true, false, false, :accepted,
-                               expansions, 0, x0 + dir * thi, current.gap,
-                               current.cancellation)
-        current.gap > current.cancellation && break
-        current.gap >= -current.cancellation &&
-            return make_result(dir > 0 ? Inf : -Inf, false, false, true,
-                               :insufficient_precision, expansions, 0,
-                               x0 + dir * thi, current.gap, current.cancellation)
+                               expansions, 0, x0 + dir * thi, current.gap)
+        current.gap > 0 && break
         tlo = thi
         thi *= 1.6
         expansions += 1
     end
-    current.gap > current.cancellation ||
+    current.gap > 0 ||
         return make_result(dir > 0 ? Inf : -Inf, false, true, false, :no_crossing,
-                           expansions, 0, x0 + dir * (thi / 1.6), current.gap,
-                           current.cancellation)
+                           expansions, 0, x0 + dir * (thi / 1.6), current.gap)
 
     # Guarded Newton on [tlo, thi]; h(tlo) < 0 ≤ h(thi). Every accepted
     # endpoint is an actually evaluated candidate with a small residual.
     t = thi
     for iteration in 0:maxnewton
-        abs(current.gap) < ftol && abs(current.gap) + current.cancellation <= ftol &&
+        abs(current.gap) < ftol &&
             return make_result(x0 + dir * t, true, false, false, :accepted,
-                               expansions, iteration, x0 + dir * t, current.gap,
-                               current.cancellation)
-        abs(current.gap) <= current.cancellation &&
-            return make_result(dir > 0 ? Inf : -Inf, false, false, true,
-                               :insufficient_precision, expansions, iteration,
-                               x0 + dir * t, current.gap, current.cancellation)
+                               expansions, iteration, x0 + dir * t, current.gap)
         iteration == maxnewton &&
             return make_result(dir > 0 ? Inf : -Inf, false, false, true, :max_iterations,
-                               expansions, iteration, x0 + dir * t, current.gap,
-                               current.cancellation)
+                               expansions, iteration, x0 + dir * t, current.gap)
         thi - tlo < xtol &&
             return make_result(dir > 0 ? Inf : -Inf, false, false, true, :bracket_collapse,
-                               expansions, iteration, x0 + dir * t, current.gap,
-                               current.cancellation)
-        current.gap > current.cancellation ? (thi = t) : (tlo = t)
+                               expansions, iteration, x0 + dir * t, current.gap)
+        current.gap > 0 ? (thi = t) : (tlo = t)
         sd = dir * current.slope                # h'(t) = dir · ∂nll/∂θ[idx]
         tn = (isfinite(sd) && sd > 0) ? t - current.gap / sd : (tlo + thi) / 2
         t = (tlo < tn < thi) ? tn : (tlo + thi) / 2
         current = evaluate(t)
         current.ok || return make_result(dir > 0 ? Inf : -Inf, false, false, true,
                                          current.reason, expansions, iteration + 1,
-                                         x0 + dir * t, current.gap, current.cancellation)
+                                         x0 + dir * t, current.gap)
     end
     error("unreachable location-scale profile root state")
 end
@@ -276,8 +225,8 @@ function _ls_profile_root(evalh, x0; kwargs...)
 end
 
 """
-    _ls_profile_ci_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; idx, level=0.95,
-                          nll_min=nothing, se=nothing)
+    _ls_profile_ci(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; idx, level=0.95, nll_min=nothing,
+                   se=nothing) -> (lower, upper)
 
 Profile-likelihood CI for packed parameter `idx`, inverting `2(ℓ̂ − ℓ_profile) =
 χ²₁(level)` by a Venzon–Moolgavkar-style guarded-Newton root-find (the profile
@@ -299,7 +248,7 @@ function _ls_profile_ci_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; idx::Int, le
                                Zη = _ls_canonical_Zeta(length(y)),
                                Zψ = _ls_canonical_Zpsi(length(y)))
     nmin = nll_min === nothing ? _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ) : nll_min
-    half = Distributions.quantile(Distributions.Chisq(1), level) / 2
+    thr = nmin + Distributions.quantile(Distributions.Chisq(1), level) / 2
     z = Distributions.quantile(Distributions.Normal(), 1 - (1 - level) / 2)
     if se === nothing
         V = _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ)
@@ -319,25 +268,9 @@ function _ls_profile_ci_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; idx::Int, le
         # Slope ∂nll/∂θ[idx] at the constrained optimum: the idx-component of the
         # exact full gradient (free-parameter components ≈ 0 by stationarity).
         θ = collect(float.(θ̂)); θ[free] .= nuisance.minimizer; θ[idx] = val
-        slope = try
-            g = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0=mwarm[])
-            (length(g) == p && isfinite(g[idx])) ? g[idx] : NaN
-        catch err
-            err isa InterruptException && rethrow()
-            NaN
-        end
-        reference = _profile_reference_difference(nuisance.value, nmin)
-        reference.status === :accepted || return (
-            gap=NaN, slope=NaN, ok=false, reason=reference.status,
-            cancellation=reference.cancellation, nuisance=nuisance,
-        )
-        gap = reference.difference - half
-        isfinite(gap) || return (
-            gap=NaN, slope=NaN, ok=false, reason=:insufficient_precision,
-            cancellation=reference.cancellation, nuisance=nuisance,
-        )
-        return (gap=gap, slope=slope, ok=true, cancellation=reference.cancellation,
-                nuisance=nuisance)
+        g = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0=mwarm[])
+        slope = (length(g) == p && isfinite(g[idx])) ? g[idx] : NaN
+        return (gap=nuisance.value - thr, slope=slope, ok=true, nuisance=nuisance)
     end
     lower = _ls_profile_root_result(evalh, θ̂[idx]; dir=-1.0, init=step0)
     lastsol[] = nothing                         # reset warm-start before the other side
@@ -347,13 +280,6 @@ function _ls_profile_ci_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; idx::Int, le
 end
 
 # Historical two-bound CI helper retained for direct internal callers.
-"""
-    _ls_profile_ci(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; kwargs...)
-
-Compatibility wrapper returning only `(lower, upper)` from
-[`_ls_profile_ci_result`](@ref). Use the structured result to inspect endpoint
-failure, no-crossing, and nuisance diagnostics.
-"""
 function _ls_profile_ci(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; kwargs...)
     result = _ls_profile_ci_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; kwargs...)
     return (lower=result.lower, upper=result.upper)

@@ -2218,6 +2218,12 @@ function _bridge_profile_outcome(result, row)
             (status="profile", message="profile_result completed")
     end
     s = only(selected)
+    endpoint = nothing
+    if hasproperty(result, :endpoint_diagnostics)
+        matching = filter(d -> d.param === row.param && d.coef == row.coef,
+                          result.endpoint_diagnostics)
+        isempty(matching) || (endpoint = only(matching))
+    end
     if s.lower_endpoint_failed || s.upper_endpoint_failed
         arms = String[]
         for arm in (:lower, :upper)
@@ -2226,6 +2232,15 @@ function _bridge_profile_outcome(result, row)
             method = Symbol(arm, :_nuisance_method)
             fallback = Symbol(arm, :_nuisance_fallback)
             detail = String(arm)
+            # Location-scale profiles distinguish root-search failure from the
+            # nuisance optimizer's state. Keep this selected-row detail in the
+            # message that the R bridge exposes as `profile.message`.
+            if endpoint !== nothing && hasproperty(endpoint, arm)
+                diagnostic = getproperty(endpoint, arm)
+                detail *= " (endpoint=" * string(diagnostic.reason)
+                detail *= "; candidate=" * string(diagnostic.candidate)
+                detail *= "; residual=" * string(diagnostic.residual) * ")"
+            end
             if hasproperty(s, reason)
                 detail *= " (nuisance=" * string(getproperty(s, reason))
                 hasproperty(s, method) && (detail *= "; " * string(getproperty(s, method)))
