@@ -1,0 +1,69 @@
+ERROR: LoadError: Some tests did not pass: 0 passed, 5 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:76
+LSS marginal simulator preserves all named components and mask: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:84
+  Expression: sim !== nothing
+   Evaluated: nothing !== nothing
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:84 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:77
+LSS marginal simulator preserves all named components and mask: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:84
+  Expression: sim !== nothing
+   Evaluated: nothing !== nothing
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:84 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:77
+LSS marginal simulator preserves all named components and mask: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:84
+  Expression: sim !== nothing
+   Evaluated: nothing !== nothing
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:84 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:77
+LSS marginal simulator preserves all named components and mask: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:84
+  Expression: sim !== nothing
+   Evaluated: nothing !== nothing
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:84 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:77
+LSS marginal simulator preserves all named components and mask: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:84
+  Expression: sim !== nothing
+   Evaluated: nothing !== nothing
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:84 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_bootstrap_contract.jl:77
+Test Summary:                                                  | Fail  Total  Time
+LSS marginal simulator preserves all named components and mask |    5      5  4.3s

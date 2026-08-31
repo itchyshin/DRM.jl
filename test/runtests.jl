@@ -60,6 +60,8 @@ include("test_gaussian_ranef.jl")
 include("test_lss_group.jl")   # #544 location-scale-scale sd(g) ~ x
 include("test_lss_phylo.jl")   # #545 sd_phylo + #548 cancellation regression
 include("test_lss_tip_identity.jl") # Named tree-tip mapping under shuffled rows
+include("test_lss_bootstrap_contract.jl") # Marginal components, masks and REML refits
+include("test_bootstrap_thread_flags.jl") # Independent storage for parallel status flags
 include("test_lss_sparse.jl")  # #551 O(p) sparse exact marginal LSS engine
 include("test_lsss_multi.jl")  # #555 multi-component sd() (lsss)
 include("test_lss_reml.jl")    # #558 location-scale-scale REML

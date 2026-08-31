@@ -1,0 +1,1 @@
+| 2026-08-30 | **Gaussian LSS bootstrap contracts and parallel success flags** (#563) | Independent component draws, masks, manual REML refits, serial/threaded bookkeeping, eight tutorial examples | Final187/187 checks pass; public R receipt/final reconciliation pending; original strict boundary and whole-programme gates OPEN | Ada / Fisher / Karpinski / Rose |

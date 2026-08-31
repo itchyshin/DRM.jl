@@ -160,10 +160,13 @@ fitq_shuffled = drm(bf(@formula(y ~ x + phylo(1 | species)),
 coef(fitq_shuffled, :sd_phylo)
 ```
 
-!!! warning "Bootstrap validation is separate"
-    The marginal bootstrap simulator still needs its own tree-tip mapping
-    repair for unsorted LSS input. The fitting example above does not establish
-    correct bootstrap draws or intervals for that input order.
+!!! note "Bootstrap draws follow the fitted variance model"
+    For Gaussian models with `sd()` submodels, each bootstrap replicate redraws
+    every IID and phylogenetic mean effect independently, using tree-tip names
+    to match species. It also redraws residual error. Missing responses remain
+    missing in each refit, and a REML seed fit is refitted with REML.
+    These simulation checks do not establish interval coverage or large-tree
+    performance; inspect failed-refit counts before interpreting intervals.
 
 !!! note "Grammar and solver notes"
     - `sd(species, phylogenetic)` is the canonical spelling (drmTMB:
@@ -216,8 +219,25 @@ fit_reml = drm(bf(@formula(y ~ sex + (1 | id)),
 reml_loglik(fit_reml)   # restricted log-likelihood
 ```
 
-Both iid and phylogenetic LSS models support REML estimation with finite
-standard errors across mean, scale, and random-effect SD blocks.
+Both iid and phylogenetic LSS models support REML estimation. Standard errors
+can be unreliable when a variance approaches zero; a successful fit alone does
+not establish reliable uncertainty estimates.
+
+For an auditable bootstrap, start from the fitted model and retain the result:
+
+```@example lss
+boot = bootstrap_result(fit_reml; data = dat, B = 4,
+                        rng = MersenneTwister(20260830), threads = true,
+                        failures = :skip, check_converged = true)
+@assert boot.attempted == boot.used + boot.failed
+(attempted = boot.attempted, used = boot.used, failed = boot.failed)
+```
+
+Four replicates keep this example quick; they are too few for an interval you
+would report. Choose the number of replicates for your analysis and retain
+`boot.failures`, which records failed replicate seeds and messages. For a
+phylogenetic model, also pass the original `tree`. Profile nuisance-convergence
+checks and performance on large trees remain separate validation work.
 
 ## From R, with intervals
 

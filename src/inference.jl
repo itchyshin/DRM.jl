@@ -1243,8 +1243,10 @@ function bootstrap_result(
     _check_bootstrap_failure_mode(failures)
     fit0 = drm(formula, family; data, K, A, tree, algorithm, g_tol)
     refit = datab -> drm(formula, family; data=datab, K, A, tree, algorithm, g_tol)
+    simulate_fn = _marginal_simulator(fit0, data; K, A, tree)
     return _bootstrap_result(
-        fit0, formula, data, B, level, rng, threads, refit; failures, check_converged
+        fit0, formula, data, B, level, rng, threads, refit;
+        failures, check_converged, simulate_fn
     )
 end
 
@@ -1275,7 +1277,16 @@ function bootstrap_result(
     end
     _check_bootstrap_failure_mode(failures)
     formula = _bootstrap_fit_formula(fit)
-    refit = datab -> drm(formula, fit.family; data=datab, K, A, tree, algorithm, g_tol)
+    # LSS refits must preserve the seed fit's estimator. Other Gaussian routes
+    # retain their existing dispatch here; MAP needs its separate penalty contract.
+    refit_options = if _is_gaussian_lss(fit)
+        method = estimation_method(fit)
+        method in (:ML, :REML) || throw(ArgumentError("LSS bootstrap supports ML/REML seed fits only"))
+        (; method)
+    else
+        (;)
+    end
+    refit = datab -> drm(formula, fit.family; data=datab, K, A, tree, algorithm, g_tol, refit_options...)
     # #459: redraw the random effects rather than conditioning on the fitted BLUPs.
     simulate_fn = _marginal_simulator(fit, data; K=K, A=A, tree=tree)
     return _bootstrap_result(
@@ -1403,8 +1414,105 @@ end
 #
 # Returns a closure `rng -> ysim`, or `nothing` when the fit has NO random effects
 # (there conditional and marginal simulation coincide and `simulate` is correct).
+# Gaussian LSS bootstrap uses the full marginal model, not fitted random effects.
+# Prepared arrays are read-only; each call allocates its own draws and response.
+_is_gaussian_lss(fit::DrmFit) = fit.family isa Gaussian &&
+    fit.formula isa DrmFormula &&
+    (!isempty(_sd_parts(fit.formula)) || !isempty(_sdphylo_parts(fit.formula)))
+
+function _lss_marginal_simulator(fit::DrmFit, data; tree=nothing)
+    f = fit.formula
+    rhs = Dict(f.forms)
+    fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])
+    fixed_sigma, sigma_re, _, structured_sigma = _split_ranef(rhs[:sigma])
+    (metav === nothing && isempty(sigma_re) && structured_sigma === nothing) ||
+        throw(ArgumentError("LSS bootstrap requires mean random intercepts and fixed residual-scale predictors"))
+    all(r -> first(_re_kind(r[1])) === :intercept, re) ||
+        throw(ArgumentError("LSS bootstrap supports random intercepts only"))
+    raw_y = _table_column(data, f.response)
+    _, observed = _coerce_response_column(raw_y)
+    count(observed) == fit.nobs ||
+        throw(ArgumentError("LSS bootstrap observed response count does not match the seed fit"))
+    _, Xmu, nm_mu = _design(f.response, fixed_mu, data)
+    _, Xsigma, nm_sigma = _design(f.response, fixed_sigma, data)
+    names = Dict(fit.coefnames)
+    get(names, :mu, String[]) == nm_mu && get(names, :sigma, String[]) == nm_sigma ||
+        throw(ArgumentError("LSS bootstrap mean/scale design names do not match the seed fit"))
+    mu = Xmu * coef(fit, :mu)
+    sigma = exp.(Xsigma * coef(fit, :sigma))
+    length(mu) == length(sigma) == length(observed) ||
+        throw(ArgumentError("LSS bootstrap designs must preserve the full input rows"))
+    all(isfinite, mu) && all(x -> isfinite(x) && x > 0, sigma) ||
+        throw(ArgumentError("LSS bootstrap requires finite means and positive finite residual scales"))
+    sdmap = Dict(_sd_parts(f))
+    sdphy = _sdphylo_parts(f)
+    # IID blocks precede phylogenetic blocks, matching the fitted parameter layout.
+    components = NamedTuple[]
+    aiid = isempty(re) ? Float64[] : coef(fit, :sd)
+    offset = 0
+    expected_names = String[]
+    for (_, grp) in re
+        labels = _table_column(data, grp)
+        any(ismissing, labels) && throw(ArgumentError("LSS bootstrap grouping `$grp` contains missing labels"))
+        gidx, G = _group_index(labels)
+        Zg, nm = haskey(sdmap, grp) ?
+            _sd_group_design(f.response, sdmap[grp], data, gidx, G, grp) :
+            (ones(G, 1), ["(Intercept)"])
+        width = size(Zg, 2)
+        offset + width <= length(aiid) ||
+            throw(ArgumentError("LSS bootstrap iid SD coefficients do not match the group designs"))
+        scale = exp.(Zg * aiid[offset+1:offset+width])
+        push!(components, (; gidx, G, scale, factor=nothing))
+        append!(expected_names, length(re)>1 ? string.(grp, ": ", nm) : nm)
+        offset += width
+    end
+    offset == length(aiid) ||
+        throw(ArgumentError("LSS bootstrap has unused iid SD coefficients"))
+    isempty(re) || get(names, :sd, String[]) == expected_names ||
+        throw(ArgumentError("LSS bootstrap iid SD coefficient names do not match the group designs"))
+    if structured !== nothing
+        kind, grp = structured
+        kind === :phylo || throw(ArgumentError("LSS bootstrap supports the phylogenetic structured level only"))
+        tree === nothing && throw(ArgumentError("LSS bootstrap with phylo(1 | $grp) requires `tree`"))
+        phy, gidx, G = _lss_phylo_group_index(tree, _table_column(data, grp), grp)
+        Zg, nm = if isempty(sdphy)
+            (ones(G, 1), ["(Intercept)"])
+        else
+            sgrp, srhs = only(sdphy)
+            sgrp === grp || throw(ArgumentError("LSS bootstrap phylogenetic SD grouping does not match the mean"))
+            _sd_group_design(f.response, srhs, data, gidx, G, grp)
+        end
+        aphy = coef(fit, :sd_phylo)
+        length(aphy) == size(Zg, 2) && get(names, :sd_phylo, String[]) == nm ||
+            throw(ArgumentError("LSS bootstrap phylogenetic SD coefficients do not match the group design"))
+        scale = exp.(Zg * aphy)
+        # Every LSS phylogenetic route defines its SD against correlation,
+        # including a scalar phylogenetic component in a multi-component fit.
+        factor = cholesky(Symmetric(_phylo_correlation(phy))).L
+        push!(components, (; gidx, G, scale, factor))
+    elseif !isempty(sdphy)
+        throw(ArgumentError("LSS bootstrap phylogenetic SD needs a phylogenetic mean effect"))
+    end
+    isempty(components) && throw(ArgumentError("LSS bootstrap found no mean variance component"))
+    all(c -> all(isfinite, c.scale), components) ||
+        throw(ArgumentError("LSS bootstrap requires finite random-effect scales"))
+    return function (rng)
+        out = copy(mu)
+        for c in components
+            noise = randn(rng, c.G)
+            u = c.scale .* (c.factor === nothing ? noise : c.factor * noise)
+            out .+= u[c.gidx]
+        end
+        out .+= sigma .* randn(rng, length(out))
+        all(isfinite, out) || throw(ArgumentError("LSS bootstrap produced a nonfinite response"))
+        out[.!observed] .= NaN
+        return out
+    end
+end
+
 function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothing,
                              coords=nothing)
+    _is_gaussian_lss(fit) && return _lss_marginal_simulator(fit, data; tree)
     fit.formula isa DrmFormula || return nothing
     # Gaussian needs a residual scale; other families carry their dispersion in the
     # family object or in `scales`, and some (Poisson) have none at all.
@@ -1561,7 +1669,9 @@ function _bootstrap_result(
     est = coef(fit0)
     p = length(est)
     draws = Matrix{Float64}(undef, B, p)
-    ok = falses(B)
+    # Distinct BitVector indices share a machine word: parallel writes can
+    # silently lose a successful replicate. Byte-addressable flags are independent.
+    ok = fill(false, B)
     messages = Vector{Union{Nothing,String}}(nothing, B)
     seeds = rand(rng, UInt, B)
 
