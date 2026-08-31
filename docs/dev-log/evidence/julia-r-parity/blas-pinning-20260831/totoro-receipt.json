@@ -1,0 +1,35 @@
+{
+  "base_head": "39150792e4ed8c3cdbd38760901ef5641e63d1a7",
+  "source_sha256": "c0675b16ec4b0c64acfa81a45543959b256fb8e5b200c50c704b4aafb585bc0e",
+  "runtime": "Julia1.10.10",
+  "host": "Totoro",
+  "julia_threads": 4,
+  "initial_blas_threads": 4,
+  "final_blas_threads": 4,
+  "source_hashes": 327,
+  "source_unchanged": true,
+  "elapsed_seconds": 58,
+  "exit_status": 0,
+  "group_complete": true,
+  "passing_testset_assertions": 181,
+  "additional_final_blas_assertion": 1,
+  "testsets": 8,
+  "completed_files": [
+    "test_inference_blas_pinning.jl",
+    "test_bootstrap_thread_flags.jl",
+    "test_profile_ci.jl",
+    "test_bootstrap.jl",
+    "test_lss_bootstrap_contract.jl"
+  ],
+  "summaries": [
+    "inference BLAS pinning is composable across callers |   17     17  0.2s",
+    "Threaded bootstrap keeps every successful replicate |    2      2  1.2s",
+    "Profile-likelihood CI: confint(fit; method=:profile) |   27     27  10.0s",
+    "Gaussian crossed profile uses stored gradient |    9      9  7.0s",
+    "Profile CI on crossed Poisson random-effect SDs |    9      9  4.7s",
+    "Profile CI on the scale parameter (asymmetric) |   11     11  0.4s",
+    "Parametric bootstrap CI |   46     46  8.3s",
+    "Gaussian LSS bootstrap contract |   60     60  21.9s"
+  ],
+  "scope": "Focused repaired-source inference regressions; not whole-suite, calibration or warm performance proof"
+}

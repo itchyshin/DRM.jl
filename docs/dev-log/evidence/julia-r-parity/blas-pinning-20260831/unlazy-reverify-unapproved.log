@@ -1,0 +1,17 @@
+APPROVAL REQUIRED blas-pinning:B1
+    CHECK: OPENBLAS_NUM_THREADS=2 JULIA_PKG_OFFLINE=true JULIA_PKG_PRECOMPILE_AUTO=0 julia --project=. --startup-file=no --threads=1 -e 'include("test/test_inference_blas_pinning.jl"); println("BLAS_PINNING_CHECK_PASS")'
+    EXPECT: BLAS_PINNING_CHECK_PASS
+    CWD: /private/tmp/drm-parity-20260830/integration/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg0rqosbj:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+    NOT RUN: inspect this oracle, then re-run with --approve
+APPROVAL REQUIRED blas-pinning:B2
+    CHECK: OPENBLAS_NUM_THREADS=2 JULIA_PKG_OFFLINE=true JULIA_PKG_PRECOMPILE_AUTO=0 julia --project=. --startup-file=no --threads=4 -e 'include("test/test_inference_blas_pinning.jl"); println("BLAS_PINNING_CHECK_PASS")'
+    EXPECT: BLAS_PINNING_CHECK_PASS
+    CWD: /private/tmp/drm-parity-20260830/integration/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg0rqosbj:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+    NOT RUN: inspect this oracle, then re-run with --approve
+blas-pinning.md: 3 gates
+UNMET: 2 (met: 1, reran: 0, previously met reverified: 0)
+  blas-pinning:B1 (reverify not run), blas-pinning:B2 (reverify not run)

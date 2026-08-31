@@ -1,6 +1,6 @@
 # Bounded package continuation — 31 August 2026
 
-Current result: **nine complete files, 788 passing assertions**. The sections
+Current result before the BLAS helper repair: **31 complete files, 971 passing assertions**. The sections
 below retain the interrupted runs and subsequent completions in order. No
 full-suite, native-R parity, coverage or performance gate is closed.
 
@@ -77,3 +77,17 @@ raw covariance scaling, degeneracy status and prediction behavior.
 This adds 79 assertions: nine completed files now contain 788 assertions. The
 initial whole-suite and later group timeouts remain incomplete historical runs.
 No calibrated-coverage, native-R parity, full-suite or warm-speed claim follows.
+
+## Prediction and response-family groups
+
+Six further original files (response prediction, ranef, correlated/crossed random
+effects, sigma random effects and sigma accessors) completed with 50 assertions
+in 31 seconds. Sixteen basic-family files completed with 133 assertions in
+31 seconds. Both groups exited zero with every completion marker and all 326
+input hashes verified against source commit 39150792. The remote sources were
+unchanged. This brings the continuation to 31 completed files and 971 assertions,
+530 seconds of cumulative continuation wall time.
+
+These results precede the newly investigated BLAS scope repair. Their source
+provenance remains historical; they must not be presented as a full-suite pass
+against that later source. No native-R parity or speedup follows from these tests.

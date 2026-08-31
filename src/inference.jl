@@ -100,20 +100,44 @@ function _blas_oversubscribed(active::Bool)
 end
 
 # Run `f()` with BLAS pinned to one thread when a multi-threaded Julia region is
-# about to make CONCURRENT dense-BLAS calls, restoring the setting afterwards.
+# about to make CONCURRENT dense-BLAS calls. BLAS thread count is process-global,
+# so coordinated overlapping scopes retain the pin until the last scope exits.
 # Concurrent callers into multi-threaded OpenBLAS contend on its internal locks:
 # measured on the #545 dense route (64 tips, B = 99 bootstrap, 8 Julia threads),
 # serial 5.03 s / threaded-unpinned 9.53 s / threaded-pinned 0.58 s — the pin is
 # the difference between a 1.9x SLOWDOWN and an 8.7x speedup (#550).
+#
+# The lock covers only this state transition, never `f()`. Uncoordinated external
+# calls to `BLAS.set_num_threads` while a scope is active remain outside this
+# helper's contract; the last coordinated scope restores the setting it observed.
+const _blas_pin_lock = ReentrantLock()
+const _blas_pin_scopes = Ref{Int}(0)
+const _blas_pin_restore = Ref{Int}(1)
+
 function _with_pinned_blas(f, active::Bool)
     active || return f()
-    old = BLAS.get_num_threads()
-    old > 1 || return f()
-    BLAS.set_num_threads(1)
+    lock(_blas_pin_lock)
+    try
+        if _blas_pin_scopes[] == 0
+            old = BLAS.get_num_threads()
+            old > 1 && BLAS.set_num_threads(1)
+            _blas_pin_restore[] = old
+        end
+        _blas_pin_scopes[] += 1
+    finally
+        unlock(_blas_pin_lock)
+    end
     try
         return f()
     finally
-        BLAS.set_num_threads(old)
+        lock(_blas_pin_lock)
+        try
+            _blas_pin_scopes[] > 0 || error("BLAS pin scope underflow")
+            _blas_pin_scopes[] -= 1
+            _blas_pin_scopes[] == 0 && BLAS.set_num_threads(_blas_pin_restore[])
+        finally
+            unlock(_blas_pin_lock)
+        end
     end
 end
 

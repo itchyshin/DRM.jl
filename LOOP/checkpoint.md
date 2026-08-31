@@ -1,3 +1,58 @@
+# Current — verified BLAS repair; next default-suite group
+
+Programme ACTIVE; all G0–G8 gates remain OPEN. The BLAS scope repair is verified:
+source c0675b16, test82a0499a. Local checks pass 17 assertions each at one/four
+Julia threads; all three local gates pass re-verification. Rose approved source
+and final receipts; Melissa found no material omissions. No estimator changed.
+
+Totoro updated copy: /home/snakagaw/drm_parity_blas_c0675b16_001.
+Its focused-pilot-001 completed five files: 181 testset assertions plus one final
+BLAS-restoration assertion, 58 seconds, exit 0, 327 unchanged source/test hashes.
+Initial/final BLAS4 and four Julia threads verified. No fit job is running.
+Original baseline copy remains preserved; its 31 completed files / 971 assertions
+are pre-repair evidence, not a full-suite pass against this new source.
+
+NEXT: continue original default-suite files beginning test_poisson_re.jl on the
+updated Totoro copy, with a fresh estimate and cap. Maintain source binding and
+retain failures. Full suite, native-R/direct/bridge parity, Ayumi large-tree
+inference, missing-predictor obligations and all warm-workflow wins remain open.
+The two known LSS boundary failures and two denied Gaussian files remain untouched.
+
+Mission Control update is QUEUED, not applied: live claude:shinichi-brain lease
+covers the dashboard directory. Proposed delta is in
+`docs/dev-log/evidence/julia-r-parity/blas-pinning-20260831/mission-control-queued.json`.
+Recheck ownership, reread current status and rebase that delta before applying.
+Do not overwrite the foreign lease. Other code work can continue independently.
+
+Continue only in the paired integration worktrees. No release, main merge,
+public deployment, worktree retirement or collaborator message. The scoped
+commit below this checkpoint contains the repair, tests, review and receipts.
+
+---
+
+# Current — deterministic BLAS overlap defect reproduced; repair underway
+
+Programme ACTIVE; all G0–G8 OPEN. On source 39150792, two more Totoro groups
+passed: six prediction/random-effect files (50 assertions,31s) and sixteen basic
+family files (133 assertions,31s). Cumulative continuation:31 files,971 assertions.
+All326input hashes matched; no remote fit remains running. Source-bound logs are
+retained in package-continuation-20260831. These precede the pending helper repair.
+
+Builder s9_frontend_builder owns src/inference.jl helper,
+test/test_inference_blas_pinning.jl and its runtests include. Root owns evidence
+and checkpoint. RED reproduced on MacJulia1.10.0,4threads:13pass1fail,
+BLAS restored to2 while a second scope still active (8.89s). Fix only overlapping
+BLAS setting lifetimes via entry/exit lock and reference count; no numerical
+contract change. Do not alter the two denied Gaussian source files.
+
+Next: await builder, freeze hashes, ask Rose to review, run local unlazy B1/B2
+(1and4Julia threads, no fits,90s cap each). Then run focused profile/bootstrap
+regressions on a separate updated Totoro source copy, preserving old baseline.
+After review and receipts, commit scoped changes and update Mission Control.
+No release/public deployment/main merge/worktree retirement/messages.
+
+---
+
 # Current — nine package files complete; no remote fit running
 
 Programme ACTIVE; all G0–G8 gates OPEN. Documentation commit 5e9d5883 and initial

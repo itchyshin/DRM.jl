@@ -67,6 +67,7 @@ include("test_lsss_multi.jl")  # #555 multi-component sd() (lsss)
 include("test_lss_reml.jl")    # #558 location-scale-scale REML
 include("test_lss_missing_response.jl") # #559 location-scale-scale missing responses
 include("test_inference.jl")
+include("test_inference_blas_pinning.jl") # Nested and overlapping global-BLAS restoration
 include("test_profile_ci.jl")
 include("test_profile_nuisance_status.jl")
 include("test_profile_acceptance_oracles.jl")
