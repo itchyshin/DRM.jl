@@ -1,3 +1,51 @@
+# Current — isolated Newton-REML test running
+
+Programme ACTIVE; all G0–G8 gates OPEN. Documentation commit 5e9d5883 is reviewed.
+Four unchanged test files completed on Totoro: 602 + 20 + 36 + 12 = 670 assertions.
+The following Newton file was incomplete at the previous group's 300-second cap;
+34 partial assertions do not count as a completed file. Rose verified this
+classification and all 326 source/test hashes against retained logs.
+
+The isolated whole Newton file is now running under the same existing Totoro
+connection, Julia 1.10.10, one Julia/BLAS thread. Estimate 2–4 minutes; cap 300 s.
+Remote: /home/snakagaw/drm_parity_integration_567fec06_001/newton-reml-pilot-001
+Launch PID: 3571051. Inspect exit-status.txt/run.log; never duplicate a run because
+an observation times out. Local runners: integration/newton-reml-pilot-001.
+
+Next: collect terminal evidence, then continue remaining default-suite files in
+suite order. Update Mission Control with terminal results and commit scoped
+receipts. No full-suite, native-R parity, coverage or performance claim.
+Two previously denied source files remain untouched. Other worktrees, stashes,
+releases, public deployment and collaborator messages remain untouched.
+
+---
+
+# Current — documentation committed; numerical package continuation active
+
+Docs/auditor/evidence committed5e9d58836cb21e4cfbbfc6e832b2852051b37cd8;
+Rose+Melissa approvedboundedclaims;3localunlazygatesmet. GlobalG0–G8OPEN.
+MissionControllocalcommita1e100bservedverified;42foreignvaultfilespreserved.
+No newRcode; paired RHEAD61218f18. Protected twoGaussianfilesuntouched.
+
+Totoro interruptedlocation-onlyREMLfile nowcompleted:602assertions,3testsets,
+20s,exit0;326src/testhashesverifiedunchanged. SSHlaunchobservationtimedout15s,
+but samejobterminalreceiptconfirmed; no restart. Evidence retainedin
+package-continuation-20260831/loconly-*. This doesnotcompletefulldefaultsuite.
+
+Four-filegroup launchedinremote drm_parity_integration_567fec06_001/
+profile-reml-pilot-001: test_profile_sigma_a.jl,test_bootstrap_sigma_a.jl,
+test_reml_sigma_phylo.jl,test_reml_newton_sigma_phylo.jl;1Julia/1BLAS,
+timeout300s,estimate2–5minutes. Inspect same pid.txt/exit-status.txt/run.log;
+neverrestartbecauseobservationtimesout. Localrunner/manifestin integration/
+profile-reml-pilot-001. Collectresultbeforeanothercampaign. NoDRACjob.
+
+Rawdocsrendermetadataerrors and broadergraphics/live/inference/performance,
+capability/recovery/cleanupobligationsremainopen. Latestefficiencygatefailed
+historicalguardian>25calls; disk-goaledcheckpoint-and-roll exceptionapplies.
+Continue fromthisexplicitcheckpoint, notoldworktrees. Priorhistorybelow.
+
+---
+
 # Current — reviewed local documentation checks ready for commit
 
 Programme ACTIVE,G0–G8OPEN. Strict52sourcepages/134exampleblocksPASS142.177647s;

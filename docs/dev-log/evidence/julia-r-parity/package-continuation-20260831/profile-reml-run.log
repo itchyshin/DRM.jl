@@ -1,0 +1,198 @@
+2026-08-31T10:43:09Z
+9c958c8f83243bc4664ea272f5ebfcf3f1369cc34a5084afbd8a2619b84b460f  Project.toml
+3352aa55d3cca25d17195987efaaa5e5e6050f064dbf5036ab53e5808e51e899  test/Project.toml
+b1fc84ff68aab61a70d58db505fc5041a43af20cf91dc749290b2a50ac57f51e  test/Manifest.toml
+fd59b9fc04d4b89ac2d7cee3d7bbe248a80c22aca6f9dd87e1581c1f38146040  profile-reml-pilot-001/run.jl
+078401478d43e4d4b207f09ec3f52fdfa7d71fe6e7041e2e35144036aa2e3496  profile-reml-pilot-001/run.sh
+RUNTIME julia=1.10.10 threads=1 BLAS=1 DRM=/home/snakagaw/drm_parity_integration_567fec06_001/src/DRM.jl
+START_FILE test_profile_sigma_a.jl
+Test Summary:                                                       | Pass  Total     Time
+profile_sigma_a — q4 among-axis SD profile CIs (boundary lower = 0) |   20     20  1m42.3s
+COMPLETE_FILE test_profile_sigma_a.jl
+START_FILE test_bootstrap_sigma_a.jl
+Test Summary:                                              | Pass  Total   Time
+bootstrap_sigma_a — q4 among-axis SD CIs (boundary-honest) |   36     36  12.0s
+COMPLETE_FILE test_bootstrap_sigma_a.jl
+START_FILE test_reml_sigma_phylo.jl
+Test Summary:                                               | Pass  Total  Time
+REML σ-phylo: penalty → fixed-effect REML as σ-phylo SD → 0 |    2      2  1.3s
+Test Summary:                                        | Pass  Total     Time
+REML σ-phylo: end-to-end drm(method=:REML) + tagging |   10     10  1m42.1s
+COMPLETE_FILE test_reml_sigma_phylo.jl
+START_FILE test_reml_newton_sigma_phylo.jl
+
+[3567627] signal (15): Terminated
+in expression starting at /home/snakagaw/drm_parity_integration_567fec06_001/test/test_reml_newton_sigma_phylo.jl:231
++ at ./float.jl:409 [inlined]
+log_proc1 at ./special/log.jl:166 [inlined]
+_log at ./special/log.jl:295
+log at ./special/log.jl:267 [inlined]
+_ls_nll at /home/snakagaw/drm_parity_integration_567fec06_001/src/locscale_kernels.jl:269 [inlined]
+_ls_joint at /home/snakagaw/drm_parity_integration_567fec06_001/src/locscale_inner.jl:81
+#_ls_inner_mode#994 at /home/snakagaw/drm_parity_integration_567fec06_001/src/locscale_inner.jl:170
+_ls_inner_mode at /home/snakagaw/drm_parity_integration_567fec06_001/src/locscale_inner.jl:158 [inlined]
+#_ls_marginal_grad#1013 at /home/snakagaw/drm_parity_integration_567fec06_001/src/locscale_grad.jl:54
+_ls_marginal_grad at /home/snakagaw/drm_parity_integration_567fec06_001/src/locscale_grad.jl:43 [inlined]
+#_glsp_asym_grad#1103 at /home/snakagaw/drm_parity_integration_567fec06_001/src/gaussian_locscale_phylo.jl:542
+_glsp_asym_grad at /home/snakagaw/drm_parity_integration_567fec06_001/src/gaussian_locscale_phylo.jl:536
+unknown function (ip: 0x7f22781e782a)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+_asym_grad_raw at /home/snakagaw/drm_parity_integration_567fec06_001/src/gaussian_locscale_phylo.jl:632
+grad! at /home/snakagaw/drm_parity_integration_567fec06_001/src/gaussian_locscale_phylo.jl:466
+fg! at /home/snakagaw/.julia/packages/NLSolversBase/n7XXO/src/objective_types/abstract.jl:13
+unknown function (ip: 0x7f2277d3916c)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+value_gradient!! at /home/snakagaw/.julia/packages/NLSolversBase/n7XXO/src/interface.jl:82
+value_gradient! at /home/snakagaw/.julia/packages/NLSolversBase/n7XXO/src/interface.jl:69
+unknown function (ip: 0x7f22907ad5fe)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+value_gradient! at /home/snakagaw/.julia/packages/Optim/gmigl/src/Manifolds.jl:50
+ϕdϕ at /home/snakagaw/.julia/packages/LineSearches/2BCHN/src/LineSearches.jl:32
+HagerZhang at /home/snakagaw/.julia/packages/LineSearches/2BCHN/src/hagerzhang.jl:234
+HagerZhang at /home/snakagaw/.julia/packages/LineSearches/2BCHN/src/hagerzhang.jl:103 [inlined]
+perform_linesearch! at /home/snakagaw/.julia/packages/Optim/gmigl/src/utilities/perform_linesearch.jl:58
+update_state! at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/solvers/first_order/l_bfgs.jl:220
+optimize at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:65
+optimize at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:43 [inlined]
+#optimize#79 at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:301 [inlined]
+optimize at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:289 [inlined]
+prof_dev at /home/snakagaw/drm_parity_integration_567fec06_001/src/gaussian_locscale_phylo.jl:468
+endpoint at /home/snakagaw/drm_parity_integration_567fec06_001/src/gaussian_locscale_phylo.jl:489
+unknown function (ip: 0x7f2277d37fd3)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+#_glsp_profile_ci#1096 at /home/snakagaw/drm_parity_integration_567fec06_001/src/gaussian_locscale_phylo.jl:493
+unknown function (ip: 0x7f2277d373f4)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+_glsp_profile_ci at /home/snakagaw/drm_parity_integration_567fec06_001/src/gaussian_locscale_phylo.jl:459
+unknown function (ip: 0x7f2277d36bbc)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+#_fit_gaussian_locscale_phylo#1108 at /home/snakagaw/drm_parity_integration_567fec06_001/src/gaussian_locscale_phylo.jl:715
+_fit_gaussian_locscale_phylo at /home/snakagaw/drm_parity_integration_567fec06_001/src/gaussian_locscale_phylo.jl:598
+unknown function (ip: 0x7f2278192ae0)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+#drm#103 at /home/snakagaw/drm_parity_integration_567fec06_001/src/gaussian_core.jl:606
+drm at /home/snakagaw/drm_parity_integration_567fec06_001/src/gaussian_core.jl:436
+unknown function (ip: 0x7f2277d4fd3f)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+#_bridge_fit#1383 at /home/snakagaw/drm_parity_integration_567fec06_001/src/bridge.jl:355
+_bridge_fit at /home/snakagaw/drm_parity_integration_567fec06_001/src/bridge.jl:312
+unknown function (ip: 0x7f2277d44c10)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+#drm_bridge_inference#1380 at /home/snakagaw/drm_parity_integration_567fec06_001/src/bridge.jl:197
+drm_bridge_inference at /home/snakagaw/drm_parity_integration_567fec06_001/src/bridge.jl:177
+unknown function (ip: 0x7f2277d41d45)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+jl_apply at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/julia.h:1982 [inlined]
+do_call at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:126
+eval_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:223
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:489
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:544
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:544
+jl_interpret_toplevel_thunk at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:775
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:934
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:877
+ijl_toplevel_eval_in at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:985
+eval at ./boot.jl:385 [inlined]
+include_string at ./loading.jl:2146
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+_include at ./loading.jl:2206
+include at ./client.jl:494
+unknown function (ip: 0x7f2290701c25)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+jl_apply at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/julia.h:1982 [inlined]
+do_call at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:126
+eval_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:223
+eval_stmt_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:174 [inlined]
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:617
+jl_interpret_toplevel_thunk at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:775
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:934
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:877
+ijl_toplevel_eval_in at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:985
+eval at ./boot.jl:385 [inlined]
+include_string at ./loading.jl:2146
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+_include at ./loading.jl:2206
+include at ./Base.jl:495
+jfptr_include_46653 at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+exec_options at ./client.jl:323
+_start at ./client.jl:557
+jfptr__start_83114 at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+jl_apply at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/julia.h:1982 [inlined]
+true_main at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jlapi.c:582
+jl_repl_entrypoint at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jlapi.c:731
+main at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/cli/loader_exe.c:58
+unknown function (ip: 0x7f2296c2a1c9)
+__libc_start_main at /lib/x86_64-linux-gnu/libc.so.6 (unknown line)
+unknown function (ip: 0x4010b8)
+unknown function (ip: (nil))
+Allocations: 4031533063 (Pool: 4017527008; Big: 14006055); GC: 6476
+┌ Info: REML identity
+│   penalty = 4.774792639844237
+│   ref = 4.774792671583748
+└   diff = 3.173951146351328e-8
+┌ Warning: drm: this tree's maximum tip height is 1.5, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.224745 = sqrt(1.5) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/1.5 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Info: REML vs ML σ-phylo SD
+│   sd_sig_reml = 0.30107565265434166
+└   sd_sig_ml = 0.2667781666980271
+┌ Info: clean-gradient refit vs FD-REML
+│   sd_cg = 0.5193081671550355
+│   sd_fd = 0.5193097075319102
+│   diff = 1.5403768747201951e-6
+│   nsteps = 6
+└   conv_cg = true
+┌ Info: observed-info Newton vs FD-REML
+│   sd_nw = 0.570587774772971
+│   sd_fd = 0.5703847153578606
+│   diff = 0.00020305941511034042
+│   nnewton = 3
+└   conv = true
+┌ Info: separate-block observed-info Newton vs FD-REML
+│   sd_mu_nw = 0.584909104246843
+│   sd_mu_fd = 0.5849045461592111
+│   sd_sig_nw = 0.363666849028895
+│   sd_sig_fd = 0.3636506345583958
+│   nstep = 3
+└   conv = true
+┌ Warning: drm: this tree's maximum tip height is 1.5, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.224745 = sqrt(1.5) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/1.5 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Warning: drm: this tree's maximum tip height is 1.8, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.341641 = sqrt(1.8) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/1.8 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Warning: drm: 20 of 144 rows have a missing/NaN response and were dropped (σ-phylo observed-rows fit; the tree is kept in full). Use `drm_listwise` to preprocess explicitly to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:557
+┌ Warning: drm: 20 of 144 rows have a missing/NaN response and were dropped (σ-phylo observed-rows fit; the tree is kept in full). Use `drm_listwise` to preprocess explicitly to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:557
+┌ Warning: aic on a REML fit: REML log-likelihoods are only comparable across models with the SAME fixed-effect (mean) structure (variance-only differences). For model selection across mean structures, refit with method = :ML.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:1887
+Test Summary:                                                         | Pass  Total   Time
+REML σ-phylo: clean-gradient refit matches FD-REML (asymmetric route) |    3      3  18.9s
+Test Summary:                                                | Pass  Total  Time
+REML σ-phylo: observed-information Newton (asymmetric route) |    4      4  1.5s
+Test Summary:                                                       | Pass  Total  Time
+REML σ-phylo: observed-info Newton, separate block (both axes, K=2) |    5      5  1.5s
+Test Summary:                                                        | Pass  Total  Time
+REML σ-phylo: no crash at the variance boundary (homoscedastic data) |   12     12  4.1s
+Test Summary:                                                               | Pass  Total  Time
+REML σ-phylo: collinear mean design ⇒ NaN loglik, not a 1e18-poisoned value |    2      2  6.8s
+Test Summary:                                                                 | Pass  Total   Time
+REML σ-phylo: asymmetric route, weak σ-signal — returns a fit, does not throw |    2      2  15.0s
+Test Summary:                                                    | Pass  Total  Time
+REML σ-phylo: missing responses compose (drm + bridge), Ayumi #2 |    6      6  8.0s
+ELAPSED_SECONDS 300

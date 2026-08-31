@@ -1,0 +1,25 @@
+{
+  "exit_code": 124,
+  "completed_files": [
+    "test_profile_sigma_a.jl",
+    "test_bootstrap_sigma_a.jl",
+    "test_reml_sigma_phylo.jl"
+  ],
+  "group_complete": false,
+  "source_unchanged": true,
+  "elapsed_seconds": 300,
+  "test_summaries": [
+    "profile_sigma_a \u2014 q4 among-axis SD profile CIs (boundary lower = 0) |   20     20  1m42.3s",
+    "bootstrap_sigma_a \u2014 q4 among-axis SD CIs (boundary-honest) |   36     36  12.0s",
+    "REML \u03c3-phylo: penalty \u2192 fixed-effect REML as \u03c3-phylo SD \u2192 0 |    2      2  1.3s",
+    "REML \u03c3-phylo: end-to-end drm(method=:REML) + tagging |   10     10  1m42.1s",
+    "REML \u03c3-phylo: clean-gradient refit matches FD-REML (asymmetric route) |    3      3  18.9s",
+    "REML \u03c3-phylo: observed-information Newton (asymmetric route) |    4      4  1.5s",
+    "REML \u03c3-phylo: observed-info Newton, separate block (both axes, K=2) |    5      5  1.5s",
+    "REML \u03c3-phylo: no crash at the variance boundary (homoscedastic data) |   12     12  4.1s",
+    "REML \u03c3-phylo: collinear mean design \u21d2 NaN loglik, not a 1e18-poisoned value |    2      2  6.8s",
+    "REML \u03c3-phylo: asymmetric route, weak \u03c3-signal \u2014 returns a fit, does not throw |    2      2  15.0s",
+    "REML \u03c3-phylo: missing responses compose (drm + bridge), Ayumi #2 |    6      6  8.0s"
+  ],
+  "scope": "Completed files retained; timed-out group incomplete, later partial-file testsets are not a complete-file pass"
+}

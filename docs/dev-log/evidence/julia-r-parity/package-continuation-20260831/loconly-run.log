@@ -1,0 +1,15 @@
+2026-08-31T10:41:27Z
+9c958c8f83243bc4664ea272f5ebfcf3f1369cc34a5084afbd8a2619b84b460f  Project.toml
+3352aa55d3cca25d17195987efaaa5e5e6050f064dbf5036ab53e5808e51e899  test/Project.toml
+b1fc84ff68aab61a70d58db505fc5041a43af20cf91dc749290b2a50ac57f51e  test/Manifest.toml
+622fa66e0ba5c50906cb1e92360b121b8ede526a6c405f661c1b202e2ce4ed35  loconly-pilot-001/run.jl
+3925e5bddfb0cb3c2287de9eb3ebb5241c630c865e4cc026704418d947aa7631  loconly-pilot-001/run.sh
+RUNTIME julia=1.10.10 threads=1 BLAS=1 DRM=/home/snakagaw/drm_parity_integration_567fec06_001/src/DRM.jl
+Test Summary:                                                   | Pass  Total   Time
+Location-only Gaussian phylo: supplied-variance REML and traces |  209    209  12.1s
+Test Summary:                                                             | Pass  Total  Time
+Location-only Gaussian phylo: boundary diagnostics are finite or explicit |  144    144  3.0s
+Test Summary:                                                 | Pass  Total  Time
+Location-only Gaussian phylo: status schema and scaling smoke |  249    249  2.2s
+LOCONLY_FILE_COMPLETE
+ELAPSED_SECONDS 20
