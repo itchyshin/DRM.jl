@@ -1819,6 +1819,8 @@ end
 
 function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothing,
                              coords=nothing)
+    fit.nll isa LocScaleObjective &&
+        return _ls_marginal_simulator(fit, data; K, A, tree, coords)
     _is_gaussian_lss(fit) && return _lss_marginal_simulator(fit, data; tree)
     fit.formula isa DrmFormula || return nothing
     # Gaussian needs a residual scale; other families carry their dispersion in the

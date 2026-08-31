@@ -171,6 +171,41 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
         res = nm()
         θ̂ = Optim.minimizer(res)
     end
+    # A trust-region solve may stop unsuccessfully near a zero-variance
+    # boundary while its inner mode remains valid. Try ONE continuation of the
+    # same likelihood, not a relaxed convergence flag. This adds at most another
+    # `iterations` outer steps; successful fits and the legacy raw route bypass it.
+    if whitened && !Optim.converged(res)
+        warm[] = nothing
+        try
+            baseline = _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ;
+                                         gradient=false)
+            if baseline.status.ok && isfinite(baseline.value)
+                refine_opts = Optim.Options(g_tol=g_tol, iterations=iterations,
+                    x_abstol=NaN, x_reltol=NaN, f_abstol=NaN, f_reltol=NaN)
+                candidate = Optim.optimize(nll, g!, copy(θ̂), Optim.LBFGS(), refine_opts)
+                θc = Optim.minimizer(candidate)
+                if Optim.converged(candidate) && all(isfinite, θc)
+                    checked = _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q, θc, Zη, Zψ)
+                    # Eight ULPs of the baseline objective permit only rounding
+                    # differences; this is not a relative likelihood tolerance.
+                    allowance = 8 * eps(max(abs(baseline.value), 1.0))
+                    if checked.status.ok && isfinite(checked.value) &&
+                       all(isfinite, checked.gradient) &&
+                       maximum(abs, checked.gradient) <= g_tol &&
+                       checked.value <= baseline.value + allowance
+                        res = candidate
+                        θ̂ = θc
+                    end
+                end
+            end
+        catch err
+            err isa InterruptException && rethrow(err)
+            # Retain the original unsuccessful result, never a partial candidate.
+        finally
+            warm[] = nothing
+        end
+    end
     Λ̂ = _ls_lc_to_Λ(θ̂[pμ+pψ+1:pμ+pψ+3])
     nll(θ̂)                       # ensure warm[] holds the mode at θ̂ for the SE solve
     # Wald inference (opt-in): observed information = Hessian of the exact gradient.

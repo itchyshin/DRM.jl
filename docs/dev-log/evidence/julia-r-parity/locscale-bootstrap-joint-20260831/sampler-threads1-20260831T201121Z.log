@@ -1,0 +1,23 @@
+ERROR: LoadError: Some tests did not pass: 91 passed, 1 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/sampler-threads1-20260831T201121Z.jl:2
+beta relmat draw: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:215
+  Expression: all(0 .< expected .< 1)
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:0 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:166 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:137
+Test Summary:                                           | Pass  Fail  Total   Time
+bounded bootstrap regression                            |   91     1     92  13.6s
+  canonical location-scale marginal bootstrap simulator |   91     1     92  13.1s
+    gamma relmat draw                                   |   19           19   0.6s
+    nb2 relmat draw                                     |   19           19   0.4s
+    beta relmat draw                                    |   18     1     19   5.9s
+    betabinomial relmat draw                            |   20           20   0.8s

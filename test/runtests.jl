@@ -80,6 +80,8 @@ include("test_postfit.jl")
 include("test_meta.jl")
 include("test_simulate.jl")
 include("test_simulate_scale_conventions.jl") # NB2 size, Gamma slot conventions, owned auxiliary draws
+include("test_locscale_bootstrap_simulator.jl") # coupled marginal draws, precision and family contracts
+include("test_locscale_bootstrap_refit.jl") # same-seed public Gamma refits, serial/threaded
 include("test_gaussian_structured.jl")
 include("test_gaussian_phylo_mean_missing_response.jl")  # #482: species-subset (drop) + include refusal
 include("test_phylo_interaction.jl")

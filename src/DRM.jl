@@ -114,6 +114,7 @@ include("locscale_infer.jl")     # #202 groundwork: Wald inference + RE summarie
 include("locscale_whitened.jl")  # paired latent-coordinate value/gradient/information
 include("locscale_profile.jl")   # #202: profile-likelihood CIs (trust-region inner solve)
 include("locscale_frontend.jl")  # #202 slice 3b: drm() routing for (1|tag|group)
+include("locscale_simulate.jl")  # marginal bootstrap draws both coupled latent axes
 include("locscale_corr.jl")      # cluster ①: (1+x|g)/(0+x|g) reroute onto the q2 core
 include("locscale_sigma.jl")     # cluster ②: standalone sigma ~ 1+(1|g) RE onto the q2 core
 include("gaussian_locscale_phylo.jl")  # B1: Gaussian sigma~phylo(1|g) univariate route — separate/coupled/asymmetric + boundary CIs (Ayumi #2)

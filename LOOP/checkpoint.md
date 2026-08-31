@@ -1,3 +1,28 @@
+# Current continuation — coupled sampler and Gamma B2 repaired
+
+Implementation is based on HEAD8a7b41a2885f2c8d5d81734eee66832356c2a6ba.
+Resolve the containing checkpoint commit with `git log -1 -- LOOP/checkpoint.md`.
+Final145/145 with asserted1/4Julia and1BLAS; profile neighbour16/16. Exact
+source/test hashes and raw failed/successful runs live in
+`docs/dev-log/evidence/julia-r-parity/locscale-bootstrap-joint-20260831/`.
+Rose reviewed sampler and the single bounded optimizer continuation. The original
+B2 failure is retained: one replicate had a valid inner mode but outer gradient
+above1e-8. Continuation now certifies the same seed without relaxing tolerance.
+
+Next: tree forwarding in non-Gaussian fixed-target `drm_bridge_inference`, first
+with a real bounded red. Then other providers/families and actual R bridge parity.
+The generic direct bootstrap still lacks coords. Beta float endpoints remain
+explicit failures, not clipped or redrawn. Gamma public scale normalization and
+all original programme G0-G8 remain OPEN. The interrupted Terra draft is now
+owned/completed locally by root, not by a running worker. No live numerical jobs.
+
+Do not rerun old profiles/sampler discovery or discard old red receipts. Use the
+new after-task report and exact fixtures. No release, deployment, registration,
+remote campaign or worktree cleanup was performed. Local sampler/refit progress
+is not full bootstrap coverage or programme completion.
+
+---
+
 # Current continuation — conditional simulation repaired, joint sampler building
 
 BaseHEAD0b35ad61 before the pending conditional-simulator-only commit. Root
