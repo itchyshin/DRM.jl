@@ -79,3 +79,11 @@ into independent row effects or collapse it to one arbitrary group covariate.
 No public API, likelihood, page deployment or inference gate is changed by this
 note. The reviewed private whitening helper passed 252 focused checks, but it
 remains unwired and the original production finite-profile gate remains open.
+
+## Subsequent implementation checkpoint (2026-08-31)
+
+The earlier paragraph records the state at the time of reading. The helper is
+now paired with canonical fitting/inference and the unchanged finite-profile
+fixture passes with asserted1/4thread runtimes. See the paired-profile after-task
+report. Bootstrap validity remains open: a separate simulation defect was found.
+These code checks do not change the papers' estimator or R-squared scope.

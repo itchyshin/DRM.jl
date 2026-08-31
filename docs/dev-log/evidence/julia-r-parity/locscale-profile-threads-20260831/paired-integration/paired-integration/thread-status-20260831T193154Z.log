@@ -1,0 +1,12 @@
+┌ Info: canonical location-scale profile status fixture
+│   attempted = 1
+│   failed = 0
+│   lower_reason = :accepted
+└   upper_reason = :accepted
+Test Summary:                          | Pass  Total   Time
+location-scale profile endpoint status |   90     90  13.8s
+Test Summary:                                  | Pass  Total  Time
+generic profile nuisance acceptance and status |   74     74  3.9s
+Test Summary:                                       | Pass  Total  Time
+inference BLAS pinning is composable across callers |   17     17  0.2s
+REGRESSION_BUNDLE_PASS

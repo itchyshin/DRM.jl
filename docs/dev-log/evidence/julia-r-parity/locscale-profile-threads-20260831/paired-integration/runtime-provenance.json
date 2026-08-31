@@ -1,0 +1,8 @@
+{
+  "julia_version": "1.10.0",
+  "drm_path": "/private/tmp/drm-parity-20260830/integration/DRM.jl/src/DRM.jl",
+  "optim_version": "1.13.3",
+  "optim_path": "/Users/z3437171/.julia/packages/Optim/gmigl/src/Optim.jl",
+  "blas_config": "LBTConfig([ILP64] libopenblas64_.dylib)",
+  "scope": "Post-check runtime query, not a per-run package snapshot; Project/Manifest hashes retained"
+}

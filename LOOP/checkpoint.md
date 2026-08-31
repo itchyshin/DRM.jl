@@ -1,3 +1,40 @@
+# Current checkpoint — paired finite profiles pass; bootstrap simulator next
+
+Goal ACTIVE; programme G0-G8 OPEN. BaseHEAD16e00719ddd7a93d2d76d3590bf5264cc3e7b27b
+before the pending bounded source/evidence commit. RHEAD9007338e5975fa14ec19915c07dada880250ed01 unchanged.
+Branch codex/parity-integration-20260831. No remote run, release, deployment,
+push/merge, worktree retirement or collaborator message in this slice.
+
+Canonical location-scale now explicitly pairs whitened value/gradient/info/profile
+and diagnostic paths; legacy sigma/correlation defaults remain raw and paired.
+Strict nuisance g1e-7 and200iteration contract unchanged; paired x/f early stopping
+disabled. Each profile coefficient owns warm state; onejob serial, BLAS restored.
+Immutable finite-profile fixture SHAca1d9db8 passes16/16 at asserted1/4Julia threads.
+Current exact source/test hashes and snapshots: paired-integration/manifest.json.
+Final helper284pass, kernelbundle1982pass, neighbours29pass, serialprofile/status193,
+threadstatus181, integration44. No fullPkg.test or R numeric parity claimed.
+Review and all red/green receipts retained; after-task report lists timing misses.
+No numerical process remains running. Root owns all source; children read-only/idle.
+
+NEXT (required bug): canonical bootstrap's generic marginal simulator returns
+nothing because coupled fit has :recov, no :resd. Fallback simulate uses fixed
+means/scales and omits both random mean and log-scale effects. Dedicated sampler
+must draw joint a viaQ PRECISION solve and L with public recov packing corrected,
+apply both eta/psi axes, and never reuse fitted-mode seeds. First no-fit red with
+manual distribution oracle, then bounded B=2smokes; no coverage claim fromB=2.
+Read retained next-bootstrap-finding.md. Non-Gaussian bridge bootstrap additionally
+needs treeforwarding verification. Existing Poisson-only tests do not cover this.
+No sampler source change yet; acquire exact test path ownership first.
+
+MissionControl608342b94b305da7ed6cc3ebe2d23a21becb04e4 updated only two fields;
+served values verified, foreign staging preserved, exact lease released.
+Fullfunctional/parity, performance, whole-site, recovery and Melissa programme
+reconciliation remain required; a bounded pass never substitutes for them.
+Protected src/gaussian_sparse_lss.jl, src/gaussian_structured.jl and
+ docs/src/tutorials/location-scale.md remain untouched; do not bypass denials.
+
+---
+
 # Current checkpoint — private helper passes; paired production wiring next
 
 Goal ACTIVE; programme G0–G8 OPEN. Source HEAD18f66f863d5c7aaba7f19419bb3f4303517d44bb
