@@ -120,3 +120,84 @@ Root added duplicate-label refusal and exclusive log creation to the three
 private regression runners. Invoking each with an existing label exits before
 Julia starts; previous log and receipt hashes remain unchanged. Copies and the
 verification receipt are retained under `retained-runner-guards/`.
+
+### Frozen candidate and original regression results
+
+Candidate `2c534141` and focused test `194b91bd` address Rose's cancellation
+findings and pass78 focused assertions. Rose approved these source/test changes
+at their bounded scope. All five retained failure steps pass independent128/256
+bit comparisons: maximum relative discrepancy1.446e-5 against the unchanged1e-4
+criterion. A later review caught a missing opposite-step assertion in the pilot;
+pilot004 adds it and passes, while deliberate corruption is rejected in005.
+Earlier failed script drafts remain evidence, not passing runs.
+
+Root's separate48-case grid covers both families, n=5/17/64, general loadings,
+coupled dense/sparse priors, both step directions, row reversal and objective
+shifts. It passes294 assertions in4.43s. Corrupting estimates by1% produces96
+expected failures and198 passes in7.85s, exit1. Source/probe hashes are unchanged.
+
+The actual Unlazy commands were rerun on the frozen source. G0 passes; G1 passes
+123 test assertions plus2 runner checks in34.66s, including the previously failed
+NB2 convergence/recovery test. G4 passes150 perturbation assertions plus2 runner
+checks in5.72s. G2 and G3 each still produce76 passes and one Gamma covariance
+error, before profiling, in15.10s and14.23s respectively. One Optim warning about
+early termination due to a NaN Hessian remains in the otherwise passing G1 log.
+All run inputs are unchanged. This candidate is **not integrated acceptance**.
+
+The next diagnostic uses the actual public Gamma fit and fitter-held warm state.
+A copied-loop replay and the public marginal status disagree; distinguish inner
+failure from prior-factor failure before changing production code. No tolerance,
+iteration budget, likelihood or requested uncertainty calculation was weakened.
+
+### Documentation and coordination delta
+
+Four additional retained Documenter pages were visually sampled. Root inspection
+rejected the initial mobile verdict because two screenshots were invalid. A fresh
+browser check found a normal342pixel article within the390pixel viewport both
+on direct navigation and after resize settled; immediate resize captures can
+contain a transient sidebar overlay. All original and corrected receipts remain.
+This is not a fresh build, all-page or globalG6 verdict.
+
+The small tutorial line-wrap edit was not performed: auto-review rejected its
+ownership claim. No retry or indirect source change was attempted. Mission
+Control commit `260abcb` was checked at its served URL and its exact-file lease
+released. No remote fit/allocation, publication or cleanup action was launched.
+
+### Gamma arithmetic diagnosis and reconnected compute
+
+The apparent replay disagreement above is now resolved: the public fit stores
+its covariance parameters in a different order from the internal engine. Using
+the captured engine-order vector reproduces exactly one failed covariance
+perturbation (theta1 minus h). Its prior factor is valid. Independent 128/256-bit
+objective evaluation gives a decrease of 5.4686167e-20 and confirms the trial is
+stationary, while the current estimated-error margin correctly refuses it.
+
+The read-only compensated-prior prototype reduces the directional estimate error
+from 7.45e-22 to 1.25e-25 on that sixth case. All five earlier states and the sixth
+case have dense/sparse state, row-order and group-coordinate checks (the
+prototype still traverses sparse states by dense indexing). This does not
+accept a production repair: source remains frozen at 2c534141 and the current
+margin still refuses. Rose is reviewing tracked residual arithmetic before any
+new source change. Final prototype003 and earlier failed attempts are retained
+with hashes; earlier script bytes are not claimed to match the final script.
+
+At 2026-08-31 14:56 UTC, live hostname probes succeeded through existing sockets
+for Totoro, Fir, Nibi, Rorqual, Trillium and Narval. Fresh login fallback was
+disabled. No jobs or allocations were submitted. The initial sandbox refused
+socket access; the authorized read-only probe then succeeded. The Mac remains
+the appropriate target for this seconds-long arithmetic check.
+
+Rose subsequently approved the tracked-residual contract for implementation and
+testing. The contract is retained before edits. Builder is implementing only
+within its existing lease; source is now mutable until a new hash freeze. The
+prototype's uphill check used the old helper and its sparse traversal was dense
+indexing, so neither supports acceptance of the new code. Required new controls
+explicitly address both. Pat's read-only receipt review found one missing
+connectivity checksum; it has now been added to the manifest. No completion or
+performance claim follows from this authorization.
+
+Melissa independently approved the exact 99-file evidence-only checkpoint. It
+contains no working source, test or reader-page files; embedded source snapshots
+are explicitly unaccepted evidence. Her clarity comment about dense/sparse state
+checks versus actual CSC traversal was incorporated above. The global programme
+and the new candidate's acceptance remain open.

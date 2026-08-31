@@ -1,0 +1,42 @@
+{
+  "utc": "2026-08-31T14:56:56.707173+00:00",
+  "no_jobs_submitted": true,
+  "results": [
+    {
+      "host": "totoro.biology.ualberta.ca",
+      "ok": true,
+      "hostname": "totoro",
+      "detail": ""
+    },
+    {
+      "host": "fir.alliancecan.ca",
+      "ok": true,
+      "hostname": "login2",
+      "detail": ""
+    },
+    {
+      "host": "nibi.alliancecan.ca",
+      "ok": true,
+      "hostname": "l5.nibi.sharcnet",
+      "detail": ""
+    },
+    {
+      "host": "rorqual.alliancecan.ca",
+      "ok": true,
+      "hostname": "rorqual3",
+      "detail": ""
+    },
+    {
+      "host": "trillium.alliancecan.ca",
+      "ok": true,
+      "hostname": "tri-login03",
+      "detail": ""
+    },
+    {
+      "host": "narval.alliancecan.ca",
+      "ok": true,
+      "hostname": "narval3",
+      "detail": ""
+    }
+  ]
+}

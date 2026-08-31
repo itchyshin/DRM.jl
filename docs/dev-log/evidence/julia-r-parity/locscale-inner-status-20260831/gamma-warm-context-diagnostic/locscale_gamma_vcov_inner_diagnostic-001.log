@@ -1,0 +1,9 @@
+ERROR: LoadError: ParseError:
+# Error @ /private/tmp/locscale_gamma_vcov_inner_diagnostic.jl:61:24
+            if issuccess(F)
+                step=F\\grad; alpha=1.0
+#                      ╙ ── not a unary operator
+Stacktrace:
+ [1] top-level scope
+   @ /private/tmp/locscale_gamma_vcov_inner_diagnostic.jl:61
+in expression starting at /private/tmp/locscale_gamma_vcov_inner_diagnostic.jl:61

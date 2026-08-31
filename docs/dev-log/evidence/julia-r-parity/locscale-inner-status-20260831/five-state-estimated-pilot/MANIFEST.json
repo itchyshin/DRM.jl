@@ -1,0 +1,35 @@
+{
+  "scope": "Terminal generated diagnostics and current private scripts; earlier failed logs do not imply they used the final script revision. Production remains frozen2c534141.",
+  "files": [
+    {
+      "file": "locscale_estimated_error_five_state_pilot-001.log",
+      "source": "/private/tmp/locscale_estimated_error_five_state_pilot-001.log",
+      "sha256": "d23d8e914f80e41a7eb7706571277163ace6c0f704a727f2046cc6613673ec1e"
+    },
+    {
+      "file": "locscale_estimated_error_five_state_pilot-002.log",
+      "source": "/private/tmp/locscale_estimated_error_five_state_pilot-002.log",
+      "sha256": "4df12326a470b2b2dc1f3f01929e0550f1c53fc9939b1e59290578c3329df0c1"
+    },
+    {
+      "file": "locscale_estimated_error_five_state_pilot-003.log",
+      "source": "/private/tmp/locscale_estimated_error_five_state_pilot-003.log",
+      "sha256": "42427c77570cf326648fea9ca1ac867c0b34c631f5ff646880e52acba315e559"
+    },
+    {
+      "file": "locscale_estimated_error_five_state_pilot-004.log",
+      "source": "/private/tmp/locscale_estimated_error_five_state_pilot-004.log",
+      "sha256": "42427c77570cf326648fea9ca1ac867c0b34c631f5ff646880e52acba315e559"
+    },
+    {
+      "file": "locscale_estimated_error_five_state_pilot-negative-005.log",
+      "source": "/private/tmp/locscale_estimated_error_five_state_pilot-negative-005.log",
+      "sha256": "2c4dbc793111a7c35d480e1d03df516fafce89609fd208b557579ed58cea2079"
+    },
+    {
+      "file": "locscale_estimated_error_five_state_pilot.jl",
+      "source": "/private/tmp/locscale_estimated_error_five_state_pilot.jl",
+      "sha256": "c0007154c884884f289effbfca542812801d4ee1b62f8fb09a2ab817176d1157"
+    }
+  ]
+}

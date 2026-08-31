@@ -1,4 +1,60 @@
-# Current — bounded stable-comparison implementation authorized
+# Current — NB2 recovery restored; Gamma covariance still unresolved
+
+Programme ACTIVE; every global G0–G8 remains OPEN. Evidence-only HEAD2de4435c;
+accepted source baseline remains5daa1593 (profile implementationde4620c7),
+R9007338e5. Prior candidate source2c534141/test194b91bd is retained, NOT integrated.
+Builder is now implementing the reviewed tracked-prior arithmetic candidate;
+source is mutable until the next explicit hash freeze.
+
+Finite comparison validation passed:78focused assertions; five retained128/256bit
+cases (relativeerror<=1.446e-5 against1e-4); independent48casegrid294assertions.
+One-percent corruption gives96expectedfailures,198passes. Privatefivepilot004
+adds Rose's missing opposite-helper guard; negative005 catches corruptmargin.
+OriginalG1nowpasses123test+2runnerchecks including NB2recovery,34.66s. G4passes
+150+2checks,5.72s. G2/G3each76pass1Gamma covarianceerror beforeprofile,15.10/14.23s.
+Inputs unchanged. One OptimNaNHessianwarning remains inpassingG1. Allrootruns
+terminal, including Unlazy session76494exit1; no fresh fullsuite/docsbuild yet.
+
+Exact Gamma mismatch is resolved: publicfit.theta covariance tail is in recovery
+order, whereas_vcovusesengineorder. Correctedtrace003andactualreplayagree.
+Onlytheta1-h fails; priorfactorvalid. HPconfirmsbasegradientnonstationary,
+trialstationaryandtrueDelta=-5.4686167e-20. CurrentQ8=-5.394159e-20 butE=4.56462e-19,
+so currentrefusaliscorrect. Prior-direction rounding accounts forQ8's7.446e-22
+error; rawNLLsignlossalsoarisesinper-termarithmetic. Do notconflate these.
+
+ACTIVE: builder Terra/high is implementing Rose's reviewed tracked-residual
+prior arithmetic contract in its existing owned source/test/ledger files only.
+See locscale-inner-status-20260831/tracked-prior-arithmetic-contract.md.
+Keep all original tolerances, constants, data envelopes and acceptance guards.
+Focused arithmetic and six-state pilot estimate<=3min each; no full fits until
+source/test freeze plus review. Root owns independent varied oracle execution.
+The read-only prototype improves sixth-case error7.45e-22 to1.25e-25, but its
+uphill checks used the old helper and sparse traversal was dense indexing.
+The new implementation must check both explicitly; prototype is not acceptance.
+Totoro and all five general-purpose DRAC connections verified14:56UTC through
+existing sockets, with fresh-login fallback disabled. No remote jobs/allocations.
+Do not restart the old capped slow profile benchmark.
+
+Pat sampled4more retainedDocumenterpages. Rootcaught invalidmobilecaptures;
+freshdirect/settledphone checks show342pxarticlewithin390pxviewport. Immediate
+resizecapturecancontaintransientoverlay. Original07/08areNOTpassingvisualproof.
+See documenter-additional-visuals-20260831/root-responsive-recheck.json.
+Browserviewportreset, tabclosed, localhostserver40309terminated(session89756).
+
+Auto-review DENIED tutorialpath ownership claim (docs/src/tutorials/location-scale.md)
+becauseanotherlanehaswork; doNOTretry/bypass/edittutorial. Rootexistingleasewasnot
+expanded. Prior twoGaussian sourceeditdenials also remain. Smallmobilecodewrap
+improvementcarried. No publicdeployment, push, merge, release orworktreeretirement.
+MissionControl260abcbservescurrentstatus; its exactfileleaseisreleased.
+
+Provenancegap disclosed: pre003fivepilot and invalidtrace002 scriptbytes were
+not snapshotted before privateedits; theirlogsremain, guardedpilot004repeatspass
+withretainedcurrentscript. Do notattributeoldlogstofinalscript. Arithmeticfinal003
+andhashesretainedin gamma-warm-context-diagnostic/arithmetic-final/.
+
+---
+
+# Previous — bounded stable-comparison implementation authorized
 
 Programme ACTIVE; allglobalgatesOPEN. Evidence-only checkpoint `2b015936`
 is retained and independently approved by Melissa; it does not accept the
