@@ -1,0 +1,61 @@
+{
+  "checked_utc": "2026-08-31T15:47:54.400878+00:00",
+  "scope": "Existing-socket read-only connectivity and sbatch availability; no fit, allocation or new login",
+  "user_authority": "Up to five DRAC computers when needed; notify user of unavailable connections",
+  "results": [
+    {
+      "host": "fir",
+      "socket": "/Users/z3437171/.ssh/cm-snakagaw@fir.alliancecan.ca:22",
+      "exists": true,
+      "status": "connected",
+      "returncode": 0,
+      "stdout": "login2\n/opt/software/slurm/bin/sbatch",
+      "stderr": ""
+    },
+    {
+      "host": "nibi",
+      "socket": "/Users/z3437171/.ssh/cm-snakagaw@nibi.alliancecan.ca:22",
+      "exists": true,
+      "status": "connected",
+      "returncode": 0,
+      "stdout": "l5.nibi.sharcnet\n/opt/software/slurm/24.11.7/bin/sbatch",
+      "stderr": ""
+    },
+    {
+      "host": "rorqual",
+      "socket": "/Users/z3437171/.ssh/cm-snakagaw@rorqual.alliancecan.ca:22",
+      "exists": true,
+      "status": "connected",
+      "returncode": 0,
+      "stdout": "rorqual3\n/opt/software/slurm/bin/sbatch",
+      "stderr": ""
+    },
+    {
+      "host": "trillium",
+      "socket": "/Users/z3437171/.ssh/cm-snakagaw@trillium.alliancecan.ca:22",
+      "exists": true,
+      "status": "connected",
+      "returncode": 0,
+      "stdout": "tri-login03\nsbatch",
+      "stderr": ""
+    },
+    {
+      "host": "narval",
+      "socket": "/Users/z3437171/.ssh/cm-snakagaw@narval.alliancecan.ca:22",
+      "exists": true,
+      "status": "connected",
+      "returncode": 0,
+      "stdout": "narval3\n/opt/software/slurm/bin/sbatch",
+      "stderr": ""
+    },
+    {
+      "host": "totoro",
+      "socket": "/Users/z3437171/.ssh/cm-snakagaw@totoro.biology.ualberta.ca:22",
+      "exists": true,
+      "status": "connected",
+      "returncode": 0,
+      "stdout": "totoro",
+      "stderr": ""
+    }
+  ]
+}

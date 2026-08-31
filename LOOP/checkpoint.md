@@ -1,3 +1,43 @@
+# Current — numerical repair committed; bounded profile-threading implementation active
+
+Programme ACTIVE; global G0–G8 remain OPEN. Julia local source checkpoint
+c7e5b823fb3977bf5488c98f112089eb11772ecb includes reviewed inner arithmetic,
+regressions and documentation evidence. Frozen source7f9571e7/test59fb2c45
+match committed bytes; postcommit review-freshness check passes. R9007338e5
+unchanged. No push/main merge/deployment/release/retirement.
+
+All six LOCAL inner repair gates passed before commit. Gamma covariance/profile
+regression is repaired. Existing OptimNaNHessianwarning retained. Docs006 passes
+52pages134examples and freshHTML; phone light/dark body has no horizontal
+overflow. Sticky-navigation fragment headings P2 and raw106deployment-metadata
+link failures remain G6 tasks. Preview server/tab closed, viewport reset.
+
+MissionControl f21c6c0b3a15634042695ff525aadfb6f377746b locally committed and
+served-fields verified; its lease released. Old completed builder lease released.
+All six compute targets verified15:47UTC via existing sockets (Totoro plusFir,
+Nibi,Rorqual,Trillium,Narval); no new login, job or allocation launched.
+
+ACTIVE child /root/profile_threading_builder requestedTerra/high fresh brief.
+Read-only ownership/history review found no existing pending coefficient-threading
+implementation in18divergent refs, and no competing inference-file lease. Child
+now authorized to claim EXACTsrc/inference.jl,test/test_locscale_profile_threads.jl,
+.unlazy/locscale-profile-threads.md undercodex:01a05261-profile-threads-builder.
+It must honor lease refusal. Root owns docs/evidence and later runtests wiring.
+
+Child writes acceptance ledger before running untouched4threadtest with180second
+hard cap. Runtimeunknown; this is a<=3minfeasibility estimate, already stated.
+If expectedredonlymissingthreadingmetadata and pilot finishes, implement minimal
+coefficient-only threading preserving independent warmstates, sequentialendpoint
+arms, BLASrestoration and numericalcontracts. Then capped1/4threadverification,
+freeze source/test and obtain Rose review. Stop/reassess ontimeout, neverrestart
+old901s/fullvectorbenchmark or weaken cases. No agent commit/dependencyinstall/
+remotejob. Root willretain logs andwiretestafterfreeze.
+
+Protected threepaths untouched. Allglobalgatesremainopen. Receivechildreceipt,
+independentlyreview, runfocusedtests anddocs asappropriate, checkpoints andMC.
+
+---
+
 # Current — verified inner repair ready for scoped source checkpoint
 
 Programme ACTIVE; all global G0–G8 remain OPEN. Evidence checkpoint c4e44a3e;
