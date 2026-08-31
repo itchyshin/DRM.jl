@@ -10,8 +10,9 @@ marginal simulation reconstructs the fitted exponential covariance. Final
 provider test19/19 at4Julia/1BLAS with serial/thread equality; existing structured
 neighbours green. R retains/forwards the exact provider into profile and both
 bootstrap branches; pure routing48checks. Actual source-loaded R relmat profile
-and bootstrap (B2/2) equal direct Julia exactly. Rose PASS; Melissa pending final
-reconciliation. No live numerical process and no remote job.
+and bootstrap (B2/2) equal direct Julia exactly. Rose and Melissa bounded PASS. Mission Control two-field update verified
+served, locally committed dade5f5 and exact lease released. No live numerical
+process and no remote job.
 
 This is provider plumbing, not native-R parity, calibration, coverage, or
 performance. Live R animal/converted-spatial and non-Gaussian provider cells
