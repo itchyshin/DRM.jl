@@ -163,7 +163,7 @@ _multi_scalar_phylo_lss_formula() = bf(
     @formula(sd(study) ~ 1),
 )
 
-function _lss_boundary_comparison(label, left, right)
+function _lss_boundary_comparison(label, left, right; broken = false)
     difference = maximum(abs.(left.theta - right.theta))
     println("LSS_BOUNDARY_DIAGNOSTIC label=", label, " max_theta_difference=", difference)
     for block in (:mu, :sigma, :sd, :sd_phylo)
@@ -173,8 +173,15 @@ function _lss_boundary_comparison(label, left, right)
     end
     if get(ENV, "DRM_LSS_STRICT_BOUNDARY", "") == "1"
         @test difference <= 4e-6
-    else
+    elseif broken
         @test_broken difference <= 4e-6
+    elseif Sys.islinux()
+        # Both supported Linux CI versions satisfy this boundary. The same
+        # optimizer fixture is still platform-sensitive on macOS, so do not
+        # turn a Linux repair into an unsupported cross-platform claim.
+        @test difference <= 4e-6
+    else
+        @test_skip difference <= 4e-6
     end
 end
 
@@ -193,7 +200,7 @@ end
         # six-tip scale-scale fixture.  The unlazy switch turns it into a
         # normal failure rather than allowing the default broken-test status
         # to be mistaken for closure; its cause remains unassigned here.
-        _lss_boundary_comparison("dedicated_small", fit_shuffled, fit_ordered)
+        _lss_boundary_comparison("dedicated_small", fit_shuffled, fit_ordered; broken = true)
 
         # IID group indices remain deliberately first-seen; this repair is
         # restricted to phylogenetic components.

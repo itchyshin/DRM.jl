@@ -134,6 +134,21 @@ DRM._vcov_from_hessian
 DRM.q2_reml_phi_len
 ```
 
+### Paired whitening internals (no stability guarantee)
+
+These private helpers implement the transformed latent-state route used by
+coupled non-Gaussian location-scale fitting, observed information, and marginal
+bootstrap simulation. They are documented here so their contracts remain
+visible to Documenter's completeness check; they are not public API.
+
+```@docs
+DRM._LSWhitenedSeed
+DRM._ls_whitened_eval
+DRM._ls_whitened_information
+DRM._ls_whitened_vcov
+DRM._ls_bootstrap_effect
+```
+
 ### Location-scale inner-mode acceptance
 
 For the non-Gaussian location-scale Laplace engine, a positive-definite latent

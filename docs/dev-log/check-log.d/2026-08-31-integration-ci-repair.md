@@ -1,0 +1,1 @@
+| 2026-08-31 | **Paired integration CI repair** (#565) | Linux CI RED isolated to one unexpected pass; focused macOS file 401 PASS / 1 BROKEN / 1 SKIP; full Documenter and VitePress build PASS | Five private docstrings are indexed; Linux scalar multi-component boundary is asserted while unresolved macOS behavior remains explicit | Ada / Rose |
