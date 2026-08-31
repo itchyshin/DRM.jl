@@ -1,0 +1,15 @@
+ERROR: LoadError: type NamedTuple has no field labels
+Stacktrace:
+ [1] getproperty
+   @ ./Base.jl:37 [inlined]
+ [2] _assert_fixture_bytes!(reconstructed::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, rows::Vector{Int64}, tree_species::Vector{Int64}, z_tip::Vector{Float64}, x_tree::Vector{Float64}, study_tree::Vector{Int64}, y_tree::Vector{Float64}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}}, original::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, label::String)
+   @ Main /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:68
+ [3] _fixture_pair
+   @ /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:81 [inlined]
+ [4] main()
+   @ Main /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:251
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:267
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:267
+LSS_BOUNDARY_META julia=1.10.0 threads=1 openblas_env=1 openblas_actual=1 fixture_mode=original_test_bytes source_sha256=4465956f8786436b72827366032178f1a81f0b76582df7f232d155ed624191f9 test_sha256=9e8f2522841c1294d4cfac6aa11d26fe7c8bd2b1c6d501f2fe22b8391e283068 runner_sha256=8492166b66145c942cd743bbc9cb1f9aa1b6609a02ada3284773dec92c5f0a04
+LSS_BOUNDARY_META oracle=hard_correlation_byte_verified_fixture=true
