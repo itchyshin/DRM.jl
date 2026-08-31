@@ -15,7 +15,8 @@ factor interactions from their typed components, and uses collision-safe
 temporary columns. The R adapter validates the map before inference startup and
 preserves it for prediction and selectors. Tests cover punctuation, numerical
 coordinate order, LSS prefixes, missing responses and ordinal intercept removal.
-Source and owned-only candidate verification passed. The source hash is
+Source and owned-only candidate verification passed; scoped code commits are
+Julia `6d35b133` and R `2cd1f2ce3`. Their source blobs match the executed candidates. The source hash is
 `269937e0fd5a88f4db973759a7f03c91e288da2e9a7a9f65f1ec74e61072cfaf`.
 This report certifies the bounded local patch; it does not claim a deployed
 package or complete programme integration.
@@ -53,7 +54,7 @@ fixture contains generated R outputs, and its generator remains in drmTMB.
   `tools/generate-julia-scalar-label-fixture.R`,
   `tools/generate-julia-conditional-label-fixture.R` and retained R evidence.
 - Programme checkpoint, ignored leaf ledger and this report. Mission Control
-  changed only its four owned NOW fields in local vault commit `f24b9c4`;
+  changed only its four owned NOW fields in local vault commit `4f6edef`;
   served values matched, and that lease was released.
 
 Foreign S5 and ZOB changes are preserved and excluded from scoped staging.

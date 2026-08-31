@@ -1,3 +1,39 @@
+# Current checkpoint — verified label patch committed locally
+
+Programme ACTIVE. All programme G0–G8 remain OPEN; the five bounded coefficient-
+label leaf gates PASS. No fits/benchmarks or child execution running. No releases,
+publication, collaborator messages, worktree retirement or stash disposal.
+
+Julia source commit6d35b133; R adaptercommit2cd1f2ce3. Owned-only validation:
+public00817Gaussian point cases+12public/direct profile/bootstrap operations,
+49.48s; combined0051061assertions+actualreaderexample,89.3627s/108unchangedinputs;
+Rmetadata/prediction62checks. Rreceiptchecker13damages; Pythonchecker11damages
+under normal/-O. Rose independentlyapproved source and retained evidence;
+Melissa obligationreconciliation addressed. Staged and committed source blobs
+match tested snapshots (107Julia trackedinputs +46Rinputs; Manifestrecorded as
+untrackedruntime dependency); both checker blobs also match. Foreignworkingbytes
+preserved exactly: RZOB96+/10- and JuliaS5include/test remain uncommitted.
+
+Final report/RESULT/ACCEPTANCE/check-log/failed+passingreceipts retained inboth
+repos under docs/dev-log/evidence/julia-r-parity/coefficient-labels/. Paired
+label-verification checkouts retained, with matching executed sources/artifacts;
+no claimofnewnativecompilation (existingDLLreused onlyforpackage loading).
+MissionControl localcommit4f6edef changesfourNOWfields; servedvaluesverified,
+vaultleasereleased. RootactualSol/medium; builder/reconcilerTerra/high;
+RoseSol/high; historyscoutLuna/low. Activeagenthoursnotinstrumented.
+
+NEXT: inspectlivePR/main state for codex/julia-r-parity inbothrepos, integrate
+verifiedscopedwork underexistingapprovalandCIpacing; no new fitsneeded merelyto
+recheck source equivalence. Then advance remaining unblocked inference/canonical-
+tree and capability obligations fromprogrammeledger#563. Existing denied edits
+src/gaussian_sparse_lss.jl and src/gaussian_structured.jl MUST NOT be retried or
+bypassed withoutfreshuserapproval. Whole-tree profiling/performance, strict4e-6
+losses,24native missingpredictorcells,LSSSE/REML/masks/largetree,allmodel/output
+parity,1/2/4/8threadpolicy,cleanup,fullDocumenter/visual/liveverification and
+programme-levelMelissareconciliation remainrequired. No narrowed denominator.
+
+---
+
 # Current — coefficient-label patch validated; scoped commits next
 
 Programme ACTIVE, all programmeG0–G8OPEN. No fits running. Finalsource269937e0
