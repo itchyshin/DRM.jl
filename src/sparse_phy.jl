@@ -31,9 +31,9 @@
 # the parser is ~80 lines of recursive descent and matches the minimal
 # Newick grammar at
 #     https://evolution.genetics.washington.edu/phylip/newicktree.html.
-# Only `name:length` leaves and balanced parentheses are supported (no
-# quoted names, no bootstrap labels, no internal-node names). The
-# delimiter is `;`. Whitespace is ignored.
+# Leaves use either old-compatible unquoted names or lossless single-quoted
+# Newick labels. Internal labels are parsed but discarded. The delimiter is
+# `;`; whitespace is ignored only between grammar tokens.
 
 using SparseArrays
 using LinearAlgebra
@@ -85,10 +85,12 @@ end
 #     node    := leaf | internal
 #     leaf    := name [":" length]
 #     internal:= "(" node ("," node)* ")" [name] [":" length]
-#     name    := [A-Za-z0-9_.\-]+
+#     label   := unquoted | "'" quoted "'"
+#     quoted  := any character, with "''" representing one apostrophe
 #     length  := [0-9]+ ( "." [0-9]+ )? ( [eE] [+-]? [0-9]+ )?
 #
-# We strip whitespace before parsing. Length defaults to 0.0 if omitted.
+# Whitespace outside labels is ignored. It remains literal inside a quoted
+# label. Length defaults to 0.0 if omitted.
 
 mutable struct _NewickCursor
     s::String
@@ -100,6 +102,15 @@ end
     ch = _peek(c)
     c.i = nextind(c.s, c.i)
     return ch
+end
+
+@inline _newick_whitespace(ch::Char) = isspace(ch)
+
+function _skip_newick_whitespace!(c::_NewickCursor)
+    while _newick_whitespace(_peek(c))
+        _advance(c)
+    end
+    return nothing
 end
 
 function _parse_number!(c::_NewickCursor)
@@ -118,18 +129,62 @@ function _parse_number!(c::_NewickCursor)
     return val
 end
 
-function _parse_name!(c::_NewickCursor)
-    j = c.i
-    while j <= lastindex(c.s)
-        ch = c.s[j]
-        if ch == ',' || ch == ')' || ch == ':' || ch == ';' || ch == '('
-            break
-        end
-        j = nextind(c.s, j)
+"""Parse one Newick label, retaining quoted Unicode/control characters exactly."""
+function _parse_label!(c::_NewickCursor)
+    ch = _peek(c)
+    if ch == '\0' || ch == ',' || ch == ')' || ch == ':' || ch == ';' || ch == '('
+        throw(ArgumentError("expected Newick label at position $(c.i)"))
     end
-    name = c.s[c.i:prevind(c.s, j)]
-    c.i = j
-    return name
+    if ch == '\''
+        _advance(c)
+        label = IOBuffer()
+        while true
+            ch = _peek(c)
+            ch == '\0' && throw(ArgumentError(
+                "unterminated quoted label beginning before position $(c.i)"))
+            if ch == '\''
+                _advance(c)
+                if _peek(c) == '\''
+                    write(label, '\'')
+                    _advance(c)
+                else
+                    return String(take!(label))
+                end
+            else
+                write(label, ch)
+                _advance(c)
+            end
+        end
+    end
+
+    first = c.i
+    while true
+        ch = _peek(c)
+        if ch == '\0' || ch == ',' || ch == ')' || ch == ':' || ch == ';' || ch == '('
+            break
+        elseif _newick_whitespace(ch)
+            # Whitespace separates grammar tokens, so `A : 1` retains the
+            # old accepted spelling. It cannot split an unquoted label such
+            # as `two words`.
+            label = c.s[first:prevind(c.s, c.i)]
+            _skip_newick_whitespace!(c)
+            next = _peek(c)
+            if next == ':' || next == ',' || next == ')' || next == ';' || next == '\0'
+                return label
+            end
+            throw(ArgumentError(
+                "unquoted label cannot contain whitespace at position $(c.i); quote the label"))
+        elseif ch == '\''
+            throw(ArgumentError(
+                "single quote in an unquoted label at position $(c.i); quote the whole label"))
+        elseif ch == '[' || ch == ']'
+            throw(ArgumentError(
+                "Newick comments are unsupported at position $(c.i); quote literal brackets in a label"))
+        end
+        _advance(c)
+    end
+    first == c.i && throw(ArgumentError("expected Newick label at position $(c.i)"))
+    return c.s[first:prevind(c.s, c.i)]
 end
 
 # Internal builder: walks the Newick string and writes nodes + edges into
@@ -141,33 +196,41 @@ function _parse_node!(c::_NewickCursor,
                       node_length::Vector{Float64},
                       leaf_indices::Vector{Int},
                       leaf_names::Vector{String})
+    _skip_newick_whitespace!(c)
     children_local = Int[]
     if _peek(c) == '('
         _advance(c)                       # consume "("
+        _skip_newick_whitespace!(c)
         # parse comma-separated children
         push!(children_local, _parse_node!(c, node_parent, node_is_leaf,
                                            node_name, node_length,
                                            leaf_indices, leaf_names))
+        _skip_newick_whitespace!(c)
         while _peek(c) == ','
             _advance(c)
             push!(children_local, _parse_node!(c, node_parent, node_is_leaf,
                                                node_name, node_length,
                                                leaf_indices, leaf_names))
+            _skip_newick_whitespace!(c)
         end
         _peek(c) == ')' ||
-            error("expected ')' at position $(c.i) in Newick string")
+            throw(ArgumentError("expected delimiter ',' or ')' at position $(c.i) in Newick string"))
         _advance(c)
+        _skip_newick_whitespace!(c)
         # internal node label (optional, discarded — minimal grammar)
         name = ""
         if _peek(c) != ':' && _peek(c) != ',' && _peek(c) != ')' && _peek(c) != ';'
-            name = _parse_name!(c)
+            name = _parse_label!(c)
         end
+        _skip_newick_whitespace!(c)
         # branch length (to PARENT, optional)
         blen = 0.0
         if _peek(c) == ':'
             _advance(c)
+            _skip_newick_whitespace!(c)
             blen = _parse_number!(c)
         end
+        _skip_newick_whitespace!(c)
         # allocate this internal node and patch children's parents
         push!(node_parent, 0)             # parent set by caller
         push!(node_is_leaf, false)
@@ -180,12 +243,15 @@ function _parse_node!(c::_NewickCursor,
         return my_idx
     else
         # leaf
-        name = _parse_name!(c)
+        name = _parse_label!(c)
+        _skip_newick_whitespace!(c)
         blen = 0.0
         if _peek(c) == ':'
             _advance(c)
+            _skip_newick_whitespace!(c)
             blen = _parse_number!(c)
         end
+        _skip_newick_whitespace!(c)
         push!(node_parent, 0)             # parent set by caller
         push!(node_is_leaf, true)
         push!(node_name, name)
@@ -290,8 +356,10 @@ Restrictions
 ------------
 * Rooted multifurcating trees are admitted: every internal node must have at
   least two children. Unary nodes are currently unsupported.
-* Leaf names follow `[A-Za-z0-9_.\\-]+`. Internal node labels are tolerated
-  but discarded.
+* Leaf names may be old-compatible unquoted labels or lossless single-quoted
+  labels. Doubled apostrophes inside a quoted label represent one apostrophe.
+  Internal labels are tolerated but discarded.
+* Literal NUL bytes are invalid Newick input and are rejected before parsing.
 * Non-root branch lengths must be finite, > 0, and have finite reciprocal.
 * The root has no parent branch; the optional root length in
   `(…):0.0;` is read but does not enter Q.
@@ -307,11 +375,11 @@ nnz(phy.Q_topology)          # 13  (5 diagonal + 8 off-diagonal entries)
 ```
 """
 function augmented_phy(newick::AbstractString)
-    s = filter(!isspace, String(newick))
-    !endswith(s, ";") &&
-        error("Newick string must end with ';'")
-    s = s[1:prevind(s, lastindex(s))]    # strip trailing ;
+    s = String(newick)
+    occursin('\0', s) && throw(ArgumentError(
+        "Newick strings cannot contain literal NUL bytes"))
     c = _NewickCursor(s, firstindex(s))
+    _skip_newick_whitespace!(c)
 
     node_parent = Int[]
     node_is_leaf = Bool[]
@@ -323,8 +391,13 @@ function augmented_phy(newick::AbstractString)
     root_idx = _parse_node!(c, node_parent, node_is_leaf, node_name,
                             node_length, leaf_indices, leaf_names)
 
-    c.i <= lastindex(c.s) &&
-        error("extra characters after end of tree at position $(c.i)")
+    _skip_newick_whitespace!(c)
+    _peek(c) == ';' || throw(ArgumentError(
+        "Newick string must end with ';' at position $(c.i)"))
+    _advance(c)
+    _skip_newick_whitespace!(c)
+    _peek(c) == '\0' || throw(ArgumentError(
+        "extra characters after end of tree at position $(c.i)"))
 
     # Reindex: place leaves first (1:p) in the order they were encountered,
     # then internal nodes in the order they were added (post-order, so the

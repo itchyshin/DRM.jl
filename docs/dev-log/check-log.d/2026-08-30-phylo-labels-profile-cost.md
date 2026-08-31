@@ -1,0 +1,1 @@
+| 2026-08-30 | **Lossless tree labels and profile diagnostic** (#563) | Julia/R label and topology tests; public LSS oracle; diagnostic damage checks | Bounded label parity passes; one profile nuisance solve fails and is retained; programme gates open | Ada / Hopper / Rose |

@@ -1,0 +1,231 @@
+ERROR: LoadError: Some tests did not pass: 5 passed, 10 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:16
+quoted labels preserve names, order, and covariance: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:17
+  Got exception outside of a @test
+  expected number at position 26
+  Stacktrace:
+    [1] error(s::String)
+      @ Base ./error.jl:35
+    [2] _parse_number!(c::DRM._NewickCursor)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:115
+    [3] _parse_node!(c::DRM._NewickCursor, node_parent::Vector{Int64}, node_is_leaf::Vector{Bool}, node_name::Vector{String}, node_length::Vector{Float64}, leaf_indices::Vector{Int64}, leaf_names::Vector{String})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:187
+    [4] _parse_node!(c::DRM._NewickCursor, node_parent::Vector{Int64}, node_is_leaf::Vector{Bool}, node_name::Vector{String}, node_length::Vector{Float64}, leaf_indices::Vector{Int64}, leaf_names::Vector{String})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:153
+    [5] _parse_node!(c::DRM._NewickCursor, node_parent::Vector{Int64}, node_is_leaf::Vector{Bool}, node_name::Vector{String}, node_length::Vector{Float64}, leaf_indices::Vector{Int64}, leaf_names::Vector{String})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:148
+    [6] augmented_phy(newick::String)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:323
+    [7] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:19 [inlined]
+    [8] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [9] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:18 [inlined]
+   [10] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [11] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:17
+   [12] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [13] top-level scope
+      @ none:1
+   [14] eval
+      @ Core ./boot.jl:385 [inlined]
+   [15] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [16] _start()
+      @ Base ./client.jl:552
+quoted whitespace is literal while token whitespace is ignored: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:37
+  Expression: phy.leaf_names == ["two words", "tab\tname", "line\nbreak"]
+   Evaluated: ["'twowords'", "'tabname'", "'linebreak'"] == ["two words", "tab\tname", "line\nbreak"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:37 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:33 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:17
+quoted spaces do not collide with simple labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:50
+  Expression: phy.leaf_names == ["A B", "AB", "A_B", " leading", "trailing "]
+   Evaluated: ["'AB'", "AB", "A_B", "'leading'", "'trailing'"] == ["A B", "AB", "A_B", " leading", "trailing "]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:50 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:47 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:17
+malformed quoted and unquoted labels fail clearly: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:12
+  Expression: err isa ArgumentError
+   Evaluated: nothing isa ArgumentError
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] _phylo_label_error(newick::String)
+   @ Main /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:12
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:55 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:55 [inlined]
+ [7] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [8] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:17
+malformed quoted and unquoted labels fail clearly: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:55
+  Expression: occursin("unterminated quoted label", _phylo_label_error("('unterminated:1.0,B:2.0);"))
+   Evaluated: occursin("unterminated quoted label", "nothing")
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:55 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:55 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:17
+malformed quoted and unquoted labels fail clearly: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:12
+  Expression: err isa ArgumentError
+   Evaluated: nothing isa ArgumentError
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] _phylo_label_error(newick::String)
+   @ Main /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:12
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:56 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:55 [inlined]
+ [7] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [8] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:17
+malformed quoted and unquoted labels fail clearly: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:56
+  Expression: occursin("expected delimiter", _phylo_label_error("('A'junk:1.0,B:2.0);"))
+   Evaluated: occursin("expected delimiter", "nothing")
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:56 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:55 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:17
+malformed quoted and unquoted labels fail clearly: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:12
+  Expression: err isa ArgumentError
+   Evaluated: nothing isa ArgumentError
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] _phylo_label_error(newick::String)
+   @ Main /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:12
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:57 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:55 [inlined]
+ [7] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [8] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:17
+malformed quoted and unquoted labels fail clearly: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:57
+  Expression: occursin("unquoted label", _phylo_label_error("(two words:1.0,B:2.0);"))
+   Evaluated: occursin("unquoted label", "nothing")
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:57 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:55 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:17
+malformed quoted and unquoted labels fail clearly: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:12
+  Expression: err isa ArgumentError
+   Evaluated: ErrorException("Newick string must end with ';'") isa ArgumentError
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] _phylo_label_error(newick::String)
+   @ Main /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:12
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:58 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:55 [inlined]
+ [7] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [8] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:17
+malformed quoted and unquoted labels fail clearly: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:58
+  Expression: occursin("extra characters", _phylo_label_error("('A B':1.0,C:2.0); trailing"))
+   Evaluated: occursin("extra characters", "Newick string must end with ';'")
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:58 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:55 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_phylo_labels.jl:17
+Test Summary:                                                    | Pass  Fail  Error  Total  Time
+quoted Newick tip labels                                         |    5    10      1     16  2.1s
+  quoted labels preserve names, order, and covariance            |                 1      1  0.7s
+  quoted whitespace is literal while token whitespace is ignored |    1     1             2  1.3s
+  simple labels retain their existing spelling                   |    1                   1  0.0s
+  quoted spaces do not collide with simple labels                |    1     1             2  0.0s
+  malformed quoted and unquoted labels fail clearly              |    2     8            10  0.0s

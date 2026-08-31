@@ -74,10 +74,26 @@ Two ways to use DRM.jl from R, in increasing integration:
 
 A polytomy is an internal node with more than two immediate children. The development
 bridge accepts these nodes without resolving them into invented binary branches.
-The tree must still have positive branch lengths, simple unique tip labels, and
+The tree must still have positive branch lengths, nonempty unique tip labels, and
 at least two children at every internal node. The R bridge currently requires an
-ultrametric tree for its correlation-scale convention. Zero-length branches,
-unary nodes and wider label support remain separate parity work.
+ultrametric tree for its correlation-scale convention. Zero-length branches
+and unary nodes remain separate parity work.
+
+The development bridge preserves tip labels containing spaces, punctuation,
+Unicode and apostrophes. Keep the same labels in your data; do not replace spaces
+with underscores. The serializer quotes labels where needed, and Julia decodes
+them without changing their spelling. In direct Newick input, use single quotes
+around such labels and double an apostrophe inside a quoted label:
+
+```@example quoted_tree_labels
+using DRM
+named_tree = augmented_phy("('Mola mola':1,'O''Brien':1,A_B:1);")
+@assert named_tree.leaf_names == ["Mola mola", "O'Brien", "A_B"]
+named_tree.leaf_names
+```
+
+Quoted labels preserve whitespace literally, including leading/trailing spaces.
+This concerns tip identity; internal-node labels are parsed but not retained.
 
 Direct Julia keeps the supplied Brownian branch-length scale and can represent
 unequal tip depths:
