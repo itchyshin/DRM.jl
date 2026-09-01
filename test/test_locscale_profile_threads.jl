@@ -58,6 +58,16 @@ end
           [(s.lower_unbounded, s.upper_unbounded, s.lower_endpoint_failed,
             s.upper_endpoint_failed, s.lower_nuisance_reason, s.upper_nuisance_reason)
            for s in serial.stats]
+    fallback_flags(result) = [
+        (diag.lower.nuisance !== nothing && diag.lower.nuisance.fallback,
+         diag.upper.nuisance !== nothing && diag.upper.nuisance.fallback)
+        for diag in result.endpoint_diagnostics
+    ]
+    @test fallback_flags(threaded) == fallback_flags(serial)
+    @test [(s.lower_nuisance_fallback, s.upper_nuisance_fallback)
+           for s in serial.stats] == fallback_flags(serial)
+    @test [(s.lower_nuisance_fallback, s.upper_nuisance_fallback)
+           for s in threaded.stats] == fallback_flags(threaded)
 
     if Threads.nthreads() > 1
         @test threaded.threaded

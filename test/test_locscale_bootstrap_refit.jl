@@ -57,14 +57,23 @@ end
             @test isequal(result.summary, serial_result.summary)
         end
     end
-    # Check the repaired replicate independently of the returned convergence
-    # flag. Merely relabelling the previous failed fit as converged must fail.
-    seed = first(rand(MersenneTwister(4001), UInt, 2))
-    yb = DRM._marginal_simulator(fit, data)(MersenneTwister(seed))
-    replay = drm(fit.formula, fit.family; data=DRM._bootstrap_data(fit.formula, data, yb))
+    # Check BOTH retained replicates independently of the returned convergence
+    # flag. CI exposed a platform-sensitive failure in the second seed; checking
+    # only the first seed would let that optimizer-routing regression recur.
+    seeds = rand(MersenneTwister(4001), UInt, 2)
+    replays = map(seeds) do seed
+        yb = DRM._marginal_simulator(fit, data)(MersenneTwister(seed))
+        drm(fit.formula, fit.family; data=DRM._bootstrap_data(fit.formula, data, yb))
+    end
     p = size(obj.Xμ, 2) + size(obj.Xψ, 2)
+    for replay in replays
+        theta = vcat(replay.theta[1:p], replay.theta[p+1], replay.theta[p+3], replay.theta[p+2])
+        @test is_converged(replay)
+        @test maximum(abs, DRM._ls_objective_gradient(replay.nll, theta)) <= 1e-8
+    end
+    # Merely relabelling the previously failed first-seed fit as converged must fail.
+    replay = first(replays)
     theta = vcat(replay.theta[1:p], replay.theta[p+1], replay.theta[p+3], replay.theta[p+2])
-    @test maximum(abs, DRM._ls_objective_gradient(replay.nll, theta)) <= 1e-8
     previous_failed = [0.7100026355628111, 0.11333869814470285,
         1.1136994971048377, -9.904592396244107, -2.9795300738040686e-6,
         -10.214044558800888]

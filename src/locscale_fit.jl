@@ -172,9 +172,12 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
         θ̂ = Optim.minimizer(res)
     end
     # A trust-region solve may stop unsuccessfully near a zero-variance
-    # boundary while its inner mode remains valid. Try ONE continuation of the
-    # same likelihood, not a relaxed convergence flag. This adds at most another
-    # `iterations` outer steps; successful fits and the legacy raw route bypass it.
+    # boundary while its inner mode remains valid. First continue from that
+    # endpoint. If the Hessian failed before Newton found a stable endpoint,
+    # retry the same gradient-only solve from the canonical start. Neither route
+    # relaxes convergence: a candidate replaces the failed result only after a
+    # fresh exact gradient and no-worse-objective certificate. Successful fits
+    # and the legacy raw route bypass both refinements.
     if whitened && !Optim.converged(res)
         warm[] = nothing
         try
@@ -183,20 +186,37 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
             if baseline.status.ok && isfinite(baseline.value)
                 refine_opts = Optim.Options(g_tol=g_tol, iterations=iterations,
                     x_abstol=NaN, x_reltol=NaN, f_abstol=NaN, f_reltol=NaN)
-                candidate = Optim.optimize(nll, g!, copy(θ̂), Optim.LBFGS(), refine_opts)
-                θc = Optim.minimizer(candidate)
-                if Optim.converged(candidate) && all(isfinite, θc)
-                    checked = _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q, θc, Zη, Zψ)
-                    # Eight ULPs of the baseline objective permit only rounding
-                    # differences; this is not a relative likelihood tolerance.
-                    allowance = 8 * eps(max(abs(baseline.value), 1.0))
-                    if checked.status.ok && isfinite(checked.value) &&
-                       all(isfinite, checked.gradient) &&
-                       maximum(abs, checked.gradient) <= g_tol &&
-                       checked.value <= baseline.value + allowance
-                        res = candidate
-                        θ̂ = θc
+                function certified_refinement(start)
+                    warm[] = nothing
+                    try
+                        candidate = Optim.optimize(nll, g!, copy(start), Optim.LBFGS(),
+                                                   refine_opts)
+                        θc = Optim.minimizer(candidate)
+                        if Optim.converged(candidate) && all(isfinite, θc)
+                            checked = _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q,
+                                                        θc, Zη, Zψ)
+                            # Eight ULPs of the baseline objective permit only
+                            # rounding differences; this is not a relative
+                            # likelihood tolerance.
+                            allowance = 8 * eps(max(abs(baseline.value), 1.0))
+                            if checked.status.ok && isfinite(checked.value) &&
+                               all(isfinite, checked.gradient) &&
+                               maximum(abs, checked.gradient) <= g_tol &&
+                               checked.value <= baseline.value + allowance
+                                return candidate, θc
+                            end
+                        end
+                    catch err
+                        err isa InterruptException && rethrow(err)
+                    finally
+                        warm[] = nothing
                     end
+                    return nothing
+                end
+                refined = certified_refinement(θ̂)
+                refined === nothing && (refined = certified_refinement(θ0))
+                if refined !== nothing
+                    res, θ̂ = refined
                 end
             end
         catch err

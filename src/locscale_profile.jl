@@ -33,41 +33,46 @@ const _LSProfileNuisanceResult = NamedTuple{
 }
 
 _ls_profile_nuisance_result(value, minimizer, accepted, reason;
-                            converged=false, gradient_maxabs=NaN) =
+                            converged=false, gradient_maxabs=NaN, fallback=false) =
     (value=Float64(value), minimizer=collect(float.(minimizer)), accepted=accepted,
-     method=:lbfgs, fallback=false, reason=reason, converged=converged,
+     method=:lbfgs, fallback=fallback, reason=reason, converged=converged,
      gradient_maxabs=Float64(gradient_maxabs))::_LSProfileNuisanceResult
 
-function _ls_profile_candidate_status(f, g!, xmin, converged::Bool)
+function _ls_profile_candidate_status(f, g!, xmin, converged::Bool; fallback=false)
     all(isfinite, xmin) ||
         return _ls_profile_nuisance_result(Inf, xmin, false, :nonfinite_minimizer;
-                                           converged=converged)
-    converged || return _ls_profile_nuisance_result(Inf, xmin, false, :not_converged)
+                                           converged=converged, fallback=fallback)
+    converged || return _ls_profile_nuisance_result(Inf, xmin, false, :not_converged;
+                                                    fallback=fallback)
     value = try
         f(xmin)
     catch err
         err isa InterruptException && rethrow()
-        return _ls_profile_nuisance_result(Inf, xmin, false, :exception; converged=true)
+        return _ls_profile_nuisance_result(Inf, xmin, false, :exception;
+                                           converged=true, fallback=fallback)
     end
     (isfinite(value) && value < _LS_PROFILE_INFEASIBLE / 2) ||
         return _ls_profile_nuisance_result(value, xmin, false, :nonfinite_objective;
-                                           converged=true)
+                                           converged=true, fallback=fallback)
     gradient = similar(xmin)
     try
         g!(gradient, xmin)
     catch err
         err isa InterruptException && rethrow()
-        return _ls_profile_nuisance_result(value, xmin, false, :exception; converged=true)
+        return _ls_profile_nuisance_result(value, xmin, false, :exception;
+                                           converged=true, fallback=fallback)
     end
     all(isfinite, gradient) ||
         return _ls_profile_nuisance_result(value, xmin, false, :nonfinite_gradient;
-                                           converged=true)
+                                           converged=true, fallback=fallback)
     gradient_maxabs = isempty(gradient) ? 0.0 : maximum(abs, gradient)
     gradient_maxabs <= 1e-7 ||
         return _ls_profile_nuisance_result(value, xmin, false, :not_stationary;
-                                           converged=true, gradient_maxabs=gradient_maxabs)
+                                           converged=true, gradient_maxabs=gradient_maxabs,
+                                           fallback=fallback)
     return _ls_profile_nuisance_result(value, xmin, true, :accepted;
-                                       converged=true, gradient_maxabs=gradient_maxabs)
+                                       converged=true, gradient_maxabs=gradient_maxabs,
+                                       fallback=fallback)
 end
 
 # Profile NLL at θ[idx] = val: minimise the marginal over the other packed params.
@@ -124,21 +129,36 @@ function _ls_profile_nll_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, idx::Int, v
                                    x_abstol=NaN, x_reltol=NaN,
                                    f_abstol=NaN, f_reltol=NaN) :
                       Optim.Options(g_tol=1e-7, iterations=iterations)
-    res = try
-        Optim.optimize(f, g!, init,
-                       Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking()),
-                       opts)
-    catch err
-        err isa InterruptException && rethrow()
-        return _ls_profile_nuisance_result(Inf, init, false, :exception)
+    function solve(start; fallback=false)
+        res = try
+            Optim.optimize(f, g!, start,
+                           Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking()),
+                           opts)
+        catch err
+            err isa InterruptException && rethrow()
+            return _ls_profile_nuisance_result(Inf, start, false, :exception;
+                                               fallback=fallback)
+        end
+        reported = Optim.minimum(res)
+        xmin = Optim.minimizer(res)
+        # Re-evaluate the objective and gradient even after `Optim.converged`: its
+        # status can be driven by a non-gradient stopping condition.
+        candidate = _ls_profile_candidate_status(
+            f, g!, xmin, Optim.converged(res); fallback=fallback,
+        )
+        if !candidate.accepted && candidate.reason === :not_converged
+            return _ls_profile_nuisance_result(reported, xmin, false, :not_converged;
+                                               fallback=fallback)
+        end
+        return candidate
     end
-    reported = Optim.minimum(res)
-    xmin = Optim.minimizer(res)
-    # Re-evaluate the objective and gradient even after `Optim.converged`: its
-    # status can be driven by a non-gradient stopping condition.
-    candidate = _ls_profile_candidate_status(f, g!, xmin, Optim.converged(res))
-    if !candidate.accepted && candidate.reason === :not_converged
-        return _ls_profile_nuisance_result(reported, xmin, false, :not_converged)
+    candidate = solve(init)
+    if whitened && !candidate.accepted && x0 !== nothing
+        # A warm start can strand L-BFGS on a platform-sensitive line-search
+        # path. Retry from the fitted nuisance coordinates with a fresh inner
+        # seed, then apply the identical convergence and exact-gradient checks.
+        mwarm[] = nothing
+        candidate = solve(float.(θ̂[free]); fallback=true)
     end
     return candidate
 end

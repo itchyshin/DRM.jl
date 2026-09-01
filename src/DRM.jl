@@ -186,8 +186,9 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
 # (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).
 export mf_coef, mf_aic, mf_bic, mf_fitted, mf_summary
 
-# Prepared joint-model API. Formula/mi() and R-bridge admission are separate
-# programme obligations; these methods accept explicit numerical designs.
+# Prepared joint missing-predictor API. This whole surface is Experimental: it
+# accepts explicit numerical designs and includes bounded formula/mi and bridge
+# wrappers. The admitted cells and limitations are documented separately.
 export PreparedJointModel, PreparedJointFit, PreparedFiniteJointModel, PreparedFiniteJointFit, prepared_joint_model,
        prepared_joint_rowloglik, prepared_joint_nll,
        prepared_joint_conditional_moments, fit_prepared_joint,

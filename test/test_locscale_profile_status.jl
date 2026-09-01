@@ -208,6 +208,39 @@ end
         @test !accepted
     end
 
+    @testset "whitened canonical retry is reported and raw route is untouched" begin
+        fit = _ls_profile_status_smoke_fit()
+        obj = fit.nll::DRM.LocScaleObjective
+        base = size(obj.Xμ, 2) + size(obj.Xψ, 2)
+        perm = vcat(collect(1:base), [base + 1, base + 3, base + 2])
+        theta = fit.theta[perm]
+        idx = 2
+        value = theta[idx] + 0.1
+        damaged_warm_start = fill(10.0, length(theta) - 1)
+
+        recovered = DRM._ls_profile_nll_result(
+            obj.kind, obj.y, obj.Xμ, obj.Xψ, obj.gidx, obj.G, obj.Q,
+            theta, idx, value;
+            x0=damaged_warm_start,
+            whitened=true,
+        )
+        @test recovered.accepted
+        @test recovered.reason == :accepted
+        @test recovered.fallback
+        @test recovered.converged
+        @test recovered.gradient_maxabs <= 1e-7
+
+        raw = DRM._ls_profile_nll_result(
+            obj.kind, obj.y, obj.Xμ, obj.Xψ, obj.gidx, obj.G, obj.Q,
+            theta, idx, value;
+            x0=damaged_warm_start,
+            whitened=false,
+            iterations=0,
+        )
+        @test !raw.accepted
+        @test !raw.fallback
+    end
+
     @testset "public canonical result propagates failed-arm diagnostics" begin
         fit = _ls_profile_status_smoke_fit()
         result = profile_result(fit; parm=:mu => "x")

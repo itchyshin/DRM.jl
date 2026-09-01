@@ -2,8 +2,10 @@
 # this stalled (slow, gmax≥1e-3, non-finite SEs) because the cold inner solves
 # were slow and LBFGS converged only linearly on the ill-conditioned tree. The
 # fix: warm-start the inner mode + a trust-region Newton outer optimiser. This
-# test now asserts real convergence (stationarity of the EXACT gradient through
-# the tree precision + Takahashi) and finite Wald SEs.
+# test asserts convergence and a small certified gradient through the tree
+# precision + Takahashi, plus finite fixed-effect Wald SEs. It uses the whitened
+# route selected by the canonical coupled frontend; the legacy raw coordinate
+# route is not an end-to-end oracle for that frontend.
 using DRM
 using Test, Random, LinearAlgebra, SparseArrays
 import Distributions
@@ -26,10 +28,16 @@ _nb2_draw_p(η, ψ) = (r = exp(ψ); μ = exp(η);
     y = [_nb2_draw_p(0.2 + 0.4x[i] + A[species[i], 1], 0.3 + A[species[i], 2]) for i in 1:n]
 
     Q, gidx, G = DRM._locscale_phylo_setup(phy, species)
-    fit = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, gidx, G, Q; se = true)
+    fit = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, gidx, G, Q;
+                            se = true, whitened = true)
 
-    gmax = maximum(abs.(DRM._ls_marginal_grad(Val(:nb2), y, Xμ, Xψ, gidx, G, Q, fit.θ)))
-    @test gmax < 1e-3                          # converged through the tree precision + Takahashi
+    certified = DRM._ls_whitened_eval(
+        Val(:nb2), y, Xμ, Xψ, gidx, G, Q, fit.θ,
+        DRM._ls_canonical_Zeta(length(y)), DRM._ls_canonical_Zpsi(length(y)),
+    )
+    @test fit.converged
+    @test certified.status.ok
+    @test maximum(abs, certified.gradient) <= 1e-6
     @test isposdef(Symmetric(fit.Lambda))
     @test fit.vcov !== nothing                 # observed information inverted
     # Fixed-effect (mean-axis) Wald SEs are well identified. NB: SEs for the phylo

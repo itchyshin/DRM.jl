@@ -4,6 +4,7 @@
 using DRM
 using Test
 using Statistics
+using LinearAlgebra: I
 using StatsModels: FormulaTerm, Term, apply_schema, coefnames, schema
 import StatsAPI: StatisticalModel
 
