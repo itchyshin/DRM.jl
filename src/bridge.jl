@@ -167,8 +167,9 @@ end
 
 Run a narrow inference primitive for the R bridge.
 
-With `parm = nothing` (the default) this targets the Gaussian phylogenetic SD
-block (`param = :resd` / `:resd_mu` / `:resd_sigma`), because the R side needs
+With `parm = nothing` (the default) this targets the admitted Gaussian
+phylogenetic SD block (`param = :sd_phylo` / `:resd` / `:resd_mu` /
+`:resd_sigma`), because the R side needs
 explicit response-scale transforms and parity checks before exposing broader
 Julia inference results. This path is unchanged from the first slice.
 
@@ -219,7 +220,7 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     if bridge_method == "profile"
         # Preserve the implicit SD target set, but an explicit fixed-effect
         # request must profile only that coefficient, not its entire block.
-        profile_parm = rawtarget === nothing ? [:resd_sigma, :resd, :resd_mu] :
+        profile_parm = rawtarget === nothing ? [:sd_phylo, :resd_sigma, :resd, :resd_mu] :
                                               rawtarget.param => rawtarget.coef
         result = profile_result(fit; level = level, threads = threads, parm = profile_parm)
         row = target === nothing ? _bridge_pick_sd_row(result.ci) :
@@ -370,13 +371,13 @@ function _bridge_is_bivariate_phylo_q4(bundle, fam, tree)
 end
 
 # Pick the variance-component SD row from a profile/bootstrap result for the bridge: prefer the
-# σ-phylo location-scale σ-axis SD (:resd_sigma), then the legacy phylo SD block (:resd), then
-# the μ-axis SD (:resd_mu). (Routes the bridge inference to the SD that matters for the σ-phylo
-# cell Ayumi needs.) There is NO silent fall-back to the first row: if none of the expected SD
+# phylogenetic LSS SD block (:sd_phylo), then the σ-phylo location-scale σ-axis SD
+# (:resd_sigma), the legacy phylo SD block (:resd), and the μ-axis SD (:resd_mu).
+# There is NO silent fall-back to the first row: if none of the expected SD
 # params is present the row would be a fixed-effect coefficient mislabelled as the SD CI on the R
 # side, so throw an explicit error naming the params that WERE returned.
 function _bridge_pick_sd_row(rows)
-    for want in (:resd_sigma, :resd, :resd_mu)
+    for want in (:sd_phylo, :resd_sigma, :resd, :resd_mu)
         for row in rows
             row.param === want && return row
         end
@@ -384,7 +385,7 @@ function _bridge_pick_sd_row(rows)
     isempty(rows) && throw(ArgumentError("drm_bridge_inference: no SD row in the result"))
     got = join(unique(String(r.param) for r in rows), ", ")
     throw(ArgumentError("drm_bridge_inference: no variance-component SD row " *
-        "(:resd_sigma, :resd, or :resd_mu) in the result; got params [$(got)]. " *
+        "(:sd_phylo, :resd_sigma, :resd, or :resd_mu) in the result; got params [$(got)]. " *
         "Refusing to mislabel a fixed-effect row as the SD confidence interval."))
 end
 
