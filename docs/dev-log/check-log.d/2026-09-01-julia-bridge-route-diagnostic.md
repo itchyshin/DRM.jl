@@ -7,3 +7,4 @@
 | Diff hygiene | pass | `git diff --check` |
 
 The payload defines `max_abs_gradient_of_stored_negative_loglikelihood`, with a threshold of `1e-3`. It is a DRM.jl diagnostic, not a numeric substitute for TMB's raw optimizer gradient. Profile and bootstrap rows retain their independent status contracts.
+| Julia 1.12 focused contract | pass | same standalone available-route check on Julia 1.12.6 |

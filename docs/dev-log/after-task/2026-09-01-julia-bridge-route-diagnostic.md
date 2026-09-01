@@ -16,3 +16,6 @@ The targeted standalone contract check passes for both states. The complete brid
 
 ## Follow-up
 Add the R reconstruction and `check_drm()` display in the paired drmTMB control-surface slice, then validate it through the JuliaCall bridge.
+
+## Rolling-runtime check
+The focused contract also passed on locally installed Julia 1.12.6. This rules out a basic Julia 1.x compatibility failure in this change; it does not substitute for the full CI suite.
