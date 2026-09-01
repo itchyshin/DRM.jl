@@ -117,6 +117,37 @@ _q4_formula_nonintercept_marker() = bf(
     @test size(ranef(fit)[:species], 2) == fixture.phy.n_leaves
 end
 
+# Regression for raw, deep phylogenies in a q4 location-scale model. The
+# raw-tree parametrisation remains valid; only the initial covariance must be
+# on the corresponding precision scale so the first gradient is finite.
+@testset "q=4 location-scale fit starts on a deep raw tree" begin
+    rng = MersenneTwister(912)
+    p = 64
+    phy = random_balanced_tree(p; branch_length = 20.0)
+    x1, x2, x3 = randn(rng, p), randn(rng, p), randn(rng, p)
+    data = (; y1 = randn(rng, p), y2 = randn(rng, p), x1, x2, x3,
+            species = phy.leaf_names)
+    form = bf(
+        mu1 = @formula(y1 ~ x1 + x2 + x1 & x2 + x3 + phylo(1 | species)),
+        mu2 = @formula(y2 ~ x1 + x2 + x1 & x2 + x3 + phylo(1 | species)),
+        sigma1 = @formula(sigma1 ~ x1 + x2 + x1 & x2 + x3 + phylo(1 | species)),
+        sigma2 = @formula(sigma2 ~ x1 + x2 + x1 & x2 + x3 + phylo(1 | species)),
+        rho12 = @formula(rho12 ~ 1),
+    )
+    fit = drm(
+        form,
+        Gaussian();
+        data,
+        tree = phy,
+        q4_iterations = 300,
+        q4_n_newton = 40,
+        q4_vcov = false,
+    )
+
+    @test isfinite(loglik(fit))
+    @test fit.converged
+end
+
 @testset "Bivariate q=4 phylo front-end validation" begin
     fixture = _q4_frontend_data(p = 6, nrep = 2)
 
