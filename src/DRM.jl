@@ -111,8 +111,10 @@ include("locscale_marginal.jl")  # #202 groundwork: q=2 Laplace marginal
 include("locscale_fit.jl")       # #202 groundwork: end-to-end location–scale fit
 include("locscale_grad.jl")      # #202 groundwork: exact O(p) outer gradient
 include("locscale_infer.jl")     # #202 groundwork: Wald inference + RE summaries
+include("locscale_whitened.jl")  # paired latent-coordinate value/gradient/information
 include("locscale_profile.jl")   # #202: profile-likelihood CIs (trust-region inner solve)
 include("locscale_frontend.jl")  # #202 slice 3b: drm() routing for (1|tag|group)
+include("locscale_simulate.jl")  # marginal bootstrap draws both coupled latent axes
 include("locscale_corr.jl")      # cluster ①: (1+x|g)/(0+x|g) reroute onto the q2 core
 include("locscale_sigma.jl")     # cluster ②: standalone sigma ~ 1+(1|g) RE onto the q2 core
 include("gaussian_locscale_phylo.jl")  # B1: Gaussian sigma~phylo(1|g) univariate route — separate/coupled/asymmetric + boundary CIs (Ayumi #2)
@@ -132,6 +134,13 @@ include("chibar.jl")             # chi-bar-square boundary p-values for variance
 include("bridge.jl")
 include("introspection.jl")     # A4d-2: profile_targets + structured_effects (drmTMB post-fit inventories)
 include("missing_data.jl")       # #49: documented listwise-deletion preprocessing (no engine change)
+include("joint_missing_predictor.jl") # #563: prepared exact joint-model prototypes
+include("joint_missing_uncertainty.jl") # #563: native-shaped imputation summaries
+include("joint_missing_two_predictor.jl") # #563: exact two-Gaussian prepared kernel
+include("joint_missing_finite.jl") # #563: exact ordinal/categorical finite sums
+include("joint_missing_frontend.jl") # #563: two fixed-effect joint formula routes
+include("joint_missing_bridge.jl") # #563: primitive prepared-array transport
+include("joint_missing_finite_bridge.jl") # #563: ordinal/categorical state transport
 
 # Public API — the verified single-fit + scaling engine.
 export AugProblem, make_problem,
@@ -176,6 +185,16 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
 # Public API — post-fit accessors for the cross-family bivariate fit
 # (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).
 export mf_coef, mf_aic, mf_bic, mf_fitted, mf_summary
+
+# Prepared joint missing-predictor API. This whole surface is Experimental: it
+# accepts explicit numerical designs and includes bounded formula/mi and bridge
+# wrappers. The admitted cells and limitations are documented separately.
+export PreparedJointModel, PreparedJointFit, PreparedFiniteJointModel, PreparedFiniteJointFit, prepared_joint_model,
+       prepared_joint_rowloglik, prepared_joint_nll,
+       prepared_joint_conditional_moments, fit_prepared_joint,
+       joint_missing_summary, imputed, mi, miss_control, impute_model,
+       JointDrmFit, JointTwoDrmFit, JointFiniteDrmFit, JointMissingControl, JointImputeModel,
+       CategoricalLogit, cutpoints
 
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare

@@ -1,0 +1,9 @@
+/* Loaded after the resolved DocumenterVitepress theme styles. */
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4,
+.vp-doc h5,
+.vp-doc h6 {
+  scroll-margin-top: calc(var(--vp-nav-height) + 8px);
+}

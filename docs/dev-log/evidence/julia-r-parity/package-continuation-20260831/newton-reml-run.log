@@ -1,0 +1,58 @@
+2026-08-31T10:54:55Z
+9c958c8f83243bc4664ea272f5ebfcf3f1369cc34a5084afbd8a2619b84b460f  Project.toml
+3352aa55d3cca25d17195987efaaa5e5e6050f064dbf5036ab53e5808e51e899  test/Project.toml
+b1fc84ff68aab61a70d58db505fc5041a43af20cf91dc749290b2a50ac57f51e  test/Manifest.toml
+8d28c0901f9a80505da22ca209f8a2e5187a9e551a6ba17e3d6aebce1a0b92a7  newton-reml-pilot-001/run.jl
+a41586332e207ccef95d5bc482e01024ea4ec904b4f09479d91a2541f2587012  newton-reml-pilot-001/run.sh
+RUNTIME julia=1.10.10 threads=1 BLAS=1 DRM=/home/snakagaw/drm_parity_integration_567fec06_001/src/DRM.jl
+START_FILE test_reml_newton_sigma_phylo.jl
+Test Summary:                                                         | Pass  Total   Time
+REML σ-phylo: clean-gradient refit matches FD-REML (asymmetric route) |    3      3  24.7s
+Test Summary:                                                | Pass  Total  Time
+REML σ-phylo: observed-information Newton (asymmetric route) |    4      4  1.5s
+Test Summary:                                                       | Pass  Total  Time
+REML σ-phylo: observed-info Newton, separate block (both axes, K=2) |    5      5  1.8s
+Test Summary:                                                        | Pass  Total  Time
+REML σ-phylo: no crash at the variance boundary (homoscedastic data) |   12     12  9.0s
+Test Summary:                                                               | Pass  Total  Time
+REML σ-phylo: collinear mean design ⇒ NaN loglik, not a 1e18-poisoned value |    2      2  6.9s
+Test Summary:                                                                 | Pass  Total   Time
+REML σ-phylo: asymmetric route, weak σ-signal — returns a fit, does not throw |    2      2  15.0s
+Test Summary:                                                    | Pass  Total  Time
+REML σ-phylo: missing responses compose (drm + bridge), Ayumi #2 |    6      6  9.8s
+Test Summary:                                                         | Pass  Total   Time
+REML σ-phylo: boundary inference exposed (confint + bridge), Ayumi #2 |    5      5  37.6s
+COMPLETE_FILE test_reml_newton_sigma_phylo.jl
+NEWTON_REML_COMPLETE
+┌ Info: clean-gradient refit vs FD-REML
+│   sd_cg = 0.5193081671550355
+│   sd_fd = 0.5193097075319102
+│   diff = 1.5403768747201951e-6
+│   nsteps = 6
+└   conv_cg = true
+┌ Info: observed-info Newton vs FD-REML
+│   sd_nw = 0.570587774772971
+│   sd_fd = 0.5703847153578606
+│   diff = 0.00020305941511034042
+│   nnewton = 3
+└   conv = true
+┌ Info: separate-block observed-info Newton vs FD-REML
+│   sd_mu_nw = 0.584909104246843
+│   sd_mu_fd = 0.5849045461592111
+│   sd_sig_nw = 0.363666849028895
+│   sd_sig_fd = 0.3636506345583958
+│   nstep = 3
+└   conv = true
+┌ Warning: drm: this tree's maximum tip height is 1.5, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.224745 = sqrt(1.5) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/1.5 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Warning: drm: this tree's maximum tip height is 1.8, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.341641 = sqrt(1.8) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/1.8 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Warning: drm: this tree's maximum tip height is 1.5, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.224745 = sqrt(1.5) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/1.5 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Warning: drm: 20 of 144 rows have a missing/NaN response and were dropped (σ-phylo observed-rows fit; the tree is kept in full). Use `drm_listwise` to preprocess explicitly to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:557
+┌ Warning: drm: 20 of 144 rows have a missing/NaN response and were dropped (σ-phylo observed-rows fit; the tree is kept in full). Use `drm_listwise` to preprocess explicitly to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:557
+┌ Warning: aic on a REML fit: REML log-likelihoods are only comparable across models with the SAME fixed-effect (mean) structure (variance-only differences). For model selection across mean structures, refit with method = :ML.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:1887
+ELAPSED_SECONDS 107

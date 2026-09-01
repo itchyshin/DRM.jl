@@ -53,12 +53,20 @@ residuals
 
 ### Predicting distributional parameters
 
+!!! warning "Prediction interpretation"
+    The embedded `predict_parameters` docstring above uses legacy wording about
+    integrating effects out. The current implementation sets random and
+    structured effects to zero. With a nonlinear link, these are different
+    predictions: for example, `exp(η)` differs from averaging `exp(η + b)` over
+    a non-degenerate random effect `b`. Use the fixed-effect interpretation here.
+
 [`predict`](@ref) returns the response (mean) prediction, but a distributional
 regression also models the scale and—bivariately—the correlation. Use
 [`predict_parameters`](@ref) to obtain the population-level value of **every**
 distributional parameter the model carries (`:mu`, `:sigma`, plus any family
-extras) at new covariate values, with random / structured effects integrated
-out. [`marginal_parameters`](@ref) is the cheap in-sample accessor that reads the
+extras) at new covariate values, with random / structured effects set to zero.
+This is an inverse-link transformation of the fixed-effect linear predictor,
+not response-scale integration over the random-effect distribution. [`marginal_parameters`](@ref) is the cheap in-sample accessor that reads the
 fitted per-observation parameters straight off the fit. [`prediction_grid`](@ref)
 builds the new-data table to sweep over (varying chosen predictors, holding the
 rest at a reference value).
@@ -87,7 +95,34 @@ predict_parameters(fit, grid; type = :link)[:mu]
 marginal_parameters(fit)            # == predict_parameters(fit, data) in-sample
 ```
 
+## Formula-fitted finite-state missing predictors
+
+For one ordinal or categorical missing predictor in the bounded Gaussian joint
+route, construct the predictor model with `impute_model`; use
+`CategoricalLogit()` for nominal states. `JointFiniteDrmFit` retains the raw
+kernel coefficients and covariance. For ordinal predictors, `cutpoints(fit)`
+provides the constrained cutpoints separately. See the engine-internals
+reference for the prepared-state design and route limits.
+
+```@docs
+DRM.CategoricalLogit
+DRM.JointFiniteDrmFit
+DRM.cutpoints
+```
+
 ## Inference
+
+Check the status as well as the bounds of a profile interval. A signed infinite
+bound can mean that no crossing was found within the searched range, or that an
+endpoint solve failed. `profile_result` distinguishes these outcomes in `stats`
+and `failed`; `confint` warns about failed endpoint solves.
+
+For coupled non-Gaussian location–scale fits, `endpoint_diagnostics` also records
+why each endpoint search stopped, its last evaluated candidate and its residual.
+A candidate from a failed search is diagnostic information, not a confidence
+limit. Through R's `engine = "julia"`, inspect `conf.status` and `profile.message`
+in the returned interval table. A failed result must not be read as evidence of
+an unbounded interval.
 
 ```@docs
 confint
@@ -128,6 +163,44 @@ family
 is_converged
 deviance
 dof_residual
+```
+
+## Fit summaries and route inventories
+
+```@docs
+Base.summary(::DrmFit)
+niterations
+profile_targets
+structured_effects
+```
+
+## Derived phylogenetic quantities and boundary comparisons
+
+```@docs
+gaussian_locscale_phylo_sds
+profile_sigma_a
+bootstrap_sigma_a
+repeatability
+lrt_boundary
+```
+
+## R bridge and preprocessing
+
+These entries document the Julia-side interface used by the optional R bridge.
+The [R ↔ Julia bridge](../r-julia-bridge.md) defines its admitted cells and
+refusals; these docstrings do not expand that contract.
+
+```@docs
+drm_bridge
+drm_bridge_inference
+drm_listwise
+```
+
+## Staged pair association diagnostics
+
+```@docs
+PairAssociation
+integration_diagnostics
 ```
 
 ## Phylogenetic penalty (MAP)
@@ -179,21 +252,32 @@ chibar_pvalue
 Accessors for a `fit_mixed_family` result. [`mf_coef`](@ref) is the tidy
 coefficient table; the other `mf_*` helpers live beside it in the module.
 
-```@docs
-mf_coef
-```
-
 ## Engine constructors (q=4 and coevolution)
 
-These are the exported constructors and types behind the verified q=4 PLSM
-engine and the general-q coevolution block. They are public because the
-engine is the package's selling point, not because a typical `drm()` user
-needs to call them.
+`AugProblem`, `make_problem`, and `fit_q4_sparse_tmb` are low-level exported
+interfaces behind the q=4 PLSM path. Use `drm(...)` for ordinary model fitting;
+these bindings serve scripts that prepare engine inputs directly.
+
+### [AugProblem](@id AugProblem)
+
+`AugProblem` holds the augmented-phylogeny data and q=4 design matrices used
+by the sparse engine.
+
+### [make_problem](@id make_problem)
+
+`make_problem(phy, y1, y2, X1, X2, Xs1, Xs2, Xr; species = 1:phy.n_leaves)`
+builds that problem and its root-conditioned precision from a phylogeny.
+
+### [fit_q4_sparse_tmb](@id fit_q4_sparse_tmb)
+
+`fit_q4_sparse_tmb(prob, Q_cond; θ0 = ..., ...)` runs sparse q=4 optimisation.
+Starting values must be supplied as either `θ0` (the full parameter vector)
+or `β0` (the mean coefficients).
+
+The documented q=4 marginal evaluator and general-q coevolution bindings are
+listed below.
 
 ```@docs
-AugProblem
-make_problem
-fit_q4_sparse_tmb
 marginal_nll
 CoevoProblem
 lc_to_cov

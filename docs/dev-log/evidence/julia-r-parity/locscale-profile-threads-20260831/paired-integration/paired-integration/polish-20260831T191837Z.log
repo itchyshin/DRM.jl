@@ -1,0 +1,24 @@
+START (value = 45.52655959779556, minimizer = [0.6777130323919079, 1.189084929903275, -1.8699903729932836, -0.025585337369280994, -10.76672459047523], accepted = false, method = :lbfgs, fallback = false, reason = :not_stationary, converged = true, gradient_maxabs = 1.0005112410782502e-7)
+RESTART (value = 45.52655959779556, minimizer = [0.677713031689222, 1.1890849288967384, -1.8699903731226855, -0.025585336711788892, -10.766724590532695], accepted = true, method = :lbfgs, fallback = false, reason = :accepted, converged = true, gradient_maxabs = 8.239408116894609e-8)
+STRICT (value = 45.52655959779556, minimizer = [0.6777130310850126, 1.1890849243222756, -1.869990373921459, -0.025585333550476968, -10.766724590868915], accepted = true, method = :lbfgs, fallback = false, reason = :accepted, converged = true, gradient_maxabs = 2.4929195263645454e-8) iterations=2
+ * Status: success
+
+ * Candidate solution
+    Final objective value:     4.552656e+01
+
+ * Found with
+    Algorithm:     L-BFGS
+
+ * Convergence measures
+    |x - x'|               = 4.57e-09 ≰ 0.0e+00
+    |x - x'|/|x'|          = 4.25e-10 ≰ 0.0e+00
+    |f(x) - f(x')|         = 0.00e+00 ≤ 0.0e+00
+    |f(x) - f(x')|/|f(x')| = 0.00e+00 ≤ 0.0e+00
+    |g(x)|                 = 2.49e-08 ≰ 1.0e-08
+
+ * Work counters
+    Seconds run:   0  (vs limit Inf)
+    Iterations:    2
+    f(x) calls:    5
+    ∇f(x) calls:   3
+

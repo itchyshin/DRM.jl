@@ -1,0 +1,1 @@
+| 2026-08-31 | Inner-mode arithmetic investigation (#563 / S11), unresolved checkpoint | Focused controls; exact perturbations; historical negative control; high-precision arithmetic probes | Gradient perturbations restored on608c; recovery/profile regressions remain failed; stable comparison implementation authorized, not accepted | Ada / Noether / Rose |

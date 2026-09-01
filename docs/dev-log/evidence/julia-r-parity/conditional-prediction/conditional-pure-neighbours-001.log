@@ -1,0 +1,12 @@
+julia-prediction-scales: ..........................
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+julia-predict-newdata: ...............S
+
+══ Skipped ═════════════════════════════════════════════════════════════════════
+1. predict(newdata) aligns factor and interaction coefficient names (user-journey snag) ('test-julia-predict-newdata.R:177:3') - Reason: Live Julia skipped on CRAN lane (set NOT_CRAN=true or DRMTMB_JULIA_TESTS=true).
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+julia-bridge: ..........................................................................................................................
+
+══ DONE ════════════════════════════════════════════════════════════════════════

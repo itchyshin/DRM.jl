@@ -1,0 +1,275 @@
+ERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 5 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:103
+dedicated dense named covariance is invariant to first-seen order: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:104
+  Got exception outside of a @test
+  type Array has no field n_leaves
+  Stacktrace:
+    [1] getproperty
+      @ ./Base.jl:37 [inlined]
+    [2] getcolumn(x::Vector{String}, nm::Symbol)
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/Tables.jl:102
+    [3] getcolumn
+      @ ~/.julia/packages/Tables/cRTb7/src/tofromdatavalues.jl:73 [inlined]
+    [4] eachcolumns
+      @ ~/.julia/packages/Tables/cRTb7/src/utils.jl:127 [inlined]
+    [5] __buildcolumns(rowitr::Tables.IteratorWrapper{@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}}, st::Int64, sch::Tables.Schema{(:n_leaves, :n_total, :Q_topology, :leaf_indices, :leaf_names, :branch_lengths, :root_index), nothing}, columns::Tuple{Vector{Int64}, Vector{Int64}, Vector{SparseArrays.SparseMatrixCSC{Float64, Int64}}, Vector{Vector{Int64}}, Vector{Vector{String}}, Vector{Vector{Float64}}, Vector{Int64}}, rownbr::Int64, updated::Base.RefValue{Any})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:174
+    [6] _buildcolumns(rowitr::Tables.IteratorWrapper{@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}}, row::Tables.IteratorRow{DRM.AugmentedPhy{Float64}}, st::Int64, sch::Tables.Schema{(:n_leaves, :n_total, :Q_topology, :leaf_indices, :leaf_names, :branch_lengths, :root_index), nothing}, columns::NTuple{7, Tables.EmptyVector}, updated::Base.RefValue{Any})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:198
+    [7] buildcolumns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:227 [inlined]
+    [8] _columns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:274 [inlined]
+    [9] columns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:258 [inlined]
+   [10] columntable(itr::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/namedtuples.jl:193
+   [11] schema(ts::Vector{StatsModels.Term}, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, hints::Dict{Symbol, Any})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:120
+   [12] schema(f::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, hints::Dict{Symbol, Any})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:128
+   [13] schema(f::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:131
+   [14] _design(response::Symbol, rhs::StatsModels.Term, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:356
+   [15] drm(f::DrmFormula, fam::Gaussian; data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, K::Nothing, A::Nothing, tree::DRM.AugmentedPhy{Float64}, coords::Nothing, g_tol::Float64, algorithm::Symbol, method::Symbol, profile_ci::Bool, phylo_coupled::Bool, penalty::Nothing, sparse::Nothing, impute::Nothing, missing::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:469
+   [16] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:108 [inlined]
+   [17] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [18] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:105 [inlined]
+   [19] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [20] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:104
+   [21] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [22] top-level scope
+      @ none:1
+   [23] eval
+      @ Core ./boot.jl:385 [inlined]
+   [24] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [25] _start()
+      @ Base ./client.jl:552
+dedicated sparse and Newick inputs use the same named tree: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:122
+  Got exception outside of a @test
+  type Array has no field n_leaves
+  Stacktrace:
+    [1] getproperty
+      @ ./Base.jl:37 [inlined]
+    [2] getcolumn(x::Vector{String}, nm::Symbol)
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/Tables.jl:102
+    [3] getcolumn
+      @ ~/.julia/packages/Tables/cRTb7/src/tofromdatavalues.jl:73 [inlined]
+    [4] eachcolumns
+      @ ~/.julia/packages/Tables/cRTb7/src/utils.jl:127 [inlined]
+    [5] __buildcolumns(rowitr::Tables.IteratorWrapper{@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}}, st::Int64, sch::Tables.Schema{(:n_leaves, :n_total, :Q_topology, :leaf_indices, :leaf_names, :branch_lengths, :root_index), nothing}, columns::Tuple{Vector{Int64}, Vector{Int64}, Vector{SparseArrays.SparseMatrixCSC{Float64, Int64}}, Vector{Vector{Int64}}, Vector{Vector{String}}, Vector{Vector{Float64}}, Vector{Int64}}, rownbr::Int64, updated::Base.RefValue{Any})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:174
+    [6] _buildcolumns(rowitr::Tables.IteratorWrapper{@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}}, row::Tables.IteratorRow{DRM.AugmentedPhy{Float64}}, st::Int64, sch::Tables.Schema{(:n_leaves, :n_total, :Q_topology, :leaf_indices, :leaf_names, :branch_lengths, :root_index), nothing}, columns::NTuple{7, Tables.EmptyVector}, updated::Base.RefValue{Any})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:198
+    [7] buildcolumns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:227 [inlined]
+    [8] _columns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:274 [inlined]
+    [9] columns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:258 [inlined]
+   [10] columntable(itr::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/namedtuples.jl:193
+   [11] schema(ts::Vector{StatsModels.Term}, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, hints::Dict{Symbol, Any})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:120
+   [12] schema(f::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, hints::Dict{Symbol, Any})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:128
+   [13] schema(f::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:131
+   [14] _design(response::Symbol, rhs::StatsModels.Term, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:356
+   [15] drm(f::DrmFormula, fam::Gaussian; data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, K::Nothing, A::Nothing, tree::String, coords::Nothing, g_tol::Float64, algorithm::Symbol, method::Symbol, profile_ci::Bool, phylo_coupled::Bool, penalty::Nothing, sparse::Bool, impute::Nothing, missing::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:469
+   [16] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:125 [inlined]
+   [17] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [18] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:123 [inlined]
+   [19] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [20] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:104
+   [21] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [22] top-level scope
+      @ none:1
+   [23] eval
+      @ Core ./boot.jl:385 [inlined]
+   [24] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [25] _start()
+      @ Base ./client.jl:552
+multi-component phylogenetic covariance remains named: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:131
+  Got exception outside of a @test
+  type Array has no field n_leaves
+  Stacktrace:
+    [1] getproperty
+      @ ./Base.jl:37 [inlined]
+    [2] getcolumn(x::Vector{String}, nm::Symbol)
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/Tables.jl:102
+    [3] getcolumn
+      @ ~/.julia/packages/Tables/cRTb7/src/tofromdatavalues.jl:73 [inlined]
+    [4] eachcolumns
+      @ ~/.julia/packages/Tables/cRTb7/src/utils.jl:127 [inlined]
+    [5] __buildcolumns(rowitr::Tables.IteratorWrapper{@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}}, st::Int64, sch::Tables.Schema{(:n_leaves, :n_total, :Q_topology, :leaf_indices, :leaf_names, :branch_lengths, :root_index), nothing}, columns::Tuple{Vector{Int64}, Vector{Int64}, Vector{SparseArrays.SparseMatrixCSC{Float64, Int64}}, Vector{Vector{Int64}}, Vector{Vector{String}}, Vector{Vector{Float64}}, Vector{Int64}}, rownbr::Int64, updated::Base.RefValue{Any})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:174
+    [6] _buildcolumns(rowitr::Tables.IteratorWrapper{@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}}, row::Tables.IteratorRow{DRM.AugmentedPhy{Float64}}, st::Int64, sch::Tables.Schema{(:n_leaves, :n_total, :Q_topology, :leaf_indices, :leaf_names, :branch_lengths, :root_index), nothing}, columns::NTuple{7, Tables.EmptyVector}, updated::Base.RefValue{Any})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:198
+    [7] buildcolumns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:227 [inlined]
+    [8] _columns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:274 [inlined]
+    [9] columns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:258 [inlined]
+   [10] columntable(itr::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/namedtuples.jl:193
+   [11] schema(ts::Vector{StatsModels.Term}, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, hints::Dict{Symbol, Any})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:120
+   [12] schema(f::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, hints::Dict{Symbol, Any})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:128
+   [13] schema(f::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:131
+   [14] _design(response::Symbol, rhs::StatsModels.Term, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:356
+   [15] drm(f::DrmFormula, fam::Gaussian; data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, K::Nothing, A::Nothing, tree::DRM.AugmentedPhy{Float64}, coords::Nothing, g_tol::Float64, algorithm::Symbol, method::Symbol, profile_ci::Bool, phylo_coupled::Bool, penalty::Nothing, sparse::Nothing, impute::Nothing, missing::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:469
+   [16] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:135 [inlined]
+   [17] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [18] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:132 [inlined]
+   [19] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [20] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:104
+   [21] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [22] top-level scope
+      @ none:1
+   [23] eval
+      @ Core ./boot.jl:385 [inlined]
+   [24] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [25] _start()
+      @ Base ./client.jl:552
+REML and a wholly missing response tip retain full tree identity: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:145
+  Got exception outside of a @test
+  type Array has no field n_leaves
+  Stacktrace:
+    [1] getproperty
+      @ ./Base.jl:37 [inlined]
+    [2] getcolumn(x::Vector{String}, nm::Symbol)
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/Tables.jl:102
+    [3] getcolumn
+      @ ~/.julia/packages/Tables/cRTb7/src/tofromdatavalues.jl:73 [inlined]
+    [4] eachcolumns
+      @ ~/.julia/packages/Tables/cRTb7/src/utils.jl:127 [inlined]
+    [5] __buildcolumns(rowitr::Tables.IteratorWrapper{@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Union{Missing, Float64}}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}}, st::Int64, sch::Tables.Schema{(:n_leaves, :n_total, :Q_topology, :leaf_indices, :leaf_names, :branch_lengths, :root_index), nothing}, columns::Tuple{Vector{Int64}, Vector{Int64}, Vector{SparseArrays.SparseMatrixCSC{Float64, Int64}}, Vector{Vector{Int64}}, Vector{Vector{String}}, Vector{Vector{Float64}}, Vector{Int64}}, rownbr::Int64, updated::Base.RefValue{Any})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:174
+    [6] _buildcolumns(rowitr::Tables.IteratorWrapper{@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Union{Missing, Float64}}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}}, row::Tables.IteratorRow{DRM.AugmentedPhy{Float64}}, st::Int64, sch::Tables.Schema{(:n_leaves, :n_total, :Q_topology, :leaf_indices, :leaf_names, :branch_lengths, :root_index), nothing}, columns::NTuple{7, Tables.EmptyVector}, updated::Base.RefValue{Any})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:198
+    [7] buildcolumns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:227 [inlined]
+    [8] _columns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:274 [inlined]
+    [9] columns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:258 [inlined]
+   [10] columntable(itr::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Union{Missing, Float64}}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/namedtuples.jl:193
+   [11] _replace_table_column(data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Union{Missing, Float64}}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, name::Symbol, replacement::Vector{Float64})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:334
+   [12] _design(response::Symbol, rhs::StatsModels.Term, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Union{Missing, Float64}}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:350
+   [13] drm(f::DrmFormula, fam::Gaussian; data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Union{Missing, Float64}}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, K::Nothing, A::Nothing, tree::DRM.AugmentedPhy{Float64}, coords::Nothing, g_tol::Float64, algorithm::Symbol, method::Symbol, profile_ci::Bool, phylo_coupled::Bool, penalty::Nothing, sparse::Nothing, impute::Nothing, missing::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:469
+   [14] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:147 [inlined]
+   [15] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [16] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:146 [inlined]
+   [17] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [18] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:104
+   [19] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [20] top-level scope
+      @ none:1
+   [21] eval
+      @ Core ./boot.jl:385 [inlined]
+   [22] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [23] _start()
+      @ Base ./client.jl:552
+integer positions, and invalid full-input labels: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:154
+  Got exception outside of a @test
+  type Array has no field n_leaves
+  Stacktrace:
+    [1] getproperty
+      @ ./Base.jl:37 [inlined]
+    [2] getcolumn(x::Vector{String}, nm::Symbol)
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/Tables.jl:102
+    [3] getcolumn
+      @ ~/.julia/packages/Tables/cRTb7/src/tofromdatavalues.jl:73 [inlined]
+    [4] eachcolumns
+      @ ~/.julia/packages/Tables/cRTb7/src/utils.jl:127 [inlined]
+    [5] __buildcolumns(rowitr::Tables.IteratorWrapper{@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{Int64}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}}, st::Int64, sch::Tables.Schema{(:n_leaves, :n_total, :Q_topology, :leaf_indices, :leaf_names, :branch_lengths, :root_index), nothing}, columns::Tuple{Vector{Int64}, Vector{Int64}, Vector{SparseArrays.SparseMatrixCSC{Float64, Int64}}, Vector{Vector{Int64}}, Vector{Vector{String}}, Vector{Vector{Float64}}, Vector{Int64}}, rownbr::Int64, updated::Base.RefValue{Any})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:174
+    [6] _buildcolumns(rowitr::Tables.IteratorWrapper{@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{Int64}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}}, row::Tables.IteratorRow{DRM.AugmentedPhy{Float64}}, st::Int64, sch::Tables.Schema{(:n_leaves, :n_total, :Q_topology, :leaf_indices, :leaf_names, :branch_lengths, :root_index), nothing}, columns::NTuple{7, Tables.EmptyVector}, updated::Base.RefValue{Any})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:198
+    [7] buildcolumns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:227 [inlined]
+    [8] _columns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:274 [inlined]
+    [9] columns
+      @ ~/.julia/packages/Tables/cRTb7/src/fallbacks.jl:258 [inlined]
+   [10] columntable(itr::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{Int64}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ Tables ~/.julia/packages/Tables/cRTb7/src/namedtuples.jl:193
+   [11] schema(ts::Vector{StatsModels.Term}, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{Int64}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, hints::Dict{Symbol, Any})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:120
+   [12] schema(f::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{Int64}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, hints::Dict{Symbol, Any})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:128
+   [13] schema(f::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{Int64}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:131
+   [14] _design(response::Symbol, rhs::StatsModels.Term, data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{Int64}, species_idx::Vector{Int64}, z_tip::Vector{Float64}})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:356
+   [15] drm(f::DrmFormula, fam::Gaussian; data::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, labels::Vector{String}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{Int64}, species_idx::Vector{Int64}, z_tip::Vector{Float64}}, K::Nothing, A::Nothing, tree::DRM.AugmentedPhy{Float64}, coords::Nothing, g_tol::Float64, algorithm::Symbol, method::Symbol, profile_ci::Bool, phylo_coupled::Bool, penalty::Nothing, sparse::Nothing, impute::Nothing, missing::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:469
+   [16] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:156 [inlined]
+   [17] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [18] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:155 [inlined]
+   [19] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [20] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:104
+   [21] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [22] top-level scope
+      @ none:1
+   [23] eval
+      @ Core ./boot.jl:385 [inlined]
+   [24] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [25] _start()
+      @ Base ./client.jl:552
+Test Summary:                                                       | Error  Total   Time
+Gaussian LSS phylogenetic tip identity                              |     5      5  10.0s
+  dedicated dense named covariance is invariant to first-seen order |     1      1   8.6s
+  dedicated sparse and Newick inputs use the same named tree        |     1      1   0.4s
+  multi-component phylogenetic covariance remains named             |     1      1   0.2s
+  REML and a wholly missing response tip retain full tree identity  |     1      1   0.5s
+  integer positions, and invalid full-input labels                  |     1      1   0.3s

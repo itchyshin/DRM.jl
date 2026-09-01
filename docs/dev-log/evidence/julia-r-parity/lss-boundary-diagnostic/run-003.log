@@ -1,0 +1,18 @@
+ERROR: LoadError: MethodError: no method matching _lss_identity_fixture(; order::Vector{Int64})
+
+Closest candidates are:
+  _lss_identity_fixture(; order, numeric_species, missing_tip) (method too new to be called from this world context.)
+   @ Main.var"##LssOriginalFixture#225" /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:18
+
+Stacktrace:
+ [1] _original_test_fixture(order::Vector{Int64})
+   @ Main /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:61
+ [2] _fixture_pair
+   @ /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:78 [inlined]
+ [3] main()
+   @ Main /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:249
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:265
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:265
+LSS_BOUNDARY_META julia=1.10.0 threads=1 openblas_env=1 openblas_actual=1 fixture_mode=original_test_bytes source_sha256=4465956f8786436b72827366032178f1a81f0b76582df7f232d155ed624191f9 test_sha256=9e8f2522841c1294d4cfac6aa11d26fe7c8bd2b1c6d501f2fe22b8391e283068 runner_sha256=200e2330e33ff6368a8d40152525e43685f9bf29f109c8cf647b88e697a61d84
+LSS_BOUNDARY_META oracle=hard_correlation_no_test_import=true

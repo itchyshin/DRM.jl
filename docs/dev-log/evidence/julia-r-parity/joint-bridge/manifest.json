@@ -1,0 +1,40 @@
+{
+  "scope": "Two adapters only; required native parity FAIL, all programme gates open",
+  "julia_implementation_commit": "bc0105701a637749ce88935f93c88b95090b40a2",
+  "r_implementation_commit": "b2b0c37695122edf6b3a27647152693648941fe9",
+  "working_source_note": "R receipt includes preserved uncommitted ZOB; not a clean committed-source receipt",
+  "evidence": {
+    "README.md": "3c766b9aa8ef2dcd181d83a505ec5016455239634fc867037fd68c22c4b966eb",
+    "joint-all-pure-001.log": "3723f65706d55d6bc7521d1a4eacad4b7cef7d568eeebfcf31d503249ab8f02c",
+    "joint-all-pure-002.log": "7f4de563235308c1e8fb6c3c5c9177e57b6a336bf4f553bce876a1a71ad2b6de",
+    "joint-all-pure-003.log": "7b61a82f8b8e012b75f7df71c95f155e3b63f16aeb86c24d5f84932b6b3acd85",
+    "joint-bridge-docs-003.log": "ef402b4db86d18ce1e6a4d754ff8a6daaccedbf72d837c3b6a04ddfd6091dc7b",
+    "joint-bridge-docs-gate-003.log": "09b1724fd8a79985d422a82b3ad9e7277b383722c7f727e0785697d5ddae6e9b",
+    "joint-direct-bridge-001.log": "499ad33c9dd44f2efb944ae0566389b1e42ae7b58eaa6edc8fd42ba8716309c7",
+    "joint-direct-bridge-001.toml": "810ebc3a02cbc11f25f7a07760b4bc57f9c08a43d901d1719da65fbe45f67a8b",
+    "joint-dispatch-red-001.log": "2aa179343e1d056e0a47c4cdf55a6e082c4659aa9b91417101ab2800cc36629f",
+    "joint-native-prediction-diagnostic.json": "9f64c057bb4ba69decbb7505175d46ba58d36f678c5ec59d2835577ecb0e40bf",
+    "joint-native-public-contract-001.json": "327244319a00954b25a06523d7d10b39ba55bbd9838e1a001b2dc492a6443c70",
+    "joint-neighbour-gates-001.log": "1c4281c6fb6a67e9dcb3fb0f71f0c794e2106b15dfda10c0e9ea5ebb5e045d84",
+    "joint-preparation-dispatch-green-001.log": "e3237dc31e61367618a649884cd3df69729e25bc60abc32612469d154e8e7d44",
+    "joint-preparation-red-003.log": "940d7f1e117cb7da3a67da782a8abf64ad1c309b6f4a5064392421506ff202fc",
+    "joint-public-001.json": "a02d0d565f0aea86a2588d583918e0dce68ad444652a872d4d77bb1a3f21903e",
+    "joint-public-001.log": "36db5edb6320b0608ec25dce4efd59183c0ba131b0ea78beadb2de549dbe64eb",
+    "joint-public-002.json": "89c261e8af4aa7997b66933776cc97ce3770d6ddbdf869cfd0128a75e2be229b",
+    "joint-public-002.log": "ad48e1e9580ae6c7dbec1ea0f31e88b670727eb739eb552862c3340a8c7c92eb",
+    "joint-public-003.json": "81a7d530d6939b8041aff16f16dd21144448a69609eabe48e7c56e4f5825938d",
+    "joint-public-003.log": "ad48e1e9580ae6c7dbec1ea0f31e88b670727eb739eb552862c3340a8c7c92eb",
+    "joint-public-native-gate-003.log": "21e5e96c40415ddce45a50dd591bcaf058e26211644a4813e065c3c32a28817d",
+    "joint-result-adapter-green-003.log": "d5a57191b3be2abb395bed15cb75c4089da9f498e9321acaed3900b07a2ef5db",
+    "joint-result-adapter-green-004.log": "d5a57191b3be2abb395bed15cb75c4089da9f498e9321acaed3900b07a2ef5db",
+    "joint-result-adapter-red-001.log": "e5ccb44f0bd94be83bf545baf4cbaaee8f2798a38526b027ea838ddb4fcc4c4c",
+    "joint-transport-001.json": "52bc579866e907ef8f60f28948ac827780c2d6d023c34d57b40865d1584690a7",
+    "joint-transport-001.log": "a1bfea20817d88968df5bc1ab04affc2ac271376997579702e94afb54b85e10e",
+    "melissa-checkpoint.md": "ddc98b65b09b441d37e701b1cec1c6cf9726c6860ac177653f4dd3b084c758e6",
+    "rose-review.md": "ba2fcf2ab0adeb09ee93fd09f97f5eae5e3ab3efa27e232e0ebb7e9dc7a442d9"
+  },
+  "checkers": {
+    "tools/check_joint_bridge_public_receipt.py": "76a6236a9a434c4c3d8f915e3dd46fec8d00744de9905d684e3dd60d8f1aca69",
+    "tools/test_joint_bridge_public_receipt.py": "1efd6ade1e4f51fbc2c62014f6b89e730d2c711c1d562419c2c8b047e1e5a050"
+  }
+}

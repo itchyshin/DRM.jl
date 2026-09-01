@@ -1,0 +1,24 @@
+{
+  "source_commit": "c7e5b823fb3977bf5488c98f112089eb11772ecb",
+  "reviewed_source_sha256": "7f9571e775cef5cced81ab124a77f284225b85f57a4a054e565b36ddfe04fae0",
+  "focused_test_sha256": "59fb2c4581f3097a99aa47ef757e5ccc8a81de241b7bbeb97cf461740ccf8625",
+  "postcommit_review_check": "TRACKED_REVIEW_RECEIPT_CURRENT",
+  "mission_control_commit": "f21c6c0b3a15634042695ff525aadfb6f377746b",
+  "local_gates": "G0-G5 all met; distinct from global programme gates",
+  "global_gates": "G0-G8 OPEN",
+  "carried_over": [
+    "test/test_locscale_profile_threads.jl (unwired/untracked)",
+    "sticky-navigation hides direct fragment headings",
+    "raw deployment metadata links missing"
+  ],
+  "scope": "Local reviewed numerical source checkpoint; not full-suite/final-programme verification; no publication",
+  "next_dispatch": {
+    "agent": "/root/profile_threading_builder",
+    "requested_model": "gpt-5.6-terra",
+    "requested_effort": "high",
+    "dispatch": "explicit native child with fresh self-contained brief; tool accepted",
+    "actual_model": "not independently read from runtime metadata in this receipt",
+    "ownership": "Ownership/history review complete; exact inference/profile-thread-test/ignored-ledger claim and capped red-green implementation authorized; no commit or docs ownership"
+  },
+  "compute_receipt": "../compute-connections-20260831/receipt-reconnected-002.json"
+}

@@ -1,0 +1,7 @@
+{
+  "scope": "Prediction-only package candidate, not a separate git checkout; other R files and DLL symlink to source checkout. No zero_one_beta admission/constructor changes.",
+  "source_checkout": "/private/tmp/drm-parity-20260830/drmTMB",
+  "base_head": "f3d872cd9376e78391501b1f771976ed03a54b66",
+  "candidate_bridge_sha256": "9e7b2edad435d0fcd423866ef388426842002c67b40a288e5977fd05fc8d6ad1",
+  "full_working_bridge_sha256": "c3ff25207933e16b5987073d9f89bf9518cda6a5b2817d59daacd41b87526ec7"
+}

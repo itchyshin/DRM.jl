@@ -1,0 +1,37 @@
+APPROVAL REQUIRED locscale-inner-status:G0
+    CHECK: JULIA_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 julia --project=. --startup-file=no -e 'include("test/test_locscale_inner_status.jl"); println("LOCSCALE_INNER_STATUS_OK")'
+    EXPECT: LOCSCALE_INNER_STATUS_OK
+    CWD: /private/tmp/drm-parity-20260830/integration/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg0rqosbj:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+gate-check: could not record approval for locscale-inner-status:G0: EPERM: operation not permitted, open '/Users/z3437171/.unlazy/approved/fcb6aa328a1dc20533744318bd3c460c122adb7f8b52f192da66d0efee335b0b.json.lock'
+APPROVAL REQUIRED locscale-inner-status:G1
+    CHECK: python3 /private/tmp/drm-parity-20260830/integration/run_inner_status_module.py 1 tracked001
+    EXPECT: MODULE_INNER_STATUS_OK
+    CWD: /private/tmp/drm-parity-20260830/integration/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg0rqosbj:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+gate-check: could not record approval for locscale-inner-status:G1: EPERM: operation not permitted, open '/Users/z3437171/.unlazy/approved/879f8f9be5d1d6c96284cdd3ef5a764dd1022731065473d23fda70b581bbf4d3.json.lock'
+APPROVAL REQUIRED locscale-inner-status:G2
+    CHECK: python3 /private/tmp/drm-parity-20260830/integration/run_profile_status_module.py 1 tracked001
+    EXPECT: MODULE_PROFILE_STATUS_OK
+    CWD: /private/tmp/drm-parity-20260830/integration/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg0rqosbj:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+gate-check: could not record approval for locscale-inner-status:G2: EPERM: operation not permitted, open '/Users/z3437171/.unlazy/approved/8b3b8297559347690627548cfd3740aef35371a95720b14a458bcdc7414964f7.json.lock'
+APPROVAL REQUIRED locscale-inner-status:G3
+    CHECK: python3 /private/tmp/drm-parity-20260830/integration/run_profile_status_module.py 4 tracked002
+    EXPECT: MODULE_PROFILE_STATUS_OK
+    CWD: /private/tmp/drm-parity-20260830/integration/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg0rqosbj:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+gate-check: could not record approval for locscale-inner-status:G3: EPERM: operation not permitted, open '/Users/z3437171/.unlazy/approved/f03fba67508115d204ee334b35c69628f4511a9ee91e9157b4ba04fb606c0b6b.json.lock'
+APPROVAL REQUIRED locscale-inner-status:G4
+    CHECK: python3 /private/tmp/drm-parity-20260830/integration/run_inner_perturbations.py 1 tracked001
+    EXPECT: MODULE_INNER_PERTURBATIONS_OK
+    CWD: /private/tmp/drm-parity-20260830/integration/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg0rqosbj:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+gate-check: could not record approval for locscale-inner-status:G4: EPERM: operation not permitted, open '/Users/z3437171/.unlazy/approved/6b1e431eaaf0eb764e2f964ce6eecfd1937fe0b0707d25824a5267dad3088e2a.json.lock'
+locscale-inner-status.md: 6 gates
+gate-check: infrastructure failure prevented 5 approval(s)

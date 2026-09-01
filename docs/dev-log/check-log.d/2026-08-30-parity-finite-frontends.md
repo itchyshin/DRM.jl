@@ -1,0 +1,1 @@
+| 2026-08-30 | **Finite-state direct/R frontends** (#563) | Focused Julia/R regressions, independent receipt replay/damages, two-page docs execution | Bounded adapters pass; both strict native comparisons FAIL; programme OPEN | Ada / Rose / Melissa |

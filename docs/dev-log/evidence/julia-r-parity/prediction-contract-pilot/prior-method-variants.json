@@ -1,0 +1,397 @@
+{
+  "scope": "Reachable committed prediction-method text variants only; excludes uncommitted work and helpers outside this method. Hashes are not behavior proof.",
+  "R_head": "f3d872cd9376e78391501b1f771976ed03a54b66",
+  "revision_count": 97,
+  "distinct_method_bodies": 3,
+  "missing_method_count": 0,
+  "revisions": [
+    {
+      "commit": "79e8f0951de0257d1154437a529e82fcee8bd313",
+      "prediction_body_sha256": "cb793dd5968ce3745a94e118c3b3771bdaa4ac306be13056719f1681d251a8f4"
+    },
+    {
+      "commit": "862bf057f353aa3203ab9277110e6a95eb7b482a",
+      "prediction_body_sha256": "cb793dd5968ce3745a94e118c3b3771bdaa4ac306be13056719f1681d251a8f4"
+    },
+    {
+      "commit": "c03464493925983afb4fd4a79d02b9f12cccf0a8",
+      "prediction_body_sha256": "cb793dd5968ce3745a94e118c3b3771bdaa4ac306be13056719f1681d251a8f4"
+    },
+    {
+      "commit": "18f1bf6303f557b7eb7c7737ec627b65e8bba507",
+      "prediction_body_sha256": "cb793dd5968ce3745a94e118c3b3771bdaa4ac306be13056719f1681d251a8f4"
+    },
+    {
+      "commit": "a6de6bb71c6d8303fe4c9f3dd48840792e4d76ba",
+      "prediction_body_sha256": "cb793dd5968ce3745a94e118c3b3771bdaa4ac306be13056719f1681d251a8f4"
+    },
+    {
+      "commit": "da05bec34b7ac22cf9f36105dad06ab167ac1690",
+      "prediction_body_sha256": "cb793dd5968ce3745a94e118c3b3771bdaa4ac306be13056719f1681d251a8f4"
+    },
+    {
+      "commit": "0303d8ee1af47b7e3bdcded3913f6b485633d8c2",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "a26f54742d931a81e95aaf871ebb5f2e0cadfea4",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "7b4a4d63d88544783df5bbd679fa11f64ff4998f",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "54192dd3a98d431b0657c1c4652ea9dfc7b1dc92",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "5840b2d5f79d1020dd5c933fef9b7ec82fbb4723",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "142b9002cbdf6d8a2a74c6e0f31676d14112e3b7",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "b49619a7c9d8dc43d024c4414f6e7ceb3d8fad81",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "68b2818410b72bc13788df3f9f503aa179fa307d",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "52d1c8545969d2463edad8703795b4c57de20c9e",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "9d75761d689127e42c2757cd04e67f23baaa2b3a",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "c8dafc6e0ffc05f213346d830ffc1dc8bc7898e6",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "cc3ef1e8f38dd2826d84d080da8533db02fad8fa",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "85df76b1073542639c69d7b26577220229e51b0c",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "fc8ee77a6fe64047f99d9ea7716dc81516b86564",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "972819df54849db249e014df5b3aa7968701fb4a",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "6aa541714b52fd20d038358cadf5539770051342",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "a7abdfd73b9bd85d1e339093d0a6f9d3ebd0d81e",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "cbc4f48fe2283e0380fbad404246253c6e9f67b0",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "883530e3e09e1a1052a2214b1b3a18b5b73195f8",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "7b1143caaef6245b0b2af5e2722241d8ff523001",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "9242eab33fed5c0c071c1aca5254a9fe96d6bcdd",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "e4cdeeee6672caf34a34e9014d3da01aaa19b21e",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "0c86d506e968eb43bc37ba0a53777d5d3ccfdb91",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "414b0f95aa9b932eb8dd7824a9ada348d462d4a8",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "b0c5ed5dc597f4ab8b0435b8ec441e2e93f2453d",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "710388ad5117b43bc622427a6ae0901c4b2cc06f",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "6ec12cf51d723a0ecd48f6d30a2de7a522d292d5",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "d88901699910b3457bee54c9a599170c39810515",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "205d2d14f2b02c6fbd29fc28bb2395febabda6e4",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "08c9f2330550f766534a7f1e1f910373963b2cf1",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "c5775e61f169d84e1d1bc1a121fe04737cd0a447",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "cae7bf6de44e4626ea7912504ba41e0e2db91051",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "fb59cd32cdfb4f2b4f0101c8576c04b25add9767",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "e3002492de34209a7c9135045e441a5bc676d059",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "0413c845567bc4e44c844fce162966bb479d686f",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "e63014a13bb66fc55b78cfcc9f3b59b9901065f6",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "1a972b8e6e1c60cec85ca116c0f1463fc2bf4214",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "6712e86f4854dcf34fbaf581962d591ae0b256a3",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "1b651e366d4604af81ff91a8bbd0ae1bc871efc4",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "009528d609519039bb8df13d84db779408f06499",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "f6b25b26353b692257c0aa823edf55e9fedce97c",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "549c633d66b623bf09f119e2ab3a21f0bf9af0ba",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "8544c4fb8c876eddec95a8d1bd0ea500632c15e8",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "cffa7002c96c8b8defc45ea31e465ca0996a56a7",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "0bc1e6f835cbcceda8beab300fcbf1ac284ffd8a",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "863da2558827920405aad21ff985d2b29c917edb",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "d8636535b0200db33dd6d5c3f2956bca018ee056",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "ea3db393e9944453e1a4b542399e31e0d7860056",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "e6ba7d551b0aca3fc56326dfbc20e7f93f41e3f5",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "bc467293bf4420ad536d0d7f376eea6dc0139b5f",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "6944451edca9aa30e01d480f57fbe3063390f808",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "7a4aa4dcab00dd412e6e0350b64fdaeecc7e8f9d",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "e792f1593545d6541e6322bb5dcdcad7c02acce6",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "bf86888dce4fe5172898dab2a8e2b241aa0258b9",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "e398cff1ef1a10b7c9335dd09b788e15831e9881",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "10c65bec298ae2d7b490164bde1f19132f57a2c9",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "0f477ac3e0246d8da08efd3562d7aae827538fee",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "b0297892db189f5ffd0af0a9ca4995f90e72f166",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "ceb1f6ddab538739f4845edb87182fdba70b56fb",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "e573cff02d7bd37c982de0485c3ab96e04c1757d",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "7137f19634b6005ffbe83d5db801e19c612ff338",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "24b186eba31f6dba1bc8bf74a0a04237eb538d60",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "c81539b59a59bd6ad29deaf9c909c0bb6d3cd6c9",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "27cbdd50a0fb11ff21d315cf450b790b9ed44452",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "10134405121a92e28e0df48b73a58101f019dc1e",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "3efec88e4efc2dd2879748a43ec06c4e63b21b8b",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "9f9f956df4321d99a31805494673f5a55a0cebb9",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "654fb92b900eab025c43d7b72905b63930f509a0",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "c7ec1469fddb926e949b9c030d5f0887863b529f",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "5bdc0733c33e3531f0a0fb31a487b72c1b1beb2e",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "130ae818769559daeb13f91d2376a95ea37623ba",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "dc16624db0f78de7110220e424c9949a70f522e6",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "29f84c39ebc58bbcb8c73191918ef066b9d4be7a",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "da90d8a7bf376a14e85b2bb00f1a84e3faf61dbc",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "5a9f6c4e5c3d23ef3359501a99b57fdbc09b01da",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "95b478741f17604f61737bcd4a54364f119a07ec",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "7aa8a4177562bb83c90d653c0fae685445c356f9",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "5a2c33e743834abcb3450fdf22eaf80cde87f742",
+      "prediction_body_sha256": "28dac136f4631165319faf3922aff15a0f5883ed232c02060a1d598245db044b"
+    },
+    {
+      "commit": "7d7710414c1372447f8dd67d31b70f5e83da464c",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "472cc40e2d7c8184a3c53cc69ba54f6796e66c95",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "6a2b21a36786adfa890e4324ce45c7824af3374a",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "cb1a21bbb8aa94a8cfedd815d2d9d667ecf97b63",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "c77901f6a9421df7be679dcabd6041f0c8bd56c1",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "f6dc7d136493e0ba833b05cd18e0155f4f049c28",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "c3f901a9f5a4f83255fbf8f02e44615b5af3f3a6",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "9fc7e097337fe6ad6eba4862aa381d77e2f00ee8",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "4568713040e7ee51d998d2c99ec2bb1c4f5c815b",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "25f781f4435bdd87ca20acd69cae011feb08adf2",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "a1573eb690c8329217c7f43b2273f72945b9fcd5",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "0972ef9d8d6c636ac9cde6ede95840f4e526eb4c",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    },
+    {
+      "commit": "d92fb8242e85eda3a4c174aacaee3dad7a119d9f",
+      "prediction_body_sha256": "556610fa13e0f27a704983a04650df69231b0654c4277a1c73661a5037f3243b"
+    }
+  ]
+}

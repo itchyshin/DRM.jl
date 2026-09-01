@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/check_joint_bridge_public_receipt.py", line 167, in <module>
+    check(receipt, reference, direct, rroot, jroot, native=native)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/check_joint_bridge_public_receipt.py", line 148, in check
+    require(case.get("native_status") == "PASS", kind + ": native workflow failure")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/check_joint_frontend_fit_receipt.py", line 14, in require
+    raise ValueError(message)
+ValueError: gaussian: native workflow failure

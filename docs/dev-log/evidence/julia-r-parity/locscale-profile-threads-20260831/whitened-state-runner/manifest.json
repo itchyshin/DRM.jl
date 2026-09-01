@@ -1,0 +1,50 @@
+{
+  "scope": "Unwired private helper. First numerical failure and corrected run retained. No production finite-profile claim.",
+  "files": [
+    {
+      "path": "run_focused.py",
+      "sha256": "e1150fd717967d5626f7c6775e0b3e94fc506a54ec1ba1243d6f08f934c6100f",
+      "bytes": 3479
+    },
+    {
+      "path": "whitened-focused-20260831T185530Z.log",
+      "sha256": "74f46821d2f974efec4821aef7e8e0fa15f6266ab3bd2f6906dc44e071915fec",
+      "bytes": 2628
+    },
+    {
+      "path": "whitened-focused-20260831T185530Z.source-snapshot.jl",
+      "sha256": "7c16bde33298bcb8f08a1f8efb0b9667fac6e14242ae5b66c9b040bbc2cd3288",
+      "bytes": 13795
+    },
+    {
+      "path": "whitened-focused-20260831T185530Z.status.json",
+      "sha256": "cda05d436e2ce70946cbb3d79b6b97319ec39bb5f6e97d9fe0e1514668c4ab2f",
+      "bytes": 1635
+    },
+    {
+      "path": "whitened-focused-20260831T185530Z.test-snapshot.jl",
+      "sha256": "1978fc660488650e721148bbc430b0a03d9a0028f11cdce4e2a3b5b89c0c0cf3",
+      "bytes": 13628
+    },
+    {
+      "path": "whitened-focused-20260831T190401Z.log",
+      "sha256": "cbf2f74d3f4f978c73e3ebb2cb403109739c57859a1972f8cd481044ff65a112",
+      "bytes": 159
+    },
+    {
+      "path": "whitened-focused-20260831T190401Z.source-snapshot.jl",
+      "sha256": "1baf3baf1ef4eea4ad4d539e0c2da4d616978a7ad94b4852694aee3ac8a3f0ec",
+      "bytes": 15130
+    },
+    {
+      "path": "whitened-focused-20260831T190401Z.status.json",
+      "sha256": "baddb714de8e30d0c77702e6e44c0f06ec3e0df7bea2f806093492419be6c4a2",
+      "bytes": 1637
+    },
+    {
+      "path": "whitened-focused-20260831T190401Z.test-snapshot.jl",
+      "sha256": "4226d2a690567a860cb2e50263f0022b8f78202d4499d1f3e98b81d7f97a82dc",
+      "bytes": 14236
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+$ordinal
+$ordinal$status
+[1] "PASS"
+
+$ordinal$rows
+[1] 60
+
+$ordinal$max_abs_error
+[1] 2.220446e-16
+
+$ordinal$fitted_error
+[1] 2.220446e-16
+
+$ordinal$nondegenerate
+[1] TRUE
+
+$ordinal$convergence
+[1] 0
+
+
+$categorical
+$categorical$status
+[1] "PASS"
+
+$categorical$rows
+[1] 66
+
+$categorical$max_abs_error
+[1] 2.220446e-16
+
+$categorical$fitted_error
+[1] 2.220446e-16
+
+$categorical$nondegenerate
+[1] TRUE
+
+$categorical$convergence
+[1] 0
+
+
+$two_gaussian
+$two_gaussian$status
+[1] "PASS"
+
+$two_gaussian$rows
+[1] 160
+
+$two_gaussian$max_abs_error
+[1] 8.881784e-16
+
+$two_gaussian$fitted_error
+[1] 8.881784e-16
+
+$two_gaussian$nondegenerate
+[1] TRUE
+
+$two_gaussian$convergence
+[1] 0
+
+
+NATIVE_PREDICTION_NEIGHBOURS_PASS

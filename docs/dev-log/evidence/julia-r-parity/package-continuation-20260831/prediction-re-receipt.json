@@ -1,0 +1,31 @@
+{
+  "source_head": "39150792e4ed8c3cdbd38760901ef5641e63d1a7",
+  "runtime": "Julia1.10.10",
+  "host": "Totoro",
+  "julia_threads": 1,
+  "blas_threads": 1,
+  "expected_source_hashes": 326,
+  "source_unchanged": true,
+  "elapsed_seconds": 31,
+  "exit_status": 0,
+  "group_complete": true,
+  "passing_assertions": 50,
+  "testsets": 6,
+  "completed_files": [
+    "test_predict_response.jl",
+    "test_ranef.jl",
+    "test_correlated_re.jl",
+    "test_multi_re.jl",
+    "test_sigma_re.jl",
+    "test_sigma.jl"
+  ],
+  "summaries": [
+    "predict response scale (non-Gaussian inverse link) |    7      7  7.1s",
+    "ranef() \u2014 Gaussian BLUPs |   15     15  9.2s",
+    "Gaussian correlated random slope (1+x|g) \u2014 recovery |    4      4  0.1s",
+    "Gaussian crossed random intercepts (1|g)+(1|h) \u2014 recovery |    4      4  4.7s",
+    "Gaussian random effect on sigma: sigma ~ 1 + (1|g) \u2014 recovery |    6      6  1.6s",
+    "sigma() \u2014 fitted scale accessor |   14     14  3.1s"
+  ],
+  "scope": "Unchanged original regression files; not full-suite, native-R parity, coverage or warm performance evidence"
+}

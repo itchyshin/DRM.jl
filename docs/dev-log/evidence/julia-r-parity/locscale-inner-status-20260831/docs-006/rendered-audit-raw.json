@@ -1,0 +1,2961 @@
+{
+  "external_targets": [
+    "data:application/x-font-woff;charset=utf-8;base64,T1RUTwAJAIAAAwAQQ0ZGIGnFMZkAAARQAAAAlE9TLzJpUWOBAAABAAAAAGBjbWFwAAwAUwAABAQAAAAsaGVhZCFRvpAAAACcAAAANmhoZWEC8AD9AAAA1AAAACRobXR4A+gAAAAABOQAAAAIbWF4cAACUAAAAAD4AAAABm5hbWVNb8+2AAABYAAAAqNwb3N0AAMAAAAABDAAAAAgAAEAAAABAABVWOu4Xw889QADA+gAAAAA3ym+2AAAAADfKb7YAAAAAAPoAAAAAAADAAIAAAAAAAAAAQAAAu79EgAAA+gAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAIAAFAAAAIAAAADA+gB9AAFAAACigK7AAAAjAKKArsAAAHfADEBAgAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAABYWFhYAEAAIAAgAu79EgAAAu4C7gAAAAEAAAAAAXcAAAAgACAAAAAAACIBngABAAAAAAAAAAEAQQABAAAAAAABAAsAAAABAAAAAAACAAcAIQABAAAAAAADABUAxgABAAAAAAAEABMANgABAAAAAAAFAAsApQABAAAAAAAGABIAbwABAAAAAAAHAAEAQQABAAAAAAAIAAEAQQABAAAAAAAJAAEAQQABAAAAAAAKAAEAQQABAAAAAAALAAEAQQABAAAAAAAMAAEAQQABAAAAAAANAAEAQQABAAAAAAAOAAEAQQABAAAAAAAQAAsAAAABAAAAAAARAAcAIQADAAEECQAAAAIAXwADAAEECQABABYACwADAAEECQACAA4AKAADAAEECQADACoA2wADAAEECQAEACYASQADAAEECQAFABYAsAADAAEECQAGACQAgQADAAEECQAHAAIAXwADAAEECQAIAAIAXwADAAEECQAJAAIAXwADAAEECQAKAAIAXwADAAEECQALAAIAXwADAAEECQAMAAIAXwADAAEECQANAAIAXwADAAEECQAOAAIAXwADAAEECQAQABYACwADAAEECQARAA4AKG1qeC1sbS16ZXJvAG0AagB4AC0AbABtAC0AegBlAHIAb1JlZ3VsYXIAUgBlAGcAdQBsAGEAcm1qeC1sbS16ZXJvIFJlZ3VsYXIAbQBqAHgALQBsAG0ALQB6AGUAcgBvACAAUgBlAGcAdQBsAGEAcm1qeC1sbS16ZXJvUmVndWxhcgBtAGoAeAAtAGwAbQAtAHoAZQByAG8AUgBlAGcAdQBsAGEAclZlcnNpb24gMC4xAFYAZQByAHMAaQBvAG4AIAAwAC4AMSA6bWp4LWxtLXplcm8gUmVndWxhcgAgADoAbQBqAHgALQBsAG0ALQB6AGUAcgBvACAAUgBlAGcAdQBsAGEAcgAAAAABAAMAAQAAAAwABAAgAAAABAAEAAEAAAAg//8AAAAg////4QABAAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAEAQABAQETbWp4LWxtLXplcm9SZWd1bGFyAAEBASf4GwD4HAL4HQP4HgSLi/mC+nwFHQAAAIYPHQAAAIkRix0AAACUEgAFAQEMHyoxNlZlcnNpb24gMC4xbWp4LWxtLXplcm8gUmVndWxhcm1qeC1sbS16ZXJvUmVndWxhcnNwYWNlAAAAAYsAAgEBAwaLDvp8DgAAAAAD6AAA",
+    "data:image/svg+xml, %3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' %3E%3Cpath d='M0 0h24v24H0V0z' fill='none' /%3E%3Cpath d='M9 5v2h6.59L4 18.59 5.41 20 17 8.41V15h2V5H9z' /%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='1'/%3E%3Ccircle cx='19' cy='12' r='1'/%3E%3Ccircle cx='5' cy='12' r='1'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/%3E%3Cpath d='M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2ZM18 9l-6 6M12 9l6 6'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M21 6H3M15 12H3M17 18H3'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M5 12h14M12 5l7 7-7 7'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M5 12h14M12 5v14'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m9 10-5 5 5 5'/%3E%3Cpath d='M20 4v7a4 4 0 0 1-4 4H4'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Crect width='7' height='7' x='3' y='3' rx='1'/%3E%3Crect width='7' height='7' x='3' y='14' rx='1'/%3E%3Cpath d='M14 4h7M14 9h7M14 15h7M14 20h7'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='rgba(128,128,128,1)' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Crect width='8' height='4' x='8' y='2' rx='1' ry='1'/%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='rgba(128,128,128,1)' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Crect width='8' height='4' x='8' y='2' rx='1' ry='1'/%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/%3E%3Cpath d='m9 14 2 2 4-4'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' stroke-width='1.6' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' d='m14.386 14.386 4.088 4.088-4.088-4.088A7.533 7.533 0 1 1 3.733 3.733a7.533 7.533 0 0 1 10.653 10.653z'/%3E%3C/svg%3E",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'/%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 16 16' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath fill='currentColor' d='M10 13a1 1 0 1 1 0-2a1 1 0 0 1 0 2m0-4a1 1 0 1 1 0-2a1 1 0 0 1 0 2m-4 4a1 1 0 1 1 0-2a1 1 0 0 1 0 2m5-9a1 1 0 1 1-2 0a1 1 0 0 1 2 0M7 8a1 1 0 1 1-2 0a1 1 0 0 1 2 0M6 5a1 1 0 1 1 0-2a1 1 0 0 1 0 2'/%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 16 16' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath fill='currentColor' d='M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326a.75.75 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275a.75.75 0 0 1-.734-.215L8 9.06l-3.22 3.22a.75.75 0 0 1-1.042-.018a.75.75 0 0 1-.018-1.042L6.94 8L3.72 4.78a.75.75 0 0 1 0-1.06'/%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 32 32' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath fill='currentColor' d='M16 2a14 14 0 1 0 14 14A14 14 0 0 0 16 2m0 23a1.5 1.5 0 1 1 1.5-1.5A1.5 1.5 0 0 1 16 25m1.142-7.754v2.501h-2.25V15h2.125a2.376 2.376 0 0 0 0-4.753h-1.5a2.38 2.38 0 0 0-2.375 2.375v.638h-2.25v-.638A4.63 4.63 0 0 1 15.517 8h1.5a4.624 4.624 0 0 1 .125 9.246'/%3E%3Cpath fill='none' d='M16 25a1.5 1.5 0 1 1 1.5-1.5A1.5 1.5 0 0 1 16 25m1.142-7.754v2.501h-2.25V15h2.125a2.376 2.376 0 0 0 0-4.753h-1.5a2.38 2.38 0 0 0-2.375 2.375v.638h-2.25v-.638A4.63 4.63 0 0 1 15.517 8h1.5a4.624 4.624 0 0 1 .125 9.246'/%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 48 48' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cg fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='4'%3E%3Cpath d='M24 4v8'/%3E%3Cpath d='m22 22l20 4l-6 4l6 6l-6 6l-6-6l-4 6z' clip-rule='evenodd'/%3E%3Cpath d='m38.142 9.858l-5.657 5.657M9.858 38.142l5.657-5.657M4 24h8M9.858 9.858l5.657 5.657'/%3E%3C/g%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 48 48' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cg fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='4'%3E%3Cpath d='M30 6h12v12M31 29H19V17M42 6L19 29'/%3E%3Cpath d='M22 6H8a2 2 0 0 0-2 2v32a2 2 0 0 0 2 2h32a2 2 0 0 0 2-2V26'/%3E%3C/g%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 48 48' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cg fill='none' stroke='currentColor' stroke-linecap='round' stroke-width='4'%3E%3Cpath d='M5 40V8'/%3E%3Cpath stroke-linejoin='round' d='M24 13L14 35m4-7h12m-6-15l10 22'/%3E%3Cpath d='M43 40V8'/%3E%3C/g%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 48 48' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cg fill='none' stroke='currentColor' stroke-linecap='round' stroke-width='4'%3E%3Cpath d='M6 7h36M8 24h32'/%3E%3Cpath stroke-linejoin='round' d='M13.99 30L8 24.005L14 18m20.01 0L40 23.995L34 30'/%3E%3Cpath d='M6 41h36'/%3E%3C/g%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 48 48' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cg fill='none' stroke='currentColor' stroke-linecap='round' stroke-width='4'%3E%3Cpath stroke-linejoin='round' d='M16 6h16v6H16z'/%3E%3Cpath d='M6 42V6'/%3E%3Cpath stroke-linejoin='round' d='M16 21h20v6H16zm0 15h26v6H16z'/%3E%3C/g%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 48 48' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cg fill='none' stroke='currentColor' stroke-linejoin='round' stroke-width='4'%3E%3Cpath d='M39 6H9a3 3 0 0 0-3 3v30a3 3 0 0 0 3 3h30a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3Z'/%3E%3Cpath stroke-linecap='round' d='M26 24H14m20-9H14m18 18H14'/%3E%3C/g%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 48 48' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cg fill='none' stroke='currentColor' stroke-linejoin='round' stroke-width='4'%3E%3Crect width='36' height='36' x='6' y='6' rx='3'/%3E%3Cpath stroke-linecap='round' d='M6 16h36M6 13v6m36-5v6m-10-4v26m-3 0h6'/%3E%3C/g%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 48 48' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' d='M15 15h18v18H15zm-4 28v-6H5m32 6v-6h6M11 5v6H5m32-6v6h6'/%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 48 48' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' d='M30 6h12v12M18 6H6v12m24 24h12V30M18 42H6V30M42 6L29 19M19 29L6 42'/%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 48 48' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' d='M33 6h9v9m0 18v9h-9m-18 0H6v-9m0-18V6h9'/%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 48 48' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='4' d='m6 6l10 9.9m-10 26L16 32m26 9.9L32.1 32m9.8-26L32 15.9M33 6h9v9m0 18v9h-9m-18 0H6v-9m0-18V6h9'/%3E%3C/svg%3E",
+    "data:image/svg+xml;utf8,%3Csvg viewBox='0 0 48 48' display='inline-block' vertical-align='middle' min-width='1.2rem' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath fill='none' stroke='currentColor' stroke-linejoin='round' stroke-width='4' d='M5 7h11a8 8 0 0 1 8 8v27a6 6 0 0 0-6-6H5zm38 0H32a8 8 0 0 0-8 8v27a6 6 0 0 1 6-6h13z'/%3E%3C/svg%3E",
+    "https://cdn.jsdelivr.net/gh/cormullion/juliamono/webfonts/JuliaMono-Regular.woff2",
+    "https://docs.makie.org/",
+    "https://fonts.gstatic.com/s/baloo2/v22/wXK0E3kTposypRydzVT08TS3JnAmtdgazZpm_leP6HcMqzQCjA.woff2",
+    "https://fonts.gstatic.com/s/baloo2/v22/wXK0E3kTposypRydzVT08TS3JnAmtdgazZpn_leP6HcMqzQCjA.woff2",
+    "https://fonts.gstatic.com/s/baloo2/v22/wXK0E3kTposypRydzVT08TS3JnAmtdgazZpo_leP6HcMqzQ.woff2",
+    "https://fonts.gstatic.com/s/baloo2/v22/wXK0E3kTposypRydzVT08TS3JnAmtdgazZpp_leP6HcMqzQCjA.woff2",
+    "https://fonts.gstatic.com/s/chakrapetch/v12/cIf6MapbsEk7TDLdtEz1BwkWi6pgar3I1D8t.woff2",
+    "https://fonts.gstatic.com/s/chakrapetch/v12/cIf6MapbsEk7TDLdtEz1BwkWkKpgar3I1D8t.woff2",
+    "https://fonts.gstatic.com/s/chakrapetch/v12/cIf6MapbsEk7TDLdtEz1BwkWkapgar3I1D8t.woff2",
+    "https://fonts.gstatic.com/s/chakrapetch/v12/cIf6MapbsEk7TDLdtEz1BwkWn6pgar3I1A.woff2",
+    "https://fonts.gstatic.com/s/jura/v33/z7NOdRfiaC4Vd8hhoPzfb5vBTP1d7ZuiR_iJGursUpyo0Q.woff2",
+    "https://fonts.gstatic.com/s/jura/v33/z7NOdRfiaC4Vd8hhoPzfb5vBTP1d7ZulR_iJGursUpyo0Q.woff2",
+    "https://fonts.gstatic.com/s/jura/v33/z7NOdRfiaC4Vd8hhoPzfb5vBTP1d7ZumR_iJGursUpw.woff2",
+    "https://fonts.gstatic.com/s/jura/v33/z7NOdRfiaC4Vd8hhoPzfb5vBTP1d7ZuoR_iJGursUpyo0Q.woff2",
+    "https://fonts.gstatic.com/s/jura/v33/z7NOdRfiaC4Vd8hhoPzfb5vBTP1d7ZupR_iJGursUpyo0Q.woff2",
+    "https://fonts.gstatic.com/s/jura/v33/z7NOdRfiaC4Vd8hhoPzfb5vBTP1d7ZuqR_iJGursUpyo0Q.woff2",
+    "https://fonts.gstatic.com/s/jura/v33/z7NOdRfiaC4Vd8hhoPzfb5vBTP1d7ZurR_iJGursUpyo0Q.woff2",
+    "https://fonts.gstatic.com/s/jura/v33/z7NOdRfiaC4Vd8hhoPzfb5vBTP1d7ZvuR_iJGursUpyo0Q.woff2",
+    "https://fonts.gstatic.com/s/notosans/v39/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjcz6L1SoM-jCpoiyD9A-9U6VLYyWtZ3rKW9w.woff2",
+    "https://fonts.gstatic.com/s/notosans/v39/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjcz6L1SoM-jCpoiyD9A-9V6VLYyWtZ3rKW9w.woff2",
+    "https://fonts.gstatic.com/s/notosans/v39/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjcz6L1SoM-jCpoiyD9A-9W6VLYyWtZ3rKW9w.woff2",
+    "https://fonts.gstatic.com/s/notosans/v39/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjcz6L1SoM-jCpoiyD9A-9X6VLYyWtZ3rKW9w.woff2",
+    "https://fonts.gstatic.com/s/notosans/v39/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjcz6L1SoM-jCpoiyD9A-9Z6VLYyWtZ3rKW9w.woff2",
+    "https://fonts.gstatic.com/s/notosans/v39/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjcz6L1SoM-jCpoiyD9A-9a6VLYyWtZ3rI.woff2",
+    "https://fonts.gstatic.com/s/notosans/v39/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjcz6L1SoM-jCpoiyD9A-9b6VLYyWtZ3rKW9w.woff2",
+    "https://fonts.gstatic.com/s/notosans/v39/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjcz6L1SoM-jCpoiyD9A-9e6VLYyWtZ3rKW9w.woff2",
+    "https://fonts.gstatic.com/s/roboto/v48/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbVmQiAr0klQmz24O0g.woff2",
+    "https://fonts.gstatic.com/s/roboto/v48/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbVmUiAr0klQmz24.woff2",
+    "https://fonts.gstatic.com/s/roboto/v48/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbVmXiAr0klQmz24O0g.woff2",
+    "https://fonts.gstatic.com/s/roboto/v48/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbVmYiAr0klQmz24O0g.woff2",
+    "https://fonts.gstatic.com/s/roboto/v48/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbVmZiAr0klQmz24O0g.woff2",
+    "https://fonts.gstatic.com/s/roboto/v48/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbVmaiAr0klQmz24O0g.woff2",
+    "https://fonts.gstatic.com/s/roboto/v48/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbVmbiAr0klQmz24O0g.woff2",
+    "https://fonts.gstatic.com/s/roboto/v48/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbVn6iAr0klQmz24O0g.woff2",
+    "https://fonts.gstatic.com/s/roboto/v48/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbVnoiAr0klQmz24O0g.woff2",
+    "https://github.com/JuliaInterop/JuliaCall",
+    "https://github.com/itchyshin/DRM.jl",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/DRM.jl#L1-L35",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/aghq_1d.jl#L12-L16",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/aghq_1d.jl#L24-L44",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/aghq_1d.jl#L78-L88",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/associate_pairs.jl#L216-L222",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/associate_pairs.jl#L27-L33",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/associate_pairs.jl#L36-L41",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/associate_pairs.jl#L44-L56",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/associate_pairs.jl#L498-L508",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/associate_pairs.jl#L527-L539",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/associate_pairs.jl#L76-L100",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/beta.jl#L9-L37",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/betabinomial.jl#L10-L17",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/betabinomial.jl#L20-L39",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bias_correct.jl#L103-L109",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bias_correct.jl#L43-L96",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/binomial.jl#L12-L40",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bivariate_lognormal.jl#L32-L83",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bivariate_student.jl#L56-L117",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bootstrap_q4_phylo.jl#L19-L51",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bridge.jl#L156-L176",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bridge.jl#L1722-L1750",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bridge.jl#L1771-L1779",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bridge.jl#L1783-L1804",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bridge.jl#L1828-L1843",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bridge.jl#L19-L50",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bridge.jl#L443-L450",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bridge.jl#L64-L72",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/bridge.jl#L99-L112",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/chibar.jl#L36-L82",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/chibar.jl#L97-L133",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevo_accessors.jl#L101-L119",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevo_accessors.jl#L128-L146",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevo_accessors.jl#L48-L84",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L104-L110",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L123-L130",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L149-L155",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L216-L223",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L290",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L300",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L304-L314",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L397-L404",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L45",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L48-L54",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L482-L489",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L66-L71",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/coevolution_q.jl#L86-L93",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/comparison.jl#L17-L64",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/comparison.jl#L170-L181",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/comparison.jl#L184-L208",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/comparison.jl#L217-L230",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/comparison.jl#L233-L251",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/cumulative.jl#L9-L24",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fisherz_q4.jl#L120",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fisherz_q4.jl#L164",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fisherz_q4.jl#L167",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fisherz_q4.jl#L173",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fisherz_q4.jl#L179-L185",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fisherz_q4.jl#L204",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fisherz_q4.jl#L215-L221",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fisherz_q4.jl#L51",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fisherz_q4.jl#L71",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fisherz_q4.jl#L77",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fit_q4_sparse_tmb.jl#L107-L119",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fit_q4_sparse_tmb.jl#L242-L248",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fit_q4_sparse_tmb.jl#L280-L287",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fit_q4_sparse_tmb.jl#L38",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fit_q4_sparse_tmb.jl#L42",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fit_q4_sparse_tmb.jl#L48",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/fit_q4_sparse_tmb.jl#L58",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gamma.jl#L10-L36",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_bivariate.jl#L10-L15",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_bivariate.jl#L57-L76",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_bivariate.jl#L669-L678",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_bivariate.jl#L98-L138",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1075-L1083",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1166-L1171",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1179-L1183",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1185-L1189",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1192-L1197",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1200-L1225",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1237-L1251",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1259-L1268",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1274-L1294",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1438-L1479",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1516-L1561",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L154-L160",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1596-L1614",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1627-L1655",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L17-L22",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1809-L1820",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1823-L1828",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1831-L1860",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1863-L1870",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1873-L1877",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1904-L1913",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1920-L1927",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1934-L1943",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L1962-L1966",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L249-L293",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L25-L31",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L362-L435",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_core.jl#L76-L91",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_locscale_phylo.jl#L579-L597",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_locscale_phylo.jl#L952-L958",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_lss.jl#L13-L45",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_lss.jl#L279-L289",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_lss.jl#L296-L306",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_meta.jl#L9-L17",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_ranef.jl#L103-L112",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_ranef.jl#L368-L382",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_ranef.jl#L391-L403",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_structured.jl#L16-L27",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_structured.jl#L30-L36",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_structured.jl#L39-L48",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/gaussian_structured.jl#L59-L67",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/heritability.jl#L238-L288",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/heritability.jl#L295-L308",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/heritability.jl#L317-L323",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/inference.jl#L1237-L1251",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/inference.jl#L1365-L1377",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/inference.jl#L144-L179",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/inference.jl#L1489-L1512",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/inference.jl#L15-L28",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/inference.jl#L2108-L2139",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/inference.jl#L214-L234",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/inference.jl#L82-L89",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/introspection.jl#L11-L35",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/introspection.jl#L80-L100",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_bridge.jl#L74-L83",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_finite.jl#L181",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_finite.jl#L23",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_finite.jl#L243",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_finite.jl#L270-L276",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_finite.jl#L368",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_finite.jl#L42",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_finite.jl#L5",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_finite.jl#L85-L96",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L1181-L1190",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L1222",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L132-L142",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L170",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L18",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L33-L40",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L48",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L51",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L583-L592",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L62-L70",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L813-L822",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L86",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L9-L15",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L900",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L903-L909",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L93-L100",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L933",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L943",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L969",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L979",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_frontend.jl#L990-L996",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_predictor.jl#L10",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_predictor.jl#L117-L124",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_predictor.jl#L13-L20",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_predictor.jl#L201-L207",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_predictor.jl#L250-L255",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_predictor.jl#L307",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_predictor.jl#L359-L365",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_predictor.jl#L37",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_predictor.jl#L54-L61",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_predictor.jl#L68-L74",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_predictor.jl#L7",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_two_predictor.jl#L152",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_two_predictor.jl#L182-L188",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_two_predictor.jl#L20",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_two_predictor.jl#L36",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_two_predictor.jl#L4",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_two_predictor.jl#L57-L64",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/joint_missing_uncertainty.jl#L77-L94",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/lc_metric.jl#L15-L32",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/link_residual.jl#L13-L26",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/location_only.jl#L113-L137",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/location_only.jl#L179-L182",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/location_only.jl#L199",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/location_only.jl#L205",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/location_only.jl#L3163-L3166",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/locscale_corr.jl#L87-L100",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/locscale_fit.jl#L75-L81",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/locscale_grad.jl#L34-L42",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/locscale_infer.jl#L10-L15",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/locscale_infer.jl#L47-L52",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/locscale_inner.jl#L476-L484",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/locscale_marginal.jl#L21-L27",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/locscale_profile.jl#L278-L296",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/locscale_profile.jl#L350-L356",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/locscale_sigma.jl#L115-L125",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/lognormal.jl#L11-L31",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/meta_vcov_bivariate.jl#L31-L41",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/meta_vcov_bivariate.jl#L48-L77",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/missing_data.jl#L44-L76",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/mixed_family.jl#L149-L173",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/mixed_family.jl#L412-L439",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/mixed_family_postfit.jl#L10-L17",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/mixed_family_postfit.jl#L105-L114",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/mixed_family_postfit.jl#L124-L132",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/mixed_family_postfit.jl#L21-L36",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/mixed_family_postfit.jl#L57-L63",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/mixed_family_postfit.jl#L66-L73",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/mixed_family_postfit.jl#L79-L94",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/negbinomial.jl#L38-L71",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/negbinomial.jl#L396-L409",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/phylo_interaction.jl#L22-L28",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/phylo_interaction.jl#L36-L44",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/phylo_interaction.jl#L64-L78",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/phylo_penalty.jl#L235-L265",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/phylo_penalty.jl#L36-L44",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/phylo_penalty.jl#L52-L62",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/phylo_penalty.jl#L68-L115",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/plotting_ext.jl#L33-L38",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/plotting_ext.jl#L43-L48",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/plotting_ext.jl#L53-L58",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/plotting_ext.jl#L7-L30",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/poisson.jl#L603-L624",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/poisson.jl#L7-L75",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/profile_q4_phylo.jl#L25-L48",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/reml_q2.jl#L216-L252",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/reml_q2.jl#L60",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/reml_q4.jl#L291-L301",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/reml_q4.jl#L305-L355",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/skewnormal.jl#L16-L42",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_em_fit.jl#L47-L56",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_laplace_glmm.jl#L1276-L1285",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_laplace_glmm.jl#L1373-L1381",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_laplace_glmm.jl#L1454-L1462",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_laplace_glmm.jl#L1501-L1511",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_laplace_glmm.jl#L1677-L1686",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_laplace_glmm.jl#L1830-L1836",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_laplace_glmm.jl#L3145-L3154",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_laplace_glmm.jl#L362-L382",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_laplace_glmm.jl#L458-L465",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_laplace_glmm.jl#L476-L487",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_laplace_glmm.jl#L502-L511",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_laplace_glmm.jl#L884-L900",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_phy.jl#L132",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_phy.jl#L286",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_phy.jl#L349-L376",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_phy.jl#L41-L68",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_phy.jl#L448-L463",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_phy.jl#L532-L543",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_phy.jl#L553-L564",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_phy.jl#L590-L601",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_phy.jl#L624-L633",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/sparse_phy.jl#L643-L666",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/student.jl#L11-L25",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/summary.jl#L101-L124",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/summary.jl#L145-L150",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/summary.jl#L153-L158",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/summary.jl#L204-L209",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/summary.jl#L212-L232",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/summary.jl#L79-L85",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/summary.jl#L88-L94",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/takahashi_selinv.jl#L191-L198",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/takahashi_selinv.jl#L91-L102",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/tweedie.jl#L40-L55",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/variational.jl#L17-L22",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/variational.jl#L24-L31",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/variational.jl#L33-L40",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/variational.jl#L7-L14",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/vcov_guard.jl#L57-L74",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/visualization.jl#L15-L30",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/visualization.jl#L198-L208",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/visualization.jl#L91-L107",
+    "https://github.com/itchyshin/DRM.jl/blob/c4e44a3e5c2d972be020a632b9c2b4f254c2a03b/src/zeroonebeta.jl#L15-L28",
+    "https://github.com/itchyshin/DRM.jl/blob/main/HANDOVER.md",
+    "https://github.com/itchyshin/DRM.jl/blob/main/NEWS.md",
+    "https://github.com/itchyshin/DRM.jl/blob/main/ROADMAP.md",
+    "https://github.com/itchyshin/DRM.jl/blob/main/docs/dev-log/check-log.md",
+    "https://github.com/itchyshin/DRM.jl/blob/main/docs/dev-log/evidence/2026-08-28-lss-mladder-cross-engine.md",
+    "https://github.com/itchyshin/DRM.jl/blob/main/report/comparison-grid.md",
+    "https://github.com/itchyshin/DRM.jl/blob/main/src/DRM.jl",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/api-stability.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/capabilities.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/changelog.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/cross-family.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/developer-notes/adding-families.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/developer-notes/formula-grammar.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/developer-notes/source-map.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/diagnostics-and-validation/exact-gaussian-diagnostics.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/diagnostics-and-validation/figure-gallery.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/diagnostics-and-validation/implementation-map.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/diagnostics-and-validation/prediction-and-postfit.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/diagnostics-and-validation/profile-likelihood.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/diagnostics-and-validation/simulation-plot-grammar.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/diagnostics-and-validation/small-sample-behaviour.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/diagnostics-and-validation/testing-likelihoods.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/families.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/get-started.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/getting-started.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/model-guides/convergence.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/model-guides/cross-family-methods.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/model-guides/distribution-families.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/model-guides/large-data.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/model-guides/marginal-la-vs-va.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/model-guides/meta-analysis.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/model-guides/model-map.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/model-guides/model-selection.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/model-guides/model-workflow.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/model-guides/which-scale.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/r-julia-bridge.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/reference/deprecated-marker-internals.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/reference/engine-internals.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/reference/model-fitting-and-postfit.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/reference/model-specification.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/reference/package.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/reference/structured-effect-markers.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/reference/visualization.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/rosetta.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/animal-models.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/bivariate-coscale.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/bivariate-nongaussian.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/count-nbinom2.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/location-scale-scale.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/location-scale.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/meta-analysis.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/phylogenetic-models.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/phylogenetic-spatial.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/proportion-beta-binomial.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/relmat-known-matrices.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/robust-student.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/spatial-models.md",
+    "https://github.com/itchyshin/DRM.jl/edit/main/docs/src/tutorials/structural-dependence.md",
+    "https://github.com/itchyshin/DRM.jl/issues",
+    "https://github.com/itchyshin/DRM.jl/issues/167",
+    "https://github.com/itchyshin/DRM.jl/issues/471",
+    "https://itchyshin.github.io/GLLVM.jl",
+    "https://itchyshin.github.io/drmTMB/",
+    "https://itchyshin.github.io/drmTMB/articles/adding-families.html",
+    "https://itchyshin.github.io/drmTMB/articles/animal-models.html",
+    "https://itchyshin.github.io/drmTMB/articles/bivariate-coscale.html",
+    "https://itchyshin.github.io/drmTMB/articles/bivariate-nongaussian.html",
+    "https://itchyshin.github.io/drmTMB/articles/convergence.html",
+    "https://itchyshin.github.io/drmTMB/articles/count-nbinom2.html",
+    "https://itchyshin.github.io/drmTMB/articles/distribution-families.html",
+    "https://itchyshin.github.io/drmTMB/articles/drmTMB.html",
+    "https://itchyshin.github.io/drmTMB/articles/figure-gallery.html",
+    "https://itchyshin.github.io/drmTMB/articles/formula-grammar.html",
+    "https://itchyshin.github.io/drmTMB/articles/implementation-map.html",
+    "https://itchyshin.github.io/drmTMB/articles/large-data.html",
+    "https://itchyshin.github.io/drmTMB/articles/location-scale-scale.html",
+    "https://itchyshin.github.io/drmTMB/articles/location-scale.html",
+    "https://itchyshin.github.io/drmTMB/articles/meta-analysis.html",
+    "https://itchyshin.github.io/drmTMB/articles/model-map.html",
+    "https://itchyshin.github.io/drmTMB/articles/model-selection.html",
+    "https://itchyshin.github.io/drmTMB/articles/model-workflow.html",
+    "https://itchyshin.github.io/drmTMB/articles/phylogenetic-models.html",
+    "https://itchyshin.github.io/drmTMB/articles/phylogenetic-spatial.html",
+    "https://itchyshin.github.io/drmTMB/articles/profile-likelihood.html",
+    "https://itchyshin.github.io/drmTMB/articles/proportion-beta-binomial.html",
+    "https://itchyshin.github.io/drmTMB/articles/relmat-known-matrices.html",
+    "https://itchyshin.github.io/drmTMB/articles/robust-student.html",
+    "https://itchyshin.github.io/drmTMB/articles/simulation-plot-grammar.html",
+    "https://itchyshin.github.io/drmTMB/articles/source-map.html",
+    "https://itchyshin.github.io/drmTMB/articles/spatial-models.html",
+    "https://itchyshin.github.io/drmTMB/articles/structural-dependence.html",
+    "https://itchyshin.github.io/drmTMB/articles/testing-likelihoods.html",
+    "https://itchyshin.github.io/drmTMB/articles/which-scale.html",
+    "https://itchyshin.github.io/drmTMB/reference/index.html",
+    "https://luxdl.github.io/DocumenterVitepress.jl/dev/"
+  ],
+  "failures": [
+    {
+      "kind": "missing_asset",
+      "page": "404.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "404.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "api-stability.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "api-stability.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "capabilities.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "capabilities.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "changelog.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "changelog.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "cross-family.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "cross-family.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "developer-notes/adding-families.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "developer-notes/adding-families.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "developer-notes/formula-grammar.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "developer-notes/formula-grammar.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "developer-notes/source-map.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "developer-notes/source-map.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/exact-gaussian-diagnostics.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/exact-gaussian-diagnostics.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/figure-gallery.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/figure-gallery.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/implementation-map.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/implementation-map.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/prediction-and-postfit.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/prediction-and-postfit.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/profile-likelihood.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/profile-likelihood.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/simulation-plot-grammar.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/simulation-plot-grammar.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/small-sample-behaviour.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/small-sample-behaviour.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/testing-likelihoods.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "diagnostics-and-validation/testing-likelihoods.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "families.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "families.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "get-started.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "get-started.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "getting-started.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "getting-started.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "index.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "index.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/convergence.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/convergence.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/cross-family-methods.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/cross-family-methods.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/distribution-families.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/distribution-families.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/large-data.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/large-data.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/marginal-la-vs-va.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/marginal-la-vs-va.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/meta-analysis.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/meta-analysis.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/model-map.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/model-map.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/model-selection.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/model-selection.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/model-workflow.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/model-workflow.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/which-scale.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "model-guides/which-scale.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "r-julia-bridge.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "r-julia-bridge.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/deprecated-marker-internals.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/deprecated-marker-internals.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/engine-internals.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/engine-internals.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/model-fitting-and-postfit.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/model-fitting-and-postfit.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/model-specification.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/model-specification.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/package.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/package.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/structured-effect-markers.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/structured-effect-markers.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/visualization.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "reference/visualization.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "rosetta.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "rosetta.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/animal-models.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/animal-models.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/bivariate-coscale.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/bivariate-coscale.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/bivariate-nongaussian.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/bivariate-nongaussian.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/count-nbinom2.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/count-nbinom2.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/location-scale-scale.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/location-scale-scale.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/location-scale.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/location-scale.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/meta-analysis.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/meta-analysis.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/phylogenetic-models.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/phylogenetic-models.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/phylogenetic-spatial.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/phylogenetic-spatial.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/proportion-beta-binomial.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/proportion-beta-binomial.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/relmat-known-matrices.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/relmat-known-matrices.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/robust-student.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/robust-student.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/spatial-models.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/spatial-models.html",
+      "target": "/versions.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/structural-dependence.html",
+      "target": "/siteinfo.js"
+    },
+    {
+      "kind": "missing_asset",
+      "page": "tutorials/structural-dependence.html",
+      "target": "/versions.js"
+    }
+  ],
+  "pages": [
+    {
+      "h1": [],
+      "ids": [
+        "app",
+        "check-dark-mode",
+        "check-mac-os"
+      ],
+      "path": "404.html",
+      "sha256": "7c93116b3217afe6df77e080f6a97ebb75b191ee46df3edd5c5ec863f277ba05",
+      "title": "404 | DRM.jl"
+    },
+    {
+      "h1": [
+        "API stability \u200b"
+      ],
+      "ids": [
+        "API-stability",
+        "Deliberate-exclusions-at-v0.7.0",
+        "The-promise",
+        "The-three-tiers",
+        "VPContent",
+        "VPSidebarNav",
+        "What-the-promise-does-and-does-not-cover",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "api-stability.html",
+      "sha256": "bac93ec0816d091707b274b8db3d8e7312413c2cc82e1d772ac73e3ec3a5b798",
+      "title": "API stability | DRM.jl"
+    },
+    {
+      "h1": [
+        "Capability matrix \u200b"
+      ],
+      "ids": [
+        "Absent-/-out-of-scope-explicit",
+        "Bivariate-Gaussian-residual-correlation,-no-phylo",
+        "Capability-matrix",
+        "Coevolution:-q4-phylogenetic-bivariate-location\u2013scale-model-PLSM",
+        "Distributional-location\u2013scale-sub-models",
+        "Follow-up-test-targets-implemented-but-untested",
+        "Inference",
+        "Location\u2013scale-with-a-phylogenetic-random-effect-on-the-scale-q2-route",
+        "Location\u2013scale\u2013scale-models-LSS,-sd",
+        "Marginal-method-selection-VA/ELBO",
+        "Meta-analysis",
+        "Model-comparison-and-accessors",
+        "Non-Gaussian-phylogenetic-random-intercept-on-the-mean-sparse-Laplace",
+        "Plain-unstructured-random-effects-on-the-mean",
+        "Prediction,-post-fit,-residuals,-simulation",
+        "R-Julia-bridge-engine-\"julia\"",
+        "Random-effect-structures",
+        "Response-families",
+        "Structured-q2-bivariate-Gaussian-mu1/mu2-only",
+        "Structured-random-effects-with-a-known-relatedness-matrix-closed-form-Gaussian",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "capabilities.html",
+      "sha256": "5425b580c163a8dda35f72e887fe118d0c1a05c30df30bb892f013ae754c643a",
+      "title": "Capability matrix | DRM.jl"
+    },
+    {
+      "h1": [
+        "Changelog \u200b"
+      ],
+      "ids": [
+        "Changelog",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "changelog.html",
+      "sha256": "88e6cfb73eb7f153fcbbcb91cada4ee919fe52eb8e90e99ee3ff1897aa206ffa",
+      "title": "Changelog | DRM.jl"
+    },
+    {
+      "h1": [
+        "Cross-family bivariate dependence \u200b"
+      ],
+      "ids": [
+        "API",
+        "Confidence-intervals-for-\u03c1",
+        "Cross-family-bivariate-dependence",
+        "DRM.link_residual",
+        "DRM.mf_aic",
+        "DRM.mf_bic",
+        "DRM.mf_coef",
+        "DRM.mf_fitted",
+        "DRM.mf_summary",
+        "Post-fit-accessors",
+        "References",
+        "Returned-fields",
+        "See-also",
+        "The-latent-scale-correlation",
+        "The-model",
+        "VPContent",
+        "VPSidebarNav",
+        "Worked-example:-Gaussian-Poisson",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "cross-family.html",
+      "sha256": "ec27738693590c861f49ffdfeeded3984090936d27f7671faf11a2d1879ee938",
+      "title": "Cross-family bivariate dependence | DRM.jl"
+    },
+    {
+      "h1": [
+        "Adding distribution families \u200b"
+      ],
+      "ids": [
+        "1.-Define-the-family-struct",
+        "2.-Add-a-drm-method",
+        "3.-Write-the-fitter",
+        "4.-Wire-it-into-the-module",
+        "5.-Add-a-recovery-test",
+        "6.-Document-it",
+        "7.-Optional:-random-effects,-zero-inflation,-hurdle",
+        "Adding-distribution-families",
+        "Checklist",
+        "The-seven-steps",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "developer-notes/adding-families.html",
+      "sha256": "0e9f0d67931d825fda8d9b5aaccb08a3f3b5fee6c3ad581360b3ab2530da10b4",
+      "title": "Adding distribution families | DRM.jl"
+    },
+    {
+      "h1": [
+        "Formula grammar \u200b"
+      ],
+      "ids": [
+        "Bivariate-keyword-form",
+        "Formula-grammar",
+        "Random-effects-and-structured-markers",
+        "Reserved-syntax-rejections",
+        "Structured-bivariate-Gaussian-cells",
+        "The-implicit-intercept",
+        "Two-column-response",
+        "Univariate-form",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "developer-notes/formula-grammar.html",
+      "sha256": "e5c5834586ab4a9c2325eedabf267fd92c3da655bb75b12b1e636a1b7fe99dd5",
+      "title": "Formula grammar | DRM.jl"
+    },
+    {
+      "h1": [
+        "Implemented source map \u200b"
+      ],
+      "ids": [
+        "Front-end-Gaussian-family",
+        "Implemented-source-map",
+        "Non-Gaussian-families",
+        "Not-yet-wired-\u2014-src/experimental/",
+        "Post-fit,-inference,-and-output",
+        "VPContent",
+        "VPSidebarNav",
+        "Verified-engine-core",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "developer-notes/source-map.html",
+      "sha256": "8d99e284c567be43629a92e435167affb0c5d3440b473cc082beed5b108c57b2",
+      "title": "Implemented source map | DRM.jl"
+    },
+    {
+      "h1": [
+        "Exact-Gaussian Diagnostics \u200b"
+      ],
+      "ids": [
+        "Claim-Boundaries",
+        "Current-Row-Contract-Donor",
+        "Evidence-Gates",
+        "Exact-Gaussian-Diagnostics",
+        "Second-Sparse-Candidate",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "diagnostics-and-validation/exact-gaussian-diagnostics.html",
+      "sha256": "e403d8778e34431c50b094839470a54648a91e08ef6e13a10efb0339c8d9df6b",
+      "title": "Exact-Gaussian Diagnostics | DRM.jl"
+    },
+    {
+      "h1": [
+        "Figure gallery \u200b"
+      ],
+      "ids": [
+        "Figure-gallery",
+        "Location\u2013scale:-the-mean-and-the-spread",
+        "See-also",
+        "The-Confidence-Eye",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "diagnostics-and-validation/figure-gallery.html",
+      "sha256": "cd6b2723ecafea72ab4c44a2c1b75c1f5e6ebe691a15966f61ac0b5e69bd6680",
+      "title": "Figure gallery | DRM.jl"
+    },
+    {
+      "h1": [
+        "Implementation map \u200b"
+      ],
+      "ids": [
+        "Gaussian-location\u2013scale",
+        "Implementation-map",
+        "Non-Gaussian-families",
+        "Shared-spine",
+        "The-verified-engine-phylogenetic-q4-PLSM",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "diagnostics-and-validation/implementation-map.html",
+      "sha256": "64dcf123f25b9f39ca7578ba7eceaa84db0d78eb36aa872e0cc16633b71aaba1",
+      "title": "Implementation map | DRM.jl"
+    },
+    {
+      "h1": [
+        "Prediction, residuals & model comparison \u200b"
+      ],
+      "ids": [
+        "Does-the-extra-structure-earn-its-keep?",
+        "In-sample-fitted-parameters",
+        "Predicting-every-distributional-parameter",
+        "Predicting-the-mean-at-new-data",
+        "Prediction,-residuals-and-model-comparison",
+        "Refitting:-update",
+        "Residuals:-response-and-quantile",
+        "See-also",
+        "Standard-errors-the-delta-method",
+        "Sweeping-a-predictor:-prediction_grid",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "diagnostics-and-validation/prediction-and-postfit.html",
+      "sha256": "3e0b46b3204ae705f7602a1353416e5c5a4bf823462d406b1191fe392e822971",
+      "title": "Prediction, residuals & model comparison | DRM.jl"
+    },
+    {
+      "h1": [
+        "Profile-likelihood intervals \u200b"
+      ],
+      "ids": [
+        "Fit-a-small-model",
+        "Inspect-the-likelihood-ratio-curve",
+        "Profile-likelihood-intervals",
+        "See-also",
+        "The-auditable-profile-object",
+        "VPContent",
+        "VPSidebarNav",
+        "Wald-first,-then-profile",
+        "When-to-reach-for-which",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "diagnostics-and-validation/profile-likelihood.html",
+      "sha256": "8ef54b490d3fa4a1fab413bd744c225a4ec1efbe77d47df1270a5b4f0d9ebfb8",
+      "title": "Profile-likelihood intervals | DRM.jl"
+    },
+    {
+      "h1": [
+        "Simulation plot grammar \u200b"
+      ],
+      "ids": [
+        "Plot-data-providers",
+        "Simulating-from-a-fit",
+        "Simulation-plot-grammar",
+        "The-Confidence-Eye",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "corpairs_datafit",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "parameter_surfacefit,-k1,-k2;-npoints-25,-span-3.0",
+        "profile_curvefit,-k;-npoints-41,-span-3.0,-level-0.95",
+        "sidebar-aria-label"
+      ],
+      "path": "diagnostics-and-validation/simulation-plot-grammar.html",
+      "sha256": "0f28de998b8cb030add683d9534ccfdebab9e03b63225634810be7814e9ad2a6",
+      "title": "Simulation plot grammar | DRM.jl"
+    },
+    {
+      "h1": [
+        "Small-sample behaviour of phylogenetic covariance estimates \u200b"
+      ],
+      "ids": [
+        "It-is-small-sample,-not-structural",
+        "Practical-guidance",
+        "Provenance",
+        "REML-helps-substantially-and-is-the-right-default-here",
+        "Small-sample-behaviour-of-phylogenetic-covariance-estimates",
+        "Standard-errors-on-the-off-diagonals-are-not-informative-at-small-N",
+        "The-pattern-follows-Cholesky-depth,-not-\"mean-vs-scale\"",
+        "Three-contributors,-measured-separately",
+        "VPContent",
+        "VPSidebarNav",
+        "What-was-measured",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "diagnostics-and-validation/small-sample-behaviour.html",
+      "sha256": "36689f00049878d6047d9bfbc9d7dfc068e82ca003d1f0ee477f44d5f4132ff2",
+      "title": "Small-sample behaviour of phylogenetic covariance estimates | DRM.jl"
+    },
+    {
+      "h1": [
+        "Testing likelihoods \u200b"
+      ],
+      "ids": [
+        "1.-Parameter-recovery-\u2014-the-primary-gate",
+        "2.-Exact-gradient-vs-finite-differences",
+        "3.-Collapse-/-consistency-cross-checks",
+        "4.-AD-safety-and-the-information-matrix",
+        "Testing-likelihoods",
+        "VPContent",
+        "VPSidebarNav",
+        "Where-the-results-live",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "diagnostics-and-validation/testing-likelihoods.html",
+      "sha256": "1d70527505597dbc20af5559f42ce7632349b421bfe3e03c79f67c2e152b6842",
+      "title": "Testing likelihoods | DRM.jl"
+    },
+    {
+      "h1": [
+        "Response families \u200b"
+      ],
+      "ids": [
+        "Beta-binomial-\u2014-BetaBinomial",
+        "Beta-\u2014-Beta",
+        "Binomial-\u2014-Binomial",
+        "Continuous,-real-valued",
+        "Counts",
+        "Cumulative-logit-\u2014-CumulativeLogit",
+        "Gamma-\u2014-Gamma",
+        "Gaussian-\u2014-Gaussian",
+        "LogNormal-\u2014-LogNormal",
+        "Negative-binomial-\u2014-NegBinomial2",
+        "Ordered-categories",
+        "Poisson-\u2014-Poisson",
+        "Proportions-and-binary-data",
+        "Response-families",
+        "See-also",
+        "Student-t-\u2014-Student",
+        "Tweedie-\u2014-Tweedie",
+        "VPContent",
+        "VPSidebarNav",
+        "Zero-one-inflated-beta-\u2014-ZeroOneBeta",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "families.html",
+      "sha256": "cac23ea71db02dd8bdcc3ae650b1dc0637d2074b595e4d739748d217341448af",
+      "title": "Response families | DRM.jl"
+    },
+    {
+      "h1": [
+        "Get started \u200b"
+      ],
+      "ids": [
+        "Get-started",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "get-started.html",
+      "sha256": "e49b629f70f6dc58998f98df76063f660d5eaf5081c7320f2ed17ac269cfa683",
+      "title": "Get started | DRM.jl"
+    },
+    {
+      "h1": [
+        "Getting started \u200b"
+      ],
+      "ids": [
+        "Beyond-a-first-fit",
+        "Confidence-intervals",
+        "Fit-your-first-distributional-regression",
+        "Getting-started",
+        "Install",
+        "Read-the-coefficients",
+        "Read-the-model-fit",
+        "VPContent",
+        "VPSidebarNav",
+        "Where-to-go-next",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "getting-started.html",
+      "sha256": "a24530382730cd11271e9a42d3969f6445b73da28defd8152a6572671c3d52f0",
+      "title": "Getting started | DRM.jl"
+    },
+    {
+      "h1": [
+        "DRM.jlDistributional regression in Julia"
+      ],
+      "ids": [
+        "Fit-your-first-model",
+        "For-R-users",
+        "VPContent",
+        "Why-use-the-Julia-workflow?",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "local-search",
+        "main-nav-aria-label"
+      ],
+      "path": "index.html",
+      "sha256": "e5e33dd697c2ce06f7b20e40c449e883aa0879234337ba925b1ef523f2f07ec6",
+      "title": "DRM.jl"
+    },
+    {
+      "h1": [
+        "Improving convergence \u200b"
+      ],
+      "ids": [
+        "A-variance-at-the-boundary",
+        "Confounded-predictors",
+        "Improving-convergence",
+        "Step-1-\u2014-check-the-fit",
+        "Step-2-\u2014-read-the-failure-mode",
+        "Step-3-\u2014-scale-and-standardise",
+        "Stopped-early",
+        "The-phylogenetic-engine",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "model-guides/convergence.html",
+      "sha256": "315fd94411829e259db2b4c6de83c21b63a9a367b1a72244765dfcc98b8b68da",
+      "title": "Improving convergence | DRM.jl"
+    },
+    {
+      "h1": [
+        "Cross-family dependence: statistical foundations \u200b"
+      ],
+      "ids": [
+        "1.-Motivation-and-scope",
+        "2.-The-shared-latent-construction",
+        "3.-The-Gauss\u2013Hermite-marginal-likelihood",
+        "4.-Link-residual-standardisation",
+        "5.-The-latent-scale-correlation-and-identifiability",
+        "6.1-Fisher-z-Wald-delta-method",
+        "6.2-Profile-likelihood",
+        "6.3-Parametric-bootstrap",
+        "7.-Exact-reduction-to-the-rho12-bivariate-model",
+        "8.-Summary-of-the-construction",
+        "Change-of-variables-to-Gauss\u2013Hermite-form",
+        "Cross-family-dependence:-statistical-foundations",
+        "Dispersion-sub-model",
+        "Identifiability",
+        "Per-family-v_k-derivations",
+        "References",
+        "See-also",
+        "VPContent",
+        "VPSidebarNav",
+        "Why-quadrature,-not-Laplace",
+        "_6-confidence-intervals-for-6-confidence-intervals-for-rho",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "model-guides/cross-family-methods.html",
+      "sha256": "92ae97dec13b146227669d39cfcb506182154cae6bf12294a1df8feb210a72a9",
+      "title": "Cross-family dependence: statistical foundations | DRM.jl"
+    },
+    {
+      "h1": [
+        "Choosing response families \u200b"
+      ],
+      "ids": [
+        "Choosing-response-families",
+        "Example:-a-Gamma-model-for-positive-data",
+        "See-also",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "model-guides/distribution-families.html",
+      "sha256": "1d2fbe32409a0728ccf5019ecef015adf605554107aa5229ec75afe17ede1615",
+      "title": "Choosing response families | DRM.jl"
+    },
+    {
+      "h1": [
+        "Working with large data \u200b"
+      ],
+      "ids": [
+        "Beyond-the-verified-engine",
+        "Practical-tips-for-large-fits",
+        "VPContent",
+        "VPSidebarNav",
+        "Verified-scaling",
+        "Why-it-scales",
+        "Working-with-large-data",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "model-guides/large-data.html",
+      "sha256": "4529cfb7233d0520fb3ae8e40637935a57ecff943db2e26156378532e48a2a79",
+      "title": "Working with large data | DRM.jl"
+    },
+    {
+      "h1": [
+        "Laplace vs variational marginals \u200b"
+      ],
+      "ids": [
+        "A-place-DRM.jl-can-exceed-drmTMB",
+        "Concrete-evidence-from-the-sister-project-GLLVM.jl",
+        "How-we-trust-it-anchors-on-tip",
+        "Laplace-vs-variational-marginals",
+        "See-also",
+        "The-default-:LA-route",
+        "The-public-API-Experimental",
+        "The-variational-VA-/-ELBO-proposal",
+        "VPContent",
+        "VPSidebarNav",
+        "What-\"the-marginal\"-is,-and-why-it-matters",
+        "When-to-use-which",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "model-guides/marginal-la-vs-va.html",
+      "sha256": "70cf7e1356d34852298615ea57bd5ff48c2eb332c4ed62e4634f457262b9f5e5",
+      "title": "Laplace vs variational marginals | DRM.jl"
+    },
+    {
+      "h1": [
+        "Meta-analysis: known sampling variance, and the two correlations \u200b"
+      ],
+      "ids": [
+        "1.-What-makes-meta-analysis-different",
+        "2.-Two-responses,-and-now-two-correlations",
+        "3.-Coming-from-R",
+        "4.-What-is-not-covered",
+        "5.-Verifying-your-own-fit",
+        "How-wrong-can-your-cor12-guess-be?",
+        "Meta-analysis:-known-sampling-variance,-and-the-two-correlations",
+        "See-also",
+        "Supplying-the-sampling-covariance",
+        "Univariate",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "model-guides/meta-analysis.html",
+      "sha256": "4ce3e50dc0a2aa9af29ae678ccdeef95045aa51511ef25116a50cf9aa7d4e8b1",
+      "title": "Meta-analysis: known sampling variance, and the two correlations | DRM.jl"
+    },
+    {
+      "h1": [
+        "What can I fit today? \u200b"
+      ],
+      "ids": [
+        "After-the-fit",
+        "Structured-and-random-effects",
+        "Supported-families",
+        "The-bf...-front-end",
+        "The-one-idea:-a-formula-per-parameter",
+        "VPContent",
+        "VPSidebarNav",
+        "What-can-I-fit-today?",
+        "Which-page-next",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "model-guides/model-map.html",
+      "sha256": "5ec76a8ab49cadf555e52c79e607112ebc3f8b0345e70fe4c0206c53cfe1d73e",
+      "title": "What can I fit today? | DRM.jl"
+    },
+    {
+      "h1": [
+        "Model selection with AIC and BIC \u200b"
+      ],
+      "ids": [
+        "A-tail-assumption:-Gaussian-vs-Student-t",
+        "Diagnostics-belong-beside-the-table",
+        "Does-the-residual-scale-need-a-predictor?",
+        "Model-selection-with-AIC-and-BIC",
+        "Practical-checklist",
+        "See-also",
+        "Structural-zeros:-NB2-vs-zero-inflated-NB2",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "model-guides/model-selection.html",
+      "sha256": "c772065cf29446e10e39a5fa3bcf4a51741a20b4b3a7f38128186ddb762499e3",
+      "title": "Model selection with AIC and BIC | DRM.jl"
+    },
+    {
+      "h1": [
+        "Checking and using fitted models \u200b"
+      ],
+      "ids": [
+        "Bootstrap-confidence-intervals",
+        "Checking-and-using-fitted-models",
+        "Fitted-values-and-residuals",
+        "See-also",
+        "Simulating-from-a-fitted-model",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "model-guides/model-workflow.html",
+      "sha256": "238f8184987d5bb516616dbc7f535c9233fdf125f3babadfa9a0f8064072b2b2",
+      "title": "Checking and using fitted models | DRM.jl"
+    },
+    {
+      "h1": [
+        "Which scale are you modelling? \u200b"
+      ],
+      "ids": [
+        "Inference-at-the-variance-boundary-where-drmTMB-can't",
+        "Residual-\u03c3-vs-group-SD,-side-by-side",
+        "See-also",
+        "VPContent",
+        "VPSidebarNav",
+        "Which-scale-are-you-modelling?",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "model-guides/which-scale.html",
+      "sha256": "9bd9bde5a1952df019f767641c19e48d8645b8c6c38830f1b3c334dc6a3a50f7",
+      "title": "Which scale are you modelling? | DRM.jl"
+    },
+    {
+      "h1": [
+        "R \u2194 Julia bridge \u200b"
+      ],
+      "ids": [
+        "Coefficient-scale-parity-gate-#370-/-#383-/-#385",
+        "Materialised-columns-and-newdata",
+        "One-modelled-missing-predictor-\u2014-development-admission",
+        "Open-design-questions",
+        "R-Julia-bridge",
+        "R-formula-constructs-through-engine-\"julia\"",
+        "The-DRM.jl-side-contract",
+        "The-idea",
+        "Trees-with-polytomies",
+        "Two-rejections-worth-explaining",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "r-julia-bridge.html",
+      "sha256": "03d1018adb553da3a076fc65668874b11670c3900850bb0bec6b559af20da854",
+      "title": "R \u2194 Julia bridge | DRM.jl"
+    },
+    {
+      "h1": [
+        "Deprecated marker internals \u200b"
+      ],
+      "ids": [
+        "Deprecated-marker-internals",
+        "Deprecation-map",
+        "VPContent",
+        "VPSidebarNav",
+        "Why-DRM.jl-doesn't-carry-the-old-names",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "reference/deprecated-marker-internals.html",
+      "sha256": "85a626a2e13a628ee0e6d7728658f433c19c2f1190d9825e5496abba8c14bd16",
+      "title": "Deprecated marker internals | DRM.jl"
+    },
+    {
+      "h1": [
+        "Engine internals and advanced constructors \u200b"
+      ],
+      "ids": [
+        "Augmented-phylogeny-and-sparse-linear-algebra",
+        "Bridge-and-mixed-family-payload-helpers",
+        "Bridge-label-metadata-internals-no-stability-guarantee",
+        "Coevolution-and-phylogenetic-interaction-kernels",
+        "DRM.AGHQ",
+        "DRM.AugmentedPhy",
+        "DRM.JointFiniteMissingMetadata",
+        "DRM.JointMissingMetadata",
+        "DRM.JointTwoMissingMetadata",
+        "DRM.Laplace",
+        "DRM.LatentNormal",
+        "DRM.MarginalMethod",
+        "DRM.PreparedFiniteJointFit",
+        "DRM.PreparedFiniteJointModel",
+        "DRM.PreparedJointBernoulli",
+        "DRM.PreparedJointFit",
+        "DRM.PreparedJointGaussian",
+        "DRM.PreparedJointModel",
+        "DRM.PreparedTwoJointGaussianFit",
+        "DRM.PreparedTwoJointGaussianModel",
+        "DRM.Variational",
+        "DRM.Vinv_mul",
+        "DRM._BridgeFormulaLabels",
+        "DRM._ProfileNuisanceResult",
+        "DRM._aghq_1d_logint",
+        "DRM._aghq_require_1d",
+        "DRM._assoc_logdiffexp",
+        "DRM._bridge_dpars",
+        "DRM._bridge_dpars_newdata",
+        "DRM._bridge_meta_parts",
+        "DRM._bridge_trials",
+        "DRM._finite_joint_ordinal_logprobabilities",
+        "DRM._fit_beta_relmat_laplace",
+        "DRM._fit_betabinomial_crossed_laplace",
+        "DRM._fit_betabinomial_phylo_laplace",
+        "DRM._fit_bivariate_q4_structured",
+        "DRM._fit_corr_locscale",
+        "DRM._fit_fixed_gaussian_reml",
+        "DRM._fit_gamma_relmat_laplace",
+        "DRM._fit_gaussian_locscale_phylo",
+        "DRM._fit_joint_formula",
+        "DRM._fit_locscale",
+        "DRM._fit_nb2_relmat_laplace",
+        "DRM._fit_poisson_crossed_laplace",
+        "DRM._fit_poisson_phylo_laplace",
+        "DRM._fit_poisson_relmat_laplace",
+        "DRM._fit_poisson_spatial_coord",
+        "DRM._fit_ranef_gaussian",
+        "DRM._fit_sigma_axis_re",
+        "DRM._general_cov_setup",
+        "DRM._has_joint_mi",
+        "DRM._joint_finite_state_prediction_plan",
+        "DRM._ls_components",
+        "DRM._ls_inner_estimated_change",
+        "DRM._ls_marginal_grad",
+        "DRM._ls_marginal_nll",
+        "DRM._ls_obs_information",
+        "DRM._ls_profile_ci",
+        "DRM._ls_profile_ci_result",
+        "DRM._lss_phylo_group_index",
+        "DRM._mf_nparams",
+        "DRM._parse_label!",
+        "DRM._phy_validate_topology",
+        "DRM._phylo_mean_laplace_hetero_fg",
+        "DRM._phylo_mean_leaf_index",
+        "DRM._poisson_crossed_laplace_fg",
+        "DRM._poisson_group_aghq_logint",
+        "DRM._poisson_phylo_laplace_fg",
+        "DRM._reml_normalise",
+        "DRM._vcov_from_hessian",
+        "DRM.beta_widths",
+        "DRM.build_M",
+        "DRM.coevo_marginal_cov",
+        "DRM.coevo_pack",
+        "DRM.coevo_unpack",
+        "DRM.cov_to_lc",
+        "DRM.drm_bridge_joint",
+        "DRM.drm_bridge_q2_known_precision",
+        "DRM.drm_bridge_q2_phylo",
+        "DRM.exact_traces",
+        "DRM.fit_coevolution",
+        "DRM.fit_coevolution_q2_reml",
+        "DRM.fit_coevolution_q2_residual",
+        "DRM.fit_mixed_family",
+        "DRM.fit_phylo_interaction",
+        "DRM.fit_prepared_joint",
+        "DRM.fit_q4_reml",
+        "DRM.fit_q4_sparse_fisherz",
+        "DRM.fz_DRD",
+        "DRM.fz_R",
+        "DRM.fz_R_chol",
+        "DRM.fz_init_from_Sigma",
+        "DRM.fz_marginal_and_grad",
+        "DRM.fz_marginal_nll",
+        "DRM.fz_psi_len",
+        "DRM.fz_psi_to_theta",
+        "DRM.fz_unpack_psi",
+        "DRM.joint_missing_summary",
+        "DRM.lc_len",
+        "DRM.lc_metric",
+        "DRM.logdetV_val",
+        "DRM.make_coevo_problem",
+        "DRM.make_coevo_problem_from_covariance",
+        "DRM.make_coevo_problem_from_precision",
+        "DRM.make_phy",
+        "DRM.make_problem_from_Q",
+        "DRM.marginal_and_exact_grad",
+        "DRM.pack_theta",
+        "DRM.phylo_interaction_nll",
+        "DRM.prepared_joint_conditional_moments",
+        "DRM.prepared_joint_initial",
+        "DRM.prepared_joint_model",
+        "DRM.prepared_joint_rowloglik",
+        "DRM.q2_reml_phi_len",
+        "DRM.q4_marginal_diagnostic",
+        "DRM.simulate_coevolution",
+        "DRM.takahashi_diag",
+        "DRM.takahashi_selinv",
+        "DRM.theta_len",
+        "DRM.unpack_theta",
+        "Engine-internals-and-advanced-constructors",
+        "Finite-state-retained-prediction-internals-no-stability-guarantee",
+        "Helpers-referenced-by-source-docstrings",
+        "Location-scale-and-structured-fit-kernels",
+        "Location-scale-inner-mode-acceptance",
+        "Marginal-method-and-association-internals",
+        "Newick-and-topology-parser-internals-no-stability-guarantee",
+        "Non-Gaussian-sparse-Laplace-kernels",
+        "Ordinal-and-categorical-predictor-models",
+        "Phylogenetic-group-index-internals-no-stability-guarantee",
+        "Prepared-missing-predictor-development-route",
+        "Profile-nuisance-status-internals-no-stability-guarantee",
+        "Two-independent-Gaussian-predictor-models",
+        "VPContent",
+        "VPSidebarNav",
+        "_fit_crossed_mean_laplace_nuisance",
+        "_fit_phylo_mean_laplace_nuisance",
+        "_group_index",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "prepared_joint_nll",
+        "q4-and-Fisher-z-evaluators",
+        "sidebar-aria-label"
+      ],
+      "path": "reference/engine-internals.html",
+      "sha256": "744fb738f6b0bd8160a455f842364f102022645f82183bbdd1dec0e22009b59b",
+      "title": "Engine internals and advanced constructors | DRM.jl"
+    },
+    {
+      "h1": [
+        "Model fitting and post-fit tools \u200b"
+      ],
+      "ids": [
+        "AugProblem",
+        "Base.summary-Tuple{DrmFit}",
+        "Boundary-inference",
+        "Coefficients-and-covariance",
+        "Cross-family-post-fit",
+        "DRM.CategoricalLogit",
+        "DRM.CoevoProblem",
+        "DRM.DrmFit",
+        "DRM.JointFiniteDrmFit",
+        "DRM.PairAssociation",
+        "DRM.PhyloCorPenaltyNeedsTwoSD",
+        "DRM.PhyloPenalty",
+        "DRM.aicc",
+        "DRM.anova",
+        "DRM.associate_pairs",
+        "DRM.association",
+        "DRM.bias_correct",
+        "DRM.bootstrap_ci",
+        "DRM.bootstrap_result",
+        "DRM.bootstrap_sigma_a",
+        "DRM.bootstrap_summary",
+        "DRM.check_drm",
+        "DRM.chibar_pvalue",
+        "DRM.coevolution_cor",
+        "DRM.coevolution_summary",
+        "DRM.coevolution_vc",
+        "DRM.corpairs",
+        "DRM.cutpoints",
+        "DRM.drm",
+        "DRM.drm_bridge",
+        "DRM.drm_bridge_inference",
+        "DRM.drm_listwise",
+        "DRM.drm_phylo_penalty",
+        "DRM.drm_phylo_penalty_sweep",
+        "DRM.estimation_method",
+        "DRM.family",
+        "DRM.fixef",
+        "DRM.gaussian_locscale_phylo_sds",
+        "DRM.heritability",
+        "DRM.icc",
+        "DRM.integration_diagnostics",
+        "DRM.is_converged",
+        "DRM.latent_normal",
+        "DRM.lc_to_cov",
+        "DRM.loglik",
+        "DRM.lrt_boundary",
+        "DRM.lrtest",
+        "DRM.marginal_nll",
+        "DRM.marginal_parameters",
+        "DRM.ml_loglik",
+        "DRM.niterations",
+        "DRM.predict_parameters",
+        "DRM.prediction_grid",
+        "DRM.profile_result",
+        "DRM.profile_sigma_a",
+        "DRM.profile_targets",
+        "DRM.ranef",
+        "DRM.re_sd",
+        "DRM.reml_loglik",
+        "DRM.repeatability",
+        "DRM.rho12",
+        "DRM.sigma",
+        "DRM.simulate",
+        "DRM.structured_effects",
+        "DRM.update",
+        "DRM.vc",
+        "Derived-phylogenetic-quantities-and-boundary-comparisons",
+        "Diagnostics-and-accessors",
+        "Engine-constructors-q4-and-coevolution",
+        "Fit-summaries-and-route-inventories",
+        "Fitted-scale-and-correlation",
+        "Fitting",
+        "Formula-fitted-finite-state-missing-predictors",
+        "Heritability,-ICC,-and-derived-quantities",
+        "Inference",
+        "Information-criteria",
+        "Model-comparison",
+        "Model-fitting-and-post-fit-tools",
+        "Phylogenetic-penalty-MAP",
+        "Predicting-distributional-parameters",
+        "Prediction-and-simulation",
+        "R-bridge-and-preprocessing",
+        "Random-effect-estimates",
+        "Staged-pair-association",
+        "Staged-pair-association-diagnostics",
+        "StatsAPI.aic",
+        "StatsAPI.bic",
+        "StatsAPI.coef",
+        "StatsAPI.coeftable",
+        "StatsAPI.confint",
+        "StatsAPI.deviance",
+        "StatsAPI.dof",
+        "StatsAPI.dof_residual",
+        "StatsAPI.fitted",
+        "StatsAPI.nobs",
+        "StatsAPI.predict",
+        "StatsAPI.residuals",
+        "StatsAPI.stderror",
+        "StatsAPI.vcov",
+        "StatsAPI.weights",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "fit_q4_sparse_tmb",
+        "local-search",
+        "main-nav-aria-label",
+        "make_problem",
+        "sidebar-aria-label"
+      ],
+      "path": "reference/model-fitting-and-postfit.html",
+      "sha256": "78a88e3a29c765ccabe51e2041eda04d2d931f5cf9b8109a8e06457cee196c11",
+      "title": "Model fitting and post-fit tools | DRM.jl"
+    },
+    {
+      "h1": [
+        "Model specification \u200b"
+      ],
+      "ids": [
+        "Advanced-family-type",
+        "DRM.Beta",
+        "DRM.BetaBinomial",
+        "DRM.Binomial",
+        "DRM.BivariateDrmFormula",
+        "DRM.CumulativeLogit",
+        "DRM.DrmFormula",
+        "DRM.Gamma",
+        "DRM.Gaussian",
+        "DRM.JointDrmFit",
+        "DRM.JointImputeModel",
+        "DRM.JointMissingControl",
+        "DRM.JointTwoDrmFit",
+        "DRM.LogNormal",
+        "DRM.NegBinomial2",
+        "DRM.Poisson",
+        "DRM.SkewNormal",
+        "DRM.Student",
+        "DRM.TruncatedNegBinomial2",
+        "DRM.Tweedie",
+        "DRM.ZeroOneBeta",
+        "DRM.bf",
+        "DRM.cbind",
+        "DRM.impute_model",
+        "DRM.imputed",
+        "DRM.mi",
+        "DRM.miss_control",
+        "Formula-bundle",
+        "Model-specification",
+        "Response-families",
+        "Two-column-response",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "joint-predictor-formula",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "reference/model-specification.html",
+      "sha256": "915720c72ddf49991972d3bfeaf3e0fc059a4c4d7513a346261bc9aef37f6da6",
+      "title": "Model specification | DRM.jl"
+    },
+    {
+      "h1": [
+        "Package \u200b"
+      ],
+      "ids": [
+        "DRM",
+        "Package",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "reference/package.html",
+      "sha256": "8fb169c3e29ef3823ec86f07443a1b648ed1d4452e2349bdf15a6e21b65d00c2",
+      "title": "Package | DRM.jl"
+    },
+    {
+      "h1": [
+        "Structured-effect markers \u200b"
+      ],
+      "ids": [
+        "Advanced-tree-preparation-helpers",
+        "Correlation-structured-random-effects",
+        "DRM.MetaVcovBivariate",
+        "DRM.animal",
+        "DRM.augmented_phy",
+        "DRM.augmented_tree_precision",
+        "DRM.meta_V",
+        "DRM.meta_vcov_bivariate",
+        "DRM.phylo",
+        "DRM.phylo_correlation",
+        "DRM.phylo_tree_height",
+        "DRM.random_balanced_tree",
+        "DRM.random_caterpillar_tree",
+        "DRM.relmat",
+        "DRM.sd",
+        "DRM.sd_phylo",
+        "DRM.sigma_phy_dense",
+        "DRM.spatial",
+        "Known-sampling-variance-meta-analysis",
+        "Location\u2013scale\u2013scale-submodel-markers",
+        "Structured-effect-markers",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "reference/structured-effect-markers.html",
+      "sha256": "79ec557cdf94aecd44f871aaf442b9f1f3551d71d1de9fcc1929ed5b34f08cd5",
+      "title": "Structured-effect markers | DRM.jl"
+    },
+    {
+      "h1": [
+        "Visualization \u200b"
+      ],
+      "ids": [
+        "DRM.corpairs_data",
+        "DRM.drm_figure",
+        "DRM.parameter_surface",
+        "DRM.plot_corpairs",
+        "DRM.plot_parameter_surface",
+        "DRM.plot_profile",
+        "DRM.profile_curve",
+        "Drawing-layer-optional-Makie-extension",
+        "Plotting-data-providers",
+        "VPContent",
+        "VPSidebarNav",
+        "Visualization",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "reference/visualization.html",
+      "sha256": "46ce807265d09bf166db7f9022cd5ee9b2b2bb65b6ab18bc4b427c53fdf73866",
+      "title": "Visualization | DRM.jl"
+    },
+    {
+      "h1": [
+        "Rosetta \u2014 R \u2194 Julia \u200b"
+      ],
+      "ids": [
+        "Bivariate-two-responses-residual-correlation",
+        "Families",
+        "Formula-grammar",
+        "Naming-rules-to-remember",
+        "Post-fit-accessors",
+        "Prediction",
+        "Rosetta-\u2014-R-Julia",
+        "Structured-effects-and-meta-analysis",
+        "The-fit-call",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "rosetta.html",
+      "sha256": "084f78e1607a627b7b391a703af80b7b778fcc4ed1fcacbdfd5a2fcebd0cbfa0",
+      "title": "Rosetta \u2014 R \u2194 Julia | DRM.jl"
+    },
+    {
+      "h1": [
+        "Animal models and additive relatedness \u200b"
+      ],
+      "ids": [
+        "A-worked-Gaussian-example",
+        "Animal-models-and-additive-relatedness",
+        "Reading-the-fit",
+        "Scope-and-what's-next",
+        "See-also",
+        "The-DRM.jl-formula",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/animal-models.html",
+      "sha256": "bdcd46697f1f949708f9f6119e67a00bf70d6dbdc674f2f587bf2967ba5b07d5",
+      "title": "Animal models and additive relatedness | DRM.jl"
+    },
+    {
+      "h1": [
+        "Changing residual coupling with rho12 \u200b"
+      ],
+      "ids": [
+        "A-correlation-that-changes-with-a-covariate",
+        "Changing-residual-coupling-with-rho12",
+        "Phylogenetic-location-scale-coevolution",
+        "Relmat-/-animal-/-spatial-q4-coevolution-#189",
+        "See-also",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/bivariate-coscale.html",
+      "sha256": "6532b7c1633be9ed111376b9b4be384613a94d2e4e35353e203cf314f9b46bcd",
+      "title": "Changing residual coupling with rho12 | DRM.jl"
+    },
+    {
+      "h1": [
+        "Bivariate non-Gaussian models: joint or staged \u200b"
+      ],
+      "ids": [
+        "A-mixed-pair:-the-staged-association",
+        "Bivariate-non-Gaussian-models:-joint-or-staged",
+        "Choosing-between-them",
+        "See-also",
+        "Two-heavy-tailed-traits:-the-Student-t-joint-model",
+        "Two-positive-traits:-the-lognormal-joint-model",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/bivariate-nongaussian.html",
+      "sha256": "a7ff32fcbe53ef5f14b3937c969cb6108498287dde3f9fb7d25261a17a2a5695",
+      "title": "Bivariate non-Gaussian models: joint or staged | DRM.jl"
+    },
+    {
+      "h1": [
+        "Count abundance and extra zeros \u200b"
+      ],
+      "ids": [
+        "A-Poisson-abundance-model",
+        "A-different-two-part-story:-the-hu-hurdle-modifier",
+        "Count-abundance-and-extra-zeros",
+        "Counts-that-can't-be-zero:-truncated-NB2",
+        "Extra-zeros:-the-zi-modifier",
+        "Overdispersion:-the-negative-binomial-NB2-family",
+        "Random-effects:-a-count-GLMM",
+        "See-also",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/count-nbinom2.html",
+      "sha256": "03c765b4e0c389f2a69f5c49c0317698c37abfadb90dadb42693222883ebfca4",
+      "title": "Count abundance and extra zeros | DRM.jl"
+    },
+    {
+      "h1": [
+        "When variance carries signal, Part 2: location\u2013scale\u2013scale \u200b"
+      ],
+      "ids": [
+        "From-R,-with-intervals",
+        "Missing-response-handling",
+        "Personality,-predictability,-repeatability",
+        "REML-on-location\u2013scale\u2013scale-models",
+        "See-also",
+        "The-phylogenetic-scale:-sdspecies,-phylogenetic",
+        "VPContent",
+        "VPSidebarNav",
+        "When-variance-carries-signal,-Part-2:-location\u2013scale\u2013scale",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/location-scale-scale.html",
+      "sha256": "52590a648d574a6b7018eaffa1747758935a9d974c2fcc709bf6d98c40773dee",
+      "title": "When variance carries signal, Part 2: location\u2013scale\u2013scale | DRM.jl"
+    },
+    {
+      "h1": [
+        "When variance carries signal, Part 1: location\u2013scale \u200b"
+      ],
+      "ids": [
+        "A-variance-that-moves-while-the-mean-stays-put",
+        "Does-the-scale-model-earn-its-keep?",
+        "Random-dispersion:-a-scale-that-varies-by-group",
+        "See-also",
+        "VPContent",
+        "VPSidebarNav",
+        "When-variance-carries-signal,-Part-1:-location\u2013scale",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/location-scale.html",
+      "sha256": "195c9973067bb13a122c29a5d86c1adfe86b2566974b110e8f9b5bfb68520d5a",
+      "title": "When variance carries signal, Part 1: location\u2013scale | DRM.jl"
+    },
+    {
+      "h1": [
+        "Mean effects and residual heterogeneity \u200b"
+      ],
+      "ids": [
+        "Mean-effects-and-residual-heterogeneity",
+        "Meta-regression-adding-a-moderator",
+        "Random-effects-meta-analysis-intercept-only",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/meta-analysis.html",
+      "sha256": "abf34208f18eddead6550f06341d50f1b2f1464f0232774624b40a44043e96a6",
+      "title": "Mean effects and residual heterogeneity | DRM.jl"
+    },
+    {
+      "h1": [
+        "Phylogenetic structured effects \u200b"
+      ],
+      "ids": [
+        "Non-Gaussian-responses-counts,-proportions,-\u2026",
+        "Phylogenetic-location\u2013scale-non-Gaussian",
+        "Phylogenetic-structured-effects",
+        "See-also",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/phylogenetic-models.html",
+      "sha256": "9ab60cdce0cc515c4e22e86bd5c04cb681b164332f472be30553fd1309777f23",
+      "title": "Phylogenetic structured effects | DRM.jl"
+    },
+    {
+      "h1": [
+        "Structural dependence details \u200b"
+      ],
+      "ids": [
+        "Combining-dependences-planned",
+        "One-structured-effect-at-a-time",
+        "Structural-dependence-details",
+        "VPContent",
+        "VPSidebarNav",
+        "Why-it-matters",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/phylogenetic-spatial.html",
+      "sha256": "98e57c2ccc8c511643376d552eb65b1bdd9b390ecc96988bad9ad19389ccc2c2",
+      "title": "Structural dependence details | DRM.jl"
+    },
+    {
+      "h1": [
+        "Proportions and success rates \u200b"
+      ],
+      "ids": [
+        "A-beta-regression",
+        "Proportions-and-success-rates",
+        "Proportions-that-hit-0-or-1:-zero-one-inflated-beta",
+        "See-also",
+        "Successes-out-of-trials:-the-beta-binomial-family",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/proportion-beta-binomial.html",
+      "sha256": "b0d14c8123ebc5b083afb1b9eaf9052d750981eea515f3473e65c3ef0012f52b",
+      "title": "Proportions and success rates | DRM.jl"
+    },
+    {
+      "h1": [
+        "Known-matrix relatedness with relmat \u200b"
+      ],
+      "ids": [
+        "Known-matrix-relatedness-with-relmat",
+        "See-also",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/relmat-known-matrices.html",
+      "sha256": "d707a1884955a2f0438792477b1fa9b2524ed15d347d8676ff8a989198081954",
+      "title": "Known-matrix relatedness with relmat | DRM.jl"
+    },
+    {
+      "h1": [
+        "Robust continuous responses \u200b"
+      ],
+      "ids": [
+        "Fitting-a-Student-t-model",
+        "Robust-continuous-responses",
+        "See-also",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/robust-student.html",
+      "sha256": "88b9c6bf34fb0af0dc9bc9c3e46892eeb97ecb953c49cc2314025d3dd880ed5a",
+      "title": "Robust continuous responses | DRM.jl"
+    },
+    {
+      "h1": [
+        "Coordinate-spatial structured effects \u200b"
+      ],
+      "ids": [
+        "Coordinate-spatial-structured-effects",
+        "See-also",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/spatial-models.html",
+      "sha256": "8b3ce2726a8d8b1511545c1c1073e17cbf5d6ec87bef59649f6a0eb9e5540abc",
+      "title": "Coordinate-spatial structured effects | DRM.jl"
+    },
+    {
+      "h1": [
+        "Structural dependence overview \u200b"
+      ],
+      "ids": [
+        "See-also",
+        "Structural-dependence-overview",
+        "VPContent",
+        "VPSidebarNav",
+        "app",
+        "check-dark-mode",
+        "check-mac-os",
+        "doc-footer-aria-label",
+        "doc-outline-aria-label",
+        "local-search",
+        "main-nav-aria-label",
+        "sidebar-aria-label"
+      ],
+      "path": "tutorials/structural-dependence.html",
+      "sha256": "1b55fb50787c03e6534a81f6ea75938b01022d1fbf4fc2fece11be1ed999a42e",
+      "title": "Structural dependence overview | DRM.jl"
+    }
+  ],
+  "schema_version": 1,
+  "scope": {
+    "accessibility": "limited_to_image_alt_absence",
+    "external_links": "reported_not_checked",
+    "visual_layout": "not_checked"
+  },
+  "site_root": "/private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-inner-006/1",
+  "source_pages": [
+    {
+      "rendered_exists": true,
+      "rendered_path": "api-stability.html",
+      "source_path": "api-stability.md",
+      "source_sha256": "eeb5309fc664b7a312bc210525d0154bb9252045139907665e704d7c3f71ddd6"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "capabilities.html",
+      "source_path": "capabilities.md",
+      "source_sha256": "2a7136b376c60dad57ca56adb13b268fccf301a05529a3f90caead9a013e7797"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "changelog.html",
+      "source_path": "changelog.md",
+      "source_sha256": "b06cca1b186ab634e3acd8fbf4fa61ac66f9aab7989ec7b2a79bb36e07b03393"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "cross-family.html",
+      "source_path": "cross-family.md",
+      "source_sha256": "b8bdb1a2e0b32ee4e99c05e5f7a46f8ac3dc6b88a680513cf3ff28916548a099"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "developer-notes/adding-families.html",
+      "source_path": "developer-notes/adding-families.md",
+      "source_sha256": "d3d23f5424b4c6f1a6c5c1aea780c287a69925c71ce27a4b8fa6d1cc22995517"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "developer-notes/formula-grammar.html",
+      "source_path": "developer-notes/formula-grammar.md",
+      "source_sha256": "bb6e5a773489ac956ea90eabb7dc2569fce8ba6cea5b33048b18436d10a5855f"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "developer-notes/source-map.html",
+      "source_path": "developer-notes/source-map.md",
+      "source_sha256": "31e807b82ae25d1a0a4bc7c2518ba603a7d0af7aff76d4b55f43a6f1803287bc"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "diagnostics-and-validation/exact-gaussian-diagnostics.html",
+      "source_path": "diagnostics-and-validation/exact-gaussian-diagnostics.md",
+      "source_sha256": "505cbafa9e491f8485447b6fab0a6a716e703d0fcacbaae403ca70258f9eaab7"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "diagnostics-and-validation/figure-gallery.html",
+      "source_path": "diagnostics-and-validation/figure-gallery.md",
+      "source_sha256": "a6e1c705d8b4191f1e6e943db3d77ed7d440249574770e5b45a9e4d93c3dc920"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "diagnostics-and-validation/implementation-map.html",
+      "source_path": "diagnostics-and-validation/implementation-map.md",
+      "source_sha256": "55676bf1b0c23df2839d61871fd952d2ae4373f7cd52737b8120d9e2acb4bb4a"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "diagnostics-and-validation/prediction-and-postfit.html",
+      "source_path": "diagnostics-and-validation/prediction-and-postfit.md",
+      "source_sha256": "3b8e89deb42f00a5a39846c6a9f6caddb3ba09724302530a3fe40266e475a078"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "diagnostics-and-validation/profile-likelihood.html",
+      "source_path": "diagnostics-and-validation/profile-likelihood.md",
+      "source_sha256": "dd03e23d5602732c3cce0e4e0e7f7529486095503709d5a0d149326ff2c7f15c"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "diagnostics-and-validation/simulation-plot-grammar.html",
+      "source_path": "diagnostics-and-validation/simulation-plot-grammar.md",
+      "source_sha256": "cd915d0c3e98966bcd148990b5e2a16619c52a5af8bf377937de2471b3ef286e"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "diagnostics-and-validation/small-sample-behaviour.html",
+      "source_path": "diagnostics-and-validation/small-sample-behaviour.md",
+      "source_sha256": "0752fa7956584a0941f36e5e824053bf563cc2cf694414fb52a338b8b544c702"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "diagnostics-and-validation/testing-likelihoods.html",
+      "source_path": "diagnostics-and-validation/testing-likelihoods.md",
+      "source_sha256": "36f670a0f31e81147772898fa46ad8d52b77fef11d87be091a8914899e92f33c"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "families.html",
+      "source_path": "families.md",
+      "source_sha256": "0e91121a74d1a5ad23baa69bf0751b249e8f037b2b0c52d1411ffe7af7612fe4"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "get-started.html",
+      "source_path": "get-started.md",
+      "source_sha256": "f9f378e01c8899322e3c364afe0094cf5e37476bfba5b2df49854a9ac42db3b5"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "getting-started.html",
+      "source_path": "getting-started.md",
+      "source_sha256": "d66bccd1e9a104938eb3562f7c39782b3e6fa48710b2b52234bfec771d827b18"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "index.html",
+      "source_path": "index.md",
+      "source_sha256": "0148ab097afeb8b3f54c29b26613380c28d2937b9f04795e274e0a4a3d7c4f9d"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "model-guides/convergence.html",
+      "source_path": "model-guides/convergence.md",
+      "source_sha256": "9fcb428c71bb82d3efd33ef6af86ce430e30d4692a0e947f7daf11faaecfb1d4"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "model-guides/cross-family-methods.html",
+      "source_path": "model-guides/cross-family-methods.md",
+      "source_sha256": "c7ac31ef232503f5546b476af4e63b6628a6d826bcc10b39e898e60e16432f60"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "model-guides/distribution-families.html",
+      "source_path": "model-guides/distribution-families.md",
+      "source_sha256": "41a30a844d23fb68e42ab73fce581f26b72e9c781d841cb6d486936c0c5963a8"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "model-guides/large-data.html",
+      "source_path": "model-guides/large-data.md",
+      "source_sha256": "7b80550bfcbbc72f9b719814854a0ba0a2967495f5759863a475cebea4921c60"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "model-guides/marginal-la-vs-va.html",
+      "source_path": "model-guides/marginal-la-vs-va.md",
+      "source_sha256": "074afe6e39249bdd6b566a9b8f4d048a4136eab3462613b0a4511518fd2939e4"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "model-guides/meta-analysis.html",
+      "source_path": "model-guides/meta-analysis.md",
+      "source_sha256": "cfccb499edac9ecbe274714db6183f3d631b8c9d4598b9c92997dec537ac901a"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "model-guides/model-map.html",
+      "source_path": "model-guides/model-map.md",
+      "source_sha256": "1fdc7d9baa9497aa145f358c19a822cc34bdbd74e6fc70d1433bdb8c22950cdf"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "model-guides/model-selection.html",
+      "source_path": "model-guides/model-selection.md",
+      "source_sha256": "071ff207c8139f1beef34f4cd6c79305fa81ea5bf7ac539192f5e5ae251e1bde"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "model-guides/model-workflow.html",
+      "source_path": "model-guides/model-workflow.md",
+      "source_sha256": "e678ef9c903e9e4a55bc8ee6f4f417becad5e649e9c479457f711742fa7fa369"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "model-guides/which-scale.html",
+      "source_path": "model-guides/which-scale.md",
+      "source_sha256": "8db184844473ec61e063ff2bfbf2781c80946427809cb1b59a71894a656014c3"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "r-julia-bridge.html",
+      "source_path": "r-julia-bridge.md",
+      "source_sha256": "9cc7e619d24317f84db2a51b4c1337660edf11ad7ea1f8226e05571a3476837f"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "reference/deprecated-marker-internals.html",
+      "source_path": "reference/deprecated-marker-internals.md",
+      "source_sha256": "4a257a098a9e180cfec55bc491726fb46e47b13877c994fd2596b021db25ec92"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "reference/engine-internals.html",
+      "source_path": "reference/engine-internals.md",
+      "source_sha256": "97d8d68cc9aeb96e207d1c04dfa1db225e91eec3c784ca9bb0c1dd1e30bea533"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "reference/model-fitting-and-postfit.html",
+      "source_path": "reference/model-fitting-and-postfit.md",
+      "source_sha256": "189b0145514343e157d60620b1b16a7c93e5f53810b257603bad375e2d551720"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "reference/model-specification.html",
+      "source_path": "reference/model-specification.md",
+      "source_sha256": "0ac6200bff732a444184e6005ff7b81d648e60634d9bb63bd1162df1d61e6d2b"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "reference/package.html",
+      "source_path": "reference/package.md",
+      "source_sha256": "91774e06016a6d3298986b8580eb9a8859358046cdfcf832893b8e4b3e1035e4"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "reference/structured-effect-markers.html",
+      "source_path": "reference/structured-effect-markers.md",
+      "source_sha256": "ee8f4a0459beb14b6aee1a64b3d42a5f7efe61510ca0fbec465e0480fb28b673"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "reference/visualization.html",
+      "source_path": "reference/visualization.md",
+      "source_sha256": "d627f2e682ed5842bf6c8ade3be8a4c63dfecc128c1e03bb5820431c079f6e87"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "rosetta.html",
+      "source_path": "rosetta.md",
+      "source_sha256": "f13f9a74f09139441a48cb3bac6de4478f721a5685c74ac785563a2c2fee9334"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/animal-models.html",
+      "source_path": "tutorials/animal-models.md",
+      "source_sha256": "f8e2833ab0a502960ff73a990042b0863caa92e1e2b06e4a495370da2d192506"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/bivariate-coscale.html",
+      "source_path": "tutorials/bivariate-coscale.md",
+      "source_sha256": "21f056e40538693da1b04a3256dc14371ade6d607707db09db2515e02d10d007"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/bivariate-nongaussian.html",
+      "source_path": "tutorials/bivariate-nongaussian.md",
+      "source_sha256": "74d06f50743362e032d4b19a87017d45192f3dcefdb3db6c6fe198cbc0b62bf7"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/count-nbinom2.html",
+      "source_path": "tutorials/count-nbinom2.md",
+      "source_sha256": "5e6025360f77eaf8ecc403e8678fd38ee1db626767392ac8e1d7918ac2f365ac"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/location-scale-scale.html",
+      "source_path": "tutorials/location-scale-scale.md",
+      "source_sha256": "84b574a229918e98b1bafb6dfd7b5d8e3c3d2d547f82658691bec46fe4e4b9b3"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/location-scale.html",
+      "source_path": "tutorials/location-scale.md",
+      "source_sha256": "fcbe1f87cdfe6ebd5b4def6f56b5578f295d65b7d332394f371a5586944c9c8a"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/meta-analysis.html",
+      "source_path": "tutorials/meta-analysis.md",
+      "source_sha256": "2db505189cb527571b8bdd66adc6a932dfeceaac140c08c9eef24a9828916d45"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/phylogenetic-models.html",
+      "source_path": "tutorials/phylogenetic-models.md",
+      "source_sha256": "59b729edb6275e83f6c0b1dd4ca4397b58a902f46f32158a5ce7bc6d62edc70d"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/phylogenetic-spatial.html",
+      "source_path": "tutorials/phylogenetic-spatial.md",
+      "source_sha256": "62dcd2450f5227b4a689a92ea65b3584776a070134dbef23c1b911c35dc74f78"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/proportion-beta-binomial.html",
+      "source_path": "tutorials/proportion-beta-binomial.md",
+      "source_sha256": "34d277ba95f0b4cb1cbd9b37a8520c452278f6b6bb40480610b6f90eee1680f9"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/relmat-known-matrices.html",
+      "source_path": "tutorials/relmat-known-matrices.md",
+      "source_sha256": "1cf4c8c5638fae5eba7773fade5094fe7d03e0b6bc44243e79cf27d90cf5cbf1"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/robust-student.html",
+      "source_path": "tutorials/robust-student.md",
+      "source_sha256": "bce66d8e71796594112912032abf8ecd4cc68888112181ef60aaee755150c90e"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/spatial-models.html",
+      "source_path": "tutorials/spatial-models.md",
+      "source_sha256": "e773aaa713e8a1e21c9f6efa25ff749769e85c59278ba70ab4b88bd216d5de5d"
+    },
+    {
+      "rendered_exists": true,
+      "rendered_path": "tutorials/structural-dependence.html",
+      "source_path": "tutorials/structural-dependence.md",
+      "source_sha256": "eb3b44dd4487fda9558243bd6e3aa80fdca3fbd0e972951052a913a7bdf887b5"
+    }
+  ],
+  "source_root": "/private/tmp/drm-parity-20260830/integration/DRM.jl/docs/src"
+}

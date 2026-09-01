@@ -1,0 +1,11 @@
+{
+  "changed_fields": [
+    "next_safe_action",
+    "lane",
+    "active_lane"
+  ],
+  "foreign_files_checked": 42,
+  "foreign_unchanged": true,
+  "before_sha256": "97447dd433372e0ce0c17722da394cda8372ed85c659df3ec7cc7e3feae3fb74",
+  "after_sha256": "26a3748b9ce2b0fed9222660d3f649ff4af0388dd536eaf4b216e6f1f2e53190"
+}

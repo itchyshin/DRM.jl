@@ -1,0 +1,18 @@
+{
+  "Julia": {
+    "base_head": "4fe48c123fecfe35029d9998d4e7211e8ee1dbcf",
+    "files": {
+      "src/bridge.jl": "438295482f232ac8ee3fd928d35af80f1dcf2076188a6e9b94e4769e14d3767d",
+      "test/test_bridge_bootstrap_tree.jl": "cf1d2326544bd6b3dcdc2fdf217cc3a179ceb99a2e62e8c1871940deee45c6b6",
+      "test/runtests.jl": "dbd50ba7762de6956ade8bc6d4c8005998a38218c87097cf897b33f32919f187"
+    }
+  },
+  "R": {
+    "base_head": "9007338e5975fa14ec19915c07dada880250ed01",
+    "files": {
+      "R/julia-bridge.R": "861037c5a86b0e807071351807a6e47bab28ec7d3bebbea750061a2696308d53",
+      "tests/testthat/test-julia-bootstrap-tree.R": "5109135043d0137972b51b846fdfffc6591c231ffe993d1c68876efbafda2c1c",
+      "tests/testthat/test-julia-inference.R": "d21a087f182ed877e1a3879d0300b1817f3511b69e33955b674fbdce428c1e19"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+| 2026-08-30 | S10 Gaussian components #563 | Four cases:32/32 adapter/native predictions and4 likelihood checks pass;27 pure assertions and14 checker outcomes pass; prior RI native failure retained | Validated R payloads reuse unchanged Julia modes; Rose approved; no speed/full-parity claim |

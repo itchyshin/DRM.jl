@@ -1,0 +1,5 @@
+(kind = Val{:gamma}(), general = false, errors = [1.0091385060917446e-8, 3.391855685208611e-10, 3.2290763396503053e-9], objective_error = 3.552713678800501e-15, gradient_error = 1.8607337892717624e-13, pass = true, damaged_gradient_rejected = true, missing_normalization_rejected = true)
+(kind = Val{:gamma}(), general = true, errors = [7.9901488203582e-9, 3.123417080530544e-10, 2.4305573109728584e-9], objective_error = 3.552713678800501e-15, gradient_error = 8.881784197001252e-15, pass = true, damaged_gradient_rejected = true, missing_normalization_rejected = true)
+(kind = Val{:nb2}(), general = false, errors = [1.2254914949494378e-7, 1.0108145431786397e-9, 5.3798112631398e-9], objective_error = 7.105427357601002e-15, gradient_error = 5.364597654988756e-13, pass = true, damaged_gradient_rejected = true, missing_normalization_rejected = true)
+(kind = Val{:nb2}(), general = true, errors = [7.420161551863202e-8, 1.0512417603081303e-9, 4.5168500051318006e-9], objective_error = 0.0, gradient_error = 7.105427357601002e-15, pass = true, damaged_gradient_rejected = true, missing_normalization_rejected = true)
+WHITENED_GRADIENT_MODERATE_PASS

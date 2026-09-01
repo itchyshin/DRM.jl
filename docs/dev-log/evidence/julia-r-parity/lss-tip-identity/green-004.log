@@ -1,0 +1,73 @@
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 1.1333327030555286e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 5.97564381642706e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse LSS phylo"
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 6.775109676031435e-21
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     6
+│   rcond = 4.051460891631831e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     6
+│   rcond = 2.267387912725702e-19
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: drm: 8 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:393
+┌ Warning: drm: 8 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:393
+┌ Warning: drm: 8 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:393
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 1.1333327030555286e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+Test Summary:                          | Pass  Broken  Total   Time
+Gaussian LSS phylogenetic tip identity |  400       2    402  27.8s
+LSS_TIP_IDENTITY_PASS

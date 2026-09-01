@@ -1,0 +1,8 @@
+{
+  "scope": "First components candidate failed during setup before any fit",
+  "bridge_sha256": "4611883000f24087e396978d4f7c10601d67fa0c35f3c7e18c64ffd788e254b4",
+  "source_snapshot_private_path": "/private/tmp/drm-parity-20260830/s10-components-setup-failed-bridge.R",
+  "cause": "JuliaCall Meta.parse accepts one expression; function definition followed by alias assignment yielded extra token after end of expression",
+  "fit_receipt_created": false,
+  "raw_setup_log_sha256": "0113f71111f144b49a15741dc256e52a253397239308f3e48a45eaef3119968e"
+}

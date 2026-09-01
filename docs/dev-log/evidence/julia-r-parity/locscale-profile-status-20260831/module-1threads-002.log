@@ -1,0 +1,15 @@
+┌ Info: canonical location-scale profile status fixture
+│   attempted = 1
+│   failed = 1
+│   lower_reason = :not_converged
+└   upper_reason = :not_converged
+Test Summary:                          | Pass  Total   Time
+location-scale profile endpoint status |   65     65  33.8s
+FILE_COMPLETE test/test_locscale_profile_status.jl
+Test Summary:                           | Pass  Total  Time
+bridge exposes selected profile failure |   17     17  0.2s
+FILE_COMPLETE test/test_bridge_profile_status.jl
+Test Summary:                                       | Pass  Total  Time
+inference BLAS pinning is composable across callers |   17     17  0.2s
+FILE_COMPLETE test/test_inference_blas_pinning.jl
+MODULE_PROFILE_STATUS_OK

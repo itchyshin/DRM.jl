@@ -1,0 +1,82 @@
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 1.1333327030555286e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 5.97564381642706e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     6
+│   rcond = 4.051460891631831e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     6
+│   rcond = 2.267387912725702e-19
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+LSS_BOUNDARY_META julia=1.10.0 threads=1 openblas_env=1 openblas_actual=1 fixture_mode=original_test_bytes source_sha256=4465956f8786436b72827366032178f1a81f0b76582df7f232d155ed624191f9 test_sha256=9e8f2522841c1294d4cfac6aa11d26fe7c8bd2b1c6d501f2fe22b8391e283068 runner_sha256=447f15e595da3b246a9fa626a9f0375867619027f2baf9599d0185b9a5c6c2df
+LSS_BOUNDARY_META oracle=hard_correlation_byte_verified_fixture=true
+LSS_BOUNDARY_FIXTURE label=original_test_bytes_5_1_6_3_4_2 original_test_bytes=true
+LSS_BOUNDARY_FIXTURE label=original_test_bytes_1_2_3_4_5_6 original_test_bytes=true
+LSS_BOUNDARY_FIT label=dedicated_shuffled objective=6.9694458795201015 loglik=-6.9694458795201015 score_inf=6.704087958109284e-7 hessian_min=7.655782749082359e-15 hessian_max=675.3676794113001 vcov_min=-1.4497120637493747e-19 vcov_max=0.05809366386214401 hand_nll=6.969445879520094
+LSS_BOUNDARY_BLOCK label=dedicated_shuffled block=mu indices=1:2 theta=[0.4815898894670049, 0.35949626467542445] hessian_diag=[648.4932080505762, 154.26539476743767] vcov_diag=[0.001796386668712177, 0.007638701173178763]
+LSS_BOUNDARY_BLOCK label=dedicated_shuffled block=sigma indices=3:4 theta=[-1.2637569557987067, -0.35712383536195885] hessian_diag=[96.00000046944243, 17.57309184396094] vcov_diag=[0.01046194071567986, 0.057917469578959886]
+LSS_BOUNDARY_BLOCK label=dedicated_shuffled block=sd_phylo indices=5:6 theta=[-29.79931027098353, -10.55467823747122] hessian_diag=[7.010759921958068e-15, 8.483030432856633e-15] vcov_diag=[1.8639421489277637e-31, 2.255368055473034e-31]
+LSS_BOUNDARY_COV label=dedicated_shuffled eig_min=0.04678018094919243 eig_max=0.1307502174102388 phy_fro=1.2711087067365318e-15 iid_fro=0.0 total_fro=0.6045009062055074 phy_fraction=2.1027407795223437e-15
+LSS_BOUNDARY_FIT label=dedicated_ordered objective=6.969445879520094 loglik=-6.969445879520094 score_inf=3.086869915236434e-8 hessian_min=4.035774721796905e-17 hessian_max=675.3676761665017 vcov_min=-3.2082922286382992e-18 vcov_max=0.05809366420744517 hand_nll=6.969445879520094
+LSS_BOUNDARY_BLOCK label=dedicated_ordered block=mu indices=1:2 theta=[0.48158988868280395, 0.35949626351384495] hessian_diag=[648.4932048674436, 154.26539403202736] vcov_diag=[0.00179638667785757, 0.0076387012215927376]
+LSS_BOUNDARY_BLOCK label=dedicated_ordered block=sigma indices=3:4 theta=[-1.2637569532380044, -0.35712383594530706] hessian_diag=[95.99999998091913, 17.57309176503538] vcov_diag=[0.010461940769628524, 0.057917469912747835]
+LSS_BOUNDARY_BLOCK label=dedicated_ordered block=sd_phylo indices=5:6 theta=[-34.32911121870014, -12.241882360794037] hessian_diag=[3.336307444826063e-17, 4.03693249827804e-17] vcov_diag=[1.471194645760049e-34, 1.7801454998410688e-34]
+LSS_BOUNDARY_COV label=dedicated_ordered eig_min=0.046780181147908044 eig_max=0.13075021818516644 phy_fro=6.048993967906843e-18 iid_fro=0.0 total_fro=0.604500909486218 phy_fraction=1.0006592005044375e-17
+LSS_BOUNDARY_CROSS label=dedicated_small own_objective_difference=7.105427357601002e-15 left_at_right=6.969445879520109 right_at_left=6.969445879520087
+LSS_BOUNDARY_DELTA label=dedicated_small block=mu maxabs=1.1615794992536621e-9 l2=1.4015127634386144e-9
+LSS_BOUNDARY_DELTA label=dedicated_small block=sigma maxabs=2.5607023168561227e-9 l2=2.6263075755867265e-9
+LSS_BOUNDARY_DELTA label=dedicated_small block=sd_phylo maxabs=4.529800947716613 l2=4.833813647596671
+LSS_BOUNDARY_CURVATURE label=dedicated_small sd_phylo_directional_hessian=2.1451973565597112e-15 line_nll=[6.9694458795201015, 6.969445879520094, 6.9694458795201015, 6.9694458795201015, 6.9694458795201015] line_delta=[0.0, -7.105427357601002e-15, 0.0, 0.0, 0.0]
+LSS_BOUNDARY_NAMED_COVARIANCE label=dedicated_small total_difference_fro=3.2933371824995003e-9 total_relative_fro=5.448026844655367e-9 phy_difference_fro=1.2650597127686246e-15 phy_relative_fro=2.0927341761054316e-15 left_eig=(0.04678018094919243, 0.1307502174102388) right_eig=(0.046780181147908044, 0.13075021818516644)
+LSS_BOUNDARY_FIT label=scalar_multi_shuffled objective=1.8134460868339772 loglik=-1.8134460868339772 score_inf=5.003619740762133e-9 hessian_min=8.767894803230753e-18 hessian_max=216.41316645411968 vcov_min=6.264292289278584e-53 vcov_max=0.17502708106561768 hand_nll=1.813446086833963
+LSS_BOUNDARY_BLOCK label=scalar_multi_shuffled block=mu indices=1:2 theta=[0.48000468061998613, 0.3701759588313161] hessian_diag=[151.1659214742386, 196.5714276599531] vcov_diag=[0.006918232760870556, 0.005466106598776475]
+LSS_BOUNDARY_BLOCK label=scalar_multi_shuffled block=sigma indices=3:4 theta=[-1.4455921349149878, -0.4912897281919255] hessian_diag=[88.17976613898938, 16.01345974986268] vcov_diag=[0.01137740095784198, 0.06431085946417653]
+LSS_BOUNDARY_BLOCK label=scalar_multi_shuffled block=sd indices=5:5 theta=[-1.899184723141704] hessian_diag=[5.728633671396225] vcov_diag=[0.17498336603187659]
+LSS_BOUNDARY_BLOCK label=scalar_multi_shuffled block=sd_phylo indices=6:6 theta=[-22.730628098256663] hessian_diag=[8.767894803230753e-18] vcov_diag=[1.651005096077249e-37]
+LSS_BOUNDARY_COV label=scalar_multi_shuffled eig_min=0.02697270315279007 eig_max=0.33180470288430813 phy_fro=4.2403024256822864e-19 iid_fro=0.5377746805482 total_fro=0.7912626998874855 phy_fraction=5.35890599453916e-19
+LSS_BOUNDARY_FIT label=scalar_multi_ordered objective=1.8134460868339701 loglik=-1.8134460868339701 score_inf=2.433138135415902e-8 hessian_min=4.906925975882201e-17 hessian_max=216.4131663727282 vcov_min=6.681911775230489e-52 vcov_max=0.1750270811641337 hand_nll=1.8134460868339772
+LSS_BOUNDARY_BLOCK label=scalar_multi_ordered block=mu indices=1:2 theta=[0.48000468076954617, 0.37017595878435405] hessian_diag=[151.16592127280236, 196.57142766172242] vcov_diag=[0.006918232769705997, 0.0054661065981640045]
+LSS_BOUNDARY_BLOCK label=scalar_multi_ordered block=sigma indices=3:4 theta=[-1.445592134948438, -0.4912897282658023] hessian_diag=[88.17976614569878, 16.013459749797548] vcov_diag=[0.011377400956856376, 0.06431085946140053]
+LSS_BOUNDARY_BLOCK label=scalar_multi_ordered block=sd indices=5:5 theta=[-1.8991847223456968] hessian_diag=[5.728633668105496] vcov_diag=[0.1749833661304379]
+LSS_BOUNDARY_BLOCK label=scalar_multi_ordered block=sd_phylo indices=6:6 theta=[-21.869560081905245] hessian_diag=[4.906925975882201e-17] vcov_diag=[5.171026530726881e-36]
+LSS_BOUNDARY_COV label=scalar_multi_ordered eig_min=0.02697270314806649 eig_max=0.331804703305572 phy_fro=2.3730725099434847e-18 iid_fro=0.5377746814043449 total_fro=0.7912627005916393 phy_fraction=2.9990956330547387e-18
+LSS_BOUNDARY_CROSS label=scalar_multi_small own_objective_difference=7.105427357601002e-15 left_at_right=1.813446086833963 right_at_left=1.813446086833956
+LSS_BOUNDARY_DELTA label=scalar_multi_small block=mu maxabs=1.495600310263967e-10 l2=1.5675980538820596e-10
+LSS_BOUNDARY_DELTA label=scalar_multi_small block=sigma maxabs=7.387679357151455e-11 l2=8.109680591340855e-11
+LSS_BOUNDARY_DELTA label=scalar_multi_small block=sd maxabs=7.960072601065349e-10 l2=7.960072601065349e-10
+LSS_BOUNDARY_DELTA label=scalar_multi_small block=sd_phylo maxabs=0.8610680163514175 l2=0.8610680163514175
+LSS_BOUNDARY_CURVATURE label=scalar_multi_small sd_phylo_directional_hessian=8.767894803230753e-18 line_nll=[1.8134460868339772, 1.8134460868339772, 1.8134460868339772, 1.8134460868339772, 1.8134460868339772] line_delta=[0.0, 0.0, 0.0, 0.0, 0.0]
+LSS_BOUNDARY_NAMED_COVARIANCE label=scalar_multi_small total_difference_fro=8.517056391458369e-10 total_relative_fro=1.076387953721316e-9 phy_difference_fro=1.949042267375256e-18 phy_relative_fro=2.4632050340777183e-18 left_eig=(0.02697270315279007, 0.33180470288430813) right_eig=(0.02697270314806649, 0.331804703305572)
+LSS_BOUNDARY_DIAGNOSTIC_COMPLETE

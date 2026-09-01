@@ -35,7 +35,11 @@ change between releases, and each carries its reason:
   `PhyloCorPenaltyNeedsTwoSD`) and **bivariate meta** (`meta_vcov_bivariate`) — newer surfaces
   whose ergonomics are still settling;
 - the **VA/ELBO marginal** (`marginal = :VA`, #136) — reachable through stable `drm()` but
-  Experimental-labelled on its own pages; its behaviour and coverage may change between releases.
+  Experimental-labelled on its own pages; its behaviour and coverage may change between releases;
+- the **prepared joint missing-predictor surface** (`PreparedJointModel`,
+  `prepared_joint_model`, `fit_prepared_joint`, `mi`, and related result and
+  summary types) — implemented and tested, while formula and bridge ergonomics
+  continue to settle.
 
 **Engine** — the computational spine (`AugProblem`, `make_problem`, `fit_q4_sparse_tmb`,
 `estep_mode`, the `coevo_*` and `fz_*` families, tree utilities, packers). Exported so scripts,
@@ -56,6 +60,5 @@ fences are permanent documented boundaries by owner decision (D-179 #4, D-180 #2
   `Student()` bivariate) are **outside** the frozen surface (D-180 #3, issue #471) — matching
   drmTMB, whose own `biv_student()` defers structured effects. Bivariate **LogNormal** structured
   markers are inside: they delegate to the exact/q4 Gaussian engines on `log(y)` and are tested.
-- **drmTMB's `mi()` missing-data axis** is fenced out of the v0.7.0 twin claim as a pinned delta
-  (D-180 #1); DRM.jl's counterpart (#49 FIML) is deliberately parked and is the designated
-  post-0.7 headline.
+- The prepared joint missing-predictor API is available as an Experimental
+  post-v0.7 surface. Its inclusion here does not widen the Stable-tier promise.

@@ -1,0 +1,12 @@
+APPROVAL REQUIRED leaf-S10-stopping:G1
+    CHECK: cd /private/tmp/drm-parity-20260830/DRM.jl && Rscript tools/parity_stopping_diagnostic.R /private/tmp/drm-parity-20260830/s10-candidate docs/dev-log/evidence/julia-r-parity/prediction-contract-pilot/prediction-green-003.json /private/tmp/drm-parity-20260830/stopping-diagnostic-002.json
+    EXPECT: STOPPING_ORACLE_PASS
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH=[local environment redacted; raw log retained in private task directory]
+    APPROVED: /Users/z3437171/.unlazy/approved/bdec9a8e02f7c20d9a543c1ce0ed0904c20200f63444c41824b02baa1beb677e.json
+  RUN  leaf-S10-stopping:G1 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=[local environment redacted; raw log retained in private task directory]
+  PASS leaf-S10-stopping:G1: Independent Gaussian oracle matches TMB and frozen default fits
+       exit=0; EXPECT=matched; output=`check_drm()` to diagnose; consider rescaling the data, within-group | replication, or a penalized/MAP fit.
+leaf-S10-stopping.md: 1 gates
+ALL MET (1 met)

@@ -1,0 +1,19 @@
+ℹ Testing drmTMB
+julia-joint-dispatch: 1....
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Error ('test-julia-joint-dispatch.R:8:3'): public Julia entry routes joint
+Error in `drmTMB_julia_bridge(formula = formula, family = family, data = data, env = formula_env, weights_missing = base::missing(weights), control = control, impute = impute, missing = missing, REML = drm_control_flag(REML, "REML"), call = match.call())`: `engine = "julia"` does not support `impute` yet.
+i Use native `engine = "tmb"` for imputation workflows until the bridge has an imputation payload.
+Backtrace:
+    ▆
+ 1. └─drmTMB::drmTMB(...) at test-julia-joint-dispatch.R:8:3
+ 2.   └─drmTMB:::drmTMB_julia_bridge(...) at drmTMB/R/drmTMB.R:296:5
+ 3.     └─cli::cli_abort(...) at drmTMB/R/julia-bridge.R:440:5
+ 4.       └─rlang::abort(...)
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+Frustration is a natural part of programming :)
+Error:
+! Test failures.
+Execution halted

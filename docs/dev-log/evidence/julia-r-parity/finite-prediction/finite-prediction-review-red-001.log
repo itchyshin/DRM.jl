@@ -1,0 +1,64 @@
+ERROR: LoadError: Some tests did not pass: 37 passed, 5 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:89
+finite-state direct newdata prediction contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:198
+  Expression: DRM.predict(ordinal_fit, (; x = ["low"], a = ["a"], z = [Inf]))
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:198 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:90
+finite-state direct newdata prediction contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:200
+  Expression: DRM.predict(ordinal_fit, (; x = ["low"], a = ["a"], z = [NaN]))
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:200 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:90
+finite-state direct newdata prediction contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:206
+  Expression: DRM.predict(overflow_fit, (; z = [0.0]); dpar = :sigma, type = :response)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:206 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:90
+finite-state direct newdata prediction contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:215
+  Expression: DRM.predict(negative_fit, categorical_new; se = true)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:215 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:90
+finite-state direct newdata prediction contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:224
+  Expression: DRM.predict(_finite_prediction_rewrap(categorical_fit; covariance_status = :not_positive_definite), categorical_new; se = true)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:224 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_prediction.jl:90
+Test Summary:                                   | Pass  Fail  Total   Time
+finite-state direct newdata prediction contract |   37     5     42  34.4s

@@ -3,8 +3,9 @@
 !!! note "Status — Stable"
     A standalone first-fit walkthrough. Everything on this page runs against the
     verified Gaussian front end (`drm` / `bf`) and the post-fit accessors
-    (`coef`, `loglik`, `confint`, `summary`). For the drmTMB-article mirror see
-    [Get started](get-started.md); for the full capability map see
+    (`coef`, `loglik`, `confint`, `summary`). For moving between R and Julia,
+    see the [R ↔ Julia bridge](r-julia-bridge.md) and
+    [Rosetta](rosetta.md); for the full capability map see
     [What can I fit today?](model-guides/model-map.md).
 
 DRM.jl is *distributional* regression: instead of a single linear predictor for
@@ -102,13 +103,17 @@ above:
 is_converged(fit)
 ```
 
-`summary(fit)` prints a drmTMB-style coefficient table — estimates, standard
-errors, z statistics, p-values, and 95% Wald intervals — for every block at once.
-Row names are prefixed with the parameter (`mu: …`, `sigma: …`) so they stay
-unique:
+`summary(fit)` prints estimates, standard errors, and 95% Wald intervals for
+every block at once. In this first-fit scale block, the `z` and `p` entries are
+currently unavailable (`NaN`); that is not evidence for a zero scale effect, and
+the estimate, standard error, and interval remain finite outputs. Supplying
+scale-block z/p results consistent with the R-facing post-fit contract remains
+an open parity obligation. Row names are prefixed with the parameter (`mu: …`,
+`sigma: …`) so they stay unique:
 
 ```@example getstarted
 summary(fit)
+show(stdout, MIME"text/plain"(), summary(fit)); nothing # hide
 ```
 
 ## Confidence intervals
@@ -123,17 +128,36 @@ confint(fit)
 
 For a coefficient near a boundary, or whenever you want intervals that do not
 assume a quadratic log-likelihood, ask for the **profile-likelihood** interval
-instead — it re-optimises the other parameters at each fixed value and is exact
-under the likelihood-ratio statistic:
+instead. It re-optimises the other parameters at each fixed value and uses a
+likelihood-ratio calibration. That calibration is asymptotic, so a profile
+interval does not have universal exact coverage:
 
 ```@example getstarted
 confint(fit; method = :profile)
 ```
 
+## Beyond a first fit
+
+The same front end also provides these next steps; the
+[capability map](model-guides/model-map.md) records their current boundaries:
+
+- **Per-parameter prediction** — `predict_parameters` (fitted μ/σ/… on new
+  data), `marginal_parameters` (population-averaged), and `prediction_grid` for
+  building a swept `newdata` grid from a reference table.
+- **Auditable profile-likelihood CIs** — `profile_result` returns the full
+  profile object behind `confint(fit; method = :profile)`.
+- **Post-fit accessors** — `summary`, `family`, `is_converged`, `deviance`,
+  `dof_residual`, and `rho12` (bivariate residual correlation).
+- **Non-Gaussian phylogenetic random effects** — `phylo(1 | species, tree)` on
+  the mean for Poisson, NegBinomial2, Gamma, Beta, and Binomial families
+  (constant `σ`), via a sparse Laplace approximation, plus crossed intercepts
+  `(1 | g) + (1 | h)` for the same families.
+
 ## Where to go next
 
-- [Get started](get-started.md) — the drmTMB-article mirror, with the recent
-  prediction / random-effect additions.
+- [R ↔ Julia bridge](r-julia-bridge.md) — use the optional R-engine backend
+  for supported models.
+- [Rosetta (R ↔ Julia)](rosetta.md) — vocabulary and workflow translation.
 - [Choosing response families](families.md) — the full list of response
   families and how to fit each one.
 - [What can I fit today?](model-guides/model-map.md) — the live capability map.

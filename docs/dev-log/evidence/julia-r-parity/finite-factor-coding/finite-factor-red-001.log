@@ -1,0 +1,38 @@
+ERROR: LoadError: Some tests did not pass: 2 passed, 1 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:39
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:43
+  Expression: isdefined(DRM, :_joint_finite_native_state_design)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:43 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:40
+finite-state native factor coding contract: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:39
+  Got exception outside of a @test
+  UndefVarError: `_joint_finite_native_state_design` not defined
+  Stacktrace:
+   [1] getproperty(x::Module, f::Symbol)
+     @ Base ./Base.jl:31
+   [2] macro expansion
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:54 [inlined]
+   [3] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [4] top-level scope
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:40
+   [5] include(fname::String)
+     @ Base.MainInclude ./client.jl:489
+   [6] top-level scope
+     @ none:1
+   [7] eval
+     @ Core ./boot.jl:385 [inlined]
+   [8] exec_options(opts::Base.JLOptions)
+     @ Base ./client.jl:291
+   [9] _start()
+     @ Base ./client.jl:552
+Test Summary:                              | Pass  Fail  Error  Total  Time
+finite-state native factor coding contract |    2     1      1      4  3.5s

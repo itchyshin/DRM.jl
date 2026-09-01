@@ -1,0 +1,1 @@
+| 2026-08-31 | **Overlapping inference BLAS scopes** (#563) | Deterministic RED then 1/4-thread GREEN; separate Totoro 4-thread source copy | Helper checks 17 each; five regression files 181 assertions + final restoration check, 58s, exit0; 327 hashes unchanged. No estimator or speed claim; global gates open | Ada, Karpinski, Fisher, Rose |

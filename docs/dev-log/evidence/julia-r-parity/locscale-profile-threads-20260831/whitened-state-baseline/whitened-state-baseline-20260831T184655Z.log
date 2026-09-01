@@ -1,0 +1,33 @@
+ERROR: LoadError: Some tests did not pass: 7 passed, 2 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-state-baseline/diagnose.jl:29
+(idx = 1, side = "lower", value_error = 3.686153604576248e-10, gradient_error = 8.56242893757006e-9)
+(idx = 1, side = "upper", value_error = 8.255653938249452e-10, gradient_error = 7.536904454073312e-8)
+(idx = 2, side = "lower", value_error = 1.0e18, gradient_error = NaN)
+(idx = 2, side = "upper", value_error = 3.232258904972696e-11, gradient_error = 5.54239758438539e-9)
+legacy boundary numerical baseline: Test Failed at /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-state-baseline/diagnose.jl:23
+  Expression: r.value_error <= 1.0e-8
+   Evaluated: 1.0e18 <= 1.0e-8
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-state-baseline/diagnose.jl:23 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] main()
+   @ Main /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-state-baseline/diagnose.jl:21
+legacy boundary numerical baseline: Test Failed at /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-state-baseline/diagnose.jl:24
+  Expression: all(isfinite, r.grad) && r.gradient_error <= 1.0e-7
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-state-baseline/diagnose.jl:24 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] main()
+   @ Main /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-state-baseline/diagnose.jl:21
+Test Summary:                      | Pass  Fail  Total  Time
+legacy boundary numerical baseline |    7     2      9  0.5s

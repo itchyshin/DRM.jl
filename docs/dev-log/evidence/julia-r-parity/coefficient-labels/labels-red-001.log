@@ -1,0 +1,128 @@
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 8.598153744780221e-18
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+bridge formula-derived coefficient labels: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:21
+  Test threw exception
+  Expression: out["coef_label_contract"] == "bridge_formula_labels_v1"
+  KeyError: key "coef_label_contract" not found
+  Stacktrace:
+   [1] getindex(h::Dict{String, Any}, key::String)
+     @ Base ./dict.jl:498
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:21 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] top-level scope
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:8
+bridge formula-derived coefficient labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:22
+  Expression: haskey(out, "raw_coef_names")
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:22 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:8
+bridge formula-derived coefficient labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:23
+  Expression: haskey(out, "coef_name_map")
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:23 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:8
+bridge formula-derived coefficient labels: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:25
+  Test threw exception
+  Expression: length(out["coef_names"]) == length(out["raw_coef_names"])
+  KeyError: key "raw_coef_names" not found
+  Stacktrace:
+   [1] getindex(h::Dict{String, Any}, key::String)
+     @ Base ./dict.jl:498
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:25 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] top-level scope
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:8
+bridge formula-derived coefficient labels: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:27
+  Test threw exception
+  Expression: length(unique(out["raw_coef_names"])) == length(out["raw_coef_names"])
+  KeyError: key "raw_coef_names" not found
+  Stacktrace:
+   [1] getindex(h::Dict{String, Any}, key::String)
+     @ Base ./dict.jl:498
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:27 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] top-level scope
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:8
+bridge formula-derived coefficient labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:38
+  Expression: out["coef_names"] == expected
+   Evaluated: ["mu_(Intercept)", "mu_x", "mu___bridge_I_1", "mu_g: b", "mu_x & g: b", "sigma_(Intercept)", "sigma___bridge_scale_2", "sigma___bridge_poly2c1_3", "sigma___bridge_poly2c2_4"] == ["mu_(Intercept)", "mu_x", "mu_I(x^2)", "mu_gb", "mu_x:gb", "sigma_(Intercept)", "sigma_scale(x)", "sigma_poly(x, 2)1", "sigma_poly(x, 2)2"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:38 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:8
+bridge formula-derived coefficient labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:39
+  Expression: all((!(occursin("__bridge_", name)) for name = out["coef_names"]))
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:39 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:8
+bridge formula-derived coefficient labels: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:7
+  Got exception outside of a @test
+  KeyError: key "coef_name_map" not found
+  Stacktrace:
+   [1] getindex(h::Dict{String, Any}, key::String)
+     @ Base ./dict.jl:498
+   [2] macro expansion
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:44 [inlined]
+   [3] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [4] top-level scope
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:8
+   [5] include(fname::String)
+     @ Base.MainInclude ./client.jl:489
+   [6] top-level scope
+     @ none:1
+   [7] eval
+     @ Core ./boot.jl:385 [inlined]
+   [8] exec_options(opts::Base.JLOptions)
+     @ Base ./client.jl:291
+   [9] _start()
+     @ Base ./client.jl:552
+Test Summary:                             | Pass  Fail  Error  Total   Time
+bridge formula-derived coefficient labels |    3     4      4     11  15.2s
+ERROR: LoadError: Some tests did not pass: 3 passed, 4 failed, 4 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:7

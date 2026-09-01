@@ -1,0 +1,227 @@
+ERROR: LoadError: Some tests did not pass: 5 passed, 2 failed, 4 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:22
+accepted solve is reevaluated at the reported minimizer: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:25
+  Got exception outside of a @test
+  UndefVarError: `_profile_nuisance_result` not defined
+  Stacktrace:
+    [1] getproperty(x::Module, f::Symbol)
+      @ Base ./Base.jl:31
+    [2] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:26 [inlined]
+    [3] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [4] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:26 [inlined]
+    [5] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [6] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:23
+    [7] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [8] top-level scope
+      @ none:1
+    [9] eval
+      @ Core ./boot.jl:385 [inlined]
+   [10] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [11] _start()
+      @ Base ./client.jl:552
+one-parameter profile is a valid direct evaluation: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:38
+  Got exception outside of a @test
+  UndefVarError: `_profile_nuisance_result` not defined
+  Stacktrace:
+    [1] getproperty(x::Module, f::Symbol)
+      @ Base ./Base.jl:31
+    [2] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:40 [inlined]
+    [3] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [4] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:39 [inlined]
+    [5] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [6] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:23
+    [7] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [8] top-level scope
+      @ none:1
+    [9] eval
+      @ Core ./boot.jl:385 [inlined]
+   [10] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [11] _start()
+      @ Base ./client.jl:552
+Nelder-Mead fallback is accepted only on successful termination: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:49
+  Got exception outside of a @test
+  UndefVarError: `_profile_nuisance_result` not defined
+  Stacktrace:
+    [1] getproperty(x::Module, f::Symbol)
+      @ Base ./Base.jl:31
+    [2] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:50 [inlined]
+    [3] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [4] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:50 [inlined]
+    [5] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [6] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:23
+    [7] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [8] top-level scope
+      @ none:1
+    [9] eval
+      @ Core ./boot.jl:385 [inlined]
+   [10] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [11] _start()
+      @ Base ./client.jl:552
+failed nuisance arm is not unbounded or warm-started: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:70
+  Got exception outside of a @test
+  DomainError with 1.0:
+  forced nuisance failure
+  Stacktrace:
+    [1] failing
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:71 [inlined]
+    [2] (::DRM.var"#obj#1192"{var"#failing#4", Int64, Float64, Vector{Int64}, Int64})(u::Vector{Float64})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:678
+    [3] value!!(obj::NLSolversBase.NonDifferentiable{Float64, Vector{Float64}}, x::Vector{Float64})
+      @ NLSolversBase ~/.julia/packages/NLSolversBase/n7XXO/src/interface.jl:9
+    [4] initial_state(method::Optim.NelderMead{Optim.AffineSimplexer, Optim.AdaptiveParameters}, options::Optim.Options{Float64, Nothing}, d::NLSolversBase.NonDifferentiable{Float64, Vector{Float64}}, initial_x::Vector{Float64})
+      @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/solvers/zeroth_order/nelder_mead.jl:172
+    [5] optimize(d::D, initial_x::Tx, method::M, options::Optim.Options{T, TCallback}, state::Any) where {D<:NLSolversBase.AbstractObjective, M<:Optim.AbstractOptimizer, Tx<:AbstractArray, T, TCallback}
+      @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:43 [inlined]
+    [6] #optimize#77
+      @ ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:274 [inlined]
+    [7] optimize (repeats 2 times)
+      @ ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:264 [inlined]
+    [8] _profile_optimize(obj::Function, u0::Vector{Float64}, autodiff::Symbol; grad!::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:737
+    [9] _profile_optimize
+      @ /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:701 [inlined]
+   [10] _profiled_nll(nll::var"#failing#4", θ̂::Vector{Float64}, k::Int64, v::Float64, u0::Vector{Float64}; autodiff::Symbol, nllgrad::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:697
+   [11] _profiled_nll
+      @ /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:660 [inlined]
+   [12] (::DRM.var"#heval#1197"{var"#failing#4", Nothing, Vector{Float64}, Int64, Int64, Symbol, Int64, Float64})(t::Float64)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:786
+   [13] _profile_endpoint_result(nll::Function, nllgrad::Nothing, θ̂::Vector{Float64}, k::Int64, nllhat::Float64, half::Float64, s::Float64, dir::Int64, u0::Vector{Float64}, autodiff::Symbol)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:807
+   [14] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:72 [inlined]
+   [15] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [16] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:71 [inlined]
+   [17] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [18] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:23
+   [19] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [20] top-level scope
+      @ none:1
+   [21] eval
+      @ Core ./boot.jl:385 [inlined]
+   [22] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [23] _start()
+      @ Base ./client.jl:552
+  
+  caused by: DomainError with 1.0:
+  forced nuisance failure
+  Stacktrace:
+    [1] failing
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:71 [inlined]
+    [2] (::DRM.var"#obj#1192"{var"#failing#4", Int64, Float64, Vector{Int64}, Int64})(u::Vector{Float64})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:678
+    [3] prepare_gradient_nokwarg(::Val{true}, ::Function, ::ADTypes.AutoFiniteDiff{Val{:central}, Val{:central}, Val{:hcentral}, Nothing, Nothing, Bool}, ::Vector{Float64})
+      @ DifferentiationInterfaceFiniteDiffExt ~/.julia/packages/DifferentiationInterface/f85Vv/ext/DifferentiationInterfaceFiniteDiffExt/onearg.jl:261
+    [4] #prepare_gradient#68
+      @ DifferentiationInterface ~/.julia/packages/DifferentiationInterface/f85Vv/src/first_order/gradient.jl:11 [inlined]
+    [5] prepare_gradient(::DRM.var"#obj#1192"{var"#failing#4", Int64, Float64, Vector{Int64}, Int64}, ::ADTypes.AutoFiniteDiff{Val{:central}, Val{:central}, Val{:hcentral}, Nothing, Nothing, Bool}, ::Vector{Float64})
+      @ DifferentiationInterface ~/.julia/packages/DifferentiationInterface/f85Vv/src/first_order/gradient.jl:8
+    [6] NLSolversBase.OnceDifferentiable(f::Function, x_seed::Vector{Float64}, F::Float64, DF::Vector{Float64}, autodiff::Symbol, chunk::ForwardDiff.Chunk{1})
+      @ NLSolversBase ~/.julia/packages/NLSolversBase/n7XXO/src/objective_types/oncedifferentiable.jl:47
+    [7] NLSolversBase.OnceDifferentiable(f::Function, x::Vector{Float64}, F::Float64, DF::Vector{Float64}; inplace::Bool, autodiff::Symbol, chunk::ForwardDiff.Chunk{1})
+      @ NLSolversBase ~/.julia/packages/NLSolversBase/n7XXO/src/objective_types/oncedifferentiable.jl:16
+    [8] promote_objtype
+      @ ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:70 [inlined]
+    [9] #optimize#77
+      @ ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:273 [inlined]
+   [10] optimize (repeats 2 times)
+      @ ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:264 [inlined]
+   [11] _profile_optimize(obj::Function, u0::Vector{Float64}, autodiff::Symbol; grad!::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:731
+   [12] _profile_optimize
+      @ /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:701 [inlined]
+   [13] _profiled_nll(nll::var"#failing#4", θ̂::Vector{Float64}, k::Int64, v::Float64, u0::Vector{Float64}; autodiff::Symbol, nllgrad::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:697
+   [14] _profiled_nll
+      @ /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:660 [inlined]
+   [15] (::DRM.var"#heval#1197"{var"#failing#4", Nothing, Vector{Float64}, Int64, Int64, Symbol, Int64, Float64})(t::Float64)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:786
+   [16] _profile_endpoint_result(nll::Function, nllgrad::Nothing, θ̂::Vector{Float64}, k::Int64, nllhat::Float64, half::Float64, s::Float64, dir::Int64, u0::Vector{Float64}, autodiff::Symbol)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:807
+   [17] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:72 [inlined]
+   [18] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [19] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:71 [inlined]
+   [20] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [21] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:23
+   [22] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [23] top-level scope
+      @ none:1
+   [24] eval
+      @ Core ./boot.jl:385 [inlined]
+   [25] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [26] _start()
+      @ Base ./client.jl:552
+diagnostics and visual data refuse invalid profiled values: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:93
+  Expression: profile_curve(invalid_ref, 1; npoints = 5, span = 3)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:93 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:92 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:23
+diagnostics and visual data refuse invalid profiled values: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:97
+  Expression: profile_curve(bad_curve, 1; npoints = 5, span = 2)
+    Expected: ArgumentError
+      Thrown: DomainError
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:97 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:92 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:23
+Test Summary:                                                      | Pass  Fail  Error  Total  Time
+generic profile nuisance acceptance and status                     |    5     2      4     11  4.0s
+  accepted solve is reevaluated at the reported minimizer          |                 1      1  0.4s
+  one-parameter profile is a valid direct evaluation               |                 1      1  0.0s
+  Nelder-Mead fallback is accepted only on successful termination  |                 1      1  0.0s
+  failed nuisance arm is not unbounded or warm-started             |                 1      1  1.6s
+  endpoint is the coordinate whose reevaluated profile hits target |    3                   3  0.4s
+  diagnostics and visual data refuse invalid profiled values       |    2     2             4  1.5s

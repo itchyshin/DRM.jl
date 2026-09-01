@@ -1,0 +1,55 @@
+ERROR: LoadError: Some tests did not pass: 2 passed, 2 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:32
+finite-state direct formula frontend API and ordinal payload design: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:36
+  Expression: isdefined(DRM, :JointFiniteDrmFit)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:36 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:33
+finite-state direct formula frontend API and ordinal payload design: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:37
+  Expression: isdefined(DRM, :CategoricalLogit)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:37 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:33
+finite-state direct formula frontend API and ordinal payload design: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:32
+  Got exception outside of a @test
+  MethodError: no method matching impute_model(::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}; family::CumulativeLogit, levels::Vector{String})
+  
+  Closest candidates are:
+    impute_model(::StatsModels.FormulaTerm; family) got unsupported keyword argument "levels"
+     @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_frontend.jl:57
+  
+  Stacktrace:
+   [1] kwerr(::@NamedTuple{family::CumulativeLogit, levels::Vector{String}}, ::Function, ::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term})
+     @ Base ./error.jl:165
+   [2] macro expansion
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:43 [inlined]
+   [3] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [4] top-level scope
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:33
+   [5] include(fname::String)
+     @ Base.MainInclude ./client.jl:489
+   [6] top-level scope
+     @ none:1
+   [7] eval
+     @ Core ./boot.jl:385 [inlined]
+   [8] exec_options(opts::Base.JLOptions)
+     @ Base ./client.jl:291
+   [9] _start()
+     @ Base ./client.jl:552
+Test Summary:                                                       | Pass  Fail  Error  Total  Time
+finite-state direct formula frontend API and ordinal payload design |    2     2      1      5  4.6s

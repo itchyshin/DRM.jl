@@ -1,0 +1,117 @@
+ERROR: LoadError: Some tests did not pass: 0 passed, 9 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:118
+Test Summary:                            | Pass  Total   Time
+joint missing-predictor formula frontend |   45     45  13.3s
+Test Summary:                                  | Pass  Total  Time
+joint public routing refuses ignored arguments |    3      3  0.2s
+JOINT_FRONTEND_PUBLIC_PASS
+joint model requires exogenous complete covariates: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:125
+  Expression: drm(form, Gaussian(); data = dat, impute = (x = #= /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:125 =# @formula(x ~ z),), missing = JointMissingControl(:drop, :model))
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:125 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:119
+joint model requires exogenous complete covariates: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:130
+  Expression: drm(invalid, Gaussian(); data = dat, impute = (x = #= /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:130 =# @formula(x ~ z),), missing = ctl)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:130 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:119
+joint model requires exogenous complete covariates: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:130
+  Expression: drm(invalid, Gaussian(); data = dat, impute = (x = #= /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:130 =# @formula(x ~ z),), missing = ctl)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:130 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:119
+joint model requires exogenous complete covariates: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:130
+  Expression: drm(invalid, Gaussian(); data = dat, impute = (x = #= /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:130 =# @formula(x ~ z),), missing = ctl)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:130 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:119
+joint model requires exogenous complete covariates: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:130
+  Expression: drm(invalid, Gaussian(); data = dat, impute = (x = #= /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:130 =# @formula(x ~ z),), missing = ctl)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:130 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:119
+joint model requires exogenous complete covariates: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:133
+  Expression: drm(form, Gaussian(); data = dat, impute = (x = invalid,), missing = ctl)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:133 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:119
+joint model requires exogenous complete covariates: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:133
+  Expression: drm(form, Gaussian(); data = dat, impute = (x = invalid,), missing = ctl)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:133 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:119
+joint model requires exogenous complete covariates: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:133
+  Expression: drm(form, Gaussian(); data = dat, impute = (x = invalid,), missing = ctl)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:133 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:119
+joint model requires exogenous complete covariates: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:135
+  Expression: drm(bf(#= /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:135 =# @formula(y ~ mi(y))), Gaussian(); data = dat, impute = (y = #= /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:135 =# @formula(y ~ z),), missing = ctl)
+    Expected: ArgumentError
+  No exception thrown
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:135 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_frontend.jl:119
+Test Summary:                                      | Fail  Total  Time
+joint model requires exogenous complete covariates |    9      9  5.6s

@@ -66,6 +66,15 @@ const API_EXPERIMENTAL = [
     "meta_vcov_bivariate", "MetaVcovBivariate",
     # location-scale-scale (#544/#545)
     "sd", "sd_phylo",
+    # prepared joint missing-predictor surface (post-v0.7 experimental)
+    "PreparedJointModel", "PreparedJointFit",
+    "PreparedFiniteJointModel", "PreparedFiniteJointFit",
+    "JointDrmFit", "JointTwoDrmFit", "JointFiniteDrmFit",
+    "JointMissingControl", "JointImputeModel", "CategoricalLogit",
+    "prepared_joint_model", "prepared_joint_rowloglik", "prepared_joint_nll",
+    "prepared_joint_conditional_moments", "fit_prepared_joint",
+    "joint_missing_summary", "imputed", "mi", "miss_control",
+    "impute_model", "cutpoints",
 ]
 
 const API_ENGINE = [

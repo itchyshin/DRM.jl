@@ -1,0 +1,20 @@
+....F.......
+======================================================================
+FAIL: test_inline_css_import_scans_nested_stylesheet (tools.tests.test_parity_rendered_docs_audit.RenderedDocsFixture.test_inline_css_import_scans_nested_stylesheet)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/integration/DRM.jl/tools/tests/test_parity_rendered_docs_audit.py", line 182, in test_inline_css_import_scans_nested_stylesheet
+    self.assertTrue(any(
+    ~~~~~~~~~~~~~~~^^^^^
+        item["kind"] == "missing_asset" and item.get("target") == "missing-inline.png"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        for item in report["failures"]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ))
+    ^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.165s
+
+FAILED (failures=1)

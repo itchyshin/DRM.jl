@@ -1,0 +1,48 @@
+{
+  "scope": "Read-only recheck of retained strict build; not fresh build or globalG6",
+  "build_head": "5d56524b7d7c8bf11f4128ce30ec71f105f72ac4",
+  "page": "/private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-production-002/1/tutorials/location-scale.html",
+  "page_sha256": "128ee4ab2ed9ae581a7bd2a12da01c385728d2eb2c92bd717d1db88d7fafc7a0",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "observed_main": {
+    "left": 24,
+    "width": 342,
+    "top": 144
+  },
+  "observed_heading": {
+    "width": 342,
+    "height": 80
+  },
+  "heading_count": 1,
+  "observations": [
+    "Phone viewport set before direct navigation: normal screenshot11.",
+    "Desktop1280 to dark then light to phone390: immediate screenshot12 contains transient sidebar overlay whileDOM already has normalmainbounds.",
+    "Subsequent settled screenshot13 normal; sameDOMbounds.",
+    "Original07 narrowcolumn defect not reproduced aftersettling; original08captureinvalid.",
+    "Metadata siteinfo.js andversions.js remain404 inrawbuild."
+  ],
+  "conclusion": "No persistent article-width defect demonstrated in this recheck. The immediate capture is unreliable during resize. This is not proof about allmobilepages or accessibility.",
+  "cleanup": {
+    "viewport_reset": true,
+    "tab_closed": true,
+    "server_pid": 40309,
+    "server_terminal_exit": 143
+  },
+  "images": [
+    {
+      "file": "root-11-direct-phone-light.png",
+      "sha256": "838a7587df73f179bf64c9d9603130ab4adf0e8ebe2ac083cdaf09c48cff7a5b"
+    },
+    {
+      "file": "root-12-resize-immediate.png",
+      "sha256": "51aad65afdbfb627a16291fb2257bafc797c16bd5c61022eb7bbd5e1a3deff66"
+    },
+    {
+      "file": "root-13-resize-settled.png",
+      "sha256": "838a7587df73f179bf64c9d9603130ab4adf0e8ebe2ac083cdaf09c48cff7a5b"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+julia-conditional-components: 1234..
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Error ('test-julia-conditional-components.R:45:3'): stored scalar intercep
+Error in `drm_julia_predict_conditional_gaussian_ri(object, dpar)`: `predict()` cannot reconstruct a conditional stored `mu` prediction: the Julia bridge did not retain its validated Gaussian random-intercept payload.
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_equal(...) at test-julia-conditional-components.R:45:3
+ 2. │ └─testthat::quasi_label(enquo(object), label)
+ 3. │   └─rlang::eval_bare(expr, quo_get_env(quo))
+ 4. ├─stats::predict(intercept, dpar = "mu", type = "link")
+ 5. └─drmTMB:::predict.drmTMB_julia(intercept, dpar = "mu", type = "link")
+ 6.   └─drmTMB:::drm_julia_predict_conditional_gaussian_ri(object, dpar) at drmTMB/R/julia-bridge.R:4219:3
+ 7.     └─cli::cli_abort("{.fn predict} cannot reconstruct a conditional stored {.code mu} prediction: the Julia bridge did not retain its validated Gaussian random-intercept payload.") at drmTMB/R/julia-bridge.R:4035:5
+ 8.       └─rlang::abort(...)
+
+── 2. Error ('test-julia-conditional-components.R:82:3'): stored correlated inte
+Error in `predict(fit, dpar = "mu", type = "link")`: `predict()` cannot reconstruct a conditional stored `mu` prediction: the Julia bridge did not retain its random-effect payload.
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_equal(...) at test-julia-conditional-components.R:82:3
+ 2. │ └─testthat::quasi_label(enquo(object), label)
+ 3. │   └─rlang::eval_bare(expr, quo_get_env(quo))
+ 4. ├─stats::predict(fit, dpar = "mu", type = "link")
+ 5. └─drmTMB:::predict.drmTMB_julia(fit, dpar = "mu", type = "link")
+ 6.   └─cli::cli_abort("{.fn predict} cannot reconstruct a conditional stored {.code {dpar}} prediction: the Julia bridge did not retain its random-effect payload.") at drmTMB/R/julia-bridge.R:4229:5
+ 7.     └─rlang::abort(...)
+
+── 3. Error ('test-julia-conditional-components.R:112:3'): stored distinct-group
+Error in `predict(fit, dpar = "mu", type = "response")`: `predict()` cannot reconstruct a conditional stored `mu` prediction: the Julia bridge did not retain its random-effect payload.
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_equal(...) at test-julia-conditional-components.R:112:3
+ 2. │ └─testthat::quasi_label(enquo(object), label)
+ 3. │   └─rlang::eval_bare(expr, quo_get_env(quo))
+ 4. ├─stats::predict(fit, dpar = "mu", type = "response")
+ 5. └─drmTMB:::predict.drmTMB_julia(fit, dpar = "mu", type = "response")
+ 6.   └─cli::cli_abort("{.fn predict} cannot reconstruct a conditional stored {.code {dpar}} prediction: the Julia bridge did not retain its random-effect payload.") at drmTMB/R/julia-bridge.R:4229:5
+ 7.     └─rlang::abort(...)
+
+── 4. Error ('test-julia-conditional-components.R:125:3'): component admission r
+Error in `drm_julia_conditional_gaussian_components_spec(base, "gaussian")`: could not find function "drm_julia_conditional_gaussian_components_spec"
+Backtrace:
+    ▆
+ 1. └─testthat::expect_equal(...) at test-julia-conditional-components.R:125:3
+ 2.   └─testthat::quasi_label(enquo(object), label)
+ 3.     └─rlang::eval_bare(expr, quo_get_env(quo))
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+S10_COMPONENTS_EXPECTED_RED

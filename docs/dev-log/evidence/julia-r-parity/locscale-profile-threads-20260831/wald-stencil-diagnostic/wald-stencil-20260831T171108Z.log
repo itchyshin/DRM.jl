@@ -1,0 +1,3 @@
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+S11_WALD_STENCIL_OK result=/private/tmp/drm-parity-20260830/profile-threads-s11/wald-stencil-diagnostic/wald-stencil-20260831T171108Z.jls sha256=25084fd208dbbe9f863331b19b70c2ed7f3407d2135095a8cc0e07dcda3647a3 base_finite=false finite_probes=7/12 H_finite=false inputs_unchanged=true

@@ -1,0 +1,52 @@
+[
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/failed-all-pages-vitepress.log.gz",
+    "uncompressed_sha256": "2ffdd8f42cebcf799bd8cab529270bd6f9a8bd1d78ea5540fd262032f5d0f164",
+    "uncompressed_bytes": 250800
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/failed-crossrefs-html.log.gz",
+    "uncompressed_sha256": "902884684ac48f92d00c210d38ee66d0df853b9479fb6fe209966cd19236091a",
+    "uncompressed_bytes": 5636
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/failed-source-precheck.log.gz",
+    "uncompressed_sha256": "68ffcec5cbf913e4cb2487bed0fedff75db6f12c1226083e4eea828355c9f68a",
+    "uncompressed_bytes": 664
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/passed-html-v2.log.gz",
+    "uncompressed_sha256": "670f402879836f8d74bf81cdd20ea957ee6809ca355712c1dfe03b856caaab5c",
+    "uncompressed_bytes": 5065
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/passed-vitepress-v4.log.gz",
+    "uncompressed_sha256": "c6e5eef2ce5ec4dd9aab6d5f766e1293d9925cb383b535f2cce01280bc5113ed",
+    "uncompressed_bytes": 6774
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/theme-preview-build.log.gz",
+    "uncompressed_sha256": "26a158740c6de658463493536396975a79a13173494f88005379048c1f0826b9",
+    "uncompressed_bytes": 186
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/theme-preview-dead-links.log.gz",
+    "uncompressed_sha256": "342dcecbdf46e2f39f9da0a9d2002dd755ff95b1d65c83862c19af025a2dad94",
+    "uncompressed_bytes": 1894
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/unlazy-reader-v5.log.gz",
+    "uncompressed_sha256": "f1d25536ccea7d4fc068c5512f4962f6ea6982faca22466518952f2075b73d11",
+    "uncompressed_bytes": 4851
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/unlazy-reader-v6-syntax-error.log.gz",
+    "uncompressed_sha256": "bb21c458e014309e62fa4c8f91a3edf1dc8751a3d5f5ecd45ccbb500867cccd9",
+    "uncompressed_bytes": 198
+  },
+  {
+    "file": "docs/dev-log/evidence/julia-r-parity/docs-pilot-logs/unlazy-reader-v6.log.gz",
+    "uncompressed_sha256": "770612fb47917df59f8dfbcf4b67ea2e3bfb315a08658dabc0a4f73881176241",
+    "uncompressed_bytes": 3619
+  }
+]

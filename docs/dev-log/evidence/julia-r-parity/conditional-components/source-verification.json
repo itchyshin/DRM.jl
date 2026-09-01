@@ -1,0 +1,11 @@
+{
+  "verified": true,
+  "Julia_src_files": 86,
+  "Julia_src_anchor": "f47789646f27221ba4fad29a8ba1b3b8a790b521",
+  "R_bridge_sha256": "1b43bcd7c3a57ef8125b191c155472f71b768e312bdd82f152fbddcb189aa3db",
+  "native_fit_sha256": "1fb01724a4d6060f22f2d4062f09cb0f9ecd5d17f4626d0cbb919fe0a0796b59",
+  "native_methods_sha256": "9822cce16be5d732b9d5b14f93a0be1cbe480ec3a9164611d11256633526ba1f",
+  "native_DLL_sha256": "37ecda8a20e59c7309717865948928fc186bca853cda65b2c23c27805de60174",
+  "runner_sha256": "25c445c3d2423ea14ba92effd51bda0102d57ffa65ed235ccf3b679a762b427a",
+  "DLL_verification": "pkgload copied runtime library has exited; retained src DLL bytes match runtime hash"
+}

@@ -1,0 +1,8 @@
+┌ Info: Found version folders
+└   all_version_folders = String[]
+[ Info: Wrote versions.js with the following content:
+var DOC_VERSIONS = [
+];
+
+siteinfo.js f74ffa0e029eff89e5c24b76d1b4c6ffc4fe8ae5d6af63ac3a9c80380e1ad58e
+versions.js 8a3c65dd510498c98efeab718f4153fe2f9985452985b2f2550c83653da39e50

@@ -1,0 +1,1 @@
+Estimate 2–5 minutes, cap 300 seconds, one Julia/BLAS thread. CHECK: source manifests match before/after, exit zero, all four original includes emit completion markers and BOOTSTRAP_NEXT_COMPLETE. EXPECT: all four files complete; missing markers, timeout or failed assertions keep the group incomplete. Not a full suite, coverage or R parity claim.

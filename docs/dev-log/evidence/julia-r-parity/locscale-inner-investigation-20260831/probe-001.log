@@ -1,0 +1,12 @@
+SOURCE /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-investigation-20260831/source-locscale-inner.jl
+SOURCE_SHA256 7915b9cc780e723cd9928b2a71c3f22884d21df5f0b57c1ea1f0e2db334f8bcb
+EXTRACTED_FUNCTION_SHA256 e7de829bce3d5c8dc685ce68a4cfd4c52a23842c487ee3234cc2896f5cb81a58
+JULIA_EXECUTABLE /Users/z3437171/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/bin/julia
+SCOPE synthetic convex joint only; no response-family or model fit
+JULIA 1.10.0
+ZERO_BUDGET ok=true chol_ok=true grad_calls=0 a=[2.0, 0.0] gradnorm=10.0 threshold=3.0000000000000004e-9 stationary=false
+DEFAULT_BUDGET ok=true chol_ok=true grad_calls=200 a=[6.049899898193765e14, 0.0] gradnorm=2.214341332527806e44 threshold=604989.9898193775 stationary=false
+VALID_STATIONARY ok=true chol_ok=true grad_calls=1 a=[0.0, 0.0] gradnorm=0.0 threshold=1.0e-9 stationary=true
+INNER_MODE_FLAG_DEFECT_REPRODUCED_WITH_VALID_CONTROL
+EXIT 0 ELAPSED_SECONDS 0.9138591671362519
+SOURCE_UNCHANGED true

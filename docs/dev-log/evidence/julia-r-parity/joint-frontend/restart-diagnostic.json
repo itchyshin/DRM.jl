@@ -1,0 +1,10 @@
+{
+  "scope": "Diagnostic restart only; original native default comparison stays red",
+  "native_receipt_sha256": "98e30931fe344881d1b6d2b37118d69f806c03fe5b0273c92aebfca4461a75b1",
+  "public_fit_receipt_sha256": "03245626d971c9906305d5dd70d1eff76291f9939a93a9e0282eb751b10d6907",
+  "default_theta_max_abs": 1.0015094105086941e-05,
+  "restart_theta_max_abs": 1.0769117819720009e-07,
+  "restart_gradient_max_abs": 2.453524235312976e-05,
+  "julia_gradient_max_abs": 2.3506085966573664e-11,
+  "objective_delta": 2.1032064978498966e-12
+}

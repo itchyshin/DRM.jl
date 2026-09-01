@@ -1,0 +1,29 @@
+ERROR: LoadError: Some tests did not pass: 0 passed, 2 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bootstrap_thread_flags.jl:3
+Threaded bootstrap keeps every successful replicate: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bootstrap_thread_flags.jl:15
+  Expression: all((==)(B), counts)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bootstrap_thread_flags.jl:15 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bootstrap_thread_flags.jl:6
+Threaded bootstrap keeps every successful replicate: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bootstrap_thread_flags.jl:16
+  Expression: Threads.nthreads() == 1 || minimum(counts) == B
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bootstrap_thread_flags.jl:16 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bootstrap_thread_flags.jl:6
+BOOTSTRAP_FLAG_COUNTS min=249 max=250 batches=300 B=250
+Test Summary:                                       | Fail  Total  Time
+Threaded bootstrap keeps every successful replicate |    2      2  1.6s

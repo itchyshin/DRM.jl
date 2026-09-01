@@ -1,0 +1,1 @@
+| 2026-08-31 | **Family/random-effect continuation** (#563) | Frozen 479f1e06, Totoro Julia1.10.10, one Julia/BLAS thread | 15 files/91 assertions/16 sets,65s exit0; all327 hashes unchanged; Rose approved; full programme remains open | Ada, Curie, Rose |

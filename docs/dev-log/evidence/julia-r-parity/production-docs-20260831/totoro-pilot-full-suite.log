@@ -1,0 +1,892 @@
+2026-08-31T07:22:38Z
+9c958c8f83243bc4664ea272f5ebfcf3f1369cc34a5084afbd8a2619b84b460f  Project.toml
+3352aa55d3cca25d17195987efaaa5e5e6050f064dbf5036ab53e5808e51e899  test/Project.toml
+b1fc84ff68aab61a70d58db505fc5041a43af20cf91dc749290b2a50ac57f51e  test/Manifest.toml
+e1b0b1ff7d3afae261fa4103276a55cffee57c96ed33fd658916b4ea43a68dea  full-suite-pilot.jl
+e12d54cbbfca035e00b06d690a408e8dd02b198bc85a8b93a4874e54cb3f36a1  full-suite-pilot.sh
+RUNTIME julia=1.10.10 threads=1 blas=1 source=/home/snakagaw/drm_parity_integration_567fec06_001/src/DRM.jl
+DRM_PARITY_TESTS=unset
+┌ Warning: aic on a REML fit: REML log-likelihoods are only comparable across models with the SAME fixed-effect (mean) structure (variance-only differences). For model selection across mean structures, refit with method = :ML.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:1887
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "bivariate Gaussian"
+│   flat_coordinates =
+│    5-element Vector{Int64}:
+│     4
+│     ⋮
+│   rcond = 2.723750472770767e-30
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Info: check_drm
+│   converged = true
+│   max_abs_grad = 0.07524531485081543
+│   vcov_complete = true
+│   vcov_posdef = true
+│   min_eigval = 0.002861056529520659
+│   cond = 419624.12219076254
+│   penalized_map = false
+└   ok = false
+┌ Warning: drm: 4 of 120 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:898
+┌ Warning: drm: 4 of 120 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:898
+┌ Warning: drm: 4 of 120 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:898
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 6 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 6 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 90 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:939
+┌ Warning: drm: 4 of 40 rows have a missing/NaN response and were dropped (σ-phylo observed-rows fit; the tree is kept in full). Use `drm_listwise` to preprocess explicitly to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:557
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     3
+│     4
+│   rcond = 7.666635938919914e-18
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 6.781861827700145e-21
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 6.785696982526484e-21
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse LSS phylo"
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 8.600855948475402e-21
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     6
+│   rcond = 4.0514646418348054e-20
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     6
+│   rcond = 1.1205819871149583e-19
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: drm: 8 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:393
+┌ Warning: drm: 8 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:393
+┌ Warning: drm: 8 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:393
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 6.781861827700145e-21
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 4.307034385550336e-23
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 5.137666251939643e-37
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 6.147487663112903e-17
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 4.26748553413767e-21
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 5.137666251939643e-37
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 6.147487663112903e-17
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 4.26748553413767e-21
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 5.137666251939643e-37
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 6.147487663112903e-17
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 4.26748553413767e-21
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 1.8918424807514037e-19
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 7.386147317155021e-20
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 1.8232162398061052e-16
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 7.386147317155021e-20
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 1.8232162398061052e-16
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 2.3116380523621043e-22
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 7.092405724198682e-29
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 3.516240090348732e-18
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 4.865614216200072e-28
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 2.3116380523621043e-22
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 7.092405724198682e-29
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 3.516240090348732e-18
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 4.865614216200072e-28
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: drm: 5 of 60 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:129
+┌ Warning: drm: 5 of 60 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:129
+┌ Warning: drm: 5 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:393
+┌ Warning: drm: 5 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:393
+┌ Warning: drm: 4 of 96 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:754
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     5
+│   rcond = 1.246324576245418e-16
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     5
+│   rcond = 1.246324576245418e-16
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: drm: 4 of 96 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:754
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     5
+│   rcond = 1.24140288030105e-16
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     5
+│   rcond = 1.24140288030105e-16
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: drm: 5 of 40 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:393
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 2.4235924935008806e-16
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: drm: 5 of 40 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:393
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 8.494273336284477e-17
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: drm: 6 of 50 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:129
+┌ Warning: drm: 6 of 50 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_lss.jl:129
+┌ Info: check_drm
+│   converged = true
+│   max_abs_grad = 6.806777363976835e-13
+│   vcov_complete = true
+│   vcov_posdef = true
+│   min_eigval = 0.0004773662162536464
+│   cond = 2.094827756869694
+│   penalized_map = false
+└   ok = true
+┌ Info: check_drm
+│   converged = true
+│   max_abs_grad = 3.0077047519228017e-9
+│   vcov_complete = true
+│   vcov_posdef = true
+│   min_eigval = 0.00114375809337953
+│   cond = 1.6574486553825791
+│   penalized_map = false
+└   ok = true
+┌ Info: check_drm
+│   converged = true
+│   max_abs_grad = 0.0
+│   vcov_complete = true
+│   vcov_posdef = true
+│   min_eigval = 1.0
+│   cond = 1.0
+│   penalized_map = false
+└   ok = true
+┌ Warning: drm: this tree's maximum tip height is 1.2, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.095445 = sqrt(1.2) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/1.2 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Info: check_drm
+│   converged = true
+│   max_abs_grad = NaN
+│   vcov_complete = false
+│   vcov_posdef = false
+│   min_eigval = NaN
+│   cond = Inf
+│   penalized_map = false
+└   ok = false
+┌ Warning: check_drm: the stored covariance has non-finite entries, so `vcov_posdef` / `min_eigval` / `cond` could not be computed and `ok` is false. This is EXPECTED on routes that report a partial covariance — the sparse phylo fitter computes the fixed-effect block only. Wald SEs on the finite directions are still usable; for the variance components use `profile_ci = true` or `profile_result`.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/inference.jl:2122
+┌ Warning: drm: this tree's maximum tip height is 1.8, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.341641 = sqrt(1.8) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/1.8 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Warning: drm: this tree's maximum tip height is 5.0, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 2.236068 = sqrt(5.0) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/5.0 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Warning: drm: this tree's maximum tip height is 15.0, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 3.872983 = sqrt(15.0) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/15.0 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Warning: drm: this tree's maximum tip height is 3.2, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.788854 = sqrt(3.2) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/3.2 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+
+[3500716] signal (15): Terminated
+in expression starting at /home/snakagaw/drm_parity_integration_567fec06_001/test/test_location_only_reml_mme.jl:584
+_ZN4llvm17IDFCalculatorBaseINS_17MachineBasicBlockELb0EE9calculateERNS_15SmallVectorImplIPS1_EE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN15LiveDebugValues16InstrRefBasedLDV17BlockPHIPlacementERKN4llvm15SmallPtrSetImplIPNS1_17MachineBasicBlockEEES7_RNS1_15SmallVectorImplIS4_EE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZZN15LiveDebugValues16InstrRefBasedLDV13placeMLocPHIsERN4llvm15MachineFunctionERNS1_15SmallPtrSetImplIPNS1_17MachineBasicBlockEEERSt10unique_ptrIA_S9_IA_NS_10ValueIDNumESt14default_deleteISB_EESC_ISF_EERNS1_15SmallVectorImplINS1_13SmallDenseMapINS_6LocIdxESA_Lj4ENS1_12DenseMapInfoISL_vEENS1_6detail12DenseMapPairISL_SA_EEEEEEENKUlSL_E_clESL_ at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN15LiveDebugValues16InstrRefBasedLDV13placeMLocPHIsERN4llvm15MachineFunctionERNS1_15SmallPtrSetImplIPNS1_17MachineBasicBlockEEERSt10unique_ptrIA_S9_IA_NS_10ValueIDNumESt14default_deleteISB_EESC_ISF_EERNS1_15SmallVectorImplINS1_13SmallDenseMapINS_6LocIdxESA_Lj4ENS1_12DenseMapInfoISL_vEENS1_6detail12DenseMapPairISL_SA_EEEEEE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN15LiveDebugValues16InstrRefBasedLDV17buildMLocValueMapERN4llvm15MachineFunctionERSt10unique_ptrIA_S4_IA_NS_10ValueIDNumESt14default_deleteIS6_EES7_ISA_EESD_RNS1_15SmallVectorImplINS1_13SmallDenseMapINS_6LocIdxES5_Lj4ENS1_12DenseMapInfoISG_vEENS1_6detail12DenseMapPairISG_S5_EEEEEE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN15LiveDebugValues16InstrRefBasedLDV12ExtendRangesERN4llvm15MachineFunctionEPNS1_20MachineDominatorTreeEPNS1_16TargetPassConfigEjj.part.1399 at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm19MachineFunctionPass13runOnFunctionERNS_8FunctionE.part.68 at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm13FPPassManager13runOnFunctionERNS_8FunctionE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm13FPPassManager11runOnModuleERNS_6ModuleE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm6legacy15PassManagerImpl3runERNS_6ModuleE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm3orc14SimpleCompilerclERNS_6ModuleE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+operator() at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jitlayers.cpp:1311
+_ZN4llvm3orc14IRCompileLayer4emitESt10unique_ptrINS0_29MaterializationResponsibilityESt14default_deleteIS3_EENS0_16ThreadSafeModuleE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm3orc16IRTransformLayer4emitESt10unique_ptrINS0_29MaterializationResponsibilityESt14default_deleteIS3_EENS0_16ThreadSafeModuleE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+emit at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jitlayers.cpp:724
+_ZN4llvm3orc31BasicIRLayerMaterializationUnit11materializeESt10unique_ptrINS0_29MaterializationResponsibilityESt14default_deleteIS3_EE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm3orc19MaterializationTask3runEv at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm6detail18UniqueFunctionBaseIvJSt10unique_ptrINS_3orc4TaskESt14default_deleteIS4_EEEE8CallImplIPFvS7_EEEvPvRS7_ at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm3orc16ExecutionSession22dispatchOutstandingMUsEv at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm3orc16ExecutionSession17OL_completeLookupESt10unique_ptrINS0_21InProgressLookupStateESt14default_deleteIS3_EESt10shared_ptrINS0_23AsynchronousSymbolQueryEESt8functionIFvRKNS_8DenseMapIPNS0_8JITDylibENS_8DenseSetINS0_15SymbolStringPtrENS_12DenseMapInfoISF_vEEEENSG_ISD_vEENS_6detail12DenseMapPairISD_SI_EEEEEE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm3orc25InProgressFullLookupState8completeESt10unique_ptrINS0_21InProgressLookupStateESt14default_deleteIS3_EE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm3orc16ExecutionSession19OL_applyQueryPhase1ESt10unique_ptrINS0_21InProgressLookupStateESt14default_deleteIS3_EENS_5ErrorE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm3orc16ExecutionSession6lookupENS0_10LookupKindERKSt6vectorISt4pairIPNS0_8JITDylibENS0_19JITDylibLookupFlagsEESaIS8_EENS0_15SymbolLookupSetENS0_11SymbolStateENS_15unique_functionIFvNS_8ExpectedINS_8DenseMapINS0_15SymbolStringPtrENS_18JITEvaluatedSymbolENS_12DenseMapInfoISI_vEENS_6detail12DenseMapPairISI_SJ_EEEEEEEEESt8functionIFvRKNSH_IS6_NS_8DenseSetISI_SL_EENSK_IS6_vEENSN_IS6_SV_EEEEEE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+_ZN4llvm3orc16ExecutionSession6lookupERKSt6vectorISt4pairIPNS0_8JITDylibENS0_19JITDylibLookupFlagsEESaIS7_EENS0_15SymbolLookupSetENS0_10LookupKindENS0_11SymbolStateESt8functionIFvRKNS_8DenseMapIS5_NS_8DenseSetINS0_15SymbolStringPtrENS_12DenseMapInfoISI_vEEEENSJ_IS5_vEENS_6detail12DenseMapPairIS5_SL_EEEEEE at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/bin/../lib/julia/libLLVM-15jl.so (unknown line)
+addModule at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jitlayers.cpp:1604
+jl_add_to_ee at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jitlayers.cpp:2015
+_jl_compile_codeinst at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jitlayers.cpp:276
+jl_generate_fptr_for_unspecialized_impl at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jitlayers.cpp:596
+jl_compile_method_internal at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2495 [inlined]
+jl_compile_method_internal at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2368
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2887 [inlined]
+ijl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2902
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:925
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:877
+ijl_toplevel_eval_in at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:985
+eval at ./boot.jl:385 [inlined]
+include_string at ./loading.jl:2146
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+_include at ./loading.jl:2206
+include at ./client.jl:494
+unknown function (ip: 0x782e89d003e5)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+jl_apply at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/julia.h:1982 [inlined]
+do_call at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:126
+eval_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:223
+eval_stmt_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:174 [inlined]
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:617
+jl_interpret_toplevel_thunk at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:775
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:934
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:877
+ijl_toplevel_eval_in at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:985
+eval at ./boot.jl:385 [inlined]
+include_string at ./loading.jl:2146
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+_include at ./loading.jl:2206
+include at ./client.jl:494
+unknown function (ip: 0x782e89d003e5)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+jl_apply at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/julia.h:1982 [inlined]
+do_call at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:126
+eval_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:223
+eval_stmt_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:174 [inlined]
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:617
+jl_interpret_toplevel_thunk at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:775
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:934
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:877
+ijl_toplevel_eval_in at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:985
+eval at ./boot.jl:385 [inlined]
+include_string at ./loading.jl:2146
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+_include at ./loading.jl:2206
+include at ./Base.jl:495
+jfptr_include_46653 at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+exec_options at ./client.jl:323
+_start at ./client.jl:557
+jfptr__start_83114 at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+jl_apply at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/julia.h:1982 [inlined]
+true_main at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jlapi.c:582
+jl_repl_entrypoint at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jlapi.c:731
+main at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/cli/loader_exe.c:58
+unknown function (ip: 0x782e9102a1c9)
+__libc_start_main at /lib/x86_64-linux-gnu/libc.so.6 (unknown line)
+unknown function (ip: 0x4010b8)
+unknown function (ip: (nil))
+Allocations: 662324262 (Pool: 660548260; Big: 1776002); GC: 1311
+┌ Warning: drm: this tree's maximum tip height is 2.0, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.414214 = sqrt(2.0) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/2.0 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Warning: drm: this tree's maximum tip height is 4.0, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 2.0 = sqrt(4.0) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/4.0 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 2.690648687454695e-10
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 2.690648687454695e-10
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+┌ Warning: drm: 2 of 100 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/gaussian_core.jl:898
+┌ Info: phylo_interaction FD gate
+└   max_abs_grad_error = 7.002114443821483e-9
+┌ Warning: drm: this tree's maximum tip height is 2.4, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.549193 = sqrt(2.4) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/2.4 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/sparse_phy.jl:713
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     4
+│   rcond = 9.340619866600201e-17
+└ @ DRM ~/drm_parity_integration_567fec06_001/src/vcov_guard.jl:87
+Test Summary:                            | Pass  Total  Time
+DRM.jl — engine loads + phylo foundation |   14     14  0.1s
+Test Summary:             | Pass  Total   Time
+Aqua.jl quality assurance |   10     10  16.5s
+Test Summary:                                                  | Pass  Total  Time
+Gaussian location-scale (univariate, fixed effects) — recovery |    4      4  7.0s
+Test Summary:                                             | Pass  Total   Time
+REML (fixed-effect Gaussian location–scale, method=:REML) |   23     23  14.2s
+Test Summary:                              | Pass  Total  Time
+REML ordinary Gaussian mean (1 | g) — #439 |   20     20  3.5s
+Test Summary:                                       | Pass  Total   Time
+niterations — iterative fitters report a real count |   20     20  23.7s
+Test Summary:                         | Pass  Total  Time
+bf() grammar: valid forms still build |    8      8  0.1s
+Test Summary:                            | Pass  Total  Time
+bf() grammar: reserved-syntax rejections |    7      7  0.0s
+Test Summary:                        | Pass  Total  Time
+bf() grammar: bivariate keyword form |    7      7  0.1s
+Test Summary:                               | Pass  Total  Time
+bf() grammar: error messages are actionable |    3      3  0.0s
+Test Summary:                                        | Pass  Total  Time
+Bivariate Gaussian location-scale + rho12 — recovery |    6      6  2.3s
+Test Summary:                                                 | Pass  Total  Time
+Bivariate residual-σ seed floor for saturated design (#324.3) |    6      6  2.1s
+Test Summary:                              | Pass  Total   Time
+bivariate lognormal (drmTMB biv_lognormal) |   46     46  24.5s
+Test Summary:                            | Pass  Total  Time
+bivariate Student-t (drmTMB biv_student) |   17     17  0.3s
+Test Summary:                               | Pass  Total   Time
+staged association (drmTMB associate_pairs) |   43     43  17.5s
+Test Summary:                          | Pass  Total  Time
+Bivariate Gaussian q=4 phylo front end |   14     14  0.3s
+Test Summary:                            | Pass  Total  Time
+Bivariate q=4 phylo front-end validation |    6      6  1.0s
+Test Summary:                                                     | Pass  Total  Time
+q=4 block-diagonal start is lc-consistent for general tags (#309) |    9      9  0.0s
+Test Summary:                                 | Pass  Total  Time
+q=4 phylo front-end review-blocker follow-ups |   18     18  3.3s
+Test Summary:                         | Pass  Total  Time
+Bivariate q=4 relmat front end (#189) |   10     10  1.1s
+Test Summary:                         | Pass  Total  Time
+Bivariate q=4 animal front end (#189) |    5      5  0.4s
+Test Summary:                                      | Pass  Total  Time
+Bivariate q=4 spatial fixed-range front end (#189) |    4      4  0.6s
+Test Summary:                              | Pass  Total  Time
+Bivariate q=4 structured validation (#189) |    3      3  0.8s
+Test Summary:                                         | Pass  Total  Time
+Bivariate q=4 structured gradient wiring smoke (#189) |    4      4  0.2s
+Test Summary:                                | Pass  Total  Time
+converged is gated on Λ admissibility (#509) |    9      9  0.3s
+Test Summary:                  | Pass  Total  Time
+#19 bivariate missing-response |   16     16  0.7s
+Test Summary:                  | Pass  Total  Time
+Gaussian response-missing rows |   15     15  2.5s
+Test Summary:                            | Pass  Total  Time
+Bivariate Gaussian response-missing rows |   12     12  0.9s
+Test Summary:                      | Pass  Total   Time
+Non-Gaussian response-missing rows |  118    118  10.7s
+Test Summary:                                        | Pass  Total  Time
+#323.1 saturated missing-response Gaussian fit warns |    1      1  0.1s
+Test Summary:                                      | Pass  Total  Time
+#324.1 bridge picker errors when no SD row present |    2      2  0.0s
+Test Summary:                                       | Pass  Total  Time
+#322.3 scale-axis RE SD keyed on the log-sigma axis |    2      2  1.3s
+Test Summary:                     | Pass  Total  Time
+#325.5 VA fitters guard sigma ~ 1 |    3      3  1.1s
+Test Summary:                                         | Pass  Total  Time
+Gaussian missing-response over-parameterisation guard |    5      5  4.5s
+Test Summary:                               | Pass  Total  Time
+q=4 coevolution among-axis accessors (#188) |   51     51  0.6s
+Test Summary:                                                 | Pass  Total  Time
+general-q log-Cholesky (q=6) round-trips + matches q=4 engine |   18     18  0.0s
+Test Summary:                                      | Pass  Total  Time
+general-q coevolution marginal is exact (Gaussian) |    1      1  0.5s
+Test Summary:                                                    | Pass  Total   Time
+q=6 coevolution recovers Λ (SDs, strong correlations, residuals) |   19     19  10.5s
+Test Summary:                                 | Pass  Total   Time
+q=8 coevolution: shape + identification smoke |    9      9  10.8s
+Test Summary:                                      | Pass  Total  Time
+corpairs() — between-response residual correlation |   10     10  0.5s
+Test Summary:                              | Pass  Total  Time
+Gaussian random intercept (1|g) — recovery |    4      4  0.0s
+Test Summary:                                            | Pass  Total  Time
+Gaussian independent random slope (0 + x | g) — recovery |    5      5  0.1s
+Test Summary:          | Pass  Total  Time
+lss sd(group): grammar |    3      3  0.1s
+Test Summary:                           | Pass  Total  Time
+lss sd(group): router refusals are loud |    4      4  2.2s
+Test Summary:                            | Pass  Total  Time
+lss sd(group): reduction invariant + fit |    9      9  2.3s
+Test Summary:                             | Pass  Total  Time
+lss sd(group): REML and post-fit surfaces |    9      9  1.7s
+Test Summary:                  | Pass  Total  Time
+sd_phylo: grammar and refusals |   11     11  7.2s
+Test Summary:                                          | Pass  Total  Time
+sd_phylo: QQQ fit matches drmTMB and recovers the mean |    8      8  2.7s
+Test Summary:                                   | Pass  Total  Time
+sd_phylo: reduction invariant + #548 regression |    7      7  2.5s
+Test Summary:                                                      | Pass  Total  Time
+sd_phylo: homoscedastic structured route is untouched (#548 guard) |    2      2  1.5s
+Test Summary:                              | Pass  Total  Time
+bridge: sd()/sd_phylo() parts route (#546) |    3      3  0.6s
+Test Summary:                                            | Pass  Total  Time
+threaded inference on the stored nll closure (#549/#550) |    4      4  2.1s
+LSS_BOUNDARY_DIAGNOSTIC label=dedicated_small max_theta_difference=5.841281726759462e-6
+LSS_BOUNDARY_DIAGNOSTIC label=dedicated_small block=mu left=[0.48158988858744245, 0.35949626382146666] right=[0.48158988858744245, 0.3594962638214665]
+LSS_BOUNDARY_DIAGNOSTIC label=dedicated_small block=sigma left=[-1.263756953354236, -0.35712383646678947] right=[-1.2637569533542359, -0.3571238364667893]
+LSS_BOUNDARY_DIAGNOSTIC label=dedicated_small block=sd_phylo left=[-36.172525749555696, -12.928494561502678] right=[-36.17253159083742, -12.928496737190907]
+LSS_BOUNDARY_DIAGNOSTIC label=scalar_multi_small max_theta_difference=0.5086774092685538
+LSS_BOUNDARY_DIAGNOSTIC label=scalar_multi_small block=mu left=[0.48000468061998597, 0.37017595883131615] right=[0.48000468052441353, 0.3701759588533307]
+LSS_BOUNDARY_DIAGNOSTIC label=scalar_multi_small block=sigma left=[-1.4455921349149878, -0.4912897281919248] right=[-1.445592134897524, -0.49128972821580114]
+LSS_BOUNDARY_DIAGNOSTIC label=scalar_multi_small block=sd left=[-1.899184723141704] right=[-1.8991847228809982]
+LSS_BOUNDARY_DIAGNOSTIC label=scalar_multi_small block=sd_phylo left=[-22.7306276354358] right=[-22.221950226167245]
+Test Summary:                          | Pass  Broken  Total   Time
+Gaussian LSS phylogenetic tip identity |  401       2    403  12.3s
+Test Summary:                   | Pass  Total   Time
+Gaussian LSS bootstrap contract |   60     60  10.7s
+BOOTSTRAP_FLAG_COUNTS min=250 max=250 batches=300 B=250
+Test Summary:                                       | Pass  Total  Time
+Threaded bootstrap keeps every successful replicate |    2      2  0.8s
+Test Summary:                                               | Pass  Total  Time
+Sparse LSS vs Dense Comparator: Scalar α (Single Predictor) |   17     17  0.8s
+Test Summary:                                                        | Pass  Total   Time
+Sparse LSS vs Dense Comparator: Multi-column α (Multiple Predictors) |   12     12  12.9s
+Test Summary:                                 | Pass  Total  Time
+Sparse LSS: Routing and sparse = true keyword |    4      4  0.3s
+Test Summary:                         | Pass  Total  Time
+Sparse LSS: Large tree scaling sanity |    5      5  0.0s
+Test Summary:                                    | Pass  Total  Time
+lsss multi: iid + phylo, both sd ~ x (fixture A) |    9      9  1.4s
+Test Summary:                                     | Pass  Total  Time
+lsss multi: three REs, five submodels (fixture B) |    5      5  4.2s
+Test Summary:        | Pass  Total  Time
+lsss multi: refusals |    6      6  5.8s
+Test Summary:                               | Pass  Total  Time
+sparse phylo-mean variance-block SEs (#556) |    5      5  0.8s
+Test Summary:                          | Pass  Total  Time
+Location-scale-scale (lss) REML (#558) |   41     41  2.3s
+Test Summary:                              | Pass  Total  Time
+#559 Location-scale-scale missing response |   57     57  4.1s
+Test Summary:                      | Pass  Total  Time
+Wald inference: stderror + confint |   14     14  0.1s
+Test Summary:                                               | Pass  Total  Time
+Wald SE at a singular boundary (non-PD vcov ⇒ Inf, not NaN) |    6      6  0.0s
+Test Summary:                                        | Pass  Total  Time
+Profile-likelihood CI: confint(fit; method=:profile) |   27     27  0.6s
+Test Summary:                                 | Pass  Total  Time
+Gaussian crossed profile uses stored gradient |    9      9  5.6s
+Test Summary:                                   | Pass  Total  Time
+Profile CI on crossed Poisson random-effect SDs |    9      9  2.1s
+Test Summary:                                  | Pass  Total  Time
+Profile CI on the scale parameter (asymmetric) |   11     11  0.1s
+Test Summary:                                  | Pass  Total  Time
+generic profile nuisance acceptance and status |   70     70  3.2s
+Test Summary:                          | Pass  Total  Time
+independent profile acceptance oracles |   13     13  0.6s
+Test Summary:                           | Pass  Total  Time
+bridge exposes selected profile failure |   10     10  0.2s
+Test Summary:                                      | Pass  Total  Time
+check_drm() — convergence / identifiability report |   27     27  0.1s
+Test Summary:                                               | Pass  Total  Time
+bias_correct — identity anchor (linear g ⇒ zero correction) |    9      9  0.8s
+Test Summary:                                          | Pass  Total  Time
+bias_correct — curvature anchor (g = exp, closed form) |   21     21  0.3s
+Test Summary:                                             | Pass  Total  Time
+bias_correct — quadratic g is exact (g = θ², closed form) |    4      4  0.3s
+Test Summary:                                                     | Pass  Total  Time
+bias_correct — cross terms via off-diagonal covariance (g = θ₁θ₂) |    3      3  0.4s
+Test Summary:                                                 | Pass  Total  Time
+bias_correct — level controls CI width; se=0 ⇒ point interval |    4      4  1.1s
+Test Summary:                                                       | Pass  Total  Time
+bias_correct — on a real DrmFit (DrmFit method == manual θ̂,V form)  |   13     13  0.8s
+Test Summary:                | Pass  Total  Time
+visualization data providers |   23     23  0.7s
+Test Summary:                                        | Pass  Total  Time
+drm_figure drawing stub (DRMMakieExt weak-dep, #336) |    8      8  0.0s
+Test Summary:                | Pass  Total  Time
+Post-fit: fitted + residuals |    7      7  0.0s
+Test Summary:                                | Pass  Total  Time
+Gaussian meta-analysis: meta_V(v) — recovery |    3      3  1.0s
+Test Summary: | Pass  Total  Time
+simulate      |   12     12  0.2s
+Test Summary:    | Pass  Total  Time
+simulate Poisson |    6      6  0.0s
+Test Summary:                                      | Pass  Total  Time
+Gaussian structured RE: relmat(1|id, K) — recovery |    4      4  2.1s
+Test Summary:                                      | Pass  Total  Time
+Gaussian structured RE: animal(1|id, A) — recovery |    2      2  0.2s
+Test Summary:                                             | Pass  Total  Time
+Gaussian structured RE: phylo(1|species, tree) — recovery |    2      2  0.0s
+Test Summary:                             | Pass  Total  Time
+#482 Gaussian mean-phylo missing response |   45     45  0.6s
+Test Summary:                            | Pass  Total  Time
+phylo_interaction: bipartite two-tree RE |   10     10  2.7s
+Test Summary:                                        | Pass  Total  Time
+Two structured components: phylo + animal — recovery |   12     12  4.1s
+Test Summary:                                                | Pass  Total  Time
+Two structured components: collapse to single phylo (σ2 → 0) |    4      4  0.9s
+Test Summary:                          | Pass  Total  Time
+Two structured components: error paths |    2      2  0.7s
+Test Summary:                                        | Pass  Total  Time
+Sparse two-structured: EQUIVALENCE to dense (anchor) |    6      6  1.5s
+Test Summary:                                                       | Pass  Total  Time
+Sparse two-structured: analytic gradient matches finite differences |    2      2  0.3s
+Test Summary:                                                        | Pass  Total  Time
+Sparse two-structured: recovery on a larger fixture (phylo + relmat) |    6      6  0.4s
+Test Summary:                                         | Pass  Total  Time
+Sparse two-structured: routed via algorithm = :sparse |    6      6  0.2s
+Test Summary:                                         | Pass  Total  Time
+augmented_tree_precision: leaf cov == sigma_phy_dense |    4      4  0.0s
+Test Summary:                                 | Pass  Total  Time
+caterpillar tree: well-formed binary topology |   12     12  0.0s
+Test Summary:                                                     | Pass  Total  Time
+END-TO-END sparse phylo: equals dense leaf-correlation fit (#232) |    7      7  0.2s
+Test Summary:                                                 | Pass  Total  Time
+END-TO-END sparse phylo: sigma ~ x heteroscedastic (D → diag) |    3      3  0.2s
+Test Summary:                                                  | Pass  Total  Time
+heritability/ICC — closed-form anchor (single phylo component) |   11     11  0.4s
+Test Summary:                                               | Pass  Total  Time
+heritability — delta vs profile agreement (well identified) |    6      6  0.2s
+Test Summary:                                                     | Pass  Total  Time
+heritability/ICC — two structured components (closed-form anchor) |   10     10  2.0s
+Test Summary:                                                  | Pass  Total  Time
+heritability — degenerate anchors (component→0 and residual→0) |    5      5  4.6s
+Test Summary:                                                      | Pass  Total  Time
+heritability — error on heteroscedastic residual and no components |    2      2  0.0s
+Test Summary:                                                           | Pass  Total  Time
+Gaussian phylo mean: :auto uses sparse L-BFGS and :em remains available |   31     31  0.6s
+Test Summary:                                     | Pass  Total  Time
+conjugate EM (#12): :em rejects unsupported cells |    4      4  0.1s
+Test Summary:                                                   | Pass  Total  Time
+Location-only Gaussian phylo: supplied-variance REML and traces |  209    209  5.5s
+Test Summary:                                                             | Pass  Total  Time
+Location-only Gaussian phylo: boundary diagnostics are finite or explicit |  144    144  3.1s
+ELAPSED_SECONDS 301

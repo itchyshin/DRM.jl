@@ -1,0 +1,18 @@
+ERROR: LoadError: UndefVarError: `rev` not defined
+Stacktrace:
+ [1] (::var"#5#6"{@NamedTuple{kind::Val{:gamma}, y::Vector{Float64}, eta::Vector{Float64}, psi::Vector{Float64}, gidx::Vector{Int64}, G::Int64, P::SparseMatrixCSC{Float64, Int64}, Zeta::Matrix{Float64}, Zpsi::Matrix{Float64}, a::Vector{Float64}, trial::Vector{Float64}, grad::Vector{Float64}, step::Vector{Float64}, f0::Float64, ft::Float64, tol::Float64}, Vector{Float64}})()
+   @ Main /private/tmp/locscale_objective_arithmetic_followup.jl:37
+ [2] setprecision(f::var"#5#6"{@NamedTuple{kind::Val{:gamma}, y::Vector{Float64}, eta::Vector{Float64}, psi::Vector{Float64}, gidx::Vector{Int64}, G::Int64, P::SparseMatrixCSC{Float64, Int64}, Zeta::Matrix{Float64}, Zpsi::Matrix{Float64}, a::Vector{Float64}, trial::Vector{Float64}, grad::Vector{Float64}, step::Vector{Float64}, f0::Float64, ft::Float64, tol::Float64}, Vector{Float64}}, ::Type{BigFloat}, prec::Int64; kws::@Kwargs{})
+   @ Base.MPFR ./mpfr.jl:1041
+ [3] setprecision
+   @ ./mpfr.jl:1037 [inlined]
+ [4] #hp_recomputed#4
+   @ /private/tmp/locscale_objective_arithmetic_followup.jl:35 [inlined]
+ [5] line(name::String, s::@NamedTuple{kind::Val{:gamma}, y::Vector{Float64}, eta::Vector{Float64}, psi::Vector{Float64}, gidx::Vector{Int64}, G::Int64, P::SparseMatrixCSC{Float64, Int64}, Zeta::Matrix{Float64}, Zpsi::Matrix{Float64}, a::Vector{Float64}, trial::Vector{Float64}, grad::Vector{Float64}, step::Vector{Float64}, f0::Float64, ft::Float64, tol::Float64})
+   @ Main /private/tmp/locscale_objective_arithmetic_followup.jl:71
+ [6] top-level scope
+   @ /private/tmp/locscale_objective_arithmetic_followup.jl:86
+in expression starting at /private/tmp/locscale_objective_arithmetic_followup.jl:86
+STATE_SHA 040645c9751dbedd57bb7021937a388d5b3f1fda9c0d89309fdbb79be5ec849a
+CASE gamma CLAMP_RANGES_A (eta = (0.19832304069859824, 1.0151411927559815), psi = (1.4072913779996972, 1.5738335417109073), nb2_rate = (-3.1476670834218146, -2.8145827559993943)) CLAMP_RANGES_T (eta = (0.19832304071689438, 1.0151411927741778), psi = (1.4072913779904714, 1.5738335417016307), nb2_rate = (-3.1476670834032614, -2.814582755980943))
+FLOAT_LINEAR_FORWARD delta=7.815970093361102e-14 REVERSE delta=7.105427357601002e-14 NEUMAIER delta=7.815970093361102e-14

@@ -1,0 +1,23 @@
+ℹ Testing drmTMB
+julia-structured-inference: 12
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Error ('test-julia-structured-inference.R:76:3'): univariate structured fi
+Error in `get(obj_name, envir = env, inherits = TRUE)`: object 'K' not found
+Backtrace:
+    ▆
+ 1. └─drmTMB:::drmTMB_julia_structured_bridge(...) at test-julia-structured-inference.R:76:3
+ 2.   └─drmTMB:::drm_julia_structured_payload(...) at drmTMB/R/julia-bridge.R:4806:3
+ 3.     └─drmTMB:::drm_julia_structured_matrix(...) at drmTMB/R/julia-bridge.R:4895:3
+ 4.       └─base::get(obj_name, envir = env, inherits = TRUE) at drmTMB/R/julia-bridge.R:4973:3
+
+── 2. Error ('test-julia-structured-inference.R:125:5'): structured providers re
+<subscriptOutOfBoundsError/error/condition>
+Error in `as.character(x$kind)[[1L]]`: subscript out of bounds
+Backtrace:
+    ▆
+ 1. └─drmTMB (local) drm_julia_structured_inference_object(case) at test-julia-structured-inference.R:125:5
+ 2.   └─drmTMB:::new_drmTMB_julia(...) at test-julia-structured-inference.R:55:3
+ 3.     └─drmTMB:::drm_julia_conditional_re_plain(result$conditional_re) at drmTMB/R/julia-bridge.R:2282:3
+
+══ DONE ════════════════════════════════════════════════════════════════════════

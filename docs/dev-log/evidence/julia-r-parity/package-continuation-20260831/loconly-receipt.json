@@ -1,0 +1,14 @@
+{
+  "passed": 602,
+  "testsets": 3,
+  "elapsed_seconds": 20,
+  "exit_code": 0,
+  "source_unchanged": true,
+  "verified_input_files": 326,
+  "scope": "complete location-only REML test file, not full suite or R parity",
+  "observation_note": "SSH launch observation timed out15s; same job terminal result inspected, not restarted",
+  "provenance_entries": 326,
+  "provenance_non_OK": [],
+  "source_head_local": "5e9d58836cb21e4cfbbfc6e832b2852051b37cd8",
+  "source_scope": "326 Julia src/test files matched exactly; docs-only commit differences are outside numerical inputs"
+}

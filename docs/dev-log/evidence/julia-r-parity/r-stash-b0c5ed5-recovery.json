@@ -1,0 +1,61 @@
+{
+  "status": "RECOVERY_PROBE_PASS",
+  "repo": "/private/tmp/drm-parity-20260830/drmTMB",
+  "stash": "b0c5ed5dc597f4ab8b0435b8ec441e2e93f2453d",
+  "parents": [
+    "68960066f98b58322a865484e62a58c614a00300",
+    "5c90643052489f064787ac9e8279089f34ed2c19",
+    "9fed4289d0ea861c9953a94e7657aa8c012e24ce"
+  ],
+  "untracked_tree_empty": true,
+  "scope": "modified regular files only; private saved-base replay; no retirement",
+  "restored_files_per_state": 2,
+  "damaged_restore_rejected": true,
+  "snapshots": {
+    "base": {
+      "R/julia-bridge.R": {
+        "mode": "100644",
+        "blob": "36b7d78ca8347b861817733b48aa4016892515a2",
+        "sha256": "11c133f3e8f7cd25304de5d118e5337174da9bdbfc9d098bf6ef51d214afd8c4"
+      },
+      "tests/testthat/test-julia-inference.R": {
+        "mode": "100644",
+        "blob": "42f276cbc03eb334a7b9b4e3d1d104800f3ec896",
+        "sha256": "281683d1d38fac40c84e8631ad27b7dd5d3bfa2b2ea481870a62ca1ce780e6fe"
+      }
+    },
+    "index": {
+      "R/julia-bridge.R": {
+        "mode": "100644",
+        "blob": "36b7d78ca8347b861817733b48aa4016892515a2",
+        "sha256": "11c133f3e8f7cd25304de5d118e5337174da9bdbfc9d098bf6ef51d214afd8c4"
+      },
+      "tests/testthat/test-julia-inference.R": {
+        "mode": "100644",
+        "blob": "42f276cbc03eb334a7b9b4e3d1d104800f3ec896",
+        "sha256": "281683d1d38fac40c84e8631ad27b7dd5d3bfa2b2ea481870a62ca1ce780e6fe"
+      }
+    },
+    "worktree": {
+      "R/julia-bridge.R": {
+        "mode": "100644",
+        "blob": "cdc53a6f14c9cd69c12fd6730370db18f17f0b41",
+        "sha256": "0ebb8903e4d0b2071e02eb7b423e3b4a57cbcb764be568737dd3ea80edfdede8"
+      },
+      "tests/testthat/test-julia-inference.R": {
+        "mode": "100644",
+        "blob": "10632f2408168d5096058951785e13e1358f55ab",
+        "sha256": "8e282f981a818b5a5fa92a4a37d0ce38fcfe1fc2fadc2f5e91db3f49a11153f9"
+      }
+    }
+  },
+  "patch_sha256": {
+    "index.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "worktree.patch": "19c81763522c28f3ce7f358061633e014cc27bf41420458c674c168f8965c241"
+  },
+  "tool_sha256": "81fdfce2fa00c1ac75d51d95a67026cd6290c066ea9bdfe2334ee168350979d8",
+  "private_snapshot": "/private/tmp/drm-parity-20260830/recovery/r-stash-b0c5ed5-v4",
+  "disposition": "preserved_superseded_wip_no_retirement",
+  "already_landed_commit": "414b0f95aa9b932eb8dd7824a9ada348d462d4a8",
+  "reviewed_main": "b35642b4560072cadba7e595e66e00209ebdeb40"
+}

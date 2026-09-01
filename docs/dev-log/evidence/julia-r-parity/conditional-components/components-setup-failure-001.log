@@ -1,0 +1,21 @@
+ℹ Starting Julia (first call in a session takes ~30-60 s; later calls are
+  fast)...
+Julia version 1.10.0 at location /Users/z3437171/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/bin will be used.
+Loading setup script for JuliaCall...
+Finish loading setup script for JuliaCall.
+drmTMB_drm_bridge (generic function with 1 method)
+
+Error: Error happens in Julia.
+ParseError("extra token after end of expression")
+Stacktrace:
+ [1] parse(str::SubString{String}; filename::String, raise::Bool, depwarn::Bool)
+   @ Base.Meta ./meta.jl:283
+ [2] parse
+   @ Base.Meta ./meta.jl:276 [inlined]
+ [3] eval_string(x::String)
+   @ Main.JuliaCall ~/Library/R/arm64/4.6/library/JuliaCall/julia/setup.jl:203
+ [4] docall(call1::Ptr{Nothing})
+   @ Main.JuliaCall ~/Library/R/arm64/4.6/library/JuliaCall/julia/setup.jl:0
+Execution halted
+Julia exit.
+  Activating project at `/private/tmp/drm-parity-20260830/DRM.jl`

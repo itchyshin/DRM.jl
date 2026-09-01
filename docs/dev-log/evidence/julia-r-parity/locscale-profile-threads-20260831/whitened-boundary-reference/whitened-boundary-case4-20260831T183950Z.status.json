@@ -1,0 +1,20 @@
+{
+  "command": [
+    "julia",
+    "--project=.",
+    "--startup-file=no",
+    "--history-file=no",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-boundary-reference/diagnose.jl",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-boundary-reference/whitened-boundary-case4-20260831T183950Z.jls",
+    "4"
+  ],
+  "script_sha256": "363dba021e42d76f59e0a0460359fec64c2f852e166e96c439a44c9743ca6751",
+  "started_utc": "2026-08-31T18:39:50.973611+00:00",
+  "wall_seconds": 35.66457675001584,
+  "hard_cap_seconds": 60,
+  "timed_out": false,
+  "returncode": 0,
+  "pid": 63260,
+  "requested_julia_threads": 1,
+  "requested_blas_threads": 1
+}

@@ -1,0 +1,1 @@
+| 2026-08-31 | Canonical location-scale profile failure disclosure (#563 / S11) | Unlazy G0–G3; actual-module 1/4 threads; strict52page docs | 90 focused assertions; 196/200 module assertions; Rose approved bounded slice; inner-mode and global numerical gates open | Ada / Fisher / Rose |

@@ -1,0 +1,17 @@
+{
+  "source_head": "479f1e06464d06592b2d845798a27fdd8a5ac544",
+  "remote": "/home/snakagaw/drm_parity_blas_c0675b16_001",
+  "files": [
+    "test_locscale_structured.jl",
+    "test_sigma_axis_re.jl",
+    "test_nonconst_sigma_re.jl"
+  ],
+  "estimate_seconds": [
+    180,
+    600
+  ],
+  "cap_seconds": 600,
+  "julia_threads": 1,
+  "blas_threads": 1,
+  "scope": "Unfinished suffix only, no native-R or performance claim"
+}

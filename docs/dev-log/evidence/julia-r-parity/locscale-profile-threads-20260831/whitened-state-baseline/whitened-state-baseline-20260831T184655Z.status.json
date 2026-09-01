@@ -1,0 +1,16 @@
+{
+  "command": [
+    "julia",
+    "--project=.",
+    "--startup-file=no",
+    "--history-file=no",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-state-baseline/diagnose.jl",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-state-baseline/whitened-state-baseline-20260831T184655Z.jls"
+  ],
+  "script_sha256": "0b23bf48d76c0b2241b0aced02ea0c53aa9be87e2057bd78e5d5b1477fcf3ad7",
+  "wall_seconds": 5.734606750076637,
+  "hard_cap_seconds": 30,
+  "timed_out": false,
+  "returncode": 1,
+  "pid": 69015
+}

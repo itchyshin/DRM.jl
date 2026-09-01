@@ -1,0 +1,13 @@
+APPROVAL REQUIRED bridge-bootstrap-tree:G3
+    CHECK: python3 /private/tmp/drm-parity-20260830/bridge-bootstrap-tree/run_r.py
+    EXPECT: R_TREE_BOOTSTRAP_CHECK_PASS
+    CWD: /private/tmp/drm-parity-20260830/integration/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg0rqosbj:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+    APPROVED: /Users/z3437171/.unlazy/approved/dfc9b1333b9afdf4fbe0c24d9046937a169c04bc0070e992a800a869aea4c56b.json
+  RUN  bridge-bootstrap-tree:G3 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/integration/DRM.jl PATH=/opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg0rqosbj:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+  FAIL bridge-bootstrap-tree:G3: actual R public API and generated wrapper
+       exit=1; EXPECT=not matched; output=/private/tmp/drm-parity-20260830/bridge-bootstrap-tree/actual-r-threads1-20260831T205655Z {'command': ['Rscript', '--vanilla', '/private/tmp/drm-parity-20260830/bridge-bootstrap-tree/actual-r.R'], 'code': 1, 'seconds': 41.733007750008255, 'cap_seconds': 60, 'estimate_seconds': 60, 'timed_out': False, 'unchanged': True, 'julia_threads': 1, 'blas_threads': 1}
+bridge-bootstrap-tree.md: 5 gates
+UNMET: 2 (met: 3)
+  bridge-bootstrap-tree:G3, bridge-bootstrap-tree:G4

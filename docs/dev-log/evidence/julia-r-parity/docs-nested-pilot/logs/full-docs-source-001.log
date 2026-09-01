@@ -1,0 +1,143 @@
+[ Info: SetupBuildDirectory: setting up build directory.
+[ Info: Doctest: running doctests.
+[ Info: ExpandTemplates: expanding markdown templates.
+WARNING: replacing module __atexample__named__fam.
+┌ Error: duplicate docs found for 'mf_coef' in `@docs` block in docs/src/reference/model-fitting-and-postfit.md:179-181
+│ ```@docs
+│ mf_coef
+│ ``` 
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+┌ Error: no docs found for 'AugProblem' in `@docs` block in docs/src/reference/model-fitting-and-postfit.md:193-200
+│ ```@docs
+│ AugProblem
+│ make_problem
+│ fit_q4_sparse_tmb
+│ marginal_nll
+│ CoevoProblem
+│ lc_to_cov
+│ ```
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+┌ Error: no docs found for 'make_problem' in `@docs` block in docs/src/reference/model-fitting-and-postfit.md:193-200
+│ ```@docs
+│ AugProblem
+│ make_problem
+│ fit_q4_sparse_tmb
+│ marginal_nll
+│ CoevoProblem
+│ lc_to_cov
+│ ```
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+┌ Error: no docs found for 'fit_q4_sparse_tmb' in `@docs` block in docs/src/reference/model-fitting-and-postfit.md:193-200
+│ ```@docs
+│ AugProblem
+│ make_problem
+│ fit_q4_sparse_tmb
+│ marginal_nll
+│ CoevoProblem
+│ lc_to_cov
+│ ```
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+┌ Error: failed to run `@example` block in docs/src/tutorials/phylogenetic-models.md:100-120
+│ ```@example phybb
+│ Random.seed!(20260802)
+│ G2 = 24
+│ phy2 = random_balanced_tree(G2; branch_length = 0.20)
+│ species2 = repeat(1:G2, inner = 10)
+│ n2 = length(species2)
+│ x2 = randn(n2)
+│ φbb = 16.0
+│ σphy2 = 0.35
+│ C2 = sigma_phy_dense(phy2; σ²_phy = σphy2^2)
+│ u2 = cholesky(Symmetric(C2)).L * randn(G2)
+│ μbb = 1 ./ (1 .+ exp.(-(-0.10 .+ 0.45 .* x2 .+ u2[species2])))
+│ trials2 = fill(10, n2)
+│ succ2 = Float64.([rand(Distributions.BetaBinomial(trials2[i], μbb[i] * φbb, (1 - μbb[i]) * φbb)) for i in 1:n2])
+│ fail2 = Float64.(trials2) .- succ2
+│ 
+│ fitbb_phy = drm(bf(@formula(cbind(succ2, fail2) ~ x2 + phylo(1 | species2)), @formula(sigma ~ 1)),
+│                 BetaBinomial(); data = (; succ2, fail2, x2, species2), tree = phy2, se = false)
+│ 
+│ re_sd(fitbb_phy)[:species2]        # phylogenetic SD on the logit mean (≈ 0.35)
+│ ```
+│   exception =
+│    UndefVarError: `Random` not defined
+│    Stacktrace:
+│      [1] top-level scope
+│        @ phylogenetic-models.md:101
+│      [2] eval
+│        @ ./boot.jl:385 [inlined]
+│      [3] #59
+│        @ ~/.julia/packages/Documenter/AXNMp/src/expander_pipeline.jl:879 [inlined]
+│      [4] cd(f::Documenter.var"#59#61"{Module, Expr}, dir::String)
+│        @ Base.Filesystem ./file.jl:112
+│      [5] (::Documenter.var"#58#60"{Documenter.Page, Module, Expr})()
+│        @ Documenter ~/.julia/packages/Documenter/AXNMp/src/expander_pipeline.jl:878
+│      [6] (::IOCapture.var"#5#9"{DataType, Documenter.var"#58#60"{Documenter.Page, Module, Expr}, IOContext{Base.PipeEndpoint}, IOContext{Base.PipeEndpoint}, IOStream, IOStream})()
+│        @ IOCapture ~/.julia/packages/IOCapture/MR051/src/IOCapture.jl:170
+│      [7] with_logstate(f::Function, logstate::Any)
+│        @ Base.CoreLogging ./logging.jl:515
+│      [8] with_logger
+│        @ ./logging.jl:627 [inlined]
+│      [9] capture(f::Documenter.var"#58#60"{Documenter.Page, Module, Expr}; rethrow::Type, color::Bool, passthrough::Bool, capture_buffer::IOBuffer, io_context::Vector{Any})
+│        @ IOCapture ~/.julia/packages/IOCapture/MR051/src/IOCapture.jl:167
+│     [10] runner(::Type{Documenter.Expanders.ExampleBlocks}, node::MarkdownAST.Node{Nothing}, page::Documenter.Page, doc::Documenter.Document)
+│        @ Documenter ~/.julia/packages/Documenter/AXNMp/src/expander_pipeline.jl:877
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+[ Info: CrossReferences: building cross-references.
+┌ Warning: invalid local link/image: file does not exist in docs/src/index.md
+│   link =
+│    @ast MarkdownAST.Link("/get-started", "") do
+│      MarkdownAST.Text("Get started")
+│    end
+│    
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: invalid local link/image: file does not exist in docs/src/index.md
+│   link =
+│    @ast MarkdownAST.Link("/model-guides/model-map", "") do
+│      MarkdownAST.Text("What can I fit today?")
+│    end
+│    
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: invalid local link/image: file does not exist in docs/src/index.md
+│   link =
+│    @ast MarkdownAST.Link("/r-julia-bridge", "") do
+│      MarkdownAST.Text("R↔Julia bridge")
+│    end
+│    
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: invalid local link/image: file does not exist in docs/src/index.md
+│   link =
+│    @ast MarkdownAST.Link("/rosetta", "") do
+│      MarkdownAST.Text("Rosetta page")
+│    end
+│    
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+[ Info: CheckDocument: running document checks.
+[ Info: Populate: populating indices.
+ERROR: LoadError: `makedocs` encountered errors [:docs_block, :example_block] -- terminating build before rendering.
+Stacktrace:
+  [1] error(s::String)
+    @ Base ./error.jl:35
+  [2] runner(::Type{Documenter.Builder.RenderDocument}, doc::Documenter.Document)
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/builder_pipeline.jl:259
+  [3] dispatch(::Type{Documenter.Builder.DocumentPipeline}, x::Documenter.Document)
+    @ Documenter.Selectors ~/.julia/packages/Documenter/AXNMp/src/utilities/Selectors.jl:170
+  [4] #90
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:283 [inlined]
+  [5] withenv(::Documenter.var"#90#92"{Documenter.Document}, ::Pair{String, Nothing}, ::Vararg{Pair{String, Nothing}})
+    @ Base ./env.jl:256
+  [6] #89
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:282 [inlined]
+  [7] cd(f::Documenter.var"#89#91"{Documenter.Document}, dir::String)
+    @ Base.Filesystem ./file.jl:112
+  [8] #makedocs#88
+    @ ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:281 [inlined]
+  [9] makedocs
+    @ ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:274 [inlined]
+ [10] main(args::Vector{String})
+    @ Main /private/tmp/drm-parity-20260830/DRM.jl/tools/parity_docs_subset.jl:43
+ [11] top-level scope
+    @ /private/tmp/drm-parity-20260830/DRM.jl/tools/parity_docs_subset.jl:57
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/tools/parity_docs_subset.jl:57
+DOCS_RUNTIME julia=1.10.0 threads=1 blas=1 loaded_drm=/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl
+DOCS_SELECTED=api-stability.md,capabilities.md,changelog.md,cross-family.md,developer-notes/adding-families.md,developer-notes/formula-grammar.md,developer-notes/source-map.md,diagnostics-and-validation/exact-gaussian-diagnostics.md,diagnostics-and-validation/figure-gallery.md,diagnostics-and-validation/implementation-map.md,diagnostics-and-validation/prediction-and-postfit.md,diagnostics-and-validation/profile-likelihood.md,diagnostics-and-validation/simulation-plot-grammar.md,diagnostics-and-validation/small-sample-behaviour.md,diagnostics-and-validation/testing-likelihoods.md,families.md,get-started.md,getting-started.md,index.md,model-guides/convergence.md,model-guides/cross-family-methods.md,model-guides/distribution-families.md,model-guides/large-data.md,model-guides/marginal-la-vs-va.md,model-guides/meta-analysis.md,model-guides/model-map.md,model-guides/model-selection.md,model-guides/model-workflow.md,model-guides/which-scale.md,r-julia-bridge.md,reference/deprecated-marker-internals.md,reference/model-fitting-and-postfit.md,reference/model-specification.md,reference/package.md,reference/structured-effect-markers.md,reference/visualization.md,rosetta.md,tutorials/animal-models.md,tutorials/bivariate-coscale.md,tutorials/bivariate-nongaussian.md,tutorials/count-nbinom2.md,tutorials/location-scale-scale.md,tutorials/location-scale.md,tutorials/meta-analysis.md,tutorials/phylogenetic-models.md,tutorials/phylogenetic-spatial.md,tutorials/proportion-beta-binomial.md,tutorials/relmat-known-matrices.md,tutorials/robust-student.md,tutorials/spatial-models.md,tutorials/structural-dependence.md

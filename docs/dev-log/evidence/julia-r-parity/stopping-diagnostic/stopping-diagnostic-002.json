@@ -1,0 +1,650 @@
+{
+  "scope": "Gaussian fixed-effect stopping diagnostic only",
+  "substitution_allowed": false,
+  "input": "/private/tmp/drm-parity-20260830/DRM.jl/docs/dev-log/evidence/julia-r-parity/prediction-contract-pilot/prediction-green-003.json",
+  "input_sha256": "395b2455fe915d101273b15d242161ef9d8fa64e70c83cb67b43c43c8214997c",
+  "native_methods_sha256": "9822cce16be5d732b9d5b14f93a0be1cbe480ec3a9164611d11256633526ba1f",
+  "native_control_sha256": "066b5bb4662677340f99a5ebbd7d51396379b8c85d0aee9f6526e263711fbcb3",
+  "runner_sha256": "73ab1ccc70fdfde20e61a90a978668bb0c8227f76db3a4666e299caaa0236874",
+  "R": "R version 4.6.0 (2026-04-24)",
+  "R_checkout": "/private/tmp/drm-parity-20260830/s10-candidate",
+  "package_version": "0.7.0",
+  "tight_diagnostic_control": {
+    "rel.tol": 9.9999999999999998e-13,
+    "x.tol": 9.9999999999999998e-13,
+    "iter.max": 1000,
+    "eval.max": 1000
+  },
+  "parity_tolerance_unchanged": 3.9999999999999998e-06,
+  "fd_step": 9.9999999999999995e-07,
+  "oracle_tolerance": 9.9999999999999995e-07,
+  "default_reproduction_tolerance": 9.9999999999999998e-13,
+  "cases": {
+    "numeric": {
+      "status": "PASS",
+      "default_reproduced": true,
+      "results": {
+        "default": {
+          "coefficient_names": {
+            "mu": ["(Intercept)", "x"],
+            "sigma": ["(Intercept)", "x"]
+          },
+          "coefficients": [0.38607391450785333, 0.60326698747990615, -0.39247147234621693, 0.14065914161402948],
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "objective": 163.62435827118944,
+          "TMB_objective_error": 2.8421709430404007e-13,
+          "gradient": [0.00010420677419675783, -0.00024708858624230575, -8.1328085905663094e-05, -0.00026779058016588502],
+          "max_abs_gradient": 0.00026779058016588502,
+          "TMB_gradient_error": 3.9968028886505635e-15,
+          "FD_gradient_error": 5.8077331479265172e-08,
+          "default_coefficient_reproduction_error": 0,
+          "comparisons": {
+            "stored/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 2.3228638159622506e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "stored/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 2.3228638159622506e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "stored/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 3.0272159393107678e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "stored/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 2.3514284336334512e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 1.8541779247538415e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 1.8541779247538415e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 2.4998312005419798e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 1.8894396444091299e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            }
+          }
+        },
+        "tight_diagnostic": {
+          "coefficient_names": {
+            "mu": ["(Intercept)", "x"],
+            "sigma": ["(Intercept)", "x"]
+          },
+          "coefficients": [0.38607391450785333, 0.60326698747990615, -0.39247147234621693, 0.14065914161402948],
+          "convergence": 1,
+          "message": "singular convergence (7)",
+          "objective": 163.62435827118944,
+          "TMB_objective_error": 2.8421709430404007e-13,
+          "gradient": [0.00010420677419675783, -0.00024708858624230575, -8.1328085905663094e-05, -0.00026779058016588502],
+          "max_abs_gradient": 0.00026779058016588502,
+          "TMB_gradient_error": 3.9968028886505635e-15,
+          "FD_gradient_error": 5.8077331479265172e-08,
+          "default_coefficient_reproduction_error": null,
+          "comparisons": {
+            "stored/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 2.3228638159622506e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "stored/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 2.3228638159622506e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "stored/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 3.0272159393107678e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "stored/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 2.3514284336334512e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 1.8541779247538415e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 1.8541779247538415e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 2.4998312005419798e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 1.8894396444091299e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            }
+          }
+        }
+      },
+      "refinement": [
+        {
+          "provider": "analytic",
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "iterations": 4,
+          "coefficients": [0.38607386096149104, 0.60326930871728168, -0.39247116486232786, 0.14066185234244535],
+          "objective": 163.62435827052522,
+          "objective_improvement": 6.6421534938854165e-10,
+          "gradient": [-1.6451672003148232e-05, 1.4539461415555422e-06, -6.4591645965172972e-06, -2.3089984910875955e-07],
+          "max_abs_gradient": 1.6451672003148232e-05,
+          "max_abs_coefficient_difference_from_frozen_Julia": 4.6564526012815577e-08
+        },
+        {
+          "provider": "native_TMB",
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "iterations": 4,
+          "coefficients": [0.38607386096149099, 0.60326930871728168, -0.39247116486232775, 0.14066185234244535],
+          "objective": 163.62435827052522,
+          "objective_improvement": 6.6421534938854165e-10,
+          "gradient": [-1.6451672028017228e-05, 1.4539461471096602e-06, -6.4591645668743425e-06, -2.3089985282950818e-07],
+          "max_abs_gradient": 1.6451672028017228e-05,
+          "max_abs_coefficient_difference_from_frozen_Julia": 4.6564526068326728e-08
+        }
+      ],
+      "Julia_recorded": {
+        "coefficients_recovered_from_link_predictions": [0.38607390752601706, 0.60326931392960781, -0.39247114455974508, 0.14066185666994066],
+        "projection_error": 4.4408920985006262e-16,
+        "objective": 163.62435827052477,
+        "gradient": [5.5449667080154086e-10, -4.3028909523334183e-10, 1.0311329567969096e-10, -8.5013751504601163e-11],
+        "max_abs_gradient": 5.5449667080154086e-10
+      }
+    },
+    "factors": {
+      "status": "PASS",
+      "default_reproduced": true,
+      "results": {
+        "default": {
+          "coefficient_names": {
+            "mu": ["(Intercept)", "x", "gb"],
+            "sigma": ["(Intercept)", "x", "gb"]
+          },
+          "coefficients": [0.23778479048241852, 0.57055795361682493, 0.29190405289860527, -0.32678752552022927, 0.18735488356834737, -0.19413720213927435],
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "objective": 158.39977974833261,
+          "TMB_objective_error": 5.6843418860808015e-14,
+          "gradient": [-0.0015332952939437483, 9.2293955060707188e-05, -0.001109282580708193, 0.00069955084210193696, -0.00013134082672005908, 0.00017368488456281916],
+          "max_abs_gradient": 0.0015332952939437483,
+          "TMB_gradient_error": 1.1601830607332886e-14,
+          "FD_gradient_error": 6.4151310263937944e-08,
+          "default_coefficient_reproduction_error": 0,
+          "comparisons": {
+            "stored/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 6.2609691542370172e-06,
+              "within_original_tolerance": false,
+              "default_reproduction_error": 0
+            },
+            "stored/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 6.2609691542370172e-06,
+              "within_original_tolerance": false,
+              "default_reproduction_error": 0
+            },
+            "stored/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 4.5590193924471833e-06,
+              "within_original_tolerance": false,
+              "default_reproduction_error": 0
+            },
+            "stored/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 2.7286689103789286e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 5.0214633001699482e-06,
+              "within_original_tolerance": false,
+              "default_reproduction_error": 0
+            },
+            "newdata/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 5.0214633001699482e-06,
+              "within_original_tolerance": false,
+              "default_reproduction_error": 0
+            },
+            "newdata/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 4.1799344820403483e-06,
+              "within_original_tolerance": false,
+              "default_reproduction_error": 0
+            },
+            "newdata/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 2.6441708510516193e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            }
+          }
+        },
+        "tight_diagnostic": {
+          "coefficient_names": {
+            "mu": ["(Intercept)", "x", "gb"],
+            "sigma": ["(Intercept)", "x", "gb"]
+          },
+          "coefficients": [0.23778479048241852, 0.57055795361682493, 0.29190405289860527, -0.32678752552022927, 0.18735488356834737, -0.19413720213927435],
+          "convergence": 1,
+          "message": "singular convergence (7)",
+          "objective": 158.39977974833261,
+          "TMB_objective_error": 5.6843418860808015e-14,
+          "gradient": [-0.0015332952939437483, 9.2293955060707188e-05, -0.001109282580708193, 0.00069955084210193696, -0.00013134082672005908, 0.00017368488456281916],
+          "max_abs_gradient": 0.0015332952939437483,
+          "TMB_gradient_error": 1.1601830607332886e-14,
+          "FD_gradient_error": 6.4151310263937944e-08,
+          "default_coefficient_reproduction_error": null,
+          "comparisons": {
+            "stored/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 6.2609691542370172e-06,
+              "within_original_tolerance": false,
+              "default_reproduction_error": null
+            },
+            "stored/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 6.2609691542370172e-06,
+              "within_original_tolerance": false,
+              "default_reproduction_error": null
+            },
+            "stored/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 4.5590193924471833e-06,
+              "within_original_tolerance": false,
+              "default_reproduction_error": null
+            },
+            "stored/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 2.7286689103789286e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 5.0214633001699482e-06,
+              "within_original_tolerance": false,
+              "default_reproduction_error": null
+            },
+            "newdata/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 5.0214633001699482e-06,
+              "within_original_tolerance": false,
+              "default_reproduction_error": null
+            },
+            "newdata/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 4.1799344820403483e-06,
+              "within_original_tolerance": false,
+              "default_reproduction_error": null
+            },
+            "newdata/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 2.6441708510516193e-06,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            }
+          }
+        }
+      },
+      "refinement": [
+        {
+          "provider": "analytic",
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "iterations": 8,
+          "coefficients": [0.23778749509862954, 0.5705591862690903, 0.29190625599843389, -0.32679078481517115, 0.18735613306660912, -0.19413489282670518],
+          "objective": 158.39977974398505,
+          "objective_improvement": 4.3475552047311794e-09,
+          "gradient": [-3.5254960168984439e-05, 2.8958836081283292e-06, -2.5422694972965232e-05, 1.5230384269648845e-05, -2.9432236126110976e-06, 1.1385568335686713e-05],
+          "max_abs_gradient": 3.5254960168984439e-05,
+          "max_abs_coefficient_difference_from_frozen_Julia": 6.0891529762852059e-08
+        },
+        {
+          "provider": "native_TMB",
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "iterations": 8,
+          "coefficients": [0.23778749457101853, 0.57055918687818163, 0.29190625649664942, -0.32679078244314735, 0.18735613435970741, -0.19413489775511078],
+          "objective": 158.39977974398516,
+          "objective_improvement": 4.3474415178934578e-09,
+          "gradient": [-3.5381715158600002e-05, 3.0316653596623543e-06, -2.5460202700333667e-05, 1.518966382474396e-05, -2.8523401130368835e-06, 1.0974041722455752e-05],
+          "max_abs_gradient": 3.5381715158600002e-05,
+          "max_abs_coefficient_difference_from_frozen_Julia": 6.1419140773288916e-08
+        }
+      ],
+      "Julia_recorded": {
+        "coefficients_recovered_from_link_predictions": [0.2377875559901593, 0.5705592002979244, 0.29190630885416519, -0.32679080732428867, 0.1873561666118084, -0.1941349412076252],
+        "projection_error": 7.7715611723760958e-16,
+        "objective": 158.3997797439828,
+        "gradient": [-2.6093107674540761e-09, 9.0106715058076381e-10, -1.9844323961848431e-09, -4.6252724983375515e-09, -3.2534692915083133e-09, -1.3513723473579375e-10],
+        "max_abs_gradient": 4.6252724983375515e-09
+      }
+    },
+    "default_scale": {
+      "status": "PASS",
+      "default_reproduced": true,
+      "results": {
+        "default": {
+          "coefficient_names": {
+            "mu": ["(Intercept)", "x"],
+            "sigma": "(Intercept)"
+          },
+          "coefficients": [0.38464532994721606, 0.58411484772447364, -0.38952155190563648],
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "objective": 164.7067225719581,
+          "TMB_objective_error": 1.0800249583553523e-12,
+          "gradient": [-5.2013948703688584e-12, 3.1927502416193682e-12, -1.1128224831069566e-05],
+          "max_abs_gradient": 1.1128224831069566e-05,
+          "TMB_gradient_error": 3.2585045772748344e-14,
+          "FD_gradient_error": 5.7969007927205496e-08,
+          "default_coefficient_reproduction_error": 0,
+          "comparisons": {
+            "stored/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 4.0023540037736893e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "stored/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 4.0023540037736893e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "stored/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 3.4775701374112344e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "stored/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 2.3556395833956856e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 3.2373409508679174e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 3.2373409508679174e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 3.4775701374112344e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 2.3556395833956856e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            }
+          }
+        },
+        "tight_diagnostic": {
+          "coefficient_names": {
+            "mu": ["(Intercept)", "x"],
+            "sigma": "(Intercept)"
+          },
+          "coefficients": [0.38464532994721606, 0.58411484772447364, -0.38952155190563648],
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "objective": 164.7067225719581,
+          "TMB_objective_error": 1.0800249583553523e-12,
+          "gradient": [-5.2013948703688584e-12, 3.1927502416193682e-12, -1.1128224831069566e-05],
+          "max_abs_gradient": 1.1128224831069566e-05,
+          "TMB_gradient_error": 3.2585045772748344e-14,
+          "FD_gradient_error": 5.7969007927205496e-08,
+          "default_coefficient_reproduction_error": null,
+          "comparisons": {
+            "stored/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 4.0023540037736893e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "stored/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 4.0023540037736893e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "stored/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 3.4775701374112344e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "stored/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 2.3556395833956856e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 3.2373409508679174e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 3.2373409508679174e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 3.4775701374112344e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 2.3556395833956856e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            }
+          }
+        }
+      },
+      "refinement": [
+        {
+          "provider": "analytic",
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "iterations": 1,
+          "coefficients": [0.38464532994721606, 0.58411484772447364, -0.38952155190563648],
+          "objective": 164.7067225719581,
+          "objective_improvement": 0,
+          "gradient": [-5.2013948703688584e-12, 3.1927502416193682e-12, -1.1128224831069566e-05],
+          "max_abs_gradient": 1.1128224831069566e-05,
+          "max_abs_coefficient_difference_from_frozen_Julia": 3.4775702040246159e-08
+        },
+        {
+          "provider": "native_TMB",
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "iterations": 1,
+          "coefficients": [0.38464532994721606, 0.58411484772447364, -0.38952155190563648],
+          "objective": 164.7067225719581,
+          "objective_improvement": 0,
+          "gradient": [-5.2013948703688584e-12, 3.1927502416193682e-12, -1.1128224831069566e-05],
+          "max_abs_gradient": 1.1128224831069566e-05,
+          "max_abs_coefficient_difference_from_frozen_Julia": 3.4775702040246159e-08
+        }
+      ],
+      "Julia_recorded": {
+        "coefficients_recovered_from_link_predictions": [0.38464532994722994, 0.58411484772444799, -0.38952151712993444],
+        "projection_error": 6.6613381477509392e-16,
+        "objective": 164.70672257195804,
+        "gradient": [-1.2345680033831741e-13, 2.5465035658423179e-14, 2.0661250488274163e-13],
+        "max_abs_gradient": 2.0661250488274163e-13
+      }
+    },
+    "known_variance": {
+      "status": "PASS",
+      "default_reproduced": true,
+      "results": {
+        "default": {
+          "coefficient_names": {
+            "mu": ["(Intercept)", "x"],
+            "sigma": "(Intercept)"
+          },
+          "coefficients": [0.38464532994720046, 0.58411484772446609, -0.41180463825939717],
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "objective": 164.70672257195798,
+          "TMB_objective_error": 7.3896444519050419e-13,
+          "gradient": [-1.0577760889418641e-11, 2.4381515739355641e-12, -6.6590054451642899e-06],
+          "max_abs_gradient": 6.6590054451642899e-06,
+          "TMB_gradient_error": 2.3925306180672123e-14,
+          "FD_gradient_error": 9.9486560767303445e-08,
+          "default_coefficient_reproduction_error": 0,
+          "comparisons": {
+            "stored/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 4.7933879088191134e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "stored/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 4.7933879088191134e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "stored/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 2.2749355121920445e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "stored/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 1.5070394154825806e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 4.2552766865711078e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 4.2552766865711078e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 2.2749355121920445e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            },
+            "newdata/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 1.5070394154825806e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": 0
+            }
+          }
+        },
+        "tight_diagnostic": {
+          "coefficient_names": {
+            "mu": ["(Intercept)", "x"],
+            "sigma": "(Intercept)"
+          },
+          "coefficients": [0.38464532994720046, 0.58411484772446609, -0.41180463825939717],
+          "convergence": 1,
+          "message": "singular convergence (7)",
+          "objective": 164.70672257195798,
+          "TMB_objective_error": 7.3896444519050419e-13,
+          "gradient": [-1.0577760889418641e-11, 2.4381515739355641e-12, -6.6590054451642899e-06],
+          "max_abs_gradient": 6.6590054451642899e-06,
+          "TMB_gradient_error": 2.3925306180672123e-14,
+          "FD_gradient_error": 9.9486560767303445e-08,
+          "default_coefficient_reproduction_error": null,
+          "comparisons": {
+            "stored/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 4.7933879088191134e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "stored/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 4.7933879088191134e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "stored/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 2.2749355121920445e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "stored/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 1.5070394154825806e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/mu/link": {
+              "max_abs_diff_from_frozen_Julia": 4.2552766865711078e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/mu/response": {
+              "max_abs_diff_from_frozen_Julia": 4.2552766865711078e-14,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/sigma/link": {
+              "max_abs_diff_from_frozen_Julia": 2.2749355121920445e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            },
+            "newdata/sigma/response": {
+              "max_abs_diff_from_frozen_Julia": 1.5070394154825806e-08,
+              "within_original_tolerance": true,
+              "default_reproduction_error": null
+            }
+          }
+        }
+      },
+      "refinement": [
+        {
+          "provider": "analytic",
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "iterations": 1,
+          "coefficients": [0.38464532994720046, 0.58411484772446609, -0.41180463825939717],
+          "objective": 164.70672257195798,
+          "objective_improvement": 0,
+          "gradient": [-1.0577760889418641e-11, 2.4381515739355641e-12, -6.6590054451642899e-06],
+          "max_abs_gradient": 6.6590054451642899e-06,
+          "max_abs_coefficient_difference_from_frozen_Julia": 2.274935534396505e-08
+        },
+        {
+          "provider": "native_TMB",
+          "convergence": 0,
+          "message": "relative convergence (4)",
+          "iterations": 1,
+          "coefficients": [0.38464532994720046, 0.58411484772446609, -0.41180463825939717],
+          "objective": 164.70672257195798,
+          "objective_improvement": 0,
+          "gradient": [-1.0577760889418641e-11, 2.4381515739355641e-12, -6.6590054451642899e-06],
+          "max_abs_gradient": 6.6590054451642899e-06,
+          "max_abs_coefficient_difference_from_frozen_Julia": 2.274935534396505e-08
+        }
+      ],
+      "Julia_recorded": {
+        "coefficients_recovered_from_link_predictions": [0.38464532994722989, 0.58411484772444811, -0.41180461551004183],
+        "projection_error": 6.106226635438361e-16,
+        "objective": 164.70672257195804,
+        "gradient": [-1.3988810110276972e-13, 4.0321003314982997e-14, 7.4218409196191715e-14],
+        "max_abs_gradient": 1.3988810110276972e-13
+      }
+    }
+  },
+  "native_DLL": {
+    "path": "/var/folders/7x/ytfpq14s0v18frbm9v_w9f4c0000gq/T//RtmpPs6rqp/pkgload308c4421506a/drmTMB.so",
+    "sha256": "37ecda8a20e59c7309717865948928fc186bca853cda65b2c23c27805de60174"
+  },
+  "seconds": 1.9020000000000001,
+  "status": "PASS"
+}

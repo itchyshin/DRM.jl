@@ -1,0 +1,1 @@
+Estimate1–5min; cap300s; oneJulia/BLAS thread. CHECK:326expectedhashes and before/after manifests match, exit0, all16file markers and FAMILY_CORE_COMPLETE. EXPECT: unchanged original files complete; timeout/failure/incomplete marker is not a pass. Not full-suite or native-R parity, coverage, performance evidence.

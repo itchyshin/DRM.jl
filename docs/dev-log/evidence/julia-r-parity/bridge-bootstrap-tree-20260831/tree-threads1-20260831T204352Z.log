@@ -1,0 +1,53 @@
+ERROR: LoadError: IOError: open("/Users/z3437171/.julia/compiled/v1.10/DRM/yORCy_FRwgh.ji.pidfile", 2562, 292): operation not permitted (EPERM)
+Stacktrace:
+  [1] uv_error
+    @ Base ./libuv.jl:100 [inlined]
+  [2] open(path::String, flags::UInt32, mode::UInt16)
+    @ Base.Filesystem ./filesystem.jl:121
+  [3] tryopen_exclusive(path::String, mode::UInt16)
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:212
+  [4] open_exclusive(path::String; mode::UInt16, poll_interval::Int64, wait::Bool, stale_age::Int64, refresh::Float64)
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:239
+  [5] open_exclusive
+    @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:232 [inlined]
+  [6] mkpidlock(at::String, pid::Int32; stale_age::Int64, refresh::Float64, kwopts::@Kwargs{wait::Bool})
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:67
+  [7] mkpidlock
+    @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:62 [inlined]
+  [8] mkpidlock(f::Base.var"#968#969"{Base.PkgId}, at::String, pid::Int32; kwopts::@Kwargs{stale_age::Int64, wait::Bool})
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:91
+  [9] #mkpidlock#6
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:88 [inlined]
+ [10] trymkpidlock(::Function, ::Vararg{Any}; kwargs::@Kwargs{stale_age::Int64})
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:111
+ [11] #invokelatest#2
+    @ Base ./essentials.jl:889 [inlined]
+ [12] invokelatest
+    @ Base ./essentials.jl:884 [inlined]
+ [13] maybe_cachefile_lock(f::Base.var"#968#969"{Base.PkgId}, pkg::Base.PkgId, srcpath::String; stale_age::Int64)
+    @ Base ./loading.jl:2977
+ [14] maybe_cachefile_lock
+    @ Base ./loading.jl:2974 [inlined]
+ [15] _require(pkg::Base.PkgId, env::String)
+    @ Base ./loading.jl:1964
+ [16] __require_prelocked(uuidkey::Base.PkgId, env::String)
+    @ Base ./loading.jl:1806
+ [17] #invoke_in_world#3
+    @ Base ./essentials.jl:921 [inlined]
+ [18] invoke_in_world
+    @ Base ./essentials.jl:918 [inlined]
+ [19] _require_prelocked(uuidkey::Base.PkgId, env::String)
+    @ Base ./loading.jl:1797
+ [20] macro expansion
+    @ Base ./loading.jl:1784 [inlined]
+ [21] macro expansion
+    @ Base ./lock.jl:267 [inlined]
+ [22] __require(into::Module, mod::Symbol)
+    @ Base ./loading.jl:1747
+ [23] #invoke_in_world#3
+    @ Base ./essentials.jl:921 [inlined]
+ [24] invoke_in_world
+    @ Base ./essentials.jl:918 [inlined]
+ [25] require(into::Module, mod::Symbol)
+    @ Base ./loading.jl:1740
+in expression starting at /private/tmp/drm-parity-20260830/bridge-bootstrap-tree/tree-threads1-20260831T204352Z.jl:1

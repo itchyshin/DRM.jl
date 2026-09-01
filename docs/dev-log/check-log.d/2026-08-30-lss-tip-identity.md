@@ -1,0 +1,1 @@
+| 2026-08-30 | **Direct LSS tree-tip mapping** (#563) | Named ML/REML oracles, unsorted native/direct/bridge, LSS neighbours and tutorial | Mapping repair reviewed;401pass/2broken default,2strictfailures retained;161+35neighbour checks pass; strictG8 OPEN | Ada / Hopper / Rose |

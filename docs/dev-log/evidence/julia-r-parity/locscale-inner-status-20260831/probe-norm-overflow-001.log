@@ -1,0 +1,11 @@
+SOURCE /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/review-draft-locscale-inner.jl
+SOURCE_SHA256 dbe3e29555704d55e4b1f71673d6b34e23fb737f1da1b7cc137088a6dc894eff
+JULIA_EXECUTABLE /Users/z3437171/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/bin/julia
+SCOPE synthetic quadratic; draft snapshot, not current source certification
+JULIA 1.10.0
+ZERO_BUDGET ok=true chol_ok=true entries_finite=true anorm=Inf gnorm=Inf bound=Inf float_comparison=true bigfloat_stationary=false scaled_score=1.0
+EARLY_RETURN ok=true chol_ok=true entries_finite=true anorm=Inf gnorm=Inf bound=Inf float_comparison=true bigfloat_stationary=false scaled_score=1.0
+VALID_STATIONARY ok=true chol_ok=true entries_finite=true anorm=0.0 gnorm=0.0 bound=1.0e-9 float_comparison=true bigfloat_stationary=true scaled_score=0.0
+INNER_NORM_OVERFLOW_DEFECT_REPRODUCED_WITH_VALID_CONTROL
+EXIT 0 ELAPSED_SECONDS 1.3257852080278099
+SNAPSHOT_UNCHANGED true

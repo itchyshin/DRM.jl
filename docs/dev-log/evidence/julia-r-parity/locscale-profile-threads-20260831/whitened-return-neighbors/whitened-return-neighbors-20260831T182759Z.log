@@ -1,0 +1,5 @@
+(idx = 1, side = :lower, initial = 1.7574127756249737e-9, neighbor = 3.36834937873892e-10, bound = 1.5644813439598879e-9, neighbor_pass = true, correctly_rounded = 1.7574127756249737e-9, correctly_rounded_pass = false, maxabs_change = 5.551115123125783e-17)
+(idx = 1, side = :upper, initial = 3.0332506310456375e-9, neighbor = 9.51938922545911e-10, bound = 1.6459155523829773e-9, neighbor_pass = true, correctly_rounded = 9.903424821229468e-10, correctly_rounded_pass = true, maxabs_change = 5.551115123125783e-17)
+(idx = 2, side = :lower, initial = 4.473282147553007e-9, neighbor = 1.4367543477957886e-9, bound = 1.4863956332807358e-9, neighbor_pass = true, correctly_rounded = 4.315017170534897e-9, correctly_rounded_pass = false, maxabs_change = 2.7755575615628914e-17)
+(idx = 2, side = :upper, initial = 9.236234482818166e-11, neighbor = 4.229610791128875e-11, bound = 1.2380020718515886e-9, neighbor_pass = true, correctly_rounded = 9.236234482818166e-11, correctly_rounded_pass = true, maxabs_change = 2.7755575615628914e-17)
+FIXED_NEIGHBOR_ENUMERATION_COMPLETE

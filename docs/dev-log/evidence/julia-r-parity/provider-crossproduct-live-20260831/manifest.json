@@ -1,0 +1,22 @@
+{
+  "README.md": "4d602abd6f61ff419185fa59389d1e0e2a3eb23585ef3b7325eb2dc945914f2b",
+  "acceptance-ledger.md": "448b738ce350ca6a19e30271f111f8ecb7fa827f617a06197f034633d74105de",
+  "actual-r-animal-spatial-threads1-final.log": "052a1a0413c69deb9429b4c1c17bb7adcfc6e16f99688bbb19e8e2d0e51d0fcd",
+  "actual-r-animal-spatial-threads4-final.log": "a5042562d4021a8b92432a9dea619b89ddfadf5e1ffd96b0a36c9cd831cdf659",
+  "actual-r-animal-spatial.R": "30ca0260d3d8dd9f1fd3f6842900bc39bdad8e4b5c653ba6fbd1bf4c76b391fd",
+  "actual-r-poisson-relmat.R": "cb1b99260d43aea45ca3d1dbfbade4929e394396920a5b2c307b9898470ca650",
+  "final-source.json": "31e6611478771300e09aedb8b620611ede57ce707962804f7d7e6c235f4f306c",
+  "melissa-reconciliation.md": "c73aa12d84b1461d89a105bd6e6d8ba5f1a3c7e298e2f5ab3c0a5b83e3f1167b",
+  "poisson-relmat-j1-escalated.log": "32da2945c47d6da35ef3ffa32fee1e5d5bd71ad29162383b0a991ad16eefb33a",
+  "poisson-relmat-j1.log": "ab20731c2ff89d904185b508daa2d674ff6047ce0c1957d5b2512d410c75a86a",
+  "poisson-relmat-j1.rds": "856722a54168155ba5a2987121013ae1c7b6bc54294bde96c259edb09462895c",
+  "poisson-relmat-j4.log": "9029a3d1e6aa7c750d1acd0338aad118122e692e2e80cc6e9f798c81f4370bd9",
+  "poisson-relmat-j4.rds": "d39a6d85a50fd90e1d368b5990e72206a95f9c1b5b4499a0b2e967597743c58a",
+  "poisson-thread-comparison.log": "fc0754003cfccb17cbec6c99daca5556459febba9eb75bd6d7a6ad88a62cbfe7",
+  "provider-damage-control.R": "a72a0173445417f642bbcb987a400733c368f5e48b4783b84f362565dd0da032",
+  "provider-damage-control.log": "0dc9b1b841ee6ed7423c6a2cf785c5ca272c3c944b2616e34ea71431a720b85d",
+  "receipt.md": "084bed4eb81bcf8ebfc3c0d21da29e25a21c79a7be212ff5f2cd3fe2ea2ecaed",
+  "rose-review.md": "f923cbb396ed546e99a3246d76c923a4c03bceb40dc32bd6ad27020fd4234554",
+  "run.py": "c4a50674b73853bb99296d166933d41715f0d98f2bd5814ed0913303e0cd4aa5",
+  "verify.py": "28e8269b38ebc639e9b44f4c255644573fe931205e65e328ae3c0f53b60a99f3"
+}

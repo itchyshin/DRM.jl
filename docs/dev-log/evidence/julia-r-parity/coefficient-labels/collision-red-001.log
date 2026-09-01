@@ -1,0 +1,120 @@
+ERROR: LoadError: Some tests did not pass: 6 passed, 7 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:3
+bridge materialized columns never overwrite user data: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:8
+  Expression: augmented.__bridge_I_1 == user
+   Evaluated: [2.25, 1.506198347107438, 0.9111570247933886, 0.4648760330578512, 0.16735537190082647, 0.018595041322314047, 0.018595041322314047, 0.16735537190082647, 0.4648760330578512, 0.9111570247933886, 1.506198347107438, 2.25] == [0.8414709848078965, 0.9092974268256817, 0.1411200080598672, -0.7568024953079282, -0.9589242746631385, -0.27941549819892586, 0.6569865987187891, 0.9893582466233818, 0.4121184852417566, -0.5440211108893698, -0.9999902065507035, -0.5365729180004349]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:8 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:4
+bridge materialized columns never overwrite user data: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:12
+  Expression: size(X) == size(oracle)
+   Evaluated: (12, 2) == (12, 3)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:12 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:4
+bridge materialized columns never overwrite user data: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:13
+  Expression: rank(X) == 3
+   Evaluated: 2 == 3
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:13 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:4
+bridge materialized columns never overwrite user data: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:14
+  Test threw exception
+  Expression: ≈(X, oracle, atol = 1.0e-14)
+  DimensionMismatch: dimensions must match: a has dims (Base.OneTo(12), Base.OneTo(2)), b has dims (Base.OneTo(12), Base.OneTo(3)), mismatch at 2
+  Stacktrace:
+   [1] promote_shape
+     @ ./indices.jl:178 [inlined]
+   [2] promote_shape(a::Matrix{Float64}, b::Matrix{Float64})
+     @ Base ./indices.jl:169
+   [3] -(A::Matrix{Float64}, B::Matrix{Float64})
+     @ Base ./arraymath.jl:7
+   [4] isapprox(x::Matrix{Float64}, y::Matrix{Float64}; atol::Float64, rtol::Float64, nans::Bool, norm::typeof(norm))
+     @ LinearAlgebra ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/LinearAlgebra/src/generic.jl:1789
+   [5] eval_test(evaluated::Expr, quoted::Expr, source::LineNumberNode, negate::Bool)
+     @ Test ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:367
+   [6] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [7] macro expansion
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:14 [inlined]
+   [8] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [9] top-level scope
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:4
+bridge materialized columns never overwrite user data: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:25
+  Expression: getproperty(aug, reserved) == user
+   Evaluated: [-1.52542553961938, -1.2480754415067656, -0.970725343394151, -0.6933752452815363, -0.4160251471689218, -0.1386750490563072, 0.13867504905630731, 0.4160251471689219, 0.6933752452815365, 0.970725343394151, 1.2480754415067656, 1.52542553961938] == [0.8414709848078965, 0.9092974268256817, 0.1411200080598672, -0.7568024953079282, -0.9589242746631385, -0.27941549819892586, 0.6569865987187891, 0.9893582466233818, 0.4121184852417566, -0.5440211108893698, -0.9999902065507035, -0.5365729180004349]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:25 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:4
+bridge materialized columns never overwrite user data: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:28
+  Expression: length(keys(aug)) == length(keys(input)) + 1
+   Evaluated: 3 == 4
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:28 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:4
+bridge materialized columns never overwrite user data: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:25
+  Expression: getproperty(aug, reserved) == user
+   Evaluated: Any[-1.5, -1.2272727272727273, -0.9545454545454546, -0.6818181818181818, -0.4090909090909091, -0.13636363636363635, 0.13636363636363635, 0.4090909090909091, 0.6818181818181818, 0.9545454545454546, 1.2272727272727273, 1.5] == [0.8414709848078965, 0.9092974268256817, 0.1411200080598672, -0.7568024953079282, -0.9589242746631385, -0.27941549819892586, 0.6569865987187891, 0.9893582466233818, 0.4121184852417566, -0.5440211108893698, -0.9999902065507035, -0.5365729180004349]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:25 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:4
+bridge materialized columns never overwrite user data: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:25
+  Expression: getproperty(aug, reserved) == user
+   Evaluated: [-0.4599331055039001, -0.37630890450319077, -0.2926847035024818, -0.20906050250177272, -0.12543630150106366, -0.04181210050035456, 0.041812100500354506, 0.1254363015010636, 0.20906050250177263, 0.2926847035024817, 0.37630890450319077, 0.4599331055038998] == [0.8414709848078965, 0.9092974268256817, 0.1411200080598672, -0.7568024953079282, -0.9589242746631385, -0.27941549819892586, 0.6569865987187891, 0.9893582466233818, 0.4121184852417566, -0.5440211108893698, -0.9999902065507035, -0.5365729180004349]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:25 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_materialization_collision.jl:4
+Test Summary:                                         | Pass  Fail  Error  Total  Time
+bridge materialized columns never overwrite user data |    6     7      1     14  6.3s
+
+EXIT=1 SECONDS=8.185205416986719

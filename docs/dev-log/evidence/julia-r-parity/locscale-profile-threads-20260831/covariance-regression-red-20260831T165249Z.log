@@ -1,0 +1,76 @@
+ERROR: LoadError: Some tests did not pass: 8 passed, 4 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:8
+intercept_lower: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:26
+  Expression: isapprox(gradient[5], case["expected_l21"]; rtol = 0.0, atol = 1.0e-7)
+   Evaluated: isapprox(-3.581923920137342e-6, 3.1838795000182637e-7; rtol = 0.0, atol = 1.0e-7)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:26 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:21 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:9
+intercept_upper: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:26
+  Expression: isapprox(gradient[5], case["expected_l21"]; rtol = 0.0, atol = 1.0e-7)
+   Evaluated: isapprox(4.988370631520134e-5, 1.6937716095533356e-5; rtol = 0.0, atol = 1.0e-7)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:26 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:21 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:9
+slope_lower: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:26
+  Expression: isapprox(gradient[5], case["expected_l21"]; rtol = 0.0, atol = 1.0e-7)
+   Evaluated: isapprox(-8.383375769582813e-5, -5.781103293919619e-6; rtol = 0.0, atol = 1.0e-7)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:26 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:21 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:9
+slope_upper: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:26
+  Expression: isapprox(gradient[5], case["expected_l21"]; rtol = 0.0, atol = 1.0e-7)
+   Evaluated: isapprox(-0.0007771154632791877, 4.954428387432731e-6; rtol = 0.0, atol = 1.0e-7)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:26 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:21 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_precision_derivatives.jl:9
+Test Summary:                                          | Pass  Fail  Total  Time
+Gamma covariance gradient at retained profile failures |    8     4     12  3.5s
+  intercept_lower                                      |    1     1      2  3.5s
+  intercept_upper                                      |    1     1      2  0.0s
+  slope_lower                                          |    1     1      2  0.0s
+  slope_upper                                          |    1     1      2  0.0s

@@ -1,0 +1,9 @@
+ERROR: LoadError: ParseError:
+# Error @ /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:137:62
+        solved_zero = solve_mode(zero_start, y, eta0, psi0, state.gidx, B, tol)
+        zstart = transformed_a === nothing ? zero_start : B \\ BigFloat.(transformed_a)
+#                                                            ╙ ── not a unary operator
+Stacktrace:
+ [1] top-level scope
+   @ /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:137
+in expression starting at /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:137

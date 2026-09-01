@@ -1,0 +1,68 @@
+julia-conditional-prediction: W1W2.W3.W4
+
+══ Warnings ════════════════════════════════════════════════════════════════════
+1. stored Gaussian ordinary random-intercept mu uses validated BLUPs ('test-julia-conditional-prediction.R:46:3') - TRE pattern compilation error 'Missing ')''
+
+2. conditional Gaussian payload must match the training group map ('test-julia-conditional-prediction.R:58:3') - TRE pattern compilation error 'Missing ')''
+
+3. conditional adapter identifies only a single Gaussian mu intercept ('test-julia-conditional-prediction.R:104:3') - TRE pattern compilation error 'Missing ')''
+
+4. bridge constructor retains the fit-time conditional payload ('test-julia-conditional-prediction.R:160:3') - TRE pattern compilation error 'Missing ')''
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Error ('test-julia-conditional-prediction.R:46:3'): stored Gaussian ordina
+Error in `grepl("^sd(_phylo)?\\\\(", dpars)`: invalid regular expression '^sd(_phylo)?\\(', reason 'Missing ')''
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_equal(...) at test-julia-conditional-prediction.R:46:3
+ 2. │ └─testthat::quasi_label(enquo(object), label)
+ 3. │   └─rlang::eval_bare(expr, quo_get_env(quo))
+ 4. ├─stats::predict(fit, dpar = "mu", type = "link")
+ 5. └─drmTMB:::predict.drmTMB_julia(fit, dpar = "mu", type = "link")
+ 6.   └─drmTMB:::drm_julia_predict_conditional_gaussian_ri(object, dpar) at drmTMB/R/julia-bridge.R:4214:3
+ 7.     └─drmTMB:::drm_julia_conditional_gaussian_ri_spec(...) at drmTMB/R/julia-bridge.R:4020:3
+ 8.       └─base::grepl("^sd(_phylo)?\\\\(", dpars) at drmTMB/R/julia-bridge.R:548:3
+
+── 2. Error ('test-julia-conditional-prediction.R:58:3'): conditional Gaussian p
+Error in `grepl("^sd(_phylo)?\\\\(", dpars)`: invalid regular expression '^sd(_phylo)?\\(', reason 'Missing ')''
+Backtrace:
+     ▆
+  1. ├─testthat::expect_error(...) at test-julia-conditional-prediction.R:58:3
+  2. │ └─testthat:::expect_condition_matching_(...)
+  3. │   └─testthat:::quasi_capture(...)
+  4. │     ├─testthat (local) .capture(...)
+  5. │     │ └─base::withCallingHandlers(...)
+  6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo))
+  7. ├─stats::predict(fit, dpar = "mu", type = "link")
+  8. └─drmTMB:::predict.drmTMB_julia(fit, dpar = "mu", type = "link")
+  9.   └─drmTMB:::drm_julia_predict_conditional_gaussian_ri(object, dpar) at drmTMB/R/julia-bridge.R:4214:3
+ 10.     └─drmTMB:::drm_julia_conditional_gaussian_ri_spec(...) at drmTMB/R/julia-bridge.R:4020:3
+ 11.       └─base::grepl("^sd(_phylo)?\\\\(", dpars) at drmTMB/R/julia-bridge.R:548:3
+
+── 3. Error ('test-julia-conditional-prediction.R:104:3'): conditional adapter i
+Error in `grepl("^sd(_phylo)?\\\\(", dpars)`: invalid regular expression '^sd(_phylo)?\\(', reason 'Missing ')''
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_equal(...) at test-julia-conditional-prediction.R:104:3
+ 2. │ └─testthat::quasi_label(enquo(object), label)
+ 3. │   └─rlang::eval_bare(expr, quo_get_env(quo))
+ 4. └─drmTMB:::drm_julia_conditional_gaussian_ri_spec(...)
+ 5.   └─base::grepl("^sd(_phylo)?\\\\(", dpars) at drmTMB/R/julia-bridge.R:548:3
+
+── 4. Error ('test-julia-conditional-prediction.R:160:3'): bridge constructor re
+Error in `grepl("^sd(_phylo)?\\\\(", dpars)`: invalid regular expression '^sd(_phylo)?\\(', reason 'Missing ')''
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_equal(...) at test-julia-conditional-prediction.R:160:3
+ 2. │ └─testthat::quasi_label(enquo(object), label)
+ 3. │   └─rlang::eval_bare(expr, quo_get_env(quo))
+ 4. ├─stats::predict(fit, dpar = "mu", type = "link")
+ 5. └─drmTMB:::predict.drmTMB_julia(fit, dpar = "mu", type = "link")
+ 6.   └─drmTMB:::drm_julia_predict_conditional_gaussian_ri(object, dpar) at drmTMB/R/julia-bridge.R:4214:3
+ 7.     └─drmTMB:::drm_julia_conditional_gaussian_ri_spec(...) at drmTMB/R/julia-bridge.R:4020:3
+ 8.       └─base::grepl("^sd(_phylo)?\\\\(", dpars) at drmTMB/R/julia-bridge.R:548:3
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+Error:
+! Test failures.
+Execution halted

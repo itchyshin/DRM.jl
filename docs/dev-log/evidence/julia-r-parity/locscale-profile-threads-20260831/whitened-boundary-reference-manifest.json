@@ -1,0 +1,190 @@
+{
+  "scope": "Independent reference and fixed-point certificates; production inference remains open",
+  "files": [
+    {
+      "path": "whitened-boundary-reference/GATES.md",
+      "bytes": 942,
+      "sha256": "cfbb57ca1591253701708c3a82f2442a562f27342fd5fa3baa71f81f2722cfdb"
+    },
+    {
+      "path": "whitened-boundary-reference/diagnose.jl",
+      "bytes": 6972,
+      "sha256": "363dba021e42d76f59e0a0460359fec64c2f852e166e96c439a44c9743ca6751"
+    },
+    {
+      "path": "whitened-boundary-reference/export_fixture.jl",
+      "bytes": 1575,
+      "sha256": "86fa4bf2dfa38b3d69d6220e63550702778daed031de30e3b4e2418f4060f36d"
+    },
+    {
+      "path": "whitened-boundary-reference/reference-fixture.toml",
+      "bytes": 4715,
+      "sha256": "90469e7c304453c0e400d4c19897e263b61beb0912c0a1c5bc677b4f39fee6ad"
+    },
+    {
+      "path": "whitened-boundary-reference/run_capped.py",
+      "bytes": 1551,
+      "sha256": "83eac6f8dcab962ae865890f7500cc90766433152816fa40c5e2e44e151c510f"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case1-20260831T183848Z.jls",
+      "bytes": 453480,
+      "sha256": "310bdc7c0b70b5190d380dea9d881eec55135df4ac92b8f80e3c58067fd916b1"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case1-20260831T183848Z.log",
+      "bytes": 2088,
+      "sha256": "8f0145b0423a302d86d4b7d7be990115f89e9d926de75d175de17368928e1233"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case1-20260831T183848Z.script-snapshot.jl",
+      "bytes": 6972,
+      "sha256": "363dba021e42d76f59e0a0460359fec64c2f852e166e96c439a44c9743ca6751"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case1-20260831T183848Z.status.json",
+      "bytes": 668,
+      "sha256": "a849ed83b87f75a2857a81472c4925539e09c5c1dc0fc43b7dc8587b399fa1d1"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case2-20260831T183848Z.jls",
+      "bytes": 474494,
+      "sha256": "cf8b5906fe8f86d26383728bc89a5c1a018e3909e1a6c889294980b4fe797355"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case2-20260831T183848Z.log",
+      "bytes": 2088,
+      "sha256": "e438dce80f34d3233948a897480f081a335f5a0b074591578995fdd6ce418ac8"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case2-20260831T183848Z.script-snapshot.jl",
+      "bytes": 6972,
+      "sha256": "363dba021e42d76f59e0a0460359fec64c2f852e166e96c439a44c9743ca6751"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case2-20260831T183848Z.status.json",
+      "bytes": 669,
+      "sha256": "c2caff7f7a118893c47377d7969560ea081db23a40adda3869fc756686181b85"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case3-20260831T183728Z.jls",
+      "bytes": 458682,
+      "sha256": "05ac5b6d32f9565b79e8f1bdec7096dfc67055519521f0e8c272e672e3af4652"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case3-20260831T183728Z.log",
+      "bytes": 2088,
+      "sha256": "3b0bc2939580219201daff37a8aa7909f353c3519731ab5c87bdc5608c58eb35"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case3-20260831T183728Z.script-snapshot.jl",
+      "bytes": 6778,
+      "sha256": "2e5516d934e4e8df8ca2dc09c852a8b5af5f3535d6ce30d8ac638511a195cd36"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case3-20260831T183728Z.status.json",
+      "bytes": 666,
+      "sha256": "20a700060d8c00c6d8b6551e8cfd4e6c3a487d520260edea00ee7c1d59bb7bd9"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case4-20260831T183950Z.jls",
+      "bytes": 436257,
+      "sha256": "f8a1c7aecdb5952164c7b5f6829bc6ff4300929d1d83931fed99d91d023b0424"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case4-20260831T183950Z.log",
+      "bytes": 2085,
+      "sha256": "95bbc3ad19dbfdcb2de46b90071a13d0e8ceda4c77f88c3f8d7a4b5d4056f517"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case4-20260831T183950Z.script-snapshot.jl",
+      "bytes": 6972,
+      "sha256": "363dba021e42d76f59e0a0460359fec64c2f852e166e96c439a44c9743ca6751"
+    },
+    {
+      "path": "whitened-boundary-reference/whitened-boundary-case4-20260831T183950Z.status.json",
+      "bytes": 669,
+      "sha256": "febe735d4afce7c8a8399e37bfc38d5cbb4ebfc4918520b98bd45f7284ba92c2"
+    },
+    {
+      "path": "whitened-return-certificates/GATES.md",
+      "bytes": 922,
+      "sha256": "e1bf0d6b98559ace888264bcefba71815c73b4b39c0fa177bb9ce401dd729439"
+    },
+    {
+      "path": "whitened-return-certificates/diagnose.jl",
+      "bytes": 8070,
+      "sha256": "d5fca97b52b3bed6444a4aefb7ba990aa269ac61fd72c19ece6ac70837aeeacf"
+    },
+    {
+      "path": "whitened-return-certificates/run_capped.py",
+      "bytes": 3451,
+      "sha256": "0e238227b257f6e1d71bd14cb715da7c82b9b5998d82c56e6a384e7398c29797"
+    },
+    {
+      "path": "whitened-return-certificates/whitened-return-certificate-20260831T183846Z.log",
+      "bytes": 685,
+      "sha256": "ed9705cebccf3c96057d1f53bdc02b81b63175871954671484b8533cd345be28"
+    },
+    {
+      "path": "whitened-return-certificates/whitened-return-certificate-20260831T183846Z.script-snapshot.jl",
+      "bytes": 8070,
+      "sha256": "d5fca97b52b3bed6444a4aefb7ba990aa269ac61fd72c19ece6ac70837aeeacf"
+    },
+    {
+      "path": "whitened-return-certificates/whitened-return-certificate-20260831T183846Z.status.json",
+      "bytes": 2176,
+      "sha256": "c38fe0d49214d07985d288199e072f873cbd8c3895d8c89945ba4f2a4350e5cb"
+    },
+    {
+      "path": "whitened-return-certificates/whitened-return-certificate-20260831T183958Z.jls",
+      "bytes": 54482,
+      "sha256": "efef9a7042ebd380a9774d01fed766970d30a254a15aa04200646593248e90ef"
+    },
+    {
+      "path": "whitened-return-certificates/whitened-return-certificate-20260831T183958Z.log",
+      "bytes": 1140,
+      "sha256": "115e76dfb02ac1d3ec4993b18aeac3e943020a703f02572bda1f0a98e1991d6d"
+    },
+    {
+      "path": "whitened-return-certificates/whitened-return-certificate-20260831T183958Z.script-snapshot.jl",
+      "bytes": 8070,
+      "sha256": "d5fca97b52b3bed6444a4aefb7ba990aa269ac61fd72c19ece6ac70837aeeacf"
+    },
+    {
+      "path": "whitened-return-certificates/whitened-return-certificate-20260831T183958Z.status.json",
+      "bytes": 2243,
+      "sha256": "85cea15efa087f434caef11281efeaae2bcec7aac8646bd0ad88112e564107d7"
+    },
+    {
+      "path": "whitened-state-baseline/diagnose.jl",
+      "bytes": 1460,
+      "sha256": "0b23bf48d76c0b2241b0aced02ea0c53aa9be87e2057bd78e5d5b1477fcf3ad7"
+    },
+    {
+      "path": "whitened-state-baseline/run_capped.py",
+      "bytes": 1283,
+      "sha256": "a4c82b37886fd9184a8d624df69fb793457900507f43cd1b020822bea86ac629"
+    },
+    {
+      "path": "whitened-state-baseline/whitened-state-baseline-20260831T184655Z.jls",
+      "bytes": 1117,
+      "sha256": "703d56133e0275b2d5343bda338207152f8a51bff5430d4b981fa0e64df0415c"
+    },
+    {
+      "path": "whitened-state-baseline/whitened-state-baseline-20260831T184655Z.log",
+      "bytes": 2179,
+      "sha256": "3b716e7eb924f374d10a016e97b073ccbbb46ef24f98e1d1e950423b3c8b5cd2"
+    },
+    {
+      "path": "whitened-state-baseline/whitened-state-baseline-20260831T184655Z.script-snapshot.jl",
+      "bytes": 1460,
+      "sha256": "0b23bf48d76c0b2241b0aced02ea0c53aa9be87e2057bd78e5d5b1477fcf3ad7"
+    },
+    {
+      "path": "whitened-state-baseline/whitened-state-baseline-20260831T184655Z.status.json",
+      "bytes": 536,
+      "sha256": "69efb3e829be3f5ce567e91046855cd19ae874feed869dd63924ac5f07f66aa3"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+WARNING: using Distributions.Poisson in module Main conflicts with an existing identifier.
+┌ Warning: profile confidence interval has failed endpoint arm(s); failed side(s) are reported as signed Inf
+│   failed =
+│    1-element Vector{String}:
+│     "mu:θ1"
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl:165
+Test Summary:                                  | Pass  Total  Time
+generic profile nuisance acceptance and status |   63     63  6.6s
+Test Summary:                           | Pass  Total  Time
+bridge exposes selected profile failure |   10     10  0.1s
+Test Summary:                                        | Pass  Total  Time
+Profile-likelihood CI: confint(fit; method=:profile) |   27     27  5.2s
+Test Summary:                                 | Pass  Total  Time
+Gaussian crossed profile uses stored gradient |    9      9  4.8s
+Test Summary:                                   | Pass  Total  Time
+Profile CI on crossed Poisson random-effect SDs |    9      9  3.4s
+Test Summary:                                  | Pass  Total  Time
+Profile CI on the scale parameter (asymmetric) |   11     11  0.3s
+Test Summary:                | Pass  Total  Time
+visualization data providers |   23     23  3.7s
+Test Summary:                                  | Pass  Total  Time
+bridge profiles only the requested coefficient |   36     36  0.5s
+PROFILE_COMBINED_PASS

@@ -1,42 +1,56 @@
-# GOAL — phylo-laplace-cox-reid (IMMUTABLE — re-read at the top of EVERY arc)
+# GOAL — complete Julia–R parity and better
 
-Read this first, every cycle. Auto-compact eats messages, not this file.
+Approved by Shinichi in Codex task `01a05261-cd5c-7ca3-a654-cebea9f187fb`, 2026-08-30.
+Read this file and checkpoint.md at every continuation. The active app goal is the same programme.
+The approved execution plan is docs/dev-log/plans/2026-08-30-julia-r-parity.md.
+LOOP/ultra-plan.md is an inherited unrelated Cox-Reid plan; do not use it for this programme.
 
-## Mission
+All currently implemented native drmTMB capabilities must work directly in Julia and through
+`engine = "julia"`, with retained correctness evidence. Every registered warm full-workflow
+benchmark must beat a comparably configured R baseline using a reliable automatic thread policy.
+Cold startup is reported separately. Polish the whole Documenter/VitePress site, repair the R
+bridge documentation, preserve/reconcile unfinished work in both repos, and update Mission Control.
 
-One issue · one branch · one PR — opt-in `method=:REML` on Poisson routes that call `_fit_poisson_general_laplace` (phylo + relmat/animal). ML default unchanged. No recovery headline. Human merges the PR (`closes #<B issue>`). Do not `gh pr merge`.
+## Immutable choices
+- Full native-R scope, not the older 12-row bridge ledger. Keep experimental boundaries honest.
+- Separate complete capability/output coverage from the finite benchmark manifest.
+- Targeted validation, not a universal interval-coverage claim. Native bugs need independent adjudication.
+- Warm timing includes preparation, transfers, construction, requested uncertainty and return conversion.
+- Report 1/2/4/8 threads; calibration fixtures are separate from policy evaluation fixtures.
+- Missing, skipped required, stale or absent output evidence never passes a required gate.
+- A remaining speed loss keeps the programme open. Re-estimate after the 8–20 agent-hour reserve;
+  never silently drop cases or run an unbounded further optimization campaign.
 
-## Headline
+## Approved boundaries
+Routine scoped edits, tests, builds, checkpoints and local commits proceed without repeat permission.
+Both repositories are in scope; current source checkouts and other lanes are preserved. Named branch
+PR preparation is in scope. Engine/grammar changes follow the approved mathematical contracts with
+Noether/Rose review. Do not change an estimator merely to agree with a buggy reference.
+No release, registration, collaborator message, credentials/security changes, forced Git operation,
+or deletion of historical work. Retire worktrees only against a concrete recoverability/disposition list.
+Respect separate repository merge/ownership gates. No new publication workflow or permission changes.
+Estimate every fit/benchmark before running; >30 min campaigns need measured pre-run + owner approval.
+Totoro CPU <=150 cores, BLAS=1; DRAC allocated jobs only. No campaigns in GitHub Actions.
 
-B. Poisson phylo Laplace Cox–Reid (reuse #444 helpers after `_withnll`).
+## Completion
+All required unlazy gates reverified on final sources; Rose independent verdict; Melissa reconciles
+original promises plus this plan. First-pass completion is not programme completion.
 
-## Invariants
+## Current execution locations (integration continuation)
 
-- Solo platform: Cursor (this `/goal` lane).
-- Dual-start guard: AGHQ lane A is LIVE (#448, PR #449, worktree `~/local-scratch/lanes/DRM.jl-aghq-lever-2`, branch `claude/lane-aghq-lever-2`). Do NOT edit those files. Do NOT open a second AGHQ issue.
-- Do NOT use `/Users/z3437171/local-scratch/lanes/DRM.jl-handover-20260818` (handover leftover LOOP/), Dropbox `docs/a3c-design`, or catchup `docs/arc1-inventory`.
-- Wait for AGHQ **open PR** (not merge) before B `src/` — that PR exists (#449). Branch from `origin/main`. Keep B's `poisson.jl` edits disjoint from AGHQ dispatch if possible. Do not revert A's hunks if they land on main.
-- All `_fit_poisson_general_laplace` callers (phylo + relmat/animal). Do NOT punch `_fit_poisson_ranef` (GHQ `(1|g)` already wired).
-- Lift `_reject_reml_route` for those structured routes only; KEEP rejecting spatial-coord estimated-ρ, crossed, slopes, VA, FE-only, Binomial.
-- Do NOT edit `test/runtests.jl` (AGHQ dirties it). Standalone `test/test_cox_reid_poisson_phylo.jl`.
-- ML is the default. Twin = drmTMB (mechanism only; no GPL vendoring). Capability chip stays missing. Cell D ≠ recovery.
-- Never `git add -A`. Never vendor drmTMB. Never mutate GLLVM `LOOP/GOAL.md`. No q4. D-111 OFF. #49 PARKED. No steal #420/#406.
-- Skip NotebookLM.
+Continue in `/private/tmp/drm-parity-20260830/integration/DRM.jl` and sibling
+`drmTMB`, both on `codex/parity-integration-20260831`. These are the active paired
+integration worktrees. The original worktrees listed below are preserved; do not
+resume edits there. The latest operational state is in `LOOP/checkpoint.md`.
 
-## DEFER
+## Original execution locations (preserved history)
 
-AGHQ (#448) · q4 · D-111 · #49 · ADEMP · Cell D as recovery · dual-start A+B
+- Julia: `/private/tmp/drm-parity-20260830/DRM.jl`, branch `codex/julia-r-parity`.
+- R: `/private/tmp/drm-parity-20260830/drmTMB`, branch `codex/julia-r-parity`.
+- Preserve these branches as durable checkpoints. `/private/tmp` itself is not durable storage.
+- Initial sources: DRM f47789646f27221ba4fad29a8ba1b3b8a790b521;
+  drmTMB b35642b4560072cadba7e595e66e00209ebdeb40.
 
-## Authoritative WHAT
-
-`LOOP/ultra-plan.md` (copy of the approved G0 plan). Detail wins there; this file wins on "what must never be lost".
-
-## Definition of done
-
-- [ ] NEW GitHub issue for B (not #448 / #443 / #103)
-- [ ] `method=:REML` wired on `_fit_poisson_general_laplace` after `_withnll` via #444 helpers
-- [ ] Callers: `_fit_poisson_phylo_laplace` and `_fit_poisson_relmat_laplace`
-- [ ] Tests: `estimation_method === :REML`; σ̂_CR > σ̂_ML direction; reml_loglik ≠ ml_loglik; uncertified routes still error; no recovery target
-- [ ] Docs: warning Cell D not recovery; ML default; no capability chip
-- [ ] check-log.d + after-task + Rose audit
-- [ ] PR opened `closes #<B issue>` — human merges; this worker does not `gh pr merge`
+The goal skill wrapper could not resolve its launcher; the canonical launcher inspected was
+Claude-specific and rewrote permission settings. Used isolated git worktrees with unchanged
+permissions and the required codex/ prefix instead. This is not a permission workaround.

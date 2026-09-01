@@ -1,0 +1,26 @@
+{
+  "coordinator": "parent runtime; model identity not independently queried",
+  "children": [
+    {
+      "responsibility": "mechanical HTML scout",
+      "requested_model": "gpt-5.6-luna",
+      "requested_effort": "low",
+      "agent": "s1_recovery_census"
+    },
+    {
+      "responsibility": "reference and homepage builder",
+      "requested_model": "gpt-5.6-terra",
+      "requested_effort": "high",
+      "agent": "s2_capability_manifest"
+    },
+    {
+      "responsibility": "independent review",
+      "requested_model": "gpt-5.6-sol",
+      "requested_effort": "high",
+      "agent": "rose_plan_gate"
+    }
+  ],
+  "actual_model_provenance": "explicit native dispatch receipts in task history; no independent backend attestation",
+  "active_agent_hours": "not instrumented; do not equate wall time with agent hours",
+  "remote_compute": "none"
+}

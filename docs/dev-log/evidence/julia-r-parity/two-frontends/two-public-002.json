@@ -1,0 +1,4242 @@
+{
+  "scope": "Two independent Gaussian missing predictors, one frozen fixture; not full programme parity or warm performance",
+  "source_before": {
+    "/private/tmp/drm-parity-20260830/drmTMB/R/adequacy-plots.R": "50d41a04d8305b034c0e2dfbe4209591c992ee6d4cde800f71678d742b487d16",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/adequacy.R": "7a88ca078c0931f257b5bf5a1c9d5315448f7d8e907921e1418d2f6584163d9a",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/aghq-coxreid.R": "66fcd996070128ef1feefb0845694888f8167ee7e4396b4d04a43d8480a4383d",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-bernoulli-bernoulli.R": "d6ccc65580d7e0700ab2aed7c49c8369e21f3a441eb6ee8b25c8543d411fd8b3",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-gaussian-bernoulli.R": "2129bbe7278b0912ba436aa71d9fc80cb5cbdf4822af20fb618ce4baefbc8860",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-gaussian-nbinom2.R": "578751c099044dc943cbadc144deaa403ff5340eaefba49aaa1f3e21de5e43fd",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-nbinom2-nbinom2.R": "bbbf3d78813b32fe8a61e4589bd9ecf1f7fdf6d8841995f52fd3ff5dbb5b0a43",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich.R": "ae36567f517d650af47b227ce3fc3b82ac791aa9ec484a78c41741e1cc17174c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs.R": "35c2f32a0a4f5789c97be437758331edd9acd783a83a121a3bd6c0ac9f57616c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/bf.R": "71dbc96868e020a4e32b7170989bd49142a7bddd0750d79875740283f7d5d43e",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/check.R": "a63e0551c7a6b494fef73d86b0b0f1752ae1f222893b547214d63e6dd4e6f979",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/control.R": "066b5bb4662677340f99a5ebbd7d51396379b8c85d0aee9f6526e263711fbcb3",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/distributional-outputs.R": "45f6731f6c73dec88a5700d79345de928d37e31cdc6349ceb0fb01ad2c364450",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/drmTMB-package.R": "25050f7f5002a26e1f9371ad01f6b5faf52af82d946f9ba46c484d83cd0f535f",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/drmTMB.R": "1fb01724a4d6060f22f2d4062f09cb0f9ecd5d17f4626d0cbb919fe0a0796b59",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/emmeans-preflight.R": "ca007531560c4fcd58a37a51716826e18eef952f64ee2f14167a05e83c3fccd3",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/family-dpq.R": "1b73f4cbd511f2c5c230e254f83a02483815029b725689a53031af8ba38f70ad",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/family.R": "34bef8f5ae57f4e794b8a5788e1982f9ba61168fed74c38125722ba937a29959",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/formula-markers.R": "298d1f7344308668485043c633413067560a7e02c92cbb08caf84614d91f8e02",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/gaussian-aggregation.R": "f80e3e3d81bd6589a89763a90bd1387580d3368894f134bfc2b0c8212d62a629",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-bridge.R": "1f3cdf0c141572529d8f4350e883f81eb11bd3bb5cae116d8fc97c58b11cb3a2",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-joint-call.R": "dd2675b3aa260e263bba32f835983ddfacfe603a311e83ab5f2cb3a9e3f21f5f",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-joint-methods.R": "85e7785887ad87f6ea31050679a622bb8545d88025b129e991321ed7af1962ae",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-joint-missing.R": "99e1f6958e0f5db4096c38828dbb985f93caf65681ac82b1dc0f334aaa3870ae",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/marginal-parameters.R": "4bb246db3341b6cc68ed0a1e60ac35682e2d7499949b21212b31ee6f00e19bea",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/mesh.R": "92ba60e72a2b467eb7ad384429912293aa38c2645c2cae4ca53dc616783a8dbb",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/meta-vcov.R": "48cbbcd5ad03689404beda6129e13bac2e80ab5394364b9aca5c982f4a5fb29a",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/methods.R": "9d45acfcce726b68f85a4cb0983cff6a6ed2583236bfd9081270458367151a4b",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/missing-data.R": "3a11d48863e31b43fbd8ad7631f47525867ee02b2503a41cc8d49a885b1fbf84",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/mspl-estimator.R": "389633693e357910d3ecf0d23472e29dc7310df922e2f150f197dc9f149d40d5",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/mspl.R": "6f394409ab1cff8e72f73c2a01626de8177d75794c03cb5d489bf4502a33719e",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/parse-formula.R": "af4c67439321c4f15ebad64f52161879a8169389af0abd5782d88bb9d2aa0faa",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/penalty.R": "8f9124aeccddf07f978ba75cb60e0bd786f4edfac91aa993c3848cde38f67df1",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/phylo-utils.R": "dd2d36f89bd3ea47161068e480004772ac9e162c31df7b0b89dae9b759c3e7ff",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/plot-corpairs.R": "23fd048ab1c152ee325ba203210f67d5c96b88c516cff4ec7c887448a805137c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/plot-parameter-surface.R": "8a93cb9c104b086e4500ecf9b2f72b7b88fd5278667d5b1c928ea88652169421",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/predict-parameters.R": "13c3bafaee98d08a938b0be921c049b158958cc47b8ac74ae405876986f4ca7e",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/prediction-grid.R": "b599efba35c0bb8c9b3467ef69da268d9fe9b0d6aee5009fda2e8d199abe4647",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/profile.R": "cbc537c023b79af2f1a359627790b788e1a7293f0a1fc844a60ce66f29d745d5",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/random-effect-scale-formulas.R": "4fa4a0ad558fac45e294a4c1a20da87eb523c1f2de7e2a2741993750d0d53c8c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/reader-contracts.R": "c197718d279b40be047e4ee39b1243827cd8ff9406dfd4bf4af0344ed236525f",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/sparse-fixed.R": "eb38f9a4281aeb652f392eb4f4bb075fd733195b665aa666a96d2fc3c8364bfd",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/zzz.R": "43307cf57423f651b986306ee8e04ab12206b6655fee33f1a3b9042925f4cb4b",
+    "/private/tmp/drm-parity-20260830/drmTMB/NAMESPACE": "020283ef550b8d649698c736e2c6bb9e265e4c04d502a5487eac8a4ddd5ff3e1",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/aghq_1d.jl": "66464da504723ea24f50aefece46c17d29600d9242d2cb2de9b233b2ea8a7452",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/associate_pairs.jl": "dbaae28b966f48ad99a46dfa796561aab2cb2a26c15a898811945e1f1160e9d1",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/beta.jl": "9af3b4dc7c4df2b6bf2ec4afbc09be59c62ff0ac39bfef7113dbda7900171a3c",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/betabinomial.jl": "28f7ac5dd4ecfa426187861a30e045fa5311d6dc4da6ad015d4212f5eaa94909",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/bias_correct.jl": "68cee45247626cbc114dc29ccca675553e86179cd75885cf3ca750f07ff5b627",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/binomial.jl": "f16e768668d432bfbef9f1d140470647bd2a20274f35bfc95a8cae9c0b9c8527",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/bivariate_lognormal.jl": "af39e1e71fc45f63137f49e62e03750d0d59fc8a2e5fce802aa200bc55522a27",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/bivariate_student.jl": "f72d2b80cb3f5ce877dc0293f02f9a7f443a5eba51e832b471b0d28e23b876a7",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/bootstrap_q4_phylo.jl": "1a273cd13533b2c61d09070901d4d20c3eb4838ab40de3e48d9ca188d7753012",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl": "6ec496e4f88106a4ea101043d25f6a1a01c54095202cbb6b2179e5998007a904",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/chibar.jl": "6521eafccce2f505886dc3eb1d13541162812f8c093d88427a72658d4fddd97f",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/coevo_accessors.jl": "9edb84589ef8499b80decabe1d12fbff1fad2802a4a3fc57d5487eedff99f65c",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/coevolution_q.jl": "77ce90a3e7dac5f9f4df4e7fac94d036146635afd7df3ab7b953b228151cb58c",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/comparison.jl": "3482d6b88f7ec5d545a2947030103fb638f41050c9a10fcb41a9823eec6eeacc",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/cumulative.jl": "5d7c8db90e0a00b3680f7e4a818ccda7912148c70fd3f5fdbcc7e6d63af10c5a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl": "5d889c5c850e34cd76e51c194cb11feefce34884b2c2eb9f8fd88f6d3b28da7b",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/em_squarem_fit.jl": "27dd32a19ca624dad007c63968f76974e790c29b09acb6767cef3f695f5d51c9",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/estep_armijoguard.jl": "19e8eb019a3184db1b13c1cde8ee882ef66b174882de15a96ba02840380cfd13",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/estep_initprior.jl": "64231307ede8f6ec71ac7e5eef07bedb0c440e7f52dad5485c9637dadaf59436",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/estep_lm.jl": "2550ab9b7edd3c0a21a6f9f0d26c3eddef046c303058569d71dcba7c678140c5",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/estep_trustregion.jl": "c4a62576c388238f16a4fb14b812c2074d9bc7999882a8cbd3e8112a6893e9f6",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_em_closed.jl": "e21460eb4a5cff018eb826f6b2ec3a638e2a9059eb0db568eea602537d9814cf",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_em_natgrad.jl": "35ec282ee4fd85fe715fbd4414b801c91100b5fbf240837484d94a985dc9b63a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_ml_q4.jl": "306ba451fee9ba337edbfc78ef2a402bc295b5a1588c36b5e49876c25461cf67",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_ml_warm.jl": "6091d3ff479f9bc3805b3faffd530bf4e675f735628435d7b11a226ad3fbfc2c",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_q4_p100_tmb.jl": "269759ce21c31ac167897df3d67f12d53cdb023b0cc3890e24b25610cbb0ee07",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_q4_tmbgrad.jl": "188582efc569ba54d141f4b9ac58b8f474e33ddc154ae0a9f8a6cda239eec5a6",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_sparse_direct.jl": "f03753b30d303febb3fac1ef89e347234f44878684cf62875d967ca35e2e322a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/location_only.jl": "39eac765202c2c7a4ed6bf990ea2214d17845cad4bbc3697a6f26651afd59646",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/q4_em_dense.jl": "f4c64d74d8d975881a9398192976402d688e8ce494b021bc01fb6816fded3bc7",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/fisherz_q4.jl": "cc864faa1b1a51c044309939e84bc1fa78a328e316ea3d8453b4ba1e2f1bf046",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/fit_ml_q4.jl": "306ba451fee9ba337edbfc78ef2a402bc295b5a1588c36b5e49876c25461cf67",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/fit_q4_sparse_tmb.jl": "51c0d6e982d53b0d2d448b2ed05d979f780cdb36bc27e71f4b47ebb25b8b18a2",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gamma.jl": "a22a3c4cbbb5ce37ffa41025118646b722df195d490a22926e03c7be0d1bd4c7",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_bivariate.jl": "7cf90337062b3ff13367321ad2b8384ecb74776c49358aa28cdb5dff04317251",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl": "2c4f2d38f1b8d1e4557583c9d1db6826681ac9696bf1b75b9330376e9e5f9d05",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_locscale_phylo.jl": "78fcaecf0a8d6fe2055321d68071101039772f71263a456cbbabbb5edbf9a39d",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl": "1e18a621a6047654b1331d4e0a43864b4e2495e7e8f149bcde2ce5f161d9f780",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_meta.jl": "66c3c4a09dd952793eeebca5c9a273d8498b32b4839e868e0d26ff0e83891cfa",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_ranef.jl": "7d096ded5eaa1172b6d6f4c8afc2794bebf84f4ae165d56fdca0758e30d18907",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_sparse_lss.jl": "96ee90f88bc12af7e6eebd7f3f51fb285711cf8f9f9c2ed0a19953ca6b19de1f",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_structured.jl": "3ba579b2db88f3ec02903b3183456a6dfed6d74714b83fe554b80e4663dd3698",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/heritability.jl": "524ac27831a0b7ac13575f43c0f4c62da7d96759c8d26f4c44392da915d7e24a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl": "bb2606042a4ee7d165fdd8b6e1b0f7f187a7738cad90cdd3ec80eccf1bbd49c0",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/introspection.jl": "546b64e0273da4530c1d1f5208b2728c001fe9466eaec1f9b5527c6730860535",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_bridge.jl": "033b7b2b5e4dd8b681c0122846db26417a53ef0db9ac3edb17adfd5edd160a3d",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_frontend.jl": "58ace548eef447f6e58efae075f1ea0a4013782354b0423837d0ac642b6956fd",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_predictor.jl": "f9f59bedbf281db34f4a0fda89ab2110daf813ea376c41a0f77e4694b294478b",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_two_predictor.jl": "fec1668bb4f6266d7580fbcbc162ae48a1b6202cf614335b97da02ca705ec7bc",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_uncertainty.jl": "2da147052c184cda46e9569290fa4c5e7b722021849c45652845882aa4097e96",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/lc_metric.jl": "f096872d4af733271d9f746735fd38c0cb2a59b9f9c61ea90150cc8beae43d1f",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/link_residual.jl": "ef69948c94a6a08e3c95f0ffb393f1b3859e1319dec869df92a5350be7b760e2",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/location_only.jl": "43c8727284f5cc592d2ba70b5bc21e4ac8a4224c5910d85f49f9c315268bb6ce",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_corr.jl": "8b558c2fab3416085875ee30956ff7d26600703163f487333c05de21f19bdd4a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_fit.jl": "10a8782a78db3b1c47a5007a998ed487072285d7f7ec0c395c5bd7664f0f6d01",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_frontend.jl": "4ed6b15861df4562df0dd7fc970c3272cd0e07048bf75e46b4866ea0315861ef",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_grad.jl": "2863ec63c5a9519de3093f8c4ccbc39ff53a47295ab9abcfcbf36afa3f02e0e8",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_infer.jl": "7944724797b8ddab50df4f741bbbf3d86d1627963976f09a5c6bdfe89e4b945a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_inner.jl": "7915b9cc780e723cd9928b2a71c3f22884d21df5f0b57c1ea1f0e2db334f8bcb",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_kernels.jl": "b9b64012a776029a44656bf7451ebeca4193d6de815affda60baa6c8d304bd60",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_marginal.jl": "05cd2e416c14fb3e8063e2bb0288c574c39bec733278d2734829b458443dd71d",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_profile.jl": "c6ca8e2d9d76c372be17f61f2edc00fcef299ed897b05742ef035b3f6d29c2b5",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_sigma.jl": "23abfb0d6b2b60179ef320cf6a219baf408429709203d378dfcf0a45ab800b83",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/lognormal.jl": "6dc293eb9cb03b77d0f5590f74e34bcd92df7617bdd9e0ef67db307433b30e54",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/meta_vcov_bivariate.jl": "fe4298f40ce8560378b3f6628a99d20bc6b7111b2bd0f3f423e5384f6aa8e8be",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/missing_data.jl": "8cb515c0ce55ac1c2f1939c7373ecfdd8b1c57ac8bcdefa9f8ebc23225d3c537",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/mixed_family_postfit.jl": "0973c19cfe22b94640682fd5221d2bc09fa9b7900d377137d5984d1303edb661",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/mixed_family.jl": "1eae9a0f838bdcb5517812d73ec4b3db6dadda15c212f0d861c16da42a3f3500",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/negbinomial.jl": "2e8b20713b9e317c37d8f8bae3c74360ddc6f9a64cac3cbe45260a430b3a6f5f",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/phylo_interaction.jl": "10288c86a05f5cdaeb66fd6a9e3f8940d9098421cc2aaa1c878e89244e4a62ea",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/phylo_penalty.jl": "b186cd9521598ff502aafe09f9768ec32899faf8511aa2d2bb5c4ea358e34c39",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/plotting_ext.jl": "1283c8404b9cdda7774931b4fe7624d2e1ba42c9b31c7058e966efb5206493c4",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/poisson.jl": "7f4aadbf523fbbb0025aa07efdd54dcf5dfcb1a683e3745f4d4a67035bb6bdeb",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/profile_q4_phylo.jl": "23761ae1b082d9183118641f8dde457291f93bb389243a3f3efd293873aef3c4",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/quantile_residuals.jl": "2f582a77af8a1506746713e82c2975b7c1204801fa638ced8d1266af6fda56c5",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/reml_q2.jl": "f3e63e5040fd40c0a99c8e514cee281b54774c88670b2cc67e116f88bfb52989",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/reml_q4.jl": "269ad2492322b1733ef187c885d5b5e465d6a7d8b12c5597a2e57d22858e0d77",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/skewnormal.jl": "870cf8fd10a6f60a754ec67b957a4500fe44eb10ca9757bfffa1a28f0c501ee8",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/sparse_aug_plsm.jl": "15bfa5fd2c7cdfadf70dd32857281efcf15dd9e2433020872973e40a79ead6b3",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/sparse_em_fit.jl": "e99ef15e448e7b01424f779cea1b6297fc5014a419bf59b5ae3b94c35f9a65cd",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl": "396ff2a2372c526e88ddba4e4673097667acf0a623eb338e91ba4a5539d8bc93",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl": "cefbe845312d61c9f7a931a451dc6834d2a7590c14e4dddaf8fc1a239af5833b",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/student.jl": "2dd03d7ec050bfbae3964b0db98f5020c26f45f38d6dc952922b1a40bfa09d9e",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/summary.jl": "cca7bb9066c240116a59a0c7322718840709352b3320c26b5a917d6afb0d0b79",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/takahashi_selinv.jl": "1ec53baad46c20c0c93d1f70626be5f39d9237e8f62f587741e8b56122214af1",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/tweedie.jl": "939dcf2c5b156163d0903d8166f52833a8ff90ff984c8ffb578495d1586ea2bc",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/variational.jl": "ec6e7be942370bfe67fe86396fd8480d0e2224096d236d3b8b56582d38020a7b",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl": "49276610d4c71db6241b3bb7836f48ce85ac8b6ad494962a4250a66137ccb78a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/visualization.jl": "31a29e6d991acca983478eaffc5a6f48f3545b77fa4ecbf93b033cd14a89b53d",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/zeroonebeta.jl": "5dc9a58d69eb0ae219b7bf70873402119bcdd78a7aaa5082b89a7b9a4e6923f8"
+  },
+  "fixture_sha256": "2f560fd5298458a3ab9aa335eb5235eb28c86dc39ed11f8ef74ccc93def24a44",
+  "runner_sha256": "95ba3bfcfc21c77d4499e0ed81f982ed16ff0f81f1de93686026b8687abcac4b",
+  "native_tolerance": 3.9999999999999998e-06,
+  "runtime": {
+    "julia": "1.10.0",
+    "blas": 1,
+    "threads": 1,
+    "source": "/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl"
+  },
+  "result": {
+    "status": "PASS",
+    "native_status": "PASS",
+    "native_errors": {
+      "theta": 1.1277067352155612e-06,
+      "loglik": 1.305124897044152e-10,
+      "training": 1.4370833443244635e-06,
+      "imputed1": 3.4429726036844244e-07,
+      "imputed1_se": 2.1553575579869033e-07,
+      "imputed2": 3.8763137344410836e-07,
+      "imputed2_se": 5.7365481975768517e-08
+    },
+    "adapter_errors": {
+      "public_theta": 0,
+      "public_vcov": 1.0842021724855044e-19,
+      "training": 8.8817841970012523e-16,
+      "newdata": 0
+    },
+    "flags": {
+      "converged": true,
+      "nobs": true,
+      "rows1": true,
+      "rows2": true,
+      "masks1": true,
+      "masks2": true,
+      "residuals": true,
+      "summary": true,
+      "wald": true,
+      "no_se": true
+    },
+    "raw_theta": [0.22040755210108159, 0.99478628540204916, 0.70719846464707348, 0.066077578045072791, -0.6829924022768995, 0.21617627276102794, 0.65443552670869243, -0.71577653422303444, -0.075346946942149592, 0.55433743687072035, -1.004827106585225],
+    "raw_covariance": [
+      [0.0023002421756107192, -0.0015834843115632735, 0.00084247325103180715, 0.00065598474318596034, 0.00017911780920212194, -0.00020094197577206791, -3.5383092444244598e-05, -3.3824254046887265e-08, -6.7499357186830947e-05, -4.384503775260059e-05, -4.6756745853289406e-05],
+      [-0.0015834843115632735, 0.0080832415260202149, 0.0019246430735795233, -0.006356014765975933, -0.00055599092293507723, -6.0823373146682794e-07, 1.6758821474391692e-05, -0.00038244925194394643, -2.8605449059169622e-05, 1.3117473468001875e-05, 3.2377185225348763e-05],
+      [0.00084247325103180715, 0.0019246430735795233, 0.015191630915993484, -0.0098454559415191347, -0.00050727405421970918, -6.1991814745954388e-05, 0.00014578696281456377, -0.00011546613817650978, 6.0923138889504782e-05, 9.3143461311276206e-05, -0.00017584315694108466],
+      [0.00065598474318596034, -0.006356014765975933, -0.0098454559415191347, 0.011499790308322363, 0.00068478098190530355, -9.6752279398793176e-06, -0.00023602650003307895, 0.00031096792258058381, -6.1525218808583466e-05, -0.0001922571133603924, 4.7345579231729416e-05],
+      [0.00017911780920212194, -0.00055599092293507723, -0.00050727405421970918, 0.00068478098190530355, 0.0040511577360901815, -7.3284737615291856e-05, -8.3601621134289545e-06, -0.00028065209263750351, -3.5779043725782595e-05, -4.9260390114016719e-05, -5.4591293846706868e-05],
+      [-0.00020094197577206791, -6.0823373146682794e-07, -6.1991814745954388e-05, -9.6752279398793176e-06, -7.3284737615291856e-05, 0.0017064635653681283, 8.1879869589817194e-05, 7.0739128229442772e-05, 2.6236981846116689e-06, 3.2357295097003256e-06, 2.7428741210178284e-06],
+      [-3.5383092444244598e-05, 1.6758821474391692e-05, 0.00014578696281456377, -0.00023602650003307895, -8.3601621134289545e-06, 8.1879869589817194e-05, 0.0015800625011613799, -1.044199927723583e-07, 1.5378670669841213e-06, 7.0485947027286933e-06, 8.7151848756805383e-07],
+      [-3.3824254046887265e-08, -0.00038244925194394643, -0.00011546613817650978, 0.00031096792258058381, -0.00028065209263750351, 7.0739128229442772e-05, -1.044199927723583e-07, 0.0038236556133229324, 3.7744921744718759e-06, 3.9863159746499538e-06, 6.0791360675374937e-06],
+      [-6.7499357186830947e-05, -2.8605449059169622e-05, 6.0923138889504782e-05, -6.1525218808583466e-05, -3.5779043725782595e-05, 2.6236981846116689e-06, 1.5378670669841213e-06, 3.7744921744718759e-06, 0.00095469685053372092, 7.5299384471621449e-05, 3.1496459231686334e-05],
+      [-4.384503775260059e-05, 1.3117473468001875e-05, 9.3143461311276206e-05, -0.0001922571133603924, -4.9260390114016719e-05, 3.2357295097003256e-06, 7.0485947027286933e-06, 3.9863159746499538e-06, 7.5299384471621449e-05, 0.00098838205305702784, 3.8915139371302784e-05],
+      [-4.6756745853289406e-05, 3.2377185225348763e-05, -0.00017584315694108466, 4.7345579231729416e-05, -5.4591293846706868e-05, 2.7428741210178284e-06, 8.7151848756805383e-07, 6.0791360675374937e-06, 3.1496459231686334e-05, 3.8915139371302784e-05, 0.0035741721692619886]
+    ],
+    "public_covariance": [
+      [0.0023002421756107192, -0.0015834843115632735, 0.00084247325103180715, 0.00065598474318596034, 0.00017911780920212194, -0.00020094197577206791, -3.5383092444244598e-05, -1.6533714285905439e-08, -6.7499357186830947e-05, -4.384503775260059e-05, -1.711801529677806e-05],
+      [-0.0015834843115632735, 0.0080832415260202149, 0.0019246430735795233, -0.006356014765975933, -0.00055599092293507723, -6.0823373146682794e-07, 1.6758821474391692e-05, -0.00018694593092087388, -2.8605449059169622e-05, 1.3117473468001875e-05, 1.1853544164368864e-05],
+      [0.00084247325103180715, 0.0019246430735795233, 0.015191630915993484, -0.0098454559415191347, -0.00050727405421970918, -6.1991814745954388e-05, 0.00014578696281456377, -5.6441278369684485e-05, 6.0923138889504782e-05, 9.3143461311276206e-05, -6.4377573661693747e-05],
+      [0.00065598474318596034, -0.006356014765975933, -0.0098454559415191347, 0.011499790308322363, 0.00068478098190530355, -9.6752279398793176e-06, -0.00023602650003307895, 0.00015200497184363141, -6.1525218808583466e-05, -0.0001922571133603924, 1.7333591864296615e-05],
+      [0.00017911780920212194, -0.00055599092293507723, -0.00050727405421970918, 0.00068478098190530355, 0.0040511577360901815, -7.3284737615291856e-05, -8.3601621134289545e-06, -0.00013718621871091857, -3.5779043725782595e-05, -4.9260390114016719e-05, -1.9986305421490129e-05],
+      [-0.00020094197577206791, -6.0823373146682794e-07, -6.1991814745954388e-05, -9.6752279398793176e-06, -7.3284737615291856e-05, 0.0017064635653681283, 8.1879869589817194e-05, 3.4578161970944259e-05, 2.6236981846116689e-06, 3.2357295097003256e-06, 1.0041879584187676e-06],
+      [-3.5383092444244598e-05, 1.6758821474391692e-05, 0.00014578696281456377, -0.00023602650003307895, -8.3601621134289545e-06, 8.1879869589817194e-05, 0.0015800625011613799, -5.1041785691453041e-08, 1.5378670669841213e-06, 7.0485947027286933e-06, 3.1906982681014092e-07],
+      [-1.6533714285905439e-08, -0.00018694593092087388, -5.6441278369684485e-05, 0.00015200497184363141, -0.00013718621871091857, 3.4578161970944259e-05, -5.1041785691453041e-08, 0.00091361489499026862, 1.8450185213425866e-06, 1.9485606182723299e-06, 1.0879105727787699e-06],
+      [-6.7499357186830947e-05, -2.8605449059169622e-05, 6.0923138889504782e-05, -6.1525218808583466e-05, -3.5779043725782595e-05, 2.6236981846116689e-06, 1.5378670669841213e-06, 1.8450185213425866e-06, 0.00095469685053372092, 7.5299384471621449e-05, 1.1531103396589835e-05],
+      [-4.384503775260059e-05, 1.3117473468001875e-05, 9.3143461311276206e-05, -0.0001922571133603924, -4.9260390114016719e-05, 3.2357295097003256e-06, 7.0485947027286933e-06, 1.9485606182723299e-06, 7.5299384471621449e-05, 0.00098838205305702784, 1.4247141003448308e-05],
+      [-1.711801529677806e-05, 1.1853544164368864e-05, -6.4377573661693747e-05, 1.7333591864296615e-05, -1.9986305421490129e-05, 1.0041879584187676e-06, 3.1906982681014092e-07, 1.0879105727787699e-06, 1.1531103396589835e-05, 1.4247141003448308e-05, 0.00047906421745724526]
+    ],
+    "coef": {
+      "mu": [0.22040755210108159, 0.99478628540204916, 0.70719846464707348, 0.066077578045072791],
+      "sigma": -0.6829924022768995,
+      "mi_x1": [0.21617627276102794, 0.65443552670869243],
+      "sigma_mi_x1": 0.48881238483445527,
+      "mi_x2": [-0.075346946942149592, 0.55433743687072035],
+      "sigma_mi_x2": 0.36610792698212941
+    },
+    "imputation": {
+      "x1": [
+        {
+          "variable": "x1",
+          "original_row": 1,
+          "model_row": 1,
+          "observed": true,
+          "estimate": 0.081447819503776497,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 2,
+          "model_row": 2,
+          "observed": true,
+          "estimate": 0.1522570514007405,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 3,
+          "model_row": 3,
+          "observed": true,
+          "estimate": 0.77740267422352183,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 4,
+          "model_row": 4,
+          "observed": true,
+          "estimate": -5.5262817947043796e-05,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 5,
+          "model_row": 5,
+          "observed": false,
+          "estimate": 0.66199598334796128,
+          "std_error": 0.49141513065064318,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 6,
+          "model_row": 6,
+          "observed": true,
+          "estimate": 0.29605798673474959,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 7,
+          "model_row": 7,
+          "observed": true,
+          "estimate": -1.0235298852690873,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 8,
+          "model_row": 8,
+          "observed": true,
+          "estimate": -0.50428773798798288,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 9,
+          "model_row": 9,
+          "observed": true,
+          "estimate": 1.0473089363308472,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 10,
+          "model_row": 10,
+          "observed": false,
+          "estimate": 1.0044962090094001,
+          "std_error": 0.35625870107652258,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 11,
+          "model_row": 11,
+          "observed": true,
+          "estimate": 0.82338722856830293,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 12,
+          "model_row": 12,
+          "observed": true,
+          "estimate": -0.26925499594535363,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 13,
+          "model_row": 13,
+          "observed": true,
+          "estimate": 0.068457141931244081,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 14,
+          "model_row": 14,
+          "observed": true,
+          "estimate": 1.3698131064893371,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 15,
+          "model_row": 15,
+          "observed": false,
+          "estimate": -1.2763366258902227,
+          "std_error": 0.35971043882732462,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 16,
+          "model_row": 16,
+          "observed": true,
+          "estimate": 0.42217500047753798,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 17,
+          "model_row": 17,
+          "observed": true,
+          "estimate": 0.93822796750331161,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 18,
+          "model_row": 18,
+          "observed": true,
+          "estimate": 0.25090310324412157,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 19,
+          "model_row": 19,
+          "observed": true,
+          "estimate": -1.3156827380059211,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 20,
+          "model_row": 20,
+          "observed": false,
+          "estimate": 0.83870063578426168,
+          "std_error": 0.35608695135753271,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 21,
+          "model_row": 21,
+          "observed": true,
+          "estimate": 1.046860626543229,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 22,
+          "model_row": 22,
+          "observed": true,
+          "estimate": -1.1149303799552566,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 23,
+          "model_row": 23,
+          "observed": true,
+          "estimate": -0.17845468799255981,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 24,
+          "model_row": 24,
+          "observed": true,
+          "estimate": -0.30147062190595358,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 25,
+          "model_row": 25,
+          "observed": false,
+          "estimate": 0.8409623545979652,
+          "std_error": 0.36096037179126839,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 26,
+          "model_row": 26,
+          "observed": true,
+          "estimate": -0.39014793801499925,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 27,
+          "model_row": 27,
+          "observed": true,
+          "estimate": 0.2025983470491261,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 28,
+          "model_row": 28,
+          "observed": true,
+          "estimate": -0.36735335509699502,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 29,
+          "model_row": 29,
+          "observed": true,
+          "estimate": 0.53665756346140803,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 30,
+          "model_row": 30,
+          "observed": false,
+          "estimate": 0.13442112449679383,
+          "std_error": 0.354469501702106,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 31,
+          "model_row": 31,
+          "observed": true,
+          "estimate": -0.55598531592282097,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 32,
+          "model_row": 32,
+          "observed": true,
+          "estimate": -1.4152598505718079,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 33,
+          "model_row": 33,
+          "observed": true,
+          "estimate": 1.0792946173794322,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 34,
+          "model_row": 34,
+          "observed": true,
+          "estimate": -0.18941956069613886,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 35,
+          "model_row": 35,
+          "observed": false,
+          "estimate": -0.018537280359104874,
+          "std_error": 0.49070207074567906,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 36,
+          "model_row": 36,
+          "observed": true,
+          "estimate": 1.2484577240294827,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 37,
+          "model_row": 37,
+          "observed": true,
+          "estimate": -0.93462733512725482,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 38,
+          "model_row": 38,
+          "observed": true,
+          "estimate": 0.47307814751532828,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 39,
+          "model_row": 39,
+          "observed": true,
+          "estimate": 0.60117484634873808,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 40,
+          "model_row": 40,
+          "observed": false,
+          "estimate": -0.31461164520540635,
+          "std_error": 0.35571293216398714,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 41,
+          "model_row": 41,
+          "observed": true,
+          "estimate": 0.59182842600484564,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 42,
+          "model_row": 42,
+          "observed": true,
+          "estimate": 2.7385698617843119,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 43,
+          "model_row": 43,
+          "observed": true,
+          "estimate": -0.15799289097925362,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 44,
+          "model_row": 44,
+          "observed": true,
+          "estimate": -0.21684211926850441,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 45,
+          "model_row": 45,
+          "observed": false,
+          "estimate": -0.47551150177915147,
+          "std_error": 0.35460656713203842,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 46,
+          "model_row": 46,
+          "observed": true,
+          "estimate": 0.42414302254112729,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 47,
+          "model_row": 47,
+          "observed": true,
+          "estimate": 0.56503576672871858,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 48,
+          "model_row": 48,
+          "observed": true,
+          "estimate": -0.23239458943909885,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 49,
+          "model_row": 49,
+          "observed": true,
+          "estimate": 0.96831157278345825,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 50,
+          "model_row": 50,
+          "observed": false,
+          "estimate": 0.71354494233623023,
+          "std_error": 0.36217457552213556,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 51,
+          "model_row": 51,
+          "observed": true,
+          "estimate": -1.025627585861427,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 52,
+          "model_row": 52,
+          "observed": true,
+          "estimate": 0.7961305132853187,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 53,
+          "model_row": 53,
+          "observed": true,
+          "estimate": 0.50697920452150202,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 54,
+          "model_row": 54,
+          "observed": true,
+          "estimate": 0.15367661179989842,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 55,
+          "model_row": 55,
+          "observed": false,
+          "estimate": 0.93337784959942283,
+          "std_error": 0.3554556536346844,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 56,
+          "model_row": 56,
+          "observed": true,
+          "estimate": 0.74858187020588174,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 57,
+          "model_row": 57,
+          "observed": true,
+          "estimate": 0.37987292761062313,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 58,
+          "model_row": 58,
+          "observed": true,
+          "estimate": -0.68523687444500381,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 59,
+          "model_row": 59,
+          "observed": true,
+          "estimate": -0.89626969711157511,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 60,
+          "model_row": 60,
+          "observed": false,
+          "estimate": 1.8229708146742554,
+          "std_error": 0.36409088620193419,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 61,
+          "model_row": 61,
+          "observed": true,
+          "estimate": 0.77483375083894945,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 62,
+          "model_row": 62,
+          "observed": true,
+          "estimate": -0.016896575766310762,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 63,
+          "model_row": 63,
+          "observed": true,
+          "estimate": 0.15352805394015556,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 64,
+          "model_row": 64,
+          "observed": true,
+          "estimate": 0.14886344978593852,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 65,
+          "model_row": 65,
+          "observed": false,
+          "estimate": -0.0034327715611821297,
+          "std_error": 0.35745146258406291,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 66,
+          "model_row": 66,
+          "observed": true,
+          "estimate": 0.1853622454072486,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 67,
+          "model_row": 67,
+          "observed": true,
+          "estimate": -0.74867433382264026,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 68,
+          "model_row": 68,
+          "observed": true,
+          "estimate": -1.2177517619609497,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 69,
+          "model_row": 69,
+          "observed": true,
+          "estimate": 0.98547394533771682,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 70,
+          "model_row": 70,
+          "observed": false,
+          "estimate": 0.86842947841338269,
+          "std_error": 0.37422524521180173,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 71,
+          "model_row": 71,
+          "observed": true,
+          "estimate": 0.79027726328006165,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 72,
+          "model_row": 72,
+          "observed": true,
+          "estimate": 1.7233927339472006,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 73,
+          "model_row": 73,
+          "observed": true,
+          "estimate": 0.50984394417510448,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 74,
+          "model_row": 74,
+          "observed": true,
+          "estimate": -0.89859409689757253,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 75,
+          "model_row": 75,
+          "observed": false,
+          "estimate": -0.39620682577287814,
+          "std_error": 0.35592314277153309,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 76,
+          "model_row": 76,
+          "observed": true,
+          "estimate": 1.7877932453508305,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 77,
+          "model_row": 77,
+          "observed": true,
+          "estimate": 0.5481040167554464,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 78,
+          "model_row": 78,
+          "observed": true,
+          "estimate": 0.44723528828067394,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 79,
+          "model_row": 79,
+          "observed": true,
+          "estimate": 1.3097556804830166,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 80,
+          "model_row": 80,
+          "observed": false,
+          "estimate": 1.1431822035011385,
+          "std_error": 0.35828931056718138,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 81,
+          "model_row": 81,
+          "observed": true,
+          "estimate": -0.018566713964056056,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 82,
+          "model_row": 82,
+          "observed": true,
+          "estimate": 1.0736687083807261,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 83,
+          "model_row": 83,
+          "observed": true,
+          "estimate": -0.60518024023099948,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 84,
+          "model_row": 84,
+          "observed": true,
+          "estimate": 0.071805273571257239,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 85,
+          "model_row": 85,
+          "observed": false,
+          "estimate": -0.083239388767840233,
+          "std_error": 0.35746152951256038,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 86,
+          "model_row": 86,
+          "observed": true,
+          "estimate": 0.11879066242825315,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 87,
+          "model_row": 87,
+          "observed": true,
+          "estimate": -1.0982214510672565,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 88,
+          "model_row": 88,
+          "observed": true,
+          "estimate": 1.9605893915081922,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 89,
+          "model_row": 89,
+          "observed": true,
+          "estimate": 1.2677009423878043,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 90,
+          "model_row": 90,
+          "observed": false,
+          "estimate": 0.55768289370128632,
+          "std_error": 0.35413400239407594,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 91,
+          "model_row": 91,
+          "observed": true,
+          "estimate": 1.0673003847371725,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 92,
+          "model_row": 92,
+          "observed": true,
+          "estimate": -0.36547158254270751,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 93,
+          "model_row": 93,
+          "observed": true,
+          "estimate": 0.12925222439355474,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 94,
+          "model_row": 94,
+          "observed": true,
+          "estimate": -1.5309169635784032,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 95,
+          "model_row": 95,
+          "observed": false,
+          "estimate": -0.052148510538059967,
+          "std_error": 0.35662585460213664,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 96,
+          "model_row": 96,
+          "observed": true,
+          "estimate": -0.22088067561333655,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 97,
+          "model_row": 97,
+          "observed": true,
+          "estimate": -0.40092377863302886,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 98,
+          "model_row": 98,
+          "observed": true,
+          "estimate": 0.89659495630886032,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 99,
+          "model_row": 99,
+          "observed": true,
+          "estimate": 0.0084174297850510005,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 100,
+          "model_row": 100,
+          "observed": false,
+          "estimate": 0.63797981939300774,
+          "std_error": 0.35767418011656549,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 101,
+          "model_row": 101,
+          "observed": true,
+          "estimate": -2.1578131974711812,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 102,
+          "model_row": 102,
+          "observed": true,
+          "estimate": 1.3611383523573237,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 103,
+          "model_row": 103,
+          "observed": true,
+          "estimate": 1.0893306416219168,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 104,
+          "model_row": 104,
+          "observed": true,
+          "estimate": -0.14946444185689636,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 105,
+          "model_row": 105,
+          "observed": false,
+          "estimate": 1.0222499377935252,
+          "std_error": 0.37456849603922437,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 106,
+          "model_row": 106,
+          "observed": true,
+          "estimate": -0.030482471486825091,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 107,
+          "model_row": 107,
+          "observed": true,
+          "estimate": -0.40770125626207876,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 108,
+          "model_row": 108,
+          "observed": true,
+          "estimate": -0.28308293105888593,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 109,
+          "model_row": 109,
+          "observed": true,
+          "estimate": -0.24104348749296992,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 110,
+          "model_row": 110,
+          "observed": false,
+          "estimate": 0.32041152421251784,
+          "std_error": 0.35385690692122712,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 111,
+          "model_row": 111,
+          "observed": true,
+          "estimate": -0.51199260586431072,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 112,
+          "model_row": 112,
+          "observed": true,
+          "estimate": 0.72508250327936852,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 113,
+          "model_row": 113,
+          "observed": true,
+          "estimate": -0.70104575944435799,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 114,
+          "model_row": 114,
+          "observed": true,
+          "estimate": 0.34666670672559019,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 115,
+          "model_row": 115,
+          "observed": false,
+          "estimate": 0.28917428043307553,
+          "std_error": 0.35847593186041982,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 116,
+          "model_row": 116,
+          "observed": true,
+          "estimate": -0.78859821311753997,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 117,
+          "model_row": 117,
+          "observed": true,
+          "estimate": 0.69082182831459371,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 118,
+          "model_row": 118,
+          "observed": true,
+          "estimate": 0.90826368584393813,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 119,
+          "model_row": 119,
+          "observed": true,
+          "estimate": 0.912134177789241,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 120,
+          "model_row": 120,
+          "observed": false,
+          "estimate": 0.53765775471487343,
+          "std_error": 0.35518647662071873,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 121,
+          "model_row": 121,
+          "observed": true,
+          "estimate": 1.6603796748620447,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 122,
+          "model_row": 122,
+          "observed": true,
+          "estimate": -0.63589449292938305,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 123,
+          "model_row": 123,
+          "observed": true,
+          "estimate": -0.32249194604724091,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 124,
+          "model_row": 124,
+          "observed": true,
+          "estimate": 0.49433177011667095,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 125,
+          "model_row": 125,
+          "observed": false,
+          "estimate": 0.67697598570038464,
+          "std_error": 0.35597825977025899,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 126,
+          "model_row": 126,
+          "observed": true,
+          "estimate": -0.77820939804196865,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 127,
+          "model_row": 127,
+          "observed": true,
+          "estimate": 0.71105095780190142,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 128,
+          "model_row": 128,
+          "observed": true,
+          "estimate": 0.39677268313499303,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 129,
+          "model_row": 129,
+          "observed": true,
+          "estimate": -1.3741280568629912,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 130,
+          "model_row": 130,
+          "observed": false,
+          "estimate": -0.908549074727248,
+          "std_error": 0.35705122788157295,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 131,
+          "model_row": 131,
+          "observed": true,
+          "estimate": -0.52521348300987758,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 132,
+          "model_row": 132,
+          "observed": true,
+          "estimate": -0.11980236377882859,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 133,
+          "model_row": 133,
+          "observed": true,
+          "estimate": 1.8585954134521392,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 134,
+          "model_row": 134,
+          "observed": true,
+          "estimate": -0.42479107557402296,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 135,
+          "model_row": 135,
+          "observed": false,
+          "estimate": 0.1744645514961739,
+          "std_error": 0.35431014187779614,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 136,
+          "model_row": 136,
+          "observed": true,
+          "estimate": 1.1659734880060231,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 137,
+          "model_row": 137,
+          "observed": true,
+          "estimate": 1.083967648671933,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 138,
+          "model_row": 138,
+          "observed": true,
+          "estimate": 0.1263981277535943,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 139,
+          "model_row": 139,
+          "observed": true,
+          "estimate": 0.44592082230093416,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 140,
+          "model_row": 140,
+          "observed": false,
+          "estimate": 0.28488627700910074,
+          "std_error": 0.3736996539237592,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 141,
+          "model_row": 141,
+          "observed": true,
+          "estimate": 0.18718867008491286,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 142,
+          "model_row": 142,
+          "observed": true,
+          "estimate": 0.99998367119651932,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 143,
+          "model_row": 143,
+          "observed": true,
+          "estimate": -0.9341069618489336,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 144,
+          "model_row": 144,
+          "observed": true,
+          "estimate": 0.046743168750977851,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 145,
+          "model_row": 145,
+          "observed": false,
+          "estimate": 0.68294999921030641,
+          "std_error": 0.35456881146136715,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 146,
+          "model_row": 146,
+          "observed": true,
+          "estimate": 0.29921453791147434,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 147,
+          "model_row": 147,
+          "observed": true,
+          "estimate": -1.351362917588689,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 148,
+          "model_row": 148,
+          "observed": true,
+          "estimate": -0.016128187765572788,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 149,
+          "model_row": 149,
+          "observed": true,
+          "estimate": 0.12778019151951359,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 150,
+          "model_row": 150,
+          "observed": false,
+          "estimate": 1.6687877433165532,
+          "std_error": 0.36103036544257761,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 151,
+          "model_row": 151,
+          "observed": true,
+          "estimate": -1.3713740243049528,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 152,
+          "model_row": 152,
+          "observed": true,
+          "estimate": 0.24922967777638927,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 153,
+          "model_row": 153,
+          "observed": true,
+          "estimate": 1.6250749976721719,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 154,
+          "model_row": 154,
+          "observed": true,
+          "estimate": 0.2070834045049415,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 155,
+          "model_row": 155,
+          "observed": false,
+          "estimate": 0.11559521159508174,
+          "std_error": 0.35962046856997409,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 156,
+          "model_row": 156,
+          "observed": true,
+          "estimate": -0.56916624333566335,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 157,
+          "model_row": 157,
+          "observed": true,
+          "estimate": 0.057792541318397103,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 158,
+          "model_row": 158,
+          "observed": true,
+          "estimate": -0.033570007057984796,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 159,
+          "model_row": 159,
+          "observed": true,
+          "estimate": -0.74447426607131806,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x1",
+          "original_row": 160,
+          "model_row": 160,
+          "observed": false,
+          "estimate": 0.007065463898114549,
+          "std_error": 0.35475376971281469,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        }
+      ],
+      "x2": [
+        {
+          "variable": "x2",
+          "original_row": 1,
+          "model_row": 1,
+          "observed": true,
+          "estimate": -0.82351591825890424,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 2,
+          "model_row": 2,
+          "observed": true,
+          "estimate": -0.66496023289139505,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 3,
+          "model_row": 3,
+          "observed": true,
+          "estimate": 0.86667853448638943,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 4,
+          "model_row": 4,
+          "observed": true,
+          "estimate": -0.24960744965645837,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 5,
+          "model_row": 5,
+          "observed": true,
+          "estimate": 1.1242525513461983,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 6,
+          "model_row": 6,
+          "observed": true,
+          "estimate": 0.53436129888849271,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 7,
+          "model_row": 7,
+          "observed": false,
+          "estimate": -0.72227104858129576,
+          "std_error": 0.36899874908671404,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 8,
+          "model_row": 8,
+          "observed": true,
+          "estimate": 0.22155963787198574,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 9,
+          "model_row": 9,
+          "observed": true,
+          "estimate": 0.24438128682740023,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 10,
+          "model_row": 10,
+          "observed": true,
+          "estimate": 0.83620743634985351,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 11,
+          "model_row": 11,
+          "observed": true,
+          "estimate": 0.75568273800855634,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 12,
+          "model_row": 12,
+          "observed": true,
+          "estimate": -0.72785929413187023,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 13,
+          "model_row": 13,
+          "observed": true,
+          "estimate": 0.18640749470704873,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 14,
+          "model_row": 14,
+          "observed": false,
+          "estimate": 0.2465523500027568,
+          "std_error": 0.32824812255925073,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 15,
+          "model_row": 15,
+          "observed": true,
+          "estimate": -0.97737146859555546,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 16,
+          "model_row": 16,
+          "observed": true,
+          "estimate": -0.65185152877473085,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 17,
+          "model_row": 17,
+          "observed": true,
+          "estimate": 0.35367662755006091,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 18,
+          "model_row": 18,
+          "observed": true,
+          "estimate": -0.40228136086088001,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 19,
+          "model_row": 19,
+          "observed": true,
+          "estimate": -1.0355057686683211,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 20,
+          "model_row": 20,
+          "observed": true,
+          "estimate": 0.43568182933910138,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 21,
+          "model_row": 21,
+          "observed": false,
+          "estimate": 0.32251346100913419,
+          "std_error": 0.32799993727736237,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 22,
+          "model_row": 22,
+          "observed": true,
+          "estimate": -1.0099894161937055,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 23,
+          "model_row": 23,
+          "observed": true,
+          "estimate": 0.48973016926274615,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 24,
+          "model_row": 24,
+          "observed": true,
+          "estimate": -0.24020979968687492,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 25,
+          "model_row": 25,
+          "observed": true,
+          "estimate": 0.21156272169179369,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 26,
+          "model_row": 26,
+          "observed": true,
+          "estimate": -0.28852675160945351,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 27,
+          "model_row": 27,
+          "observed": true,
+          "estimate": -0.43684017956861831,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 28,
+          "model_row": 28,
+          "observed": false,
+          "estimate": 0.097381996301337648,
+          "std_error": 0.32875283105948805,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 29,
+          "model_row": 29,
+          "observed": true,
+          "estimate": 0.27218014822543912,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 30,
+          "model_row": 30,
+          "observed": true,
+          "estimate": 0.28853981122084604,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 31,
+          "model_row": 31,
+          "observed": true,
+          "estimate": -0.056458722060540076,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 32,
+          "model_row": 32,
+          "observed": true,
+          "estimate": -1.0834183709799339,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 33,
+          "model_row": 33,
+          "observed": true,
+          "estimate": -0.38567747183410839,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 34,
+          "model_row": 34,
+          "observed": true,
+          "estimate": -0.25944943013429822,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 35,
+          "model_row": 35,
+          "observed": false,
+          "estimate": -0.27416028167932366,
+          "std_error": 0.3675089582905478,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 36,
+          "model_row": 36,
+          "observed": true,
+          "estimate": 0.13379879605786904,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 37,
+          "model_row": 37,
+          "observed": true,
+          "estimate": -0.7164650706668898,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 38,
+          "model_row": 38,
+          "observed": true,
+          "estimate": 1.1076702487275307,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 39,
+          "model_row": 39,
+          "observed": true,
+          "estimate": 0.19599216747451953,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 40,
+          "model_row": 40,
+          "observed": true,
+          "estimate": -0.69424880405719269,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 41,
+          "model_row": 41,
+          "observed": true,
+          "estimate": -0.53311844475377745,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 42,
+          "model_row": 42,
+          "observed": false,
+          "estimate": 1.6287292534873434,
+          "std_error": 0.3400174093165696,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 43,
+          "model_row": 43,
+          "observed": true,
+          "estimate": -0.9636305000352865,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 44,
+          "model_row": 44,
+          "observed": true,
+          "estimate": -0.41393560236461668,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 45,
+          "model_row": 45,
+          "observed": true,
+          "estimate": -0.62521599347216439,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 46,
+          "model_row": 46,
+          "observed": true,
+          "estimate": -0.37957677940051593,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 47,
+          "model_row": 47,
+          "observed": true,
+          "estimate": 1.4554160480039839,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 48,
+          "model_row": 48,
+          "observed": true,
+          "estimate": -0.51771106035065206,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 49,
+          "model_row": 49,
+          "observed": false,
+          "estimate": -0.38601156211632759,
+          "std_error": 0.32992882334420359,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 50,
+          "model_row": 50,
+          "observed": true,
+          "estimate": -0.34717624283675685,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 51,
+          "model_row": 51,
+          "observed": true,
+          "estimate": -0.33120830845977778,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 52,
+          "model_row": 52,
+          "observed": true,
+          "estimate": -0.027580288690470051,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 53,
+          "model_row": 53,
+          "observed": true,
+          "estimate": -0.062561480756799515,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 54,
+          "model_row": 54,
+          "observed": true,
+          "estimate": -0.51981577728404327,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 55,
+          "model_row": 55,
+          "observed": true,
+          "estimate": 0.1783632405205475,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 56,
+          "model_row": 56,
+          "observed": false,
+          "estimate": -0.32985811367993034,
+          "std_error": 0.32798516203663314,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 57,
+          "model_row": 57,
+          "observed": true,
+          "estimate": 0.60723705591210053,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 58,
+          "model_row": 58,
+          "observed": true,
+          "estimate": -0.59076950090226732,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 59,
+          "model_row": 59,
+          "observed": true,
+          "estimate": -0.33557248797375977,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 60,
+          "model_row": 60,
+          "observed": true,
+          "estimate": 0.29461960826627026,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 61,
+          "model_row": 61,
+          "observed": true,
+          "estimate": 0.71892157046327054,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 62,
+          "model_row": 62,
+          "observed": true,
+          "estimate": -0.40902219509902038,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 63,
+          "model_row": 63,
+          "observed": false,
+          "estimate": 0.081193732247860168,
+          "std_error": 0.32769270784151944,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 64,
+          "model_row": 64,
+          "observed": true,
+          "estimate": 0.032460519026022594,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 65,
+          "model_row": 65,
+          "observed": true,
+          "estimate": 0.22727288057742445,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 66,
+          "model_row": 66,
+          "observed": true,
+          "estimate": -0.14908756359478681,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 67,
+          "model_row": 67,
+          "observed": true,
+          "estimate": 0.57326038872157814,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 68,
+          "model_row": 68,
+          "observed": true,
+          "estimate": -1.2973019162466126,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 69,
+          "model_row": 69,
+          "observed": true,
+          "estimate": 0.26126400725470256,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 70,
+          "model_row": 70,
+          "observed": false,
+          "estimate": 0.48906549847195535,
+          "std_error": 0.34628589838304519,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 71,
+          "model_row": 71,
+          "observed": true,
+          "estimate": -0.42980268786131193,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 72,
+          "model_row": 72,
+          "observed": true,
+          "estimate": 0.070511443039712907,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 73,
+          "model_row": 73,
+          "observed": true,
+          "estimate": -0.76295185157446499,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 74,
+          "model_row": 74,
+          "observed": true,
+          "estimate": -0.59781698959161211,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 75,
+          "model_row": 75,
+          "observed": true,
+          "estimate": -0.22361651049978612,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 76,
+          "model_row": 76,
+          "observed": true,
+          "estimate": 0.8726051872467715,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 77,
+          "model_row": 77,
+          "observed": false,
+          "estimate": 0.48351165546491481,
+          "std_error": 0.32931135313006737,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 78,
+          "model_row": 78,
+          "observed": true,
+          "estimate": 0.18916523871373916,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 79,
+          "model_row": 79,
+          "observed": true,
+          "estimate": 0.46225690630439065,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 80,
+          "model_row": 80,
+          "observed": true,
+          "estimate": -0.054962842371854448,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 81,
+          "model_row": 81,
+          "observed": true,
+          "estimate": -0.07402143044655482,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 82,
+          "model_row": 82,
+          "observed": true,
+          "estimate": -0.033889206530645227,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 83,
+          "model_row": 83,
+          "observed": true,
+          "estimate": -1.1172702148003322,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 84,
+          "model_row": 84,
+          "observed": false,
+          "estimate": 0.31095939056224875,
+          "std_error": 0.33191974861923201,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 85,
+          "model_row": 85,
+          "observed": true,
+          "estimate": 0.49406750030412283,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 86,
+          "model_row": 86,
+          "observed": true,
+          "estimate": -0.40253567140885127,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 87,
+          "model_row": 87,
+          "observed": true,
+          "estimate": -1.440114118645534,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 88,
+          "model_row": 88,
+          "observed": true,
+          "estimate": 1.546646280886192,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 89,
+          "model_row": 89,
+          "observed": true,
+          "estimate": 0.34548678906830688,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 90,
+          "model_row": 90,
+          "observed": true,
+          "estimate": 0.31523638345612864,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 91,
+          "model_row": 91,
+          "observed": false,
+          "estimate": 1.2878228174117528,
+          "std_error": 0.33558150937752418,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 92,
+          "model_row": 92,
+          "observed": true,
+          "estimate": -1.0435326888850807,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 93,
+          "model_row": 93,
+          "observed": true,
+          "estimate": -0.37234903259468111,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 94,
+          "model_row": 94,
+          "observed": true,
+          "estimate": -0.73244267211232927,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 95,
+          "model_row": 95,
+          "observed": true,
+          "estimate": 0.27113393570695199,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 96,
+          "model_row": 96,
+          "observed": true,
+          "estimate": -0.13606401596308015,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 97,
+          "model_row": 97,
+          "observed": true,
+          "estimate": 0.28058289258790986,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 98,
+          "model_row": 98,
+          "observed": false,
+          "estimate": 0.74824090332679161,
+          "std_error": 0.3328239974812115,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 99,
+          "model_row": 99,
+          "observed": true,
+          "estimate": -0.20389247434886631,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 100,
+          "model_row": 100,
+          "observed": true,
+          "estimate": -0.49778473119076849,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 101,
+          "model_row": 101,
+          "observed": true,
+          "estimate": -1.7439151428057096,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 102,
+          "model_row": 102,
+          "observed": true,
+          "estimate": -0.39169178201522337,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 103,
+          "model_row": 103,
+          "observed": true,
+          "estimate": 0.31253058615850132,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 104,
+          "model_row": 104,
+          "observed": true,
+          "estimate": 0.035948797217116468,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 105,
+          "model_row": 105,
+          "observed": false,
+          "estimate": 0.57323995461467847,
+          "std_error": 0.34660387523874825,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 106,
+          "model_row": 106,
+          "observed": true,
+          "estimate": 0.59228758795146064,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 107,
+          "model_row": 107,
+          "observed": true,
+          "estimate": 0.17119060472729061,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 108,
+          "model_row": 108,
+          "observed": true,
+          "estimate": -0.34369678678425597,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 109,
+          "model_row": 109,
+          "observed": true,
+          "estimate": -0.80469982214108615,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 110,
+          "model_row": 110,
+          "observed": true,
+          "estimate": -0.24370403696060264,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 111,
+          "model_row": 111,
+          "observed": true,
+          "estimate": 0.35497085223831137,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 112,
+          "model_row": 112,
+          "observed": false,
+          "estimate": 0.3493283887447689,
+          "std_error": 0.32864055028762029,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 113,
+          "model_row": 113,
+          "observed": true,
+          "estimate": -1.0377248570628632,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 114,
+          "model_row": 114,
+          "observed": true,
+          "estimate": -0.26241122102577785,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 115,
+          "model_row": 115,
+          "observed": true,
+          "estimate": 0.1730205944073484,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 116,
+          "model_row": 116,
+          "observed": true,
+          "estimate": -1.4285604095058835,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 117,
+          "model_row": 117,
+          "observed": true,
+          "estimate": -0.18385816312881076,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 118,
+          "model_row": 118,
+          "observed": true,
+          "estimate": -0.24507012852396948,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 119,
+          "model_row": 119,
+          "observed": false,
+          "estimate": -0.025310323424905967,
+          "std_error": 0.32995177469067688,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 120,
+          "model_row": 120,
+          "observed": true,
+          "estimate": -0.2021530987755866,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 121,
+          "model_row": 121,
+          "observed": true,
+          "estimate": 0.29844920866207258,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 122,
+          "model_row": 122,
+          "observed": true,
+          "estimate": 0.19526292132989384,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 123,
+          "model_row": 123,
+          "observed": true,
+          "estimate": -0.95814005810157732,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 124,
+          "model_row": 124,
+          "observed": true,
+          "estimate": -1.2966349659853216,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 125,
+          "model_row": 125,
+          "observed": true,
+          "estimate": 0.61243773364707321,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 126,
+          "model_row": 126,
+          "observed": false,
+          "estimate": -0.50354733612494873,
+          "std_error": 0.32805098834761798,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 127,
+          "model_row": 127,
+          "observed": true,
+          "estimate": -0.16489762037911648,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 128,
+          "model_row": 128,
+          "observed": true,
+          "estimate": 0.71347336914422543,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 129,
+          "model_row": 129,
+          "observed": true,
+          "estimate": -1.1735973513910738,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 130,
+          "model_row": 130,
+          "observed": true,
+          "estimate": -0.71325893529953621,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 131,
+          "model_row": 131,
+          "observed": true,
+          "estimate": -0.53942682530891872,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 132,
+          "model_row": 132,
+          "observed": true,
+          "estimate": -0.81287755859966637,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 133,
+          "model_row": 133,
+          "observed": false,
+          "estimate": 1.0643808547701841,
+          "std_error": 0.33396649095624242,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 134,
+          "model_row": 134,
+          "observed": true,
+          "estimate": 0.6247250813329952,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 135,
+          "model_row": 135,
+          "observed": true,
+          "estimate": -0.38769022496442929,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 136,
+          "model_row": 136,
+          "observed": true,
+          "estimate": 0.31924307879981928,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 137,
+          "model_row": 137,
+          "observed": true,
+          "estimate": 0.51356528292691528,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 138,
+          "model_row": 138,
+          "observed": true,
+          "estimate": -0.8288243706699121,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 139,
+          "model_row": 139,
+          "observed": true,
+          "estimate": -0.065175519424129524,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 140,
+          "model_row": 140,
+          "observed": false,
+          "estimate": -0.12719170364195739,
+          "std_error": 0.34524338481798794,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 141,
+          "model_row": 141,
+          "observed": true,
+          "estimate": 0.32297949751301791,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 142,
+          "model_row": 142,
+          "observed": true,
+          "estimate": -0.42452528914736054,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 143,
+          "model_row": 143,
+          "observed": true,
+          "estimate": 0.36437684702529427,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 144,
+          "model_row": 144,
+          "observed": true,
+          "estimate": 0.31050501594962687,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 145,
+          "model_row": 145,
+          "observed": true,
+          "estimate": 0.19371009354420807,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 146,
+          "model_row": 146,
+          "observed": true,
+          "estimate": -0.40974261905561732,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 147,
+          "model_row": 147,
+          "observed": false,
+          "estimate": -1.8033878244093891,
+          "std_error": 0.33803107429973533,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 148,
+          "model_row": 148,
+          "observed": true,
+          "estimate": -0.12301261704056349,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 149,
+          "model_row": 149,
+          "observed": true,
+          "estimate": 0.76980253860703574,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 150,
+          "model_row": 150,
+          "observed": true,
+          "estimate": 1.1582293955767389,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 151,
+          "model_row": 151,
+          "observed": true,
+          "estimate": -1.0650302424133173,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 152,
+          "model_row": 152,
+          "observed": true,
+          "estimate": 0.0035228876171072981,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 153,
+          "model_row": 153,
+          "observed": true,
+          "estimate": 1.9100978022979997,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 154,
+          "model_row": 154,
+          "observed": false,
+          "estimate": -0.03605727491040988,
+          "std_error": 0.32704889041807983,
+          "source": "conditional_mode",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 155,
+          "model_row": 155,
+          "observed": true,
+          "estimate": 0.032874756064003863,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 156,
+          "model_row": 156,
+          "observed": true,
+          "estimate": -1.0790257612840031,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 157,
+          "model_row": 157,
+          "observed": true,
+          "estimate": -0.16162121713479963,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 158,
+          "model_row": 158,
+          "observed": true,
+          "estimate": -0.27204205411984622,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 159,
+          "model_row": 159,
+          "observed": true,
+          "estimate": -1.3778056787070729,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        },
+        {
+          "variable": "x2",
+          "original_row": 160,
+          "model_row": 160,
+          "observed": true,
+          "estimate": -0.034818788126472267,
+          "std_error": "NA",
+          "source": "observed",
+          "uncertainty_status": "ok"
+        }
+      ]
+    },
+    "prediction": [-0.3185503946931072, -0.087893783185473473, 1.6611873093938763, 0.0031611770370240655, 1.7190356423193169, 0.90049279183266395, -1.3856889183574768, -0.097121329107831444, 1.4515150785520079, 1.8986289595890828, 1.6357592144669892, -0.59184072219760031, 0.47438573950532781, 1.7908654244882181, -1.8818771929723075, 0.19429936678675891, 1.5176105372858704, 0.13848913408260916, -1.9563860370874178, 1.3889657496868857, 1.5307901196193978, -1.6660527629113526, 0.40402121366561139, -0.29461901631272791, 1.3124285287910973, -0.4028893849848223, 0.089866712267089865, -0.07347464504496079, 0.97032103388847746, 0.55244427799143236, -0.3677269208805522, -2.0782746149130555, 1.011986516579197, -0.16381848415619144, -0.015617559195730463, 1.6052112771761078, -1.3319844011410296, 1.5718930070402197, 1.0410575625921528, -0.65890500423657627, 0.39209045587906954, 4.3011771522163569, -0.70042826908685951, -0.30424532225159062, -0.74498085914851919, 0.36668220871304297, 1.9032348605527614, -0.39326845152327844, 0.89638983970741193, 0.65448138592901706, -1.082168626944841, 1.0266431296758118, 0.67775389664725572, -0.016286079226677352, 1.3208924055237827, 0.69989308337738732, 1.0680633603223819, -0.96511671093616069, -0.90638379191580654, 2.3319395810151997, 1.5566155679413716, -0.13443001938826127, 0.4364242580733112, 0.35208927641877935, 0.33077117405630452, 0.29772582303471379, -0.15159696070966289, -2.0746559417012969, 1.4492396503920411, 1.498718644424704, 0.7328042646002797, 2.0543881231117531, 0.18961690093875294, -1.1943345151479194, -0.34900691372778347, 2.7634935640568035, 1.1547873761234113, 0.83410465518959254, 1.8864507917181554, 1.3633059875653171, 0.12573603920262927, 1.250878741597689, -1.2201916881582111, 0.52092922372020967, 0.50525196218699908, 0.021967340950739989, -2.058483703983085, 3.4014789352393269, 1.8086495419220887, 1.0363899413779356, 2.3515306549898072, -0.96934090821398322, 0.068274649974932766, -1.8814531417999767, 0.38112081941423775, -0.12304232432161984, 0.022198412627841918, 1.7041150742672058, 0.022303852662798634, 0.49526647849644345, -3.3423836957824227, 1.2953157283808288, 1.5711744504492267, 0.072012515666165441, 1.716408095968595, 0.61759684552411143, -0.078043353851205644, -0.29558354895363759, -0.63892926979807962, 0.37028028254549866, -0.092812103253511191, 1.2211697203521836, -1.3058934615902946, 0.38869014810534469, 0.59109067687860795, -1.6920908847223672, 0.82279884808427839, 0.9564501259994882, 1.1425776062601103, 0.61158387173830231, 2.1289846513766806, -0.28073593990147716, -0.85535797981556239, -0.29663344538099834, 1.3984727723259183, -0.9486463501382163, 0.88194596123727997, 1.161140928734709, -2.0989334527218233, -1.2935253069424373, -0.69901190645047684, -0.50517720446142933, 2.9680997664922684, 0.23931573880789581, 0.12638368093230296, 1.6841271844390369, 1.7034652526654577, -0.26408007945304035, 0.66614959161834597, 0.39600878045065968, 0.68022154197737139, 0.9221917539500244, -0.47359077593234367, 0.46087180491875634, 1.0869332972843948, 0.22578252040355207, -2.5875673644865276, 0.13972034281898765, 0.9355793389672924, 2.7928267872519834, -1.9989994970341889, 0.48006668973329497, 3.3496388598513906, 0.40491087317773966, 0.41144523828203955, -1.1623197509132845, 0.1399278288368265, 0.0066497745086060711, -1.6327299020043045, 0.16760066788917785],
+    "newdata": [
+      {
+        "y": -0.79273733652403811,
+        "x1": 0.081447819503776497,
+        "x2": -0.82351591825890424,
+        "z": -0.56890595447797832
+      },
+      {
+        "y": -0.67251883600518214,
+        "x1": 0.1522570514007405,
+        "x2": -0.66496023289139505,
+        "z": 0.15881777430204905
+      },
+      {
+        "y": 1.5304130676094625,
+        "x1": 0.77740267422352183,
+        "x2": 0.86667853448638943,
+        "z": 0.82503795420318093
+      },
+      {
+        "y": 0.057507574922784355,
+        "x1": 0.29605798673474959,
+        "x2": 0.53436129888849271,
+        "z": 0.11609573065951174
+      },
+      {
+        "y": -0.58513399630027019,
+        "x1": -0.50428773798798288,
+        "x2": 0.22155963787198574,
+        "z": 0.41531499063729238
+      },
+      {
+        "y": 0.7932245001758258,
+        "x1": 1.0473089363308472,
+        "x2": 0.24438128682740023,
+        "z": 0.24869085192512519
+      }
+    ],
+    "newdata_prediction": [-0.31855039469310714, -0.087893783185473473, 1.6611873093938765, 0.90049279183266384, -0.097121329107831444, 1.4515150785520079],
+    "conditional_covariance": [
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.23893754756754759, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.1340350141991522]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.23893754756754759, 0],
+        [0, 0.1340350141991522]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.13779952743371332, -0.040332935368275188],
+        [-0.040332935368275188, 0.11795060130211489]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.13779952743371332, -0.040332935368275188],
+        [-0.040332935368275188, 0.11795060130211489]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.13779952743371332, -0.040332935368275188],
+        [-0.040332935368275188, 0.11795060130211489]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0.10614543980615848]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0, 0],
+        [0, 0]
+      ],
+      [
+        [0.12400777344973184, 0],
+        [0, 0]
+      ]
+    ],
+    "loglik": -273.97230340551806
+  },
+  "elapsed": 28.923999999999999,
+  "source_after": {
+    "/private/tmp/drm-parity-20260830/drmTMB/R/adequacy-plots.R": "50d41a04d8305b034c0e2dfbe4209591c992ee6d4cde800f71678d742b487d16",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/adequacy.R": "7a88ca078c0931f257b5bf5a1c9d5315448f7d8e907921e1418d2f6584163d9a",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/aghq-coxreid.R": "66fcd996070128ef1feefb0845694888f8167ee7e4396b4d04a43d8480a4383d",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-bernoulli-bernoulli.R": "d6ccc65580d7e0700ab2aed7c49c8369e21f3a441eb6ee8b25c8543d411fd8b3",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-gaussian-bernoulli.R": "2129bbe7278b0912ba436aa71d9fc80cb5cbdf4822af20fb618ce4baefbc8860",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-gaussian-nbinom2.R": "578751c099044dc943cbadc144deaa403ff5340eaefba49aaa1f3e21de5e43fd",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-nbinom2-nbinom2.R": "bbbf3d78813b32fe8a61e4589bd9ecf1f7fdf6d8841995f52fd3ff5dbb5b0a43",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich.R": "ae36567f517d650af47b227ce3fc3b82ac791aa9ec484a78c41741e1cc17174c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs.R": "35c2f32a0a4f5789c97be437758331edd9acd783a83a121a3bd6c0ac9f57616c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/bf.R": "71dbc96868e020a4e32b7170989bd49142a7bddd0750d79875740283f7d5d43e",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/check.R": "a63e0551c7a6b494fef73d86b0b0f1752ae1f222893b547214d63e6dd4e6f979",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/control.R": "066b5bb4662677340f99a5ebbd7d51396379b8c85d0aee9f6526e263711fbcb3",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/distributional-outputs.R": "45f6731f6c73dec88a5700d79345de928d37e31cdc6349ceb0fb01ad2c364450",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/drmTMB-package.R": "25050f7f5002a26e1f9371ad01f6b5faf52af82d946f9ba46c484d83cd0f535f",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/drmTMB.R": "1fb01724a4d6060f22f2d4062f09cb0f9ecd5d17f4626d0cbb919fe0a0796b59",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/emmeans-preflight.R": "ca007531560c4fcd58a37a51716826e18eef952f64ee2f14167a05e83c3fccd3",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/family-dpq.R": "1b73f4cbd511f2c5c230e254f83a02483815029b725689a53031af8ba38f70ad",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/family.R": "34bef8f5ae57f4e794b8a5788e1982f9ba61168fed74c38125722ba937a29959",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/formula-markers.R": "298d1f7344308668485043c633413067560a7e02c92cbb08caf84614d91f8e02",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/gaussian-aggregation.R": "f80e3e3d81bd6589a89763a90bd1387580d3368894f134bfc2b0c8212d62a629",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-bridge.R": "1f3cdf0c141572529d8f4350e883f81eb11bd3bb5cae116d8fc97c58b11cb3a2",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-joint-call.R": "dd2675b3aa260e263bba32f835983ddfacfe603a311e83ab5f2cb3a9e3f21f5f",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-joint-methods.R": "85e7785887ad87f6ea31050679a622bb8545d88025b129e991321ed7af1962ae",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-joint-missing.R": "99e1f6958e0f5db4096c38828dbb985f93caf65681ac82b1dc0f334aaa3870ae",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/marginal-parameters.R": "4bb246db3341b6cc68ed0a1e60ac35682e2d7499949b21212b31ee6f00e19bea",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/mesh.R": "92ba60e72a2b467eb7ad384429912293aa38c2645c2cae4ca53dc616783a8dbb",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/meta-vcov.R": "48cbbcd5ad03689404beda6129e13bac2e80ab5394364b9aca5c982f4a5fb29a",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/methods.R": "9d45acfcce726b68f85a4cb0983cff6a6ed2583236bfd9081270458367151a4b",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/missing-data.R": "3a11d48863e31b43fbd8ad7631f47525867ee02b2503a41cc8d49a885b1fbf84",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/mspl-estimator.R": "389633693e357910d3ecf0d23472e29dc7310df922e2f150f197dc9f149d40d5",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/mspl.R": "6f394409ab1cff8e72f73c2a01626de8177d75794c03cb5d489bf4502a33719e",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/parse-formula.R": "af4c67439321c4f15ebad64f52161879a8169389af0abd5782d88bb9d2aa0faa",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/penalty.R": "8f9124aeccddf07f978ba75cb60e0bd786f4edfac91aa993c3848cde38f67df1",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/phylo-utils.R": "dd2d36f89bd3ea47161068e480004772ac9e162c31df7b0b89dae9b759c3e7ff",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/plot-corpairs.R": "23fd048ab1c152ee325ba203210f67d5c96b88c516cff4ec7c887448a805137c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/plot-parameter-surface.R": "8a93cb9c104b086e4500ecf9b2f72b7b88fd5278667d5b1c928ea88652169421",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/predict-parameters.R": "13c3bafaee98d08a938b0be921c049b158958cc47b8ac74ae405876986f4ca7e",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/prediction-grid.R": "b599efba35c0bb8c9b3467ef69da268d9fe9b0d6aee5009fda2e8d199abe4647",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/profile.R": "cbc537c023b79af2f1a359627790b788e1a7293f0a1fc844a60ce66f29d745d5",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/random-effect-scale-formulas.R": "4fa4a0ad558fac45e294a4c1a20da87eb523c1f2de7e2a2741993750d0d53c8c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/reader-contracts.R": "c197718d279b40be047e4ee39b1243827cd8ff9406dfd4bf4af0344ed236525f",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/sparse-fixed.R": "eb38f9a4281aeb652f392eb4f4bb075fd733195b665aa666a96d2fc3c8364bfd",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/zzz.R": "43307cf57423f651b986306ee8e04ab12206b6655fee33f1a3b9042925f4cb4b",
+    "/private/tmp/drm-parity-20260830/drmTMB/NAMESPACE": "020283ef550b8d649698c736e2c6bb9e265e4c04d502a5487eac8a4ddd5ff3e1",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/aghq_1d.jl": "66464da504723ea24f50aefece46c17d29600d9242d2cb2de9b233b2ea8a7452",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/associate_pairs.jl": "dbaae28b966f48ad99a46dfa796561aab2cb2a26c15a898811945e1f1160e9d1",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/beta.jl": "9af3b4dc7c4df2b6bf2ec4afbc09be59c62ff0ac39bfef7113dbda7900171a3c",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/betabinomial.jl": "28f7ac5dd4ecfa426187861a30e045fa5311d6dc4da6ad015d4212f5eaa94909",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/bias_correct.jl": "68cee45247626cbc114dc29ccca675553e86179cd75885cf3ca750f07ff5b627",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/binomial.jl": "f16e768668d432bfbef9f1d140470647bd2a20274f35bfc95a8cae9c0b9c8527",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/bivariate_lognormal.jl": "af39e1e71fc45f63137f49e62e03750d0d59fc8a2e5fce802aa200bc55522a27",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/bivariate_student.jl": "f72d2b80cb3f5ce877dc0293f02f9a7f443a5eba51e832b471b0d28e23b876a7",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/bootstrap_q4_phylo.jl": "1a273cd13533b2c61d09070901d4d20c3eb4838ab40de3e48d9ca188d7753012",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl": "6ec496e4f88106a4ea101043d25f6a1a01c54095202cbb6b2179e5998007a904",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/chibar.jl": "6521eafccce2f505886dc3eb1d13541162812f8c093d88427a72658d4fddd97f",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/coevo_accessors.jl": "9edb84589ef8499b80decabe1d12fbff1fad2802a4a3fc57d5487eedff99f65c",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/coevolution_q.jl": "77ce90a3e7dac5f9f4df4e7fac94d036146635afd7df3ab7b953b228151cb58c",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/comparison.jl": "3482d6b88f7ec5d545a2947030103fb638f41050c9a10fcb41a9823eec6eeacc",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/cumulative.jl": "5d7c8db90e0a00b3680f7e4a818ccda7912148c70fd3f5fdbcc7e6d63af10c5a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl": "5d889c5c850e34cd76e51c194cb11feefce34884b2c2eb9f8fd88f6d3b28da7b",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/em_squarem_fit.jl": "27dd32a19ca624dad007c63968f76974e790c29b09acb6767cef3f695f5d51c9",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/estep_armijoguard.jl": "19e8eb019a3184db1b13c1cde8ee882ef66b174882de15a96ba02840380cfd13",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/estep_initprior.jl": "64231307ede8f6ec71ac7e5eef07bedb0c440e7f52dad5485c9637dadaf59436",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/estep_lm.jl": "2550ab9b7edd3c0a21a6f9f0d26c3eddef046c303058569d71dcba7c678140c5",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/estep_trustregion.jl": "c4a62576c388238f16a4fb14b812c2074d9bc7999882a8cbd3e8112a6893e9f6",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_em_closed.jl": "e21460eb4a5cff018eb826f6b2ec3a638e2a9059eb0db568eea602537d9814cf",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_em_natgrad.jl": "35ec282ee4fd85fe715fbd4414b801c91100b5fbf240837484d94a985dc9b63a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_ml_q4.jl": "306ba451fee9ba337edbfc78ef2a402bc295b5a1588c36b5e49876c25461cf67",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_ml_warm.jl": "6091d3ff479f9bc3805b3faffd530bf4e675f735628435d7b11a226ad3fbfc2c",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_q4_p100_tmb.jl": "269759ce21c31ac167897df3d67f12d53cdb023b0cc3890e24b25610cbb0ee07",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_q4_tmbgrad.jl": "188582efc569ba54d141f4b9ac58b8f474e33ddc154ae0a9f8a6cda239eec5a6",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/fit_sparse_direct.jl": "f03753b30d303febb3fac1ef89e347234f44878684cf62875d967ca35e2e322a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/location_only.jl": "39eac765202c2c7a4ed6bf990ea2214d17845cad4bbc3697a6f26651afd59646",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/experimental/q4_em_dense.jl": "f4c64d74d8d975881a9398192976402d688e8ce494b021bc01fb6816fded3bc7",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/fisherz_q4.jl": "cc864faa1b1a51c044309939e84bc1fa78a328e316ea3d8453b4ba1e2f1bf046",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/fit_ml_q4.jl": "306ba451fee9ba337edbfc78ef2a402bc295b5a1588c36b5e49876c25461cf67",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/fit_q4_sparse_tmb.jl": "51c0d6e982d53b0d2d448b2ed05d979f780cdb36bc27e71f4b47ebb25b8b18a2",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gamma.jl": "a22a3c4cbbb5ce37ffa41025118646b722df195d490a22926e03c7be0d1bd4c7",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_bivariate.jl": "7cf90337062b3ff13367321ad2b8384ecb74776c49358aa28cdb5dff04317251",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl": "2c4f2d38f1b8d1e4557583c9d1db6826681ac9696bf1b75b9330376e9e5f9d05",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_locscale_phylo.jl": "78fcaecf0a8d6fe2055321d68071101039772f71263a456cbbabbb5edbf9a39d",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl": "1e18a621a6047654b1331d4e0a43864b4e2495e7e8f149bcde2ce5f161d9f780",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_meta.jl": "66c3c4a09dd952793eeebca5c9a273d8498b32b4839e868e0d26ff0e83891cfa",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_ranef.jl": "7d096ded5eaa1172b6d6f4c8afc2794bebf84f4ae165d56fdca0758e30d18907",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_sparse_lss.jl": "96ee90f88bc12af7e6eebd7f3f51fb285711cf8f9f9c2ed0a19953ca6b19de1f",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_structured.jl": "3ba579b2db88f3ec02903b3183456a6dfed6d74714b83fe554b80e4663dd3698",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/heritability.jl": "524ac27831a0b7ac13575f43c0f4c62da7d96759c8d26f4c44392da915d7e24a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/inference.jl": "bb2606042a4ee7d165fdd8b6e1b0f7f187a7738cad90cdd3ec80eccf1bbd49c0",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/introspection.jl": "546b64e0273da4530c1d1f5208b2728c001fe9466eaec1f9b5527c6730860535",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_bridge.jl": "033b7b2b5e4dd8b681c0122846db26417a53ef0db9ac3edb17adfd5edd160a3d",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_frontend.jl": "58ace548eef447f6e58efae075f1ea0a4013782354b0423837d0ac642b6956fd",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_predictor.jl": "f9f59bedbf281db34f4a0fda89ab2110daf813ea376c41a0f77e4694b294478b",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_two_predictor.jl": "fec1668bb4f6266d7580fbcbc162ae48a1b6202cf614335b97da02ca705ec7bc",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_uncertainty.jl": "2da147052c184cda46e9569290fa4c5e7b722021849c45652845882aa4097e96",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/lc_metric.jl": "f096872d4af733271d9f746735fd38c0cb2a59b9f9c61ea90150cc8beae43d1f",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/link_residual.jl": "ef69948c94a6a08e3c95f0ffb393f1b3859e1319dec869df92a5350be7b760e2",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/location_only.jl": "43c8727284f5cc592d2ba70b5bc21e4ac8a4224c5910d85f49f9c315268bb6ce",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_corr.jl": "8b558c2fab3416085875ee30956ff7d26600703163f487333c05de21f19bdd4a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_fit.jl": "10a8782a78db3b1c47a5007a998ed487072285d7f7ec0c395c5bd7664f0f6d01",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_frontend.jl": "4ed6b15861df4562df0dd7fc970c3272cd0e07048bf75e46b4866ea0315861ef",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_grad.jl": "2863ec63c5a9519de3093f8c4ccbc39ff53a47295ab9abcfcbf36afa3f02e0e8",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_infer.jl": "7944724797b8ddab50df4f741bbbf3d86d1627963976f09a5c6bdfe89e4b945a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_inner.jl": "7915b9cc780e723cd9928b2a71c3f22884d21df5f0b57c1ea1f0e2db334f8bcb",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_kernels.jl": "b9b64012a776029a44656bf7451ebeca4193d6de815affda60baa6c8d304bd60",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_marginal.jl": "05cd2e416c14fb3e8063e2bb0288c574c39bec733278d2734829b458443dd71d",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_profile.jl": "c6ca8e2d9d76c372be17f61f2edc00fcef299ed897b05742ef035b3f6d29c2b5",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/locscale_sigma.jl": "23abfb0d6b2b60179ef320cf6a219baf408429709203d378dfcf0a45ab800b83",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/lognormal.jl": "6dc293eb9cb03b77d0f5590f74e34bcd92df7617bdd9e0ef67db307433b30e54",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/meta_vcov_bivariate.jl": "fe4298f40ce8560378b3f6628a99d20bc6b7111b2bd0f3f423e5384f6aa8e8be",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/missing_data.jl": "8cb515c0ce55ac1c2f1939c7373ecfdd8b1c57ac8bcdefa9f8ebc23225d3c537",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/mixed_family_postfit.jl": "0973c19cfe22b94640682fd5221d2bc09fa9b7900d377137d5984d1303edb661",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/mixed_family.jl": "1eae9a0f838bdcb5517812d73ec4b3db6dadda15c212f0d861c16da42a3f3500",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/negbinomial.jl": "2e8b20713b9e317c37d8f8bae3c74360ddc6f9a64cac3cbe45260a430b3a6f5f",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/phylo_interaction.jl": "10288c86a05f5cdaeb66fd6a9e3f8940d9098421cc2aaa1c878e89244e4a62ea",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/phylo_penalty.jl": "b186cd9521598ff502aafe09f9768ec32899faf8511aa2d2bb5c4ea358e34c39",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/plotting_ext.jl": "1283c8404b9cdda7774931b4fe7624d2e1ba42c9b31c7058e966efb5206493c4",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/poisson.jl": "7f4aadbf523fbbb0025aa07efdd54dcf5dfcb1a683e3745f4d4a67035bb6bdeb",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/profile_q4_phylo.jl": "23761ae1b082d9183118641f8dde457291f93bb389243a3f3efd293873aef3c4",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/quantile_residuals.jl": "2f582a77af8a1506746713e82c2975b7c1204801fa638ced8d1266af6fda56c5",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/reml_q2.jl": "f3e63e5040fd40c0a99c8e514cee281b54774c88670b2cc67e116f88bfb52989",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/reml_q4.jl": "269ad2492322b1733ef187c885d5b5e465d6a7d8b12c5597a2e57d22858e0d77",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/skewnormal.jl": "870cf8fd10a6f60a754ec67b957a4500fe44eb10ca9757bfffa1a28f0c501ee8",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/sparse_aug_plsm.jl": "15bfa5fd2c7cdfadf70dd32857281efcf15dd9e2433020872973e40a79ead6b3",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/sparse_em_fit.jl": "e99ef15e448e7b01424f779cea1b6297fc5014a419bf59b5ae3b94c35f9a65cd",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl": "396ff2a2372c526e88ddba4e4673097667acf0a623eb338e91ba4a5539d8bc93",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl": "cefbe845312d61c9f7a931a451dc6834d2a7590c14e4dddaf8fc1a239af5833b",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/student.jl": "2dd03d7ec050bfbae3964b0db98f5020c26f45f38d6dc952922b1a40bfa09d9e",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/summary.jl": "cca7bb9066c240116a59a0c7322718840709352b3320c26b5a917d6afb0d0b79",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/takahashi_selinv.jl": "1ec53baad46c20c0c93d1f70626be5f39d9237e8f62f587741e8b56122214af1",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/tweedie.jl": "939dcf2c5b156163d0903d8166f52833a8ff90ff984c8ffb578495d1586ea2bc",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/variational.jl": "ec6e7be942370bfe67fe86396fd8480d0e2224096d236d3b8b56582d38020a7b",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl": "49276610d4c71db6241b3bb7836f48ce85ac8b6ad494962a4250a66137ccb78a",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/visualization.jl": "31a29e6d991acca983478eaffc5a6f48f3545b77fa4ecbf93b033cd14a89b53d",
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/zeroonebeta.jl": "5dc9a58d69eb0ae219b7bf70873402119bcdd78a7aaa5082b89a7b9a4e6923f8"
+  },
+  "source_unchanged": true,
+  "status": "PASS"
+}

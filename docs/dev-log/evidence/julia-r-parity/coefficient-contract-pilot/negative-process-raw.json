@@ -1,0 +1,7 @@
+{
+  "exit": 1,
+  "seconds": 33.30033112503588,
+  "estimate_seconds": 90,
+  "injection": "remove first observed coefficient immediately before every comparison",
+  "cwd": "/private/tmp/drm-parity-20260830/fixture-contract-negative-001"
+}

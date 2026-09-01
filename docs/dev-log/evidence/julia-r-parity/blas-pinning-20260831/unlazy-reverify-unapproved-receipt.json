@@ -1,0 +1,26 @@
+{
+  "command": [
+    "node",
+    "/Users/z3437171/.codex/skills/unlazy/scripts/gate-check.mjs",
+    "--reverify",
+    "--timeout",
+    "90",
+    "--cwd",
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl",
+    ".unlazy/blas-pinning.md"
+  ],
+  "exit_status": 1,
+  "elapsed_seconds": 0.1464216250460595,
+  "source_before": {
+    "src/inference.jl": "c0675b16ec4b0c64acfa81a45543959b256fb8e5b200c50c704b4aafb585bc0e",
+    "test/test_inference_blas_pinning.jl": "82a0499af5f348c2ed1aae1eb06dbdf5ee629b16488d1ed05a74ca74de20123f",
+    "test/runtests.jl": "cc26ddf5ee55170052ff4c386dcb9ac3309a0d1966b78b408bb8131c3355a74c"
+  },
+  "source_after": {
+    "src/inference.jl": "c0675b16ec4b0c64acfa81a45543959b256fb8e5b200c50c704b4aafb585bc0e",
+    "test/test_inference_blas_pinning.jl": "82a0499af5f348c2ed1aae1eb06dbdf5ee629b16488d1ed05a74ca74de20123f",
+    "test/runtests.jl": "cc26ddf5ee55170052ff4c386dcb9ac3309a0d1966b78b408bb8131c3355a74c"
+  },
+  "source_unchanged": true,
+  "scope": "Three local helper gates only; full programme G0-G8 open"
+}

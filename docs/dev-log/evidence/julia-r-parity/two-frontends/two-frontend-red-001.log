@@ -1,0 +1,42 @@
+ERROR: LoadError: Some tests did not pass: 4 passed, 1 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_frontend.jl:20
+two Gaussian missing-predictor direct formula frontend: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_frontend.jl:24
+  Expression: isdefined(DRM, :JointTwoDrmFit)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_frontend.jl:24 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_frontend.jl:21
+two Gaussian missing-predictor direct formula frontend: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_frontend.jl:20
+  Got exception outside of a @test
+  ArgumentError: joint missing-predictor frontend: mean formula needs exactly one bare additive `mi(x)` term (found 2)
+  Stacktrace:
+    [1] _joint_mean_parts(rhs::Tuple{StatsModels.Term, StatsModels.FunctionTerm{typeof(mi), Vector{StatsModels.Term}}, StatsModels.FunctionTerm{typeof(mi), Vector{StatsModels.Term}}})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_frontend.jl:146
+    [2] _fit_joint_formula(f::DrmFormula, data::@NamedTuple{y::Vector{Union{Missing, Float64}}, x1::Vector{Union{Missing, Float64}}, x2::Vector{Union{Missing, Float64}}, z::Vector{Float64}}; impute::@NamedTuple{x2::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}, x1::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}}, missing::JointMissingControl, g_tol::Float64, method::Symbol, algorithm::Symbol, K::Nothing, A::Nothing, tree::Nothing, coords::Nothing, profile_ci::Bool, phylo_coupled::Bool, penalty::Nothing, sparse::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_frontend.jl:232
+    [3] drm(f::DrmFormula, fam::Gaussian; data::@NamedTuple{y::Vector{Union{Missing, Float64}}, x1::Vector{Union{Missing, Float64}}, x2::Vector{Union{Missing, Float64}}, z::Vector{Float64}}, K::Nothing, A::Nothing, tree::Nothing, coords::Nothing, g_tol::Float64, algorithm::Symbol, method::Symbol, profile_ci::Bool, phylo_coupled::Bool, penalty::Nothing, sparse::Nothing, impute::@NamedTuple{x2::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}, x1::StatsModels.FormulaTerm{StatsModels.Term, StatsModels.Term}}, missing::JointMissingControl)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:442
+    [4] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_frontend.jl:38 [inlined]
+    [5] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [6] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_frontend.jl:21
+    [7] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [8] top-level scope
+      @ none:1
+    [9] eval
+      @ Core ./boot.jl:385 [inlined]
+   [10] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [11] _start()
+      @ Base ./client.jl:552
+Test Summary:                                          | Pass  Fail  Error  Total  Time
+two Gaussian missing-predictor direct formula frontend |    4     1      1      6  1.7s

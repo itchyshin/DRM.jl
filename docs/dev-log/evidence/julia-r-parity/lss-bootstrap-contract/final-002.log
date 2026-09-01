@@ -1,0 +1,401 @@
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 9.429903245351869e-26
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 1.437250295988948e-34
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 2.1368477184075302e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 3.632485448603996e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 1.437250295988948e-34
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 2.1368477184075302e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 3.632485448603996e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 1.437250295988948e-34
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 3.632485448603996e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 2.1368477184075302e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 9.150813881192402e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 7.378211038686442e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 1.4504557362326217e-16
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 7.378211038686442e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 1.4504557362326217e-16
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 2.311637962259125e-22
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 7.092424095024779e-29
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 6.288694900692988e-21
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 1.417757969526224e-23
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 2.311637962259125e-22
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 7.092424095024779e-29
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 6.288694900692988e-21
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 1.417757969526224e-23
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: drm: this tree's maximum tip height is 0.8, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 0.894427 = sqrt(0.8) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/0.8 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:713
+┌ Warning: drm: this tree's maximum tip height is 1.5, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.224745 = sqrt(1.5) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/1.5 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:713
+┌ Warning: drm: this tree's maximum tip height is 5.0, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 2.236068 = sqrt(5.0) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/5.0 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:713
+┌ Warning: drm: this tree's maximum tip height is 2.1, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.449138 = sqrt(2.1) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/2.1 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:713
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 8.287097946112435e-20
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 1.131511109669185e-15
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: sparse-Laplace vcov: finite-difference Hessian is not positive definite at the optimum; reported SEs are not trustworthy.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl:146
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 0.0
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: sparse-Laplace vcov: finite-difference Hessian is not positive definite at the optimum; reported SEs are not trustworthy.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl:146
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 0.0
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: sparse-Laplace vcov: finite-difference Hessian is not positive definite at the optimum; reported SEs are not trustworthy.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl:146
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 0.0
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: sparse-Laplace vcov: finite-difference Hessian is not positive definite at the optimum; reported SEs are not trustworthy.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl:146
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 2.403169455081005e-38
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: sparse-Laplace vcov: finite-difference Hessian is not positive definite at the optimum; reported SEs are not trustworthy.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl:146
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 0.0
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 5.63020614518356e-19
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: sparse-Laplace vcov: finite-difference Hessian is not positive definite at the optimum; reported SEs are not trustworthy.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl:146
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 0.0
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: sparse-Laplace vcov: finite-difference Hessian is not positive definite at the optimum; reported SEs are not trustworthy.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl:146
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 0.0
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: sparse-Laplace vcov: finite-difference Hessian is not positive definite at the optimum; reported SEs are not trustworthy.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl:146
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 0.0
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: sparse-Laplace vcov: finite-difference Hessian is not positive definite at the optimum; reported SEs are not trustworthy.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl:146
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 0.0
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+VERSION = v"1.10.0"
+pathof(DRM) = "/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl"
+Threads.nthreads() = 4
+BLAS.get_num_threads() = 1
+BOOTSTRAP_FLAG_COUNTS min=250 max=250 batches=300 B=250
+Test Summary:                | Pass  Total     Time
+LSS bootstrap and neighbours |  187    187  1m07.6s
+LSS_BOOTSTRAP_FINAL_PASS

@@ -1,0 +1,18 @@
+{
+  "contract.md": "c61dc273203f2e4c6c11ba426aee11f263d50d41e1b6327dd6e1860034ed8130",
+  "negative-control-v2.R": "727a27ebf80ed8fec2488b7977391224c36553a6d1b0d545a0507cc94a3ffe82",
+  "negative-control.R": "215757ab7acfa831b88873ab3ed5bf32b545f43283b92f42b277ca5bd1758b57",
+  "report.md": "9fd88e14eb7b2c0b4451b7d075fcd28c0e74f34d7f289c93ea4b16764dfb0522",
+  "rose-review.md": "656768ce5bb63734713f892e777fcc49764ee42dadf0a865e515103630608a82",
+  "runner-v1.R": "76deaf61e6bf2e08715474f76514986ec03d07fd0f711ac5d580cc7a540da98f",
+  "runner-v2.R": "73ab1ccc70fdfde20e61a90a978668bb0c8227f76db3a4666e299caaa0236874",
+  "stopping-diagnostic-001.json": "f58c726d5c5a7f67b35c1521038fb3bd7876b06760317d755a7782fb8b911f13",
+  "stopping-diagnostic-002.json": "70a8fd00ff2eb5e9392354f2ecf18b289527eb5e7f286870232182c3512f7d22",
+  "stopping-gate-002.log": "5936787230a8331692ab1d0ebac01650094c1a735fd9f7ca779d56a655699bdb",
+  "stopping-negative-001.json": "1944c4408ac8504dbeadd9a10d388b9372f66fdfd37042af25328d9361b4cf20",
+  "stopping-negative-002.json": "8f8e992d1bf0bd04208ac0823de570b6b88eb1e321065f6ce28515ec94898550",
+  "stopping-negative-003.json": "2bf4d534dc8087291b89f9e370a693a81e376c738becf8c7298c0c88ba1d2719",
+  "stopping-negative-gate-001.log": "6bb86b2b91fd6bc931264f8dad6cfe6ca8948a94ab8fbca26a0e64f926693f47",
+  "stopping-negative-gate-002.log": "197992429c9ffb4a5dd76f9d4a180c4eab0eb313634ca51540821f28796269e0",
+  "stopping-negative-gate-003.log": "f0c3e8f1f247ede8ae295279b0ba3ef5257b8b4dfc976667efd19a3fd9665c53"
+}

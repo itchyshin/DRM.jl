@@ -65,9 +65,10 @@ DRM.jl keeps the inference you are entitled to:
   propagates to an honest **unbounded `(-Inf, Inf)`** Wald interval rather than a
   silent `NaN`. The well-identified directions stay usable.
 - **Profile likelihood.** [`confint`](@ref)`(fit; method = :profile)` inverts the
-  likelihood-ratio statistic and returns an unbounded endpoint when the profile
-  never crosses the threshold — the correct answer at the boundary, not a number
-  the quadratic Wald approximation invented.
+  likelihood-ratio statistic. A non-crossing endpoint describes the searched
+  range, not proof of an infinite interval. Inspect `profile_result` diagnostics:
+  an endpoint solver failure also uses signed infinity, but has
+  `lower_endpoint_failed` or `upper_endpoint_failed` set and is not a valid limit.
 - **Parametric bootstrap.** [`bootstrap_ci`](@ref) sidesteps the Hessian
   entirely and is the recommended tool right at a true boundary.
 - **Diagnostics.** [`check_drm`](@ref) flags the situation explicitly via its

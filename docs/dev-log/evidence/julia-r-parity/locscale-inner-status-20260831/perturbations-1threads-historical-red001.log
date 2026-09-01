@@ -1,0 +1,181 @@
+ERROR: LoadError: Some tests did not pass: 138 passed, 12 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:33
+DRM_SOURCE /private/tmp/drm-parity-20260830/integration/DRM.jl/src/DRM.jl
+gamma_iid base ok=true norm=4.788781998985514e-15 bound=1.886703473980337e-9 nll=32.449202911269126
+gamma_iid 1:-1 ok=true norm=3.3125788218758983e-15 bound=1.886703553361509e-9 nll=32.44920269326539
+gamma_iid 1:1 ok=false norm=2.560688668846101e-9 bound=1.8867033947676433e-9 nll=1.0e18
+gamma_iid certified perturbations: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:25
+  Expression: ok
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:25 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] diagnose(name::String, kind::Val{:gamma}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:12
+gamma_iid certified perturbations: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:27
+  Expression: all(isfinite, a) && (all(isfinite, grad) && (isfinite(bound) && (isfinite(norm(grad)) && norm(grad) <= bound)))
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:27 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] diagnose(name::String, kind::Val{:gamma}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:12
+gamma_iid certified perturbations: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:28
+  Expression: all(isfinite, ga)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:28 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] diagnose(name::String, kind::Val{:gamma}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:12
+gamma_iid certified perturbations: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:29
+  Expression: isfinite(nll) && nll != 1.0e18
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:29 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] diagnose(name::String, kind::Val{:gamma}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:12
+gamma_iid 2:-1 ok=true norm=5.125997211983629e-15 bound=1.8867036273451125e-9 nll=32.449208503938785
+gamma_iid 2:1 ok=true norm=1.707997496006914e-9 bound=1.886703320726703e-9 nll=32.44919731869521
+gamma_iid 3:-1 ok=true norm=4.9913755379247194e-15 bound=1.8867034057105914e-9 nll=32.449204112526466
+gamma_iid 3:1 ok=true norm=1.6012731583361713e-9 bound=1.8867035423550185e-9 nll=32.449201710075535
+gamma_iid 4:-1 ok=true norm=5.220704988118766e-15 bound=1.8867035503655303e-9 nll=32.44920620505485
+gamma_iid 4:1 ok=true norm=3.4582155199852684e-15 bound=1.8867033975953156e-9 nll=32.449199617492035
+gamma_iid 5:-1 ok=true norm=2.3616716789057356e-15 bound=1.8867030859429037e-9 nll=32.44920215530723
+gamma_iid 5:1 ok=true norm=3.676330504420389e-15 bound=1.8867038620177147e-9 nll=32.44920366723453
+gamma_iid 6:-1 ok=true norm=4.7603846585793856e-15 bound=1.886702847512699e-9 nll=32.44920498047007
+gamma_iid 6:1 ok=true norm=6.622831639521924e-15 bound=1.88670410044949e-9 nll=32.449200842074006
+gamma_iid 7:-1 ok=true norm=1.4915522415294933e-9 bound=1.886702868148548e-9 nll=32.4492024644483
+gamma_iid 7:1 ok=true norm=3.5191618198638835e-15 bound=1.886704079910115e-9 nll=32.44920335814267
+nb2_phy base ok=true norm=3.576547172809045e-15 bound=1.4584464375335082e-9 nll=52.02853020389104
+nb2_phy 1:-1 ok=true norm=9.815579639038494e-10 bound=1.4584457348950535e-9 nll=52.028529923234274
+nb2_phy 1:1 ok=true norm=6.288801684022286e-15 bound=1.4584471403271048e-9 nll=52.02853048457227
+nb2_phy 2:-1 ok=true norm=6.364712195308952e-15 bound=1.4584463031516674e-9 nll=52.02853276575753
+nb2_phy 2:1 ok=false norm=3.4061804089944283e-9 bound=1.4584465724462015e-9 nll=1.0e18
+nb2_phy certified perturbations: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:25
+  Expression: ok
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:25 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] diagnose(name::String, kind::Val{:nb2}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:12
+nb2_phy certified perturbations: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:27
+  Expression: all(isfinite, a) && (all(isfinite, grad) && (isfinite(bound) && (isfinite(norm(grad)) && norm(grad) <= bound)))
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:27 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] diagnose(name::String, kind::Val{:nb2}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:12
+nb2_phy certified perturbations: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:28
+  Expression: all(isfinite, ga)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:28 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] diagnose(name::String, kind::Val{:nb2}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:12
+nb2_phy certified perturbations: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:29
+  Expression: isfinite(nll) && nll != 1.0e18
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:29 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] diagnose(name::String, kind::Val{:nb2}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:12
+nb2_phy 3:-1 ok=false norm=1.534955402043275e-9 bound=1.4584461293486693e-9 nll=1.0e18
+nb2_phy certified perturbations: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:25
+  Expression: ok
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:25 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] diagnose(name::String, kind::Val{:nb2}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:12
+nb2_phy certified perturbations: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:27
+  Expression: all(isfinite, a) && (all(isfinite, grad) && (isfinite(bound) && (isfinite(norm(grad)) && norm(grad) <= bound)))
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:27 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] diagnose(name::String, kind::Val{:nb2}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:12
+nb2_phy certified perturbations: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:28
+  Expression: all(isfinite, ga)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:28 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] diagnose(name::String, kind::Val{:nb2}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:12
+nb2_phy certified perturbations: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:29
+  Expression: isfinite(nll) && nll != 1.0e18
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:29 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] diagnose(name::String, kind::Val{:nb2}, y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/verify_perturbations.jl:12
+nb2_phy 3:1 ok=true norm=4.24150146992182e-15 bound=1.4584467459589395e-9 nll=52.028534112107565
+nb2_phy 4:-1 ok=true norm=3.835580313961501e-15 bound=1.4584470389152592e-9 nll=52.02853333851378
+nb2_phy 4:1 ok=true norm=1.4551418097679376e-9 bound=1.4584458363804189e-9 nll=52.02852706930659
+nb2_phy 5:-1 ok=true norm=5.813217819574154e-15 bound=1.4584461091528623e-9 nll=52.02852918430374
+nb2_phy 5:1 ok=true norm=4.437615948667886e-15 bound=1.4584467659144048e-9 nll=52.02853122347998
+nb2_phy 6:-1 ok=true norm=6.3557040706625015e-15 bound=1.4584457133804448e-9 nll=52.02853037631999
+nb2_phy 6:1 ok=true norm=6.582971034762859e-15 bound=1.4584471616887327e-9 nll=52.02853003146471
+nb2_phy 7:-1 ok=true norm=7.3618406271255e-10 bound=1.4584461577692766e-9 nll=52.02853001492322
+nb2_phy 7:1 ok=true norm=5.523590099799265e-15 bound=1.4584467174131307e-9 nll=52.02853039286951
+Test Summary:                       | Pass  Fail  Total  Time
+all exact gradient perturbations    |  138    12    150  7.4s
+  gamma_iid certified perturbations |   71     4     75  3.6s
+  nb2_phy certified perturbations   |   67     8     75  0.1s

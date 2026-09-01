@@ -1,0 +1,18 @@
+{
+  "purpose": "Reject duplicate labels before numerical execution; exclusive log creation",
+  "verification": "Each runner invoked with existing round001 label; all exited1 with refusal; original log/json SHA256 unchanged. Python AST parsed. No Julia process started.",
+  "files": [
+    {
+      "file": "run_inner_status_module.py",
+      "sha256": "92137b33249940a35d3aa60a2bbd6c5b9081855692a8966790451e3cf8c76b72"
+    },
+    {
+      "file": "run_profile_status_module.py",
+      "sha256": "2277f504e438709aa38cdeb10a9a33832f4e6c3687bc64e428da8e33f182b983"
+    },
+    {
+      "file": "run_inner_perturbations.py",
+      "sha256": "ea87db73e4a8696d8d88aece61f823412800fa058bd345eefc291148584bc13a"
+    }
+  ]
+}

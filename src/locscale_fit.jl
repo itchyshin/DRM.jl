@@ -49,9 +49,25 @@ struct LocScaleObjective{K,Y,MX,PX,GI,QT}
     gidx::GI
     G::Int
     Q::QT
+    whitened::Bool
 end
 
-(o::LocScaleObjective)(θ) = _ls_fit_nll(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ)
+# Preserve the original private constructor and its raw-precision semantics.
+LocScaleObjective(kind, y, Xμ, Xψ, gidx, G, Q; whitened::Bool=false) =
+    LocScaleObjective(kind, y, Xμ, Xψ, gidx, G, Q, whitened)
+
+function (o::LocScaleObjective)(θ)
+    o.whitened || return _ls_fit_nll(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ)
+    result = _ls_whitened_eval(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ,
+        _ls_canonical_Zeta(length(o.y)), _ls_canonical_Zpsi(length(o.y)); gradient=false)
+    return result.status.ok ? result.value : 1e18
+end
+
+function _ls_objective_gradient(o::LocScaleObjective, θ)
+    o.whitened || return _ls_marginal_grad(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ)
+    return _ls_whitened_eval(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ,
+        _ls_canonical_Zeta(length(o.y)), _ls_canonical_Zpsi(length(o.y))).gradient
+end
 
 # Family-appropriate mean-axis intercept start. NB2/Gamma use a log link, so the
 # Poisson IRLS warm start applies directly. Beta/BetaBinomial use a logit link
@@ -84,7 +100,8 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
                        λ0 = [log(0.3), 0.0, log(0.3)],
                        Zη = _ls_canonical_Zeta(length(y)),
                        Zψ = _ls_canonical_Zpsi(length(y)),
-                       g_tol = 1e-6, iterations = 1000, se::Bool = false)
+                       g_tol = 1e-6, iterations = 1000, se::Bool = false,
+                       whitened::Bool = false)
     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
     βμ0 === nothing && (βμ0 = _ls_default_betastart(kind, y, Xμ))
     βψ0 === nothing && (βψ0 = zeros(pψ))
@@ -100,8 +117,15 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
     #    information as Hessian), which converges quadratically and tolerates the
     #    ill-conditioning/indefiniteness that makes LBFGS stall on trees. LBFGS
     #    then Nelder–Mead are kept as fallbacks.
-    warm = Ref{Union{Nothing,Vector{Float64}}}(nothing)
+    warm = whitened ? Ref{Union{Nothing,_LSWhitenedSeed}}(nothing) :
+                      Ref{Union{Nothing,Vector{Float64}}}(nothing)
     function nll(θ)
+        if whitened
+            result = _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ;
+                                      seed=warm[], gradient=false)
+            result.status.ok && (warm[] = result.seed)
+            return result.status.ok ? result.value : 1e18
+        end
         βμ = @view θ[1:pμ]; βψ = @view θ[pμ+1:pμ+pψ]
         Λ = _ls_lc_to_Λ(θ[pμ+pψ+1:pμ+pψ+3])
         P = prior_precision(Q, _ls_inv2x2(Λ))
@@ -109,8 +133,18 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
         ok && (warm[] = copy(a))
         return ok ? val : 1e18
     end
-    g!(grad, θ) = (grad .= _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0 = warm[]); grad)
-    h!(H, θ) = (H .= _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0 = warm[]); H)
+    function g!(grad, θ)
+        grad .= whitened ?
+            _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; seed=warm[]).gradient :
+            _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0=warm[])
+        return grad
+    end
+    function h!(H, θ)
+        H .= whitened ?
+            _ls_whitened_information(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; seed=warm[]) :
+            _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0=warm[])
+        return H
+    end
     opts = Optim.Options(g_tol = g_tol, iterations = iterations)
     nm() = (warm[] = nothing; Optim.optimize(nll, θ0, Optim.NelderMead(),
                           Optim.Options(iterations = max(iterations, 2000))))
@@ -137,10 +171,80 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
         res = nm()
         θ̂ = Optim.minimizer(res)
     end
+    # A trust-region solve may stop unsuccessfully near a zero-variance
+    # boundary while its inner mode remains valid. Try BFGS with backtracking,
+    # L-BFGS with backtracking, and default L-BFGS in that order; for each
+    # method, try the failed endpoint before the canonical start. None of these
+    # routes relaxes convergence: a candidate replaces the failed result only
+    # after a fresh exact gradient and no-worse-objective certificate.
+    # Successful fits and the legacy raw route bypass the entire ladder.
+    if whitened && !Optim.converged(res)
+        warm[] = nothing
+        try
+            baseline = _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ;
+                                         gradient=false)
+            if baseline.status.ok && isfinite(baseline.value)
+                refine_opts = Optim.Options(g_tol=g_tol, iterations=iterations,
+                    x_abstol=NaN, x_reltol=NaN, f_abstol=NaN, f_reltol=NaN)
+                function certified_refinement(start, method)
+                    warm[] = nothing
+                    try
+                        candidate = Optim.optimize(nll, g!, copy(start), method, refine_opts)
+                        θc = Optim.minimizer(candidate)
+                        if Optim.converged(candidate) && all(isfinite, θc)
+                            checked = _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q,
+                                                        θc, Zη, Zψ)
+                            # Eight ULPs of the baseline objective permit only
+                            # rounding differences; this is not a relative
+                            # likelihood tolerance.
+                            allowance = 8 * eps(max(abs(baseline.value), 1.0))
+                            if checked.status.ok && isfinite(checked.value) &&
+                               all(isfinite, checked.gradient) &&
+                               maximum(abs, checked.gradient) <= g_tol &&
+                               checked.value <= baseline.value + allowance
+                                return candidate, θc
+                            end
+                        end
+                    catch err
+                        err isa InterruptException && rethrow(err)
+                    finally
+                        warm[] = nothing
+                    end
+                    return nothing
+                end
+                # Full BFGS with backtracking is the robust first continuation
+                # after the trust-region failure. If that is rejected, try the
+                # two L-BFGS line searches. These are only
+                # alternate numerical routes to the same objective; every
+                # replacement passes the identical exact-gradient and
+                # no-worse-objective certificate below.
+                methods = (
+                    Optim.BFGS(linesearch=Optim.LineSearches.BackTracking()),
+                    Optim.LBFGS(linesearch=Optim.LineSearches.BackTracking()),
+                    Optim.LBFGS(),
+                )
+                refined = nothing
+                for method in methods, start in (θ̂, θ0)
+                    refined = certified_refinement(start, method)
+                    refined === nothing || break
+                end
+                if refined !== nothing
+                    res, θ̂ = refined
+                end
+            end
+        catch err
+            err isa InterruptException && rethrow(err)
+            # Retain the original unsuccessful result, never a partial candidate.
+        finally
+            warm[] = nothing
+        end
+    end
     Λ̂ = _ls_lc_to_Λ(θ̂[pμ+pψ+1:pμ+pψ+3])
     nll(θ̂)                       # ensure warm[] holds the mode at θ̂ for the SE solve
     # Wald inference (opt-in): observed information = Hessian of the exact gradient.
-    V = se ? _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ; a0 = warm[]) : nothing
+    V = !se ? nothing : whitened ?
+        _ls_whitened_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ; seed=warm[]) :
+        _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ; a0=warm[])
     return (θ = θ̂,
             beta_mu = θ̂[1:pμ],
             beta_psi = θ̂[pμ+1:pμ+pψ],

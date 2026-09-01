@@ -1,0 +1,93 @@
+[ Info: SetupBuildDirectory: setting up build directory.
+[ Info: Doctest: running doctests.
+[ Info: ExpandTemplates: expanding markdown templates.
+[ Info: CrossReferences: building cross-references.
+┌ Warning: Cannot resolve @ref for md"[`associate_pairs`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.associate_pairs`.
+│ - No docstring found in doc for binding `DRM.associate_pairs`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`AugProblem`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.AugProblem`.
+│ - No docstring found in doc for binding `DRM.AugProblem`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`fit_q4_sparse_tmb`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.fit_q4_sparse_tmb`.
+│ - No docstring found in doc for binding `DRM.fit_q4_sparse_tmb`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`make_problem`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.make_problem`.
+│ - No docstring found in doc for binding `DRM.make_problem`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`marginal_nll`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.marginal_nll`.
+│ - No docstring found in doc for binding `DRM.marginal_nll`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`lc_to_cov`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.lc_to_cov`.
+│ - No docstring found in doc for binding `DRM.lc_to_cov`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`DrmFit`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.DrmFit`.
+│ - No docstring found in doc for binding `DRM.DrmFit`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`CoevoProblem`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.CoevoProblem`.
+│ - No docstring found in doc for binding `DRM.CoevoProblem`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`CoevoProblem`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.CoevoProblem`.
+│ - No docstring found in doc for binding `DRM.CoevoProblem`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`CoevoProblem`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.CoevoProblem`.
+│ - No docstring found in doc for binding `DRM.CoevoProblem`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`fit_q4_sparse_tmb`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.fit_q4_sparse_tmb`.
+│ - No docstring found in doc for binding `DRM.fit_q4_sparse_tmb`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[joint formula frontend](@ref joint-predictor-formula)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `Base.-`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`imputed`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.imputed`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`imputed`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.imputed`.
+│ - No docstring found in doc for binding `DRM.imputed`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+[ Info: CheckDocument: running document checks.
+[ Info: Populate: populating indices.
+[ Info: RenderDocument: rendering document.
+[ Info: DocumenterVitepress: rendering MarkdownVitepress pages.
+┌ Warning: Documenter could not auto-detect the building environment. Skipping deployment.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/deployconfig.jl:93
+[ Info: Automatic `version="0.7.0"` for inventory from ../Project.toml
+[ Info: Bases that will be built: [""]
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/mathjax-plugin.ts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/julia-repl-transformer.ts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/index.ts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/style.css` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/docstrings.css` file. Substituting in the default file.
+[ Info: Base is "" and ENV["CI"] is not set so this is a local build. Not adding any additional base prefix based on the repository or deploy url and instead using absolute path "/" to facilitate serving docs locally.
+┌ Warning: DocumenterVitepress: No logo.png file found in `docs/src/assets`.  Skipping logo replacement.
+└ @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/vitepress_config.jl:148
+┌ Warning: DocumenterVitepress: No favicon.ico file found in `docs/src/assets`.  Skipping favicon replacement.
+└ @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/vitepress_config.jl:162
+┌ Info: DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
+│ You can view it yourself by running the following in the `docs` folder:
+│ ```
+│ npm run docs:dev
+│ ```
+│ and if you haven't run `npm` in this repo before, install all packages by running `npm install`.
+│ 
+└ All emitted markdown can be found in `/private/tmp/drm-parity-20260830/DRM.jl/docs/build/finite-prediction-20260830-001/.documenter`.
+DOCS_RUNTIME julia=1.10.0 threads=1 blas=1 loaded_drm=/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl
+DOCS_SELECTED=reference/engine-internals.md
+Copied: /private/tmp/drm-parity-20260830/DRM.jl/docs/build/finite-prediction-20260830-001/.documenter/components/AuthorBadge.vue
+Copied: /private/tmp/drm-parity-20260830/DRM.jl/docs/build/finite-prediction-20260830-001/.documenter/components/Authors.vue
+Copied: /private/tmp/drm-parity-20260830/DRM.jl/docs/build/finite-prediction-20260830-001/.documenter/components/SidebarDrawerToggle.vue
+Copied: /private/tmp/drm-parity-20260830/DRM.jl/docs/build/finite-prediction-20260830-001/.documenter/components/VersionPicker.vue
+DOCS_SUBSET_PASS pages=1 examples=5 seconds=20.89
+DOCS_SUBSET_BUILD=/private/tmp/drm-parity-20260830/DRM.jl/docs/build/finite-prediction-20260830-001

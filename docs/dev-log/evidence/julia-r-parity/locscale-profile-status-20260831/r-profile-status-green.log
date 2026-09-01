@@ -1,0 +1,9 @@
+RUNTIME R version 4.6.0 (2026-04-24) drmTMB 0.7.0 
+filec09b44d66789: ..............
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+                                                                        test nb
+1 Julia profile failures and no-crossing messages survive public R intervals 14
+  failed skipped error passed
+1      0   FALSE FALSE     14
+R_PROFILE_STATUS_PASS

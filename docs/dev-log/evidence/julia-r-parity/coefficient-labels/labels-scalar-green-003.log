@@ -1,0 +1,66 @@
+bridge formula-derived coefficient labels: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:9
+  Got exception outside of a @test
+  ArgumentError: drmTMB(engine="julia"): `scale(x)` has zero standard deviation; cannot standardize a constant column.
+  Stacktrace:
+    [1] _bridge_eval_scale(sym::Symbol, ctx::DRM._BridgeXlateCtx)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:910
+    [2] (::DRM.var"#1420#1428"{DRM._BridgeXlateCtx})()
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1137
+    [3] _bridge_materialize!(ctx::DRM._BridgeXlateCtx, kind::String, key_expr::Tuple{Symbol, String}, compute::DRM.var"#1420#1428"{DRM._BridgeXlateCtx}, label::String)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:667
+    [4] _bridge_xlate(e::Expr, ctx::DRM._BridgeXlateCtx; scalar_context::Bool, atom_scope::String)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1136
+    [5] _bridge_xlate
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1049 [inlined]
+    [6] (::DRM.var"#1422#1430"{DRM._BridgeXlateCtx, String, Bool})(a::Expr)
+      @ DRM ./none:0
+    [7] iterate(::Base.Generator{Vector{Any}, DRM.var"#1422#1430"{DRM._BridgeXlateCtx, String, Bool}})
+      @ Base ./generator.jl:47
+    [8] _bridge_xlate(e::Expr, ctx::DRM._BridgeXlateCtx; scalar_context::Bool, atom_scope::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1173
+    [9] _bridge_xlate
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1049 [inlined]
+   [10] #1422
+      @ DRM ./none:0 [inlined]
+   [11] iterate(g::Base.Generator{Vector{Any}, DRM.var"#1422#1430"{DRM._BridgeXlateCtx, Nothing, Bool}}, s::Int64)
+      @ Base ./generator.jl:47
+   [12] _bridge_xlate(e::Expr, ctx::DRM._BridgeXlateCtx; scalar_context::Bool, atom_scope::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1173
+   [13] _bridge_xlate
+      @ /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1049 [inlined]
+   [14] _bridge_formula_from_expr(expr::Expr, ctx::DRM._BridgeXlateCtx)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1203
+   [15] _bridge_parse_formula_part(part::SubString{String}, ctx::DRM._BridgeXlateCtx)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1196
+   [16] #1395
+      @ /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:462 [inlined]
+   [17] iterate(g::Base.Generator, s::Vararg{Any})
+      @ Base ./generator.jl:47 [inlined]
+   [18] _collect(c::Vector{SubString{String}}, itr::Base.Generator{Vector{SubString{String}}, DRM.var"#1395#1397"{DRM._BridgeXlateCtx}}, ::Base.EltypeUnknown, isz::Base.HasShape{1})
+      @ Base ./array.jl:854
+   [19] collect_similar
+      @ ./array.jl:763 [inlined]
+   [20] map
+      @ ./abstractarray.jl:3282 [inlined]
+   [21] _bridge_formula(formula::String, family::String, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}}; labels::Bool)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:462
+   [22] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:285 [inlined]
+   [23] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [24] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:10
+   [25] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [26] top-level scope
+      @ none:1
+   [27] eval
+      @ Core ./boot.jl:385 [inlined]
+   [28] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [29] _start()
+      @ Base ./client.jl:552
+Test Summary:                             | Pass  Error  Total   Time
+bridge formula-derived coefficient labels |  761      1    762  37.7s
+ERROR: LoadError: Some tests did not pass: 761 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:9

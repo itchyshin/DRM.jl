@@ -1,0 +1,22 @@
+ℹ Starting Julia (first call in a session takes ~30-60 s; later calls are
+  fast)...
+Julia version 1.10.0 at location /Users/z3437171/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/bin will be used.
+Loading setup script for JuliaCall...
+Finish loading setup script for JuliaCall.
+drmTMB_drm_bridge (generic function with 1 method)
+  
+drmTMB_drm_bridge_conditional_gaussian_ri (generic function with 1 method)
+  
+drmTMB_drm_bridge_q2_phylo (generic function with 1 method)
+  
+drmTMB_drm_bridge_inference (generic function with 1 method)
+  
+drmTMB_drm_bridge_fixef_inference (generic function with 1 method)
+  
+drmTMB_drm_bridge_structured (generic function with 1 method)
+  
+drmTMB_mixed_family (generic function with 1 method)
+  
+TWO_PUBLIC_PASS; NATIVE_PASS; elapsed=28.924
+Julia exit.
+  Activating project at `/private/tmp/drm-parity-20260830/DRM.jl`

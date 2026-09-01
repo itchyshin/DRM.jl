@@ -1,0 +1,25 @@
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     3
+│     4
+│   rcond = 1.412131870604395e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+TEST_RNG_SOURCE=/Users/z3437171/.julia/packages/StableRNGs/yMYQp/src/StableRNGs.jl
+Test Summary:                  | Pass  Total   Time
+sd_phylo: grammar and refusals |   11     11  14.5s
+Test Summary:                                          | Pass  Total  Time
+sd_phylo: QQQ fit matches drmTMB and recovers the mean |    8      8  2.3s
+Test Summary:                                   | Pass  Total  Time
+sd_phylo: reduction invariant + #548 regression |    7      7  2.2s
+Test Summary:                                                      | Pass  Total  Time
+sd_phylo: homoscedastic structured route is untouched (#548 guard) |    2      2  1.8s
+Test Summary:                              | Pass  Total  Time
+bridge: sd()/sd_phylo() parts route (#546) |    3      3  0.8s
+Test Summary:                                            | Pass  Total  Time
+threaded inference on the stored nll closure (#549/#550) |    4      4  4.8s
+LSS_PHYLO_THREADED_NEIGHBOUR_PASS

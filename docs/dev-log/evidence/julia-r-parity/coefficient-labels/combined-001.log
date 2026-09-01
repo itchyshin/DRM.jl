@@ -1,0 +1,192 @@
+┌ Warning: drm: this tree's maximum tip height is 1.2, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 1.095445 = sqrt(1.2) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/1.2 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:713
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 3.676805016974284e-10
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 3.676805016974284e-10
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     4
+│   rcond = 1.5722360777007244e-8
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "bivariate Student-t"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     7
+│   rcond = 2.6217709657519925e-12
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: drm: this tree's maximum tip height is 0.8, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 0.894427 = sqrt(0.8) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/0.8 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:713
+┌ Warning: sparse-Laplace vcov: finite-difference Hessian is not positive definite at the optimum; reported SEs are not trustworthy.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_laplace_glmm.jl:146
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 1.5397113383375382e-9
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 2.054422580978017e-9
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     7
+│   rcond = 3.677651316026714e-21
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = "sparse phylo-mean variance block"
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     2
+│   rcond = 2.054422580978017e-9
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 5.681511417025606e-18
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 4.804558811702185e-18
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+ERROR: LoadError: Some tests did not pass: 301 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/tools/check_coefficient_labels.jl:7
+RUNTIME source=/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl Julia=1.10.0 threads=1 BLAS=1
+BRIDGE_FORMULA_LABELS_PASS
+scale()/I()/factor() are now landed: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_translation.jl:122
+  Test threw exception
+  Expression: fitok("y ~ log1p(1 + I(x1^2)); sigma ~ 1")
+  MethodError: no method matching vec(::String)
+  
+  Closest candidates are:
+    vec(!Matched::Distributions.Distribution{<:Distributions.ArrayLikeVariate})
+     @ Distributions ~/.julia/packages/Distributions/PVuFU/src/reshaped.jl:143
+    vec(!Matched::FillArrays.AbstractFill)
+     @ FillArrays ~/.julia/packages/FillArrays/Ksvco/src/fillalgebra.jl:3
+    vec(!Matched::SparseArrays.AbstractSparseVector)
+     @ SparseArrays ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/SparseArrays/src/sparsevector.jl:1089
+    ...
+  
+  Stacktrace:
+    [1] _bridge_public_term_labels(t::StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}, atoms::Dict{Symbol, String}, order::Dict{Symbol, Int64})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1361
+    [2] (::DRM.var"#1450#1456"{Dict{Symbol, String}, Dict{Symbol, Int64}})(tt::StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}})
+      @ DRM ./none:0
+    [3] MappingRF
+      @ ./reduce.jl:100 [inlined]
+    [4] afoldl(::Base.MappingRF{DRM.var"#1450#1456"{Dict{Symbol, String}, Dict{Symbol, Int64}}, Base.BottomRF{typeof(vcat)}}, ::Vector{String}, ::StatsModels.InterceptTerm{true}, ::StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}})
+      @ Base ./operators.jl:545
+    [5] _foldl_impl(op::Base.MappingRF{DRM.var"#1450#1456"{Dict{Symbol, String}, Dict{Symbol, Int64}}, Base.BottomRF{typeof(vcat)}}, init::Vector{String}, itr::Tuple{StatsModels.InterceptTerm{true}, StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}})
+      @ Base ./reduce.jl:68
+    [6] foldl_impl(op::Base.MappingRF{DRM.var"#1450#1456"{Dict{Symbol, String}, Dict{Symbol, Int64}}, Base.BottomRF{typeof(vcat)}}, nt::Vector{String}, itr::Tuple{StatsModels.InterceptTerm{true}, StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}})
+      @ Base ./reduce.jl:48
+    [7] mapfoldl_impl(f::typeof(identity), op::typeof(vcat), nt::Vector{String}, itr::Base.Generator{Tuple{StatsModels.InterceptTerm{true}, StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}}, DRM.var"#1450#1456"{Dict{Symbol, String}, Dict{Symbol, Int64}}})
+      @ Base ./reduce.jl:44
+    [8] mapfoldl(f::Function, op::Function, itr::Base.Generator{Tuple{StatsModels.InterceptTerm{true}, StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}}, DRM.var"#1450#1456"{Dict{Symbol, String}, Dict{Symbol, Int64}}}; init::Vector{String})
+      @ Base ./reduce.jl:175
+    [9] mapreduce(f::Function, op::Function, itr::Base.Generator{Tuple{StatsModels.InterceptTerm{true}, StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}}, DRM.var"#1450#1456"{Dict{Symbol, String}, Dict{Symbol, Int64}}}; kw::@Kwargs{init::Vector{String}})
+      @ Base ./reduce.jl:307
+   [10] reduce(op::Function, itr::Base.Generator{Tuple{StatsModels.InterceptTerm{true}, StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}}, DRM.var"#1450#1456"{Dict{Symbol, String}, Dict{Symbol, Int64}}}; kw::@Kwargs{init::Vector{String}})
+      @ Base ./reduce.jl:490
+   [11] _bridge_public_term_labels(t::StatsModels.MatrixTerm{Tuple{StatsModels.InterceptTerm{true}, StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}}}, atoms::Dict{Symbol, String}, order::Dict{Symbol, Int64})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1359
+   [12] _bridge_render_formula_block(form::DrmFormula, param::Symbol, rhs::StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}, labels::DRM._BridgeFormulaLabels)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1287
+   [13] _bridge_public_to_raw_coef_map(fit::DrmFit{Gaussian}, labels::DRM._BridgeFormulaLabels, raw_names::Vector{String})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1203
+   [14] _bridge_coef_vector(fit::DrmFit{Gaussian}; labels::DRM._BridgeFormulaLabels)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1164
+   [15] _bridge_coef_vector
+      @ /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1138 [inlined]
+   [16] _bridge_flatten(fit::DrmFit{Gaussian}; family::String, newdata::Nothing, labels::DRM._BridgeFormulaLabels)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1080
+   [17] drm_bridge(; formula::String, family::String, data::@NamedTuple{y::Vector{Float64}, x1::Vector{Float64}, x2::Vector{Float64}, x3::Vector{Float64}, species::Vector{String}, grp3::Vector{String}}, tree::DRM.AugmentedPhy{Float64}, K::Nothing, A::Nothing, coords::Nothing, newdata::Nothing, options::Dict{String, Any})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:60
+   [18] drm_bridge
+      @ /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:51 [inlined]
+   [19] (::var"#fitok#48"{@NamedTuple{y::Vector{Float64}, x1::Vector{Float64}, x2::Vector{Float64}, x3::Vector{Float64}, species::Vector{String}, grp3::Vector{String}}, DRM.AugmentedPhy{Float64}})(f::String)
+      @ Main /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_translation.jl:37
+   [20] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_translation.jl:122 [inlined]
+   [21] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [22] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_translation.jl:122 [inlined]
+   [23] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [24] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_translation.jl:116 [inlined]
+   [25] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [26] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_translation.jl:25
+Test Summary:                                                             | Pass  Error  Total     Time
+coefficient labels and bridge neighbours                                  |  301      1    302  1m10.8s
+  bridge materialized columns never overwrite user data                   |   14            14     3.0s
+  bridge formula-derived coefficient labels                               |   70            70    20.9s
+  drm_bridge primitive R boundary                                         |  128           128    19.1s
+  keyed univariate `nu` is not a bivariate discriminator (#1090)          |    4             4     5.8s
+  bridge: R formula operator translation                                  |   48      1     49    19.4s
+    valid formulas still fit                                              |    3             3     2.1s
+    R `:` interaction + phylo no longer crashes                           |    3             3     6.2s
+    R `*` crossing: valid fits, nested bans still caught                  |    4             4     0.0s
+    poly() is landed, and its shape guards are narrow (#492)              |   12            12     3.8s
+    scale()/I()/factor() are now landed                                   |    8      1      9     4.5s
+    (...)^k crossing expands to main effects + interactions               |    3             3     1.8s
+    general `- term` removal (mechanical)                                 |    5             5     0.7s
+    `-` term removal combined with unexpanded `*` is refused, not guessed |    2             2     0.0s
+    `^` misuse still rejected                                             |    2             2     0.0s
+    scale()/factor()/I() argument-shape guards                            |    5             5     0.0s
+    R `- 1` drops the intercept                                           |    1             1     0.0s
+  bridge profiles only the requested coefficient                          |   36            36     0.3s

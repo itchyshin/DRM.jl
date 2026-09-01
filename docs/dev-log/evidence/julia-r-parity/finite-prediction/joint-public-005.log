@@ -1,0 +1,26 @@
+ℹ Starting Julia (first call in a session takes ~30-60 s; later calls are
+  fast)...
+Julia version 1.10.0 at location /Users/z3437171/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/bin will be used.
+Loading setup script for JuliaCall...
+Finish loading setup script for JuliaCall.
+Error: Error happens in Julia.
+IOError: open("/Users/z3437171/.julia/logs/manifest_usage.toml.pid", 2562, 292): operation not permitted (EPERM)
+Stacktrace:
+  [1] uv_error
+    @ Base ./libuv.jl:100 [inlined]
+  [2] open(path::String, flags::UInt32, mode::UInt16)
+    @ Base.Filesystem ./filesystem.jl:121
+  [3] tryopen_exclusive(path::String, mode::UInt16)
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:212
+  [4] open_exclusive(path::String; mode::UInt16, poll_interval::Int64, wait::Bool, stale_age::Int64, refresh::Float64)
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:239
+  [5] open_exclusive
+    @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:232 [inlined]
+  [6] mkpidlock(at::String, pid::Int32; stale_age::Int64, refresh::Float64, kwopts::@Kwargs{})
+    
+In addition: Warning message:
+In system2(file.path(.julia$bin_dir, "julia"), shQuote(command),  :
+  running command ''/Users/z3437171/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/bin/julia' '--startup-file=no' '/Users/z3437171/Library/R/arm64/4.6/library/JuliaCall/julia/install_dependency.jl' '/Library/Frameworks/R.framework/Resources' 2>&1' had status 1
+Execution halted
+Julia exit.
+  Activating project at `/private/tmp/drm-parity-20260830/DRM.jl`

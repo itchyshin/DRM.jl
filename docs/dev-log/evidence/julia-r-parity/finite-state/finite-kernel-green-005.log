@@ -1,0 +1,14 @@
+Test Summary:                   | Pass  Total  Time
+finite-state prepared joint API |    7      7  0.0s
+Test Summary:                                                     | Pass  Total  Time
+ordinal finite-state likelihood, all masks, and posterior moments |   18     18  2.0s
+Test Summary:                                                        | Pass  Total  Time
+categorical finite-state likelihood, label mapping, and no metric SE |   10     10  0.3s
+Test Summary:                                  | Pass  Total  Time
+finite-state stable derivatives and validation |   22     22  5.3s
+Test Summary:                                                    | Pass  Total  Time
+finite-state fit snapshot, covariance status, and copy isolation |   14     14  4.5s
+Test Summary:                                                            | Pass  Total  Time
+finite-state imputation tables retain ordinal SD and categorical refusal |   11     11  0.4s
+S9_FINITE_JOINT_RED_TO_GREEN
+FINITE_JOINT_KERNEL_PASS

@@ -1,0 +1,15 @@
+{
+  "status": "RESTRICTION_REPRODUCED_NOT_FIXED",
+  "reported_by": "Ayumi-san, relayed by Shinichi in this task on 2026-08-30",
+  "tree": "(a:1,b:1,c:1);",
+  "native_R_validator": "PASS",
+  "R_Julia_serializer": "REJECT_binary_only",
+  "direct_Julia_constructor": "REJECT_expected_2p_minus_1_nodes",
+  "scope": "No fitting; exact input admission reproduction only. Profile/bootstrap report remains separate and unverified.",
+  "source_sha256": {
+    "/private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl": "cefbe845312d61c9f7a931a451dc6834d2a7590c14e4dddaf8fc1a239af5833b",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/phylo-utils.R": "dd2d36f89bd3ea47161068e480004772ac9e162c31df7b0b89dae9b759c3e7ff",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-bridge.R": "1f3cdf0c141572529d8f4350e883f81eb11bd3bb5cae116d8fc97c58b11cb3a2"
+  },
+  "protected_foreign_work": "R/julia-bridge.R includes preserved foreign ZOB edits; no source mutation for this reproduction"
+}

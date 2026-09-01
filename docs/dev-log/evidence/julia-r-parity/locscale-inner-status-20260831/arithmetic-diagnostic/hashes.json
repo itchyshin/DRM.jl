@@ -1,0 +1,38 @@
+{
+  "locscale_objective_arithmetic_followup.jl": {
+    "sha256": "347ad6d11ff6a5c8d97b36dae196f46c33380323c738e5f6f5159b37665a5861",
+    "bytes": 3483
+  },
+  "locscale_objective_arithmetic_states-001.jls": {
+    "sha256": "040645c9751dbedd57bb7021937a388d5b3f1fda9c0d89309fdbb79be5ec849a",
+    "bytes": 121051
+  },
+  "locscale_objective_arithmetic_probe.jl": {
+    "sha256": "703725e1020dedfd46429af6410c2e26c93f8d7a8f4ae4751eee8fc8c8981971",
+    "bytes": 6613
+  },
+  "locscale_objective_arithmetic_probe-001.log": {
+    "sha256": "463d2129ec917a4fb2da45e38c27c196aa119b4345d334096f3b58b40e8c1740",
+    "bytes": 519
+  },
+  "locscale_objective_arithmetic_probe-003.log": {
+    "sha256": "f070a73fe49a6682545d9bb91d1b053a693260731f1f17d89bb4ba9e698ee3bf",
+    "bytes": 2004
+  },
+  "locscale_objective_arithmetic_probe-002.log": {
+    "sha256": "e58ee0386c55f00a068f2be6afdab34db7d84ac98e9ebcaa2c2d973e1d37a00e",
+    "bytes": 522
+  },
+  "locscale_objective_arithmetic_followup-003.log": {
+    "sha256": "ddde78157e70c9f8511a1ccb2d07d5db6810fad9f5ceb4807ae37971a0b4e758",
+    "bytes": 3018
+  },
+  "locscale_objective_arithmetic_followup-002.log": {
+    "sha256": "cd76c82b3e16f0e677b6a7c46b8e82134ba1f37bd109db83027f5f211b9810c4",
+    "bytes": 2261
+  },
+  "locscale_objective_arithmetic_followup-001.log": {
+    "sha256": "53a2d3ca93b5608a54b870edd1ebc83b4f7156481ed7c2b14349f7f97c033b72",
+    "bytes": 1734
+  }
+}

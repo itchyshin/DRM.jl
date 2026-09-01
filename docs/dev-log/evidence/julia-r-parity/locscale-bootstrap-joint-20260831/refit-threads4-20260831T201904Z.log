@@ -1,0 +1,11 @@
+START_B2 threads=false
+B2_COUNTS threads=false attempted=2 used=2 failures=@NamedTuple{replicate::Int64, seed::UInt64, message::String}[]
+START_B2 threads=true
+B2_COUNTS threads=true attempted=2 used=2 failures=@NamedTuple{replicate::Int64, seed::UInt64, message::String}[]
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+Test Summary:                | Pass  Total   Time
+bounded bootstrap regression |    9      9  14.9s
+BOOTSTRAP_SLICE_PASS

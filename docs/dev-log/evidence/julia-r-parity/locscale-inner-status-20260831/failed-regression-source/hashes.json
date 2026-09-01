@@ -1,0 +1,5 @@
+{
+  "test/runtests.jl": "8253bba4d55b02c7d0a538db6ad07de2a02aa2096ff7c45d43854c0cbf4fcde0",
+  "test/test_locscale_inner_status.jl": "c8db994ed4f9bf78d36587d0b95c96d98178173d70b9d644878f82f9d741a7cd",
+  "src/locscale_inner.jl": "2ab0c1685547d1814a322d258b0b23022a5637880e71b39c598727fce18f516e"
+}

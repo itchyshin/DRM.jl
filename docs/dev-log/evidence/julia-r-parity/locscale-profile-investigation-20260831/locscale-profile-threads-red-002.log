@@ -1,0 +1,56 @@
+ERROR: LoadError: Some tests did not pass: 12 passed, 4 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:38
+canonical location-scale profile coefficient threading: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:52
+  Expression: all((r->begin
+            #= /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:52 =#
+            isfinite(r.lower) && isfinite(r.upper)
+        end), serial.ci)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:52 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:39
+canonical location-scale profile coefficient threading: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:63
+  Expression: threaded.threaded
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:63 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:39
+canonical location-scale profile coefficient threading: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:64
+  Expression: threaded.worker_threads == min(2, Threads.nthreads())
+   Evaluated: 1 == 2
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:64 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:39
+canonical location-scale profile coefficient threading: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:78
+  Expression: isfinite((only(one.ci)).lower) && isfinite((only(one.ci)).upper)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:78 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl:39
+Test Summary:                                          | Pass  Fail  Total     Time
+canonical location-scale profile coefficient threading |   12     4     16  1m02.4s

@@ -1,0 +1,1 @@
+| 2026-08-31 | **Bootstrap provider forwarding** (#563/S10/S11) | K/A/tree/coords preserved through fit, marginal simulation, refits, direct bridge and R helper | Julia19/19 at4 threads/BLAS1; structured neighbours green; R48 pure checks; actual R relmat profile and B2/2 bootstrap equal direct Julia. Not calibration/performance/native parity | Ada / Hopper / Rose |

@@ -1,0 +1,80 @@
+bridge formula-derived coefficient labels: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:9
+  Got exception outside of a @test
+  DomainError with -1.4:
+  Exponentiation yielding a complex result requires a complex argument.
+  Replace x^y with (x+0im)^y, Complex(x)^y, or similar.
+  Stacktrace:
+    [1] throw_exp_domainerror(x::Float64)
+      @ Base.Math ./math.jl:41
+    [2] ^(x::Float64, y::Float64)
+      @ Base.Math ./math.jl:1206
+    [3] _broadcast_getindex_evalf
+      @ ./broadcast.jl:709 [inlined]
+    [4] _broadcast_getindex
+      @ ./broadcast.jl:682 [inlined]
+    [5] getindex
+      @ ./broadcast.jl:636 [inlined]
+    [6] macro expansion
+      @ ./broadcast.jl:1004 [inlined]
+    [7] macro expansion
+      @ ./simdloop.jl:77 [inlined]
+    [8] copyto!
+      @ ./broadcast.jl:1003 [inlined]
+    [9] copyto!
+      @ ./broadcast.jl:956 [inlined]
+   [10] copy
+      @ ./broadcast.jl:928 [inlined]
+   [11] materialize
+      @ ./broadcast.jl:903 [inlined]
+   [12] broadcast(::typeof(^), ::Vector{Float64}, ::Vector{Float64})
+      @ Base.Broadcast ./broadcast.jl:841
+   [13] _bridge_eval_I(expr::Expr, ctx::DRM._BridgeXlateCtx)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:781
+   [14] (::DRM.var"#1413#1419"{Expr, DRM._BridgeXlateCtx})()
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:971
+   [15] _bridge_materialize!(ctx::DRM._BridgeXlateCtx, kind::String, key_expr::Expr, compute::DRM.var"#1413#1419"{Expr, DRM._BridgeXlateCtx}, label::String)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:631
+   [16] _bridge_xlate(e::Expr, ctx::DRM._BridgeXlateCtx)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:970
+   [17] #1418
+      @ DRM ./none:0 [inlined]
+   [18] iterate(g::Base.Generator{Vector{Any}, DRM.var"#1418#1424"{DRM._BridgeXlateCtx}}, s::Int64)
+      @ Base ./generator.jl:47
+   [19] _bridge_xlate(e::Expr, ctx::DRM._BridgeXlateCtx)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1034
+   [20] _bridge_formula_from_expr(expr::Expr, ctx::DRM._BridgeXlateCtx)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1055
+   [21] _bridge_parse_formula_part(part::SubString{String}, ctx::DRM._BridgeXlateCtx)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1048
+   [22] #1395
+      @ /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:456 [inlined]
+   [23] iterate(g::Base.Generator, s::Vararg{Any})
+      @ Base ./generator.jl:47 [inlined]
+   [24] _collect(c::Vector{SubString{String}}, itr::Base.Generator{Vector{SubString{String}}, DRM.var"#1395#1397"{DRM._BridgeXlateCtx}}, ::Base.EltypeUnknown, isz::Base.HasShape{1})
+      @ Base ./array.jl:854
+   [25] collect_similar
+      @ ./array.jl:763 [inlined]
+   [26] map
+      @ ./abstractarray.jl:3282 [inlined]
+   [27] _bridge_formula(formula::String, family::String, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, g::Vector{String}}; labels::Bool)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:456
+   [28] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:150 [inlined]
+   [29] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [30] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:10
+   [31] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [32] top-level scope
+      @ none:1
+   [33] eval
+      @ Core ./boot.jl:385 [inlined]
+   [34] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [35] _start()
+      @ Base ./client.jl:552
+Test Summary:                             | Pass  Error  Total   Time
+bridge formula-derived coefficient labels |   29      1     30  22.6s
+ERROR: LoadError: Some tests did not pass: 29 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:9

@@ -1,0 +1,2 @@
+gate-check: --timeout needs an integer from 1 through 86400, got "120000"
+run gate-check.mjs --help for usage

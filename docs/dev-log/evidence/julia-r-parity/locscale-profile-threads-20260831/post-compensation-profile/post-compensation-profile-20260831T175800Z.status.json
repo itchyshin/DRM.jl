@@ -1,0 +1,24 @@
+{
+  "blas_threads": 1,
+  "command": [
+    "julia",
+    "--project=.",
+    "--startup-file=no",
+    "--history-file=no",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/post-compensation-profile/diagnose.jl",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/post-compensation-profile/post-compensation-profile-20260831T175800Z.jls"
+  ],
+  "hard_cap_seconds": 60,
+  "julia_threads": 1,
+  "kind": "post_compensation_profile_capped",
+  "log": "/private/tmp/drm-parity-20260830/profile-threads-s11/post-compensation-profile/post-compensation-profile-20260831T175800Z.log",
+  "mode": "both",
+  "pid": 30642,
+  "process_group": 30642,
+  "returncode": 0,
+  "script": "/private/tmp/drm-parity-20260830/profile-threads-s11/post-compensation-profile/diagnose.jl",
+  "script_sha256": "7cac9a992ec1d09619de50089db530b0d26400809d99fb1caee28949ddf5b00c",
+  "stamp": "20260831T175800Z",
+  "timed_out": false,
+  "wall_seconds": 13.279752969741821
+}

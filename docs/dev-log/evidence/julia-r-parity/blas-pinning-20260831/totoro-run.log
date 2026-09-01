@@ -1,0 +1,285 @@
+2026-08-31T11:18:25Z
+9c958c8f83243bc4664ea272f5ebfcf3f1369cc34a5084afbd8a2619b84b460f  Project.toml
+3352aa55d3cca25d17195987efaaa5e5e6050f064dbf5036ab53e5808e51e899  test/Project.toml
+b1fc84ff68aab61a70d58db505fc5041a43af20cf91dc749290b2a50ac57f51e  test/Manifest.toml
+f889b187a2bbee4c0d307c607f85094d280442f05821940ec3ba6d7c54f2cf17  focused-pilot-001/run.jl
+97fd9878bc3354d3daf50c78cb202a622d904988c1d0841a4e70577c730fa550  focused-pilot-001/run.sh
+RUNTIME julia=1.10.10 JuliaThreads=4 BLAS=4 source=/home/snakagaw/drm_parity_blas_c0675b16_001/src/DRM.jl
+START_FILE test_inference_blas_pinning.jl
+Test Summary:                                       | Pass  Total  Time
+inference BLAS pinning is composable across callers |   17     17  0.2s
+COMPLETE_FILE test_inference_blas_pinning.jl
+START_FILE test_bootstrap_thread_flags.jl
+BOOTSTRAP_FLAG_COUNTS min=250 max=250 batches=300 B=250
+Test Summary:                                       | Pass  Total  Time
+Threaded bootstrap keeps every successful replicate |    2      2  1.2s
+COMPLETE_FILE test_bootstrap_thread_flags.jl
+START_FILE test_profile_ci.jl
+Test Summary:                                        | Pass  Total   Time
+Profile-likelihood CI: confint(fit; method=:profile) |   27     27  10.0s
+Test Summary:                                 | Pass  Total  Time
+Gaussian crossed profile uses stored gradient |    9      9  7.0s
+Test Summary:                                   | Pass  Total  Time
+Profile CI on crossed Poisson random-effect SDs |    9      9  4.7s
+Test Summary:                                  | Pass  Total  Time
+Profile CI on the scale parameter (asymmetric) |   11     11  0.4s
+COMPLETE_FILE test_profile_ci.jl
+START_FILE test_bootstrap.jl
+Test Summary:           | Pass  Total  Time
+Parametric bootstrap CI |   46     46  8.3s
+COMPLETE_FILE test_bootstrap.jl
+START_FILE test_lss_bootstrap_contract.jl
+Test Summary:                   | Pass  Total   Time
+Gaussian LSS bootstrap contract |   60     60  21.9s
+COMPLETE_FILE test_lss_bootstrap_contract.jl
+PROFILE_BOOTSTRAP_REGRESSION_COMPLETE BLAS=4
+┌ Warning: drm: this tree's maximum tip height is 0.8, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 0.894427 = sqrt(0.8) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/0.8 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/sparse_phy.jl:713
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 4.307034385550336e-23
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 5.137666251939643e-37
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 6.147487663112903e-17
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 4.26748553413767e-21
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 5.137666251939643e-37
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 6.147487663112903e-17
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 4.26748553413767e-21
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 5.137666251939643e-37
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 4.26748553413767e-21
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 6.147487663112903e-17
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 1.8918424807514037e-19
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 7.386147317155021e-20
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 1.8232162398061052e-16
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 7.386147317155021e-20
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 1.8232162398061052e-16
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 2.3116380523621043e-22
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 7.092405724198682e-29
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 3.516240090348732e-18
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 4.865614216200072e-28
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 2.3116380523621043e-22
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 7.092405724198682e-29
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 3.516240090348732e-18
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    3-element Vector{Int64}:
+│     5
+│     ⋮
+│   rcond = 4.865614216200072e-28
+└ @ DRM ~/drm_parity_blas_c0675b16_001/src/vcov_guard.jl:87
+ELAPSED_SECONDS 58

@@ -1,0 +1,39 @@
+
+══ Testing test-julia-joint-two.R ══════════════════════════════════════════════
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 1 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 2 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 3 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 4 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 5 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 6 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 7 ]
+[ FAIL 1 | WARN 0 | SKIP 0 | PASS 7 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 7 ]
+
+── Error ('test-julia-joint-two.R:20:3'): two Gaussian Julia preparation preserves both native designs and all masks ──
+Error in `drm_build_gaussian_missing_predictor_model(mi_setup, data_model, env = env)`: The Gaussian `impute` model is weakly identified for the first `mi()` slice.
+x It has 2 observed `x1` value and 2 fixed-effect coefficients.
+i Use a simpler predictor model or supply more observed predictor values.
+Backtrace:
+    ▆
+ 1. └─drmTMB:::drm_julia_joint_prepare(...) at test-julia-joint-two.R:20:3
+ 2.   └─drmTMB:::drm_build_gaussian_ls_spec(...) at drmTMB/R/julia-joint-missing.R:263:3
+ 3.     └─drmTMB:::drm_build_gaussian_missing_predictor_model(mi_setup, data_model, env = env) at drmTMB/R/drmTMB.R:3585:3
+ 4.       └─cli::cli_abort(...) at drmTMB/R/missing-data.R:1292:5
+ 5.         └─rlang::abort(...)
+
+── Error ('test-julia-joint-two.R:58:3'): two Gaussian R result keeps both SD transforms and variable summaries ──
+Error in `drm_julia_joint_result_contract(result, prepared)`: Julia joint result adapter requires a joint_missing_v1 prepared payload.
+Backtrace:
+    ▆
+ 1. └─drmTMB:::drm_julia_joint_result(...) at test-julia-joint-two.R:58:3
+ 2.   └─drmTMB:::drm_julia_joint_result_contract(result, prepared) at drmTMB/R/julia-joint-methods.R:308:3
+ 3.     └─cli::cli_abort("Julia joint result adapter requires a joint_missing_v1 prepared payload.") at drmTMB/R/julia-joint-methods.R:172:5
+ 4.       └─rlang::abort(...)
+
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 7 ]
+Error:
+! Test failures.
+Execution halted

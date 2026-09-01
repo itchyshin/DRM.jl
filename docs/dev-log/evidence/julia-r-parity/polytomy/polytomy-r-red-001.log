@@ -1,0 +1,33 @@
+
+══ Testing test-julia-phylo-polytomy.R ═════════════════════════════════════════
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 1 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 0 ]
+
+── Error ('test-julia-phylo-polytomy.R:12:7'): Julia serialization retains polytomies, lengths and traversal order ──
+Error in `drm_julia_phylo_newick(tree)`: `engine = "julia"` currently serializes binary phylogenies only.
+Backtrace:
+    ▆
+ 1. └─drmTMB:::drm_julia_phylo_newick(tree) at test-julia-phylo-polytomy.R:12:7
+ 2.   └─cli::cli_abort("{.code engine = \"julia\"} currently serializes binary phylogenies only.") at drmTMB/R/julia-bridge.R:1821:5
+ 3.     └─rlang::abort(...)
+
+── Error ('test-julia-phylo-polytomy.R:28:3'): Julia serializer keeps other explicit tree refusal boundaries ──
+Error in `drm_julia_phylo_newick(ape::read.tree(text = "((a:1):1,b:2);"))`: `engine = "julia"` currently serializes binary phylogenies only.
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_error(...) at test-julia-phylo-polytomy.R:28:3
+ 2. │ └─testthat:::expect_condition_matching_(...)
+ 3. │   └─testthat:::quasi_capture(...)
+ 4. │     ├─testthat (local) .capture(...)
+ 5. │     │ └─base::withCallingHandlers(...)
+ 6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo))
+ 7. └─drmTMB:::drm_julia_phylo_newick(ape::read.tree(text = "((a:1):1,b:2);"))
+ 8.   └─cli::cli_abort("{.code engine = \"julia\"} currently serializes binary phylogenies only.") at drmTMB/R/julia-bridge.R:1821:5
+ 9.     └─rlang::abort(...)
+
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 0 ]
+Error:
+! Test failures.
+Execution halted

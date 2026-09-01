@@ -1,0 +1,103 @@
+2026-08-31T11:51:39Z
+9c958c8f83243bc4664ea272f5ebfcf3f1369cc34a5084afbd8a2619b84b460f  Project.toml
+3352aa55d3cca25d17195987efaaa5e5e6050f064dbf5036ab53e5808e51e899  test/Project.toml
+b1fc84ff68aab61a70d58db505fc5041a43af20cf91dc749290b2a50ac57f51e  test/Manifest.toml
+c6f8a18a3210ee152a058f066da942e196b160310c12feb32fb95d57d812c1f0  locscale-slow-profile-pilot-001/run.jl
+8dd9c29fe67c8e53996898aa9a6aa9606a4819af0ba72132b078f06193673021  locscale-slow-profile-pilot-001/run.sh
+RUNTIME julia=1.10.10 JuliaThreads=1 BLAS=1 DRM_SLOW_TESTS=1
+START_FILE test_locscale_profile.jl
+
+[3590052] signal (15): Terminated
+in expression starting at /home/snakagaw/drm_parity_blas_c0675b16_001/test/test_locscale_profile.jl:51
+_logabsgamma at /home/snakagaw/.julia/packages/SpecialFunctions/vcBcV/src/logabsgamma/e_lgamma_r.jl:89
+logabsgamma at /home/snakagaw/.julia/packages/SpecialFunctions/vcBcV/src/gamma.jl:624 [inlined]
+_loggamma at /home/snakagaw/.julia/packages/SpecialFunctions/vcBcV/src/gamma.jl:662 [inlined]
+loggamma at /home/snakagaw/.julia/packages/SpecialFunctions/vcBcV/src/gamma.jl:659 [inlined]
+_ls_nll at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_kernels.jl:60
+_ls_joint at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_inner.jl:81
+#_ls_inner_mode#994 at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_inner.jl:180
+_ls_inner_mode at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_inner.jl:158 [inlined]
+#_ls_marginal_nll#995 at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_marginal.jl:31
+_ls_marginal_nll at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_marginal.jl:28 [inlined]
+f at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_profile.jl:51
+unknown function (ip: 0x77ad7c99d8a5)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+value!! at /home/snakagaw/.julia/packages/NLSolversBase/n7XXO/src/interface.jl:9
+value! at /home/snakagaw/.julia/packages/NLSolversBase/n7XXO/src/interface.jl:28
+unknown function (ip: 0x77ad7c99f3d9)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+value! at /home/snakagaw/.julia/packages/Optim/gmigl/src/Manifolds.jl:31
+ϕ at /home/snakagaw/.julia/packages/LineSearches/2BCHN/src/LineSearches.jl:22
+BackTracking at /home/snakagaw/.julia/packages/LineSearches/2BCHN/src/backtracking.jl:119
+BackTracking at /home/snakagaw/.julia/packages/LineSearches/2BCHN/src/backtracking.jl:34 [inlined]
+BackTracking at /home/snakagaw/.julia/packages/LineSearches/2BCHN/src/backtracking.jl:24 [inlined]
+perform_linesearch! at /home/snakagaw/.julia/packages/Optim/gmigl/src/utilities/perform_linesearch.jl:58
+update_state! at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/solvers/first_order/l_bfgs.jl:220
+optimize at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:65
+optimize at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:43 [inlined]
+#optimize#79 at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:301 [inlined]
+optimize at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:289 [inlined]
+#_ls_profile_nll#1018 at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_profile.jl:69
+_ls_profile_nll at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_profile.jl:39 [inlined]
+evalh at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_profile.jl:167
+#_ls_profile_root#1024 at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_profile.jl:117
+_ls_profile_root at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_profile.jl:91 [inlined]
+#_ls_profile_ci#1025 at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_profile.jl:181
+_ls_profile_ci at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_profile.jl:150
+unknown function (ip: 0x77ad7c99bde5)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+jl_apply at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/julia.h:1982 [inlined]
+do_call at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:126
+eval_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:223
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:489
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:544
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:544
+jl_interpret_toplevel_thunk at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:775
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:934
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:877
+ijl_toplevel_eval_in at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:985
+eval at ./boot.jl:385 [inlined]
+include_string at ./loading.jl:2146
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+_include at ./loading.jl:2206
+include at ./client.jl:494
+unknown function (ip: 0x77ad7c902395)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+jl_apply at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/julia.h:1982 [inlined]
+do_call at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:126
+eval_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:223
+eval_stmt_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:174 [inlined]
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:617
+jl_interpret_toplevel_thunk at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:775
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:934
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:877
+ijl_toplevel_eval_in at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:985
+eval at ./boot.jl:385 [inlined]
+include_string at ./loading.jl:2146
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+_include at ./loading.jl:2206
+include at ./Base.jl:495
+jfptr_include_46653 at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+exec_options at ./client.jl:323
+_start at ./client.jl:557
+jfptr__start_83114 at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+jl_apply at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/julia.h:1982 [inlined]
+true_main at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jlapi.c:582
+jl_repl_entrypoint at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jlapi.c:731
+main at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/cli/loader_exe.c:58
+unknown function (ip: 0x77ad82e2a1c9)
+__libc_start_main at /lib/x86_64-linux-gnu/libc.so.6 (unknown line)
+unknown function (ip: 0x4010b8)
+unknown function (ip: (nil))
+Allocations: 156058714 (Pool: 156008895; Big: 49819); GC: 895
+ELAPSED_SECONDS 901

@@ -1,0 +1,1 @@
+JULIA_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 julia --startup-file=no --project=. /private/tmp/drm-parity-20260830/profile-threads-s11/diagnose-profile-threads.jl

@@ -1,0 +1,50 @@
+DIRECT_TREE_BOOTSTRAP (2, 2, 0) failures=@NamedTuple{replicate::Int64, seed::UInt64, message::String}[]
+ERROR: LoadError: Some tests did not pass: 2 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/bridge-bootstrap-tree/tree-threads1-20260831T204403Z.jl:2
+non-Gaussian phylogenetic bootstrap bridge: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_bridge_bootstrap_tree.jl:6
+  Got exception outside of a @test
+  (1 | tag | phylo(species)) needs `tree = …`
+  Stacktrace:
+    [1] error(s::String)
+      @ Base ./error.jl:35
+    [2] _ls_frontend_grouping(lc::@NamedTuple{group::Symbol, structkind::Symbol, fixed_mu::StatsModels.Term, fixed_sigma::StatsModels.ConstantTerm{Int64}}, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{String}}, tree::Nothing, K::Nothing, A::Nothing, coords::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_frontend.jl:167
+    [3] _ls_bootstrap_prepared_state(fit::DrmFit{Gamma}, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{String}}; K::Nothing, A::Nothing, tree::Nothing, coords::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_simulate.jl:79
+    [4] _ls_bootstrap_prepared_state
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_simulate.jl:48 [inlined]
+    [5] #_ls_marginal_simulator#1063
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_simulate.jl:120 [inlined]
+    [6] _ls_marginal_simulator
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_simulate.jl:118 [inlined]
+    [7] _marginal_simulator(fit::DrmFit{Gamma}, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{String}}; K::Nothing, A::Nothing, tree::Nothing, coords::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/inference.jl:1822
+    [8] _marginal_simulator
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/src/inference.jl:1820 [inlined]
+    [9] bootstrap_result(fit::DrmFit{Gamma}; data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{String}}, B::Int64, level::Float64, rng::MersenneTwister, K::Nothing, A::Nothing, tree::Nothing, threads::Bool, failures::Symbol, check_converged::Bool)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/inference.jl:1683
+   [10] drm_bridge_inference(; formula::String, family::String, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{String}}, tree::String, options::Dict{String, Any}, method::String, level::Float64, B::Int64, seed::Int64, threads::Bool, parm::String)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/bridge.jl:0
+   [11] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_bridge_bootstrap_tree.jl:44 [inlined]
+   [12] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [13] top-level scope
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_bridge_bootstrap_tree.jl:7
+   [14] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [15] macro expansion
+      @ /private/tmp/drm-parity-20260830/bridge-bootstrap-tree/tree-threads1-20260831T204403Z.jl:3 [inlined]
+   [16] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [17] top-level scope
+      @ /private/tmp/drm-parity-20260830/bridge-bootstrap-tree/tree-threads1-20260831T204403Z.jl:3
+   [18] include(mod::Module, _path::String)
+      @ Base ./Base.jl:495
+   [19] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:318
+   [20] _start()
+      @ Base ./client.jl:552
+Test Summary:                                | Pass  Error  Total   Time
+bounded bootstrap regression                 |    2      1      3  26.3s
+  non-Gaussian phylogenetic bootstrap bridge |    2      1      3  26.1s

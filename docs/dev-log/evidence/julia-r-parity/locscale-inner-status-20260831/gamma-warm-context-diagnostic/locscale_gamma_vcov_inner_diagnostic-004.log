@@ -1,0 +1,14 @@
+GAMMA_VCOV_INNER_DIAGNOSTIC
+SOURCE_SHA 2c534141d8439a4ee339bfc6d795e4a4836fea885f986f677b418016a4afc32f
+FIT theta=[0.6370344140473198, 0.24410249013547608, 1.4752127409228124, -1.6628726394324707, -0.0960544541933801, -7.410523644260694] converged=false nll=41.24361482123213 base_ok=false base_nll=Inf a_hat_finite=true
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+ERROR: LoadError: ParseError:
+# Error @ /private/tmp/locscale_gamma_vcov_inner_diagnostic.jl:137:74
+            " a_finite=",all(isfinite,a)," gradient=",gradient isa AbstractVector ? repr(gradient) : sprint(showerror,gradient),
+            " gradient_finite=",finite_grad," trace=",trace === nothing ? \"not_needed\" : repr(shorttrace(trace)))
+#                                                                        └┘ ── not a unary operator
+Stacktrace:
+ [1] top-level scope
+   @ /private/tmp/locscale_gamma_vcov_inner_diagnostic.jl:137
+in expression starting at /private/tmp/locscale_gamma_vcov_inner_diagnostic.jl:137

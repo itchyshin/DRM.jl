@@ -10,6 +10,7 @@
 #
 # Writes a TSV of results next to this script's --out argument (default below).
 
+source("tools/parity_numeric.R")
 suppressMessages(library(drmTMB))
 
 out_path <- "docs/dev-log/evidence/parity-fixtures.tsv"
@@ -134,15 +135,14 @@ for (cell in cells) {
     res$status <- "JULIA_FAILED"; res$note <- conditionMessage(attr(fj, "condition"))
   } else {
     ct <- unlist(fixef(ft)); cj <- unlist(fixef(fj))
-    common <- intersect(names(ct), names(cj))
-    if (length(common) == 0L && length(ct) == length(cj)) common <- seq_along(ct)
-    res$max_abs_coef_diff <- max(abs(ct[common] - cj[common]))
+    comparison <- parity_numeric(ct, cj, tol)
+    res$max_abs_coef_diff <- comparison$max_abs_diff
     res$loglik_tmb <- as.numeric(logLik(ft))
     res$loglik_julia <- as.numeric(logLik(fj))
     res$loglik_diff <- abs(res$loglik_tmb - res$loglik_julia)
-    agree <- res$max_abs_coef_diff < tol && res$loglik_diff < tol
+    agree <- comparison$pass && is.finite(res$loglik_diff) && res$loglik_diff < tol
     res$status <- if (agree) "PARITY_PASS" else "PARITY_FAIL"
-    res$note <- sprintf("%d coefficient(s) compared", length(common))
+    res$note <- comparison$reason
   }
   rows[[length(rows) + 1L]] <- as.data.frame(res, stringsAsFactors = FALSE)
   cat(sprintf("%-32s %-14s coef_diff=%.3e  loglik_diff=%.3e\n",
@@ -179,12 +179,13 @@ for (cell in fe_cells) {
     res$status <- "JULIA_FAILED"
   } else {
     ct <- unlist(fixef(ft)); cj <- unlist(fixef(jb))
-    k <- min(length(ct), length(cj))
-    res$max_abs_coef_diff <- max(abs(ct[seq_len(k)] - cj[seq_len(k)]))
+    comparison <- parity_numeric(ct, cj, tol)
+    res$max_abs_coef_diff <- comparison$max_abs_diff
     res$loglik_tmb <- as.numeric(logLik(ft)); res$loglik_julia <- as.numeric(logLik(jb))
     res$loglik_diff <- abs(res$loglik_tmb - res$loglik_julia)
-    res$status <- if (res$max_abs_coef_diff < tol && res$loglik_diff < tol)
+    res$status <- if (comparison$pass && is.finite(res$loglik_diff) && res$loglik_diff < tol)
       "PARITY_PASS" else "PARITY_FAIL"
+    res$note <- paste(res$note, comparison$reason, sep = "; ")
   }
   rows[[length(rows) + 1L]] <- as.data.frame(res, stringsAsFactors = FALSE)
   cat(sprintf("%-32s %-14s coef_diff=%.3e  loglik_diff=%.3e\n",
@@ -208,13 +209,16 @@ for (cell in biv_cells) {
   } else if (inherits(jb, "try-error")) {
     res$status <- "JULIA_FAILED"
   } else {
-    ct <- unlist(fixef(ft)); cj <- jb$coefficients
-    k <- min(length(ct), length(cj))
-    res$max_abs_coef_diff <- max(abs(ct[seq_len(k)] - cj[seq_len(k)]))
+    ct <- unlist(fixef(ft))
+    cj <- unlist(jb$coefficients, use.names = FALSE)
+    if (length(jb$coef_names) == length(cj)) names(cj) <- as.character(jb$coef_names)
+    comparison <- parity_numeric(ct, cj, tol)
+    res$max_abs_coef_diff <- comparison$max_abs_diff
     res$loglik_tmb <- as.numeric(logLik(ft)); res$loglik_julia <- jb$loglik
     res$loglik_diff <- abs(res$loglik_tmb - res$loglik_julia)
-    res$status <- if (res$max_abs_coef_diff < tol && res$loglik_diff < tol)
+    res$status <- if (comparison$pass && is.finite(res$loglik_diff) && res$loglik_diff < tol)
       "PARITY_PASS" else "PARITY_FAIL"
+    res$note <- paste(res$note, comparison$reason, sep = "; ")
   }
   rows[[length(rows) + 1L]] <- as.data.frame(res, stringsAsFactors = FALSE)
   cat(sprintf("%-32s %-14s coef_diff=%.3e  loglik_diff=%.3e\n",
@@ -226,3 +230,6 @@ dir.create(dirname(out_path), showWarnings = FALSE, recursive = TRUE)
 write.table(tab, out_path, sep = "\t", row.names = FALSE, quote = FALSE)
 cat("\nwrote ", out_path, "\n", sep = "")
 cat("OVERALL: ", if (all(tab$status == "PARITY_PASS")) "ALL CELLS PASS" else "SOME CELLS FAILED", "\n", sep = "")
+
+# A failed row must also fail automation, after preserving the complete table.
+if (!all(tab$status == "PARITY_PASS")) quit(status = 1L)

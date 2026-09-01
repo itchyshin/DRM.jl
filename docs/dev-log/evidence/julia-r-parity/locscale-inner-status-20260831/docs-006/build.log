@@ -1,0 +1,41 @@
+[ Info: SetupBuildDirectory: setting up build directory.
+[ Info: Doctest: running doctests.
+[ Info: ExpandTemplates: expanding markdown templates.
+WARNING: replacing module __atexample__named__fam.
+[ Info: CrossReferences: building cross-references.
+[ Info: CheckDocument: running document checks.
+[ Info: Populate: populating indices.
+[ Info: RenderDocument: rendering document.
+[ Info: DocumenterVitepress: rendering MarkdownVitepress pages.
+┌ Warning: Documenter could not auto-detect the building environment. Skipping deployment.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/deployconfig.jl:93
+[ Info: Automatic `version="0.7.0"` for inventory from ../Project.toml
+[ Info: Bases that will be built: [""]
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/mathjax-plugin.ts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/julia-repl-transformer.ts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/index.ts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/style.css` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/docstrings.css` file. Substituting in the default file.
+[ Info: Base is "" and ENV["CI"] is not set so this is a local build. Not adding any additional base prefix based on the repository or deploy url and instead using absolute path "/" to facilitate serving docs locally.
+┌ Warning: DocumenterVitepress: No logo.png file found in `docs/src/assets`.  Skipping logo replacement.
+└ @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/vitepress_config.jl:148
+┌ Warning: DocumenterVitepress: No favicon.ico file found in `docs/src/assets`.  Skipping favicon replacement.
+└ @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/vitepress_config.jl:162
+┌ Info: DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
+│ You can view it yourself by running the following in the `docs` folder:
+│ ```
+│ npm run docs:dev
+│ ```
+│ and if you haven't run `npm` in this repo before, install all packages by running `npm install`.
+│ 
+└ All emitted markdown can be found in `/private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-inner-006/.documenter`.
+DOCS_RUNTIME julia=1.10.0 threads=1 blas=1 loaded_drm=/private/tmp/drm-parity-20260830/integration/DRM.jl/src/DRM.jl
+DOCS_SELECTED=api-stability.md,capabilities.md,changelog.md,cross-family.md,developer-notes/adding-families.md,developer-notes/formula-grammar.md,developer-notes/source-map.md,diagnostics-and-validation/exact-gaussian-diagnostics.md,diagnostics-and-validation/figure-gallery.md,diagnostics-and-validation/implementation-map.md,diagnostics-and-validation/prediction-and-postfit.md,diagnostics-and-validation/profile-likelihood.md,diagnostics-and-validation/simulation-plot-grammar.md,diagnostics-and-validation/small-sample-behaviour.md,diagnostics-and-validation/testing-likelihoods.md,families.md,get-started.md,getting-started.md,index.md,model-guides/convergence.md,model-guides/cross-family-methods.md,model-guides/distribution-families.md,model-guides/large-data.md,model-guides/marginal-la-vs-va.md,model-guides/meta-analysis.md,model-guides/model-map.md,model-guides/model-selection.md,model-guides/model-workflow.md,model-guides/which-scale.md,r-julia-bridge.md,reference/deprecated-marker-internals.md,reference/engine-internals.md,reference/model-fitting-and-postfit.md,reference/model-specification.md,reference/package.md,reference/structured-effect-markers.md,reference/visualization.md,rosetta.md,tutorials/animal-models.md,tutorials/bivariate-coscale.md,tutorials/bivariate-nongaussian.md,tutorials/count-nbinom2.md,tutorials/location-scale-scale.md,tutorials/location-scale.md,tutorials/meta-analysis.md,tutorials/phylogenetic-models.md,tutorials/phylogenetic-spatial.md,tutorials/proportion-beta-binomial.md,tutorials/relmat-known-matrices.md,tutorials/robust-student.md,tutorials/spatial-models.md,tutorials/structural-dependence.md
+DOCS_PRODUCTION_NAVIGATION visible=51 emitted=52
+Copied: /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-inner-006/.documenter/components/AuthorBadge.vue
+Copied: /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-inner-006/.documenter/components/Authors.vue
+Copied: /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-inner-006/.documenter/components/SidebarDrawerToggle.vue
+Copied: /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-inner-006/.documenter/components/VersionPicker.vue
+DOCS_SUBSET_PASS pages=52 examples=134 seconds=144.741
+DOCS_SUBSET_BUILD=/private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-inner-006

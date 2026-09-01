@@ -1,0 +1,6 @@
+{
+  "commit": "9007338e5975fa14ec19915c07dada880250ed01",
+  "review": "Rose Sol/high approved R-only test/report/check-log;6 negative-control failures verified directly",
+  "status": "",
+  "scope": "local commit only, no push or merge; mocked public R conversion, not live JuliaCall"
+}

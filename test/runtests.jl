@@ -59,12 +59,19 @@ include("test_corpairs.jl")
 include("test_gaussian_ranef.jl")
 include("test_lss_group.jl")   # #544 location-scale-scale sd(g) ~ x
 include("test_lss_phylo.jl")   # #545 sd_phylo + #548 cancellation regression
+include("test_lss_tip_identity.jl") # Named tree-tip mapping under shuffled rows
+include("test_lss_bootstrap_contract.jl") # Marginal components, masks and REML refits
+include("test_bootstrap_thread_flags.jl") # Independent storage for parallel status flags
 include("test_lss_sparse.jl")  # #551 O(p) sparse exact marginal LSS engine
 include("test_lsss_multi.jl")  # #555 multi-component sd() (lsss)
 include("test_lss_reml.jl")    # #558 location-scale-scale REML
 include("test_lss_missing_response.jl") # #559 location-scale-scale missing responses
 include("test_inference.jl")
+include("test_inference_blas_pinning.jl") # Nested and overlapping global-BLAS restoration
 include("test_profile_ci.jl")
+include("test_profile_nuisance_status.jl")
+include("test_profile_acceptance_oracles.jl")
+include("test_bridge_profile_status.jl")
 include("test_check_drm.jl")
 include("test_bias_correct.jl")
 include("test_visualization.jl")
@@ -72,6 +79,9 @@ include("test_makie_ext_stub.jl")   # #336: DRMMakieExt method-less stub (Makie 
 include("test_postfit.jl")
 include("test_meta.jl")
 include("test_simulate.jl")
+include("test_simulate_scale_conventions.jl") # NB2 size, Gamma slot conventions, owned auxiliary draws
+include("test_locscale_bootstrap_simulator.jl") # coupled marginal draws, precision and family contracts
+include("test_locscale_bootstrap_refit.jl") # same-seed public Gamma refits, serial/threaded
 include("test_gaussian_structured.jl")
 include("test_gaussian_phylo_mean_missing_response.jl")  # #482: species-subset (drop) + include refusal
 include("test_phylo_interaction.jl")
@@ -126,11 +136,17 @@ include("test_betabinomial_crossed_laplace.jl")
 include("test_crossed_selected_inverse.jl")
 include("test_locscale_kernels.jl")
 include("test_locscale_inner.jl")
+include("test_locscale_inner_status.jl")
 include("test_locscale_marginal.jl")
 include("test_locscale_fit.jl")
 include("test_locscale_grad.jl")
+include("test_locscale_precision_derivatives.jl")
+include("test_locscale_compensated_gradient.jl")
+include("test_locscale_whitened.jl")
 include("test_locscale_infer.jl")
 include("test_locscale_profile.jl")
+include("test_locscale_profile_status.jl")
+include("test_locscale_profile_threads.jl") # Finite canonical intervals and owned coefficient jobs
 # Optimizer / mode-accuracy robustness for the module-wired locscale + sparse-aug
 # paths: NaN (not zero) outer gradient on inner-mode failure (#314), tightened
 # fast E-step acceptance gate (#317), and Zη/Zψ threading through the profiler
@@ -198,6 +214,9 @@ include("test_summary_method.jl")
 include("test_predict_parameters.jl")
 include("test_prediction_grid.jl")
 include("test_bridge.jl")
+include("test_bridge_bootstrap_tree.jl") # same-tree non-Gaussian fixed-effect bootstrap
+include("test_bootstrap_provider_forwarding.jl") # K/A/tree/coords survive bootstrap refits
+include("test_bridge_profile_target.jl")
 include("test_bridge_q2_direct_export.jl")
 include("test_bridge_q4_direct_export.jl")
 # Missing-data handling (#49): documents that raw missing/NaN responses ERROR
@@ -212,6 +231,9 @@ include("test_missing_listwise.jl")
 include("test_coverage_engine.jl")
 include("test_q4_objective_diagnostic.jl")
 include("test_bridge_formula_translation.jl")
+include("test_bridge_materialization_collision.jl")
+include("test_bridge_formula_labels.jl")
+include("test_bridge_lss_labels.jl")
 # Bridge inference for the bivariate q4 σ-phylo fit: among-axis SD CIs via bootstrap
 # (multi-row payload) + the profile→bootstrap redirect (Ayumi #2 uncertainty-via-R).
 include("test_bridge_bivariate_inference.jl")
@@ -307,6 +329,9 @@ include("test_phylo_penalty.jl")
 include("test_boundary_polish.jl")
 # Tree-scale convention: O(p) height + the sqrt(h) reporting warning.
 include("test_phylo_tree_height.jl")
+include("test_phylo_polytomy.jl")
+include("test_phylo_labels.jl")
+include("test_phylo_polytomy_kernels.jl")
 # A4d-2: post-fit inventories (profile_targets, structured_effects).
 include("test_introspection.jl")
 # A8: bivariate meta-analysis with known sampling covariance (meta_vcov_bivariate).
@@ -405,3 +430,17 @@ include("test_mixed_family_postfit.jl")
 # the fixture is absent) + an independent Monte-Carlo population reference for the
 # genuinely mixed Gaussian × Poisson case + the Gaussian × Gaussian closed form.
 include("test_xfam_external_validation.jl")
+
+# Shared prepared joint missing-predictor likelihood and conditional moments.
+include("test_joint_missing_predictor.jl")
+include("test_joint_missing_two_predictor.jl")
+include("test_joint_missing_finite.jl")
+include("test_joint_missing_uncertainty.jl")
+include("test_joint_missing_frontend.jl")
+include("test_joint_missing_two_frontend.jl")
+include("test_joint_missing_finite_frontend.jl")
+include("test_joint_missing_finite_factor_coding.jl")
+include("test_joint_missing_finite_prediction.jl")
+include("test_joint_missing_bridge.jl")
+include("test_joint_missing_two_bridge.jl")
+include("test_joint_missing_finite_bridge.jl")

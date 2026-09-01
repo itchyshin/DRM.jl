@@ -1,0 +1,14 @@
+{
+  "Julia": {
+    "source_base": "b656e6a8dc8b81178ae3e09f919be8950ff8dcee",
+    "src/inference.jl": "1a62575694173ae6c3c2e9b07d72dce6f08416077bfd5b3e0b2271a47fd851c5",
+    "src/bridge.jl": "7b059ff5132c8a87f0414fc88f5c12b0eb60eecdbedf4438ca1fc4bbcf72aa0c",
+    "test/test_bootstrap_provider_forwarding.jl": "4f536f5470de36bddfcf59253f476727bcea58ecc5444cf2cddd26ae84f8d48e",
+    "test/runtests.jl": "accfd041ab6c4023d38e1712a0bd5f99f69d889650640a4ab001e719630d1fa4"
+  },
+  "R": {
+    "source_base": "6487ad7281120ade8e86c66cfe7fd017ee8eaaff",
+    "R/julia-bridge.R": "fc04f271f46db12130bb3a8e3b6dc1a42ea5ee4fe71e6b9138e33a4aa84aa10a",
+    "tests/testthat/test-julia-structured-inference.R": "45b240818a5c6c08cfb096a5cff1c954001c075bf2cb890823b067944deeb349"
+  }
+}
