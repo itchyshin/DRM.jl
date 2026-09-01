@@ -28,11 +28,11 @@ function _parity_family(family::AbstractString)
     fam == "gaussian_bivariate" && return Gaussian()
     fam == "student" && return Student()
     fam == "nbinom2" && return NegBinomial2()
-    fam == "beta" && return Beta()
-    fam == "poisson" && return Poisson()
+    fam == "beta" && return DRM.Beta()
+    fam == "poisson" && return DRM.Poisson()
     fam == "gamma" && return DRM.Gamma()
-    fam == "binomial" && return Binomial()
-    fam == "lognormal" && return LogNormal()
+    fam == "binomial" && return DRM.Binomial()
+    fam == "lognormal" && return DRM.LogNormal()
     return nothing
 end
 

@@ -138,8 +138,17 @@ Julia 1.10.12 and Totoro Julia 1.12.6. The expanded affected numerical set
 passes 99/99 on macOS Julia 1.10.12; Totoro Julia 1.12.6 separately passes the
 26-test adjacent sequence and the 26-test heterogeneous-Gamma/Beta sequence.
 The mixed-family file requires the isolated `Pkg.test()` environment because
-`StableRNGs` is test-only, so it remains part of the fresh full-suite gate. A
-fifth fresh GitHub run remains required.
+`StableRNGs` is test-only, so it remains part of the fresh full-suite gate. The
+fifth fresh run again kept Documenter green and completed Julia 1.10 in 46
+minutes, but Julia 1.12.7 reached the later boundary-polish test after 88
+minutes and exposed the same shared-process namespace condition for bare
+`Binomial()`. The repair qualifies every later non-Gaussian family constructor
+shared with `Distributions` (`Beta`, `BetaBinomial`, `Binomial`, `Gamma`,
+`LogNormal`, and `Poisson`) as `DRM.*`, rather than repairing only the two
+names observed so far. With
+`Distributions` deliberately loaded, the boundary-polish and cross-family
+formula files pass 50/50, 4/4, and 18/18 on macOS Julia 1.10.12. A sixth fresh
+GitHub full-suite run remains required.
 
 ## 6. Tests of the Tests
 
@@ -215,7 +224,10 @@ raw log-SD comparison on Julia 1.12.7. The fourth fresh run passed Julia 1.10
 but took 46 minutes, and Julia 1.12.7 took 84 minutes to expose a late bare-name
 ambiguity. The earlier 12–25 minute full-run estimate was therefore wrong;
 future complete CI should be budgeted at roughly 45–90 minutes per Julia job.
-A fifth fresh run is required.
+A fifth fresh run repeated the shared-namespace pattern for `Binomial()` after
+88 minutes on Julia 1.12.7. That result widened the test-only qualification to
+all later DRM constructors that overlap `Distributions`; a sixth fresh run is
+required.
 
 The full Totoro suite exposed an older raw-profile loading test that demanded a
 finite CI around a hand-written non-optimum vector. Exact diagnostics showed both
@@ -229,8 +241,8 @@ measured platforms unless strict mode is requested. The point-fit canonical
 restart has been replaced by alternative optimizers attempted only after a
 failed whitened solve; profile continuation is also whitened-only. Neither is a
 general claim that every difficult likelihood will converge. The focused
-namespace repair is verified on Julia 1.10.12 and 1.12.6, but Julia 1.12.7 still
-requires the fresh full CI run.
+namespace repair is verified under a deliberately conflicting `Distributions`
+import on Julia 1.10.12, but Julia 1.12.7 still requires the fresh full CI run.
 
 ## 11. Team Learning
 
@@ -249,5 +261,5 @@ deployment.
 ## 13. Next Action and Routing
 
 Complete the final independent review, push the namespace repair, require the
-fifth fresh green run on PR #565 as the complete isolated-suite proof, merge it,
+sixth fresh green run on PR #565 as the complete isolated-suite proof, merge it,
 then recheck and merge the already-green PR #1104 second.

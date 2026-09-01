@@ -38,10 +38,10 @@ const _BF_XFAM = bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
         d = _xfam_fixture(31)
         X = hcat(ones(length(d.x)), d.x)
 
-        viaformula = drm(_BF_XFAM, (Gaussian(), Binomial()); data = d, confint = false)
+        viaformula = drm(_BF_XFAM, (Gaussian(), DRM.Binomial()); data = d, confint = false)
         viamatrix = DRM.fit_mixed_family(
             y1 = d.y1, X1 = X, fam1 = Gaussian(),
-            y2 = d.y2, X2 = X, fam2 = Binomial(),
+            y2 = d.y2, X2 = X, fam2 = DRM.Binomial(),
             confint = false)
 
         # identical, not merely close: the front end must build the SAME design
@@ -54,7 +54,7 @@ const _BF_XFAM = bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
 
     @testset "it recovers a latent correlation" begin
         d = _xfam_fixture(32; rho = 0.6)
-        fit = drm(_BF_XFAM, (Gaussian(), Binomial()); data = d, confint = false)
+        fit = drm(_BF_XFAM, (Gaussian(), DRM.Binomial()); data = d, confint = false)
         @test fit.converged
         @test fit.rho_latent > 0.2          # sign and rough magnitude, not a point claim
         @test fit.rho_latent < 0.95
@@ -62,7 +62,7 @@ const _BF_XFAM = bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
 
     @testset "the post-fit accessors work off the formula fit" begin
         d = _xfam_fixture(33)
-        fit = drm(_BF_XFAM, (Gaussian(), Binomial()); data = d, confint = false)
+        fit = drm(_BF_XFAM, (Gaussian(), DRM.Binomial()); data = d, confint = false)
         @test mf_coef(fit) !== nothing
         @test isfinite(mf_aic(fit))
         @test length(mf_fitted(fit)) > 0
@@ -71,7 +71,7 @@ const _BF_XFAM = bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
     @testset "a mu-only bundle works (dispersionless second axis)" begin
         d = _xfam_fixture(34)
         fit = drm(bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x)),
-                  (Gaussian(), Binomial()); data = d, confint = false)
+                  (Gaussian(), DRM.Binomial()); data = d, confint = false)
         @test fit.converged
         @test isfinite(fit.loglik)
     end
@@ -87,7 +87,7 @@ const _BF_XFAM = bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
                  sigma1 = @formula(sigma1 ~ 1), sigma2 = @formula(sigma2 ~ 1),
                  rho12 = @formula(rho12 ~ x))
         err = try
-            drm(bad, (Gaussian(), Binomial()); data = d, confint = false); nothing
+            drm(bad, (Gaussian(), DRM.Binomial()); data = d, confint = false); nothing
         catch e; e end
         @test err isa ArgumentError
         @test occursin("latent", sprint(showerror, err))
@@ -100,6 +100,6 @@ const _BF_XFAM = bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
         withre = bf(mu1 = @formula(y1 ~ x + (1 | g)), mu2 = @formula(y2 ~ x),
                     sigma1 = @formula(sigma1 ~ 1), sigma2 = @formula(sigma2 ~ 1))
         dre = (; d..., g = repeat(1:11, inner = 20))
-        @test_throws ArgumentError drm(withre, (Gaussian(), Binomial()); data = dre)
+        @test_throws ArgumentError drm(withre, (Gaussian(), DRM.Binomial()); data = dre)
     end
 end

@@ -235,7 +235,7 @@ end
     y = Float64.([rand(Distributions.Beta(μ[i] * φ[i], (1 - μ[i]) * φ[i])) for i in 1:n])
 
     fit = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ x)),
-              Beta(); data = (; y, x, species), tree = phy, se = false)
+              DRM.Beta(); data = (; y, x, species), tree = phy, se = false)
 
     @test fit.converged
     @test length(coef(fit, :sigma)) == 2

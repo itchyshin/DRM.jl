@@ -106,7 +106,7 @@ end
     y = Float64.(rand(rng, n) .< 0.5)
 
     err = try
-        drm(bf(@formula(y ~ x + relmat(1 | g))), Binomial(); data = (; y, x, g), K = K)
+        drm(bf(@formula(y ~ x + relmat(1 | g))), DRM.Binomial(); data = (; y, x, g), K = K)
         nothing
     catch e
         e
@@ -117,6 +117,6 @@ end
 
     # the supported provider still fits
     phy = random_balanced_tree(G; branch_length = 0.25)
-    fit = drm(bf(@formula(y ~ x + phylo(1 | g))), Binomial(); data = (; y, x, g), tree = phy)
+    fit = drm(bf(@formula(y ~ x + phylo(1 | g))), DRM.Binomial(); data = (; y, x, g), tree = phy)
     @test is_converged(fit)
 end
