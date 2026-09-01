@@ -163,9 +163,10 @@ end
 Run a narrow inference primitive for the R bridge.
 
 With `parm = nothing` (the default) this targets the Gaussian phylogenetic SD
-block (`param = :resd` / `:resd_mu` / `:resd_sigma`), because the R side needs
-explicit response-scale transforms and parity checks before exposing broader
-Julia inference results. This path is unchanged from the first slice.
+block (`param = :resd` / `:resd_mu` / `:resd_sigma`). Pass `parm = "sd:mu"`
+or `"sd:sigma"` to select the coupled location- or scale-axis row explicitly,
+or `"sd:resd"` / `"sd:resd_mu"` / `"sd:resd_sigma"` when an R bridge caller
+must preserve the fitted parameter block exactly.
 
 Pass `parm = "fixef:<dpar>:<coef>"` (e.g. `"fixef:mu:x"`) to instead profile
 or bootstrap a single ordinary fixed-effect coefficient, on its link scale —
@@ -188,7 +189,7 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     opts = _bridge_options(options)
     bridge_method = lowercase(strip(String(method)))
     is_biv = bundle isa BivariateDrmFormula
-    target = parm === nothing ? nothing : _bridge_parse_fixef_parm(parm)
+    target = parm === nothing ? nothing : _bridge_parse_inference_parm(parm)
     # The univariate σ-phylo location-scale route precomputes its boundary-aware
     # profile CIs into the fit (it has no re-optimisable objective), so request them
     # at fit time for the profile method. The bivariate q=4 route has no such flag
@@ -196,11 +197,13 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     # `parm` target profiles the fit's own re-optimisable objective and never reads
     # that precomputed stash, so it is skipped there too — matching the R bridge's
     # previous qualified-internal call, which never set this option either.
-    (!is_biv && target === nothing && bridge_method == "profile") && (opts[:profile_ci] = true)
+    (!is_biv && (target === nothing || target.kind === :sd) && bridge_method == "profile") &&
+        (opts[:profile_ci] = true)
     tree_obj = tree === nothing ? nothing : _bridge_tree(tree)
     fit = _bridge_fit(bundle, fam, dat; tree = tree_obj, K = K,
                       A = A, coords = coords, options = opts)
-    rawtarget = target === nothing ? nothing : _bridge_raw_fixef_target(fit, labels, target)
+    rawtarget = target === nothing || target.kind !== :fixef ? nothing :
+        _bridge_raw_fixef_target(fit, labels, target)
 
     # Bivariate q=4 phylogenetic fit: the uncertainty target is the four among-axis
     # SDs sqrt.(diag(Σ_a)), not a single SD row. The boundary makes the q4 profile
@@ -214,13 +217,14 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     if bridge_method == "profile"
         # Preserve the implicit SD target set, but an explicit fixed-effect
         # request must profile only that coefficient, not its entire block.
-        profile_parm = rawtarget === nothing ? [:resd_sigma, :resd, :resd_mu] :
-                                              rawtarget.param => rawtarget.coef
+        profile_parm = target === nothing ? [:resd_sigma, :resd, :resd_mu] :
+            target.kind === :fixef ? rawtarget.param => rawtarget.coef : target.param
         result = profile_result(fit; level = level, threads = threads, parm = profile_parm)
         row = target === nothing ? _bridge_pick_sd_row(result.ci) :
-                                    _bridge_pick_fixef_row(result.ci, rawtarget)
+            target.kind === :fixef ? _bridge_pick_fixef_row(result.ci, rawtarget) :
+            _bridge_pick_sd_row(result.ci, target.param)
         outcome = _bridge_profile_outcome(result, row)
-        target === nothing || (row = merge(row, (coef = target.coef,)))
+        target !== nothing && target.kind === :fixef && (row = merge(row, (coef = target.coef,)))
         return _bridge_inference_flatten(
             row;
             method = "profile",
@@ -266,8 +270,9 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
             )
         end
         row = target === nothing ? _bridge_pick_sd_row(result.summary) :
-                                    _bridge_pick_fixef_row(result.summary, rawtarget)
-        target === nothing || (row = merge(row, (coef = target.coef,)))
+            target.kind === :fixef ? _bridge_pick_fixef_row(result.summary, rawtarget) :
+            _bridge_pick_sd_row(result.summary, target.param)
+        target !== nothing && target.kind === :fixef && (row = merge(row, (coef = target.coef,)))
         return _bridge_inference_flatten(
             row;
             method = "bootstrap",
@@ -300,6 +305,27 @@ function _bridge_parse_fixef_parm(parm)
         "`\"fixef:<dpar>:<coef>\"` (e.g. `\"fixef:mu:x\"`)"))
     return (param = Symbol(parts[2]), coef = String(parts[3]))
 end
+
+"""Parse the bridge's explicit fixed-effect or phylogenetic-SD target."""
+function _bridge_parse_inference_parm(parm)
+    parm isa AbstractString || throw(ArgumentError(
+        "drm_bridge_inference: `parm` must be a `fixef:<dpar>:<coef>` or `sd:<dpar>` string"))
+    text = String(parm)
+    startswith(lowercase(text), "fixef:") && return merge((kind = :fixef,), _bridge_parse_fixef_parm(text))
+    parts = split(text, ':'; limit = 2)
+    (length(parts) == 2 && lowercase(parts[1]) == "sd") || throw(ArgumentError(
+        "drm_bridge_inference: unsupported `parm` target `$(repr(parm))`; expected " *
+        "`fixef:<dpar>:<coef>` or `sd:mu` / `sd:sigma`"))
+    target = Symbol(parts[2])
+    target === :mu && return (kind = :sd, param = :resd_mu)
+    target === :sigma && return (kind = :sd, param = :resd_sigma)
+    target in (:resd, :resd_mu, :resd_sigma) && return (kind = :sd, param = target)
+    throw(ArgumentError(
+        "drm_bridge_inference: unsupported SD target `$(repr(parm))`; expected `sd:mu`, " *
+        "`sd:sigma`, `sd:resd`, `sd:resd_mu`, or `sd:resd_sigma`"))
+end
+
+_bridge_parse_sd_parm(parm) = _bridge_parse_inference_parm(parm).param
 
 # Pick the single fixed-effect row named by an explicit `parm` target. There is NO
 # silent fall-back: if the (param, coef) pair is not present the row would be some
@@ -381,6 +407,14 @@ function _bridge_pick_sd_row(rows)
     throw(ArgumentError("drm_bridge_inference: no variance-component SD row " *
         "(:resd_sigma, :resd, or :resd_mu) in the result; got params [$(got)]. " *
         "Refusing to mislabel a fixed-effect row as the SD confidence interval."))
+end
+
+function _bridge_pick_sd_row(rows, want::Symbol)
+    for row in rows
+        row.param === want && return row
+    end
+    got = join(unique(String(r.param) for r in rows), ", ")
+    throw(ArgumentError("drm_bridge_inference: no requested SD row `$want`; got params [$got]"))
 end
 
 function _bridge_tree(tree)
