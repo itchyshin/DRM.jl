@@ -109,10 +109,15 @@ end
 
 @testset "sd_phylo: homoscedastic structured route is untouched (#548 guard)" begin
     phy, dat = _qqq_sim()
-    # pσ == 1 keeps the verified Woodbury path; assert it still fits sanely
+    # pσ == 1 takes the sparse Woodbury path.  At a residual variance below
+    # machine precision relative to the phylo component it once reported a
+    # spurious positive likelihood, so retain the small dense GLS oracle.
     fh = drm(bf(@formula(y ~ x + phylo(1 | species))), Gaussian(); data = dat, tree = phy)
+    fh_dense = drm(bf(@formula(y ~ x + phylo(1 | species))), Gaussian();
+                   data = dat, tree = phy, algorithm = :gls)
     @test fh.converged && isfinite(fh.loglik) && fh.loglik < 0
     @test :resd in first.(fh.blocks)
+    @test isapprox(fh.loglik, fh_dense.loglik; atol = 1e-6)
 end
 
 @testset "bridge: sd()/sd_phylo() parts route (#546)" begin
