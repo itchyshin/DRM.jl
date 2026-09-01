@@ -930,10 +930,24 @@ function _profile_optimize_result(obj, u0::Vector{Float64}, autodiff::Symbol;
         primary_attempt(obj, u0, primary_method, autodiff, grad!)
     primary.accepted && return primary
 
-    # Preserve the shipping fallback policy.  A stored-gradient construction
-    # exception first retries finite-difference LBFGS; a finite-difference
-    # exception can retry value-only Nelder--Mead.  Mere non-convergence is a
-    # rejected solve, not permission to start an additional expensive method.
+    # A finite stored-gradient attempt can hit its bounded outer-iteration
+    # budget immediately after a reference-objective evaluation refreshes a
+    # fitted workspace. Continue once from that finite candidate with the same
+    # bounded method. Acceptance still requires Optim convergence; this is not
+    # permission to accept the first non-converged result or switch algorithms.
+    if grad! !== nothing && primary.reason === :not_converged &&
+       isfinite(primary.value) && all(isfinite, primary.minimizer)
+        continuation = _profile_attempt(
+            obj, primary.minimizer, :lbfgs_stored, autodiff;
+            (grad!)=grad!, iterations=something(primary_iterations, 40), fallback=true,
+        )
+        continuation.accepted && return continuation
+        return continuation
+    end
+
+    # Preserve the remaining fallback policy. A stored-gradient construction
+    # exception retries finite-difference LBFGS; a finite-difference exception
+    # can retry value-only Nelder--Mead.
     if grad! !== nothing && primary.reason === :exception
         return _profile_attempt(obj, u0, :lbfgs_finite, :finite;
                                 iterations=something(primary_iterations, 40), fallback=true)

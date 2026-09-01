@@ -157,6 +157,22 @@ function _fit_phylo_gaussian_lss_sparse(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G,
 
     unpack(θ) = (θ[iβμ], θ[iβσ], θ[iα])
     nll_ml_only(θ) = eval_core(unpack(θ)...; want_grad = false, use_ref = false)[1]
+    # Profile calls can run concurrently for distinct coefficients.  Do not use
+    # the optimiser's mutable `chol_ref`: each stored-gradient evaluation gets
+    # its own factor and scratch arrays through `use_ref = false`.
+    function nllgrad!(g, θ)
+        _, grad, _, _, _, _, _, _, _, ok =
+            eval_core(unpack(θ)...; want_grad = true, use_ref = false)
+        if ok && length(grad) == length(g)
+            copyto!(g, grad)
+        else
+            # A finite 1e18 objective sentinel plus a zero gradient can look
+            # stationary to a stored-gradient profile optimizer.  Make the
+            # callback failure explicit so the nuisance solve is rejected.
+            fill!(g, NaN)
+        end
+        return g
+    end
     nll_reml_only(θ) = eval_reml(unpack(θ)...; use_ref = false)
 
     βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
@@ -238,7 +254,8 @@ function _fit_phylo_gaussian_lss_sparse(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G,
     scales = Dict(:sigma => exp.(Xσ * θ̂[iβσ]))
 
     fit = _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, Vcov, -nll_ml_only(θ̂), n,
-                                     Optim.converged(res), means, obs, scales), nll_ml_only), re_dict)
+                                     Optim.converged(res), means, obs, scales), nll_ml_only,
+                                reml ? nothing : nllgrad!), re_dict)
     if reml
         return _withreml(fit, -nll_reml_only(θ̂), -nll_ml_only(θ̂))
     end
