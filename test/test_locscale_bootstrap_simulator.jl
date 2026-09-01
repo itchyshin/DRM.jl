@@ -212,24 +212,27 @@ end
             elseif kind === :nb2
                 @test all(>=(0), expected) && all(isinteger, expected)
             elseif kind === :beta
-                # Finite-precision Beta draws may round to endpoints. Preserve
-                # the draw rather than clipping/resampling; refits must reject
-                # it and bootstrap must retain that failure.
+                # Finite-precision Beta draws may round to endpoints, but the
+                # exact seed that does so is not stable across Julia/Distributions
+                # RNG implementations. Inject the boundary deterministically so
+                # response validation and bootstrap failure bookkeeping do not
+                # depend on a version-specific random draw.
                 @test all(0 .<= expected .<= 1)
-                @test any(y -> y == 0 || y == 1, expected)
-                datab = DRM._bootstrap_data(fx.fit.formula, fx.data, expected)
+                boundary_draw = copy(expected)
+                boundary_draw[1] = 0.0
+                datab = DRM._bootstrap_data(fx.fit.formula, fx.data, boundary_draw)
                 rhs = Dict(fx.fit.formula.forms)
                 lc = DRM._ls_coupled_re(rhs[:mu], rhs[:sigma])
                 @test_throws ErrorException DRM._ls_frontend_design(Val(:beta), fx.fit.formula, lc, datab)
                 # Isolate failure bookkeeping from optimisation: first supply
-                # this genuine rounded draw, then an interior control response.
+                # the explicit boundary draw, then an interior control response.
                 # The refit seam uses the real response validator, not a mock
                 # error. Returning fx.fit afterwards is NOT a fitted-bootstrap
                 # or interval-coverage check.
                 draw_index = Ref(0)
                 sim_control = rng -> begin
                     draw_index[] += 1
-                    draw_index[] == 1 ? copy(expected) : copy(fx.data.y)
+                    draw_index[] == 1 ? copy(boundary_draw) : copy(fx.data.y)
                 end
                 refit_control = dat -> begin
                     DRM._ls_frontend_design(Val(:beta), fx.fit.formula, lc, dat)

@@ -230,6 +230,24 @@ end
         @test recovered.converged
         @test recovered.gradient_maxabs <= 1e-7
 
+        # With a deliberately short budget, the first solve from the fitted
+        # coordinates stops unsuccessfully on this locked fixture. Continuing
+        # once from that failed endpoint earns strict convergence without
+        # relaxing the 1e-7 exact-gradient gate (the GitHub 1.10 regression).
+        z = Distributions.quantile(Distributions.Normal(), 0.975)
+        endpoint_value = theta[idx] - max(z * stderror(fit)[2], 1e-3)
+        endpoint_recovered = DRM._ls_profile_nll_result(
+            obj.kind, obj.y, obj.Xμ, obj.Xψ, obj.gidx, obj.G, obj.Q,
+            theta, idx, endpoint_value;
+            whitened=true,
+            iterations=10,
+        )
+        @test endpoint_recovered.accepted
+        @test endpoint_recovered.reason == :accepted
+        @test endpoint_recovered.fallback
+        @test endpoint_recovered.converged
+        @test endpoint_recovered.gradient_maxabs <= 1e-7
+
         raw = DRM._ls_profile_nll_result(
             obj.kind, obj.y, obj.Xμ, obj.Xψ, obj.gidx, obj.G, obj.Q,
             theta, idx, value;

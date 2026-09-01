@@ -20,11 +20,12 @@ fails. A replacement must converge, have a finite exact gradient within the
 original tolerance, and have an objective no worse than the original endpoint
 apart from eight units of floating-point rounding.
 
-Whitened profile nuisance fits retain their warm start but retry from the fitted
-nuisance coordinates when that warm-start candidate fails any strict acceptance
-check. The retry uses the same optimizer limits and must pass the same fresh
-objective and exact-gradient checks. Its use is recorded in the returned
-internal status; the legacy raw route does not take this retry.
+Whitened profile nuisance fits retain their warm start but continue once from a
+failed optimizer endpoint with a fresh inner seed. If a cross-point warm start
+still fails, the final retry uses the fitted nuisance coordinates. Every retry
+uses the same optimizer limit and must pass the same fresh objective and
+exact-gradient checks. Its use is recorded in the returned internal status; the
+legacy raw route does not take these retries.
 
 ## 3a. Decisions and Rejected Alternatives
 
@@ -47,9 +48,10 @@ regression, the profile-status and threaded-profile regressions, the raw-profile
 loading-contract test, the canonical phylogenetic end-to-end regression, the
 structured Beta-Binomial recovery regression, the isolated test project and
 bridge-label import, the API-freeze classification, the bootstrap-test
-dependency comment, the module's prepared-joint API comment, this report, and
-one collision-free check-log entry. No public API changed; the existing
-prepared-joint exports are now explicitly classified Experimental.
+dependency comment, the deterministic bootstrap-simulator boundary test, the
+module's prepared-joint API comment, this report, and one collision-free
+check-log entry. No public API changed; the existing prepared-joint exports are
+now explicitly classified Experimental.
 
 ## 5. Checks Run
 
@@ -57,9 +59,9 @@ The focused file completed with 401 passes, two explicit non-passes on macOS
 (one known broken, one platform skip), and no failures. A full local Documenter
 build completed through VitePress rendering with no missing-doc error.
 
-On macOS with Julia 1.10.12, profile status passes 97/97, threaded profile passes
+On macOS with Julia 1.10.12, profile status passes 102/102, threaded profile passes
 19/19, and bootstrap refit passes 15/15. On Totoro with exact Julia 1.10.12,
-one BLAS thread, and two Julia threads, the same focused files pass 97/97, 19/19,
+one BLAS thread, and one or two Julia threads, the same focused files pass 102/102, 19/19,
 and 15/15.
 
 The optimizer-robustness neighbour passes 19/19 on macOS and Totoro with exact
@@ -89,6 +91,17 @@ late q4 inference checks. Its only failure was the API-freeze gate correctly
 detecting 21 unclassified prepared-joint exports; after deliberately assigning
 those existing exports to the Experimental tier, that focused gate passes
 188/188. Fresh GitHub CI remains the final complete isolated-suite run.
+
+The first fresh GitHub run made Documenter green, then exposed two independent
+late test failures. Julia 1.10 rejected a lower profile endpoint after the first
+strict nuisance solve exhausted its budget. A locked ten-iteration regression
+proves that continuing from that failed endpoint can earn convergence with the
+unchanged `1e-7` exact-gradient gate; profile status and threading pass on both
+Julia 1.10 and 1.12 after the repair. Julia 1.12 also exposed a test that assumed
+a fixed Beta RNG seed must round to exactly zero or one. The test now injects
+the boundary response explicitly and retains the real response validator and
+bootstrap failure ledger. The bootstrap-simulator file passes 100/100 on Totoro
+Julia 1.10.12 and 1.12.6.
 
 ## 6. Tests of the Tests
 
@@ -148,6 +161,11 @@ three directly imported packages absent from `test/Project.toml`, followed by a
 bridge-label test relying on another test file to import `LinearAlgebra.I`.
 After those were made explicit, the suite reached its final API-freeze gate and
 correctly rejected the new prepared-joint exports until they were classified.
+
+The first fresh GitHub CI run then found two platform/version neighbours that
+the two-thread Julia 1.10 Totoro run did not expose: a one-runner profile
+continuation failure and a Julia-version-dependent Beta RNG endpoint. Both now
+have deterministic focused regressions; a second fresh GitHub run is required.
 
 The full Totoro suite exposed an older raw-profile loading test that demanded a
 finite CI around a hand-written non-optimum vector. Exact diagnostics showed both

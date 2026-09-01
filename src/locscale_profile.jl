@@ -153,10 +153,18 @@ function _ls_profile_nll_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, idx::Int, v
         return candidate
     end
     candidate = solve(init)
+    if whitened && !candidate.accepted
+        # A platform-sensitive line search can exhaust its budget near a useful
+        # endpoint. Continue once from that endpoint with a fresh inner seed;
+        # the replacement still has to earn the unchanged convergence and exact
+        # gradient checks. This is distinct from accepting the exhausted solve.
+        mwarm[] = nothing
+        candidate = solve(candidate.minimizer; fallback=true)
+    end
     if whitened && !candidate.accepted && x0 !== nothing
-        # A warm start can strand L-BFGS on a platform-sensitive line-search
-        # path. Retry from the fitted nuisance coordinates with a fresh inner
-        # seed, then apply the identical convergence and exact-gradient checks.
+        # A damaged cross-point warm start may also strand the continuation.
+        # Its final fallback is the fitted nuisance coordinates, again with a
+        # fresh inner seed and the identical strict postchecks.
         mwarm[] = nothing
         candidate = solve(float.(θ̂[free]); fallback=true)
     end
