@@ -70,7 +70,7 @@ A third submodel putting a linear predictor on the log standard deviation of a r
 | Capability | Source | Status |
 |---|---|---|
 | Plain iid LSS `sd(group) ~ z` (ML + REML) | `src/gaussian_lss.jl` | **Tested** — `test/test_lss_group.jl`, `test/test_lss_reml.jl` |
-| Phylogenetic LSS `sd(species, phylogenetic) ~ z` (ML + REML, dense) | `src/gaussian_lss.jl` | **Tested** — `test/test_lss_phylo.jl`, `test/test_lss_reml.jl` |
+| Phylogenetic LSS `sd(species, phylogenetic) ~ z` (ML + REML; sparse automatically above 500 species) | `src/gaussian_lss.jl` | **Tested** — `test/test_lss_phylo.jl`, `test/test_lss_reml.jl`, `test/test_lss_sparse.jl` |
 | Sparse $O(p)$ phylogenetic LSS engine (`sparse = true` / `algorithm = :sparse_lbfgs`) | `src/gaussian_sparse_lss.jl` | **Tested** — `test/test_lss_sparse.jl` (exact match to dense comparator on logLik, SEs, BLUPs) |
 | Multi-component LSS (e.g. multi-iid, iid + phylo) | `src/gaussian_lss.jl` | **Tested** — `test/test_lsss_multi.jl`, `test/test_lss_reml.jl` |
 | Incomplete response handling (`missing` / `NaN` in `y`, observed-rows pattern) | `src/gaussian_lss.jl` | **Tested** — `test/test_lss_missing_response.jl` |

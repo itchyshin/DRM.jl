@@ -428,8 +428,9 @@ end
 #
 # COST. O(n³) per evaluation, so this route is for species-level datasets up to a
 # few thousand rows: the family- and order-level analyses of the Mizuno et al.
-# protocol (N ≈ 50–500) fit instantly. The whole-tree scope (~10⁴ species) needs
-# the sparse O(p) augmented-state spine — tracked as the follow-up on #545.
+# protocol (N ≈ 50–500) fit instantly. The whole-tree scope (~10⁴ species) uses
+# the sparse O(p) augmented-state spine, selected automatically by the public
+# router above 500 species or explicitly with `sparse = true`.
 function _fit_structured_gaussian_lss(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G, K,
                                       nmμ, nmσ, nmsd, grp, g_tol;
                                       block::Symbol = :sd_phylo, reml::Bool = false)
@@ -437,9 +438,9 @@ function _fit_structured_gaussian_lss(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G, K
     pμ, pσ, psd = size(Xμ, 2), size(Xσ, 2), size(Zg, 2)
     const_2pi = 0.5 * n * log(2π)
     const_pμ = 0.5 * pμ * log(2π)
-    n ≤ 5000 || throw(ArgumentError("drm: the `sd_phylo` route assembles a dense $(n)×$(n) " *
-        "marginal covariance and is limited to 5000 rows in this slice. The sparse O(p) " *
-        "whole-tree engine is the follow-up on issue #545."))
+    n ≤ 5000 || throw(ArgumentError("drm: this forced dense `sd_phylo` route assembles a $(n)×$(n) " *
+        "marginal covariance and is limited to 5000 rows. Use `sparse = true` or " *
+        "`algorithm = :sparse_lbfgs` for the existing O(p) whole-tree engine."))
     Ksym = Symmetric(Matrix{Float64}(K))
 
     function nll_ml(θ)
@@ -547,7 +548,7 @@ end
 #     V = Σ_k Z_k D_k² Z_k'  +  Z_p (D_a K D_a) Z_p'  +  diag(σ_e,i²)
 # with each D a per-group diagonal exp(Zg α) from its own linear predictor
 # (a scalar SD is the `~ 1` special case). Dense assembly, ML, ForwardDiff —
-# same correctness-first stance and 5000-row cap as the #545 engine; the iid
+# same correctness-first stance and 5000-row cap as the dense single-component route; the iid
 # α's share one `:sd` block (names group-prefixed when there is more than one
 # iid component) and the phylo α's are the `:sd_phylo` block.
 
