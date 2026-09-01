@@ -257,7 +257,15 @@ end
         @test fit_ordered.converged
         @test length(coef(fit_shuffled, :sd_phylo)) == 1
         @test abs(loglik(fit_shuffled) - _lss_named_loglik(fit_shuffled, shuffled, shuffled.phy; multi = true)) <= 1e-7
-        _lss_boundary_comparison("scalar_multi_small", fit_shuffled, fit_ordered)
+        @test abs(loglik(fit_shuffled) - loglik(fit_ordered)) <= 1e-7
+        @test coef(fit_shuffled, :mu) ≈ coef(fit_ordered, :mu) atol = 4e-6
+        @test coef(fit_shuffled, :sigma) ≈ coef(fit_ordered, :sigma) atol = 4e-6
+        @test coef(fit_shuffled, :sd) ≈ coef(fit_ordered, :sd) atol = 4e-6
+        # At the zero-variance boundary, log(sd_phylo) is not identified:
+        # large differences between very negative coefficients can represent
+        # the same negligible SD. Test the estimable natural-scale SD instead.
+        @test exp(only(coef(fit_shuffled, :sd_phylo))) ≈
+              exp(only(coef(fit_ordered, :sd_phylo))) atol = 4e-6
     end
 
     @testset "REML and a wholly missing response tip retain full tree identity" begin

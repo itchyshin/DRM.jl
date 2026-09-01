@@ -9,9 +9,9 @@ DRM.jl PR #565 without widening its model or inference claims.
 
 The internal reference now includes the five private paired-whitening docstrings
 reported missing by Documenter. The phylogenetic LSS boundary helper now keeps
-the unresolved dedicated comparison broken, asserts the scalar multi-component
-comparison on Linux, and skips that comparison on platforms where the fixture
-has not met the same numerical boundary.
+the unresolved dedicated comparison broken. The scalar multi-component case
+compares its likelihood and identified coefficients directly, while comparing
+the zero-boundary phylogenetic standard deviation on its natural scale.
 
 Whitened location-scale point fits now use a strictly certified recovery ladder
 after an unsuccessful Newton solve: BFGS with backtracking, L-BFGS with
@@ -29,14 +29,18 @@ legacy raw route does not take these retries.
 
 ## 3a. Decisions and Rejected Alternatives
 
-The test was not changed globally from `@test_broken` to `@test`: both Linux CI
-versions pass, but the same optimizer fixture still differs on macOS. A platform
-boundary records the measured result without claiming cross-platform parity.
+The scalar multi-component test was not left as a raw-parameter comparison.
+At a zero-variance boundary, very different negative values of `log(sd)` can
+represent the same negligible standard deviation, so the log coordinate is not
+identified. The invariant now checks the likelihood, identified coefficients,
+and the natural-scale phylogenetic SD. The separate two-coefficient fixture
+remains broken and visible because its broader discrepancy is unresolved.
 
 Neither optimizer repair accepts a raw failed endpoint, relaxes convergence,
 changes a random seed, changes an estimator, or widens a numerical tolerance.
 The repairs deliberately reset the inner warm state and change the numerical
-start after failure. Canonical restart was chosen only after exact Julia 1.10.12 diagnostics on Totoro showed
+start after failure. Canonical restart was chosen only after exact Julia 1.10.12
+diagnostics on Totoro showed
 that the same constrained likelihood converged from the fitted coordinates with
 free-gradient maxima between `5.18e-9` and `9.63e-8`.
 
@@ -112,15 +116,25 @@ two L-BFGS line-search variants. A replacement still must report optimizer
 convergence, have a finite exact gradient no larger than the original `g_tol`,
 and improve the same likelihood within eight floating-point units. The retained
 two-replicate integration fixture passes 15/15 on Totoro Julia 1.10.12 in 16
-seconds and Julia 1.12.6 in 25 seconds. A third fresh GitHub run remains
-required.
+seconds and Julia 1.12.6 in 25 seconds.
+
+The third fresh run kept Documenter green and reached the late phylogenetic
+identity block on Julia 1.12.7. There, two orderings agreed in `mu`, `sigma`, and
+the IID `sd` to about `1e-9`, but their boundary `log(sd_phylo)` values were
+`-22.73` and `-19.77`. Those correspond to natural-scale SDs differing by only
+about `2.5e-9`; the former raw-coordinate assertion was testing an unidentified
+quantity. The corrected focused file passes 406/407 with the one deliberately
+broken fixture on macOS Julia 1.10.12 and Totoro Julia 1.12.6. A fourth fresh
+GitHub run remains required.
 
 ## 6. Tests of the Tests
 
 Both Linux CI jobs first failed because the scalar comparison produced an
-unexpected pass under `@test_broken`. Before the platform boundary, promoting it
-unconditionally produced a real macOS failure with a maximum parameter
-difference of 0.861, proving that an unconditional assertion was incorrect.
+unexpected pass under `@test_broken`. Promoting the raw-coordinate comparison
+unconditionally then produced macOS and Julia 1.12.7 failures. The latter run
+showed the identified coefficients agreed while only the effectively zero
+phylogenetic log-SD varied, proving that the raw boundary coordinate was the
+wrong invariant.
 
 The bootstrap regression replays both retained seeds and independently requires
 `is_converged` plus an exact objective gradient no larger than `1e-8`; it also
@@ -180,7 +194,8 @@ continuation failure and a Julia-version-dependent Beta RNG endpoint. Both now
 have deterministic focused regressions. The second fresh run crossed those
 blocks, then exposed the retained second Gamma bootstrap refit on the GitHub
 Julia 1.10 runner. Its strict rejection led to the certified
-alternative-optimizer ladder; a third fresh run is required.
+alternative-optimizer ladder. The third fresh run then exposed the unidentified
+raw log-SD comparison on Julia 1.12.7; a fourth fresh run is required.
 
 The full Totoro suite exposed an older raw-profile loading test that demanded a
 finite CI around a hand-written non-optimum vector. Exact diagnostics showed both
@@ -189,12 +204,11 @@ its actual loading-threading contract rather than weakening the optimizer.
 
 ## 10. Known Residuals
 
-The scalar multi-component optimizer fixture still misses the 4e-6 coefficient
-boundary on macOS. The dedicated small fixture remains known broken on all
+The dedicated small two-coefficient fixture remains known broken on all
 measured platforms unless strict mode is requested. The point-fit canonical
 restart has been replaced by alternative optimizers attempted only after a
-failed whitened solve; profile continuation is also whitened-only. Neither is a general claim
-that every difficult likelihood will converge.
+failed whitened solve; profile continuation is also whitened-only. Neither is a
+general claim that every difficult likelihood will converge.
 
 ## 11. Team Learning
 
@@ -204,10 +218,11 @@ stable state and then earn acceptance through the original exact checks.
 
 ## 12. Cross-Product Coverage
 
-This slice covers Documenter completeness, the named Linux LSS boundary test,
+This slice covers Documenter completeness, the named LSS boundary test,
 the two retained bootstrap random seeds, and the observed whitened warm-start profile failures.
-It does NOT cover macOS coefficient invariance, Windows behavior, every profile
-shape, global parity, performance, release, or deployment.
+It does NOT cover coefficient invariance beyond the named locked fixtures,
+Windows behavior, every profile shape, global parity, performance, release, or
+deployment.
 
 ## 13. Next Action and Routing
 
