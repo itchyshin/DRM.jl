@@ -172,12 +172,12 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
         θ̂ = Optim.minimizer(res)
     end
     # A trust-region solve may stop unsuccessfully near a zero-variance
-    # boundary while its inner mode remains valid. First continue from that
-    # endpoint. If the Hessian failed before Newton found a stable endpoint,
-    # retry the same gradient-only solve from the canonical start. Neither route
-    # relaxes convergence: a candidate replaces the failed result only after a
-    # fresh exact gradient and no-worse-objective certificate. Successful fits
-    # and the legacy raw route bypass both refinements.
+    # boundary while its inner mode remains valid. Try BFGS with backtracking,
+    # L-BFGS with backtracking, and default L-BFGS in that order; for each
+    # method, try the failed endpoint before the canonical start. None of these
+    # routes relaxes convergence: a candidate replaces the failed result only
+    # after a fresh exact gradient and no-worse-objective certificate.
+    # Successful fits and the legacy raw route bypass the entire ladder.
     if whitened && !Optim.converged(res)
         warm[] = nothing
         try
@@ -186,11 +186,10 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
             if baseline.status.ok && isfinite(baseline.value)
                 refine_opts = Optim.Options(g_tol=g_tol, iterations=iterations,
                     x_abstol=NaN, x_reltol=NaN, f_abstol=NaN, f_reltol=NaN)
-                function certified_refinement(start)
+                function certified_refinement(start, method)
                     warm[] = nothing
                     try
-                        candidate = Optim.optimize(nll, g!, copy(start), Optim.LBFGS(),
-                                                   refine_opts)
+                        candidate = Optim.optimize(nll, g!, copy(start), method, refine_opts)
                         θc = Optim.minimizer(candidate)
                         if Optim.converged(candidate) && all(isfinite, θc)
                             checked = _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q,
@@ -213,8 +212,22 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
                     end
                     return nothing
                 end
-                refined = certified_refinement(θ̂)
-                refined === nothing && (refined = certified_refinement(θ0))
+                # Full BFGS with backtracking is the robust first continuation
+                # after the trust-region failure. If that is rejected, try the
+                # two L-BFGS line searches. These are only
+                # alternate numerical routes to the same objective; every
+                # replacement passes the identical exact-gradient and
+                # no-worse-objective certificate below.
+                methods = (
+                    Optim.BFGS(linesearch=Optim.LineSearches.BackTracking()),
+                    Optim.LBFGS(linesearch=Optim.LineSearches.BackTracking()),
+                    Optim.LBFGS(),
+                )
+                refined = nothing
+                for method in methods, start in (θ̂, θ0)
+                    refined = certified_refinement(start, method)
+                    refined === nothing || break
+                end
                 if refined !== nothing
                     res, θ̂ = refined
                 end

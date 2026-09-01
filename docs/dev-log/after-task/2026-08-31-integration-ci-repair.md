@@ -13,12 +13,12 @@ the unresolved dedicated comparison broken, asserts the scalar multi-component
 comparison on Linux, and skips that comparison on platforms where the fixture
 has not met the same numerical boundary.
 
-Whitened location-scale point fits now make at most two strictly certified
-gradient-only refinements after an unsuccessful Newton solve: first from the
-failed endpoint, then from the canonical start if the endpoint refinement also
-fails. A replacement must converge, have a finite exact gradient within the
-original tolerance, and have an objective no worse than the original endpoint
-apart from eight units of floating-point rounding.
+Whitened location-scale point fits now use a strictly certified recovery ladder
+after an unsuccessful Newton solve: BFGS with backtracking, L-BFGS with
+backtracking, then default L-BFGS. Each method tries the failed endpoint before
+the canonical start. A replacement must converge, have a finite exact gradient
+within the original tolerance, and have an objective no worse than the original
+endpoint apart from eight units of floating-point rounding.
 
 Whitened profile nuisance fits retain their warm start but continue once from a
 failed optimizer endpoint with a fresh inner seed. If a cross-point warm start
@@ -103,6 +103,18 @@ the boundary response explicitly and retains the real response validator and
 bootstrap failure ledger. The bootstrap-simulator file passes 100/100 on Totoro
 Julia 1.10.12 and 1.12.6.
 
+The second fresh GitHub run kept Documenter green and passed those two repaired
+blocks, then Julia 1.10 exposed the retained second Gamma bootstrap refit. Its
+trust-region Hessian became non-finite and both default-LBFGS starts stalled at
+an exact-gradient maximum of `4.33e-4`, so the fit was correctly rejected.
+Failed whitened point fits now try full BFGS with backtracking first, followed by
+two L-BFGS line-search variants. A replacement still must report optimizer
+convergence, have a finite exact gradient no larger than the original `g_tol`,
+and improve the same likelihood within eight floating-point units. The retained
+two-replicate integration fixture passes 15/15 on Totoro Julia 1.10.12 in 16
+seconds and Julia 1.12.6 in 25 seconds. A third fresh GitHub run remains
+required.
+
 ## 6. Tests of the Tests
 
 Both Linux CI jobs first failed because the scalar comparison produced an
@@ -165,7 +177,10 @@ correctly rejected the new prepared-joint exports until they were classified.
 The first fresh GitHub CI run then found two platform/version neighbours that
 the two-thread Julia 1.10 Totoro run did not expose: a one-runner profile
 continuation failure and a Julia-version-dependent Beta RNG endpoint. Both now
-have deterministic focused regressions; a second fresh GitHub run is required.
+have deterministic focused regressions. The second fresh run crossed those
+blocks, then exposed the retained second Gamma bootstrap refit on the GitHub
+Julia 1.10 runner. Its strict rejection led to the certified
+alternative-optimizer ladder; a third fresh run is required.
 
 The full Totoro suite exposed an older raw-profile loading test that demanded a
 finite CI around a hand-written non-optimum vector. Exact diagnostics showed both
@@ -177,8 +192,8 @@ its actual loading-threading contract rather than weakening the optimizer.
 The scalar multi-component optimizer fixture still misses the 4e-6 coefficient
 boundary on macOS. The dedicated small fixture remains known broken on all
 measured platforms unless strict mode is requested. The point-fit canonical
-restart is intentionally limited to a failed whitened solve; the profile restart
-is intentionally limited to a failed warm-start arm. Neither is a general claim
+restart has been replaced by alternative optimizers attempted only after a
+failed whitened solve; profile continuation is also whitened-only. Neither is a general claim
 that every difficult likelihood will converge.
 
 ## 11. Team Learning
