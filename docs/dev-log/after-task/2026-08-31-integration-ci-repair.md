@@ -53,9 +53,11 @@ loading-contract test, the canonical phylogenetic end-to-end regression, the
 structured Beta-Binomial recovery regression, the isolated test project and
 bridge-label import, the API-freeze classification, the bootstrap-test
 dependency comment, the deterministic bootstrap-simulator boundary test, the
-module's prepared-joint API comment, this report, and one collision-free
-check-log entry. No public API changed; the existing prepared-joint exports are
-now explicitly classified Experimental.
+module's prepared-joint API comment, two phylogenetic location-scale test-helper
+names, explicit `DRM.Gamma()` constructors in every remaining test included
+after the failing shared-namespace point and in its parity mapper, this report,
+and one collision-free check-log entry. No public API changed; the existing
+prepared-joint exports are now explicitly classified Experimental.
 
 ## 5. Checks Run
 
@@ -125,7 +127,19 @@ the IID `sd` to about `1e-9`, but their boundary `log(sd_phylo)` values were
 about `2.5e-9`; the former raw-coordinate assertion was testing an unidentified
 quantity. The corrected focused file passes 406/407 with the one deliberately
 broken fixture on macOS Julia 1.10.12 and Totoro Julia 1.12.6. A fourth fresh
-GitHub run remains required.
+GitHub run kept Documenter green and completed the full Julia 1.10 suite in 46
+minutes. Julia 1.12.7 reached the public phylogenetic location-scale test after
+84 minutes, then rejected its bare `Gamma()` because both DRM and Distributions
+provided that exported name in the shared test process. The test now names
+`DRM.Gamma()` explicitly. Its local helpers and the adjacent sigma-axis helper
+also have file-specific names, removing both method-overwrite warnings reported
+immediately before the failure. The adjacent sequence passes 26/26 on macOS
+Julia 1.10.12 and Totoro Julia 1.12.6. The expanded affected numerical set
+passes 99/99 on macOS Julia 1.10.12; Totoro Julia 1.12.6 separately passes the
+26-test adjacent sequence and the 26-test heterogeneous-Gamma/Beta sequence.
+The mixed-family file requires the isolated `Pkg.test()` environment because
+`StableRNGs` is test-only, so it remains part of the fresh full-suite gate. A
+fifth fresh GitHub run remains required.
 
 ## 6. Tests of the Tests
 
@@ -168,7 +182,9 @@ platforms.
 
 This repairs the current checks for PR #565. The paired drmTMB PR #1104 and the
 global parity programme remain open; DRM.jl must merge first. Fresh full-suite
-and GitHub checks remain required before merge.
+and GitHub checks remain required before merge. The fourth run is retained as
+partial evidence: Documenter and Julia 1.10 passed, while Julia 1.12.7 failed
+only at the late shared-namespace test described above.
 
 ## 8. Consistency Audit
 
@@ -195,7 +211,11 @@ have deterministic focused regressions. The second fresh run crossed those
 blocks, then exposed the retained second Gamma bootstrap refit on the GitHub
 Julia 1.10 runner. Its strict rejection led to the certified
 alternative-optimizer ladder. The third fresh run then exposed the unidentified
-raw log-SD comparison on Julia 1.12.7; a fourth fresh run is required.
+raw log-SD comparison on Julia 1.12.7. The fourth fresh run passed Julia 1.10
+but took 46 minutes, and Julia 1.12.7 took 84 minutes to expose a late bare-name
+ambiguity. The earlier 12–25 minute full-run estimate was therefore wrong;
+future complete CI should be budgeted at roughly 45–90 minutes per Julia job.
+A fifth fresh run is required.
 
 The full Totoro suite exposed an older raw-profile loading test that demanded a
 finite CI around a hand-written non-optimum vector. Exact diagnostics showed both
@@ -208,7 +228,9 @@ The dedicated small two-coefficient fixture remains known broken on all
 measured platforms unless strict mode is requested. The point-fit canonical
 restart has been replaced by alternative optimizers attempted only after a
 failed whitened solve; profile continuation is also whitened-only. Neither is a
-general claim that every difficult likelihood will converge.
+general claim that every difficult likelihood will converge. The focused
+namespace repair is verified on Julia 1.10.12 and 1.12.6, but Julia 1.12.7 still
+requires the fresh full CI run.
 
 ## 11. Team Learning
 
@@ -226,6 +248,6 @@ deployment.
 
 ## 13. Next Action and Routing
 
-Complete the final independent review, push the repair, require fresh green
-checks on PR #565 as the complete isolated-suite proof, merge it, then require
-fresh green checks and merge PR #1104 second.
+Complete the final independent review, push the namespace repair, require the
+fifth fresh green run on PR #565 as the complete isolated-suite proof, merge it,
+then recheck and merge the already-green PR #1104 second.

@@ -110,7 +110,7 @@ end
     y = Float64.([rand(Distributions.Gamma(α[i], μ[i] / α[i])) for i in 1:n])
 
     fit = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ x)),
-              Gamma(); data = (; y, x, species), tree = phy, se = false)
+              DRM.Gamma(); data = (; y, x, species), tree = phy, se = false)
 
     @test fit.converged
     @test length(coef(fit, :sigma)) == 2            # intercept + slope on log-σ

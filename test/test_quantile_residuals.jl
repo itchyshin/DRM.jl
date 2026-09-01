@@ -116,7 +116,7 @@ moments_ok(r) = abs(mean(r)) < 0.15 && 0.85 < std(r) < 1.18
         y = Float64.([rand(Distributions.Gamma(α, μi / α)) for μi in μ])
         data = (; y, x)
 
-        fit = drm(bf(@formula(y ~ x), @formula(sigma ~ 1)), Gamma(); data = data)
+        fit = drm(bf(@formula(y ~ x), @formula(sigma ~ 1)), DRM.Gamma(); data = data)
         r = residuals(fit; type = :quantile)
         @test all(isfinite, r)
         @test moments_ok(r)
@@ -148,7 +148,7 @@ moments_ok(r) = abs(mean(r)) < 0.15 && 0.85 < std(r) < 1.18
 
         fit = drm(bf(@formula(y ~ x + (1 | p | species)),
                      @formula(sigma ~ 1 + (1 | p | species))),
-                  Gamma(); data = data, se = false)
+                  DRM.Gamma(); data = data, se = false)
 
         # The sigma slot IS the shape here (≈ true α ≈ 4.95), not σ ≈ 1/√α ≈ 0.45.
         @test 3.5 < fit.scales[:sigma][1] < 6.5

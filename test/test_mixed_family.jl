@@ -22,7 +22,7 @@ end
         @test DRM.link_residual(Gaussian(); dispersion = 4.0) ≈ 4.0
         # Tier-2 dispersion families (each maps its own dispersion convention)
         @test DRM.link_residual(NegBinomial2(); dispersion = 5.0) ≈ trigamma(5.0)
-        @test DRM.link_residual(Gamma(); dispersion = 0.25) ≈ trigamma(1 / 0.25)   # disp = σ²
+        @test DRM.link_residual(DRM.Gamma(); dispersion = 0.25) ≈ trigamma(1 / 0.25)   # disp = σ²
         @test DRM.link_residual(Beta(), 0.4; dispersion = 8.0) ≈ trigamma(0.4 * 8) + trigamma(0.6 * 8)
     end
 
@@ -227,10 +227,10 @@ end
         u = randn(rng, n)
         η1 = X1 * β1 .+ λ1 .* u
         η2 = X2 * β2 .+ λ2 .* u
-        y1 = [DRM._mf_rand(Gamma(), η1[i], 1.0, σ1, rng) for i in 1:n]              # σ → α=1/σ²
+        y1 = [DRM._mf_rand(DRM.Gamma(), η1[i], 1.0, σ1, rng) for i in 1:n]          # σ → α=1/σ²
         y2 = [DRM._mf_rand(Poisson(), η2[i], 1.0, 1.0, rng) for i in 1:n]
 
-        fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gamma(),
+        fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = DRM.Gamma(),
                                    y2 = y2, X2 = X2, fam2 = Poisson())
         @test fit.converged
         @test isapprox(fit.β1, β1; atol = 0.12)
