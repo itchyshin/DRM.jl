@@ -271,6 +271,7 @@ include("test_parity_harness.jl")
 include("test_parity_biv_q4_phylo_reml.jl")       # #445 Option A: #433/#434 same-target fixture
 include("test_parity_gaussian_phylo_mean.jl")     # #445 Option A: #437/#438 Route A fixture
 include("test_q4_reml_warm_restart.jl")           # #484: public drm() converges the q4 phylo REML cell
+include("test_reml_objective_at.jl")              # #575: objective-at-point diagnostic primitive
 
 # Delta-method prediction standard errors (feat-predict-se).
 include("test_predict_se.jl")
