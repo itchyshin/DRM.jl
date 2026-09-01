@@ -2339,8 +2339,11 @@ function _bridge_bivariate_inference(fit, dat, method::AbstractString;
     if method == "bootstrap"
         rng = seed === nothing ? Random.default_rng() :
               Random.MersenneTwister(Int(seed))
+        # Percentile intervals must be based on converged refits. Retain the
+        # failed count in the bridge payload instead of allowing an arbitrary
+        # non-converged estimate to move an endpoint.
         result = bootstrap_result(fit; data = dat, B = Int(B), level = level,
-                                  rng = rng, failures = :warn, check_converged = false)
+                                  rng = rng, failures = :warn, check_converged = true)
         return _bridge_inference_flatten_multi(
             result.summary;
             method = "bootstrap",
