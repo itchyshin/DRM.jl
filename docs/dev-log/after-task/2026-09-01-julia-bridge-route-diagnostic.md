@@ -19,3 +19,6 @@ Add the R reconstruction and `check_drm()` display in the paired drmTMB control-
 
 ## Rolling-runtime check
 The focused contract also passed on locally installed Julia 1.12.6. This rules out a basic Julia 1.x compatibility failure in this change; it does not substitute for the full CI suite.
+
+## Full focused regression
+`test/test_bridge.jl` completed on Julia 1.12.6 in 60.9 seconds: 128/128 existing bridge assertions, 11/11 new diagnostic assertions, and 4/4 Student-regression assertions passed. Expected warnings concern explicitly boundary/singular Hessian fixtures; no test failed.
