@@ -1,7 +1,7 @@
 # test_575_q4_optimum.jl — issue #575: q4 REML mode-finder stops short of its
 # own optimum on the biv-q4-phylo-reml fixture.
 #
-# DIAGNOSIS (scratchpad/575-mechanism.md): on this fixture, `fit_q4_reml`
+# DIAGNOSIS (drmTMB docs/dev-log/evidence/julia-r-parity/ayumi-target/2026-09-01-matched-q4/575-mechanism.md): on this fixture, `fit_q4_reml`
 # declares convergence (g_residual = 7.54e-4 < g_tol = 1e-3) at
 # reml_loglik = -219.630231, but DRM.jl's OWN objective evaluated at TMB's
 # fitted point theta_hat_TMB (beta reprofiled by the same conditional-Newton
@@ -50,11 +50,11 @@ end
 
     # DRM.jl's own objective, evaluated at TMB's fitted point via the SAME
     # conditional-Newton profiling this route uses, attains -219.620508
-    # (scratchpad/575-mechanism.md). The solver must reach at least that,
+    # (drmTMB docs/dev-log/evidence/julia-r-parity/ayumi-target/2026-09-01-matched-q4/575-mechanism.md). The solver must reach at least that,
     # up to a small numerical-tolerance margin -- otherwise it stopped short
     # of a point it can itself demonstrably reach.
     floor_ll = -219.6206
-    # PLATEAU (2026-09-01, see scratchpad/p12a-summary.md): several attempted
+    # PLATEAU (2026-09-01, see drmTMB docs/dev-log/evidence/julia-r-parity/ayumi-target/2026-09-01-matched-q4/p12a-summary.md): several attempted
     # fixes (LBFGS restarts at tighter g_tol, an objective-value polish with
     # cache-consistent comparison, NelderMead+LBFGS, bounded jittered
     # multistart) all closed PART of the gap without ever reaching floor_ll,
