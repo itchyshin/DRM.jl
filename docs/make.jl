@@ -23,6 +23,7 @@ makedocs(
             "Capabilities" => "capabilities.md",
             "R ↔ Julia bridge" => "r-julia-bridge.md",
             "Rosetta (R ↔ Julia)" => "rosetta.md",
+            "drmTMB parity scoreboard" => "drmtmb-parity.md",
         ],
         "Model guides" => [
             "model-guides/model-map.md",
