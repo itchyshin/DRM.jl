@@ -1309,7 +1309,15 @@ end
 # engine knows the scale of this gradient; the R layer must preserve that
 # description rather than compare it numerically to a TMB optimizer gradient.
 function _bridge_diagnostic(fit::DrmFit; grad_tol::Real = 1e-3)
-    mag = _check_max_abs_grad(fit)
+    # Diagnostics must never make a successful bridge fit fail.  Some valid
+    # sparse objectives are Float64-only under CHOLMOD, so their generic
+    # ForwardDiff gradient is unavailable (not evidence of non-convergence).
+    mag = try
+        _check_max_abs_grad(fit)
+    catch err
+        err isa InterruptException && rethrow()
+        NaN
+    end
     available = isfinite(mag)
     return Dict{String,Any}(
         "status" => available ? "available" : "unavailable",
