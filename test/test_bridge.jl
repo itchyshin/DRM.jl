@@ -449,6 +449,39 @@ using Test, Random, LinearAlgebra
     @test pbootstrap["param"] == internal_sd_boot["param"]
 end
 
+@testset "bridge route-aware convergence diagnostic (#569)" begin
+    rng = MersenneTwister(569)
+    n = 80
+    x = randn(rng, n)
+    y = 0.2 .+ 0.6 .* x .+ 0.5 .* randn(rng, n)
+    out = drm_bridge(; formula = "y ~ x; sigma ~ 1", family = "gaussian",
+                     data = (; y, x))
+
+    diagnostic = out["diagnostic"]
+    @test diagnostic["status"] == "available"
+    @test diagnostic["scale"] == "max_abs_gradient_of_stored_negative_loglikelihood"
+    @test diagnostic["threshold"] == 1e-3
+    @test diagnostic["converged"] == out["converged"]
+    @test diagnostic["max_abs_grad"] isa Float64
+    @test isfinite(diagnostic["max_abs_grad"])
+    @test diagnostic["reason"] === nothing
+
+    # The bridge must not fabricate a gradient when a route does not retain an
+    # objective.  The convergence flag remains meaningful, but the gradient
+    # status is explicitly unavailable.
+    blocks = [:mu => 1:1]
+    coefnames = [:mu => ["(Intercept)"]]
+    empty = Dict{Symbol,Vector{Float64}}()
+    no_objective = DRM.DrmFit(Gaussian(), blocks, coefnames, [0.0],
+                              reshape([1.0], 1, 1), -1.0, 1, true,
+                              empty, empty, empty)
+    unavailable = DRM._bridge_diagnostic(no_objective)
+    @test unavailable["status"] == "unavailable"
+    @test unavailable["reason"] == "stored objective gradient is unavailable for this route"
+    @test unavailable["max_abs_grad"] === nothing
+    @test unavailable["converged"]
+end
+
 @testset "keyed univariate `nu` is not a bivariate discriminator (#1090)" begin
     # drmTMB's Workflow G robust-student cell marshals bf(y ~ x, sigma ~ 1,
     # nu ~ 1) as KEYED parts. `:nu` sat in _BRIDGE_BIVARIATE_KEYS (it is

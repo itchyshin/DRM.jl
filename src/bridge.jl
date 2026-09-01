@@ -40,7 +40,12 @@ fails loudly (missing column) rather than silently mismodelling; see #467.
 
 The return value is a `Dict{String,Any}` made of primitive R-reconstructable
 pieces: named coefficients, covariance matrix, likelihood summaries, fitted
-values, residuals, scales, and residual correlations when present.
+values, residuals, scales, and residual correlations when present. Its
+`"diagnostic"` entry reports the maximum absolute gradient of DRM.jl's stored
+negative log-likelihood and the threshold used to interpret it. Routes that do
+not retain that objective explicitly report an unavailable diagnostic instead
+of fabricating a gradient; this quantity is not asserted to equal TMB's raw
+optimizer gradient.
 
 It also carries what drmTMB's post-fit surface consumes: `"dpars"`, the
 per-observation distributional parameters on the response scale keyed by dpar
@@ -1263,6 +1268,7 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
         # NA everywhere and no bridge-side comparison of optimiser effort was
         # possible: a speed difference could be measured but never attributed.
         "iterations" => niterations(fit),
+        "diagnostic" => _bridge_diagnostic(fit),
         "fitted" => _bridge_plain(fitted(fit)),
         "residuals" => _bridge_plain(residuals(fit)),
         "sigma" => _bridge_plain(sigma(fit)),
@@ -1297,6 +1303,23 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
         out["q2_point_export"] = q2_point_export
     end
     return out
+end
+
+# Stable, primitive diagnostic payload for the R bridge. The direct Julia
+# engine knows the scale of this gradient; the R layer must preserve that
+# description rather than compare it numerically to a TMB optimizer gradient.
+function _bridge_diagnostic(fit::DrmFit; grad_tol::Real = 1e-3)
+    mag = _check_max_abs_grad(fit)
+    available = isfinite(mag)
+    return Dict{String,Any}(
+        "status" => available ? "available" : "unavailable",
+        "reason" => available ? nothing :
+            "stored objective gradient is unavailable for this route",
+        "scale" => "max_abs_gradient_of_stored_negative_loglikelihood",
+        "threshold" => Float64(grad_tol),
+        "max_abs_grad" => available ? Float64(mag) : nothing,
+        "converged" => Bool(is_converged(fit)),
+    )
 end
 
 function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = nothing)
