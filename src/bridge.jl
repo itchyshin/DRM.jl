@@ -306,7 +306,7 @@ function _bridge_parse_fixef_parm(parm)
     return (param = Symbol(parts[2]), coef = String(parts[3]))
 end
 
-"""Parse the bridge's explicit fixed-effect or phylogenetic-SD target."""
+# Parse the bridge's explicit fixed-effect or phylogenetic-SD target.
 function _bridge_parse_inference_parm(parm)
     parm isa AbstractString || throw(ArgumentError(
         "drm_bridge_inference: `parm` must be a `fixef:<dpar>:<coef>` or `sd:<dpar>` string"))
