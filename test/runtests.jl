@@ -282,6 +282,7 @@ include("test_reml_objective_at.jl")              # #575: objective-at-point dia
 include("test_bridge_objective_at.jl")             # #563: drm_bridge_objective_at (bridge-boundary reml_objective_at)
 include("test_575_exact_reml_gradient.jl")        # #575: exact REML gradient vs a tight central difference
 include("test_575_q4_optimum.jl")                 # #575: the q4 REML cold-start route reaches its own optimum
+include("test_reml_q4_missing_response.jl")       # #578: _reml_border_blocks mask consistency, missing responses
 include("test_reml_prior_precision_collapse.jl")  # #563: _reml_prior_precision collapsed into prior_precision after #577
 
 # Delta-method prediction standard errors (feat-predict-se).
