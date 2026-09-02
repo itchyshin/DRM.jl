@@ -151,6 +151,147 @@ function cond_newton_beta(prob::AugProblem, u_hat::Vector{Float64},
 end
 
 # ---------------------------------------------------------------------------
+# Augmented-state layout for the PROFILED fixed effects beta = (mu1, mu2, s1, s2).
+# `Xax[d]` is axis d's design, `wax[d]` its width, `off[d]` its column offset in
+# the stacked beta vector. Axis order 1=mu1, 2=mu2, 3=logσ1, 4=logσ2 — the same
+# order the latent u block uses, which is what makes the lift R_i (docs/src/
+# developer-notes/reml-q4-exact-gradient.md §1.1) a plain re-indexing.
+# ---------------------------------------------------------------------------
+function _reml_axis_layout(prob::AugProblem)
+    Xax = (prob.X1, prob.X2, prob.Xs1, prob.Xs2)
+    wax = (size(prob.X1, 2), size(prob.X2, 2),
+           size(prob.Xs1, 2), size(prob.Xs2, 2))
+    off = (0, wax[1], wax[1]+wax[2], wax[1]+wax[2]+wax[3])
+    return Xax, wax, off, sum(wax)
+end
+
+_reml_beta_vec(prob::AugProblem, b) = vcat(b.mu1, b.mu2, b.s1, b.s2)
+
+function _reml_beta_nt(prob::AugProblem, bv::AbstractVector, rho)
+    _, wax, off, _ = _reml_axis_layout(prob)
+    return (mu1 = bv[off[1]+1:off[1]+wax[1]], mu2 = bv[off[2]+1:off[2]+wax[2]],
+            s1  = bv[off[3]+1:off[3]+wax[3]], s2  = bv[off[4]+1:off[4]+wax[4]],
+            rho = rho)
+end
+
+# ---------------------------------------------------------------------------
+# Bordered blocks of the JOINT Hessian over z = (u, beta):
+#   H_u_beta[base+d, off[dp]+k] = Hb[d,dp] * X_dp[i,k]
+#   H_beta_beta[off[d]+r, off[dp]+c] = Hb[d,dp] * X_d[i,r] * X_dp[i,c]
+# i.e. the leaf contribution is R_i' Hb R_i for the lift R_i = [E_i | F_i].
+# Extracted from reml_ll_and_mode so the exact gradient reuses the SAME build.
+# ---------------------------------------------------------------------------
+function _reml_border_blocks(prob::AugProblem, u_hat::Vector{Float64}, beta_full)
+    nu = 4 * prob.n_total
+    Xax, wax, off, nbeta = _reml_axis_layout(prob)
+    e1, e2, es1, es2, er = leaf_etas(prob, beta_full)
+    H_u_beta    = zeros(nu, nbeta)
+    H_beta_beta = zeros(nbeta, nbeta)
+    @inbounds for i in eachindex(prob.leaf_node)
+        t    = prob.leaf_node[i]; base = 4*(t - 1)
+        ublk = [u_hat[base+1], u_hat[base+2], u_hat[base+3], u_hat[base+4]]
+        Hb   = leaf_hess(ublk, prob.y1[i], prob.y2[i],
+                         e1[i], e2[i], es1[i], es2[i], er[i],
+                         prob.obs1[i], prob.obs2[i])
+        for d in 1:4, dp in 1:4
+            Hdd = Hb[d, dp]
+            Hdd == 0.0 && continue
+            Xdp = Xax[dp]; odp = off[dp]
+            for k in 1:wax[dp]
+                H_u_beta[base+d, odp+k] += Hdd * Xdp[i, k]
+            end
+            Xd = Xax[d]; od = off[d]
+            for r in 1:wax[d], c in 1:wax[dp]
+                H_beta_beta[od+r, odp+c] += Hdd * Xd[i, r] * Xdp[i, c]
+            end
+        end
+    end
+    return H_u_beta, H_beta_beta
+end
+
+# ∇_z J at z = (u, beta): the u block is `joint_grad`; the beta block is the
+# same leaf gradient chained through each axis's design (R_i' again).
+function _reml_grad_z(prob::AugProblem, P::SparseMatrixCSC,
+                      u::Vector{Float64}, beta_full)
+    Xax, wax, off, nbeta = _reml_axis_layout(prob)
+    g_u = joint_grad(prob, P, u, beta_full)
+    e1, e2, es1, es2, er = leaf_etas(prob, beta_full)
+    g_b = zeros(nbeta)
+    @inbounds for i in eachindex(prob.leaf_node)
+        t = prob.leaf_node[i]; base = 4*(t - 1)
+        gb = leaf_grad([u[base+1], u[base+2], u[base+3], u[base+4]],
+                       prob.y1[i], prob.y2[i], e1[i], e2[i], es1[i], es2[i], er[i],
+                       prob.obs1[i], prob.obs2[i])
+        for d in 1:4
+            gb[d] == 0.0 && continue
+            Xd = Xax[d]; od = off[d]
+            for k in 1:wax[d]
+                g_b[od+k] += gb[d] * Xd[i, k]
+            end
+        end
+    end
+    return g_u, g_b
+end
+
+# ---------------------------------------------------------------------------
+# JOINT (u, beta) Newton mode-finder on the bordered system, never factorising
+# the (n_u + n_beta) matrix: with A = H_uu (CHOLMOD), B = H_uβ, D = H_ββ,
+# C = A^{-1}B and S = D - B'C,
+#     𝓗^{-1} v  =  ( A^{-1}v_u + C q ,  -q ),   q = S^{-1}(C'v_u - v_β).
+# Returns (u, beta_full, ch_H, C, S_chol, ‖∇_z J‖). The alternation in
+# `reml_ll_and_mode` exits on a RELATIVE beta criterion (~1e-4·‖β‖), which is
+# far too loose for an exact gradient certified at 1e-6: the implicit-function
+# derivation is valid only at ∇_z J = 0. A few of these steps cost one extra
+# sparse solve each and take ‖∇_z J‖ to ~1e-11.
+# ---------------------------------------------------------------------------
+function _reml_joint_newton(prob::AugProblem, P::SparseMatrixCSC,
+                            u0::Vector{Float64}, beta_full;
+                            max_iter::Int = 25, tol::Float64 = 1e-10)
+    u  = copy(u0)
+    bv = _reml_beta_vec(prob, beta_full)
+    rho = beta_full.rho
+    b   = _reml_beta_nt(prob, bv, rho)
+    Hobs = build_Huu(prob, P, u, b); ch_H, _ = sparse_pd_chol(Hobs)
+    B, D  = _reml_border_blocks(prob, u, b)
+    nbeta = size(B, 2)
+    C  = Matrix{Float64}(undef, length(u), nbeta)
+    for j in 1:nbeta; C[:, j] = ch_H \ B[:, j]; end
+    ch_S = cholesky(Symmetric((D - B'C + (D - B'C)') / 2); check = false)
+    g_u, g_b = _reml_grad_z(prob, P, u, b)
+    gn = sqrt(sum(abs2, g_u) + sum(abs2, g_b))
+    f  = joint_nll(prob, P, u, b)
+
+    for _ in 1:max_iter
+        (gn < tol || !issuccess(ch_S)) && break
+        q   = ch_S \ (C'g_u .- g_b)
+        d_u = (ch_H \ g_u) .+ C * q
+        d_b = -q
+        (all(isfinite, d_u) && all(isfinite, d_b)) || break
+        α = 1.0; accepted = false
+        for _ in 1:30
+            un = u .- α .* d_u
+            bn = _reml_beta_nt(prob, bv .- α .* d_b, rho)
+            fn = joint_nll(prob, P, un, bn)
+            if isfinite(fn) && fn <= f + 1e-12 * abs(f)
+                u = un; bv = bv .- α .* d_b; b = bn; f = fn; accepted = true
+                break
+            end
+            α *= 0.5
+        end
+        accepted || break
+        Hobs = build_Huu(prob, P, u, b); ch_H, _ = sparse_pd_chol(Hobs)
+        B, D = _reml_border_blocks(prob, u, b)
+        for j in 1:nbeta; C[:, j] = ch_H \ B[:, j]; end
+        ch_S = cholesky(Symmetric((D - B'C + (D - B'C)') / 2); check = false)
+        g_u, g_b = _reml_grad_z(prob, P, u, b)
+        gn_new = sqrt(sum(abs2, g_u) + sum(abs2, g_b))
+        gn_new >= gn && (gn = gn_new; break)   # no further progress
+        gn = gn_new
+    end
+    return u, b, ch_H, C, ch_S, gn
+end
+
+# ---------------------------------------------------------------------------
 # REML log-likelihood at outer parameters phi = (beta_rho, lc).
 #   1. Unpack phi, build P.
 #   2. Warm E-step to get u_hat.
@@ -234,36 +375,8 @@ function reml_ll_and_mode(prob::AugProblem, Q_cond::SparseMatrixCSC,
     # build generalised to all 4 axes — including the mean<->scale cross blocks
     # Hb[1,3] etc. that carry the SCALE REML correction.
     nu  = 4 * prob.n_total
-    eta1_v, eta2_v, etas1_v, etas2_v, etar_v = leaf_etas(prob, beta_full)
-
-    Xax = (prob.X1, prob.X2, prob.Xs1, prob.Xs2)         # per-axis designs
-    wax = (size(prob.X1, 2), size(prob.X2, 2),
-           size(prob.Xs1, 2), size(prob.Xs2, 2))         # per-axis column widths
-    off = (0, wax[1], wax[1]+wax[2], wax[1]+wax[2]+wax[3])  # column offsets per axis
-    nbeta = wax[1] + wax[2] + wax[3] + wax[4]
-
-    H_u_beta   = zeros(nu, nbeta)
-    H_beta_beta = zeros(nbeta, nbeta)
-    @inbounds for i in eachindex(prob.leaf_node)
-        t    = prob.leaf_node[i]; base = 4*(t - 1)
-        ublk = [u_hat[base+1], u_hat[base+2], u_hat[base+3], u_hat[base+4]]
-        Hb   = leaf_hess(ublk, prob.y1[i], prob.y2[i],
-                          eta1_v[i], eta2_v[i], etas1_v[i], etas2_v[i], etar_v[i])
-        for d in 1:4, dp in 1:4
-            Hdd = Hb[d, dp]
-            Hdd == 0.0 && continue
-            Xdp = Xax[dp]; odp = off[dp]
-            # H_u_beta[base+d, col in axis-dp block] += Hb[d,dp] * X_dp[i,k]
-            for k in 1:wax[dp]
-                H_u_beta[base+d, odp+k] += Hdd * Xdp[i, k]
-            end
-            # H_beta_beta[axis-d block, axis-dp block] += Hb[d,dp] * X_d[i,r] * X_dp[i,c]
-            Xd = Xax[d]; od = off[d]
-            for r in 1:wax[d], c in 1:wax[dp]
-                H_beta_beta[od+r, odp+c] += Hdd * Xd[i, r] * Xdp[i, c]
-            end
-        end
-    end
+    _, _, _, nbeta = _reml_axis_layout(prob)
+    H_u_beta, H_beta_beta = _reml_border_blocks(prob, u_hat, beta_full)
 
     # Schur complement: S = H_beta_beta - H_u_beta' * (H_uu^{-1} * H_u_beta)
     C   = Matrix{Float64}(undef, nu, nbeta)
@@ -281,6 +394,244 @@ function reml_ll_and_mode(prob::AugProblem, Q_cond::SparseMatrixCSC,
     ld_S  = logdet(ch_S)
 
     return ml_ll - 0.5*ld_S, u_hat, ch_H, beta_full, P, inner_converged
+end
+
+# ---------------------------------------------------------------------------
+# EXACT gradient of the REML objective (#575).
+#
+# The implemented objective collapses to a single Laplace form over the
+# AUGMENTED state z = (u, beta):
+#
+#     L_REML(phi) = -J(z_hat; phi) - 0.5*logdet(H) + 0.5*logdet(P)
+#     H = [A B; B' D],  logdet H = logdet A + logdet S
+#
+# — structurally identical to the ML objective in fit_q4_sparse_tmb.jl, so the
+# exact O(p) implicit-function gradient transfers term-by-term with the leaf
+# selected-inverse block Vblk replaced by
+#
+#     Omega_i = Vsel[leaf block] + G_i S^{-1} G_i',   G_i = C[leaf block, :] - F_i
+#
+# (F_i the leaf's rows of the lifted per-axis designs). H is NEVER factorised:
+# every quantity comes from the existing CHOLMOD factor of A, the Takahashi
+# selected inverse of A, and the small dense S. Full derivation with the
+# term-by-term alignment table:
+#   docs/src/developer-notes/reml-q4-exact-gradient.md
+# ---------------------------------------------------------------------------
+
+# Prior precision with a STRUCTURALLY FULL 4×4 axis block.
+#
+# `prior_precision(Q, Λ⁻¹)` calls `sparse(Λinv)`, which DROPS zeros. At an
+# exactly diagonal Λ — including `fit_q4_reml`'s own default warm start
+# `Λ0 = 0.3I(4)` — that leaves H_uu without its cross-axis entries at non-leaf
+# nodes, so the Cholesky pattern, and with it the Takahashi selected inverse,
+# is missing entries the logdet-H trace genuinely needs (they are structurally
+# absent, not zero in H⁻¹). Measured on the biv-q4-phylo-reml fixture at
+# Λ = 0.3I: two lc components of the gradient came out wrong by 0.04 and 13.7,
+# while every component agreed to 6.7e-8 the moment a 1e-6 off-diagonal was
+# added. Storing all 16 entries explicitly costs nothing numerically (the
+# matrix is identical) and removes the degeneracy.
+#
+# NOTE: `marginal_and_exact_grad` (fit_q4_sparse_tmb.jl) builds `Gst` from the
+# same construction and so shares this degeneracy on the ML path; that is left
+# alone here (out of scope for #575) and recorded in the derivation note.
+function _reml_prior_precision(Q::SparseMatrixCSC, Λinv::AbstractMatrix)
+    rows = [a for _ in 1:4 for a in 1:4]
+    cols = [b for b in 1:4 for _ in 1:4]
+    vals = [Λinv[a, b] for b in 1:4 for a in 1:4]
+    return kron(Q, sparse(rows, cols, vals, 4, 4))
+end
+
+# Joint mode at phi, Newton-certified. Returns everything the value and the
+# gradient both need (P, the certified z_hat, A's factor, C = A^{-1}B, S's
+# factor, and the achieved ‖∇_z J‖).
+function _reml_exact_state(prob::AugProblem, Q_cond::SparseMatrixCSC,
+                           phi::AbstractVector{<:Real};
+                           u0 = nothing, beta0 = nothing, n_newton::Int = 40,
+                           joint_iter::Int = 25, joint_tol::Float64 = 1e-10)
+    phiv = Vector{Float64}(phi)
+    rho_coef, lc = unpack_phi(prob, phiv)
+    Lam = lc_to_Λ(lc)
+    P   = _reml_prior_precision(Q_cond, inv(Lam))
+    # Reuse the existing alternation to get into the right neighbourhood, then
+    # certify with joint Newton (the alternation's relative beta exit is far too
+    # loose to support an exact gradient — see the derivation note §2.4).
+    _, u_a, _, b_a, _, _ = reml_ll_and_mode(prob, Q_cond, phiv;
+                                            u0 = u0, beta0 = beta0, n_newton = n_newton)
+    u, b, ch_H, C, ch_S, gz = _reml_joint_newton(prob, P, Vector{Float64}(u_a), b_a;
+                                                 max_iter = joint_iter, tol = joint_tol)
+    return (rho = rho_coef, lc = lc, Lam = Lam, P = P, u = u, beta = b,
+            ch_H = ch_H, C = C, ch_S = ch_S, gz = gz)
+end
+
+"""
+    reml_nll_exact(prob, Q_cond, phi; u0, beta0, n_newton) -> Float64
+
+The q=4 REML objective as a NEGATIVE, UNNORMALISED restricted log-likelihood at
+`phi = (beta_rho, lc)`, evaluated at a joint-Newton-certified `(û, β̂)`. Same
+objective as [`reml_ll_and_mode`](@ref) up to sign; the difference is that the
+joint mode is driven to `‖∇_z J‖ ≈ 1e-10` instead of the alternation's relative
+beta criterion, which makes the value a smooth, deterministic function of `phi`
+— what a finite-difference reference (and a Newton-grade certification) needs.
+Returns `Inf` on the non-PD Schur barrier.
+"""
+function reml_nll_exact(prob::AugProblem, Q_cond::SparseMatrixCSC,
+                        phi::AbstractVector{<:Real};
+                        u0 = nothing, beta0 = nothing, n_newton::Int = 40,
+                        joint_iter::Int = 25, joint_tol::Float64 = 1e-10)
+    st = _reml_exact_state(prob, Q_cond, phi; u0 = u0, beta0 = beta0,
+                           n_newton = n_newton, joint_iter = joint_iter,
+                           joint_tol = joint_tol)
+    issuccess(st.ch_S) || return Inf
+    ll = laplace_ll(prob, st.P, st.beta, st.u, st.ch_H) - 0.5 * logdet(st.ch_S)
+    return isfinite(ll) ? -ll : Inf
+end
+
+"""
+    reml_nll_and_exact_grad(prob, Q_cond, phi; u0, beta0, n_newton)
+        -> (nll, grad, û, β̂, ch_H, z_residual)
+
+Negative unnormalised REML log-likelihood and its EXACT gradient over
+`phi = (beta_rho, lc)`. `z_residual` is `‖∇_z J(ẑ)‖` — the exact gradient is
+valid only where this is small, so callers should check it before certifying
+convergence on `grad`.
+"""
+function reml_nll_and_exact_grad(prob::AugProblem, Q_cond::SparseMatrixCSC,
+                                 phi::AbstractVector{<:Real};
+                                 u0 = nothing, beta0 = nothing, n_newton::Int = 40,
+                                 joint_iter::Int = 25, joint_tol::Float64 = 1e-10)
+    phiv = Vector{Float64}(phi)
+    kr   = size(prob.Xr, 2)
+    o_lc = kr
+    nph  = length(phiv)
+
+    st = _reml_exact_state(prob, Q_cond, phiv; u0 = u0, beta0 = beta0,
+                           n_newton = n_newton, joint_iter = joint_iter,
+                           joint_tol = joint_tol)
+    P = st.P; u_hat = st.u; b = st.beta; ch_H = st.ch_H; C = st.C; ch_S = st.ch_S
+    if !issuccess(ch_S)
+        return Inf, fill(NaN, nph), u_hat, b, ch_H, st.gz
+    end
+    ll = laplace_ll(prob, P, b, u_hat, ch_H) - 0.5 * logdet(ch_S)
+    if !isfinite(ll)
+        return Inf, fill(NaN, nph), u_hat, b, ch_H, st.gz
+    end
+
+    Xax, wax, off, nbeta = _reml_axis_layout(prob)
+    nu   = 4 * prob.n_total
+    N    = prob.n_total
+    Λi   = inv(st.Lam)
+    Sinv = Matrix(inv(ch_S))          # nbeta is the marginalised width (small)
+    CS   = C * Sinv                   # nu × nbeta
+    Vsel = takahashi_selinv(ch_H)     # A^{-1} at the L+L' pattern, O(p)
+    e1, e2, es1, es2, er = leaf_etas(prob, b)
+
+    grad = zeros(nph)
+
+    # --- C1: ∇_phi J(ẑ; phi) with ẑ frozen (single-level AD, no CHOLMOD). ----
+    jn_of_phi = function (pv::AbstractVector)
+        rho_t = pv[1:kr]; lc_t = pv[kr+1:kr+10]
+        Pt = _reml_prior_precision(Q_cond, inv(lc_to_Λ(lc_t)))
+        βt = (mu1 = b.mu1, mu2 = b.mu2, s1 = b.s1, s2 = b.s2, rho = rho_t)
+        return joint_nll_T(prob, Pt, u_hat, βt)
+    end
+    grad .+= ForwardDiff.gradient(jn_of_phi, phiv)
+
+    # --- C2: −0.5 ∇ logdet P = +0.5·N·∇_lc logdet Λ (analytic). -------------
+    grad[o_lc+1:o_lc+10] .+=
+        0.5 * N .* ForwardDiff.gradient(v -> logdet(Symmetric(lc_to_Λ(v))), st.lc)
+
+    # --- C3a (beta_rho logdet-H trace) and I1 (v = 0.5 ∇_z logdet H) --------
+    # One pass over data rows; both need the same per-leaf Omega_i.
+    Gst = zeros(4, 4)                 # Q-pattern accumulator for the lc trace
+    v_u = zeros(nu); v_b = zeros(nbeta)
+    Gi  = zeros(4, nbeta)
+    @inbounds for i in eachindex(prob.leaf_node)
+        t = prob.leaf_node[i]; bt = 4 * (t - 1)
+        ublk = [u_hat[bt+1], u_hat[bt+2], u_hat[bt+3], u_hat[bt+4]]
+        # G_i = C[leaf block, :] − F_i, then Omega = Vsel_blk + G_i S^{-1} G_i'.
+        for d in 1:4
+            for m in 1:nbeta; Gi[d, m] = C[bt+d, m]; end
+            Xd = Xax[d]; od = off[d]
+            for k in 1:wax[d]; Gi[d, od+k] -= Xd[i, k]; end
+        end
+        Ω = Gi * Sinv * Gi'
+        for a in 1:4, bb in 1:4
+            Ω[a, bb] += Vsel[bt+a, bt+bb]
+        end
+
+        if kr > 0
+            dHr = ForwardDiff.derivative(
+                e -> vec(leaf_hess(ublk, prob.y1[i], prob.y2[i],
+                                   e1[i], e2[i], es1[i], es2[i], e,
+                                   prob.obs1[i], prob.obs2[i])), er[i])
+            s = 0.0
+            for bb in 1:4, a in 1:4; s += Ω[a, bb] * dHr[(bb-1)*4 + a]; end
+            for c in 1:kr; grad[c] += 0.5 * s * prob.Xr[i, c]; end
+        end
+
+        T = leaf_hess_du(ublk, prob.y1[i], prob.y2[i],
+                         e1[i], e2[i], es1[i], es2[i], er[i],
+                         prob.obs1[i], prob.obs2[i])
+        for c in 1:4
+            acc = 0.0
+            for bb in 1:4, a in 1:4; acc += Ω[a, bb] * T[a, bb, c]; end
+            vt = 0.5 * acc
+            v_u[bt+c] += vt
+            Xc = Xax[c]; oc = off[c]
+            for k in 1:wax[c]; v_b[oc+k] += vt * Xc[i, k]; end
+        end
+    end
+
+    # --- C3b: lc logdet-H trace. Only the u-u block of H depends on lc, via
+    # P = kron(Q, Λ^{-1}); the needed inverse block is W_uu = A^{-1} + C S^{-1} C'.
+    rowsQ = rowvals(Q_cond); valsQ = nonzeros(Q_cond)
+    @inbounds for tcol in 1:N
+        for idx in nzrange(Q_cond, tcol)
+            s = rowsQ[idx]; q = valsQ[idx]
+            bs = 4 * (s - 1); btt = 4 * (tcol - 1)
+            for a in 1:4, bb in 1:4
+                corr = 0.0
+                for m in 1:nbeta; corr += CS[btt+a, m] * C[bs+bb, m]; end
+                Gst[bb, a] += q * (Vsel[btt+a, bs+bb] + corr)
+            end
+        end
+    end
+    dΛ = ForwardDiff.jacobian(lc_to_Λ, st.lc)      # 16×10
+    for k in 1:10
+        dΛk = reshape(@view(dΛ[:, k]), 4, 4)
+        Mk  = -Λi * dΛk * Λi
+        acc = 0.0
+        for a in 1:4, bb in 1:4; acc += Gst[bb, a] * Mk[bb, a]; end
+        grad[o_lc + k] += 0.5 * acc
+    end
+
+    # --- I2: w = H^{-1} v via the same bordered block solve. ----------------
+    qv  = ch_S \ (C'v_u .- v_b)
+    w_u = (ch_H \ v_u) .+ C * qv
+    w_b = -qv
+
+    # --- I3: −∇_phi[ (∇_z J)' w ] at frozen (ẑ, w). ------------------------
+    scalar_of_phi = function (pv::AbstractVector)
+        rho_t = pv[1:kr]; lc_t = pv[kr+1:kr+10]
+        Pt = _reml_prior_precision(Q_cond, inv(lc_to_Λ(lc_t)))
+        βt = (mu1 = b.mu1, mu2 = b.mu2, s1 = b.s1, s2 = b.s2, rho = rho_t)
+        acc = dot(joint_grad_T(prob, Pt, u_hat, βt), w_u)
+        f1, f2, fs1, fs2, fr = leaf_etas(prob, βt)
+        @inbounds for i in eachindex(prob.leaf_node)
+            t = prob.leaf_node[i]; bt = 4 * (t - 1)
+            gb = leaf_grad([u_hat[bt+1], u_hat[bt+2], u_hat[bt+3], u_hat[bt+4]],
+                           prob.y1[i], prob.y2[i], f1[i], f2[i], fs1[i], fs2[i], fr[i],
+                           prob.obs1[i], prob.obs2[i])
+            for d in 1:4
+                Xd = Xax[d]; od = off[d]
+                for k in 1:wax[d]; acc += gb[d] * Xd[i, k] * w_b[od+k]; end
+            end
+        end
+        return acc
+    end
+    grad .-= ForwardDiff.gradient(scalar_of_phi, phiv)
+
+    return -ll, grad, u_hat, b, ch_H, st.gz
 end
 
 # ---------------------------------------------------------------------------

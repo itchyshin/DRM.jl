@@ -149,3 +149,29 @@ z ← z − 𝓗⁻¹ ∇_z J(z)        (same block solve as I2)
 drives `‖∇_z J‖` to ~1e-10, after which the exact gradient is trustworthy and
 convergence can be certified on it. This is the "Newton-grade certification"
 the FD route could not provide.
+
+---
+
+## 3. Found while implementing: the diagonal-Λ pattern degeneracy
+
+`prior_precision(Q, Λ⁻¹)` (`src/sparse_aug_plsm.jl:79`) calls `sparse(Λinv)`,
+which **drops zeros**. At an exactly diagonal `Λ` — including `fit_q4_reml`'s
+own default warm start `Λ0 = 0.3I(4)` (`src/reml_q4.jl:374`) — the cross-axis
+entries of `P`, and hence of `H_uu` at every non-leaf node, are *structurally*
+absent. The Cholesky pattern shrinks with them, so the Takahashi selected
+inverse cannot return `A⁻¹` at entries the `logdet H` trace genuinely needs.
+They are missing, not zero.
+
+Measured on `biv-q4-phylo-reml` at `Λ = 0.3I`, exact vs a step-scanned central
+difference: two `lc` components were wrong by **0.037** and **13.70**; with a
+`1e-6` off-diagonal added to `Λ`, **every** component agreed to **6.7e-8**.
+
+Fix in the REML path: `_reml_prior_precision` stores all 16 entries of the 4×4
+axis block explicitly. The matrix is numerically identical; only the pattern
+changes.
+
+**`marginal_and_exact_grad` (`fit_q4_sparse_tmb.jl:374–384`) builds its `Gst`
+from the same construction and therefore shares this degeneracy on the ML
+path.** Not changed here (out of scope for #575), but it should be checked: the
+ML fit also starts at `Λ0 = 0.3I`, so its very first exact gradient is taken at
+the degenerate point.
