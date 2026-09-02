@@ -163,25 +163,17 @@ _multi_scalar_phylo_lss_formula() = bf(
     @formula(sd(study) ~ 1),
 )
 
-function _lss_boundary_comparison(label, left, right; broken = false)
+function _lss_boundary_diagnostic(label, left, right)
+    # Non-gating: prints the raw log-scale theta L∞ difference for the
+    # record only. At a zero-variance boundary, log(sd_phylo) coefficients
+    # are unidentified (see the natural-scale gate below), so this raw
+    # difference is expected to be large and must never be asserted on.
     difference = maximum(abs.(left.theta - right.theta))
     println("LSS_BOUNDARY_DIAGNOSTIC label=", label, " max_theta_difference=", difference)
     for block in (:mu, :sigma, :sd, :sd_phylo)
         haskey(Dict(left.blocks), block) || continue
         println("LSS_BOUNDARY_DIAGNOSTIC label=", label, " block=", block,
                 " left=", coef(left, block), " right=", coef(right, block))
-    end
-    if get(ENV, "DRM_LSS_STRICT_BOUNDARY", "") == "1"
-        @test difference <= 4e-6
-    elseif broken
-        @test_broken difference <= 4e-6
-    elseif Sys.islinux()
-        # Both supported Linux CI versions satisfy this boundary. The same
-        # optimizer fixture is still platform-sensitive on macOS, so do not
-        # turn a Linux repair into an unsupported cross-platform claim.
-        @test difference <= 4e-6
-    else
-        @test_skip difference <= 4e-6
     end
 end
 
@@ -196,11 +188,29 @@ end
         @test fit_ordered.converged
         @test DRM._phylo_correlation(shuffled.phy) ≈ _lss_hand_correlation() atol = 1e-12
         @test abs(loglik(fit_shuffled) - _lss_named_loglik(fit_shuffled, shuffled, shuffled.phy)) <= 1e-7
-        # Retained strict numerical discrepancy on this deliberately small
-        # six-tip scale-scale fixture.  The unlazy switch turns it into a
-        # normal failure rather than allowing the default broken-test status
-        # to be mistaken for closure; its cause remains unassigned here.
-        _lss_boundary_comparison("dedicated_small", fit_shuffled, fit_ordered; broken = true)
+        # Boundary-oracle repair (issue #563, diagnosis s7-g8-diagnosis.md):
+        # both fits are gradient-stationary optima of the identical dense
+        # objective (loglik agrees to 7e-15) on a Hessian-singular
+        # (rcond ~1e-17..1e-20) ridge in the 2-parameter sd_phylo log-scale
+        # block, so raw-theta L∞ agreement is an unfulfillable oracle here
+        # (measured 4.53). Gate on the natural (estimable) scale instead —
+        # objective value and per-tip phylogenetic SD — mirroring the
+        # scalar sd_phylo repair in 25503f30 for `scalar_multi_small`.
+        _lss_boundary_diagnostic("dedicated_small", fit_shuffled, fit_ordered)
+        @test abs(loglik(fit_shuffled) - loglik(fit_ordered)) <= 1e-7
+        @test coef(fit_shuffled, :mu) ≈ coef(fit_ordered, :mu) atol = 4e-6
+        @test coef(fit_shuffled, :sigma) ≈ coef(fit_ordered, :sigma) atol = 4e-6
+        # sd_phylo here has 2 coefficients (intercept + slope on z), so the
+        # raw pair is not directly comparable even on a log scale; compare
+        # the fitted per-tip natural-scale SD they imply. Probe
+        # (scratchpad/probe_g8_natural.jl) measured this L∞ difference at
+        # 1.2e-8 for this fixture — keep the file's usual 4e-6 tolerance
+        # (>300x the measured agreement) rather than tightening it further.
+        αphy_shuffled = coef(fit_shuffled, :sd_phylo)
+        αphy_ordered = coef(fit_ordered, :sd_phylo)
+        σphy_shuffled = exp.(αphy_shuffled[1] .+ αphy_shuffled[2] .* shuffled.z_tip)
+        σphy_ordered = exp.(αphy_ordered[1] .+ αphy_ordered[2] .* ordered.z_tip)
+        @test maximum(abs.(σphy_shuffled .- σphy_ordered)) <= 4e-6
 
         # IID group indices remain deliberately first-seen; this repair is
         # restricted to phylogenetic components.
