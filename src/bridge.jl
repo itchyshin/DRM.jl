@@ -55,10 +55,11 @@ function drm_bridge(; formula, family::AbstractString, data, tree = nothing,
     bundle, dat, labels = _bridge_formula(formula, family, dat; labels = true)
     fam = _bridge_family(family)
     opts = _bridge_options(options)
+    coef_labels = get(opts, :coef_labels, nothing)
     fit = _bridge_fit(bundle, fam, dat; tree = tree, K = K, A = A,
                       coords = coords, options = opts)
     return _bridge_flatten(fit; family = String(family), newdata = newdata,
-                           labels = labels)
+                           labels = labels, coef_labels = coef_labels)
 end
 
 """
@@ -1356,8 +1357,9 @@ function _bridge_formula_from_expr(expr, ctx::_BridgeXlateCtx)
 end
 
 function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
-        labels::Union{Nothing,_BridgeFormulaLabels} = nothing)
-    cnames, cvals, raw_cnames, public_to_raw = _bridge_coef_vector(fit; labels = labels)
+        labels::Union{Nothing,_BridgeFormulaLabels} = nothing, coef_labels = nothing)
+    cnames, cvals, raw_cnames, public_to_raw =
+        _bridge_coef_vector(fit; labels = labels, coef_labels = coef_labels)
     V = Matrix{Float64}(vcov(fit))
     _bridge_validate_coordinate_axes(fit.blocks, fit.coefnames, length(cvals), V)
     out = Dict{String,Any}(
@@ -1385,10 +1387,14 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
         "corpairs" => _bridge_plain(corpairs(fit)),
         "dpars" => _bridge_dpars(fit),
     )
-    if labels !== nothing
+    if labels !== nothing || coef_labels !== nothing
         # `coef_names`/`vcov_names` are the public R spelling.  Retain the exact
         # Julia coordinate names and a bijection for the bridge inference route;
-        # no numeric coordinate, value, or covariance entry is rewritten.
+        # no numeric coordinate, value, or covariance entry is rewritten. When
+        # `options["coef_labels"]` (design 258 §7.1) is supplied, its per-dpar
+        # names are echoed verbatim (dpar-prefixed) as `coef_names`/
+        # `vcov_names` in place of Julia's self-rendered names — `raw_coef_names`
+        # still carries Julia's own spelling either way (#563).
         out["coef_label_contract"] = "bridge_formula_labels_v1"
         out["raw_coef_names"] = raw_cnames
         out["coef_name_map"] = public_to_raw
@@ -1415,22 +1421,26 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
     return out
 end
 
-function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = nothing)
+function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = nothing,
+        coef_labels = nothing)
     θ = coef(fit)
     namemap = Dict(p => ns for (p, ns) in fit.coefnames)
     raw_names = String[]
     vals = Float64[]
     indices = Int[]
+    block_ranges = Pair{Symbol,UnitRange{Int}}[]
     for (param, r) in fit.blocks
         haskey(namemap, param) || error("drm_bridge: no coefficient names for parameter block `$param`")
         pnames = namemap[param]
         length(pnames) == length(r) ||
             error("drm_bridge: coefficient-name mismatch for `$param`")
+        block_start = length(raw_names) + 1
         for (nm, idx) in zip(pnames, r)
             push!(raw_names, "$(param)_$(nm)")
             push!(vals, θ[idx])
             push!(indices, idx)
         end
+        push!(block_ranges, param => block_start:length(raw_names))
     end
     _bridge_validate_coordinate_axes(fit.blocks, fit.coefnames, length(θ), nothing)
     length(raw_names) == length(θ) || error("drm_bridge: coefficient blocks do not cover every raw coordinate")
@@ -1438,6 +1448,13 @@ function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = 
         error("drm_bridge: coefficient blocks must cover raw coordinates in covariance order")
     length(unique(raw_names)) == length(raw_names) ||
         error("drm_bridge: raw coefficient labels are not unique")
+    if coef_labels !== nothing
+        names = _bridge_echo_coef_labels(coef_labels, block_ranges, raw_names)
+        length(unique(names)) == length(names) ||
+            error("drm_bridge: echoed coef_labels public names are not unique")
+        public_to_raw = Dict{String,String}(pub => raw for (pub, raw) in zip(names, raw_names))
+        return names, vals, raw_names, public_to_raw
+    end
     if labels === nothing
         return raw_names, vals, raw_names, Dict{String,String}(n => n for n in raw_names)
     end
@@ -1448,6 +1465,44 @@ function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = 
     Set(values(public_to_raw)) == Set(raw_names) ||
         error("drm_bridge: public coefficient map does not cover every raw coordinate")
     return names, vals, raw_names, public_to_raw
+end
+
+# Echo an R-supplied `options["coef_labels"] :: Dict{String,Vector{String}}`
+# payload (design 258 §7.1: base-R `model.matrix()` column names per dpar, in
+# order, fixed-effect part only) as the public `bridge_formula_labels_v1`
+# names, prefixed `"<dpar>_"` to match the self-rendered convention. Fails
+# closed: any count mismatch, unknown dpar key, or a dpar with fixed-effect
+# columns but no supplied labels aborts naming the dpar and both counts —
+# never guesses, pads, or reorders (#563).
+function _bridge_echo_coef_labels(coef_labels, block_ranges::Vector{Pair{Symbol,UnitRange{Int}}},
+        raw_names::Vector{String})
+    supplied = Dict{String,Any}(String(k) => v for (k, v) in pairs(coef_labels))
+    known_dpars = [String(param) for (param, _) in block_ranges]
+    for dpar in keys(supplied)
+        dpar in known_dpars ||
+            error("drm_bridge: coef_labels supplies names for unknown dpar \"$dpar\"; " *
+                  "the model has dpars: $(join(known_dpars, ", "))")
+    end
+    names = Vector{String}(undef, length(raw_names))
+    for (param, range) in block_ranges
+        dpar = String(param)
+        n_actual = length(range)
+        haskey(supplied, dpar) ||
+            error("drm_bridge: coef_labels is missing an entry for dpar \"$dpar\" " *
+                  "($n_actual fixed-effect columns; Julia names: $(raw_names[range])); " *
+                  "the R side must supply names for every dpar when sending coef_labels")
+        dpar_labels = supplied[dpar]
+        n_supplied = length(dpar_labels)
+        n_supplied == n_actual ||
+            error("drm_bridge: coef_labels[\"$dpar\"] supplies $n_supplied names but the " *
+                  "$dpar formula part has $n_actual fixed-effect columns " *
+                  "(Julia names: $(raw_names[range])); the R side must send exactly one " *
+                  "name per column")
+        for (i, nm) in zip(range, dpar_labels)
+            names[i] = "$(dpar)_$(nm)"
+        end
+    end
+    return names
 end
 
 function _bridge_validate_coordinate_axes(blocks, names, p::Integer,
