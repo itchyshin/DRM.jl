@@ -96,12 +96,11 @@ AugProblem(phy, n_total, p, leaf_node, y1, y2, X1, X2, Xs1, Xs2, Xr) =
 # stored pattern changes — and it closes the whole class at the root instead of
 # one call site at a time.
 #
-# `_reml_prior_precision` (reml_q4.jl) is the same fix applied locally, and #579
-# merged it to main before this landed. It is now REDUNDANT: this function gives
-# it nothing to correct. Deliberately NOT collapsed here — reml_q4.jl belongs to
-# the #575/#579 lane, and folding it in would put the exact REML gradient's
-# certification back on the table for a tidiness gain. Left as a follow-up for
-# that lane to take or refuse.
+# #579 had applied the same fix locally on the REML path (`_reml_prior_precision`
+# in reml_q4.jl). Once this root fix landed the helper was proven redundant —
+# bit-identical pattern and values from both builders on the q4 fixture, nnz
+# 1376 at a diagonal and at a fitted Λ — and collapsed (#563 follow-up); the
+# REML path now calls this function directly.
 function prior_precision(Q::SparseMatrixCSC, Λinv::AbstractMatrix)
     q = LinearAlgebra.checksquare(Λinv)
     rows = [a for _ in 1:q for a in 1:q]
