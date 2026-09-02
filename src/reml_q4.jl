@@ -746,68 +746,48 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
     nobs     = length(prob.leaf_node)
     nph      = length(phi0)
 
-    # Cache-updating main evaluation (for the line-search objective).
-    function neg_reml(phiv)
+    # Objective AND exact gradient in one evaluation (#575).
+    #
+    # This replaced a central finite-difference gradient with step
+    # `h_inner = max(h_fd, 5e-4)`, which re-ran the whole (u, beta) alternation
+    # for each of the 2*nph perturbations. Two things were wrong with that.
+    # (1) ACCURACY: each one-sided value carried the alternation's own relative
+    # exit slack, so on the biv-q4-phylo-reml cell the gradient's noise was the
+    # same order as `g_tol` itself -- convergence was being certified at the
+    # noise floor, which is what #575 is (see docs/src/developer-notes/
+    # reml-q4-exact-gradient.md). (2) COST: 2*nph + 1 mode solves per gradient
+    # instead of one.
+    #
+    # `reml_nll_and_exact_grad` returns the value at a JOINT-Newton-certified
+    # mode together with the exact gradient, so the line search and the gradient
+    # see the same objective by construction. `gz_last` records the achieved
+    # ‖∇_z J‖ so the convergence flag can require the mode to have been found,
+    # not merely the outer optimiser to have stopped.
+    gz_last = Ref(Inf)
+    fg! = function (F, G, phiv)
         eval_cnt[] += 1
-        local rv, uv, _, bv, _
+        pv = Vector{Float64}(phiv)
+        local nllv, gv, uv, bv, gz
         try
-            rv, uv, _, bv, _ = reml_ll_and_mode(prob, Q_cond, Vector{Float64}(phiv);
-                                                  u0=u_cache[], beta0=beta_cache[],
-                                                  n_newton=n_newton)
+            nllv, gv, uv, bv, _, gz = reml_nll_and_exact_grad(
+                prob, Q_cond, pv; u0=u_cache[], beta0=beta_cache[],
+                n_newton=n_newton)
         catch e
             (e isa DomainError || e isa LinearAlgebra.PosDefException ||
-             e isa LinearAlgebra.SingularException) || rethrow(e)
+             e isa LinearAlgebra.SingularException || e isa ArgumentError) || rethrow(e)
             return Inf
         end
-        isfinite(rv) || return Inf
+        (isfinite(nllv) && all(isfinite, gv)) || return Inf
         u_cache[]    = uv
         beta_cache[] = (mu1=bv.mu1, mu2=bv.mu2, s1=bv.s1, s2=bv.s2)
-        return -rv / nobs
-    end
-
-    # Finite-difference gradient with robust barrier handling.
-    # h_fd_inner is slightly larger than the default to avoid hitting the
-    # non-PD S barrier at tiny perturbations.
-    h_inner = max(h_fd, 5e-4)
-
-    fg! = function (F, G, phiv)
-        pv = Vector{Float64}(phiv)
-        f  = neg_reml(pv)    # updates cache
+        gz_last[]    = gz
         if G !== nothing
-            # Use the WARM start from the current cached state for FD evaluations.
-            # h_inner is large enough to avoid the S non-PD barrier near the mode.
-            u_snap    = u_cache[]
-            beta_snap = beta_cache[]
-            for k in 1:nph
-                pp = copy(pv); pp[k] += h_inner
-                pm = copy(pv); pm[k] -= h_inner
-                local fp, fm
-                try
-                    rv_p, _, _, _, _ = reml_ll_and_mode(prob, Q_cond,
-                        pp; u0=u_snap, beta0=beta_snap, n_newton=n_newton)
-                    fp = isfinite(rv_p) ? -rv_p/nobs : Inf
-                catch; fp = Inf; end
-                try
-                    rv_m, _, _, _, _ = reml_ll_and_mode(prob, Q_cond,
-                        pm; u0=u_snap, beta0=beta_snap, n_newton=n_newton)
-                    fm = isfinite(rv_m) ? -rv_m/nobs : Inf
-                catch; fm = Inf; end
-
-                if isfinite(fp) && isfinite(fm)
-                    G[k] = (fp - fm) / (2h_inner)
-                elseif isfinite(fp) && !isfinite(fm)
-                    G[k] = (fp - f) / h_inner
-                elseif !isfinite(fp) && isfinite(fm)
-                    G[k] = (f - fm) / h_inner
-                else
-                    G[k] = 0.0
-                end
-            end
-            # Pin the constrained lc directions (block-diagonal Σ_a): zero their
-            # gradient so LBFGS never steps off the constrained subspace.
+            copyto!(G, gv ./ nobs)
+            # Pin the constrained lc directions (block-diagonal Sigma_a): zero
+            # their gradient so LBFGS never steps off the constrained subspace.
             isempty(phi_zero) || (G[phi_zero] .= 0.0)
         end
-        return f
+        return nllv / nobs
     end
 
     # REML optimization via LBFGS starting from phi0.
@@ -936,21 +916,63 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
         end
     end
 
+    # Exact-gradient polish (#575). With a finite-difference gradient whose noise
+    # sat at the same order as `g_tol`, tightening the tolerance was meaningless
+    # -- there was nothing below the noise floor to find, and every polish tried
+    # on the FD route either failed to move or moved to a point that no longer
+    # met the gradient contract (scratchpad p12a). With an EXACT gradient at a
+    # joint-Newton-certified mode, a 10x tighter run is both meaningful and
+    # nearly free (one mode solve per evaluation instead of 2*nph + 1).
+    #
+    # Measured on biv-q4-phylo-reml: -219.614762 (g_residual 9.51e-4) ->
+    # -219.613996 (g_residual 7.27e-5), i.e. the cold-start public route lands
+    # within 1e-5 of drmTMB's own reported optimum.
+    #
+    # Adopted ONLY if the polished point is converged, no worse in objective AND
+    # strictly better in gradient residual, so it can never trade the caller's
+    # contract for a better number. The warm caches are snapshotted and restored
+    # on rejection: `fg!` mutates them on every trial evaluation whether or not
+    # the trial is adopted, and a rejected trial leaving a stale cache behind was
+    # itself a confirmed regression on an earlier attempt at this route.
+    if Optim.converged(res)
+        _u_snap = u_cache[]; _b_snap = beta_cache[]
+        _g_before = try; Optim.g_residual(res); catch; NaN; end
+        res_pol = _optimize_phi(Optim.minimizer(res), max(g_tol / 10, 1e-10),
+                                max(iterations, 1000))
+        _g_after = try; Optim.g_residual(res_pol); catch; NaN; end
+        if Optim.converged(res_pol) && isfinite(_g_after) &&
+           Optim.minimum(res_pol) <= Optim.minimum(res) &&
+           (!isfinite(_g_before) || _g_after < _g_before)
+            res = res_pol
+        else
+            u_cache[] = _u_snap; beta_cache[] = _b_snap
+        end
+    end
+
     phi_hat    = Optim.minimizer(res)
     _, lc_hat  = unpack_phi(prob, phi_hat)
     Lam_hat    = lc_to_Λ(lc_hat)
 
-    rhat, uhat, ch_H, bhat, P_hat, inner_ok = reml_ll_and_mode(
+    # Final evaluation through the SAME exact/joint-Newton path the optimiser
+    # used, so the reported objective, the mode and the certified gradient all
+    # refer to one point. `gz` = ‖∇_z J(ẑ)‖ replaces the old alternation flag as
+    # the inner-convergence criterion (#526): it measures the thing that flag was
+    # a proxy for, directly, and it is also exactly the condition under which the
+    # exact gradient — and therefore `g_residual` — means anything.
+    nll_hat, _, uhat, bhat, ch_H, gz_hat = reml_nll_and_exact_grad(
         prob, Q_cond, phi_hat; u0=u_cache[], beta0=beta_cache[], n_newton=n_newton)
     # The warm-cached u0/beta0 are the last line-search state, which need not sit at
     # the JOINT (u, β) mode for phi_hat. If that lands on the non-PD Schur barrier
-    # (S not PD ⇒ rhat = -Inf), re-evaluate COLD so the alternating E-step / β
-    # Newton re-converges the joint mode at phi_hat (mirrors the Gate-B cold check).
-    if !isfinite(rhat)
-        rhat, uhat, ch_H, bhat, P_hat, inner_ok = reml_ll_and_mode(
+    # (S not PD ⇒ nll_hat = Inf), re-evaluate COLD so the alternation and joint
+    # Newton re-converge the mode at phi_hat (mirrors the Gate-B cold check).
+    if !isfinite(nll_hat)
+        nll_hat, _, uhat, bhat, ch_H, gz_hat = reml_nll_and_exact_grad(
             prob, Q_cond, phi_hat; n_newton=n_newton)
     end
-    mlhat = laplace_ll(prob, P_hat, bhat, uhat, ch_H)
+    rhat     = isfinite(nll_hat) ? -nll_hat : -Inf
+    inner_ok = isfinite(gz_hat) && gz_hat < 1e-6
+    P_hat    = _reml_prior_precision(Q_cond, inv(Lam_hat))
+    mlhat    = laplace_ll(prob, P_hat, bhat, uhat, ch_H)
 
     g_resid_val = try; Optim.g_residual(res); catch; NaN; end
 
