@@ -70,7 +70,12 @@ fitt = drm(bf(@formula(y ~ x), @formula(sigma ~ 1), @formula(nu ~ 1)), Student()
 
 For strictly positive, multiplicative data. The μ formula is the mean of
 `log y`; `σ` (log link) is the SD of `log y`. The response-scale median is
-`exp(μ)`.
+`exp(μ)`. A random intercept `(1 | g)` or correlated slope `(1 + x | g)`, or a
+`phylo(1 | group)` (needs `tree = ...`) / `relmat(1 | group)` (needs
+`K = ...`) structured marker, may be placed on the mean; the structured
+routes delegate to `Gaussian()` on `log y` (exact — no approximation) and
+shift the reported log-likelihood by the parameter-free Jacobian. `animal`/
+`spatial` markers are not implemented for `LogNormal()`.
 
 ```@example fam
 Random.seed!(3)
