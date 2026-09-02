@@ -11,7 +11,7 @@
 # 2026-09-02-a5-cross-engine-receipt.md (DRM.jl @ dc3ce1908369e4734e92c37
 # 220dad951647b4844, the commit this branch stacks on):
 #   DRM.jl objective at TMB's fitted point   = -219.620688
-#   DRM.jl objective at Julia's own point    = -219.630326
+#   DRM.jl objective at Julia's own point    = -219.630326 (pre-#579; -219.614005 post-#579)
 #
 #   julia --project=. -e 'using DRM, Test; include("test/test_bridge_objective_at.jl")'
 
@@ -136,7 +136,12 @@ end
                                               BRIDGE_OPTIONS;
                                               beta = beta_julia, Lambda = rr.Lambda,
                                               rho12 = rr.beta.rho[1])
-        @test isapprox(result["reml_loglik"], -219.630326; atol = 2e-4)
+        # HISTORY: the A5 receipt (DRM.jl @ dc3ce190, finite-difference mode-finder)
+        # recorded -219.630326 at Julia's own point. After #579 (exact REML
+        # gradient, merged f930e8bf) fit_q4_reml's optimum on this fixture is
+        # -219.614005, so the point moved with it; the TMB-point value above is
+        # unchanged. The entry must agree with the fit's own report (next test).
+        @test isapprox(result["reml_loglik"], -219.614005; atol = 2e-4)
     end
 
     @testset "(b) equals the private reml_objective_at path at an identical point" begin
