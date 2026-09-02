@@ -65,6 +65,7 @@ include("test_bootstrap_thread_flags.jl") # Independent storage for parallel sta
 include("test_lss_sparse.jl")  # #551 O(p) sparse exact marginal LSS engine
 include("test_lss_sparse_multi.jl")  # #563 S7b.1 sparse multi-component block assembly + objective
 include("test_lss_sparse_multi_gradient.jl")  # #563 S7b.2/S7b.2b sparse multi-component exact gradient
+include("test_lss_sparse_multi_reml.jl")  # #563 S7b.3 sparse multi-component REML correction + gradient
 include("test_sparse_precision_storage.jl")  # S5a (#563): no dense copy of the augmented tree precision
 include("test_lsss_multi.jl")  # #555 multi-component sd() (lsss)
 include("test_lss_reml.jl")    # #558 location-scale-scale REML

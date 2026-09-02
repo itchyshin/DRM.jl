@@ -396,16 +396,32 @@ function _lss_sparse_multi_assemble(θ::AbstractVector, y::AbstractVector, Xμ::
 end
 
 """
-    _lss_sparse_multi_objective(θ, y, Xμ, Xσ, comps::Vector{_SparseLssComp}) -> Float64
+    _lss_sparse_multi_objective(θ, y, Xμ, Xσ, comps::Vector{_SparseLssComp};
+                                reml::Bool = false) -> Float64
 
-Negative Gaussian ML log-likelihood of a sparse multi-component LSS model at
-a fixed `θ`, via the block assembly of [`_lss_sparse_multi_assemble`](@ref):
-logdet through the Cholesky factor of `H`, the zero-cancellation GMRF sum of
-squares (`:89` generalised: `dot(â, Qs*â)` becomes
-`dot(â, Q_all*â) = Σ_c dot(â_c, Q_c*â_c)`, §3), and the per-component prior
-logdets. Structural pattern (nested vs. crossed fill, §2.1) and PD-ness are
-checked directly against `_lss_sparse_multi_assemble`'s `H`, not through this
-scalar.
+Negative Gaussian ML (or REML, `reml = true`) log-likelihood of a sparse
+multi-component LSS model at a fixed `θ`, via the block assembly of
+[`_lss_sparse_multi_assemble`](@ref): logdet through the Cholesky factor of
+`H`, the zero-cancellation GMRF sum of squares (`:89` generalised:
+`dot(â, Qs*â)` becomes `dot(â, Q_all*â) = Σ_c dot(â_c, Q_c*â_c)`, §3), and the
+per-component prior logdets. Structural pattern (nested vs. crossed fill,
+§2.1) and PD-ness are checked directly against `_lss_sparse_multi_assemble`'s
+`H`, not through this scalar.
+
+**REML (#563 S7b.3, design note §4).** `reml = true` adds the Patterson–
+Thompson correction `+ 0.5*logdet(Xμ'V⁻¹Xμ) - 0.5*pμ*log(2π)` — the SAME
+closed form and normalisation convention #558's single-component
+`eval_reml` (`:135–156` above) and the dense multi-component route
+(`gaussian_lss.jl:634–638`) both use. `Xμ'V⁻¹Xμ` is obtained via `pμ` sparse
+Cholesky backsolves against the SAME shared factor `ch` this function already
+computes (`_lss_sparse_multi_reml_pieces`, §4's block-accumulation
+generalisation of `:138–152`'s per-column loop: `Z' * (w .* Xμ)` sums every
+component's contribution into `bX` at its own block offset in one sparse
+product, exactly as the ML `b` accumulation does at `:428` above — no
+cross-component term, per the design note's own review, §8 finding 5). Cost:
+`O(pμ · nnz(L))` on top of the ML evaluation, matching #558's order.
+`reml = false` (the default) is the ORIGINAL S7b.1 code path, byte-for-byte
+unchanged.
 
 IN SCOPE (#563 S7b.1): the assembly is correct for genuinely crossed
 component groupings too (it does not assume nesting) — but the design note's
@@ -413,12 +429,12 @@ O(p) fill argument (§2.1/§2.3) only covers one phylogenetic component plus
 nested or small (`G_c ≪ p`) iid components; a crossed topology at comparable
 scale is numerically correct here but NOT O(p) (§2.3 case (c)).
 
-OUT OF SCOPE for this sub-slice: gradients (S7b.2/S7b.2b), the REML
-correction (S7b.3), and `drm()`/router wiring (S7b.4) — see the block comment
-above this section.
+OUT OF SCOPE for this sub-slice: `drm()`/router wiring (S7b.4) — see the
+block comment above this section.
 """
 function _lss_sparse_multi_objective(θ::AbstractVector, y::AbstractVector, Xμ::AbstractMatrix,
-                                     Xσ::AbstractMatrix, comps::Vector{_SparseLssComp})
+                                     Xσ::AbstractMatrix, comps::Vector{_SparseLssComp};
+                                     reml::Bool = false)
     n = length(y)
     asm = _lss_sparse_multi_assemble(θ, y, Xμ, Xσ, comps)
     H, Q_all, Z, w, r = asm.H, asm.Q_all, asm.Z, asm.w, asm.r
@@ -437,7 +453,51 @@ function _lss_sparse_multi_objective(θ::AbstractVector, y::AbstractVector, Xμ:
 
     quad_sos = dot(res_lat, w .* res_lat) + dot(â, Q_all * â)
     nll_ml = 0.5 * (logdetV + quad_sos + n * log(2π))
-    return isfinite(nll_ml) ? nll_ml : 1e18
+    isfinite(nll_ml) || return 1e18
+    reml || return nll_ml
+
+    corr, _, _, _, chX = _lss_sparse_multi_reml_pieces(Xμ, w, Z, ch)
+    (chX !== nothing && isfinite(corr)) || return nll_ml + REML_NONPD_PENALTY
+    return nll_ml + corr
+end
+
+"""
+    _lss_sparse_multi_reml_pieces(Xμ, w, Z, ch) -> (corr, BX, ÂX, Xtilde, chX)
+
+Shared REML machinery (#563 S7b.3, design note §4) for both
+[`_lss_sparse_multi_objective`](@ref) and
+[`_lss_sparse_multi_objective_and_grad`](@ref): the Patterson–Thompson
+correction value `corr = 0.5*logdet(Xμ'V⁻¹Xμ) - 0.5*pμ*log(2π)` and the
+intermediates its gradient (below) reuses, computed via the
+Woodbury identity `V⁻¹x = w .* (x - Z*(H⁻¹*(Zᵀ*(w.*x))))` applied to every
+column of `Xμ` AT ONCE (one `q_total × pμ` sparse backsolve against the
+shared factor `ch`, rather than #558's `pμ` separate column solves — same
+total cost, `O(pμ · nnz(L))`):
+
+- `BX = Zᵀ(w .* Xμ)` (`q_total × pμ`): the multi-component generalisation of
+  `:138–145`'s per-column `bX` accumulation — every component's contribution
+  lands at its own block offset in one sparse product, no cross term (§8
+  finding 5);
+- `ÂX = ch \\ BX` (`q_total × pμ`): the joint BLUP of every `Xμ` column,
+  generalising `:146`'s `âX = ch \\ bX`;
+- `Xtilde = Xμ - Z*ÂX` (`n × pμ`): generalising `:147–148`'s
+  `Xk .- ZâX`;
+- `XtVinvX = Xμ'*(w .* Xtilde)` (`pμ × pμ`), `chX = cholesky(Symmetric(XtVinvX))`.
+
+Returns `(NaN, BX, ÂX, Xtilde, nothing)` if `chX` is not PD (caller applies
+`REML_NONPD_PENALTY`, `:154` above's convention).
+"""
+function _lss_sparse_multi_reml_pieces(Xμ::AbstractMatrix, w::AbstractVector,
+                                       Z::AbstractMatrix, ch)
+    pμ = size(Xμ, 2)
+    BX = Matrix(Z' * (w .* Xμ))
+    ÂX = ch \ BX
+    Xtilde = Xμ .- Z * ÂX
+    XtVinvX = Symmetric(Xμ' * (w .* Xtilde))
+    chX = cholesky(XtVinvX; check = false)
+    issuccess(chX) || return (NaN, BX, ÂX, Xtilde, nothing)
+    corr = 0.5 * logdet(chX) - 0.5 * pμ * log(2π)
+    return (corr, BX, ÂX, Xtilde, chX)
 end
 
 # ---------------------------------------------------------------------------
@@ -448,7 +508,8 @@ end
 
 """
     _lss_sparse_multi_objective_and_grad(θ, y, Xμ, Xσ, comps::Vector{_SparseLssComp};
-                                          cross_terms::Bool = true) -> (nll, grad)
+                                          cross_terms::Bool = true,
+                                          reml::Bool = false) -> (nll, grad)
 
 Exact analytic gradient of the sparse multi-component LSS objective
 ([`_lss_sparse_multi_objective`](@ref)), generalising #551's single-
@@ -524,10 +585,49 @@ accumulation and `O(n)` per unordered component pair for the cross
 accumulation — at most `m(m-1)/2` such pairs — so `O(p·n_components)`
 overall for fixed component count `m`, the same order as the block
 assembly itself (§2).
+
+**REML (#563 S7b.3, design note §4).** `reml = true` adds the exact gradient
+of the Patterson–Thompson correction `0.5*logdet(Xμ'V⁻¹Xμ) - 0.5*pμ*log(2π)`
+([`_lss_sparse_multi_objective`](@ref)'s REML branch) to `g_βσ` and every
+`g_α_c`; `g_βμ` is left UNTOUCHED. This is not a numerical convenience but an
+exact identity: `Xμ'V⁻¹Xμ` depends on `θ` only through `V` (hence through
+`βσ` and every `α_c`), never through `βμ`, so the correction's `β_μ` partial
+is EXACTLY zero and **`β_μ` is profiled out of the REML gradient** — the
+returned `g_βμ` block is bit-identical to the `reml = false` (ML) block at
+the same `θ` (the same structural contract `reml_q4.jl`/
+`gaussian_bivariate.jl` document for their own profiled-out mean
+parameters), not merely close under finite differences.
+
+Derivation, via the Schur-complement identity `logdet(Xμ'V⁻¹Xμ) = logdet(C) -
+logdet(H)` for the bordered matrix `C = [Xμ'WXμ  Xμ'WZ; Zᵀ WXμ  H]` (so
+`Xμ'V⁻¹Xμ` is `C`'s Schur complement w.r.t. `H`, standard REML/mixed-model-
+equations fact): writing `ÂX = H⁻¹(Zᵀ W Xμ)` (`q_total × pμ`, the SAME
+quantity [`_lss_sparse_multi_reml_pieces`](@ref) computes for the objective),
+`M = Xμ'V⁻¹Xμ`, `Minv = M⁻¹` (`pμ × pμ`, cheap — `pμ` is small), and
+`C2 = ÂX * Minv` (`q_total × pμ`), the two nonzero θ-derivative blocks of `C`
+(`Xμ'WXμ` doesn't depend on θ at all) combine so that:
+
+- `∂corr/∂βσ_k = -Σ_i Xσ[i,k]·w_i·(X̃ᵢ' Minv X̃ᵢ)`, where `X̃ = Xμ - Z*ÂX`
+  (`n × pμ`, `Xtilde` in [`_lss_sparse_multi_reml_pieces`](@ref)) — no
+  `Hinv`/Takahashi term survives here: the `H`-logdet and `C`-logdet
+  contributions that both involve `Hinv[node,node]`-type bilinear forms
+  cancel exactly (verified symbolically and against central-FD below);
+- `∂corr/∂η_c,g` (per-group-level, chained through `Zg_c` exactly as `g_α_c`
+  is): own-node term `diagZtWZ[c][node]·Ψ[ĝ,ĝ] - dot(BX[ĝ,:], C2[ĝ,:])` plus
+  the SAME cross-component accumulation pattern the ML `g_α_c` uses (`:687–
+  698` above) with `Hinv[gi,gj]` replaced by `Ψ[gi,gj] := dot(ÂX[gi,:],
+  C2[gj,:])` (the `(gi,gj)` entry of `ÂX*Minv*ÂX'`, needed only at exactly
+  the same sparse `(node, node')` pairs the ML gradient already visits — no
+  new sparsity pattern to track), where `BX = Zᵀ(w .* Xμ)`
+  (`_lss_sparse_multi_reml_pieces`).
+
+Every quantity above (`ÂX`, `BX`, `Minv`, `Xtilde`) is already produced by a
+single call to [`_lss_sparse_multi_reml_pieces`](@ref) — no extra Cholesky
+factorisation beyond the one `chX` (`pμ × pμ`, trivial) it already forms.
 """
 function _lss_sparse_multi_objective_and_grad(θ::AbstractVector, y::AbstractVector, Xμ::AbstractMatrix,
                                               Xσ::AbstractMatrix, comps::Vector{_SparseLssComp};
-                                              cross_terms::Bool = true)
+                                              cross_terms::Bool = true, reml::Bool = false)
     n = length(y)
     pμ = size(Xμ, 2); pσ = size(Xσ, 2)
     m = length(comps)
@@ -640,5 +740,53 @@ function _lss_sparse_multi_objective_and_grad(θ::AbstractVector, y::AbstractVec
 
     grad = vcat(g_βμ, g_βσ, g_αs...)
     all(isfinite, grad) || return (1e18, Float64[])
-    return (nll_ml, grad)
+    reml || return (nll_ml, grad)
+
+    # REML (#563 S7b.3, design note §4) — see the docstring's derivation.
+    corr, BX, ÂX, Xtilde, chX = _lss_sparse_multi_reml_pieces(Xμ, w, Z, ch)
+    (chX !== nothing && isfinite(corr)) || return (nll_ml + REML_NONPD_PENALTY, Float64[])
+
+    Minv = chX \ Matrix{Float64}(I, pμ, pμ)
+    C2 = ÂX * Minv                        # q_total × pμ
+    XtildeM = Xtilde * Minv               # n × pμ
+
+    g_βσ_corr = zeros(pσ)
+    for i in 1:n
+        qi = dot(view(Xtilde, i, :), view(XtildeM, i, :))
+        coef = -w[i] * qi
+        for k in 1:pσ
+            g_βσ_corr[k] += Xσ[i, k] * coef
+        end
+    end
+
+    d_all_corr = [zeros(c.G) for c in comps]
+    for (ci, c) in enumerate(comps)
+        for g in 1:c.G
+            r_node = c.leaf_pos[g]
+            ĝ = offnode[ci] + r_node
+            psi_own = dot(view(ÂX, ĝ, :), view(C2, ĝ, :))
+            term_a = -dot(view(BX, ĝ, :), view(C2, ĝ, :))
+            d_all_corr[ci][g] = diagZtWZ[ci][r_node] * psi_own + term_a
+        end
+    end
+    for ci in 1:m, cj in (ci+1):m
+        c_i = comps[ci]; c_j = comps[cj]
+        for i in 1:n
+            gi = offnode[ci] + nodeC[ci][i]
+            gj = offnode[cj] + nodeC[cj][i]
+            psi_cross = dot(view(ÂX, gi, :), view(C2, gj, :))
+            val = w[i] * wtsC[ci][i] * wtsC[cj][i] * psi_cross
+            d_all_corr[ci][c_i.gidx[i]] += val
+            d_all_corr[cj][c_j.gidx[i]] += val
+        end
+    end
+    g_αs_corr = [comps[ci].Zg' * d_all_corr[ci] for ci in 1:m]
+
+    grad_reml = copy(grad)
+    grad_reml[(pμ+1):(pμ+pσ)] .+= g_βσ_corr
+    for ci in 1:m
+        grad_reml[(offα[ci]+1):offα[ci+1]] .+= g_αs_corr[ci]
+    end
+    all(isfinite, grad_reml) || return (1e18, Float64[])
+    return (nll_ml + corr, grad_reml)
 end
