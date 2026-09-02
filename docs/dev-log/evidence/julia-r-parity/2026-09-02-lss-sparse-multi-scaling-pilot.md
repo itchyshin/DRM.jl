@@ -173,3 +173,28 @@ suite: the `timeout 5400 … Pkg.test()` wrapper and its child, plus a second
 independent suite-related `julia … runtests.jl` process — all pre-existing,
 none started or touched by this pilot). The `~/s7b_pilot/DRM.jl` checkout
 itself was left in place (only processes were asked to be cleaned up).
+
+## Post-fix re-measurement (S7b.6, head 86b7e3d4, Totoro, single-threaded, 2026-09-02)
+
+The pre-fix exponent was not the engine's: profiling (p = 1000/2000/4000) showed the multi-component
+router materialising the dense G×G tree correlation (`_phylo_correlation`, a cubic inverse) before it
+decided the route, and the sparse branch never reads it. Fix = a `_LazyPhyloK` marker; the dense route
+alone materialises it. Same ladder, same fixture, same seeds; log-likelihoods are bit-identical to the
+pre-fix run (the objective is untouched), only the wasted work is gone.
+
+| p | n | method | wall s (pre-fix 07c18534) | wall s (post-fix 86b7e3d4) | loglik identical | nnz(L)/dim | RSS MB post-fix |
+|---|---|---|---|---|---|---|---|
+| 1000 | 2000 | ML | 9.263 | 8.665 | yes | 3.085 | 1248.0 |
+| 1000 | 2000 | REML | 0.971 | 0.764 | yes | 3.085 | 1248.0 |
+| 2500 | 5000 | ML | 3.657 | 0.338 | yes | 3.089 | 1248.0 |
+| 2500 | 5000 | REML | 3.917 | 0.941 | yes | 3.089 | 1248.0 |
+| 5000 | 10000 | ML | 22.525 | 0.679 | yes | 3.091 | 1248.0 |
+| 5000 | 10000 | REML | 23.323 | 1.548 | yes | 3.091 | 1301.3 |
+| 10000 | 20000 | ML | 165.788 | 1.624 | yes | 3.092 | 1341.7 |
+| 10000 | 20000 | REML | 167.017 | 2.863 | yes | 3.092 | 1350.0 |
+
+Wall-time exponent 2500 → 10000: ML log(1.624/0.338)/log 4 ≈ 1.13; REML log(2.863/0.941)/log 4 ≈ 0.80.
+Verdict: sparsity O(p) (unchanged) AND wall time O(p) to p = 10,000 on this fixture, post-fix. Memory
+1.25–1.35 GB across the ladder (was 8 GB at p = 10,000). Log: `~/s7b_work/pilot-postfix-86b7e3d4.log` on
+Totoro; local copy in the session scratchpad (`s7b6-pilot-postfix.log`). Totoro left with no pilot
+processes. The original pre-fix table above is kept as the record of the finding.
