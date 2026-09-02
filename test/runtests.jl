@@ -272,6 +272,8 @@ include("test_parity_biv_q4_phylo_reml.jl")       # #445 Option A: #433/#434 sam
 include("test_parity_gaussian_phylo_mean.jl")     # #445 Option A: #437/#438 Route A fixture
 include("test_q4_reml_warm_restart.jl")           # #484: public drm() converges the q4 phylo REML cell
 include("test_reml_objective_at.jl")              # #575: objective-at-point diagnostic primitive
+include("test_575_exact_reml_gradient.jl")        # #575: exact REML gradient vs a tight central difference
+include("test_575_q4_optimum.jl")                 # #575: the q4 REML cold-start route reaches its own optimum
 
 # Delta-method prediction standard errors (feat-predict-se).
 include("test_predict_se.jl")
