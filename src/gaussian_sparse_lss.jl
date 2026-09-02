@@ -264,3 +264,178 @@ end
 
 # Alias for compatibility
 const _fit_structured_gaussian_lss_sparse = _fit_phylo_gaussian_lss_sparse
+
+# ---------------------------------------------------------------------------
+# #563 S7b.1 — sparse MULTI-component block assembly + objective.
+#
+# Generalises the single-phylo-component engine above
+# (`_fit_phylo_gaussian_lss_sparse`) to several `sd()` components in one fit,
+# the way `#555`'s dense multi-component engine (`_fit_gaussian_lss_multi`,
+# `gaussian_lss.jl:564`) already does — following the block-precision
+# construction (`H = blockdiag(Q_k) + ZᵀWZ`) `gaussian_structured.jl`'s
+# `_fit_two_structured_gaussian_sparse_spec` already uses for TWO fixed-
+# variance structured MEAN components, generalised here to `m` components
+# whose per-group SDs are themselves modelled (LSS, `sd(g) ~ …`, as #551
+# does for one). See
+# `docs/src/developer-notes/lss-sparse-multi-component.md` (§2/§3) for the
+# reviewed design.
+#
+# Scope for THIS sub-slice (assembly + objective ONLY, evaluated at a fixed
+# θ — no fit loop yet):
+# - the block augmented precision H = blockdiag(Q_1,…,Q_m) + ZᵀWZ (§2),
+#   including the genuine cross-component blocks (Z_k)ᵀ W Z_l the design
+#   note introduces — `hcat`-ing the per-component sparse incidence columns
+#   into one `Z = [Z_1|…|Z_m]` and forming `Zᵀ diag(W) Z` in one sparse
+#   product assembles those cross blocks automatically, so no separate
+#   cross-block loop is needed;
+# - the per-component `b_c = Z_cᵀ W r` accumulation into a shared `b`
+#   (`Z' * (w .* r)` sums every component's contribution at its own block
+#   offset in one product, generalising the `b` loop at :75–79);
+# - the ML objective at that fixed θ (logdet via the Cholesky factor, the
+#   zero-cancellation quadratic form, and the per-component prior logdets,
+#   generalising :85–90).
+#
+# NOT in scope here (design note §7, sub-slices S7b.2–S7b.4): the exact
+# analytic gradient (the diagonal-only trace-term formula the note first
+# drafted is WRONG for the cross-component case — §3/§8 finding 4 — so no
+# gradient is attempted here at all), the REML correction (§4), and
+# `drm()`/router wiring. `_lss_sparse_multi_objective` only evaluates a
+# supplied θ; it does not fit. Because there is no repeated-evaluation loop
+# yet in this sub-slice, the block Cholesky is (re)factorised fresh each
+# call — the symbolic-factor-reuse-via-`cholesky!` idiom `#551` and
+# `gaussian_structured.jl` use inside their optimiser closures only pays for
+# itself once a fit loop calls this repeatedly (S7b.4); building that
+# machinery here with no caller to benefit from it would be premature.
+
+# One component of a sparse multi-component LSS fit. `Qs` is the component's
+# sparse prior precision: the root-conditioned augmented tree precision for a
+# phylogenetic component (generalising `Qs` at :20 above), or `I_G` for an
+# iid component, since `K_c = I` (design note §1). `leaf_pos` maps a group
+# level to its row within the component's own latent block; `inv_sd` is the
+# Takahashi leaf-SD row-scaling (the `D_a T` row-scaling generalised, :53) —
+# ≡ 1 for iid, since an iid group has no cross-group correlation to absorb.
+struct _SparseLssComp
+    gidx::Vector{Int}
+    G::Int
+    Zg::Matrix{Float64}
+    q::Int
+    leaf_pos::Vector{Int}
+    Qs::SparseMatrixCSC{Float64,Int}
+    inv_sd::Vector{Float64}
+    logdetCprior::Float64
+end
+
+"""
+    _sparse_lss_phylo_comp(gidx, G, Zg, tree) -> _SparseLssComp
+
+The phylogenetic block of a sparse multi-component LSS fit: the same
+root-conditioned augmented tree precision and Takahashi leaf-SD row-scaling
+`_fit_phylo_gaussian_lss_sparse` builds for a single component (:16–27).
+"""
+function _sparse_lss_phylo_comp(gidx::AbstractVector{<:Integer}, G::Int, Zg::AbstractMatrix, tree)
+    phy = tree isa AbstractString ? augmented_phy(tree) : tree
+    phy.n_leaves == G ||
+        error("phylo component: tree has $(phy.n_leaves) tips but the grouping has $G levels")
+    Q, leaf_pos, q = augmented_tree_precision(phy)
+    Qs = dropzeros!(sparse(Symmetric(Q, :U)))
+    chQ = cholesky(Symmetric(Qs); check = false)
+    issuccess(chQ) || error("sparse LSS multi (phylo): augmented precision is not PD")
+    logdetCprior = -logdet(chQ)
+    Qinv = takahashi_selinv(chQ)
+    leaf_var = [Qinv[leaf_pos[t], leaf_pos[t]] for t in 1:G]
+    inv_sd = [1.0 / sqrt(leaf_var[t]) for t in 1:G]
+    return _SparseLssComp(collect(Int, gidx), G, Matrix{Float64}(Zg), q, leaf_pos, Qs, inv_sd, logdetCprior)
+end
+
+"""
+    _sparse_lss_iid_comp(gidx, G, Zg) -> _SparseLssComp
+
+An iid block: `K_c = I_G` (design note §1), so the latent state IS the group
+level (`leaf_pos = 1:G`), prior precision `I_G`, and `inv_sd ≡ 1`.
+"""
+function _sparse_lss_iid_comp(gidx::AbstractVector{<:Integer}, G::Int, Zg::AbstractMatrix)
+    Qs = sparse(1.0 * I, G, G)
+    return _SparseLssComp(collect(Int, gidx), G, Matrix{Float64}(Zg), G, collect(1:G), Qs, ones(G), 0.0)
+end
+
+"""
+    _lss_sparse_multi_assemble(θ, y, Xμ, Xσ, comps::Vector{_SparseLssComp})
+
+Block assembly at a fixed `θ = [βμ; βσ; α_1; …; α_m]` (`comps` order):
+`H = blockdiag(Q_1,…,Q_m) + ZᵀWZ` (design note §2), plus the joint sparse
+incidence `Z = [Z_1|…|Z_m]`, the residual precision `w`, and the mean
+residual `r`. Returns a `NamedTuple` `(H, Q_all, Z, w, r)`; `H` is what a
+caller checks the O(p) fill claim (§2.1/§2.3) or PD-ness against.
+"""
+function _lss_sparse_multi_assemble(θ::AbstractVector, y::AbstractVector, Xμ::AbstractMatrix,
+                                    Xσ::AbstractMatrix, comps::Vector{_SparseLssComp})
+    n = length(y)
+    pμ = size(Xμ, 2); pσ = size(Xσ, 2)
+    m = length(comps)
+    psds = [size(c.Zg, 2) for c in comps]
+    offα = pμ + pσ .+ cumsum([0; psds])
+
+    βμ = θ[1:pμ]; βσ = θ[(pμ+1):(pμ+pσ)]
+    ημ = Xμ * βμ; ησ = Xσ * βσ
+    w = exp.(-2 .* ησ)
+    r = y .- ημ
+
+    Zcols = Vector{SparseMatrixCSC{Float64,Int}}(undef, m)
+    for (ci, c) in enumerate(comps)
+        α = θ[(offα[ci]+1):offα[ci+1]]
+        σa = exp.(c.Zg * α)
+        wtsc = (σa .* c.inv_sd)[c.gidx]
+        Zcols[ci] = _sparse_incidence(c.leaf_pos[c.gidx], n, c.q, wtsc)
+    end
+    Z = hcat(Zcols...)
+
+    Q_all = blockdiag((c.Qs for c in comps)...)
+    ZtWZ = dropzeros!(sparse(Symmetric(Z' * Diagonal(w) * Z)))
+    H = Q_all + ZtWZ
+    return (H = H, Q_all = Q_all, Z = Z, w = w, r = r)
+end
+
+"""
+    _lss_sparse_multi_objective(θ, y, Xμ, Xσ, comps::Vector{_SparseLssComp}) -> Float64
+
+Negative Gaussian ML log-likelihood of a sparse multi-component LSS model at
+a fixed `θ`, via the block assembly of [`_lss_sparse_multi_assemble`](@ref):
+logdet through the Cholesky factor of `H`, the zero-cancellation GMRF sum of
+squares (`:89` generalised: `dot(â, Qs*â)` becomes
+`dot(â, Q_all*â) = Σ_c dot(â_c, Q_c*â_c)`, §3), and the per-component prior
+logdets. Structural pattern (nested vs. crossed fill, §2.1) and PD-ness are
+checked directly against `_lss_sparse_multi_assemble`'s `H`, not through this
+scalar.
+
+IN SCOPE (#563 S7b.1): the assembly is correct for genuinely crossed
+component groupings too (it does not assume nesting) — but the design note's
+O(p) fill argument (§2.1/§2.3) only covers one phylogenetic component plus
+nested or small (`G_c ≪ p`) iid components; a crossed topology at comparable
+scale is numerically correct here but NOT O(p) (§2.3 case (c)).
+
+OUT OF SCOPE for this sub-slice: gradients (S7b.2/S7b.2b), the REML
+correction (S7b.3), and `drm()`/router wiring (S7b.4) — see the block comment
+above this section.
+"""
+function _lss_sparse_multi_objective(θ::AbstractVector, y::AbstractVector, Xμ::AbstractMatrix,
+                                     Xσ::AbstractMatrix, comps::Vector{_SparseLssComp})
+    n = length(y)
+    asm = _lss_sparse_multi_assemble(θ, y, Xμ, Xσ, comps)
+    H, Q_all, Z, w, r = asm.H, asm.Q_all, asm.Z, asm.w, asm.r
+    ch = cholesky(Symmetric(H); check = false)
+    issuccess(ch) || return 1e18
+
+    b = Vector(Z' * (w .* r))
+    â = ch \ b
+    Zâ = Z * â
+    res_lat = r .- Zâ
+
+    logdetH = logdet(ch)
+    logdetD = -sum(log, w)
+    logdetCprior = sum(c.logdetCprior for c in comps)
+    logdetV = logdetD + logdetCprior + logdetH
+
+    quad_sos = dot(res_lat, w .* res_lat) + dot(â, Q_all * â)
+    nll_ml = 0.5 * (logdetV + quad_sos + n * log(2π))
+    return isfinite(nll_ml) ? nll_ml : 1e18
+end
