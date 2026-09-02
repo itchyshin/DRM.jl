@@ -279,7 +279,7 @@ H]`, and the selected-pairs matrix `Ψ[gi,gj] := dot(ÂX[gi,:], C2[gj,:])`
 `g_α,c` trace term — is NOT re-derived in this note (an earlier draft left it
 as a TO-BUILD placeholder here, S7b.2 found the omission): it is fully
 derived and FD-verified in
-[`_lss_sparse_multi_objective_and_grad`](@ref)'s own docstring
+[`DRM._lss_sparse_multi_objective_and_grad`](@ref)'s own docstring
 (`gaussian_sparse_lss.jl`, the function's REML paragraph), which is the
 authoritative source for this derivation. Read it there rather than
 re-deriving it from this section.
