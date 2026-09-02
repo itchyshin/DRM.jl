@@ -95,7 +95,12 @@ const FORM = bf(mu1    = @formula(y1 ~ x + phylo(1 | species)),
     # beta-scale. Both #575's frozen probe (a different worktree/commit) and
     # this in-process reproduction sit inside that same noise floor, and it is
     # 150x tighter than the fixture's own cross-optimum atol_loglik = 0.03.
-    @test isapprox(obj_at_julia_hat.reml_loglik, -219.630231; atol = 2e-4)
+    # HISTORY: on the finite-difference mode-finder this pinned -219.630231 (the
+    # #575 "suboptimal basin"). After #579 (exact REML gradient, merged f930e8bf)
+    # fit_q4_reml's own optimum is -219.614005 (2e-5 from drmTMB's -219.613986),
+    # so the point this test fits to moved; the value AT that point is what is
+    # pinned, and it must agree with the fit's own report (next assertion).
+    @test isapprox(obj_at_julia_hat.reml_loglik, -219.614005; atol = 2e-4)
     # Self-consistency: evaluating at Julia's OWN optimum must reproduce
     # fit_q4_reml's own reported reml_loglik, not just #575's frozen number.
     @test isapprox(obj_at_julia_hat.reml_loglik, rr.reml_loglik; atol = 2e-4)
@@ -122,7 +127,11 @@ const FORM = bf(mu1    = @formula(y1 ~ x + phylo(1 | species)),
     # The point at issue in #575: DRM.jl's own objective at TMB's theta is
     # BETTER than what DRM.jl's own solver returned (mode-finder gap, not an
     # objective-translation difference).
-    @test obj_at_tmb_hat.reml_loglik > rr.reml_loglik
+    # HISTORY: pre-#579 this read `obj_at_tmb_hat > rr` — DRM.jl's own objective
+    # was BETTER at TMB's point than at its own optimum, the #575 mode-finder
+    # diagnosis. Post-#579 the fitter's optimum is at least as good as any
+    # probe point, TMB's included; the diagnostic primitive itself is unchanged.
+    @test rr.reml_loglik >= obj_at_tmb_hat.reml_loglik - 1e-8
 end
 
 end # module TestReplObjectiveAt
