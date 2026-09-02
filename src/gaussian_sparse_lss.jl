@@ -439,3 +439,206 @@ function _lss_sparse_multi_objective(θ::AbstractVector, y::AbstractVector, Xμ:
     nll_ml = 0.5 * (logdetV + quad_sos + n * log(2π))
     return isfinite(nll_ml) ? nll_ml : 1e18
 end
+
+# ---------------------------------------------------------------------------
+# #563 S7b.2 / S7b.2b — exact analytic gradient of the sparse multi-component
+# LSS objective. See
+# `docs/src/developer-notes/lss-sparse-multi-component.md` §3 (alignment
+# table) and §8 finding 4 for the reviewed derivation this generalises.
+
+"""
+    _lss_sparse_multi_objective_and_grad(θ, y, Xμ, Xσ, comps::Vector{_SparseLssComp};
+                                          cross_terms::Bool = true) -> (nll, grad)
+
+Exact analytic gradient of the sparse multi-component LSS objective
+([`_lss_sparse_multi_objective`](@ref)), generalising #551's single-
+component gradient (`:99–127` above) to `m` components sharing the block
+augmented precision `H` (design note §2). `nll` is obtained by calling
+[`_lss_sparse_multi_objective`](@ref) directly, so it is bit-identical to
+that entry's own return value; `grad = [g_βμ; g_βσ; g_α_1; …; g_α_m]`.
+
+**The cross-component correction (§3/§8 finding 4).** For a single
+component, one observation touches exactly ONE latent node, so `Zᵀ W Z` is
+diagonal and `∂H/∂α` only ever perturbs its own diagonal entry (#551's
+`s_node = Hinv[r_node, r_node]`). With `m ≥ 2` components, one observation
+touches `m` nodes (one per component), so `Zᵀ W Z` gains genuine cross-
+component blocks, and `∂H[g,t]/∂α_c,g` is nonzero not only at `H[g,g]` but
+at every `H[g,t]` for `t` a node of another component sharing an
+observation with `g`. The design note's adversarial review (§8 finding 4)
+showed the naive diagonal-only generalisation of #551's formula is WRONG:
+on its 6-node nested toy, central-FD `d(logdet H)/dα_iid[1] = 1.400168`,
+the diagonal-only formula gives `2.669901` (**91% error**), the corrected
+formula (own-node term `Hinv[g,g]·∂H[g,g]/∂α_c,g` plus the cross-component
+accumulation `Hinv[g,t]·∂H[g,t]/∂α_c,g` over every node `t` of every other
+component sharing an observation with `g`) agrees to `3.4e-10`. Every
+`Hinv[g,t]` this needs is already inside the Takahashi selected inverse's
+pattern — sparse-Cholesky fill (`L+Lᵀ`) only ever grows a matrix's own
+nonzero set, and `H[g,t] ≠ 0` (from the shared observation) implies `g,t`
+are already coupled in `H`'s own pattern, hence in `L`'s (see
+`takahashi_selinv`, `src/takahashi_selinv.jl:103`) — so the fix costs
+nothing extra to fetch.
+
+**A second, related correction not spelled out in the design note's own
+alignment table (verified here by central-FD, not merely asserted): the
+`quad_term` subtraction also needs a component-LOCAL fix.** The note's
+table describes `quad_term` (the `u[i]*Zâ[i]` sum) as "unaffected" by
+multi-component, apparently intending the JOINT
+`Zâ_i = Σ_c' wts_c'[i]·â[node(i,c')]` `_lss_sparse_multi_objective` itself
+computes as `Z*â`. Re-deriving `∂quad_sos/∂α_c,g` from scratch (using the
+same GMRF zero-cancellation identity #551 relies on — `â` solves `H·â =
+Zᵀ W r`, so `Q_all·â = Zᵀ W(r - Zâ)` and the `∂â/∂α` term vanishes
+identically) shows the surviving term is
+`-2·â[node_c(g)]·Σ_{i: node_c(i)=g} u_i·wts_c[i]`: it needs component `c`'s
+OWN contribution `wts_c[i]·â[node_c(i)]` to row `i`'s fitted value, not the
+joint sum over every component sharing that row. Using the joint `Zâ_i`
+here silently collapses every component's `quad_term` to the SAME scalar
+total whenever every component has a single-column `Zg` (confirmed on a
+6-node nested toy mirroring the design note's: both components' `quad_term`
+came out numerically identical under the joint formula — impossible, since
+they must differ by component in general) — the component-local fix
+matches central-FD to `~1e-9` relative at every point checked. Recorded
+here because it is exactly the kind of load-bearing spec gap symbolic-
+alignment exists to catch before code ships.
+
+**`g_βσ`** needs the SAME generalisation as `g_α,c` for the same structural
+reason: `Vinv_ii = w_i - w_i²·zᵢᵀH⁻¹zᵢ` where `zᵢ` (row `i` of the joint
+`Z`) has one nonzero per component, so `zᵢᵀH⁻¹zᵢ` is the FULL bilinear form
+`Σ_{c,c'} wts_c[i]·wts_c'[i]·Hinv[node_c(i), node_c'(i)]` over every
+component pair touched by row `i` (own AND cross), not the single-node
+read `Hinv[r_node, r_node]` #551 uses when `m = 1`.
+
+`cross_terms = false` reproduces the WRONG diagonal-only `g_α` formula
+(own-node term only, no cross-component accumulation) — a test-only hook
+for the regression guard pinning finding 4 (design note §5 oracle 3): with
+it, the returned `g_α` block must disagree with the FD gradient by a wide
+margin, so a future regression to the pre-review #551-style formula is
+caught rather than silently reintroduced. `g_βμ` and `g_βσ` are unaffected
+by this flag.
+
+On failure (non-PD `H` or a non-finite objective) returns `(1e18,
+Float64[])`, matching #551's sentinel convention.
+
+Complexity: one Takahashi selected inverse per evaluation (`O(nnz(L))`,
+design note §2) plus `O(n)` per component for the own-node/quad
+accumulation and `O(n)` per unordered component pair for the cross
+accumulation — at most `m(m-1)/2` such pairs — so `O(p·n_components)`
+overall for fixed component count `m`, the same order as the block
+assembly itself (§2).
+"""
+function _lss_sparse_multi_objective_and_grad(θ::AbstractVector, y::AbstractVector, Xμ::AbstractMatrix,
+                                              Xσ::AbstractMatrix, comps::Vector{_SparseLssComp};
+                                              cross_terms::Bool = true)
+    n = length(y)
+    pμ = size(Xμ, 2); pσ = size(Xσ, 2)
+    m = length(comps)
+    psds = [size(c.Zg, 2) for c in comps]
+    offα = pμ + pσ .+ cumsum([0; psds])
+
+    nll_ml = _lss_sparse_multi_objective(θ, y, Xμ, Xσ, comps)
+    (isfinite(nll_ml) && nll_ml < 1e18) || return (nll_ml, Float64[])
+
+    βμ = θ[1:pμ]; βσ = θ[(pμ+1):(pμ+pσ)]
+    ημ = Xμ * βμ; ησ = Xσ * βσ
+    w = exp.(-2 .* ησ)
+    r = y .- ημ
+
+    # Node offset of each component's block within the shared H (cumsum of
+    # component `q`, the same order `_lss_sparse_multi_assemble` lays `Z`
+    # out in), the local latent-node touched by each row, and each row's
+    # per-component `wts` scaling.
+    offnode = Vector{Int}(undef, m + 1); offnode[1] = 0
+    for (ci, c) in enumerate(comps)
+        offnode[ci+1] = offnode[ci] + c.q
+    end
+    wtsC = Vector{Vector{Float64}}(undef, m)
+    nodeC = Vector{Vector{Int}}(undef, m)
+    for (ci, c) in enumerate(comps)
+        α = θ[(offα[ci]+1):offα[ci+1]]
+        σa = exp.(c.Zg * α)
+        wtsC[ci] = (σa .* c.inv_sd)[c.gidx]
+        nodeC[ci] = c.leaf_pos[c.gidx]
+    end
+
+    asm = _lss_sparse_multi_assemble(θ, y, Xμ, Xσ, comps)
+    H, Q_all, Z = asm.H, asm.Q_all, asm.Z
+    ch = cholesky(Symmetric(H); check = false)
+    issuccess(ch) || return (1e18, Float64[])
+
+    b = Vector(Z' * (w .* r))
+    â = ch \ b
+    Zâ = Z * â
+    res_lat = r .- Zâ
+    u = w .* res_lat
+
+    Hinv = takahashi_selinv(ch)
+
+    g_βμ = -(Xμ' * u)
+
+    # Per component: diag(Zᵀ W Z) block (unchanged from #551) and this
+    # component's OWN contribution to each row's fitted Zâ (needed for the
+    # quad_term correction above — NOT the joint `Zâ`).
+    diagZtWZ = Vector{Vector{Float64}}(undef, m)
+    Zâ_own = Vector{Vector{Float64}}(undef, m)
+    for (ci, c) in enumerate(comps)
+        dz = zeros(c.q)
+        zo = zeros(n)
+        for i in 1:n
+            node = nodeC[ci][i]
+            dz[node] += w[i] * wtsC[ci][i]^2
+            zo[i] = wtsC[ci][i] * â[offnode[ci] + node]
+        end
+        diagZtWZ[ci] = dz
+        Zâ_own[ci] = zo
+    end
+
+    # g_βσ: full bilinear form zᵢᵀ Hinv zᵢ across every component pair (own
+    # AND cross) touched by row i.
+    g_βσ = zeros(pσ)
+    for i in 1:n
+        zHz = 0.0
+        for ci in 1:m
+            gi = offnode[ci] + nodeC[ci][i]
+            zHz += wtsC[ci][i]^2 * Hinv[gi, gi]
+            for cj in (ci+1):m
+                gj = offnode[cj] + nodeC[cj][i]
+                zHz += 2 * wtsC[ci][i] * wtsC[cj][i] * Hinv[gi, gj]
+            end
+        end
+        vinv_ii = w[i] - w[i]^2 * zHz
+        dη = vinv_ii / w[i] - u[i]^2 / w[i]
+        for k in 1:pσ
+            g_βσ[k] += Xσ[i, k] * dη
+        end
+    end
+
+    # g_α_c: own-node trace term (#551) + cross-component trace term (§3/§8
+    # finding 4) - quad_term (component-local Zâ, per the correction above).
+    d_all = [zeros(c.G) for c in comps]
+    for (ci, c) in enumerate(comps)
+        for g in 1:c.G
+            r_node = c.leaf_pos[g]
+            ĝ = offnode[ci] + r_node
+            d_all[ci][g] = diagZtWZ[ci][r_node] * Hinv[ĝ, ĝ]
+        end
+        for i in 1:n
+            d_all[ci][c.gidx[i]] -= u[i] * Zâ_own[ci][i]
+        end
+    end
+    if cross_terms
+        for ci in 1:m, cj in (ci+1):m
+            c_i = comps[ci]; c_j = comps[cj]
+            for i in 1:n
+                gi = offnode[ci] + nodeC[ci][i]
+                gj = offnode[cj] + nodeC[cj][i]
+                val = w[i] * wtsC[ci][i] * wtsC[cj][i] * Hinv[gi, gj]
+                d_all[ci][c_i.gidx[i]] += val
+                d_all[cj][c_j.gidx[i]] += val
+            end
+        end
+    end
+    g_αs = [comps[ci].Zg' * d_all[ci] for ci in 1:m]
+
+    grad = vcat(g_βμ, g_βσ, g_αs...)
+    all(isfinite, grad) || return (1e18, Float64[])
+    return (nll_ml, grad)
+end
