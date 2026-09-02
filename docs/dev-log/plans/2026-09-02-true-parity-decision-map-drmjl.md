@@ -23,6 +23,9 @@ lanes that had not yet compared notes.
 
 ## Decisions so far
 
+
+> **Standing rule vs this arc's scope (D-204, drmTMB session, 2026-09-02):** Shinichi: *"both ways for user-facing; keep the legacy rewrite; file the issues."* The standing principle is parity **both ways for user-facing capabilities**; D-203 §1's "one-directional" is the **scope of this DRM.jl arc**, not the principle. The drmTMB lane is filing the four user-facing reverse-gap issues from the AHEAD-OF list below. **D-203 §5 (same day):** the supported `(payload, φ)` bridge entry is approved PR-gated → PR #587.
+
 | decision | date | who | where recorded |
 |---|---|---|---|
 | Cross-family permanent boundary; intervals capability-parity not coverage; `mi()` fenced; #471 Student-only out (D-179 #1–4) | 2026-08-27 | Shinichi | vault D-179 |
@@ -166,3 +169,4 @@ the drmTMB lane's action, not performed by this session.
 | label echo (`coef_labels` → `bridge_formula_labels_v1` verbatim, fail-closed on count) | #585 (draft, stacked on #584) | wire field = `options["coef_labels"]` (drmTMB `a17306295`); RED 5 cases → GREEN 28/28, neighbours 819/819 and 20/20; `<dpar>_<name>` form confirmed against R's `drm_julia_bridge_check_coef_labels()` (`f0b7c4da9`) |
 | codex PR triage | comments on #568, #573, #574 | #568 pre-existing on `main` (merge #571 first); #574's `_loconly_resolvable_scales` guard turns the #461 degenerate fixture away before the refit stage (`res.failed > 0` → `0 > 0`) — a guard-vs-guard contract decision for Noether/Fisher + owner; #573 inherits it (contains `ff12403f`) |
 | `reml_objective_at` diagnostic primitive (cross-engine objective at a point) | #586 (draft; `feat/575-objective-at`, 2 ahead / 0 behind) | needed by drmTMB A4/A5 (`claude/rev-parity-a4-objective-at-bridge` @ `1291772bc`, pinned to `dc3ce190`); their 2×2 receipt reproduces the #575 mode-finder gap (DRM.jl at TMB point −219.620688 vs TMB −219.613986). Pins to re-run after #579. **Proposed, not built (owner sign-off needed):** one supported bridge entry `(payload, φ)` so R stops depending on five DRM.jl private names (#569 territory) |
+| `drm_bridge_objective_at` — supported bridge entry (payload + β, Λ, ρ12) | #587 (draft, stacked on #586) | RED → GREEN 17/17; reproduces the A5 receipt at both points (atol 2e-4); equals the private path at 1e-8; neighbours 5/5, 819/819, 188/188; drmTMB shim can drop its five private-name dependencies (R replacement call sent) |
