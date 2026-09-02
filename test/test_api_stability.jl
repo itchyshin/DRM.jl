@@ -84,7 +84,7 @@ const API_ENGINE = [
     "fit_q4_sparse_fisherz", "fz_DRD", "fz_R", "fz_correlations",
     "fz_marginal_and_grad", "fz_phi_to_lc", "fz_init_from_Sigma",
     "estep_mode", "prior_precision", "build_Huu", "joint_grad", "joint_nll",
-    "aug_prior_grad!",
+    "aug_prior_grad!", "reml_objective_at",
     "pack_theta", "unpack_theta", "lc_to_Λ", "Λ_to_lc",
     "lc_to_cov", "cov_to_lc", "lc_len",
     "augmented_phy", "random_balanced_tree", "random_caterpillar_tree",

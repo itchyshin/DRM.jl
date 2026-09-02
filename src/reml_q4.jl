@@ -654,6 +654,48 @@ _reml_normalise(reml_ll, n_beta::Integer) =
     isfinite(reml_ll) ? reml_ll + 0.5 * n_beta * log(2π) : reml_ll
 
 """
+    reml_objective_at(prob, Q_cond, phi; beta0=nothing, u0=nothing, n_newton=60)
+        -> NamedTuple(reml_loglik, raw_reml_ll, beta, u, converged)
+
+Evaluate the q=4 REML objective at a SUPPLIED `phi = (beta_rho, lc)` — the
+variance-component / correlation half of `fit_q4_reml`'s parameter space —
+reprofiling `beta_mu1/mu2/s1/s2` (the marginalised mean and scale fixed
+effects) by the SAME conditional-Newton alternation `fit_q4_reml` runs
+internally (`reml_ll_and_mode`), rather than re-running the outer LBFGS.
+
+This is the diagnostic primitive behind cross-engine mode-finder-vs-
+objective-translation checks (#575): given another engine's fitted point
+(mapped into DRM.jl's `phi`/`beta` scale — see `pack_phi`, `Λ_to_lc`), call
+this to ask "is DRM.jl's OWN objective, evaluated AT that point, better or
+worse than what DRM.jl's own solver returned?" without hand-writing the
+inner E-step/Newton alternation each time.
+
+`beta0`/`u0` seed the conditional-Newton warm start (pass the other engine's
+fixed effects, or `fit_q4_reml`'s returned `.beta`/`.u_hat`, as `beta0`/`u0`
+respectively) so the inner profile has the best chance of reaching its true
+conditional optimum at `phi` rather than stalling from a cold start.
+
+`reml_loglik` is on the SAME normalised (Patterson–Thompson, `+ (n_β/2)·log(2π)`)
+scale as `fit_q4_reml`'s `.reml_loglik` and as drmTMB/TMB/lme4/glmmTMB (#477);
+`raw_reml_ll` is the pre-normalisation value, exposed for constant-offset
+sanity checks. `n_β` is `prob`'s combined `X1+X2+Xs1+Xs2` design width — the
+same marginalised-fixed-effect count `fit_q4_reml` uses.
+
+Returns `(reml_loglik, raw_reml_ll, beta, u, converged)`. `converged` is the
+inner alternation's own convergence flag (`inner_converged` from
+`reml_ll_and_mode`) — a barrier hit (non-PD Schur complement) surfaces as
+`raw_reml_ll = reml_loglik = -Inf`, `converged = false`, rather than an error.
+"""
+function reml_objective_at(prob::AugProblem, Q_cond::SparseMatrixCSC, phi::AbstractVector;
+                            beta0=nothing, u0=nothing, n_newton::Int=60)
+    n_beta = size(prob.X1, 2) + size(prob.X2, 2) + size(prob.Xs1, 2) + size(prob.Xs2, 2)
+    raw, u_hat, _, beta_hat, _, inner_converged = reml_ll_and_mode(
+        prob, Q_cond, Vector{Float64}(phi); u0 = u0, beta0 = beta0, n_newton = n_newton)
+    return (reml_loglik = _reml_normalise(raw, n_beta), raw_reml_ll = raw,
+            beta = beta_hat, u = u_hat, converged = inner_converged)
+end
+
+"""
     fit_q4_reml(prob, Q_cond; beta0, Lambda0, [phi0], g_tol, ...) -> NamedTuple
 
 Fit REML objective over phi = (beta_rho, lc). beta_mu AND beta_sigma (the location
