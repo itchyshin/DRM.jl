@@ -468,7 +468,7 @@ end
 
 The q=4 REML objective as a NEGATIVE, UNNORMALISED restricted log-likelihood at
 `phi = (beta_rho, lc)`, evaluated at a joint-Newton-certified `(û, β̂)`. Same
-objective as [`reml_ll_and_mode`](@ref) up to sign; the difference is that the
+objective as `reml_ll_and_mode` up to sign; the difference is that the
 joint mode is driven to `‖∇_z J‖ ≈ 1e-10` instead of the alternation's relative
 beta criterion, which makes the value a smooth, deterministic function of `phi`
 — what a finite-difference reference (and a Newton-grade certification) needs.
