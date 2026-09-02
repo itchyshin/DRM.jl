@@ -418,28 +418,11 @@ end
 #   docs/src/developer-notes/reml-q4-exact-gradient.md
 # ---------------------------------------------------------------------------
 
-# Prior precision with a STRUCTURALLY FULL 4×4 axis block.
-#
-# `prior_precision(Q, Λ⁻¹)` calls `sparse(Λinv)`, which DROPS zeros. At an
-# exactly diagonal Λ — including `fit_q4_reml`'s own default warm start
-# `Λ0 = 0.3I(4)` — that leaves H_uu without its cross-axis entries at non-leaf
-# nodes, so the Cholesky pattern, and with it the Takahashi selected inverse,
-# is missing entries the logdet-H trace genuinely needs (they are structurally
-# absent, not zero in H⁻¹). Measured on the biv-q4-phylo-reml fixture at
-# Λ = 0.3I: two lc components of the gradient came out wrong by 0.04 and 13.7,
-# while every component agreed to 6.7e-8 the moment a 1e-6 off-diagonal was
-# added. Storing all 16 entries explicitly costs nothing numerically (the
-# matrix is identical) and removes the degeneracy.
-#
-# NOTE: `marginal_and_exact_grad` (fit_q4_sparse_tmb.jl) builds `Gst` from the
-# same construction and so shares this degeneracy on the ML path; that is left
-# alone here (out of scope for #575) and recorded in the derivation note.
-function _reml_prior_precision(Q::SparseMatrixCSC, Λinv::AbstractMatrix)
-    rows = [a for _ in 1:4 for a in 1:4]
-    cols = [b for b in 1:4 for _ in 1:4]
-    vals = [Λinv[a, b] for b in 1:4 for a in 1:4]
-    return kron(Q, sparse(rows, cols, vals, 4, 4))
-end
+# The local `_reml_prior_precision` guard (#579) against `prior_precision`'s
+# then-degenerate zero-dropping at an exactly diagonal Λ is gone: #577 fixed
+# `prior_precision` itself (src/sparse_aug_plsm.jl) to store the full q×q
+# axis block unconditionally, so the REML path now calls it directly. See
+# docs/src/developer-notes/reml-q4-exact-gradient.md §3 and #563.
 
 # Joint mode at phi, Newton-certified. Returns everything the value and the
 # gradient both need (P, the certified z_hat, A's factor, C = A^{-1}B, S's
@@ -451,7 +434,7 @@ function _reml_exact_state(prob::AugProblem, Q_cond::SparseMatrixCSC,
     phiv = Vector{Float64}(phi)
     rho_coef, lc = unpack_phi(prob, phiv)
     Lam = lc_to_Λ(lc)
-    P   = _reml_prior_precision(Q_cond, inv(Lam))
+    P   = prior_precision(Q_cond, inv(Lam))
     # Reuse the existing alternation to get into the right neighbourhood, then
     # certify with joint Newton (the alternation's relative beta exit is far too
     # loose to support an exact gradient — see the derivation note §2.4).
@@ -530,7 +513,7 @@ function reml_nll_and_exact_grad(prob::AugProblem, Q_cond::SparseMatrixCSC,
     # --- C1: ∇_phi J(ẑ; phi) with ẑ frozen (single-level AD, no CHOLMOD). ----
     jn_of_phi = function (pv::AbstractVector)
         rho_t = pv[1:kr]; lc_t = pv[kr+1:kr+10]
-        Pt = _reml_prior_precision(Q_cond, inv(lc_to_Λ(lc_t)))
+        Pt = prior_precision(Q_cond, inv(lc_to_Λ(lc_t)))
         βt = (mu1 = b.mu1, mu2 = b.mu2, s1 = b.s1, s2 = b.s2, rho = rho_t)
         return joint_nll_T(prob, Pt, u_hat, βt)
     end
@@ -613,7 +596,7 @@ function reml_nll_and_exact_grad(prob::AugProblem, Q_cond::SparseMatrixCSC,
     # --- I3: −∇_phi[ (∇_z J)' w ] at frozen (ẑ, w). ------------------------
     scalar_of_phi = function (pv::AbstractVector)
         rho_t = pv[1:kr]; lc_t = pv[kr+1:kr+10]
-        Pt = _reml_prior_precision(Q_cond, inv(lc_to_Λ(lc_t)))
+        Pt = prior_precision(Q_cond, inv(lc_to_Λ(lc_t)))
         βt = (mu1 = b.mu1, mu2 = b.mu2, s1 = b.s1, s2 = b.s2, rho = rho_t)
         acc = dot(joint_grad_T(prob, Pt, u_hat, βt), w_u)
         f1, f2, fs1, fs2, fr = leaf_etas(prob, βt)
@@ -1013,7 +996,7 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
     end
     rhat     = isfinite(nll_hat) ? -nll_hat : -Inf
     inner_ok = isfinite(gz_hat) && gz_hat < 1e-6
-    P_hat    = _reml_prior_precision(Q_cond, inv(Lam_hat))
+    P_hat    = prior_precision(Q_cond, inv(Lam_hat))
     mlhat    = laplace_ll(prob, P_hat, bhat, uhat, ch_H)
 
     g_resid_val = try; Optim.g_residual(res); catch; NaN; end

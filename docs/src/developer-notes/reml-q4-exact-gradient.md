@@ -166,9 +166,9 @@ Measured on `biv-q4-phylo-reml` at `Λ = 0.3I`, exact vs a step-scanned central
 difference: two `lc` components were wrong by **0.037** and **13.70**; with a
 `1e-6` off-diagonal added to `Λ`, **every** component agreed to **6.7e-8**.
 
-Fix in the REML path: `_reml_prior_precision` stores all 16 entries of the 4×4
-axis block explicitly. The matrix is numerically identical; only the pattern
-changes.
+Fix in the REML path (at the time): a local helper, `_reml_prior_precision`,
+stored all 16 entries of the 4×4 axis block explicitly. The matrix was
+numerically identical; only the pattern changed.
 
 **`marginal_and_exact_grad` (`fit_q4_sparse_tmb.jl:374–384`) builds its `Gst`
 from the same construction and therefore shares this degeneracy on the ML
@@ -176,13 +176,17 @@ path.** Not changed here (out of scope for #575), but it should be checked: the
 ML fit also starts at `Λ0 = 0.3I`, so its very first exact gradient is taken at
 the degenerate point.
 
-Residual, recorded for completeness: `reml_ll_and_mode` (`src/reml_q4.jl:309`)
-still builds its own `P` through the **unguarded** `prior_precision`, so that
-one value carries the degeneracy described above. It is not a defect — the only
-caller on the exact path, `_reml_exact_state`, uses `reml_ll_and_mode` purely to
-reach the right neighbourhood and then discards its `P`, re-certifying the mode
-against the guarded `_reml_prior_precision`; nothing derived from the unguarded
-`P` reaches the objective, the gradient, or the reported fit.
+**Update (#577, #563):** #577 fixed the root cause — `prior_precision` itself
+(`src/sparse_aug_plsm.jl`) now stores the full q×q axis block unconditionally,
+so it no longer drops the cross-axis entries at a diagonal `Λ`. That made the
+local `_reml_prior_precision` guard redundant: #563 proved the two builders
+produced bit-identical sparse output on this fixture (same pattern, same
+nzval, `nnz` = 1376 at both a diagonal and a non-diagonal `Λ`) and deleted
+`_reml_prior_precision`, repointing its call sites — including
+`reml_ll_and_mode` (`src/reml_q4.jl:309`), whose call was previously the only
+one left on the unguarded `prior_precision` — at `prior_precision` directly.
+Every call site in `src/reml_q4.jl` now uses the same, now-correct,
+`prior_precision`.
 
 ---
 
