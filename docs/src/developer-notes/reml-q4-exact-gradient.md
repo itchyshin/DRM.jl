@@ -175,3 +175,11 @@ from the same construction and therefore shares this degeneracy on the ML
 path.** Not changed here (out of scope for #575), but it should be checked: the
 ML fit also starts at `Λ0 = 0.3I`, so its very first exact gradient is taken at
 the degenerate point.
+
+Residual, recorded for completeness: `reml_ll_and_mode` (`src/reml_q4.jl:309`)
+still builds its own `P` through the **unguarded** `prior_precision`, so that
+one value carries the degeneracy described above. It is not a defect — the only
+caller on the exact path, `_reml_exact_state`, uses `reml_ll_and_mode` purely to
+reach the right neighbourhood and then discards its `P`, re-certifying the mode
+against the guarded `_reml_prior_precision`; nothing derived from the unguarded
+`P` reaches the objective, the gradient, or the reported fit.
