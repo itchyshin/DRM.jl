@@ -824,7 +824,7 @@ const _LSS_MULTI_ROUTE = WeakKeyDict{Vector{Float64},Symbol}()
 Record which engine the sd() multi-component router chose for `fit` —
 `:sparse_multi` or `:dense_multi` — keyed by `fit.theta`'s object identity
 (see the block comment above for why) — and return `fit` unchanged.
-Test-only bookkeeping (see [`_lss_multi_route`](@ref)); never read by any
+Test-only bookkeeping (see `_lss_multi_route`); never read by any
 fitting code.
 """
 function _mark_lss_multi_route!(fit, route::Symbol)
@@ -846,7 +846,7 @@ _lss_multi_route(fit) = get(_LSS_MULTI_ROUTE, fit.theta, :unknown)
     _fit_gaussian_lss_sparse_multi(fam, y, Xμ, Xσ, comps, comp_nm, comp_is_phylo,
                                    comp_label, nmμ, nmσ, g_tol; reml = false) -> DrmFit
 
-The sparse multi-component analogue of [`_fit_phylo_gaussian_lss_sparse`](@ref)
+The sparse multi-component analogue of `_fit_phylo_gaussian_lss_sparse`
 (:13-263 above), generalising its LBFGS-on-the-exact-gradient optimiser loop
 from one phylogenetic component to the `comps::Vector{_SparseLssComp}` block
 this sub-slice's S7b.1-S7b.3 machinery already evaluates

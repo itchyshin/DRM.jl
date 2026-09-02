@@ -476,3 +476,20 @@ an explicit `algorithm = :sparse` request on a multi-component `sd()` model
 was silently dropped (never reaching the router at all), the same silent-
 drop failure mode issue #2 named for σ-phylo; left in place rather than
 leaving the feature unreachable from `drm()`.
+
+## 9. API (internal, documented)
+
+Module-level entry points of the sparse multi-component route (unexported; the public surface is `drm(...)` with several `sd()` parts).
+
+```@docs
+DRM._fit_gaussian_lss_sparse_multi
+DRM._lss_sparse_multi_assemble
+DRM._lss_sparse_multi_objective
+DRM._lss_sparse_multi_objective_and_grad
+DRM._lss_sparse_multi_reml_pieces
+DRM._mark_lss_multi_route!
+DRM._sparse_lss_iid_comp
+DRM._sparse_lss_phylo_comp
+DRM.fg!
+DRM.nllgrad!
+```
