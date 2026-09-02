@@ -52,7 +52,7 @@ lanes that had not yet compared notes.
    initialisation, per `s5a.md`'s proposed patch (`Qs = dropzeros!(sparse(Symmetric(Q, :U)))`); (b)
    the label-map echo in `src/bridge.jl` — payload-supplied base-R names echoed under
    `bridge_formula_labels_v1` (design 258 §7 on drmTMB branch `claude/rev-parity-c2-label-producer`
-   @ `5b77eb691`, on origin: payload `coef_labels` per dpar; echo = `coef_label_contract` /
+   @ `af1790492` (supersedes `5b77eb691` after an adversarial pass; R now rejects any returned map whose public names are not its per-dpar `coef_labels` verbatim and in order), on origin: payload `coef_labels` per dpar; echo = `coef_label_contract` /
    `coef_names` / `raw_coef_names` / `coef_name_map` / `vcov_names`; the R half is implemented and
    fail-closed). The drmTMB lane's handoff memo for the Julia half:
    `docs/dev-log/2026-09-02-drmjl-lane-handoff.md` on `claude/rev-parity-drmjl-findings`.
@@ -154,3 +154,12 @@ the drmTMB lane's action, not performed by this session.
 | brain semantic | `search_notes("R Julia true parity programme drmTMB DRM.jl bridge engine julia capability status decision", all projects)` | bridge after-tasks 2026-06; hsquared bridge-compat matrix (pattern) | reuse pattern only |
 | brain grep | Haiku scout: `grep -in "true parity" memory/AGENT_LOG.md` (0); DECISIONS D-111/D-58/D-94/D-164/D-183; OPEN_QUESTIONS (0); journal (3, none on-topic); dr-notes (REML bias only) | no "true parity" decision beyond D-183 twin versioning; D-202 written today by drmTMB2 | build-the-gap = one map |
 | session dialogue | AskUserQuestion 2026-09-02 (this session) | 4 answers, D-203 §1–4; ownership (§2) corrected mid-session — see note in §2 | locked |
+
+## Execution log (appended 2026-09-02, same session, after the owner moved the #563 remainder to this lane)
+
+| slice | PR | state |
+|---|---|---|
+| S5a sparse precision (two conversion sites) | #581 (draft) | RED→GREEN test, five neighbour files green, after-task + check-log; ledger `.unlazy/563-s5a` all met |
+| `[tol]` re-derivation, `biv-q4-phylo-reml` (10% → 1%, from receipt `996870366`) | #582 (draft, base = #579 branch) | 33/33, 1/1, 12/12 at the new tolerance; retarget to `main` after #579 |
+| `capabilities.md` drift (six false claims) | #583 (draft) | corrected in place with dated strike-throughs; flags `mi` export (`src/DRM.jl:195`) vs D-181 #1 for the owner |
+| label echo (`coef_labels` → `bridge_formula_labels_v1` verbatim) | measurement first | RED test of the ten design-258 constructs in progress (`feat/563-bridge-base-r-names`) |
