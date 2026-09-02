@@ -67,6 +67,26 @@ up to its `n ≤ 5000` cap (`gaussian_lss.jl:570`); this note is only about
 whether an O(p) *sparse* alternative exists, and for that topology it does
 not.
 
+**S7b.4 router rule (D-206, `gaussian_lss.jl`'s `_drm_gaussian_lss_multi`).**
+The public router turns the IN-SCOPE/OUT-OF-SCOPE classification above into a
+decision at fit time, mechanically: dispatch to the sparse multi-component
+route ONLY when (a) **exactly one** `sd()` component is phylogenetic, AND (b)
+**every** iid component is either NESTED within it — `_lss_iid_nested_in`,
+each iid group level co-occurs with exactly one phylo group level across all
+rows, the same clean-partition test §2 uses — OR **small**: `G_c ≤
+_LSS_SPARSE_SMALL_FRACTION × G_phy` with `_LSS_SPARSE_SMALL_FRACTION = 0.1`
+(10% of the phylogenetic component's tip count), the documented threshold for
+"`G_c ≪ p`" (§2.1 case (b), §7's S7b.2 estimate row) as a checkable rule
+rather than a judgement call. Any iid component failing BOTH tests (crossed
+at comparable scale, case (c)) routes the WHOLE model to dense, even under an
+explicit `algorithm = :sparse` request — the router never silently runs an
+unproven-fill sparse fit, and never silently drops the request either: an
+explicit sparse request that falls back emits an `@info` naming which
+component and why. `:auto` (the `drm()` default) auto-dispatches to sparse
+when eligible AND the phylogenetic component has more than 500 tips,
+mirroring the single-component `G > 500` rule (`gaussian_lss.jl:402`).
+Acceptance: oracle 4 below.
+
 ---
 
 ## 2. The augmented precision
@@ -251,6 +271,19 @@ summing `wts_c[i]*wXk[i]` into `bX` at each component's node for `i`'s row —
 no new mathematics, just the same block-accumulation pattern as `b` in §3.
 Cost stays `O(pμ · nnz(L))` sparse backsolves, same order as #551.
 
+**Where the REML gradient actually lives (S7b.3).** The exact analytic
+gradient of this correction — the Schur-complement identity `logdet(Xμ'V⁻¹Xμ)
+= logdet(C) - logdet(H)` for the bordered matrix `C = [Xμ'WXμ Xμ'WZ; Zᵀ WXμ
+H]`, and the selected-pairs matrix `Ψ[gi,gj] := dot(ÂX[gi,:], C2[gj,:])`
+(`C2 = ÂX * (Xμ'V⁻¹Xμ)⁻¹`) that stands in for `Hinv[gi,gj]` in the REML
+`g_α,c` trace term — is NOT re-derived in this note (an earlier draft left it
+as a TO-BUILD placeholder here, S7b.2 found the omission): it is fully
+derived and FD-verified in
+[`_lss_sparse_multi_objective_and_grad`](@ref)'s own docstring
+(`gaussian_sparse_lss.jl`, the function's REML paragraph), which is the
+authoritative source for this derivation. Read it there rather than
+re-deriving it from this section.
+
 ---
 
 ## 5. Acceptance oracles
@@ -266,6 +299,10 @@ Cost stays `O(pμ · nnz(L))` sparse backsolves, same order as #551.
    note's earlier `1e-8` draft was tighter than #551's own precedent with no
    measured margin to justify it, and was flagged as likely-flaky by the
    adversarial review, §8 finding 6).
+   **WIRED (#563 S7b.4):** `test/test_lss_sparse_multi_public.jl` (public
+   `drm(...; algorithm = :sparse)` route, not this specific CSV fixture —
+   the S7b.1 nested fixture, 64 tips/192 sites, ML and REML; also covers the
+   `G_phylo > 500` `:auto` dispatch case, S7b.4's own oracle 1c).
 2. **FD-vs-exact gradient**, three points: the fixture-A MLE, a random
    interior point, and a boundary-ish point (one component's `α` pushed so
    `σ_c,g → e^{-6}`, mirroring #551's own boundary check). `‖g_exact −
@@ -273,6 +310,11 @@ Cost stays `O(pμ · nnz(L))` sparse backsolves, same order as #551.
    uses for its own exact-vs-FD Hessian check (`gaussian_sparse_lss.jl:199–
    217`), not the looser `rtol=2e-4,atol=2e-5` line 198 uses for its packed
    *stored*-gradient regression test.
+   **WIRED:** `test/test_lss_sparse_multi_gradient.jl` (S7b.2/S7b.2b, at the
+   `_lss_sparse_multi_objective_and_grad` level) and
+   `test/test_lss_sparse_multi_reml.jl` (S7b.3, the REML gradient); S7b.4
+   only re-touches this indirectly through the public route's own
+   convergence/gradient-norm checks (oracle 1c), it does not re-derive it.
 3. **Cross-term gradcheck (finding 4, §3).** The generalisation of
    `review_s7b_gradcheck.jl`'s toy into a permanent unit test: a small nested
    multi-component fixture (phylo-like 4-node block + 2-level iid block,
@@ -286,6 +328,16 @@ Cost stays `O(pμ · nnz(L))` sparse backsolves, same order as #551.
    ≥ 1.2` (crossed) vs. the nested comparator's `< 1.0`, i.e. the note's §2.3
    claim is checked against the actual shipped fixture, not only synthetic
    data.
+   **WIRED (router reading, #563 S7b.4):** `test/test_lss_sparse_multi_public.jl`
+   exercises this at the ROUTER level instead of fixture B specifically — a
+   genuinely crossed two-iid-component fixture (§1's router rule, D-206)
+   asserts (i) `drm(...; algorithm = :sparse)` still returns the DENSE
+   route's fit (via the `_lss_multi_route` marker) with an informative
+   `@info`, never a silent sparse run on an unproven-fill topology, and (ii)
+   the S7b.1 assembler's `H` on that same fixture measures `nnz(L)/dim > 4`
+   — well above the nested band, matching this note's §2.1 case (c) reading.
+   `test/test_lsss_multi.jl` separately pins fixture B itself on the DENSE
+   route (unchanged by this sub-slice).
 5. **Scaling to p = 10,000** — **only** if §2 continues to hold at that
    scale for the in-scope topology (one phylo + nested/small-crossed iid).
    This is a >30-minute class of run (D-139): pilot on Totoro first (≤150
@@ -401,3 +453,26 @@ VERDICT: APPROVE WITH REQUIRED EDITS
 Edits applied: 2026-09-02, by the author
 
 Implementation review (S7b.2, 2026-09-02): two further table corrections applied — see §3 rows quad_term and g_βσ.
+
+Implementation note (S7b.4, 2026-09-02): the public-route wiring added §1's
+router rule and a `_lss_multi_route` marker (`gaussian_sparse_lss.jl`) so
+tests can assert which engine a fit took — `DrmFit` (`gaussian_core.jl`) is a
+plain positional struct with an 11-/19-/22-arg constructor ladder kept
+stable specifically so ~70 call sites across ~20 family files never change
+when a field is added, so this sub-slice deliberately did NOT add a `route`
+field there; a side table keyed by `fit.theta` plays that role instead (NOT
+by `fit` itself — `drm()` reconstructs a new immutable `DrmFit` via
+`_withformula` on every route's return value, so the object the router marks
+is never the object the caller gets back; `θ̂` is the one field every
+`_with*` wrapper forwards by reference rather than copying, confirmed the
+hard way when marking `fit` directly read back `:unknown` in this
+sub-slice's own tests — see the marker's own docstring). Wiring
+`algorithm`/`sparse` through to the
+multi-component router also required one small forwarding edit at the
+`drm()` dispatch call site (`gaussian_core.jl`, mirroring the identical
+forwarding the sibling single-component phylo call two lines above already
+does) — outside this sub-slice's originally scoped file list, but without it
+an explicit `algorithm = :sparse` request on a multi-component `sd()` model
+was silently dropped (never reaching the router at all), the same silent-
+drop failure mode issue #2 named for σ-phylo; left in place rather than
+leaving the feature unreachable from `drm()`.

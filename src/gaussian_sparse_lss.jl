@@ -790,3 +790,207 @@ function _lss_sparse_multi_objective_and_grad(θ::AbstractVector, y::AbstractVec
     all(isfinite, grad_reml) || return (1e18, Float64[])
     return (nll_ml + corr, grad_reml)
 end
+
+# ---------------------------------------------------------------------------
+# #563 S7b.4 — public-route wiring: the sparse multi-component OPTIMISER loop
+# (`_fit_gaussian_lss_sparse_multi`) and a route marker, called from the
+# router in `gaussian_lss.jl` (`_drm_gaussian_lss_multi`, D-206). See
+# `docs/src/developer-notes/lss-sparse-multi-component.md` §1 (router rule)
+# and §5 (acceptance oracles 1/2/4).
+#
+# ROUTE MARKER. `DrmFit` is a plain positional struct with an 11-/19-/22-arg
+# constructor ladder (`gaussian_core.jl:161-247`) specifically so that ~70
+# call sites across ~20 family files never have to change when a new field is
+# added; adding a `route` field there is out of scope for this sub-slice
+# (edits here are confined to `gaussian_sparse_lss.jl` and the route-selection
+# lines of `gaussian_lss.jl`). Record the router's decision in a small side
+# table instead, keyed by `fit.theta` — NOT by `fit` itself: `DrmFit` is
+# IMMUTABLE, and every `_with*` wrapper (`_withformula`, `_withnll`,
+# `_withranef`, `_withreml`, `gaussian_core.jl:204-247`) RECONSTRUCTS a new
+# `DrmFit` from the old one's fields rather than mutating it — `drm()` itself
+# calls `_withformula` on the router's return value, so the object the router
+# marks is never the object the caller receives (confirmed by running this
+# file's own tests: marking `fit` directly always read back `:unknown`).
+# `fit.theta` (`θ̂`, a `Vector{Float64}`) is the one field every wrapper
+# forwards BY REFERENCE, never copies, so its identity survives the whole
+# chain intact — and, being a genuinely mutable heap object, it also accepts
+# a `WeakKeyDict` finalizer (unlike `DrmFit` itself), so a marked fit does
+# not have to be kept alive by this table past its normal lifetime.
+const _LSS_MULTI_ROUTE = WeakKeyDict{Vector{Float64},Symbol}()
+
+"""
+    _mark_lss_multi_route!(fit, route::Symbol) -> fit
+
+Record which engine the sd() multi-component router chose for `fit` —
+`:sparse_multi` or `:dense_multi` — keyed by `fit.theta`'s object identity
+(see the block comment above for why) — and return `fit` unchanged.
+Test-only bookkeeping (see [`_lss_multi_route`](@ref)); never read by any
+fitting code.
+"""
+function _mark_lss_multi_route!(fit, route::Symbol)
+    _LSS_MULTI_ROUTE[fit.theta] = route
+    return fit
+end
+
+"""
+    _lss_multi_route(fit) -> Symbol
+
+Which engine the sd() multi-component router (#563 S7b.4, D-206) selected for
+`fit`: `:sparse_multi` or `:dense_multi`. Returns `:unknown` for any fit the
+multi-component router did not produce (the single-component `sd()`/
+`sd_phylo()` routes, or any non-LSS fit) — those are not tracked here.
+"""
+_lss_multi_route(fit) = get(_LSS_MULTI_ROUTE, fit.theta, :unknown)
+
+"""
+    _fit_gaussian_lss_sparse_multi(fam, y, Xμ, Xσ, comps, comp_nm, comp_is_phylo,
+                                   comp_label, nmμ, nmσ, g_tol; reml = false) -> DrmFit
+
+The sparse multi-component analogue of [`_fit_phylo_gaussian_lss_sparse`](@ref)
+(:13-263 above), generalising its LBFGS-on-the-exact-gradient optimiser loop
+from one phylogenetic component to the `comps::Vector{_SparseLssComp}` block
+this sub-slice's S7b.1-S7b.3 machinery already evaluates
+([`_lss_sparse_multi_objective_and_grad`](@ref)). `comp_nm`/`comp_is_phylo`/
+`comp_label` are PARALLEL metadata (one entry per `comps` element, same
+order) carrying what `_SparseLssComp` itself does not — the coefficient
+names, whether a component is the (at most one) phylogenetic block, and its
+grouping-factor label — kept OUTSIDE `_SparseLssComp` deliberately: that
+struct is the numeric machinery S7b.1-S7b.3 already exercise and pin by
+tests, and adding label/name fields to it would be a change to code this
+sub-slice does not need to touch.
+
+Unlike the single-component route's REML branch (`eval_reml`, which falls
+back to `autodiff = :finite` because #551 never built an analytic REML
+gradient — design note §8 finding 5), S7b.3 DID build one
+(`_lss_sparse_multi_objective_and_grad(...; reml = true)`), so both `reml =
+false` and `reml = true` here use the SAME LBFGS-on-the-exact-gradient loop
+and the SAME finite-difference-of-the-analytic-gradient Hessian for `vcov`
+(mirroring :199-217's ML branch, not :219-240's REML branch) — there is no
+`autodiff = :finite` fallback in this route at all.
+
+Convergence contract, `DrmFit` fields, and the `nllgrad!`-only-for-ML /
+`nothing`-for-REML convention (`test_lss_sparse.jl`'s
+`_profile_autodiff_mode` check, `:stored` vs `:finite`) are exactly
+`_fit_phylo_gaussian_lss_sparse`'s.
+"""
+function _fit_gaussian_lss_sparse_multi(fam::Gaussian, y, Xμ, Xσ, comps::Vector{_SparseLssComp},
+                                        comp_nm::Vector{Vector{String}}, comp_is_phylo::Vector{Bool},
+                                        comp_label::Vector{String}, nmμ, nmσ, g_tol; reml::Bool = false)
+    n = length(y)
+    pμ = size(Xμ, 2); pσ = size(Xσ, 2)
+    m = length(comps)
+    psds = [size(c.Zg, 2) for c in comps]
+    offα = pμ + pσ .+ cumsum([0; psds])
+    np = offα[end]
+
+    nll_ml_only(θ) = _lss_sparse_multi_objective(θ, y, Xμ, Xσ, comps; reml = false)
+    nll_reml_only(θ) = _lss_sparse_multi_objective(θ, y, Xμ, Xσ, comps; reml = true)
+    grad_at(θ; use_reml::Bool = reml) =
+        _lss_sparse_multi_objective_and_grad(θ, y, Xμ, Xσ, comps; reml = use_reml)[2]
+
+    function nllgrad!(g, θ)
+        _, grad = _lss_sparse_multi_objective_and_grad(θ, y, Xμ, Xσ, comps; reml = false)
+        if length(grad) == length(g)
+            copyto!(g, grad)
+        else
+            fill!(g, NaN)   # see :169-173's rationale: never look stationary on failure
+        end
+        return g
+    end
+
+    βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
+    s0 = std(res0)
+    θ0 = zeros(np)
+    θ0[1:pμ] .= βμ0
+    θ0[pμ+1] = log(s0 / sqrt(m + 1) + eps())
+    for (ci, c) in enumerate(comps)
+        θ0[offα[ci]+1:offα[ci+1]] .= c.Zg \ fill(log(s0 / sqrt(m + 1) + eps()), c.G)
+    end
+
+    function fg!(F, Gout, θ)
+        nll, grad = _lss_sparse_multi_objective_and_grad(θ, y, Xμ, Xσ, comps; reml = reml)
+        if Gout !== nothing
+            if length(grad) == length(Gout)
+                copyto!(Gout, grad)
+            else
+                fill!(Gout, 0.0)
+            end
+        end
+        return nll
+    end
+    od = Optim.NLSolversBase.only_fg!(fg!)
+    res = Optim.optimize(od, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol))
+    θ̂ = Optim.minimizer(res)
+
+    # Finite differences on the exact analytic gradient (ML or REML, per
+    # `reml`) for the variance-covariance matrix — see the docstring for why
+    # this differs from #551's REML branch.
+    Hmat = zeros(np, np)
+    hstep = 1e-6
+    for k in 1:np
+        θp = copy(θ̂); θm = copy(θ̂)
+        step = hstep * max(abs(θ̂[k]), 1.0)
+        θp[k] += step; θm[k] -= step
+        gp = grad_at(θp); gm = grad_at(θm)
+        if isempty(gp) || isempty(gm)
+            step = 1e-4
+            θp = copy(θ̂); θm = copy(θ̂)
+            θp[k] += step; θm[k] -= step
+            gp = grad_at(θp); gm = grad_at(θm)
+        end
+        Hmat[:, k] .= (gp .- gm) ./ (2 * step)
+    end
+    Hmat .= 0.5 .* (Hmat .+ Hmat')
+    Vcov = _vcov_from_hessian(Hmat; context = reml ? "sparse LSS multi REML" : "sparse LSS multi")
+
+    # Random effects (BLUPs): joint â at θ̂, then each component's own
+    # contribution at its own block offset — generalising :244-248's
+    # `u_phylo` to every component, iid or phylogenetic (`inv_sd ≡ 1` for
+    # iid, design note §1).
+    asm = _lss_sparse_multi_assemble(θ̂, y, Xμ, Xσ, comps)
+    ch_final = cholesky(Symmetric(asm.H); check = false)
+    â = issuccess(ch_final) ? (ch_final \ Vector(asm.Z' * (asm.w .* asm.r))) : fill(NaN, size(asm.H, 1))
+    offnode = Vector{Int}(undef, m + 1); offnode[1] = 0
+    for (ci, c) in enumerate(comps)
+        offnode[ci+1] = offnode[ci] + c.q
+    end
+    re_dict = Dict{Symbol,Vector{Float64}}()
+    for (ci, c) in enumerate(comps)
+        α = θ̂[offα[ci]+1:offα[ci+1]]
+        σc = exp.(c.Zg * α)
+        re_dict[Symbol(comp_label[ci])] =
+            [σc[g] * c.inv_sd[g] * â[offnode[ci] + c.leaf_pos[g]] for g in 1:c.G]
+    end
+
+    iid_ci = [ci for ci in 1:m if !comp_is_phylo[ci]]
+    phy_ci = [ci for ci in 1:m if comp_is_phylo[ci]]
+    blocks = Pair{Symbol,UnitRange{Int}}[:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ)]
+    names = Pair{Symbol,Vector{String}}[:mu => nmμ, :sigma => nmσ]
+    # Contiguous-block assumption (mirrors the dense multi route,
+    # `gaussian_lss.jl:659-669`): the ROUTER lays `comps` out iid-then-phylo,
+    # so the iid α's occupy one contiguous slice of θ.
+    if !isempty(iid_ci)
+        lo = offα[first(iid_ci)] + 1; hi = offα[last(iid_ci)+1]
+        nm = String[]
+        for ci in iid_ci
+            append!(nm, length(iid_ci) > 1 ? string.(comp_label[ci], ": ", comp_nm[ci]) : comp_nm[ci])
+        end
+        push!(blocks, :sd => lo:hi); push!(names, :sd => nm)
+    end
+    if !isempty(phy_ci)
+        ci = only(phy_ci)
+        push!(blocks, :sd_phylo => (offα[ci]+1):offα[ci+1])
+        push!(names, :sd_phylo => comp_nm[ci])
+    end
+    means = Dict(:mu => Xμ * θ̂[1:pμ])
+    obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
+
+    fit = _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, Vcov, -nll_ml_only(θ̂), n,
+                                     Optim.converged(res), means, obs, scales), nll_ml_only,
+                                reml ? nothing : nllgrad!), re_dict)
+    if reml
+        return _withreml(fit, -nll_reml_only(θ̂), -nll_ml_only(θ̂))
+    end
+    return fit
+end
