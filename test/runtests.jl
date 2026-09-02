@@ -63,6 +63,7 @@ include("test_lss_tip_identity.jl") # Named tree-tip mapping under shuffled rows
 include("test_lss_bootstrap_contract.jl") # Marginal components, masks and REML refits
 include("test_bootstrap_thread_flags.jl") # Independent storage for parallel status flags
 include("test_lss_sparse.jl")  # #551 O(p) sparse exact marginal LSS engine
+include("test_sparse_precision_storage.jl")  # S5a (#563): no dense copy of the augmented tree precision
 include("test_lsss_multi.jl")  # #555 multi-component sd() (lsss)
 include("test_lss_reml.jl")    # #558 location-scale-scale REML
 include("test_lss_missing_response.jl") # #559 location-scale-scale missing responses
