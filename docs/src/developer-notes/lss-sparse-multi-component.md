@@ -342,7 +342,30 @@ re-deriving it from this section.
    scale for the in-scope topology (one phylo + nested/small-crossed iid).
    This is a >30-minute class of run (D-139): pilot on Totoro first (≤150
    cores, per D-143), report the pilot's wall time and `nnz(L)/p` before
-   committing to the full p=10,000 fit. Not run for this note.
+   committing to the full p=10,000 fit.
+   **RUN (S7b.5, Totoro, `tools/lss_sparse_multi_scaling_pilot.jl`,
+   `docs/dev-log/evidence/julia-r-parity/2026-09-02-lss-sparse-multi-
+   scaling-pilot.md`):** the fill claim held (`nnz(L)/dim` flat, 3.085 →
+   3.092 across the 1000 → 10,000 ladder) but wall time did NOT — log-log
+   exponent ≈ 2.6–2.9 from p = 2500 → 10,000 (165 s at p = 10,000, RSS 1.3 →
+   8.0 GB). **Root cause (S7b.6, this sub-slice):** not the sparse engine
+   itself — `_drm_gaussian_lss_multi` (the public router,
+   `src/gaussian_lss.jl`) called `_phylo_correlation(phy)`, a DENSE inverse
+   of the ~2p×2p augmented tree matrix (`sigma_phy_dense`, cubic), **before**
+   deciding `use_sparse`, on every fit with a phylogenetic `sd()` component
+   — the sparse route never reads that matrix (it rebuilds a sparse
+   precision from the tree directly), so the O(p³) cost was pure waste on
+   every sparse-route call. Fixed by deferring materialisation with a
+   `_LazyPhyloK()` marker (`src/gaussian_lss.jl`) until the dense route is
+   actually selected.
+   Local (laptop) post-fix re-measurement, same fixture/script, warm JIT at
+   p = 200, single BLAS thread: p = 1000 → 0.17 s, p = 2000 → 0.30 s,
+   p = 4000 → 1.55 s (down from the pre-fix router bug's p = 2000 → 3.77 s
+   observed while diagnosing this sub-slice) — log-log exponent ≈ 1.6 from
+   p = 1000 → 4000 (vs. ≈2.3–2.9 measured on the unfixed router at the same
+   scale). The **p = 10,000 Totoro re-measurement is pending** — see §7;
+   until it runs, this note makes no O(p) wall-time claim, only "no longer
+   cubic locally to p = 4000."
 
 ---
 
@@ -392,6 +415,18 @@ size crossed factors, and no elimination order changes that. The existing
 **dense** multi-component route (`gaussian_lss.jl:564`, `n ≤ 5000`) already
 covers genuinely crossed models like fixture B and should stay the
 recommended route for that topology.
+
+**Limitations (S7b.6 update, this sub-slice).** The GO/NO-GO above is about
+fill (`nnz(L)/p`), not wall time — the two turned out to be separate claims.
+S7b.5's Totoro pilot measured fill flat but wall time superlinear (log-log
+exponent ≈2.6–2.9, p=2500→10,000); S7b.6 traced that to a router bug (§5
+oracle 5 above), not the sparse engine's own complexity, and fixed it. Local
+(laptop) re-measurement to p=4000 dropped the exponent to ≈1.6, but **the
+p=10,000 Totoro re-measurement has not yet been re-run against the fix** —
+until it is, this note makes **no O(p) wall-time claim** for the sparse
+multi-component route, only that it is measurably no longer cubic locally.
+Treat "O(p) fill, wall time TBD at p=10,000" as the accurate summary of this
+route's scaling until that pilot re-runs.
 
 ---
 

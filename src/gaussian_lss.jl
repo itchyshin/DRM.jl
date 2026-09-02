@@ -552,12 +552,21 @@ end
 # iid component) and the phylo α's are the `:sd_phylo` block.
 
 # One variance component of the multi engine.
+# Marker for "this component IS phylogenetic, but its dense G x G tree
+# correlation has not been materialised yet" (#563 S7b.6). The router builds
+# every phylo `_LssComp` with this marker instead of eagerly calling the
+# CUBIC `_phylo_correlation` — the sparse route never reads `.K` as a matrix
+# (it rebuilds the sparse precision from `phy_tree` directly), so computing
+# the dense inverse before the router even decides `use_sparse` wasted O(p^3)
+# work on every sparse-route fit. Only the dense route materialises it.
+struct _LazyPhyloK end
+
 struct _LssComp
     gidx::Vector{Int}
     G::Int
     Zg::Matrix{Float64}
     nm::Vector{String}
-    K::Union{Nothing,Matrix{Float64}}   # nothing = iid; matrix = phylo correlation
+    K::Union{Nothing,Matrix{Float64},_LazyPhyloK}   # nothing = iid; matrix = phylo correlation; _LazyPhyloK = phylo, not yet materialised
     label::String
 end
 
@@ -822,9 +831,11 @@ function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re
         tree === nothing && error("phylo(1 | $pgrp) needs `tree = …`")
         phy, gidx, G = _lss_phylo_group_index(tree, getproperty(data, pgrp), pgrp)
         phy_tree = phy
-        Kmat = _phylo_correlation(phy)
-        size(Kmat) == (G, G) ||
-            error("structured matrix must be $(G)×$(G) (the number of `$pgrp` levels)")
+        # #563 S7b.6: do NOT materialise the dense G×G tree correlation here —
+        # the router below may pick the sparse route, which never reads it as
+        # a matrix (it rebuilds a sparse precision from `phy_tree` directly).
+        # `_LazyPhyloK()` marks this component as phylogenetic; only the dense
+        # route (below) calls `_phylo_correlation` and checks its size.
         if !isempty(sdpp)
             (sgrp, srhs) = only(sdpp)
             sgrp === pgrp ||
@@ -834,7 +845,7 @@ function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re
         else
             Zg, nm = ones(G, 1), ["(Intercept)"]  # phylo term with scalar SD
         end
-        push!(comps, _LssComp(gidx, G, Zg, nm, Matrix{Float64}(Kmat), String(pgrp)))
+        push!(comps, _LssComp(gidx, G, Zg, nm, _LazyPhyloK(), String(pgrp)))
     elseif !isempty(sdpp)
         (sgrp, _) = only(sdpp)
         throw(ArgumentError("drm: `sd($sgrp, phylogenetic)` requires a `phylo(1 | $sgrp)` " *
@@ -888,8 +899,22 @@ function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re
                                              comp_label, nmμ, nmσ, g_tol; reml = method === :REML)
         return _mark_lss_multi_route!(fit, :sparse_multi)
     end
-    fit = _fit_gaussian_lss_multi(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol; reml = method === :REML)
+    # Dense route: materialise the phylo component's dense G×G correlation
+    # NOW (#563 S7b.6) — the sparse branch above never reaches this point, so
+    # the cubic `_phylo_correlation` cost is paid only when it is actually
+    # needed.
+    dense_comps = [c.K isa _LazyPhyloK ? _materialize_lss_comp_K(c, phy_tree) : c for c in comps]
+    fit = _fit_gaussian_lss_multi(fam, y, Xμ, Xσ, dense_comps, nmμ, nmσ, g_tol; reml = method === :REML)
     return _mark_lss_multi_route!(fit, :dense_multi)
+end
+
+# Replace a `_LazyPhyloK()` marker with the materialised dense G×G tree
+# correlation (#563 S7b.6) — same size check the eager computation had.
+function _materialize_lss_comp_K(c::_LssComp, phy_tree)
+    Kmat = _phylo_correlation(phy_tree)
+    size(Kmat) == (c.G, c.G) ||
+        error("structured matrix must be $(c.G)×$(c.G) (the number of `$(c.label)` levels)")
+    return _LssComp(c.gidx, c.G, c.Zg, c.nm, Matrix{Float64}(Kmat), c.label)
 end
 
 function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re_kinds,
