@@ -86,7 +86,7 @@ for the profiled-out fixed effects — `reml_objective_at` reprofiles them at
 `phi` regardless of the warm start supplied), `Lambda` is the 4×4 symmetric
 among-axis covariance matrix (axis order mu1, mu2, sigma1, sigma2), and
 `rho12` is the residual correlation. Internally: `Lambda`/`rho12` are packed
-into DRM.jl's own `phi = (beta_rho, lc)` via [`pack_phi`](@ref) and
+into DRM.jl's own `phi = (beta_rho, lc)` via `pack_phi` and
 [`reml_objective_at`](@ref) evaluates the q=4 REML objective there.
 
 Returns a `Dict{String,Any}` with `"objective"` and `"reml_loglik"` (the
