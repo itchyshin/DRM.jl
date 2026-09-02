@@ -175,7 +175,7 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
        heritability, repeatability, icc,
        coevolution_cor, coevolution_vc, coevolution_summary,
        reml_loglik, ml_loglik, estimation_method,
-       drm_bridge, drm_bridge_inference,
+       drm_bridge, drm_bridge_inference, drm_bridge_objective_at,
        drm_listwise,
        associate_pairs, latent_normal, association, PairAssociation,
        integration_diagnostics,

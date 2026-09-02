@@ -62,6 +62,122 @@ function drm_bridge(; formula, family::AbstractString, data, tree = nothing,
 end
 
 """
+    drm_bridge_objective_at(formula, family, data, tree, options = Dict();
+                            beta, Lambda, rho12)
+
+The bivariate q=4 phylogenetic REML counterpart to [`reml_objective_at`](@ref)
+(#575) reached through the SAME marshalling-friendly boundary [`drm_bridge`](@ref)
+uses — one SUPPORTED entry point for the drmTMB R shim
+(`drm_julia_reml_objective_at()`, `R/julia-bridge.R`), replacing its previous
+dependency on five private DRM.jl names (`_bridge_data`, `_bridge_formula`,
+`_bivariate_q4_marker`, `_design`, `_phylo_species_index`) reached by qualified
+name. `formula`, `family`, `data`, `tree`, `options` are exactly the payload
+`drm_bridge` takes for a bivariate q=4 phylogenetic model (a formula with
+`phylo(...)` markers shared by `mu1`, `mu2`, `sigma1`, `sigma2`); `options` is
+accepted for positional parity with that payload but is not otherwise used —
+this is a read-only diagnostic, not a fitting route.
+
+`beta`, `Lambda`, `rho12` are the outer evaluation POINT, in the SAME
+(fixed-effect, among-axis-covariance, residual-correlation) parameterisation
+`drm_bridge`'s q4 phylo REML fit reports: `beta` is a `NamedTuple` or `Dict`
+with `mu1`/`mu2`/`sigma1`/`sigma2` numeric vectors (inner-Newton warm starts
+for the profiled-out fixed effects — `reml_objective_at` reprofiles them at
+`phi` regardless of the warm start supplied), `Lambda` is the 4×4 symmetric
+among-axis covariance matrix (axis order mu1, mu2, sigma1, sigma2), and
+`rho12` is the residual correlation. Internally: `Lambda`/`rho12` are packed
+into DRM.jl's own `phi = (beta_rho, lc)` via [`pack_phi`](@ref) and
+[`reml_objective_at`](@ref) evaluates the q=4 REML objective there.
+
+Returns a `Dict{String,Any}` with `"objective"` and `"reml_loglik"` (the
+normalised Patterson–Thompson restricted log-likelihood `reml_objective_at`
+reports — the two keys carry the same value; `"objective"` is the
+route-agnostic name, `"reml_loglik"` names the DRM.jl convention explicitly),
+`"raw_reml_ll"` (the pre-normalisation value), `"converged_inner"` (the inner
+conditional-Newton alternation's own convergence flag — a barrier hit
+surfaces as `-Inf`/`false` rather than an error), and `"contract" =>
+"bridge_objective_at_v1"` so R callers can assert the return shape.
+
+This is a DIAGNOSTIC: it selects nothing, fits nothing, and promotes no
+capability-ledger row. See #575 for the cross-engine mode-finder-vs-
+objective-translation question it exists to answer.
+"""
+function drm_bridge_objective_at(formula, family::AbstractString, data, tree,
+        options = Dict{String,Any}(); beta, Lambda, rho12)
+    tree === nothing && throw(ArgumentError(
+        "drm_bridge_objective_at: `tree` is required for the bivariate q=4 " *
+        "phylogenetic REML objective-at diagnostic"))
+    dat = _bridge_data(data)
+    bundle, dat2, _ = _bridge_formula(formula, family, dat; labels = true)
+    bundle isa BivariateDrmFormula || throw(ArgumentError(
+        "drm_bridge_objective_at: only the bivariate q=4 phylogenetic REML " *
+        "route is supported (got a univariate formula)"))
+    rhs = Dict(bundle.forms)
+    fixed, marker = _bivariate_q4_marker(rhs)
+    (marker !== nothing && marker[1] === :phylo_q4) || throw(ArgumentError(
+        "drm_bridge_objective_at: only the bivariate q=4 phylogenetic REML " *
+        "route is supported (formula has no shared `phylo(...)` term on " *
+        "mu1, mu2, sigma1, and sigma2)"))
+    grp = marker[2]
+    phy = _as_augmented_phy(_bridge_tree(tree))
+    species = _phylo_species_index(phy, getproperty(dat2, grp))
+
+    y1, X1, _ = _design(bundle.response1, fixed[:mu1], dat2)
+    y2, X2, _ = _design(bundle.response2, fixed[:mu2], dat2)
+    _, Xs1, _ = _design(bundle.response1, fixed[:sigma1], dat2)
+    _, Xs2, _ = _design(bundle.response1, fixed[:sigma2], dat2)
+    _, Xr, _  = _design(bundle.response1, fixed[:rho12], dat2)
+    prob, Q_cond = make_problem(phy, y1, y2, X1, X2, Xs1, Xs2, Xr; species = species)
+
+    Lam = Matrix{Float64}(Lambda)
+    size(Lam) == (4, 4) || throw(ArgumentError(
+        "drm_bridge_objective_at: `Lambda` must be a 4x4 symmetric numeric " *
+        "matrix (the phylo q4 among-axis covariance, axis order mu1, mu2, " *
+        "sigma1, sigma2); got size $(size(Lam))"))
+    rho_vec = [Float64(rho12)]
+    phi = pack_phi(prob, rho_vec, Lam)
+
+    beta_mu1 = _bridge_objective_at_beta_field(beta, :mu1, size(X1, 2))
+    beta_mu2 = _bridge_objective_at_beta_field(beta, :mu2, size(X2, 2))
+    beta_s1  = _bridge_objective_at_beta_field(beta, :sigma1, size(Xs1, 2))
+    beta_s2  = _bridge_objective_at_beta_field(beta, :sigma2, size(Xs2, 2))
+    beta0 = (mu1 = beta_mu1, mu2 = beta_mu2, s1 = beta_s1, s2 = beta_s2, rho = rho_vec)
+
+    rr = reml_objective_at(prob, Q_cond, phi; beta0 = beta0, n_newton = 60)
+    return Dict{String,Any}(
+        "objective" => rr.reml_loglik,
+        "reml_loglik" => rr.reml_loglik,
+        "raw_reml_ll" => rr.raw_reml_ll,
+        "converged_inner" => rr.converged,
+        "contract" => "bridge_objective_at_v1",
+    )
+end
+
+# Fetch `beta[field]` from a NamedTuple or Dict (String or Symbol keyed), as a
+# `Vector{Float64}`, and check it against the design width `reml_objective_at`
+# expects — naming both the field and the expected/actual lengths so a
+# mismatched R-side `beta` fails loudly rather than silently misaligning
+# coefficients to the wrong design columns.
+function _bridge_objective_at_beta_field(beta, field::Symbol, expected_len::Int)
+    value = if beta isa AbstractDict
+        haskey(beta, field) ? beta[field] :
+            haskey(beta, String(field)) ? beta[String(field)] :
+            throw(ArgumentError("drm_bridge_objective_at: `beta` is missing field `$(field)`"))
+    elseif beta isa NamedTuple
+        hasproperty(beta, field) ||
+            throw(ArgumentError("drm_bridge_objective_at: `beta` is missing field `$(field)`"))
+        getproperty(beta, field)
+    else
+        throw(ArgumentError("drm_bridge_objective_at: `beta` must be a NamedTuple or " *
+            "Dict with mu1/mu2/sigma1/sigma2 fields"))
+    end
+    v = value isa Number ? Float64[value] : Vector{Float64}(vec(value))
+    length(v) == expected_len || throw(ArgumentError(
+        "drm_bridge_objective_at: `beta[$(field)]` must have length $(expected_len) " *
+        "(the $(field) design width); got length $(length(v))"))
+    return v
+end
+
+"""
     drm_bridge_q2_phylo(; Y, X, species, tree, options = Dict())
 
 Private diagnostic boundary for the restricted q2 phylogenetic coevolution
