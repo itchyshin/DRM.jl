@@ -363,9 +363,14 @@ re-deriving it from this section.
    p = 4000 → 1.55 s (down from the pre-fix router bug's p = 2000 → 3.77 s
    observed while diagnosing this sub-slice) — log-log exponent ≈ 1.6 from
    p = 1000 → 4000 (vs. ≈2.3–2.9 measured on the unfixed router at the same
-   scale). The **p = 10,000 Totoro re-measurement is pending** — see §7;
-   until it runs, this note makes no O(p) wall-time claim, only "no longer
-   cubic locally to p = 4000."
+   scale). Totoro re-measurement against the fix (head 86b7e3d4, same
+   ladder, seeds and script, single-threaded): p = 1000 / 2500 / 5000 /
+   10,000 → ML 8.7 (JIT) / 0.34 / 0.68 / 1.62 s, REML 0.76 / 0.94 / 1.55 /
+   2.86 s; log-log exponent 2500 → 10,000 ≈ 1.1 (ML) / 0.8 (REML); RSS
+   1.25–1.35 GB across the ladder (was 8.0 GB at p = 10,000); every
+   log-likelihood bit-identical to the pre-fix run (the objective is
+   untouched). Receipt: `docs/dev-log/evidence/julia-r-parity/
+   2026-09-02-lss-sparse-multi-scaling-pilot.md`, "Post-fix re-measurement".
 
 ---
 
@@ -421,12 +426,14 @@ fill (`nnz(L)/p`), not wall time — the two turned out to be separate claims.
 S7b.5's Totoro pilot measured fill flat but wall time superlinear (log-log
 exponent ≈2.6–2.9, p=2500→10,000); S7b.6 traced that to a router bug (§5
 oracle 5 above), not the sparse engine's own complexity, and fixed it. Local
-(laptop) re-measurement to p=4000 dropped the exponent to ≈1.6, but **the
-p=10,000 Totoro re-measurement has not yet been re-run against the fix** —
-until it is, this note makes **no O(p) wall-time claim** for the sparse
-multi-component route, only that it is measurably no longer cubic locally.
-Treat "O(p) fill, wall time TBD at p=10,000" as the accurate summary of this
-route's scaling until that pilot re-runs.
+(laptop) re-measurement to p=4000 dropped the exponent to ≈1.6, and the
+Totoro re-run of the full ladder against the fix (§5 oracle 5) measured
+p = 10,000 at 1.6 s (ML) / 2.9 s (REML) with exponent ≈ 1.1 / 0.8 from
+p = 2500 → 10,000. The accurate summary is therefore **O(p) fill and O(p)
+wall time to p = 10,000 on the nested fixture** (one phylogenetic component
+plus one small iid component, n = 2p). Nothing here is measured for the
+crossed layouts the router sends to the dense route, nor for many
+components, nor beyond p = 10,000.
 
 ---
 
