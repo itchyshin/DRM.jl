@@ -51,8 +51,11 @@ lanes that had not yet compared notes.
    edits, `src/gaussian_structured.jl` `_phylo_aug_comp` and `src/gaussian_sparse_lss.jl`'s precision
    initialisation, per `s5a.md`'s proposed patch (`Qs = dropzeros!(sparse(Symmetric(Q, :U)))`); (b)
    the label-map echo in `src/bridge.jl` — payload-supplied base-R names echoed under
-   `bridge_formula_labels_v1` (design 258 §7 on drmTMB branch `claude/rev-parity-c2-label-producer`,
-   SHA pending).
+   `bridge_formula_labels_v1` (design 258 §7 on drmTMB branch `claude/rev-parity-c2-label-producer`
+   @ `5b77eb691`, on origin: payload `coef_labels` per dpar; echo = `coef_label_contract` /
+   `coef_names` / `raw_coef_names` / `coef_name_map` / `vcov_names`; the R half is implemented and
+   fail-closed). The drmTMB lane's handoff memo for the Julia half:
+   `docs/dev-log/2026-09-02-drmjl-lane-handoff.md` on `claude/rev-parity-drmjl-findings`.
 
 4. **Promotion authority** on the bridge axis (scoreboard `docs/src/drmtmb-parity.md`) = a
    Rose-scanned draft PR + Shinichi's merge. No per-row sentence.
@@ -98,7 +101,7 @@ draft.
 | ticket | kind | default |
 |---|---|---|
 | Reverse-gap list contents (below) | task, drafted here | file as drmTMB issues by the drmTMB lane, on confirmation — not here |
-| `rtol_coef = 10%` re-derivation on `biv-q4-phylo-reml` `[tol]` | task, this lane, **after** drmTMB2's S4 SE receipt | one fixture edit + test rerun, own PR |
+| `rtol_coef = 10%` re-derivation on `biv-q4-phylo-reml` `[tol]` — the drmTMB S4 receipt now exists (`claude/rev-parity-q4-se-receipt` @ `996870366`, `docs/dev-log/evidence/julia-r-parity/ayumi-target/2026-09-02-q4-se-receipt.{md,R}`, engine pinned `cda42b8c`: coef + logLik agree, \|Δ\| 1.9e-05, 7/7 names; TMB Wald SEs finite). The Julia bridge `vcov()` on this route is all-NaN (`uncertainty$status = "unavailable"`) — that is the fixture's **recorded fence** `interval_status = "wald_unavailable"` (`expected.meta.toml:22`), not a new defect; the tolerance was always sized from drmTMB's own Wald SEs (`reml_restriction_note`), so the receipt unblocks the re-derivation | task, this lane (fresh task, C10) | decide the fraction (1% per #483's exact-gradient precedent vs the withdrawn 10%), edit `[tol]`, rerun the 33-assertion fixture test + #575 tests, own PR |
 | Red codex PRs #568 (test 1.10 fail) / #574 (test 1.10 + test 1 fail); #573 (no checks reported, CI run failing) | task, Codex lane / D-203 §2 successor | repair or close; #567/#571 merge when green (Shinichi merges) |
 | Is #563's G5 "every warm workflow wins" still the bar, or is a retained loss acceptable for v0.7.1? | decide-with-Shinichi, **not blocking** | keep #563's wording (a loss keeps the programme open) |
 
