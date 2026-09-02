@@ -488,8 +488,7 @@ DRM._lss_sparse_multi_objective
 DRM._lss_sparse_multi_objective_and_grad
 DRM._lss_sparse_multi_reml_pieces
 DRM._mark_lss_multi_route!
+DRM._lss_multi_route
 DRM._sparse_lss_iid_comp
 DRM._sparse_lss_phylo_comp
-DRM.fg!
-DRM.nllgrad!
 ```
