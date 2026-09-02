@@ -183,3 +183,16 @@ caller on the exact path, `_reml_exact_state`, uses `reml_ll_and_mode` purely to
 reach the right neighbourhood and then discards its `P`, re-certifying the mode
 against the guarded `_reml_prior_precision`; nothing derived from the unguarded
 `P` reaches the objective, the gradient, or the reported fit.
+
+---
+
+## 4. API
+
+The two module-level entry points the exact path exposes (unexported; called
+by `fit_q4_reml`'s `fg!`). Both take the augmented problem, the root-conditioned
+tree precision `Q_cond`, and the outer parameter vector `φ = (β_ρ, lc)`.
+
+```@docs
+DRM.reml_nll_exact
+DRM.reml_nll_and_exact_grad
+```

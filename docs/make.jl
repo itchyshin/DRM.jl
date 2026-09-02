@@ -77,6 +77,7 @@ makedocs(
                 "developer-notes/formula-grammar.md",
                 "developer-notes/adding-families.md",
                 "developer-notes/source-map.md",
+                "developer-notes/reml-q4-exact-gradient.md",
                 "API stability" => "api-stability.md",
                 "Changelog" => "changelog.md",
             ],

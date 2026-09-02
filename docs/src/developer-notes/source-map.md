@@ -22,6 +22,7 @@ exact O(p) gradient. The files form a single migrated chain (top calls down):
 | `sparse_aug_plsm.jl` | The sparse augmented-state Laplace-EM core for the q=4 PLSM. |
 | `sparse_phy.jl` | Augmented-state sparse phylogenetic precision (never forms a dense p×p Σ). |
 | `takahashi_selinv.jl` | Takahashi selected inverse for sparse positive-definite matrices (the O(p) gradient correction). |
+| `reml_q4.jl` | REML for the q=4 PLSM (`drm(method = :REML)`): the restricted objective over the augmented state `(u, β)` with its exact O(p) gradient — see [The exact gradient of the q=4 REML objective](reml-q4-exact-gradient.md). |
 
 ## Front end + Gaussian family
 
