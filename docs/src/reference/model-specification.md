@@ -55,6 +55,10 @@ cbind
 
 ## [Modelled missing predictors](@id joint-predictor-formula)
 
+!!! warning "Experimental"
+    Exported for evaluation; fenced for v1.0 (D-181). API and numerics may
+    change; not covered by the R-parity scoreboard.
+
 For a Gaussian response, `mi(x)` marks an additive predictor whose missing
 values are integrated out under a joint model. Observed predictor values inform
 the predictor distribution; missing predictors are not filled in before fitting.

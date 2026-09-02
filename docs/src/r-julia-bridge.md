@@ -114,6 +114,10 @@ verify every response family, profile interval or bootstrap workflow.
 
 ### One modelled missing predictor — development admission
 
+!!! warning "Experimental"
+    Exported for evaluation; fenced for v1.0 (D-181). API and numerics may
+    change; not covered by the R-parity scoreboard.
+
 The R bridge also has a deliberately narrow development route for one modelled
 missing predictor. It accepts a Gaussian identity-link response, exactly one
 bare additive `mi(x)` term in `mu`, complete fixed-effect exogenous designs,
