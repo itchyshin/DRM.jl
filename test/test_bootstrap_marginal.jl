@@ -106,12 +106,17 @@ end
     @test 0.75 < ratio < 1.3
 end
 
-@testset "#461 a degenerate optimum is not reported as converged" begin
+@testset "#461 a degenerate optimum is not reported as converged -- converges under the #574 guard" begin
     # With ONE row per group a structured random effect can interpolate the data:
-    # sigma collapses toward 0 and the Gaussian log-likelihood runs away to +Inf.
-    # `Optim.converged` returns true there, so before this guard 25% of bootstrap
-    # replicates were admitted with values like sd_phylo = 22980, sigma = 7.5e-15,
-    # loglik = 6.8e13 -- and the percentile interval inherited them.
+    # sigma collapses toward 0 and, under the SPARSE Woodbury objective, the
+    # Gaussian log-likelihood used to run away to +Inf (`Optim.converged` returns
+    # true there). #461's `is_converged` floor caught 25% of bootstrap replicates
+    # post hoc (sd_phylo = 22980, sigma = 7.5e-15, loglik = 6.8e13). #574 closes
+    # the true numerical hole -- a residual variance below machine precision
+    # relative to the phylo variance is now refused INSIDE the objective, before
+    # the optimizer can reach that spurious region -- so refits now converge to
+    # the same (bounded) optimum a dense GLS oracle finds, and no replicate
+    # should be dropped as degenerate on this fixture any more.
     Random.seed!(4242)
     G = 100
     phy = random_balanced_tree(G; branch_length = 0.3)
@@ -132,14 +137,18 @@ end
     res = bootstrap_result(fit; data = dat, tree = phy, B = 60, level = 0.95,
                            rng = MersenneTwister(20260824),
                            failures = :skip, check_converged = true)
-    # Degenerate replicates must be DROPPED AND COUNTED, not silently included.
-    @test res.failed > 0
-    @test res.used > 0
+    # #574 fixed the numerical cause of the degeneracy (catastrophic
+    # cancellation in the sparse Woodbury objective near sigma -> 0), so every
+    # refit now lands on the true, bounded optimum: no replicate is degenerate.
+    @test res.failed == 0
+    @test res.used == 60
     sd_rows = [r for r in res.summary if occursin("sd", lowercase(String(r.param)))]
     @test !isempty(sd_rows)
     row = first(sd_rows)
-    # Before the guard the upper percentile reached ~179 (and 22980 in the raw
-    # draws) against an estimate near 1. Anything within a factor of 20 is sane.
+    # Before #461's `is_converged` floor the upper percentile reached ~179 (and
+    # 22980 in the raw draws) against an estimate near 1; #574 removes the
+    # runaway at its numerical source, so the bound should be comfortably
+    # sane rather than merely "not astronomical."
     @test isfinite(row.upper)
     @test row.upper < 20 * max(row.estimate, 1e-3)
 end
