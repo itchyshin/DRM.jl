@@ -195,4 +195,5 @@ tree precision `Q_cond`, and the outer parameter vector `φ = (β_ρ, lc)`.
 ```@docs
 DRM.reml_nll_exact
 DRM.reml_nll_and_exact_grad
+reml_objective_at
 ```
