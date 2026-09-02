@@ -126,7 +126,12 @@ _dpar_block(names, dpar::AbstractString) =
     @testset "coef_labels payload forwarded verbatim (design 258 §7)" begin
         for c in _CONSTRUCTS
             expected_full = ["mu_" * n for n in c.expected]
-            options = Dict{String,Any}("coef_labels" => Dict("mu" => c.expected))
+            # #563's fail-closed contract aborts when a dpar with fixed-effect
+            # columns has no supplied labels; every construct here also gets
+            # an auto-defaulted intercept-only `sigma` (see Part A's comment
+            # above), so a real payload names both dpars, not just `mu`.
+            options = Dict{String,Any}("coef_labels" => Dict(
+                "mu" => c.expected, "sigma" => ["(Intercept)"]))
             status, result = _try_bridge(; formula = c.formula, options = options)
             observed = status === :ok ? _dpar_block(result["coef_names"], "mu") :
                 ["REJECTED: $(result)"]
