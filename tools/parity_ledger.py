@@ -45,6 +45,15 @@ NOT_CAPABILITY = {"gr", "drm_control", "meta_known_V"}
 # the classes separately. Adding a name here is a claim -- it must be true, and
 # it must say why.
 DELIBERATELY_NOT_PORTED = {
+    # 2026-09-02 (drmTMB #1114): cross-engine objective at a supplied point.
+    # DRM.jl's counterparts are `reml_objective_at` (primitive, #589) and the
+    # supported bridge entry `drm_bridge_objective_at` (#590); the name differs
+    # by design because the Julia entry takes the bridge payload, not a fit.
+    "objective_at": "counterpart is drm_bridge_objective_at / reml_objective_at (DRM.jl #589/#590)",
+    # 2026-09-02 (drmTMB #1114): build provenance baked at install via configure.
+    # DRM.jl records the comparator build with tools/drmtmb_provenance.R --toml
+    # (DRM.jl#473) rather than a runtime accessor; a Julia twin is not owed.
+    "drm_provenance": "DRM.jl stamps comparator provenance via tools/drmtmb_provenance.R --toml (#473)",
     # --- delivered, but spelled differently: a family plus a bivariate formula
     "biv_lognormal": "delivered as LogNormal() with a bivariate formula (A3a, parity-verified)",
     "biv_student": "delivered as Student() with a bivariate formula (A3b, parity-verified)",
