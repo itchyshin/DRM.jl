@@ -12,7 +12,11 @@ on:
 
 concurrency:
   group: docs-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded runs on PR refs only. On `main` every push must run to
+  # completion: on 2026-09-02 five merges inside two minutes cancelled each
+  # other's docs run, and a :missing_docs failure that entered at the first of
+  # them stayed invisible until the last push happened to finish (#589/#590).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   docs:

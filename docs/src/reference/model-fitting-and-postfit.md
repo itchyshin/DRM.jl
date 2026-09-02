@@ -193,6 +193,7 @@ refusals; these docstrings do not expand that contract.
 ```@docs
 drm_bridge
 drm_bridge_inference
+drm_bridge_objective_at
 drm_listwise
 ```
 
