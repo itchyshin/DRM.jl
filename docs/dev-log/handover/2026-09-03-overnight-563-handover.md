@@ -41,32 +41,32 @@ bug — same issue #609); S11 q4 REML fixed-effect Wald SE remains `wald_unavail
 returns all-NaN; drmTMB returns finite; root cause not yet pinned — `scratchpad/s11-inference.md`
 §3 step 3).
 
-## 2. Merge table (placeholders for the conductor)
+## 2. Merge table (final, 2026-09-03 ~02:30 MDT)
 
-Every row below is this lane's own PR, or a sibling-lane (Codex) PR the lane was pre-authorised to
-merge (D-209 §1). `<<fill>>` marks what the conductor fills in after re-reading each PR's current
-head.
+Every merge below was made only after every check on the PR's current head had completed green
+(D-209 §1). Merged-into-main shas are the merge commits.
 
-| # | Branch | Slice | What it is | Head sha (as read tonight) | Check state | Merged sha |
-|---|---|---|---|---|---|---|
-| #610 | `feat/563-s7b-lss-sparse-multi` | S7(b) | Sparse multi-component LSS engine (O(p), one phylo + nested iid components) | `8da629ef` | `<<fill>>` | `<<fill>>` |
-| #574 | `codex/loconly-numerical-boundary` | A2 | Resolvable-scale guard for `location_only.jl`; #461 test updated per D-211 | `aaecac45` | `<<fill>>` | `<<fill>>` |
-| #573 | `codex/julia-bridge-route-diagnostic` (stacked on #574) | A2 | Bridge route-aware convergence diagnostics; retarget to `main` after #574 merges | `04e3e5d1` | `<<fill>>` | `<<fill>>` |
-| #607 | `test/578-q4-reml-missing-response` | A3/S8 | RED-first test: missing-response mask consistency in `_reml_border_blocks` (closes #578) | `55e2f803` | `<<fill>>` | `<<fill>>` |
-| #608 | `feat/563-lognormal-structured-mean` | A3/S8 | LogNormal phylo/relmat structured markers on the mean, via Gaussian-on-log(y) delegation | `2c9452dc` | `<<fill>>` | `<<fill>>` |
-| #605 | `docs/563-s9-experimental-labels` | A4/S9 | Label exported joint missing-predictor routes Experimental under the D-181 fence | `e976f51e` | `<<fill>>` | `<<fill>>` |
-| #612 | `evidence/563-receipts-regen` | A5/S10 | Regenerate S9/S10 programme receipts against current `src/` (closes stale-baseline leaves for #606/#609) | `da54cd11` | `<<fill>>` | `<<fill>>` |
-| #611 | `fix/563-s11-q4-reml-vcov` | A6/S11 | Pin q4 REML `vcov()` behaviour (native finite/PD; bridge NaN by documented default) + `[se]` provenance note | `99a03cd7` | `<<fill>>` | `<<fill>>` |
-| #613 | `feat/563-s12-warm-timing-harness` | A7/S12 | Matched warm-timing harness + registry; first sweep (10/10 workflows win at 1/2/4/8 threads) | `e2a80c2c` | `<<fill>>` | `<<fill>>` |
-| #567 | `codex/sigma-phylo-inference-contract` | sibling | Retain location-scale SD inference targets — **already merged** | `6d030a98` (PR head) | MERGED (`d388d690` on main) | `d388d690` |
-| #571 | `codex/profile-thread-fit-budget` | sibling | Stabilize public LSS fit before threaded profiling — **already merged** | `028b7661` (PR head) | MERGED (`501fa666` on main) | `501fa666` |
-| #568 | `codex/lss-sparse-capacity-guidance` | sibling | Docs: clarify sparse phylogenetic LSS capacity guidance; branch updated from main | `a2325345` | `<<fill>>` | `<<fill>>` |
+| PR | slice | what | head | checks on head | merged |
+|---|---|---|---|---|---|
+| #571 (codex) | sibling | stabilise public LSS fit before threaded profiling | 028b7661 | all green | 501fa666 |
+| #567 (codex) | sibling | retain location-scale SD inference targets | 6d030a98 | all green | d388d690 |
+| #574 (codex + D-211) | A2 | resolvable-scale guard; #461 test asserts convergence | aaecac45 | all green | 9451abc0 |
+| #605 | A4/S9 | Experimental labelling of the exported joint routes (D-181 fence) | e976f51e | all green | 4d7517ff |
+| #610 | A1/S7(b) | sparse multi-component LSS engine; Totoro suite green; 18/18 gates | 8da629ef | all green | 01273278 |
+| #608 | A3/S8 | LogNormal phylo/relmat on the mean (delegation identity) | 2c9452dc | all green | a9d435b7 |
+| #611 | A6/S11 | q4 REML vcov pin + `[se]` provenance | 99a03cd7 | all green | 88493250 |
+| #613 | A7/S12 | warm-timing harness + registry + sweep (10/10 WIN, 1/2/4/8 threads) | e2a80c2c | all green | 19833b57 |
+| #617 | A3/S8 | CumulativeLogit iid intercept + independent slope | e84e4699 | all green | 3163dcc3 |
+| #615 | A3/S8 | Tweedie iid intercept + independent slope | 56352694 | all green | a323b1b9 |
+| #614 | S6 follow-up | label echo: scalar String; every block needs labels | 3dd997f3 | all green (1.10 rerun after flake #616) | f2c48ab4 |
+| #612 | A5/S10 | receipts regenerated against current src | da54cd11 | all green (rebased after flake #616) | c66aa289 |
+| #568 (codex) | sibling | sparse phylo LSS capacity docs; rebased on main | a2325345 | all green (docs rerun after a gh-pages push race) | ddb02133 |
+| #607 | A3/S8 | #578 test: q4 REML missing-response mask consistency | 96d4ed85 → main merged in after conflicts with #615/#617 | rerunning at hand-off | pending — merge if green, else owner |
+| #618 | A3/S8 | CumulativeLogit phylo intercept; Opus review APPROVE WITH REQUIRED EDITS → applied (060c70b3) | 060c70b3 (retargeted to main after #617) | running at hand-off | pending — merge if green, else owner |
+| #573 (codex) | A2 | route-aware convergence diagnostics; retargeted + main merged in (4e82032a) | 4e82032a | test (1.10) FAILED: own-branch `q=4 location-scale fit starts on a deep raw tree` (`fit.converged` false) | NOT merged — owner |
 
-Note: at read time, `gh api` reported #605/#607/#608/#610/#611/#612/#613/#574/#573/#568 all
-`state: open`, `merged_at: null` — none of this lane's own PRs are merged yet; only the two Codex
-sibling PRs (#567, #571) landed. Every head sha above was read fresh via `gh api
-repos/itchyshin/DRM.jl/pulls` at handover time — the conductor should re-read before merging in
-case a PR moved since.
+Branches pushed without a PR: `fix/563-s10-lss-ranef-gtol` @ 744d28b3 (RED test + fixture + R oracles for drmTMB #1130).
+Post-merge `main` docs deploys checked green through 19833b57; PR-preview deploys raced main's twice (rerun fixed both).
 
 ## 3. Owner decisions owed
 
