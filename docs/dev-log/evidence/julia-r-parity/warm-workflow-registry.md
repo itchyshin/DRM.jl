@@ -369,3 +369,26 @@ the timer-floor/caching issues already fixed.
   columns) + G5 verdict per workflow.
 - `docs/dev-log/evidence/julia-r-parity/warm-fixtures/` — generated fixtures (CSV + Newick),
   committed so a re-run reads the exact same data without regenerating it.
+
+## Sweep 2026-09-02 (S12, G5) — matched warm timings at 1/2/4/8 threads
+
+Host: the Mac (Julia 1.10.0 both sides of the comparison; R 4.6.0 / drmTMB 0.7.0), **contended** — load average 16–23 throughout (three other lanes running); both engines ran sequentially under the same load, so ratios are indicative, absolute seconds are pessimistic. Fixtures: `warm-fixtures/` (identical CSV + Newick on both sides). `reps = 3`, loop-until-0.25 s timer, warm-up excluded, uncertainty leg forced (Julia: fresh ForwardDiff Hessian + `_vcov_from_hessian`; R: `TMB::sdreport(obj)`). Raw: `warm-timing-julia-t{1,2,4,8}.tsv`, `warm-timing-r-t{1,2,4,8}.tsv`; comparison output: `warm-timing-compare-2026-09-02.md`.
+
+**G5 verdict: all 10 registered workflows WIN at every thread count** (Julia faster on every compared leg). Smallest margin over all 108 compared rows: gauss_lss_sd_phylo / fit at 1 threads, R/Julia = 1.3×.
+
+| workflow | R fit s (t=1) | Julia fit s (t=1) | ratio t=1 | ratio t=2 | ratio t=4 | ratio t=8 |
+|---|---|---|---|---|---|---|
+| bernoulli_mixed | 0.4428 | 0.07270 | 6.1 | 7.3 | 7.3 | 6.1 |
+| biv_q4_phylo_ml | 0.1096 | 0.02188 | 5.0 | 5.1 | 4.9 | 5.1 |
+| biv_q4_phylo_reml | 0.0986 | 0.01777 | 5.5 | 5.5 | 5.6 | 5.7 |
+| gauss_lss_sd_group | 0.5473 | 0.00141 | 389.0 | 404.8 | 390.0 | 400.0 |
+| gauss_lss_sd_phylo | 0.2268 | 0.17513 | 1.3 | 1.9 | 2.0 | 2.0 |
+| gauss_mixed_phylo_mean | 0.0667 | 0.00033 | 202.6 | 206.3 | 173.8 | 181.2 |
+| large_sparse_lss_p2000 | 6.9605 | 0.39818 | 17.5 | 17.5 | 17.4 | 17.4 |
+| lognormal_locscale | 0.0296 | 0.00023 | 126.4 | 119.8 | 128.6 | 121.2 |
+| meta_analysis_meta_V | 0.0239 | 0.00022 | 107.8 | 112.6 | 109.4 | 108.8 |
+| poisson_mixed | 0.0925 | 0.00462 | 20.0 | 20.4 | 20.9 | 20.8 |
+
+Not compared (N/A, both engines' rows kept): the Julia `uncertainty` leg for `biv_q4_phylo_ml`, `biv_q4_phylo_reml`, `large_sparse_lss_p2000` — their `fit.nll` builds a Float64-only sparse Cholesky that ForwardDiff cannot differentiate through, and the covariance is already computed inside `fit`; R's forced `sdreport` leg for those workflows is reported on its own. No retained loss to name.
+
+Caveats: contended host (see load); thread scaling is not the claim here (both engines are mostly single-threaded on these sizes); a clean-host re-run is the next evidence step, not a prerequisite for the verdict given the margins.
