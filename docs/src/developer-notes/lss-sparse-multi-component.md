@@ -67,6 +67,26 @@ up to its `n ≤ 5000` cap (`gaussian_lss.jl:570`); this note is only about
 whether an O(p) *sparse* alternative exists, and for that topology it does
 not.
 
+**S7b.4 router rule (D-206, `gaussian_lss.jl`'s `_drm_gaussian_lss_multi`).**
+The public router turns the IN-SCOPE/OUT-OF-SCOPE classification above into a
+decision at fit time, mechanically: dispatch to the sparse multi-component
+route ONLY when (a) **exactly one** `sd()` component is phylogenetic, AND (b)
+**every** iid component is either NESTED within it — `_lss_iid_nested_in`,
+each iid group level co-occurs with exactly one phylo group level across all
+rows, the same clean-partition test §2 uses — OR **small**: `G_c ≤
+_LSS_SPARSE_SMALL_FRACTION × G_phy` with `_LSS_SPARSE_SMALL_FRACTION = 0.1`
+(10% of the phylogenetic component's tip count), the documented threshold for
+"`G_c ≪ p`" (§2.1 case (b), §7's S7b.2 estimate row) as a checkable rule
+rather than a judgement call. Any iid component failing BOTH tests (crossed
+at comparable scale, case (c)) routes the WHOLE model to dense, even under an
+explicit `algorithm = :sparse` request — the router never silently runs an
+unproven-fill sparse fit, and never silently drops the request either: an
+explicit sparse request that falls back emits an `@info` naming which
+component and why. `:auto` (the `drm()` default) auto-dispatches to sparse
+when eligible AND the phylogenetic component has more than 500 tips,
+mirroring the single-component `G > 500` rule (`gaussian_lss.jl:402`).
+Acceptance: oracle 4 below.
+
 ---
 
 ## 2. The augmented precision
@@ -210,8 +230,8 @@ scaling factor per component per observation.
 | `quad_sos` | zero-cancellation GMRF sum of squares | `dot(res_lat, w .* res_lat) + dot(â, Qs*â)` (`:89`) generalises to `+ Σ_c dot(â_c, Q_c â_c)` | §5 oracle 1 | atol = 1e-5 (loglik) |
 | `Hinv` (selected inverse, **full pattern**, not just the diagonal) | O(p) exact `H⁻¹` entries at every pair the sparse pattern of `H`/`L` connects, any component — this now includes **cross-component** pairs `(g, t)`, `g` in one component's block and `t` in another's | `takahashi_selinv(ch)` (`:96`, `src/takahashi_selinv.jl:103`) — **works unchanged on the bigger `H`**: `takahashi_selinv` returns the selected inverse at every nonzero of the Cholesky factor's fill pattern, and every `H[g,t]` §2 introduces is by construction already inside that pattern (fill only ever *adds* to a matrix's own nonzero set, never removes from it) — so the cross entries needed below cost nothing extra to obtain | §5 oracle 2 | grad ≤ 1e-6 |
 | `g_βμ` | mean-block gradient | `-(Xμ' * u)` (`:99`) — **unchanged**, `u` only depends on the joint residual | §5 oracle 2 | grad ≤ 1e-6 |
-| `g_βσ` | residual-scale gradient | loop (`:101–111`) — **unchanged**: `s_ii = Hinv[r_node, r_node]` still reads off the (bigger) selected inverse at the phylo-leaf node | §5 oracle 2 | grad ≤ 1e-6 |
-| `g_α,c` | per-component α gradient, log-det trace term | **corrected formula — diagonal alone is WRONG.** `∂H[g,g]/∂α_c,g` (own-node term, as #551) **plus** `∂H[g,t]/∂α_c,g` for every node `t` of every *other* component sharing an observation with group `g` (exactly the cross blocks §2 introduces): `trace_term_g = Hinv[g,g]·∂H[g,g]/∂α_c,g + 2·Σ_{t≠g} Hinv[g,t]·∂H[g,t]/∂α_c,g`. Single-component #551 has no such `t` (its only cross partner is the tree, already folded into the diagonal via `leaf_pos`), so `:114–126`'s bare `s_node = Hinv[r_node,r_node]` is the `m=1` special case, not the general one. `quad_term` (`u[i]*Zâ[i]` sum) is unaffected — it only ever needed the fitted `â`, not `Hinv`. **TO BUILD** | §5 oracle 3 (cross-term gradcheck) | grad ≤ 1e-6 |
+| `g_βσ` | residual-scale gradient | loop (`:101–111`) — ~~**unchanged**: `s_ii = Hinv[r_node, r_node]` still reads off the (bigger) selected inverse at the phylo-leaf node~~ **CORRECTED 2026-09-02** (implementation review, S7b.2): needs the SAME cross-component generalisation as `g_α,c`. `Vinv_ii = w_i − w_i²·zᵢᵀH⁻¹zᵢ`, and `zᵢ` (row `i` of the joint `Z`) has ONE nonzero per component — so the bilinear form is the FULL `Σ_{c,c'} wts_c[i]·wts_c'[i]·Hinv[node_c(i), node_c'(i)]` over every component pair touched by row `i` (own AND cross), not the single-node read `Hinv[r_node,r_node]` #551 uses when `m=1`. Verified against central-FD in `test/test_lss_sparse_multi_gradient.jl`: max relative error 1.37e-7 / 9.4e-10 / 2.7e-10 at the three oracle-2 points (dense optimum / perturbed / boundary) | §5 oracle 2 | grad ≤ 1e-6 |
+| `g_α,c` | per-component α gradient, log-det trace term | **corrected formula — diagonal alone is WRONG.** `∂H[g,g]/∂α_c,g` (own-node term, as #551) **plus** `∂H[g,t]/∂α_c,g` for every node `t` of every *other* component sharing an observation with group `g` (exactly the cross blocks §2 introduces): `trace_term_g = Hinv[g,g]·∂H[g,g]/∂α_c,g + 2·Σ_{t≠g} Hinv[g,t]·∂H[g,t]/∂α_c,g`. Single-component #551 has no such `t` (its only cross partner is the tree, already folded into the diagonal via `leaf_pos`), so `:114–126`'s bare `s_node = Hinv[r_node,r_node]` is the `m=1` special case, not the general one. ~~`quad_term` (`u[i]*Zâ[i]` sum) is unaffected — it only ever needed the fitted `â`, not `Hinv`~~. **CORRECTED 2026-09-02** (implementation review, S7b.2): `quad_term` needs each component's OWN contribution `wts_c[i]·â[node_c(i)]`, NOT the joint `Zâ_i = Σ_c' wts_c'[i]·â[node(i,c')]` this note's `Zâ_i` (multi) row defines. Using the joint sum collapses every component's `quad_term` to the SAME scalar total whenever every component has a single-column `Zg` — each component's own indicator-sum then reduces to `Σ_i u_i·Zâ_i` over ALL rows regardless of which component is being differentiated, so distinct components cannot come out with distinct gradients, which is wrong. Verified against central-FD in `test/test_lss_sparse_multi_gradient.jl`: max relative error 1.37e-7 / 9.4e-10 / 2.7e-10 at the three oracle-2 points (dense optimum / perturbed / boundary). **TO BUILD** | §5 oracle 3 (cross-term gradcheck) | grad ≤ 1e-6 |
 | cross-block `∂H[g,t]/∂α_c,g` accumulation | for every pair of components `(c, c')` and every observation `i` whose row touches both a node `g` of `c` and a node `t` of `c'`, the derivative of the *cross* entry `H[g,t] = Σ_i w_i·wts_c[i]·wts_{c'}[i]` w.r.t. `α_c,g` is `w_i·(∂wts_c[i]/∂α_c,g)·wts_{c'}[i]` — a new per-observation accumulation loop, one for every unordered component pair actually crossed by shared observations (at most `m(m-1)/2` loops, each `O(n)`) | **TO BUILD**: no #551 analogue exists (single component has only one factor in `wts`, so this derivative never arose) | §5 oracle 3 | grad ≤ 1e-6 |
 | `Zâ_i` (multi) | fitted joint random effect at row `i` | `Zâ` (`:82`) generalises to `Σ_c wts_c[i]·â_c[node(i,c)]` | §5 oracle 1 | rtol = 2e-4, atol = 2e-5 (coef) |
 
@@ -251,6 +271,19 @@ summing `wts_c[i]*wXk[i]` into `bX` at each component's node for `i`'s row —
 no new mathematics, just the same block-accumulation pattern as `b` in §3.
 Cost stays `O(pμ · nnz(L))` sparse backsolves, same order as #551.
 
+**Where the REML gradient actually lives (S7b.3).** The exact analytic
+gradient of this correction — the Schur-complement identity `logdet(Xμ'V⁻¹Xμ)
+= logdet(C) - logdet(H)` for the bordered matrix `C = [Xμ'WXμ Xμ'WZ; Zᵀ WXμ
+H]`, and the selected-pairs matrix `Ψ[gi,gj] := dot(ÂX[gi,:], C2[gj,:])`
+(`C2 = ÂX * (Xμ'V⁻¹Xμ)⁻¹`) that stands in for `Hinv[gi,gj]` in the REML
+`g_α,c` trace term — is NOT re-derived in this note (an earlier draft left it
+as a TO-BUILD placeholder here, S7b.2 found the omission): it is fully
+derived and FD-verified in
+[`DRM._lss_sparse_multi_objective_and_grad`](@ref)'s own docstring
+(`gaussian_sparse_lss.jl`, the function's REML paragraph), which is the
+authoritative source for this derivation. Read it there rather than
+re-deriving it from this section.
+
 ---
 
 ## 5. Acceptance oracles
@@ -266,6 +299,10 @@ Cost stays `O(pμ · nnz(L))` sparse backsolves, same order as #551.
    note's earlier `1e-8` draft was tighter than #551's own precedent with no
    measured margin to justify it, and was flagged as likely-flaky by the
    adversarial review, §8 finding 6).
+   **WIRED (#563 S7b.4):** `test/test_lss_sparse_multi_public.jl` (public
+   `drm(...; algorithm = :sparse)` route, not this specific CSV fixture —
+   the S7b.1 nested fixture, 64 tips/192 sites, ML and REML; also covers the
+   `G_phylo > 500` `:auto` dispatch case, S7b.4's own oracle 1c).
 2. **FD-vs-exact gradient**, three points: the fixture-A MLE, a random
    interior point, and a boundary-ish point (one component's `α` pushed so
    `σ_c,g → e^{-6}`, mirroring #551's own boundary check). `‖g_exact −
@@ -273,6 +310,11 @@ Cost stays `O(pμ · nnz(L))` sparse backsolves, same order as #551.
    uses for its own exact-vs-FD Hessian check (`gaussian_sparse_lss.jl:199–
    217`), not the looser `rtol=2e-4,atol=2e-5` line 198 uses for its packed
    *stored*-gradient regression test.
+   **WIRED:** `test/test_lss_sparse_multi_gradient.jl` (S7b.2/S7b.2b, at the
+   `_lss_sparse_multi_objective_and_grad` level) and
+   `test/test_lss_sparse_multi_reml.jl` (S7b.3, the REML gradient); S7b.4
+   only re-touches this indirectly through the public route's own
+   convergence/gradient-norm checks (oracle 1c), it does not re-derive it.
 3. **Cross-term gradcheck (finding 4, §3).** The generalisation of
    `review_s7b_gradcheck.jl`'s toy into a permanent unit test: a small nested
    multi-component fixture (phylo-like 4-node block + 2-level iid block,
@@ -286,11 +328,49 @@ Cost stays `O(pμ · nnz(L))` sparse backsolves, same order as #551.
    ≥ 1.2` (crossed) vs. the nested comparator's `< 1.0`, i.e. the note's §2.3
    claim is checked against the actual shipped fixture, not only synthetic
    data.
+   **WIRED (router reading, #563 S7b.4):** `test/test_lss_sparse_multi_public.jl`
+   exercises this at the ROUTER level instead of fixture B specifically — a
+   genuinely crossed two-iid-component fixture (§1's router rule, D-206)
+   asserts (i) `drm(...; algorithm = :sparse)` still returns the DENSE
+   route's fit (via the `_lss_multi_route` marker) with an informative
+   `@info`, never a silent sparse run on an unproven-fill topology, and (ii)
+   the S7b.1 assembler's `H` on that same fixture measures `nnz(L)/dim > 4`
+   — well above the nested band, matching this note's §2.1 case (c) reading.
+   `test/test_lsss_multi.jl` separately pins fixture B itself on the DENSE
+   route (unchanged by this sub-slice).
 5. **Scaling to p = 10,000** — **only** if §2 continues to hold at that
    scale for the in-scope topology (one phylo + nested/small-crossed iid).
    This is a >30-minute class of run (D-139): pilot on Totoro first (≤150
    cores, per D-143), report the pilot's wall time and `nnz(L)/p` before
-   committing to the full p=10,000 fit. Not run for this note.
+   committing to the full p=10,000 fit.
+   **RUN (S7b.5, Totoro, `tools/lss_sparse_multi_scaling_pilot.jl`,
+   `docs/dev-log/evidence/julia-r-parity/2026-09-02-lss-sparse-multi-
+   scaling-pilot.md`):** the fill claim held (`nnz(L)/dim` flat, 3.085 →
+   3.092 across the 1000 → 10,000 ladder) but wall time did NOT — log-log
+   exponent ≈ 2.6–2.9 from p = 2500 → 10,000 (165 s at p = 10,000, RSS 1.3 →
+   8.0 GB). **Root cause (S7b.6, this sub-slice):** not the sparse engine
+   itself — `_drm_gaussian_lss_multi` (the public router,
+   `src/gaussian_lss.jl`) called `_phylo_correlation(phy)`, a DENSE inverse
+   of the ~2p×2p augmented tree matrix (`sigma_phy_dense`, cubic), **before**
+   deciding `use_sparse`, on every fit with a phylogenetic `sd()` component
+   — the sparse route never reads that matrix (it rebuilds a sparse
+   precision from the tree directly), so the O(p³) cost was pure waste on
+   every sparse-route call. Fixed by deferring materialisation with a
+   `_LazyPhyloK()` marker (`src/gaussian_lss.jl`) until the dense route is
+   actually selected.
+   Local (laptop) post-fix re-measurement, same fixture/script, warm JIT at
+   p = 200, single BLAS thread: p = 1000 → 0.17 s, p = 2000 → 0.30 s,
+   p = 4000 → 1.55 s (down from the pre-fix router bug's p = 2000 → 3.77 s
+   observed while diagnosing this sub-slice) — log-log exponent ≈ 1.6 from
+   p = 1000 → 4000 (vs. ≈2.3–2.9 measured on the unfixed router at the same
+   scale). Totoro re-measurement against the fix (head 86b7e3d4, same
+   ladder, seeds and script, single-threaded): p = 1000 / 2500 / 5000 /
+   10,000 → ML 8.7 (JIT) / 0.34 / 0.68 / 1.62 s, REML 0.76 / 0.94 / 1.55 /
+   2.86 s; log-log exponent 2500 → 10,000 ≈ 1.1 (ML) / 0.8 (REML); RSS
+   1.25–1.35 GB across the ladder (was 8.0 GB at p = 10,000); every
+   log-likelihood bit-identical to the pre-fix run (the objective is
+   untouched). Receipt: `docs/dev-log/evidence/julia-r-parity/
+   2026-09-02-lss-sparse-multi-scaling-pilot.md`, "Post-fix re-measurement".
 
 ---
 
@@ -340,6 +420,20 @@ size crossed factors, and no elimination order changes that. The existing
 **dense** multi-component route (`gaussian_lss.jl:564`, `n ≤ 5000`) already
 covers genuinely crossed models like fixture B and should stay the
 recommended route for that topology.
+
+**Limitations (S7b.6 update, this sub-slice).** The GO/NO-GO above is about
+fill (`nnz(L)/p`), not wall time — the two turned out to be separate claims.
+S7b.5's Totoro pilot measured fill flat but wall time superlinear (log-log
+exponent ≈2.6–2.9, p=2500→10,000); S7b.6 traced that to a router bug (§5
+oracle 5 above), not the sparse engine's own complexity, and fixed it. Local
+(laptop) re-measurement to p=4000 dropped the exponent to ≈1.6, and the
+Totoro re-run of the full ladder against the fix (§5 oracle 5) measured
+p = 10,000 at 1.6 s (ML) / 2.9 s (REML) with exponent ≈ 1.1 / 0.8 from
+p = 2500 → 10,000. The accurate summary is therefore **O(p) fill and O(p)
+wall time to p = 10,000 on the nested fixture** (one phylogenetic component
+plus one small iid component, n = 2p). Nothing here is measured for the
+crossed layouts the router sends to the dense route, nor for many
+components, nor beyond p = 10,000.
 
 ---
 
@@ -399,3 +493,44 @@ VERDICT: APPROVE WITH REQUIRED EDITS
 - Revise S7b.2's estimate upward and add an explicit cross-block-accumulation design/test subtask.
 
 Edits applied: 2026-09-02, by the author
+
+Implementation review (S7b.2, 2026-09-02): two further table corrections applied — see §3 rows quad_term and g_βσ.
+
+Implementation note (S7b.4, 2026-09-02): the public-route wiring added §1's
+router rule and a `_lss_multi_route` marker (`gaussian_sparse_lss.jl`) so
+tests can assert which engine a fit took — `DrmFit` (`gaussian_core.jl`) is a
+plain positional struct with an 11-/19-/22-arg constructor ladder kept
+stable specifically so ~70 call sites across ~20 family files never change
+when a field is added, so this sub-slice deliberately did NOT add a `route`
+field there; a side table keyed by `fit.theta` plays that role instead (NOT
+by `fit` itself — `drm()` reconstructs a new immutable `DrmFit` via
+`_withformula` on every route's return value, so the object the router marks
+is never the object the caller gets back; `θ̂` is the one field every
+`_with*` wrapper forwards by reference rather than copying, confirmed the
+hard way when marking `fit` directly read back `:unknown` in this
+sub-slice's own tests — see the marker's own docstring). Wiring
+`algorithm`/`sparse` through to the
+multi-component router also required one small forwarding edit at the
+`drm()` dispatch call site (`gaussian_core.jl`, mirroring the identical
+forwarding the sibling single-component phylo call two lines above already
+does) — outside this sub-slice's originally scoped file list, but without it
+an explicit `algorithm = :sparse` request on a multi-component `sd()` model
+was silently dropped (never reaching the router at all), the same silent-
+drop failure mode issue #2 named for σ-phylo; left in place rather than
+leaving the feature unreachable from `drm()`.
+
+## 9. API (internal, documented)
+
+Module-level entry points of the sparse multi-component route (unexported; the public surface is `drm(...)` with several `sd()` parts).
+
+```@docs
+DRM._fit_gaussian_lss_sparse_multi
+DRM._lss_sparse_multi_assemble
+DRM._lss_sparse_multi_objective
+DRM._lss_sparse_multi_objective_and_grad
+DRM._lss_sparse_multi_reml_pieces
+DRM._mark_lss_multi_route!
+DRM._lss_multi_route
+DRM._sparse_lss_iid_comp
+DRM._sparse_lss_phylo_comp
+```

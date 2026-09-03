@@ -505,8 +505,13 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                 y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method, penalty;
                 algorithm = algorithm, sparse = sparse), f)
         else
+            # #563 S7b.4: forward algorithm/sparse so the multi-component sd()
+            # router (D-206) can honour an explicit sparse request instead of
+            # silently dropping it — the same forwarding the sibling
+            # `_drm_gaussian_lss_phylo` call two lines above already does.
             return _withformula(_drm_gaussian_lss_multi(f, fam, sdp, sdpp, re, re_kinds_sd,
-                structured, has_missing_response, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method), f)
+                structured, has_missing_response, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method;
+                algorithm = algorithm, sparse = sparse), f)
         end
     end
     # σ-phylo location-scale (B0–B2): a structured phylo marker on `sigma` routes to
