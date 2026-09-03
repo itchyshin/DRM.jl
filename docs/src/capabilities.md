@@ -282,7 +282,9 @@ To avoid overclaiming, these are confirmed **not** implemented in this worktree:
   missing-predictor routes (`mi()`, `JointDrmFit`/`JointTwoDrmFit`/
   `JointFiniteDrmFit`, `imputed`, `miss_control`) — five files included at
   `src/DRM.jl:137–143` (#563), tested by `test/test_joint_missing_*.jl`
-  (`test/runtests.jl:435–446`); (3) the Gaussian observed-response mask route,
+  (`test/runtests.jl:435–446`) — **Experimental**: exported for evaluation;
+  fenced for v1.0 (D-181); API and numerics may change; not covered by the
+  R-parity scoreboard; (3) the Gaussian observed-response mask route,
   `src/gaussian_core.jl` (`_observed_response_mask`, `:320`; #517, commit
   `53141006`); (4) missing-response handling on the location-scale-scale
   `sd()` routes, `src/gaussian_lss.jl` (`has_missing_response`; #559, commit
