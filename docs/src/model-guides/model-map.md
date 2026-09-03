@@ -116,6 +116,11 @@ non-Gaussian sparse path; `animal`/`spatial` are not implemented for
 count/proportion families, vary the mean and keep dispersion constant when
 adding a structured or phylogenetic effect.
 
+[`CumulativeLogit`](@ref) (ordinal) carries an ordinary random intercept
+`(1 | g)` or an *independent* random slope `(0 + x | g)` on `mu` via the same
+Gauss–Hermite scheme; the correlated form `(1 + x | g)` and structured
+(phylo/relmat/animal/spatial) effects are not implemented yet.
+
 For the verified engine behind the phylogenetic models — the q=4 phylogenetic
 bivariate location–scale model that fits 2.18× faster than drmTMB with valid
 intervals where its Hessian is singular — see `HANDOVER.md` and

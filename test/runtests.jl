@@ -123,7 +123,9 @@ include("test_truncated_nb.jl")
 include("test_betabinomial.jl")
 include("test_zeroonebeta.jl")
 include("test_tweedie.jl")
+include("test_tweedie_ranef.jl")
 include("test_cumulative.jl")
+include("test_cumlogit_ranef.jl")
 include("test_poisson_re.jl")
 include("test_poisson_slope_re.jl")
 include("test_poisson_crossed_laplace.jl")
@@ -288,6 +290,7 @@ include("test_bridge_objective_at.jl")             # #563: drm_bridge_objective_
 include("test_575_exact_reml_gradient.jl")        # #575: exact REML gradient vs a tight central difference
 include("test_575_q4_optimum.jl")                 # #575: the q4 REML cold-start route reaches its own optimum
 include("test_reml_q4_missing_response.jl")       # #578: _reml_border_blocks mask consistency, missing responses
+include("test_q4_reml_vcov.jl")                   # #563 S11: pin q4 REML vcov() native/bridge behaviour
 include("test_reml_prior_precision_collapse.jl")  # #563: _reml_prior_precision collapsed into prior_precision after #577
 
 # Delta-method prediction standard errors (feat-predict-se).

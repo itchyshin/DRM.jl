@@ -80,6 +80,7 @@ rows; each has a `test/test_*.jl` file cited in `docs/src/capabilities.md`'s
 | Gaussian relmat random intercept (mean) | implemented |
 | Non-Gaussian phylogenetic random intercept (mean) | implemented |
 | Non-Gaussian phylogenetic location-scale (μ + log σ) | implemented |
+| Tweedie random intercept (mean) | implemented |
 
 `Non-Gaussian phylogenetic random intercept (mean)` is `implemented` via the
 sparse augmented-state Laplace engine (`src/sparse_laplace_glmm.jl`) for
@@ -97,6 +98,19 @@ Gamma recovery + FD ≤1e-6 already in `test/test_phylo_locscale.jl` (#253).
 **D-94 honesty:** drmTMB still skips coupled `(1|p|species)` for nbinom2 in
 our parity generator; R q=1 NB2 structured-σ covers scale-axis existence.
 No `nbinom2-locscale` R fixture in this closeout.
+
+`Tweedie random intercept (mean)` is `implemented` (#563 S8): an ordinary
+`(1 | g)` random intercept, and (as of the same slice's second cell) an
+independent `(0 + x | g)` random slope, on `mu` via 32-node Gauss–Hermite
+quadrature (`src/tweedie.jl` `_fit_tweedie_ranef` / `_fit_tweedie_slope_ranef`,
+the same scheme as the Poisson/Gamma `(1 | g)` routes), same-target checked
+against drmTMB 0.7.0 (`test/test_tweedie_ranef.jl`, fixtures
+`test/parity/fixtures/tweedie-mu-ranef/` and
+`test/parity/fixtures/tweedie-mu-slope-ranef/`). Matches drmTMB's own scope
+exactly: the CORRELATED random slope `(1 + x | g)`, random effects on
+`sigma`/`nu`, and structured (phylo/relmat/animal/spatial) markers on `mu`
+stay `rejected` in both packages (drmTMB's `validate_tweedie_mu_random_terms()`
+/ `validate_tweedie_random_terms()`).
 
 ## Estimation and inference
 

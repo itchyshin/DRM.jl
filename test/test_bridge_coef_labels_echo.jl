@@ -110,6 +110,50 @@ end
         @test out1["coef_name_map"] == out2["coef_name_map"]
     end
 
+    @testset "(f) scalar String for a length-1 block echoes like [String]" begin
+        options_vec = Dict{String,Any}("coef_labels" => Dict(
+            "mu" => ["(Intercept)", "x_renamed", "ix2_renamed"],
+            "sigma" => ["sigma_only"],
+        ))
+        options_scalar = Dict{String,Any}("coef_labels" => Dict(
+            "mu" => ["(Intercept)", "x_renamed", "ix2_renamed"],
+            "sigma" => "sigma_only",  # bare String, not [String] -- JuliaCall unboxing
+        ))
+        status_vec, out_vec = _echo_try(; options = options_vec)
+        status_scalar, out_scalar = _echo_try(; options = options_scalar)
+        @test status_vec === :ok
+        @test status_scalar === :ok
+        status_vec === :ok && status_scalar === :ok || return
+        @test out_scalar["coef_names"] == out_vec["coef_names"]
+        @test out_scalar["vcov_names"] == out_vec["vcov_names"]
+        @test out_scalar["raw_coef_names"] == out_vec["raw_coef_names"]
+        @test out_scalar["coef_name_map"] == out_vec["coef_name_map"]
+    end
+
+    @testset "(g) scalar String for a 2+ column block fails closed like a 1-vector" begin
+        options = Dict{String,Any}("coef_labels" => Dict(
+            "mu" => "just_one_name",  # bare String, mu has 3 columns
+            "sigma" => ["sigma_only"],
+        ))
+        status, e, msg = _echo_try(; options = options)
+        @test status === :error
+        @test status !== :error || e isa ErrorException
+        @test status !== :error || occursin("mu", msg)
+        @test status !== :error || occursin("1", msg)
+        @test status !== :error || occursin("3", msg)
+    end
+
+    @testset "(h) non-String, non-vector value fails closed" begin
+        options = Dict{String,Any}("coef_labels" => Dict(
+            "mu" => ["(Intercept)", "x_renamed", "ix2_renamed"],
+            "sigma" => 5,  # neither a String nor a Vector{String}
+        ))
+        status, e, msg = _echo_try(; options = options)
+        @test status === :error
+        @test status !== :error || e isa ErrorException
+        @test status !== :error || occursin("sigma", msg)
+    end
+
     @testset "(e) bivariate model: echo across mu1/mu2/sigma1/sigma2/rho12" begin
         y2 = 0.4 .+ 0.2 .* _ECHO_X .+ [0.03 * cos(2.0 * i) for i in 1:_ECHO_N]
         bdata = (; y1 = _ECHO_Y, y2 = y2, x = _ECHO_X)
