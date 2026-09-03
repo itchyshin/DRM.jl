@@ -110,19 +110,34 @@ function _fit_phylo_gaussian_lss_sparse(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G,
             end
         end
 
+        # DRM.jl#627: accumulate the group quadratic term by a SCATTER over the n
+        # observations instead of a GATHER that rescanned all n rows once per
+        # group.  The old nested loop was O(G*n); it dominated every gradient
+        # call at whole-tree scale (measured 380.0 ms per gradient at G = 16,384
+        # against an 8.5 ms objective, and growing 4x per doubling of G) and so
+        # made gradient-bound work -- profile confidence intervals above all --
+        # impractical there while the objective itself remained O(p).  The
+        # multi-component route already used this form
+        # (`_lss_sparse_multi_objective_and_grad`).
+        #
+        # The rewrite is bit-for-bit identical, not merely equivalent, and both
+        # halves of that matter: each `quad_g[g]` still accumulates from 0.0 over
+        # exactly the same observations in the same ascending-`i` order the
+        # gather used, and the subtraction is still the single expression
+        # `trace - quad`, so no floating-point sum is reassociated.  Verified on
+        # the fixtures in `test_lss_sparse_gradient_scaling.jl`: every profile CI
+        # endpoint is unchanged in its last bit.
+        quad_g = zeros(G)
+        for i in 1:n
+            quad_g[gidx[i]] += u[i] * Zâ[i]
+        end
         d_g = zeros(G)
         for g in 1:G
             r_node = leaf_pos[g]
             s_node = Hinv[r_node, r_node]
             ztwz_node = diag_ZtWZ[r_node]
             trace_term = ztwz_node * s_node
-            quad_term = 0.0
-            for i in 1:n
-                if gidx[i] == g
-                    quad_term += u[i] * Zâ[i]
-                end
-            end
-            d_g[g] = trace_term - quad_term
+            d_g[g] = trace_term - quad_g[g]
         end
         g_α = Zg' * d_g
 

@@ -63,6 +63,7 @@ include("test_lss_tip_identity.jl") # Named tree-tip mapping under shuffled rows
 include("test_lss_bootstrap_contract.jl") # Marginal components, masks and REML refits
 include("test_bootstrap_thread_flags.jl") # Independent storage for parallel status flags
 include("test_lss_sparse.jl")  # #551 O(p) sparse exact marginal LSS engine
+include("test_lss_sparse_gradient_scaling.jl")  # #627 O(p) gradient + profile endpoint invariance
 include("test_lss_sparse_multi.jl")  # #563 S7b.1 sparse multi-component block assembly + objective
 include("test_lss_sparse_multi_gradient.jl")  # #563 S7b.2/S7b.2b sparse multi-component exact gradient
 include("test_lss_sparse_multi_reml.jl")  # #563 S7b.3 sparse multi-component REML correction + gradient
