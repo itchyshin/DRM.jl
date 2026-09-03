@@ -132,18 +132,51 @@ _within(a, b, rtol, atol) = abs(a - b) <= max(atol, rtol * max(abs(a), abs(b)))
 
         fit = drm(bf(@formula(y_small ~ x_small + phylo(1 | species_small))), CumulativeLogit();
                   data = (; y_small, x_small, species_small), tree = phy_small, se = false)
-        θ = coef(fit)
+
+        # Evaluated OFF the optimum (not at coef(fit)) -- at the optimum ‖g‖ is
+        # near machine noise and the FD estimate is only accurate to ~1e-5, so a
+        # loose atol there passes for essentially any gradient function, including
+        # a sign-flipped or zero one (Opus review D-1). Offsetting by a fixed,
+        # deliberately-not-optimal per-block perturbation makes both g and fd
+        # genuinely large and lets a tight rtol actually discriminate. This
+        # particular seed's fitted `coef(fit)[end]` (logσ) lands below the
+        # sparse-Laplace route's own `clamp(θ[...], -8.0, 3.0)` (a pre-existing,
+        # inherited boundary-flatness issue -- D-5 of the review, not this PR's
+        # bug: the phylo SD is boundary-collapsed at this seed), which would make
+        # every offset land back on the SAME clamped value and give a spuriously
+        # flat (near-zero, uninformative) logσ gradient regardless of the
+        # perturbation. Re-basing the logσ coordinate to an interior start
+        # (`log(0.4)`) before applying the offset keeps β/cutpoints at their
+        # genuinely-fitted values while avoiding that clamp plateau, so all four
+        # blocks are meaningfully away from zero here.
+        θ0 = copy(coef(fit)); θ0[end] = log(0.4)
+        θ = θ0 .+ [0.25, -0.20, 0.15, 0.30]   # [β; cutpoint-1; cutpoint-2; logσ]
         g = zeros(length(θ))
         fit.nllgrad(g, θ)
 
-        h = 1e-4
+        h = 3e-4                                      # noise-optimal step for this tree size
         fd = similar(g)
         for k in eachindex(θ)
             e = zeros(length(θ))
             e[k] = h
             fd[k] = (fit.nll(θ .+ e) - fit.nll(θ .- e)) / (2h)
         end
-        @test g ≈ fd rtol = 5e-3 atol = 5e-3
+        @test g ≈ fd rtol = 1e-5 atol = 1e-6
+    end
+
+    @testset "top-category kernel stays finite at extreme η (Opus review D-2)" begin
+        # k=K (top category, `!has_hi`) used to form D = ga - gb = 1 - σ(c-η) by
+        # subtraction, which cancels as η-c grows and returns Inf near η-c≈38;
+        # `_cumulative_phylo_kernel` now forms it via the exact logistic identity
+        # σ(-(c-η)) instead (matches the fixed-effect route and drmTMB). K=3 here
+        # (nc=2), so k=3 is the top category; η-cuts[2] ≈ 35.
+        cuts = [-0.5, 0.6]
+        η = cuts[2] + 35.0
+        v, d1, d2, d3, has_lo, has_hi, nval_lo, nval_hi, nr_lo, nr_hi, nw_lo, nw_hi =
+            DRM._cumulative_phylo_kernel(3, η, cuts, 3, 2)
+        @test !has_hi
+        @test has_lo
+        @test all(isfinite, (v, d1, d2, d3, nval_lo, nr_lo, nw_lo))
     end
 end
 

@@ -32,7 +32,14 @@ random slope `(0 + x | g)` on `mu` integrates the group-level term out by
 32-node Gauss–Hermite quadrature; `coef(fit, :resd)` is the log random-effect
 SD. An unlabelled, intercept-only phylogenetic random intercept
 `phylo(1 | species)` on `mu` is fit via the sparse-Laplace GLMM route instead
-(needs `tree = …`); it cannot be combined with an ordinary random effect.
+(needs `tree = …`); it cannot be combined with an ordinary random effect. For
+the `phylo` route, `re_sd(fit)[:group]` is on the RAW branch-length scale (tip
+variance equals the tree height `h`, not 1) — this differs from drmTMB's
+`sdpars\$mu[["phylo(1 | species)"]]`, which is on the CORRELATION scale
+(`ape::vcv(tree, corr = TRUE)`, tip variance 1 regardless of `h`). Convert with
+`re_sd(fit)[:group] * sqrt(phylo_tree_height(augmented_phy(tree)))` to compare
+against drmTMB's number (the same convention used throughout the Gaussian
+phylo-mean route, e.g. `test_parity_gaussian_phylo_mean.jl`).
 Correlated slopes `(1 + x | g)`, crossed/multiple random effects, and
 `relmat`/`animal`/`spatial` structured markers are not implemented.
 
@@ -345,7 +352,15 @@ function _cumulative_phylo_kernel(k::Int, η, cuts, K::Int, nc::Int)
     b = has_lo ? cuts[k-1] - η : zero(η)
     ga, gpa, gppa, gpppa = has_hi ? _sig_derivs(a) : (one(η), zero(η), zero(η), zero(η))
     gb, gpb, gppb, gpppb = has_lo ? _sig_derivs(b) : (zero(η), zero(η), zero(η), zero(η))
-    D = ga - gb
+    # D = P(y=k). The general `ga - gb` cancels for the TOP category (has_hi is
+    # false, so ga is the phantom 1 and D = 1 - σ(b)): use the logistic identity
+    # σ(-b) = 1 - σ(b) instead, computed exactly rather than by subtraction from
+    # 1 (Opus review D-2 — matches the fixed-effect route's `_cumulative_loglik`
+    # and drmTMB's `drm_log1m_inv_logit`, both exact to |η-c| ≈ 700 instead of
+    # cancelling from |η-c| ≈ 20). The k=1 branch (`!has_lo`) already avoids
+    # cancellation since D = ga there; interior categories keep the plain
+    # subtraction (not the reported issue).
+    D = has_hi ? (has_lo ? ga - gb : ga) : _logistic(-b)
     v = -log(D)                                     # NLL contribution
 
     N1 = gpb - gpa                                   # D'  (w.r.t. η)
