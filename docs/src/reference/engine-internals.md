@@ -230,6 +230,10 @@ nuisance-parameter specification, using the prepared group indices.
 
 ## Prepared missing-predictor development route
 
+!!! warning "Experimental"
+    Exported for evaluation; fenced for v1.0 (D-181). API and numerics may
+    change; not covered by the R-parity scoreboard.
+
 !!! warning "Limited developer interface"
     This prepared-array interface covers a Gaussian response with one Gaussian
     or Bernoulli predictor, or two independent Gaussian predictors. The

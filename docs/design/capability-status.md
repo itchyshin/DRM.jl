@@ -18,6 +18,10 @@ Status words:
   the module).
 - `missing` -- no implementation found anywhere in `src/`, `docs/`, `README.md`,
   `ROADMAP.md`, or `HANDOVER.md`.
+- `experimental` -- real code exists, is exported, and has a test file, but a
+  recorded decision fences it out of the frozen/parity-claimed surface (e.g.
+  a v1.0 boundary) or narrows its scope well below a native capability; not
+  `implemented` until that fence is lifted by the same decision process.
 
 Nothing below is marked `implemented` without a source file and a test file
 both found by reading the repository (not by trusting `docs/src/capabilities.md`
@@ -216,7 +220,7 @@ what the open issue supports without a separate, explicit call.
 | Bivariate structured random effect on all four axes (q4 PLSM) | implemented |
 | Cross-family bivariate (different families for y1 y2) | missing |
 | Missing-response handling (native, per fitted route) | missing |
-| Missing-predictor imputation (mi()) | missing |
+| Missing-predictor imputation (mi()) | experimental |
 | R to Julia bridge (engine=julia) | implemented |
 
 `Bivariate structured random effect on all four axes (q4 PLSM)` is the
@@ -271,11 +275,21 @@ issue #49 remains open and its own file header states FIML for missing
 responses is explicitly out of scope. This audit leaves the chip as `missing`
 given #49 is parked and the owner's 2026-08-24 authorization did not name
 this row, but corrects the stale citations and the "listwise deletion only"
-undercount above. `Missing-predictor imputation (mi())` is `missing` on
-direct evidence: no `mi(` function, export, or reference exists anywhere in
-`src/` (grep-confirmed); `missing_data.jl`'s own header puts multiple
-imputation for missing predictors explicitly out of scope under the same
-issue #49.
+undercount above. `Missing-predictor imputation (mi())` was `missing` before
+2026-08-30 (#563); that is now stale. Real code exists AND is exported AND is
+tested: `mi`, `JointDrmFit`, `JointTwoDrmFit`, `JointFiniteDrmFit`, `imputed`,
+`miss_control`, `impute_model` are exported from `src/DRM.jl:193-197`, backed
+by six files at `src/DRM.jl:137-143` (#563), and covered by
+`test/test_joint_missing_*.jl` (`test/runtests.jl:435-446`). It is marked
+`experimental`, not `implemented`, because D-181 (2026-08-28, reaffirmed by
+D-209 §3, 2026-09-02) explicitly fences the mi() axis out of the v1.0 twin
+claim, and because the scope itself is narrow: a Gaussian response with one
+Gaussian-or-Bernoulli `mi()` predictor, two independent Gaussian `mi()`
+predictors, or one ordinal/categorical `mi()` predictor, each with complete
+remaining fixed-effect designs, no random/structured effects, no REML, and no
+profile/bootstrap intervals (`docs/src/reference/model-specification.md`,
+`docs/src/reference/engine-internals.md`). No R-parity claim is made for this
+route.
 
 `R to Julia bridge (engine=julia)` is `implemented`: `src/bridge.jl` exports
 `drm_bridge`/`drm_bridge_inference` (`src/DRM.jl` export list), and
@@ -283,19 +297,25 @@ issue #49.
 
 ## Snapshot
 
-- 46 capabilities, all `implemented`/`rejected`/`planned`/`missing` per the
-  mapping above; 41 `implemented`, 1 `rejected` (`:natgrad`), 1 `planned`,
-  3 `missing`. (2026-08-24 chip audit flips `AGHQ adaptive-quadrature
-  marginal estimator` `missing` -> `implemented`: PR #449 / commit
-  `93c3db6b` landed source wired into `src/DRM.jl` plus a test registered in
-  `test/runtests.jl`, meeting this file's own ladder. The same audit
-  re-examined `Cross-family bivariate`, `Missing-response handling (native,
-  per fitted route)`, and `Variational (VA/ELBO) marginal estimator`, found
-  source+test evidence undercounted in each, corrected the stale citations,
-  and left all three chips unflipped for documented reasons -- see
-  `docs/dev-log/evidence/2026-08-24-chip-audit.md`. Prior snapshot said 37/1
-  while the table still listed two `rejected` rows; that recount flipped the
-  ordinary-RE REML chip and left `:natgrad` as the only `rejected` row.)
+- 46 capabilities, all `implemented`/`rejected`/`planned`/`missing`/
+  `experimental` per the mapping above; 41 `implemented`, 1 `rejected`
+  (`:natgrad`), 1 `planned`, 1 `experimental` (`Missing-predictor imputation
+  (mi())`), 2 `missing`. (2026-08-24 chip audit flips `AGHQ
+  adaptive-quadrature marginal estimator` `missing` -> `implemented`: PR #449
+  / commit `93c3db6b` landed source wired into `src/DRM.jl` plus a test
+  registered in `test/runtests.jl`, meeting this file's own ladder. The same
+  audit re-examined `Cross-family bivariate`, `Missing-response handling
+  (native, per fitted route)`, and `Variational (VA/ELBO) marginal
+  estimator`, found source+test evidence undercounted in each, corrected the
+  stale citations, and left all three chips unflipped for documented reasons
+  -- see `docs/dev-log/evidence/2026-08-24-chip-audit.md`. Prior snapshot
+  said 37/1 while the table still listed two `rejected` rows; that recount
+  flipped the ordinary-RE REML chip and left `:natgrad` as the only
+  `rejected` row. 2026-09-02 (S9, #563): `Missing-predictor imputation
+  (mi())` flips `missing` -> `experimental` -- the joint missing-predictor
+  routes exported at `src/DRM.jl:190-197` are now real code, exported, and
+  tested, but D-181/D-209 §3 fence them out of the v1.0 twin claim, so they
+  are labelled `experimental` rather than `implemented`.)
 - Sources read: `src/DRM.jl` (include list + export list), `README.md`,
   `docs/src/capabilities.md`, `docs/src/families.md`, `test/runtests.jl`
   (default-suite include list), and targeted `grep`/`git log` against

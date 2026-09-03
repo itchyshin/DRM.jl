@@ -37,6 +37,9 @@ end
 
 @testset "canonical location-scale profile coefficient threading" begin
     fit = _locscale_profile_threads_fixture()
+    # This test is about serial/threaded profile agreement on a fitted model;
+    # failed endpoints from a nonconverged point fit are not valid substitutes.
+    @test is_converged(fit)
     blas_before = BLAS.get_num_threads()
 
     # The serial and threaded calls repeat the same two profile intervals through

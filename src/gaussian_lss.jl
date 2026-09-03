@@ -552,12 +552,21 @@ end
 # iid component) and the phylo α's are the `:sd_phylo` block.
 
 # One variance component of the multi engine.
+# Marker for "this component IS phylogenetic, but its dense G x G tree
+# correlation has not been materialised yet" (#563 S7b.6). The router builds
+# every phylo `_LssComp` with this marker instead of eagerly calling the
+# CUBIC `_phylo_correlation` — the sparse route never reads `.K` as a matrix
+# (it rebuilds the sparse precision from `phy_tree` directly), so computing
+# the dense inverse before the router even decides `use_sparse` wasted O(p^3)
+# work on every sparse-route fit. Only the dense route materialises it.
+struct _LazyPhyloK end
+
 struct _LssComp
     gidx::Vector{Int}
     G::Int
     Zg::Matrix{Float64}
     nm::Vector{String}
-    K::Union{Nothing,Matrix{Float64}}   # nothing = iid; matrix = phylo correlation
+    K::Union{Nothing,Matrix{Float64},_LazyPhyloK}   # nothing = iid; matrix = phylo correlation; _LazyPhyloK = phylo, not yet materialised
     label::String
 end
 
@@ -683,12 +692,114 @@ function _fit_gaussian_lss_multi(fam::Gaussian, y, Xμ, Xσ, comps::Vector{_LssC
     return fit
 end
 
+# ---------------------------------------------------------------------------
+# #563 S7b.4 — router rule (D-206, design note §1/§7): dispatch a multi-
+# component sd() model to the sparse route ONLY when exactly one component is
+# phylogenetic and every iid component is either NESTED within it (each iid
+# group maps to a single phylo group) or SMALL (`G_c ≤ _LSS_SPARSE_SMALL_FRAC
+# × G_phy`, documented here as the threshold rule) — otherwise the dense
+# multi-component route, even under `algorithm = :sparse`. This mirrors the
+# GO (one phylo + nested/small iid) / NO-GO (comparable-size crossed factors)
+# classification the design note's fill measurements (§2.1/§2.3) establish.
+
+# "Small enough to route sparse even though its grouping is not verified
+# nested" — `G_c ≪ p` in the design note's own words (§1, §7's `S7b.2`
+# estimate row); 10% of the phylogenetic component's tip count is the
+# documented rule for this sub-slice.
+const _LSS_SPARSE_SMALL_FRACTION = 0.1
+
+# Is `gidx_child` a NESTED grouping within `gidx_parent`, i.e. does every
+# child group level map to exactly one parent group level across all rows?
+# (A clean partition — no observation's child-group membership is
+# independent of its parent-group membership; design note §1/§2.)
+function _lss_iid_nested_in(gidx_child::Vector{Int}, gidx_parent::Vector{Int})
+    parent_of = Dict{Int,Int}()
+    for i in eachindex(gidx_child)
+        g, p = gidx_child[i], gidx_parent[i]
+        if haskey(parent_of, g)
+            parent_of[g] == p || return false
+        else
+            parent_of[g] = p
+        end
+    end
+    return true
+end
+
+# Eligibility for the sparse multi-component route: exactly one phylogenetic
+# component, and every iid component nested-in-or-small-relative-to it.
+# Returns `(eligible::Bool, reason::String)`; `reason` is empty when eligible.
+function _lss_multi_sparse_eligible(comps::Vector{_LssComp})
+    phy_positions = findall(c -> c.K !== nothing, comps)
+    if length(phy_positions) != 1
+        reason = isempty(phy_positions) ? "no phylogenetic sd() component" :
+                                           "more than one phylogenetic sd() component"
+        return false, reason
+    end
+    pi = only(phy_positions)
+    phy = comps[pi]
+    for (ci, c) in enumerate(comps)
+        ci == pi && continue
+        nested = _lss_iid_nested_in(c.gidx, phy.gidx)
+        small = c.G <= _LSS_SPARSE_SMALL_FRACTION * phy.G
+        if !nested && !small
+            reason = "component `$(c.label)` ($(c.G) levels) is CROSSED with " *
+                "`$(phy.label)` ($(phy.G) tips) and not small enough " *
+                "(needs ≤ $(_LSS_SPARSE_SMALL_FRACTION) × $(phy.G) = " *
+                "$(_LSS_SPARSE_SMALL_FRACTION * phy.G) levels) — the sparse " *
+                "route's O(p) fill guarantee (design note §2.1/§2.3) does not " *
+                "apply to this topology"
+            return false, reason
+        end
+    end
+    return true, ""
+end
+
+# Build the sparse `_SparseLssComp` list (iid-then-phylo order, matching the
+# dense route's contiguous-block layout convention, `gaussian_lss.jl:659-
+# 669`) plus its parallel label/name/is-phylo metadata, from the SAME
+# (possibly missing-response-filtered) `comps::Vector{_LssComp}` the dense
+# route uses and the phylogenetic component's tree.
+function _lss_multi_sparse_comps(comps::Vector{_LssComp}, phy_tree)
+    phy_positions = findall(c -> c.K !== nothing, comps)
+    pi = only(phy_positions)
+    order = vcat([ci for ci in eachindex(comps) if ci != pi], pi)
+    sp_comps = _SparseLssComp[]
+    comp_nm = Vector{String}[]
+    comp_is_phylo = Bool[]
+    comp_label = String[]
+    for ci in order
+        c = comps[ci]
+        if ci == pi
+            push!(sp_comps, _sparse_lss_phylo_comp(c.gidx, c.G, c.Zg, phy_tree))
+            push!(comp_is_phylo, true)
+        else
+            push!(sp_comps, _sparse_lss_iid_comp(c.gidx, c.G, c.Zg))
+            push!(comp_is_phylo, false)
+        end
+        push!(comp_nm, c.nm)
+        push!(comp_label, c.label)
+    end
+    return sp_comps, comp_nm, comp_is_phylo, comp_label
+end
+
 # Build the component list from parsed formula parts and dispatch. Handles every
 # sd() request the single-component routes do not: several iid REs, iid + phylo,
 # an RE without an sd() part (scalar, `~ 1`), and a phylo term without its own
 # sd() part alongside sd()-carrying iid REs.
+#
+# `algorithm`/`sparse` (#563 S7b.4): forwarded from `drm(...)` exactly as the
+# single-component `_drm_gaussian_lss_phylo` route already accepts them
+# (`gaussian_core.jl` — the sibling call two lines above this route's own).
+# `:auto` (default) auto-dispatches to sparse when eligible (above) AND the
+# phylogenetic component has more than 500 tips, mirroring the single-
+# component `G > 500` rule (`:402` above). `:sparse`/`:sparse_lbfgs`/`sparse =
+# true` FORCE the sparse route when eligible and fall back to dense — with an
+# informative `@info` — when the model is not (D-206's NO-GO for genuinely
+# crossed topologies): never silently drop the request, never silently run an
+# unproven-fill sparse fit either.
 function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re_kinds,
-                                 structured, has_missing_response, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method)
+                                 structured, has_missing_response, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method;
+                                 algorithm::Symbol = :auto, sparse = nothing)
     for (kind, _) in re_kinds
         kind === :intercept ||
             throw(ArgumentError("drm: sd() supports random INTERCEPT terms only."))
@@ -701,6 +812,7 @@ function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re
                 join(re_groups, ", ") * ")."))
     end
     comps = _LssComp[]
+    phy_tree = nothing   # captured for the sparse router branch below (#563 S7b.4)
     sdmap = Dict(sdp)
     for grp in re_groups                          # iid components first (block layout)
         gidx, G = _group_index(getproperty(data, grp))
@@ -718,9 +830,12 @@ function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re
                 "supported — the structured scale level is `phylogenetic` only (#555)."))
         tree === nothing && error("phylo(1 | $pgrp) needs `tree = …`")
         phy, gidx, G = _lss_phylo_group_index(tree, getproperty(data, pgrp), pgrp)
-        Kmat = _phylo_correlation(phy)
-        size(Kmat) == (G, G) ||
-            error("structured matrix must be $(G)×$(G) (the number of `$pgrp` levels)")
+        phy_tree = phy
+        # #563 S7b.6: do NOT materialise the dense G×G tree correlation here —
+        # the router below may pick the sparse route, which never reads it as
+        # a matrix (it rebuilds a sparse precision from `phy_tree` directly).
+        # `_LazyPhyloK()` marks this component as phylogenetic; only the dense
+        # route (below) calls `_phylo_correlation` and checks its size.
         if !isempty(sdpp)
             (sgrp, srhs) = only(sdpp)
             sgrp === pgrp ||
@@ -730,7 +845,7 @@ function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re
         else
             Zg, nm = ones(G, 1), ["(Intercept)"]  # phylo term with scalar SD
         end
-        push!(comps, _LssComp(gidx, G, Zg, nm, Matrix{Float64}(Kmat), String(pgrp)))
+        push!(comps, _LssComp(gidx, G, Zg, nm, _LazyPhyloK(), String(pgrp)))
     elseif !isempty(sdpp)
         (sgrp, _) = only(sdpp)
         throw(ArgumentError("drm: `sd($sgrp, phylogenetic)` requires a `phylo(1 | $sgrp)` " *
@@ -759,11 +874,53 @@ function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re
         Xσ = Matrix{Float64}(Xσ[observed, :])
         comps = [_LssComp(c.gidx[observed], c.G, c.Zg, c.nm, c.K, c.label) for c in comps]
     end
-    return _fit_gaussian_lss_multi(fam, y, Xμ, Xσ, comps, nmμ, nmσ, g_tol; reml = method === :REML)
+
+    # #563 S7b.4 router (D-206): decide sparse vs. dense for this model.
+    eligible, ineligible_reason = _lss_multi_sparse_eligible(comps)
+    sparse_requested = (sparse === true) || (algorithm in (:sparse, :sparse_lbfgs))
+    phy_positions = findall(c -> c.K !== nothing, comps)
+    use_sparse = if sparse_requested
+        eligible
+    elseif algorithm === :auto
+        eligible && !isempty(phy_positions) && comps[only(phy_positions)].G > 500
+    else
+        false   # :gls / :lbfgs / :em have no sparse-multi meaning; stay dense
+    end
+    if sparse_requested && !eligible
+        @info "drm: sd() multi-component model requested `algorithm = :$(algorithm === :auto ? :sparse : algorithm)`" *
+              "$(sparse === true ? " (sparse = true)" : "") but is not eligible for the sparse " *
+              "multi-component route ($ineligible_reason); using the dense multi-component " *
+              "route instead."
+    end
+
+    if use_sparse
+        sp_comps, comp_nm, comp_is_phylo, comp_label = _lss_multi_sparse_comps(comps, phy_tree)
+        fit = _fit_gaussian_lss_sparse_multi(fam, y, Xμ, Xσ, sp_comps, comp_nm, comp_is_phylo,
+                                             comp_label, nmμ, nmσ, g_tol; reml = method === :REML)
+        return _mark_lss_multi_route!(fit, :sparse_multi)
+    end
+    # Dense route: materialise the phylo component's dense G×G correlation
+    # NOW (#563 S7b.6) — the sparse branch above never reaches this point, so
+    # the cubic `_phylo_correlation` cost is paid only when it is actually
+    # needed.
+    dense_comps = [c.K isa _LazyPhyloK ? _materialize_lss_comp_K(c, phy_tree) : c for c in comps]
+    fit = _fit_gaussian_lss_multi(fam, y, Xμ, Xσ, dense_comps, nmμ, nmσ, g_tol; reml = method === :REML)
+    return _mark_lss_multi_route!(fit, :dense_multi)
+end
+
+# Replace a `_LazyPhyloK()` marker with the materialised dense G×G tree
+# correlation (#563 S7b.6) — same size check the eager computation had.
+function _materialize_lss_comp_K(c::_LssComp, phy_tree)
+    Kmat = _phylo_correlation(phy_tree)
+    size(Kmat) == (c.G, c.G) ||
+        error("structured matrix must be $(c.G)×$(c.G) (the number of `$(c.label)` levels)")
+    return _LssComp(c.gidx, c.G, c.Zg, c.nm, Matrix{Float64}(Kmat), c.label)
 end
 
 function _drm_gaussian_lss_multi(f::DrmFormula, fam::Gaussian, sdp, sdpp, re, re_kinds,
-                                 structured, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method)
+                                 structured, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method;
+                                 algorithm::Symbol = :auto, sparse = nothing)
     return _drm_gaussian_lss_multi(f, fam, sdp, sdpp, re, re_kinds, structured, false,
-                                   y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method)
+                                   y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method;
+                                   algorithm = algorithm, sparse = sparse)
 end
