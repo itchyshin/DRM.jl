@@ -512,7 +512,7 @@ end
 Sparse-Laplace `CumulativeLogit()` fit with a phylogenetic random intercept
 `phylo(1 | grp)` on the mean linear predictor `η` (#563 S8 follow-on). Cutpoints
 stay ordinary fixed effects (shared across the tree, exactly as in
-[`_fit_cumulative_ranef`](@ref)'s GHQ route); only the `mu` intercept varies by
+`_fit_cumulative_ranef`'s GHQ route); only the `mu` intercept varies by
 tip. See the file-level comment above for the exact-gradient design.
 """
 function _fit_cumulative_phylo_laplace(fam::CumulativeLogit, y::Vector{Int}, Xμ, K, labels,
