@@ -275,3 +275,39 @@ sparse-Laplace GLMM spine, alongside its existing iid-RE surface from #617).
   pre-existing `test_bootstrap_marginal.jl` order-dependent flake aborts the
   full suite; verification here is per-file); merge/landing status (PR #618 was
   open, stacked on the also-open #617, at report time — neither had merged).
+
+## Post-merge addendum (2026-09-03)
+
+PR #618 merged as `e0a65f96bac2a33f331c0e3b06e55914d66abe70` ("Merge pull
+request #618 from itchyshin/feat/563-cumlogit-phylo"), stacked on #617 which
+merged first. This addendum records what happened between the review verdict
+above (§3b, branch tip `060c70b3`) and the merge, per this after-task pass's
+direct reading of the commit log (`git log e0a65f96b~6..e0a65f96b`); no new
+code review was performed here.
+
+- **Two Documenter fixes were needed after review**, both docs-only, both
+  landed as separate commits on the PR branch before merge:
+  1. `4faaa0e6a` "docs: @docs entry for `_fit_cumulative_phylo_laplace`
+     (Documenter missing_docs)" — the new phylo-Laplace fitting function
+     introduced by this PR had no `@docs` block, which Documenter's
+     `missing_docs` check flags; followed immediately by `16a7352aa` "docs:
+     move the `_fit_cumulative_phylo_laplace` @docs entry to engine-internals"
+     (the entry was added in the wrong section first, then relocated).
+  2. `a4b019051` "docs: @docs entry for `_fit_cumulative_ranef` (cross-
+     reference from the phylo route's docstring)" — the phylo route's
+     docstring cross-referenced `_fit_cumulative_ranef`, which itself had no
+     docstring, producing an unresolvable Documenter cross-reference; fixed
+     by `02d722b61` "docs: de-link `_fit_cumulative_ranef` (no docstring)
+     from the phylo route docstring; drop its @docs entry" — the cross-
+     reference was removed rather than a docstring retrofitted onto
+     `_fit_cumulative_ranef`.
+- **Opus/Noether review verdict (§3b) was APPROVE WITH REQUIRED EDITS**, and
+  D-1/D-2/D-3 were confirmed applied on the branch tip already at report time
+  (verified directly in this pass's original §3b, not merely trusted from the
+  PR description). No further review edits were requested between that
+  verdict and the merge — the only post-review changes were the two
+  Documenter fixes above, which are infrastructure (docs-build) fixes, not
+  responses to new review findings.
+- **D-4 (`se = true` unexercised) and D-5 (inherited `logσ` clamp) remain
+  open**, as they were at the original report time — unaffected by the merge
+  or the Documenter fixes.
