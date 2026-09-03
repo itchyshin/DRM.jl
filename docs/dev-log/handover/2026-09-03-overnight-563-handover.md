@@ -118,6 +118,8 @@ Post-merge `main` docs deploys checked green through 19833b57; PR-preview deploy
   `main` into the programme's ledger clone (`/private/tmp/drm-parity-20260830/DRM.jl`) after #612
   merges, then re-run those two leaves.
 
+- **`phylo(1 + x | group)` on univariate routes (issue #620).** Found at 02:30 via drmTMB's coef_labels audit: DRM.jl's `_split_ranef` keeps only the grouping symbol, so the slope form silently fits the intercept-only model on every family (Gaussian included) — `x` discarded, no warning. Tonight: a fail-closed refusal PR (RED-first) so the construct errors; owner decision: schedule the Gaussian two-SD phylogenetic random slope (drmTMB's target) as an S8 slice; non-Gaussian stays refused like drmTMB.
+
 ## 4. NOT COVERED tonight (with reasons)
 
 - **S10 varying-scale conditional-fit parity fix.** Diagnosed precisely (`scratchpad/
@@ -154,6 +156,8 @@ Post-merge `main` docs deploys checked green through 19833b57; PR-preview deploy
   the `biv-q4-phylo-reml` fixture note (`claude/rev-parity-q4-se-receipt@9968703`) is itself
   **local-only on the drmTMB checkout, not pushed to `origin`** (`scratchpad/s11-inference.md` §3
   item 1) — landing/pushing that receipt is a drmTMB-maintainer action DRM.jl cannot perform.
+
+- **drmTMB morning question 13 answered (issue #620):** the single `resd_<group>` column DRM.jl echoes for `phylo(1 + x | group)` is neither a designed one-parameter model nor a boundary collapse — it is the intercept-only fit with the slope silently dropped. drmTMB #1133 (live Julia tests fail instead of skipping) will surface it as an error once the refusal lands.
 
 ## 6. Resume block
 
