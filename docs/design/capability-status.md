@@ -84,6 +84,21 @@ Poisson, NegBinomial2, Gamma, Binomial, and Beta, each with its own
 gap: drmTMB reports this row `scope-limited` (mixed rejected/scope-limited
 across families).
 
+`cumulative_logit()`'s unlabelled, intercept-only `phylo(1 | species)` on `mu`
+(#563 S8 follow-on) reuses the same sparse-Laplace engine — the ordinal
+likelihood's cutpoints are the one genuinely new piece, generalising the
+scalar/`Xσ`-chained nuisance-parameter IFT gradient (`_phylo_mean_laplace_hetero_fg`,
+#164) from a scalar dispersion to the `K-1` cutpoint increments. Same-target
+vs drmTMB 0.7.0 (`test/test_cumlogit_phylo.jl`, 60-tip `ape::rcoal` tree,
+Brownian phylo intercept): measured gaps of 2.7e-7 (β), 9.6e-7 (cutpoints),
+1.6e-6 relative (phylo SD, correlation-scale), 3.8e-5 (logLik) — both engines
+land on essentially the same optimum, tighter than the iid slice's GHQ-vs-TMB
+comparison because both sides run a Laplace approximation of the same model
+here. Cannot be combined with an ordinary `(1 | g)`/`(0 + x | g)` random
+effect on `mu` (drmTMB parity); `relmat`/`animal`/`spatial` structured markers
+on `mu` stay refused for `cumulative_logit()` (drmTMB scope, not implemented
+there either).
+
 `Non-Gaussian phylogenetic location-scale (μ + log σ)` is `implemented`
 (`closes #202`): shared structured RE on mean **and** scale via grammar B
 `(1 | p | phylo(species))` on both axes, routed through `src/locscale_*.jl`.

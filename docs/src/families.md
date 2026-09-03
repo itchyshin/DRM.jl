@@ -247,6 +247,17 @@ fit_re = drm(bf(y ~ x + (1 | g)), CumulativeLogit(); data = dat)
 exp(coef(fit_re, :resd)[1])   # random-intercept SD
 ```
 
+An unlabelled, intercept-only phylogenetic random intercept `phylo(1 | species)`
+on `mu` is fit via the sparse augmented-state Laplace GLMM route (the same
+engine as the Poisson/Gamma/Binomial/Beta `phylo(1 | g)` cells), matching
+drmTMB 0.7.0's `validate_ordinal_phylo_mu_structured_term()`. It cannot be
+combined with an ordinary `(1 | g)`/`(0 + x | g)` random effect on `mu`.
+
+```julia
+fit_phylo = drm(bf(y ~ x + phylo(1 | species)), CumulativeLogit(); data = dat, tree = tr)
+re_sd(fit_phylo)[:species]   # phylogenetic SD, raw branch-length scale
+```
+
 ## See also
 
 - [Getting started](getting-started.md) — install and a first Gaussian fit.

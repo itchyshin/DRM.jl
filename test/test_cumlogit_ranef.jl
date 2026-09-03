@@ -11,10 +11,12 @@
 # formulae (`sd(id) ~ 1`) are rejected outright, matching drmTMB's own
 # "Random-effect scale formulae are not implemented" guard. drmTMB *does* admit
 # an unlabelled, intercept-only `phylo(1 | species)` structured effect on `mu`
-# (`validate_ordinal_phylo_mu_structured_term()`), but that route is NOT
-# implemented in DRM.jl this slice — see the refusal test below; it is a scope
-# decision (kept matched to the iid-only STEPS scope of this slice), not a
-# drmTMB-parity gap.
+# (`validate_ordinal_phylo_mu_structured_term()`) — that route IS now
+# implemented (#563 S8 follow-on, test_cumlogit_phylo.jl) via the sparse
+# augmented-state Laplace GLMM engine; the refusal test below covers
+# `relmat`/`animal`/`spatial` structured markers only, which stay refused
+# (DRM.jl scope decision, not a drmTMB gap — drmTMB itself only admits `phylo`
+# for `cumulative_logit()`).
 #
 # R oracle fixtures: test/parity/fixtures/cumlogit-mu-ranef/ (intercept) and
 # test/parity/fixtures/cumlogit-mu-slope-ranef/ (independent slope), each
