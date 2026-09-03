@@ -54,7 +54,7 @@ const API_STABLE = [
 
 const API_EXPERIMENTAL = [
     # R bridge (ledger r_bridge_status: experimental)
-    "drm_bridge", "drm_bridge_inference", "drm_listwise",
+    "drm_bridge", "drm_bridge_inference", "drm_bridge_objective_at", "drm_listwise",
     # cross-family surface (permanent claim_boundary, D-179 #3)
     "mf_coef", "mf_aic", "mf_bic", "mf_fitted", "mf_summary",
     "associate_pairs", "latent_normal", "association", "PairAssociation",
@@ -84,7 +84,7 @@ const API_ENGINE = [
     "fit_q4_sparse_fisherz", "fz_DRD", "fz_R", "fz_correlations",
     "fz_marginal_and_grad", "fz_phi_to_lc", "fz_init_from_Sigma",
     "estep_mode", "prior_precision", "build_Huu", "joint_grad", "joint_nll",
-    "aug_prior_grad!",
+    "aug_prior_grad!", "reml_objective_at",
     "pack_theta", "unpack_theta", "lc_to_Λ", "Λ_to_lc",
     "lc_to_cov", "cov_to_lc", "lc_len",
     "augmented_phy", "random_balanced_tree", "random_caterpillar_tree",

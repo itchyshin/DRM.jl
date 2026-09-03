@@ -75,8 +75,39 @@ AugProblem(phy, n_total, p, leaf_node, y1, y2, X1, X2, Xs1, Xs2, Xr) =
     AugProblem(phy, n_total, p, leaf_node, y1, y2, X1, X2, Xs1, Xs2, Xr,
                trues(length(y1)), trues(length(y2)))
 
-# Build the sparse prior precision P = kron(Q_topology, Λ⁻¹) (node-major).
-prior_precision(Q::SparseMatrixCSC, Λinv::AbstractMatrix) = kron(Q, sparse(Λinv))
+# Build the sparse prior precision P = kron(Q_topology, Λ⁻¹) (node-major), with a
+# STRUCTURALLY FULL axis block.
+#
+# #577, and the REML half of it, #575. The obvious spelling,
+# `kron(Q, sparse(Λinv))`, routes through `sparse`, which DROPS EXACT ZEROS. At an
+# exactly diagonal Λ — including the engines' own default warm start `Λ0 = 0.3I` —
+# that leaves the cross-axis entries of `H_uu` structurally ABSENT at non-leaf
+# nodes, which carry no data block to supply them. The CHOLMOD pattern, and with
+# it the Takahashi selected inverse, is then missing entries the logdet-H traces
+# genuinely need: structurally absent, not zero in H⁻¹. Every exact-gradient path
+# that feeds P into `takahashi_selinv` is silently wrong in those components.
+#
+# Measured on biv-q4-phylo-reml at Λ = 0.3I: two lc gradient components off by
+# 0.751 and 12.1 on the ML path (`marginal_and_exact_grad`), and by 0.037 and
+# 13.70 on the REML path; both collapse to the central-difference reference's own
+# ~3e-5 noise floor the moment the block is stored in full.
+#
+# Storing every entry is numerically free — the matrix is identical, only its
+# stored pattern changes — and it closes the whole class at the root instead of
+# one call site at a time.
+#
+# #579 had applied the same fix locally on the REML path (`_reml_prior_precision`
+# in reml_q4.jl). Once this root fix landed the helper was proven redundant —
+# bit-identical pattern and values from both builders on the q4 fixture, nnz
+# 1376 at a diagonal and at a fitted Λ — and collapsed (#563 follow-up); the
+# REML path now calls this function directly.
+function prior_precision(Q::SparseMatrixCSC, Λinv::AbstractMatrix)
+    q = LinearAlgebra.checksquare(Λinv)
+    rows = [a for _ in 1:q for a in 1:q]
+    cols = [b for b in 1:q for _ in 1:q]
+    vals = [Λinv[a, b] for b in 1:q for a in 1:q]
+    return kron(Q, sparse(rows, cols, vals, q, q))
+end
 
 # η's from β (Float64) for the p leaves.
 function leaf_etas(prob::AugProblem, β)
