@@ -223,10 +223,22 @@ function marginal_loglik(
     return -0.5 * (prob.n * log(2π) + ldV + quad)
 end
 
+# The Woodbury representation subtracts two O(1/σ²) terms.  Once the
+# residual variance is below machine precision relative to the phylogenetic
+# variance, that subtraction no longer represents the marginal covariance:
+# it can manufacture a large *negative* NLL and an apparently converged fit.
+# Treat that part of parameter space as numerically unavailable.  This is a
+# representation limit, not a statistical lower bound; the dense small-model
+# oracle remains available to investigate a genuine boundary estimate.
+@inline function _loconly_resolvable_scales(lσ::Real, lσ_phy::Real)
+    return lσ - lσ_phy >= 0.5 * log(eps(Float64))
+end
+
 function _loconly_marginal_nll(
     prob::LocOnlyProblem, β::AbstractVector, lσ::Real, lσ_phy::Real
 )
-    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50 &&
+     _loconly_resolvable_scales(lσ, lσ_phy)) ||
         return _LOCONLY_PENALTY
     σ²_phy = exp(2 * Float64(lσ_phy))
     σ² = exp(2 * Float64(lσ))
@@ -235,7 +247,8 @@ function _loconly_marginal_nll(
 end
 
 function _loconly_profile_beta(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
-    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50 &&
+     _loconly_resolvable_scales(lσ, lσ_phy)) ||
         return nothing, _LOCONLY_PENALTY, nothing
     σ²_phy = exp(2 * Float64(lσ_phy))
     σ² = exp(2 * Float64(lσ))
@@ -3130,7 +3143,8 @@ function _loconly_marginal_grad!(g, prob::LocOnlyProblem, θ::AbstractVector, p�
     )
     lσ = θ[pμ + 1]
     lσ_phy = θ[pμ + 2]
-    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) || return g
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50 &&
+     _loconly_resolvable_scales(lσ, lσ_phy)) || return g
     σ² = exp(2 * Float64(lσ))
     σ²_phy = exp(2 * Float64(lσ_phy))
     try
