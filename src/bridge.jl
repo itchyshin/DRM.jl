@@ -60,10 +60,127 @@ function drm_bridge(; formula, family::AbstractString, data, tree = nothing,
     bundle, dat, labels = _bridge_formula(formula, family, dat; labels = true)
     fam = _bridge_family(family)
     opts = _bridge_options(options)
+    coef_labels = get(opts, :coef_labels, nothing)
     fit = _bridge_fit(bundle, fam, dat; tree = tree, K = K, A = A,
                       coords = coords, options = opts)
     return _bridge_flatten(fit; family = String(family), newdata = newdata,
-                           labels = labels)
+                           labels = labels, coef_labels = coef_labels)
+end
+
+"""
+    drm_bridge_objective_at(formula, family, data, tree, options = Dict();
+                            beta, Lambda, rho12)
+
+The bivariate q=4 phylogenetic REML counterpart to [`reml_objective_at`](@ref)
+(#575) reached through the SAME marshalling-friendly boundary [`drm_bridge`](@ref)
+uses — one SUPPORTED entry point for the drmTMB R shim
+(`drm_julia_reml_objective_at()`, `R/julia-bridge.R`), replacing its previous
+dependency on five private DRM.jl names (`_bridge_data`, `_bridge_formula`,
+`_bivariate_q4_marker`, `_design`, `_phylo_species_index`) reached by qualified
+name. `formula`, `family`, `data`, `tree`, `options` are exactly the payload
+`drm_bridge` takes for a bivariate q=4 phylogenetic model (a formula with
+`phylo(...)` markers shared by `mu1`, `mu2`, `sigma1`, `sigma2`); `options` is
+accepted for positional parity with that payload but is not otherwise used —
+this is a read-only diagnostic, not a fitting route.
+
+`beta`, `Lambda`, `rho12` are the outer evaluation POINT, in the SAME
+(fixed-effect, among-axis-covariance, residual-correlation) parameterisation
+`drm_bridge`'s q4 phylo REML fit reports: `beta` is a `NamedTuple` or `Dict`
+with `mu1`/`mu2`/`sigma1`/`sigma2` numeric vectors (inner-Newton warm starts
+for the profiled-out fixed effects — `reml_objective_at` reprofiles them at
+`phi` regardless of the warm start supplied), `Lambda` is the 4×4 symmetric
+among-axis covariance matrix (axis order mu1, mu2, sigma1, sigma2), and
+`rho12` is the residual correlation. Internally: `Lambda`/`rho12` are packed
+into DRM.jl's own `phi = (beta_rho, lc)` via `pack_phi` and
+[`reml_objective_at`](@ref) evaluates the q=4 REML objective there.
+
+Returns a `Dict{String,Any}` with `"objective"` and `"reml_loglik"` (the
+normalised Patterson–Thompson restricted log-likelihood `reml_objective_at`
+reports — the two keys carry the same value; `"objective"` is the
+route-agnostic name, `"reml_loglik"` names the DRM.jl convention explicitly),
+`"raw_reml_ll"` (the pre-normalisation value), `"converged_inner"` (the inner
+conditional-Newton alternation's own convergence flag — a barrier hit
+surfaces as `-Inf`/`false` rather than an error), and `"contract" =>
+"bridge_objective_at_v1"` so R callers can assert the return shape.
+
+This is a DIAGNOSTIC: it selects nothing, fits nothing, and promotes no
+capability-ledger row. See #575 for the cross-engine mode-finder-vs-
+objective-translation question it exists to answer.
+"""
+function drm_bridge_objective_at(formula, family::AbstractString, data, tree,
+        options = Dict{String,Any}(); beta, Lambda, rho12)
+    tree === nothing && throw(ArgumentError(
+        "drm_bridge_objective_at: `tree` is required for the bivariate q=4 " *
+        "phylogenetic REML objective-at diagnostic"))
+    dat = _bridge_data(data)
+    bundle, dat2, _ = _bridge_formula(formula, family, dat; labels = true)
+    bundle isa BivariateDrmFormula || throw(ArgumentError(
+        "drm_bridge_objective_at: only the bivariate q=4 phylogenetic REML " *
+        "route is supported (got a univariate formula)"))
+    rhs = Dict(bundle.forms)
+    fixed, marker = _bivariate_q4_marker(rhs)
+    (marker !== nothing && marker[1] === :phylo_q4) || throw(ArgumentError(
+        "drm_bridge_objective_at: only the bivariate q=4 phylogenetic REML " *
+        "route is supported (formula has no shared `phylo(...)` term on " *
+        "mu1, mu2, sigma1, and sigma2)"))
+    grp = marker[2]
+    phy = _as_augmented_phy(_bridge_tree(tree))
+    species = _phylo_species_index(phy, getproperty(dat2, grp))
+
+    y1, X1, _ = _design(bundle.response1, fixed[:mu1], dat2)
+    y2, X2, _ = _design(bundle.response2, fixed[:mu2], dat2)
+    _, Xs1, _ = _design(bundle.response1, fixed[:sigma1], dat2)
+    _, Xs2, _ = _design(bundle.response1, fixed[:sigma2], dat2)
+    _, Xr, _  = _design(bundle.response1, fixed[:rho12], dat2)
+    prob, Q_cond = make_problem(phy, y1, y2, X1, X2, Xs1, Xs2, Xr; species = species)
+
+    Lam = Matrix{Float64}(Lambda)
+    size(Lam) == (4, 4) || throw(ArgumentError(
+        "drm_bridge_objective_at: `Lambda` must be a 4x4 symmetric numeric " *
+        "matrix (the phylo q4 among-axis covariance, axis order mu1, mu2, " *
+        "sigma1, sigma2); got size $(size(Lam))"))
+    rho_vec = [Float64(rho12)]
+    phi = pack_phi(prob, rho_vec, Lam)
+
+    beta_mu1 = _bridge_objective_at_beta_field(beta, :mu1, size(X1, 2))
+    beta_mu2 = _bridge_objective_at_beta_field(beta, :mu2, size(X2, 2))
+    beta_s1  = _bridge_objective_at_beta_field(beta, :sigma1, size(Xs1, 2))
+    beta_s2  = _bridge_objective_at_beta_field(beta, :sigma2, size(Xs2, 2))
+    beta0 = (mu1 = beta_mu1, mu2 = beta_mu2, s1 = beta_s1, s2 = beta_s2, rho = rho_vec)
+
+    rr = reml_objective_at(prob, Q_cond, phi; beta0 = beta0, n_newton = 60)
+    return Dict{String,Any}(
+        "objective" => rr.reml_loglik,
+        "reml_loglik" => rr.reml_loglik,
+        "raw_reml_ll" => rr.raw_reml_ll,
+        "converged_inner" => rr.converged,
+        "contract" => "bridge_objective_at_v1",
+    )
+end
+
+# Fetch `beta[field]` from a NamedTuple or Dict (String or Symbol keyed), as a
+# `Vector{Float64}`, and check it against the design width `reml_objective_at`
+# expects — naming both the field and the expected/actual lengths so a
+# mismatched R-side `beta` fails loudly rather than silently misaligning
+# coefficients to the wrong design columns.
+function _bridge_objective_at_beta_field(beta, field::Symbol, expected_len::Int)
+    value = if beta isa AbstractDict
+        haskey(beta, field) ? beta[field] :
+            haskey(beta, String(field)) ? beta[String(field)] :
+            throw(ArgumentError("drm_bridge_objective_at: `beta` is missing field `$(field)`"))
+    elseif beta isa NamedTuple
+        hasproperty(beta, field) ||
+            throw(ArgumentError("drm_bridge_objective_at: `beta` is missing field `$(field)`"))
+        getproperty(beta, field)
+    else
+        throw(ArgumentError("drm_bridge_objective_at: `beta` must be a NamedTuple or " *
+            "Dict with mu1/mu2/sigma1/sigma2 fields"))
+    end
+    v = value isa Number ? Float64[value] : Vector{Float64}(vec(value))
+    length(v) == expected_len || throw(ArgumentError(
+        "drm_bridge_objective_at: `beta[$(field)]` must have length $(expected_len) " *
+        "(the $(field) design width); got length $(length(v))"))
+    return v
 end
 
 """
@@ -169,9 +286,12 @@ Run a narrow inference primitive for the R bridge.
 
 With `parm = nothing` (the default) this targets the admitted Gaussian
 phylogenetic SD block (`param = :sd_phylo` / `:resd` / `:resd_mu` /
-`:resd_sigma`), because the R side needs
-explicit response-scale transforms and parity checks before exposing broader
-Julia inference results. This path is unchanged from the first slice.
+`:resd_sigma`), because the R side needs explicit response-scale transforms
+and parity checks before exposing broader Julia inference results. Pass
+`parm = "sd:mu"` or `"sd:sigma"` to select the coupled location- or
+scale-axis row explicitly, or `"sd:resd"` / `"sd:resd_mu"` /
+`"sd:resd_sigma"` when an R bridge caller must preserve the fitted parameter
+block exactly.
 
 Pass `parm = "fixef:<dpar>:<coef>"` (e.g. `"fixef:mu:x"`) to instead profile
 or bootstrap a single ordinary fixed-effect coefficient, on its link scale —
@@ -194,7 +314,7 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     opts = _bridge_options(options)
     bridge_method = lowercase(strip(String(method)))
     is_biv = bundle isa BivariateDrmFormula
-    target = parm === nothing ? nothing : _bridge_parse_fixef_parm(parm)
+    target = parm === nothing ? nothing : _bridge_parse_inference_parm(parm)
     # The univariate σ-phylo location-scale route precomputes its boundary-aware
     # profile CIs into the fit (it has no re-optimisable objective), so request them
     # at fit time for the profile method. The bivariate q=4 route has no such flag
@@ -202,11 +322,13 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     # `parm` target profiles the fit's own re-optimisable objective and never reads
     # that precomputed stash, so it is skipped there too — matching the R bridge's
     # previous qualified-internal call, which never set this option either.
-    (!is_biv && target === nothing && bridge_method == "profile") && (opts[:profile_ci] = true)
+    (!is_biv && (target === nothing || target.kind === :sd) && bridge_method == "profile") &&
+        (opts[:profile_ci] = true)
     tree_obj = tree === nothing ? nothing : _bridge_tree(tree)
     fit = _bridge_fit(bundle, fam, dat; tree = tree_obj, K = K,
                       A = A, coords = coords, options = opts)
-    rawtarget = target === nothing ? nothing : _bridge_raw_fixef_target(fit, labels, target)
+    rawtarget = target === nothing || target.kind !== :fixef ? nothing :
+        _bridge_raw_fixef_target(fit, labels, target)
 
     # Bivariate q=4 phylogenetic fit: the uncertainty target is the four among-axis
     # SDs sqrt.(diag(Σ_a)), not a single SD row. The boundary makes the q4 profile
@@ -220,13 +342,14 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     if bridge_method == "profile"
         # Preserve the implicit SD target set, but an explicit fixed-effect
         # request must profile only that coefficient, not its entire block.
-        profile_parm = rawtarget === nothing ? [:sd_phylo, :resd_sigma, :resd, :resd_mu] :
-                                              rawtarget.param => rawtarget.coef
+        profile_parm = target === nothing ? [:sd_phylo, :resd_sigma, :resd, :resd_mu] :
+            target.kind === :fixef ? rawtarget.param => rawtarget.coef : target.param
         result = profile_result(fit; level = level, threads = threads, parm = profile_parm)
         row = target === nothing ? _bridge_pick_sd_row(result.ci) :
-                                    _bridge_pick_fixef_row(result.ci, rawtarget)
+            target.kind === :fixef ? _bridge_pick_fixef_row(result.ci, rawtarget) :
+            _bridge_pick_sd_row(result.ci, target.param)
         outcome = _bridge_profile_outcome(result, row)
-        target === nothing || (row = merge(row, (coef = target.coef,)))
+        target !== nothing && target.kind === :fixef && (row = merge(row, (coef = target.coef,)))
         return _bridge_inference_flatten(
             row;
             method = "profile",
@@ -272,8 +395,9 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
             )
         end
         row = target === nothing ? _bridge_pick_sd_row(result.summary) :
-                                    _bridge_pick_fixef_row(result.summary, rawtarget)
-        target === nothing || (row = merge(row, (coef = target.coef,)))
+            target.kind === :fixef ? _bridge_pick_fixef_row(result.summary, rawtarget) :
+            _bridge_pick_sd_row(result.summary, target.param)
+        target !== nothing && target.kind === :fixef && (row = merge(row, (coef = target.coef,)))
         return _bridge_inference_flatten(
             row;
             method = "bootstrap",
@@ -306,6 +430,27 @@ function _bridge_parse_fixef_parm(parm)
         "`\"fixef:<dpar>:<coef>\"` (e.g. `\"fixef:mu:x\"`)"))
     return (param = Symbol(parts[2]), coef = String(parts[3]))
 end
+
+# Parse the bridge's explicit fixed-effect or phylogenetic-SD target.
+function _bridge_parse_inference_parm(parm)
+    parm isa AbstractString || throw(ArgumentError(
+        "drm_bridge_inference: `parm` must be a `fixef:<dpar>:<coef>` or `sd:<dpar>` string"))
+    text = String(parm)
+    startswith(lowercase(text), "fixef:") && return merge((kind = :fixef,), _bridge_parse_fixef_parm(text))
+    parts = split(text, ':'; limit = 2)
+    (length(parts) == 2 && lowercase(parts[1]) == "sd") || throw(ArgumentError(
+        "drm_bridge_inference: unsupported `parm` target `$(repr(parm))`; expected " *
+        "`fixef:<dpar>:<coef>` or `sd:mu` / `sd:sigma`"))
+    target = Symbol(parts[2])
+    target === :mu && return (kind = :sd, param = :resd_mu)
+    target === :sigma && return (kind = :sd, param = :resd_sigma)
+    target in (:resd, :resd_mu, :resd_sigma) && return (kind = :sd, param = target)
+    throw(ArgumentError(
+        "drm_bridge_inference: unsupported SD target `$(repr(parm))`; expected `sd:mu`, " *
+        "`sd:sigma`, `sd:resd`, `sd:resd_mu`, or `sd:resd_sigma`"))
+end
+
+_bridge_parse_sd_parm(parm) = _bridge_parse_inference_parm(parm).param
 
 # Pick the single fixed-effect row named by an explicit `parm` target. There is NO
 # silent fall-back: if the (param, coef) pair is not present the row would be some
@@ -387,6 +532,14 @@ function _bridge_pick_sd_row(rows)
     throw(ArgumentError("drm_bridge_inference: no variance-component SD row " *
         "(:sd_phylo, :resd_sigma, :resd, or :resd_mu) in the result; got params [$(got)]. " *
         "Refusing to mislabel a fixed-effect row as the SD confidence interval."))
+end
+
+function _bridge_pick_sd_row(rows, want::Symbol)
+    for row in rows
+        row.param === want && return row
+    end
+    got = join(unique(String(r.param) for r in rows), ", ")
+    throw(ArgumentError("drm_bridge_inference: no requested SD row `$want`; got params [$got]"))
 end
 
 function _bridge_tree(tree)
@@ -1246,8 +1399,9 @@ function _bridge_formula_from_expr(expr, ctx::_BridgeXlateCtx)
 end
 
 function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
-        labels::Union{Nothing,_BridgeFormulaLabels} = nothing)
-    cnames, cvals, raw_cnames, public_to_raw = _bridge_coef_vector(fit; labels = labels)
+        labels::Union{Nothing,_BridgeFormulaLabels} = nothing, coef_labels = nothing)
+    cnames, cvals, raw_cnames, public_to_raw =
+        _bridge_coef_vector(fit; labels = labels, coef_labels = coef_labels)
     V = Matrix{Float64}(vcov(fit))
     _bridge_validate_coordinate_axes(fit.blocks, fit.coefnames, length(cvals), V)
     out = Dict{String,Any}(
@@ -1276,10 +1430,14 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
         "corpairs" => _bridge_plain(corpairs(fit)),
         "dpars" => _bridge_dpars(fit),
     )
-    if labels !== nothing
+    if labels !== nothing || coef_labels !== nothing
         # `coef_names`/`vcov_names` are the public R spelling.  Retain the exact
         # Julia coordinate names and a bijection for the bridge inference route;
-        # no numeric coordinate, value, or covariance entry is rewritten.
+        # no numeric coordinate, value, or covariance entry is rewritten. When
+        # `options["coef_labels"]` (design 258 §7.1) is supplied, its per-dpar
+        # names are echoed verbatim (dpar-prefixed) as `coef_names`/
+        # `vcov_names` in place of Julia's self-rendered names — `raw_coef_names`
+        # still carries Julia's own spelling either way (#563).
         out["coef_label_contract"] = "bridge_formula_labels_v1"
         out["raw_coef_names"] = raw_cnames
         out["coef_name_map"] = public_to_raw
@@ -1331,22 +1489,26 @@ function _bridge_diagnostic(fit::DrmFit; grad_tol::Real = 1e-3)
     )
 end
 
-function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = nothing)
+function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = nothing,
+        coef_labels = nothing)
     θ = coef(fit)
     namemap = Dict(p => ns for (p, ns) in fit.coefnames)
     raw_names = String[]
     vals = Float64[]
     indices = Int[]
+    block_ranges = Pair{Symbol,UnitRange{Int}}[]
     for (param, r) in fit.blocks
         haskey(namemap, param) || error("drm_bridge: no coefficient names for parameter block `$param`")
         pnames = namemap[param]
         length(pnames) == length(r) ||
             error("drm_bridge: coefficient-name mismatch for `$param`")
+        block_start = length(raw_names) + 1
         for (nm, idx) in zip(pnames, r)
             push!(raw_names, "$(param)_$(nm)")
             push!(vals, θ[idx])
             push!(indices, idx)
         end
+        push!(block_ranges, param => block_start:length(raw_names))
     end
     _bridge_validate_coordinate_axes(fit.blocks, fit.coefnames, length(θ), nothing)
     length(raw_names) == length(θ) || error("drm_bridge: coefficient blocks do not cover every raw coordinate")
@@ -1354,6 +1516,13 @@ function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = 
         error("drm_bridge: coefficient blocks must cover raw coordinates in covariance order")
     length(unique(raw_names)) == length(raw_names) ||
         error("drm_bridge: raw coefficient labels are not unique")
+    if coef_labels !== nothing
+        names = _bridge_echo_coef_labels(coef_labels, block_ranges, raw_names)
+        length(unique(names)) == length(names) ||
+            error("drm_bridge: echoed coef_labels public names are not unique")
+        public_to_raw = Dict{String,String}(pub => raw for (pub, raw) in zip(names, raw_names))
+        return names, vals, raw_names, public_to_raw
+    end
     if labels === nothing
         return raw_names, vals, raw_names, Dict{String,String}(n => n for n in raw_names)
     end
@@ -1364,6 +1533,44 @@ function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = 
     Set(values(public_to_raw)) == Set(raw_names) ||
         error("drm_bridge: public coefficient map does not cover every raw coordinate")
     return names, vals, raw_names, public_to_raw
+end
+
+# Echo an R-supplied `options["coef_labels"] :: Dict{String,Vector{String}}`
+# payload (design 258 §7.1: base-R `model.matrix()` column names per dpar, in
+# order, fixed-effect part only) as the public `bridge_formula_labels_v1`
+# names, prefixed `"<dpar>_"` to match the self-rendered convention. Fails
+# closed: any count mismatch, unknown dpar key, or a dpar with fixed-effect
+# columns but no supplied labels aborts naming the dpar and both counts —
+# never guesses, pads, or reorders (#563).
+function _bridge_echo_coef_labels(coef_labels, block_ranges::Vector{Pair{Symbol,UnitRange{Int}}},
+        raw_names::Vector{String})
+    supplied = Dict{String,Any}(String(k) => v for (k, v) in pairs(coef_labels))
+    known_dpars = [String(param) for (param, _) in block_ranges]
+    for dpar in keys(supplied)
+        dpar in known_dpars ||
+            error("drm_bridge: coef_labels supplies names for unknown dpar \"$dpar\"; " *
+                  "the model has dpars: $(join(known_dpars, ", "))")
+    end
+    names = Vector{String}(undef, length(raw_names))
+    for (param, range) in block_ranges
+        dpar = String(param)
+        n_actual = length(range)
+        haskey(supplied, dpar) ||
+            error("drm_bridge: coef_labels is missing an entry for dpar \"$dpar\" " *
+                  "($n_actual fixed-effect columns; Julia names: $(raw_names[range])); " *
+                  "the R side must supply names for every dpar when sending coef_labels")
+        dpar_labels = supplied[dpar]
+        n_supplied = length(dpar_labels)
+        n_supplied == n_actual ||
+            error("drm_bridge: coef_labels[\"$dpar\"] supplies $n_supplied names but the " *
+                  "$dpar formula part has $n_actual fixed-effect columns " *
+                  "(Julia names: $(raw_names[range])); the R side must send exactly one " *
+                  "name per column")
+        for (i, nm) in zip(range, dpar_labels)
+            names[i] = "$(dpar)_$(nm)"
+        end
+    end
+    return names
 end
 
 function _bridge_validate_coordinate_axes(blocks, names, p::Integer,

@@ -17,7 +17,7 @@ function _fit_phylo_gaussian_lss_sparse(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G,
     phy.n_leaves == G ||
         error("phylo($grp): tree has $(phy.n_leaves) tips but `$grp` has $G levels")
     Q, leaf_pos, q = augmented_tree_precision(phy)
-    Qs = dropzeros!(sparse(Symmetric(Matrix(Q))))
+    Qs = dropzeros!(sparse(Symmetric(Q, :U)))
     chQ = cholesky(Symmetric(Qs); check = false)
     issuccess(chQ) ||
         error("phylo($grp): root-conditioned augmented precision is not PD")

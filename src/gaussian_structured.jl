@@ -399,7 +399,7 @@ function _phylo_aug_comp(gidx, G, tree, grp::Symbol)
     phy.n_leaves == G ||
         error("phylo($grp): tree has $(phy.n_leaves) tips but `$grp` has $G levels")
     Q, leaf_pos, q = augmented_tree_precision(phy)
-    Qs = dropzeros!(sparse(Symmetric(Matrix(Q))))   # symmetric, sparse, PD over kept nodes
+    Qs = dropzeros!(sparse(Symmetric(Q, :U)))   # symmetric, sparse, PD over kept nodes
     chQ = cholesky(Symmetric(Qs); check = false)
     issuccess(chQ) ||
         error("phylo($grp): root-conditioned augmented precision is not PD")

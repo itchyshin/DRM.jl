@@ -184,7 +184,7 @@ support.
 | Capability | Source | Status |
 |---|---|---|
 | `gaussian()` + `meta_V(v)` with **known diagonal** sampling variances; τ on the σ intercept | `src/gaussian_meta.jl:17` | **Tested** — `test/test_meta.jl` |
-| Dense / bivariate known sampling covariance | — | **Absent** (documented as planned in `src/gaussian_meta.jl:15`) |
+| Bivariate known sampling covariance (`meta_vcov_bivariate`) | `src/meta_vcov_bivariate.jl` (A8, `src/DRM.jl:72`) | **Tested** (corrected 2026-09-02: was listed Absent; exported at `src/DRM.jl:183`) — `test/test_meta_vcov_bivariate.jl` (`test/runtests.jl:338`) |
 | Deprecated `meta_known_V` parity stub | — | **Absent** in this worktree (no such symbol) |
 
 ## Inference
@@ -195,7 +195,7 @@ support.
 | Profile-likelihood CIs (`profile_result`, `confint(:profile)`) | `src/inference.jl:124` | **Tested** — `test/test_profile_ci.jl` |
 | Parametric bootstrap (`bootstrap_ci`/`_summary`/`_result`, serial + threaded) | `src/inference.jl:708` | **Tested** — `test/test_bootstrap.jl`, `test/test_bootstrap_nongaussian.jl` |
 | REML for the **fixed-effect Gaussian location–scale** fit (`method=:REML`), with the model-selection guard | `src/gaussian_core.jl`, `src/comparison.jl:84` | **Tested** — `test/test_reml.jl` |
-| REML for **Gaussian mean `(1 \| g)`** (`method=:REML`, Woodbury Patterson–Thompson) | `src/gaussian_core.jl`, `src/gaussian_ranef.jl` | **Impl, untested** — standalone `test/test_reml_ordinary_ranef.jl` (**not in the default suite yet**) |
+| REML for **Gaussian mean `(1 \| g)`** (`method=:REML`, Woodbury Patterson–Thompson) | `src/gaussian_core.jl`, `src/gaussian_ranef.jl` | **Tested** (corrected 2026-09-02: `test/test_reml_ordinary_ranef.jl` is included at `test/runtests.jl:40`, not standalone) |
 | `reml_loglik` / `ml_loglik` / `estimation_method` accessors | `src/gaussian_core.jl` (exported `src/DRM.jl:89`) | **Tested** — `test/test_reml.jl` |
 | Epsilon-method bias correction (`bias_correct`, TMB sdreport analogue) | `src/bias_correct.jl:97` | **Tested** — `test/test_bias_correct.jl` |
 | **χ̄² (chi-bar-square) boundary inference** (Self–Liang / Stram–Lee mixture) | `src/chibar.jl` | **Tested** — `test/test_chibar.jl` (corrects older audit text that listed this as Absent) |
@@ -207,7 +207,7 @@ support.
     comparable across fixed-effect structures). Wired cells: the fixed-effect
     Gaussian location–scale model (`test/test_reml.jl`); a single Gaussian mean
     intercept `(1 | g)` on the Woodbury spine (`test/test_reml_ordinary_ranef.jl`,
-    **not in the default suite yet**; #439); Location–Scale–Scale models
+    in the default suite at `test/runtests.jl:40`; #439); Location–Scale–Scale models
     (`sd(g) ~ z`, `sd(species, phylogenetic) ~ z`, and multi-component LSS;
     `test/test_lss_reml.jl`, `test/test_lss_sparse.jl`; #558); and the
     bivariate q=4 location–scale engine (`test/test_reml_q4_allaxes.jl`).
@@ -275,31 +275,64 @@ A marshalling-friendly boundary for `drmTMB(..., engine = "julia")`
 
 To avoid overclaiming, these are confirmed **not** implemented in this worktree:
 
-- **Missing-data handling** (NA dropping, `na.action`, missing-response bridge):
-  no implementation in `src/` (no `skipmissing`/`ismissing`/`na_action` code
-  path). (A `codex/missing-response-bridge` branch exists separately and is not
-  merged here.)
+- **Missing-data handling** (corrected 2026-09-02: this bullet was stale —
+  several routes are implemented on `main`). What exists: (1) listwise-deletion
+  predictor preprocessing, `src/missing_data.jl` (#49, `src/DRM.jl:136`) — pure
+  data preprocessing, explicitly documented as NOT FIML; (2) the exported joint
+  missing-predictor routes (`mi()`, `JointDrmFit`/`JointTwoDrmFit`/
+  `JointFiniteDrmFit`, `imputed`, `miss_control`) — five files included at
+  `src/DRM.jl:137–143` (#563), tested by `test/test_joint_missing_*.jl`
+  (`test/runtests.jl:435–446`); (3) the Gaussian observed-response mask route,
+  `src/gaussian_core.jl` (`_observed_response_mask`, `:320`; #517, commit
+  `53141006`); (4) missing-response handling on the location-scale-scale
+  `sd()` routes, `src/gaussian_lss.jl` (`has_missing_response`; #559, commit
+  `140460a0`), **Tested** — `test/test_lss_missing_response.jl`
+  (`test/runtests.jl:68`). Still absent: general multiple imputation for
+  missing predictors outside the joint-model routes, and an `na.action`-style
+  option.
 - **χ̄² boundary inference** — see Inference table.
 - **Cross-family bivariate models** — see Bivariate table.
 - **Variational (VA/ELBO) public path beyond `(1\|g)` on Poisson / Binomial / NB2 / Gamma / Beta** — Experimental random-intercept VA only (`sigma ~ 1` where the family has a scale). Phylo, crossed, correlated slopes, ZI/hu remain open on #136. `_fit_va` still errors for unwired families. Scoped #136e public Gamma RI smoke: `report/va-vs-laplace-bias.md` (LA ≈ VA on shape `α`; LA faster; does not close #136).
-- **Dense/bivariate `meta_V`** — diagonal known variances only.
-- **Labelled q=4 coevolution-correlation accessor with CIs** — `Σ_a` is stored
-  and surfaced, but no derived-correlation-with-interval accessor exists.
-- **`src/experimental/`** (`reml_q4`, `location_only`, EM variants, dense
-  oracles) — migrated but **not** in the `DRM.jl` include list and not covered by
-  the default suite.
+- ~~**Dense/bivariate `meta_V`** — diagonal known variances only.~~ (corrected
+  2026-09-02: false — bivariate known sampling covariance is implemented via
+  `meta_vcov_bivariate`; see the Meta-analysis table.)
+- ~~**Labelled q=4 coevolution-correlation accessor with CIs** — `Σ_a` is
+  stored and surfaced, but no derived-correlation-with-interval accessor
+  exists.~~ (corrected 2026-09-02: false, and contradicted the Coevolution
+  table above in the same page — `coevolution_cor(fit)` is the labelled
+  accessor, `src/coevo_accessors.jl`, and `bootstrap_sigma_a(fit)`,
+  `src/bootstrap_q4_phylo.jl`, adds bootstrap CIs to it for tree-driven phylo
+  fits; **Tested** — `test/test_coevo_accessors.jl`, `test/test_bootstrap_sigma_a.jl`.)
+- **`src/experimental/`** (corrected 2026-09-02: `reml_q4` and `location_only`
+  were promoted and are wired — see the Inference table and `src/DRM.jl:55`/`:81`
+  — this bullet listed them as unmigrated by mistake). What remains in
+  `src/experimental/` (`ls src/experimental`, per its own README) is: two
+  recorded negative results not exposed (`fit_em_natgrad.jl` — #13 decision-gate
+  FAIL; `fit_em_closed.jl`, `em_squarem_fit.jl` — #472, the closed-form Λ step
+  descends the marginal); four superseded predecessors of the production engine
+  (`fit_q4_tmbgrad.jl`, `fit_ml_q4.jl`, `fit_ml_warm.jl`, `fit_q4_p100_tmb.jl`,
+  and the four `estep_*.jl` mode-finder hardenings); two diagnostic oracles
+  (`q4_em_dense.jl`, `fit_sparse_direct.jl`); and a stale pre-promotion copy of
+  `location_only.jl` (the wired file is `src/location_only.jl`). None of these
+  are in the `DRM.jl` include list or the default suite.
 
 ## Follow-up test targets (implemented but untested)
 
 The highest-value gaps where code exists but no default-suite test guards it:
 
-1. **`src/experimental/` promotions.** If/when `reml_q4`, `fit_em_natgrad`, the
-   `estep_*` mode-finder candidates, `q4_em_dense`, or `fit_q4_tmbgrad` are wired
-   into the public API, each needs its own recovery/gradient test. Today they are
-   unreachable from `DRM.jl` and untested in the default suite.
-2. **Labelled q=4 coevolution-correlation accessor.** `Σ_a` is tested as stored;
-   a derived ρ_a-with-CI accessor (analogous to `heritability`) would be the
-   natural next public surface and should ship with a delta + profile CI test.
+1. **`src/experimental/` promotions.** (corrected 2026-09-02: `reml_q4` is
+   already promoted and tested — see the Inference table; drop it from this
+   list.) If/when `fit_em_natgrad`, the `estep_*` mode-finder candidates,
+   `q4_em_dense`, or `fit_q4_tmbgrad` were wired into the public API, each would
+   need its own recovery/gradient test — but per `src/experimental/README.md`
+   several of these are recorded *negative* results (e.g. `fit_em_natgrad`
+   failed the #13 decision gate) that the project has decided not to expose,
+   not pending promotions. Today none of `src/experimental/` is reachable from
+   `DRM.jl` or tested in the default suite.
+2. **Labelled q=4 coevolution-correlation accessor.** (corrected 2026-09-02:
+   this already exists and is tested — `coevolution_cor(fit)` +
+   `bootstrap_sigma_a(fit)`, see the Coevolution table and the "Absent"
+   section above; remove this as a follow-up target.)
 3. **`drm_bridge_inference` beyond `:resd`.** The bridge inference primitive is
    tested only for the Gaussian phylogenetic SD block; broadening it to other
    parameters (with the R-side response-scale transforms) needs matching tests.

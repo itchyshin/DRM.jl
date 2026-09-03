@@ -181,7 +181,15 @@ function _fit_locscale_frontend(kind, fam, f, rhs, lc, data; g_tol, se,
                                 tree = nothing, K = nothing, A = nothing, coords = nothing)
     y, Xμ, Xψ, nmμ, nmσ, obs_prop, trials = _ls_frontend_design(kind, f, lc, data)
     Q, gidx, G = _ls_frontend_grouping(lc, data, tree, K, A, coords)
-    fitres = _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q; g_tol=g_tol, se=se, whitened=true)
+    # A public LSS fit is the baseline for profile and bootstrap inference.  The
+    # default 1,000 outer iterations can leave a small Gamma fixture
+    # uncertified on some BLAS/runner combinations. A 2,000-iteration budget
+    # preserves the existing tolerance and stopping rule while giving that
+    # public fit a bounded additional chance to reach its gradient criterion.
+    fitres = _fit_locscale(
+        kind, y, Xμ, Xψ, gidx, G, Q;
+        g_tol=g_tol, iterations=2_000, se=se, whitened=true,
+    )
     fit = _build_locscale_drmfit(kind, fam, fitres, y, Xμ, Xψ, nmμ, nmσ, String(lc.group);
                                  obs_prop = obs_prop, trials = trials)
     # Carry the structured design so `confint(:profile)` can route to the robust

@@ -1,0 +1,401 @@
+# Toward an O(p) sparse multi-component LSS engine
+
+Developer note for a **future** `src/gaussian_sparse_lss_multi.jl` (no code
+exists yet — this is the symbolic-alignment pass required before writing
+any). Scope: extend `#551`'s single-phylo-component O(p) sparse engine
+(`src/gaussian_sparse_lss.jl`) to **several** `sd()` submodels in one fit,
+the way `#555`'s dense engine (`_fit_gaussian_lss_multi`,
+`src/gaussian_lss.jl:564`) already does. Issue #563, Phase-2 slice S7b.
+
+Reviewer contract item 6 (`docs/dev-log/plans/2026-08-30-julia-r-parity.md`,
+"Reviewer-required contracts"): *"Shared component precision uses full
+cross-component incidence products. Check nested/crossed groups, graph fill
+and memory. No universal O(p) claim for arbitrary dense/crossed
+structures."* This note's job is to measure that fill, not assume it.
+
+---
+
+## 1. The model
+
+Per-observation Gaussian response with a heteroscedastic residual and `m`
+independent variance components, each with its own log-SD submodel
+(`src/gaussian_lss.jl:544–552`):
+
+```
+y_i = (Xμ βμ)_i + Σ_{c=1}^m (Z_c a_c)_i + e_i
+e_i ~ N(0, σ_e,i²),        log σ_e,i = (Xσ βσ)_i
+a_c ~ N(0, D_c K_c D_c),   log σ_c,g = (Z_c α_c)_g   (g = 1..G_c)
+D_c = diag(σ_c,·) = diag(exp(Z_c α_c))
+K_c = I_{G_c}                for an iid component
+K_c = phylogenetic corr.     for the (at most one) phylogenetic component
+```
+
+Marginal, as already assembled by the dense route:
+
+```
+V = Σ_c Z_c D_c K_c D_c Z_cᵀ + diag(σ_e,i²)          (gaussian_lss.jl:548–552, 585–599)
+```
+
+**Log-SD combination is two different operations, and the code draws the
+line at the component boundary:**
+
+- *Within* one component, several predictor columns combine **additively on
+  the log scale**, i.e. **multiplicatively on the SD scale**:
+  `σ_c,g = exp(Z_c[g,:]·α_c) = Π_k exp(Z_c[g,k]·α_c,k)`
+  (`gaussian_lss.jl:582`, `σa = exp.(c.Zg * α)`; the single-component sparse
+  engine's `ησa = Zg * α; σa = exp.(ησa)` at `gaussian_sparse_lss.jl:50–52`
+  is the same identity for one component).
+- *Across* components the covariances **add**, not multiply — line
+  `Vm[i, j] += Σc[...]` runs once per component inside the `for (ci, c) in
+  enumerate(comps)` loop (`gaussian_lss.jl:576, 606`). This is the ordinary
+  independent-variance-components model, not a product-of-SDs across
+  components.
+
+**IN SCOPE for a sparse extension:** one phylogenetic component (as #551)
+plus any number of **iid** components, where every iid grouping is **nested**
+in the sense §2 measures (a clean partition — no observation's group
+membership is independent of the other components' membership). This is the
+regime the augmented-tree-plus-hub construction stays close to O(p) in.
+
+**OUT OF SCOPE, with reason:** two or more components whose group memberships
+are mutually **crossed at comparable scale** (e.g. two ~200-level iid factors
+with independent random assignment). §2 measures this filling catastrophically
+regardless of elimination order — it is a structural property of the graph,
+not an implementation gap. The existing **dense** multi-component route
+already fits such models today (fixture B below is a real crossed example)
+up to its `n ≤ 5000` cap (`gaussian_lss.jl:570`); this note is only about
+whether an O(p) *sparse* alternative exists, and for that topology it does
+not.
+
+---
+
+## 2. The augmented precision
+
+Stack the latent state `z = (a_phy; a_iid,1; …; a_iid,m)` (tree nodes `q =
+2p-2`, `gaussian_sparse_lss.jl:19`, plus each iid component's `G_c` group
+levels). The augmented precision generalises `H = Qs + Diagonal(diag_ZtWZ)`
+(`gaussian_sparse_lss.jl:41, 63`) to a block matrix with genuine
+**off-diagonal cross-component blocks**:
+
+```
+H = blockdiag(Q_phy, D_iid,1⁻¹, …, D_iid,m⁻¹) + Zᵀ W Z
+Z = [Z_phy | Z_iid,1 | … | Z_iid,m]     (n rows; one leaf/group column-block per component)
+```
+
+`Zᵀ W Z`'s diagonal blocks are exactly `diag_ZtWZ` per component (each
+observation touches exactly one leaf and one group per component, so those
+blocks stay diagonal — no change from #551). The **cross blocks**
+`(Z_k)ᵀ W Z_l`, `k ≠ l`, are new: entry `(t, g)` is `Σ_i w_i·[obs i has
+component-k index t AND component-l index g]`. Their nonzero pattern is the
+species↔group **incidence bipartite graph**, and that pattern — not the tree
+— governs symbolic-Cholesky fill.
+
+### 2.1 Measured fill (CHOLMOD `cholesky(Symmetric(H))`, default AMD ordering)
+
+Probe: `probe_s7b_fill.jl` in the session scratchpad (log:
+`probe_s7b_fill.log`, same directory), run time < 0.2 s total. `H` built with
+random positive
+weights (fill depends only on the *pattern*, not the values); `nnz(L)` from
+`nnz(sparse(cholesky(Symmetric(H)).L))`.
+
+| Case | Topology | dim(H) | nnz(H) | nnz(L) | ratio L/H | nnz(L)/dim |
+|---|---|---|---|---|---|---|
+| (a) | phylo(1000 tips) + iid(50), **nested** in species (partition) | 2048 | 8028 | 6213 | **0.774** | 3.03 |
+| (b) | phylo(1000 tips) + iid(50), **crossed** with species | 2048 | 15578 | 23920 | **1.535** | 11.68 |
+| (c) | two iid(200,200), fully **crossed**, n=5000, no phylo | 400 | 9848 | 56141 | **5.701** | 140.35 |
+
+`(a)` vs `(b)` isolate one variable (nested vs. crossed group membership,
+same sizes): crossing costs a **~3.85× increase in nnz(L)** (6213 → 23920),
+but the result is still `< nnz(H)^{1.something}` and far from dense — because
+one side of the incidence graph (the 50 groups) is small relative to the
+tree (1998 nodes), so CHOLMOD can defer group elimination and absorb species
+fill into their tree ancestors instead of forming a group-species clique.
+
+Scaling sweep (`G2 = 50` fixed, `n = 5p`, `p ∈ {1000, 2000, 4000}` — same
+script, log tail):
+
+| p | nested nnz(L)/p | crossed nnz(L)/p |
+|---|---|---|
+| 1000 | 3.03 | 11.62 |
+| 2000 | 3.02 | 11.46 |
+| 4000 | 3.01 | 11.32 |
+
+Both stay **flat as p grows with G2 fixed** — i.e. for *this* topology
+(one large tree-structured component, one small fixed-size crossed factor)
+the measured fill is O(p) empirically over this range, not just for the
+nested case. **This does not extend to case (c):** `nnz(L)/dim = 140` on a
+400×400 system (70% of the dense 400² entries) shows that when **both**
+crossed factors are large (comparable size to each other, no small "hub"
+side), no elimination order rescues sparsity — the classic two-way
+crossed-random-effects fill result. Contract item 6's caution is confirmed
+for that topology specifically, not for "any crossing."
+
+### 2.2 Real fixture check
+
+`probe_s7b_fixtureB.jl` (log: `probe_s7b_fixtureB.log`, both in the session
+scratchpad) reruns the same
+measurement on the **actual committed** `#555` fixture B design (32-tip tree,
+16 studies genuinely crossed with species — verified in §5 of the recon:
+each study spans ~12 species, each species appears in ~6 studies):
+
+```
+fixture B (real, crossed):        dim(H)=78  nnz(H)=582  nnz(L)=783  ratio=1.345
+same sizes, nested comparator:    dim(H)=78  nnz(H)=262  nnz(L)=208  ratio=0.794
+```
+
+Same qualitative signature as the synthetic sweep (crossed ratio > 1, nested
+< 1) at fixture scale — this is the "small crossed fixture" §5 uses as an
+acceptance oracle.
+
+### 2.3 When symbolic Cholesky stays O(p) — summary
+
+- **Nested groups** (partition-compatible with the tree, `case (a)`): O(p),
+  confirmed flat to p=4000.
+- **One phylo component + a small crossed iid factor** (`case (b)`,
+  `G_c ≪ p`): empirically near-linear over the measured range, but **not
+  proven asymptotically** — G2 was held fixed at 50 while p grew; the
+  argument for why (a hub-and-tree pattern lets AMD defer the small side)
+  would need to be checked again if `G_c` also scales with `p`.
+- **Two or more crossed components at comparable scale** (`case (c)`): **NOT
+  O(p)** — fill is a fixed fraction of the dense matrix even at trivial
+  size. **No universal O(p) claim** for this topology, as the contract
+  requires.
+
+**Caveat (added after adversarial re-probing, §8 finding 2 —
+`review_s7b_fill2.jl/.log`): the flatness above was measured only under
+uniform group sizes and a balanced tree.** Two further sweeps, same
+in-scope nested topology (`G2 = 50`, balanced or caterpillar tree,
+`n = 5p`):
+
+- **Unbalanced group sizes** (90% of species in one giant group, the
+  remaining 10% spread over the other 49): `nnz(L)/p` = 6.77 → 7.06 → 7.24 at
+  p = 1000/2000/4000 — a real, if mild, **upward drift** (+7% over a 4×
+  increase in `p`) that the uniform-size sweep never surfaces, and one that
+  has not visibly asymptoted by p=4000. **What would settle it:** the same
+  sweep carried to p=16,000–32,000 to see whether `nnz(L)/p` converges or
+  keeps climbing.
+- **Caterpillar tree** (`random_caterpillar_tree`, the worst case for
+  CHOLMOD ordering — see its docstring) instead of `random_balanced_tree`,
+  nested `G2=50`: `nnz(L)/p` stays flat (6.03/6.02/6.01 at p=1000/2000/4000)
+  but at **~2× the balanced-tree constant** (≈3.0) — a level shift, not
+  growth, so still O(p), but "flat to p=4000" was only ever demonstrated on
+  one tree shape. **What would settle it:** repeat across the shape sweep
+  #16 already uses elsewhere in this codebase (balanced, caterpillar, and at
+  least one intermediate topology) before treating the constant as
+  shape-independent.
+
+Neither sweep breaks the O(p) classification for the in-scope regime; both
+narrow what "confirmed" actually covers, which is why they are recorded here
+rather than folded into the headline claim above.
+
+---
+
+## 3. The exact gradient — alignment table
+
+Generalising #551's single-component machinery (`gaussian_sparse_lss.jl`) to
+the block `H` of §2. Objective and logdet structure are unchanged in form —
+`logdetV = logdetD + logdetCprior + logdetH` (`:85–87`) becomes
+`logdetV = logdetD + Σ_c logdetCprior,c + logdetH` — but every per-leaf loop
+that walks `1:G` (the single tree) must become a loop over **all component
+nodes** (tree leaves ∪ every `Σ G_c`), and `wts[i]` generalises to one
+scaling factor per component per observation.
+
+| Symbol | Meaning | Existing code name (file:line) or TO BUILD | Fixture / oracle that pins it | Tolerance |
+|---|---|---|---|---|
+| `Q_c` | prior precision of component `c` (`Q_phy` from the tree; `D_iid,c⁻¹ = I` for iid, since `K_c=I`) | `Qs` (`gaussian_sparse_lss.jl:20`) for the phylo block; **TO BUILD**: trivial diagonal for each iid block | §5 oracle 1 (dense identity) | atol = 1e-5 (loglik) |
+| `H` | augmented block precision, §2 | `H_template`/`H` (`:41, 63`) generalises to the block form of §2 — **TO BUILD**: multi-component assembly loop | §5 oracle 1 | rtol = 2e-4, atol = 2e-5 (coef) |
+| `wts_g = σ_a,g · inv_sd_g` | the `D_a T` row-scaling: component SD × Takahashi-derived conditional SD (phylo) or component SD alone (iid, `inv_sd ≡ 1`) | `wts_g` (`:53`), `inv_sd` (`:27`) — generalise per component | §5 oracle 2 (FD grad) | grad ≤ 1e-6 |
+| `b_c = Z_cᵀ W r` | per-component RHS for `â = H⁻¹b` | `b` accumulation loop (`:75–79`) — **TO BUILD**: one accumulation per component into the shared `b` vector at the component's block offset | §5 oracle 1 | rtol = 2e-4, atol = 2e-5 (coef) |
+| `â = H⁻¹ b` | joint BLUP over all components | `ch \ b` (`:81`) — unchanged pattern, bigger `H` | §5 oracle 1 | rtol = 2e-4, atol = 2e-5 (coef) |
+| `quad_sos` | zero-cancellation GMRF sum of squares | `dot(res_lat, w .* res_lat) + dot(â, Qs*â)` (`:89`) generalises to `+ Σ_c dot(â_c, Q_c â_c)` | §5 oracle 1 | atol = 1e-5 (loglik) |
+| `Hinv` (selected inverse, **full pattern**, not just the diagonal) | O(p) exact `H⁻¹` entries at every pair the sparse pattern of `H`/`L` connects, any component — this now includes **cross-component** pairs `(g, t)`, `g` in one component's block and `t` in another's | `takahashi_selinv(ch)` (`:96`, `src/takahashi_selinv.jl:103`) — **works unchanged on the bigger `H`**: `takahashi_selinv` returns the selected inverse at every nonzero of the Cholesky factor's fill pattern, and every `H[g,t]` §2 introduces is by construction already inside that pattern (fill only ever *adds* to a matrix's own nonzero set, never removes from it) — so the cross entries needed below cost nothing extra to obtain | §5 oracle 2 | grad ≤ 1e-6 |
+| `g_βμ` | mean-block gradient | `-(Xμ' * u)` (`:99`) — **unchanged**, `u` only depends on the joint residual | §5 oracle 2 | grad ≤ 1e-6 |
+| `g_βσ` | residual-scale gradient | loop (`:101–111`) — **unchanged**: `s_ii = Hinv[r_node, r_node]` still reads off the (bigger) selected inverse at the phylo-leaf node | §5 oracle 2 | grad ≤ 1e-6 |
+| `g_α,c` | per-component α gradient, log-det trace term | **corrected formula — diagonal alone is WRONG.** `∂H[g,g]/∂α_c,g` (own-node term, as #551) **plus** `∂H[g,t]/∂α_c,g` for every node `t` of every *other* component sharing an observation with group `g` (exactly the cross blocks §2 introduces): `trace_term_g = Hinv[g,g]·∂H[g,g]/∂α_c,g + 2·Σ_{t≠g} Hinv[g,t]·∂H[g,t]/∂α_c,g`. Single-component #551 has no such `t` (its only cross partner is the tree, already folded into the diagonal via `leaf_pos`), so `:114–126`'s bare `s_node = Hinv[r_node,r_node]` is the `m=1` special case, not the general one. `quad_term` (`u[i]*Zâ[i]` sum) is unaffected — it only ever needed the fitted `â`, not `Hinv`. **TO BUILD** | §5 oracle 3 (cross-term gradcheck) | grad ≤ 1e-6 |
+| cross-block `∂H[g,t]/∂α_c,g` accumulation | for every pair of components `(c, c')` and every observation `i` whose row touches both a node `g` of `c` and a node `t` of `c'`, the derivative of the *cross* entry `H[g,t] = Σ_i w_i·wts_c[i]·wts_{c'}[i]` w.r.t. `α_c,g` is `w_i·(∂wts_c[i]/∂α_c,g)·wts_{c'}[i]` — a new per-observation accumulation loop, one for every unordered component pair actually crossed by shared observations (at most `m(m-1)/2` loops, each `O(n)`) | **TO BUILD**: no #551 analogue exists (single component has only one factor in `wts`, so this derivative never arose) | §5 oracle 3 | grad ≤ 1e-6 |
+| `Zâ_i` (multi) | fitted joint random effect at row `i` | `Zâ` (`:82`) generalises to `Σ_c wts_c[i]·â_c[node(i,c)]` | §5 oracle 1 | rtol = 2e-4, atol = 2e-5 (coef) |
+
+Every row above resolves to an existing #551 line to **adapt** except the
+block-assembly loops (`H`, `b`, cross-block `∂H/∂α` accumulation), which are
+genuinely new code — they are marked **TO BUILD** rather than silently left
+blank. The `g_α,c` row was caught wrong-as-first-drafted by the adversarial
+review (§8, finding 4): a 6-node nested toy (`review_s7b_gradcheck.jl/.log`,
+diagonal-only `wts_iid = [1,2]` groups nested in 4 phylo-like nodes) gives FD
+`d(logdet H)/dα_iid[1] = 1.400168`; the diagonal-only formula returns
+`2.669901` (**91% error**); the corrected formula with the cross term returns
+`1.400168` (agrees to `3.4e-10`). The fix costs nothing extra to fetch
+(`Hinv[g,t]` is already inside the Takahashi pattern, argued above), so this
+is a specification bug, not a feasibility gap — but it is exactly the bug
+symbolic-alignment exists to catch before code is written.
+
+---
+
+## 4. The REML correction
+
+Both existing routes use the identical closed form — Patterson–Thompson,
+one term regardless of component count:
+
+```
+L_REML = L_ML(θ̂) + ½ logdet(Xμᵀ V⁻¹ Xμ) − ½ pμ log 2π
+```
+
+Dense multi-component (`gaussian_lss.jl:634–638`): `A = Vfac \ Xμ; XtVinvX =
+Xμ'*A; chX = cholesky(...); + 0.5*logdet(chX) - const_pμ` — one dense
+`n×pμ` solve. The single-component sparse route computes the same quantity
+via `pμ` sparse Cholesky **column** backsolves (`gaussian_sparse_lss.jl:135–
+156`, `eval_reml`): for each column `k` of `Xμ`, accumulate `bX` at the
+component's node positions and solve `ch \ bX`. **For the sparse multi
+route, this generalises directly**: `bX` accumulates contributions from
+*every* component's `wts` at that column, i.e. the same per-column loop but
+summing `wts_c[i]*wXk[i]` into `bX` at each component's node for `i`'s row —
+no new mathematics, just the same block-accumulation pattern as `b` in §3.
+Cost stays `O(pμ · nnz(L))` sparse backsolves, same order as #551.
+
+---
+
+## 5. Acceptance oracles
+
+1. **Dense-route identity, small nested fixture.** Fixture A
+   (`test/fixtures/lsss/lsss_A.csv`, 32 species, `(1|species) +
+   phylo(1|species)`, both `sd(species) ~ x`) — iid and phylo groupings
+   **coincide** exactly (the strictest nested case). Assert the sparse
+   multi-route's `loglik` matches `_fit_gaussian_lss_multi` to `atol = 1e-5`,
+   both `α` blocks' coefficients to `rtol = 2e-4, atol = 2e-5` — the same
+   dense-vs-sparse tolerances #551 itself ships with
+   (`test/test_lss_sparse.jl:83–115`, `atol = 1e-5` on loglik/coef; the
+   note's earlier `1e-8` draft was tighter than #551's own precedent with no
+   measured margin to justify it, and was flagged as likely-flaky by the
+   adversarial review, §8 finding 6).
+2. **FD-vs-exact gradient**, three points: the fixture-A MLE, a random
+   interior point, and a boundary-ish point (one component's `α` pushed so
+   `σ_c,g → e^{-6}`, mirroring #551's own boundary check). `‖g_exact −
+   g_FD‖_∞ ≤ 1e-6` at all three — unchanged; this is the same bound #551
+   uses for its own exact-vs-FD Hessian check (`gaussian_sparse_lss.jl:199–
+   217`), not the looser `rtol=2e-4,atol=2e-5` line 198 uses for its packed
+   *stored*-gradient regression test.
+3. **Cross-term gradcheck (finding 4, §3).** The generalisation of
+   `review_s7b_gradcheck.jl`'s toy into a permanent unit test: a small nested
+   multi-component fixture (phylo-like 4-node block + 2-level iid block,
+   nested), assert the analytic `g_α,c` (with the cross `Hinv[g,t]` term)
+   matches central-FD `d(logdet H)/dα` to `≤ 1e-6`, **and** assert the
+   diagonal-only formula is rejected by the same test (`> 1e-3` away from
+   FD) — a regression guard so the 91%-error version this note first drafted
+   can never silently come back.
+4. **Crossed fixture, fill prediction.** Fixture B (`lsss_B.csv`, real
+   `study` crossed with `species`, §2.2) — assert the measured `nnz(L)/nnz(H)
+   ≥ 1.2` (crossed) vs. the nested comparator's `< 1.0`, i.e. the note's §2.3
+   claim is checked against the actual shipped fixture, not only synthetic
+   data.
+5. **Scaling to p = 10,000** — **only** if §2 continues to hold at that
+   scale for the in-scope topology (one phylo + nested/small-crossed iid).
+   This is a >30-minute class of run (D-139): pilot on Totoro first (≤150
+   cores, per D-143), report the pilot's wall time and `nnz(L)/p` before
+   committing to the full p=10,000 fit. Not run for this note.
+
+---
+
+## 6. Memory bound
+
+Bytes as a function of the measured `nnz`, using a standard CSC double
+sparse-matrix cost `≈ 16·nnz + 8·(dim+1)` for `H`, and the same for the
+Cholesky factor `L` (its own nnz):
+
+| Case | dim | nnz(H) | bytes(H) | nnz(L) | bytes(L) |
+|---|---|---|---|---|---|
+| (a) nested, p=1000 | 2048 | 8028 | ≈145 KB | 6213 | ≈116 KB |
+| (b) crossed, p=1000 | 2048 | 15578 | ≈265 KB | 23920 | ≈399 KB |
+| (c) two crossed iid(200,200) | 400 | 9848 | ≈161 KB | 56141 | ≈901 KB |
+
+For the in-scope regime (§2.3), `nnz(L) = O(p)` (empirically `≈3·p` nested,
+`≈11.5·p` for one small crossed iid factor with `G_c=50`), so **memory stays
+linear in `p`** for one phylo + bounded iid components. It is emphatically
+**not** linear for two large crossed components — `(c)`'s 400×400 system
+already needs `56,141` factor nonzeros, i.e. `nnz(L)/dim² ≈ 0.35`: memory
+there scales like `O(G_1·G_2)`, the dense bound, well before `p` enters at
+all.
+
+---
+
+## 7. Estimate and decision
+
+Agent-hours for Phase 2, by sub-slice (nested + one-phylo scope only):
+
+| Sub-slice | Work | Est. |
+|---|---|---|
+| S7b.1 | Block `H`/`b` assembly (multi-component, §2–3 TO BUILD rows) | 4–6h |
+| S7b.2 | Per-component `g_α,c` gradient generalisation, incl. the own-node trace term and its FD check | 6–8h (raised from 3–4h — §8 finding 4/7: not a mechanical loop-widening; the diagonal-only formula this note first drafted was wrong (91% error vs FD), so the corrected term needs designing and checking, not just transcribing #551's loop) |
+| S7b.2b | Cross-block `Hinv[g,t]`/`∂H[g,t]/∂α` accumulation — design + a permanent per-component-pair FD oracle (generalising `review_s7b_gradcheck.jl` into `test/`, §5 oracle 3) | 3–4h (new sub-slice; this logic has no #551 analogue to adapt) |
+| S7b.3 | REML multi-component sparse backsolves (§4) | 2–3h |
+| S7b.4 | Oracles 1, 2, 4 (§5), wired into `test/` | 3–4h |
+| S7b.5 | p=10,000 pilot (Totoro, D-139) + scaling writeup, incl. the unbalanced/caterpillar follow-ups §2.3 leaves open | 2–3h (pilot only; full run separate) |
+| **Total** | | **20–28h** |
+
+**GO/NO-GO:** GO for the sparse multi-component engine restricted to one
+phylogenetic component plus nested (or small, `G_c ≪ p`) iid components —
+§2.1/§2.3 measure `nnz(L) = O(p)` and flat `nnz(L)/p` to p=4000 for both
+sub-cases. NO-GO for a general "any crossed structures" sparse route — file
+a separate issue if that is ever needed: case (c) measured `nnz(L)/dim² ≈
+0.35` (near-dense) on a trivially small 400×400 system with two comparable-
+size crossed factors, and no elimination order changes that. The existing
+**dense** multi-component route (`gaussian_lss.jl:564`, `n ≤ 5000`) already
+covers genuinely crossed models like fixture B and should stay the
+recommended route for that topology.
+
+---
+
+## 8. Adversarial review
+
+1. **Fill claim (§2.1) re-run.** `probe_s7b_fill.jl`/`probe_s7b_fixtureB.jl` reproduced exactly:
+   (a) 8028/6213, (b) 15578/23920, (c) 9848/56141; fixture B 582/783 vs 262/208 nested. No drift.
+2. **Adversarial fill sweeps** (`review_s7b_fill2.jl/.log`): (i) `G_c` scaling with `p`
+   (`G_c=p/10`, `p/2` at `p=1000,2000`) — flat holds, but at a **larger constant**
+   (`nnz(L)/p ≈ 6.47`/`6.48` vs the note's `3.03` at `G_c=50`) — untested case, result is
+   reassuring but the note never says the O(p) constant itself depends on `G_c`.
+   (ii) **Unbalanced groups** (90% of species in one group, `G2=50`): `nnz(L)/p` = 6.77 → 7.06 →
+   7.24 at p=1000/2000/4000 — a real, if mild (+7% over 4×p), **upward drift** the note's uniform-
+   size measurements never surface; not yet visibly asymptoting at p=4000.
+   (iii) **Caterpillar tree** (`random_caterpillar_tree`, CHOLMOD ordering stress), nested G2=50:
+   flat and stable (6.03/6.02/6.01) but at **2× the balanced-tree constant** — untested topology,
+   survives but the "flat to p=4000" headline was only ever measured on a balanced tree with
+   uniform group sizes. Caterpillar+crossed also stays flat (~11–12, matching case (b)'s order).
+   None of these break O(p); all narrow what "confirmed" actually covers.
+3. **Model convention (§1).** `σa = exp.(c.Zg * α)` at `gaussian_lss.jl:582/613` confirmed —
+   within-component predictors sum on the log scale as stated. The dense builder
+   (`gaussian_lss.jl:690–739`) allows a general multi-column `Zg` per iid component and only ever
+   pushes **one** `structured`/phylo block — the note's "(at most one) phylogenetic component,
+   general iid predictor" scope is not a silent narrowing; it matches the builder exactly.
+4. **Gradient table (§3), `g_α,c` row — WRONG as stated, load-bearing.** The claim "trace_term reads
+   Hinv at that node" (diagonal only) is the single-component (#551) formula; it does not generalize.
+   In the augmented joint state, `∂H/∂α_c,g` also perturbs the **cross-component blocks** `H[g,t]`
+   for every other-component node `t` sharing an observation with group `g` (exactly the blocks §2
+   itself introduces) — the trace needs `2·Σ_t Hinv[g,t]·∂H[g,t]/∂α_c,g` too. Numerically confirmed
+   on a 6-node nested toy (`review_s7b_gradcheck.jl/.log`): FD = 1.400168; diagonal-only formula =
+   2.669901 (**91% error**); formula with cross terms = 1.400168 (agrees to 3e-10). **Good news**:
+   the needed `Hinv[g,t]` entries are always inside the Takahashi/`L` pattern for *any* topology
+   (nested or crossed) — they equal exactly the pairs where `H` itself is already nonzero, and
+   sparse-Cholesky fill always contains the original matrix's pattern. So this is a spec gap, not a
+   feasibility gap — but the "TO BUILD" note for `g_α,c` must say so explicitly.
+5. **REML (§4).** No bug: `bX` accumulation is linear per-component (no cross term), so `ch \ bX`
+   over the full block `H` already captures cross-component coupling correctly through the solve.
+   Aside: #551's current REML path uses `autodiff = :finite` (not the analytic ML gradient), so
+   finding 4 does not currently corrupt REML — but a future analytic REML gradient would inherit it.
+6. **Oracles (§5).** Tolerances are tighter than #551's own precedent: `test_lss_sparse.jl` uses
+   `atol=1e-5` for dense-vs-sparse loglik/coef and `rtol=2e-4, atol=2e-5` for FD-vs-exact grad; the
+   note proposes `1e-8`/`1e-6` with no stated reason to expect a tighter bound — likely flaky as
+   written. Oracle 3's fixture-B fill assertion (`≥1.2` crossed vs `<1.0` nested) is confirmed with
+   real margin (1.345 vs 0.794). p=10,000 correctly fenced behind D-139 (pilot first, not run).
+7. **Estimate (§7).** #551 (single component, no cross-block bookkeeping) shipped 249 src lines +
+   424 test lines in one PR with no itemized hour log, so no clean baseline exists — but given
+   finding 4, S7b.2's 3–4h for "gradient generalization" undersells the work: it is not a mechanical
+   loop-widening, it is new cross-component accumulation logic through Takahashi that has to be
+   designed, tested per component-pair, and checked against FD (as done here) before it can be
+   trusted.
+
+VERDICT: APPROVE WITH REQUIRED EDITS
+- Rewrite §3's `g_α,c` row to include the cross-component `Hinv[g,t]` trace terms (finding 4);
+  state the general in-pattern guarantee so implementers don't think this needs re-deriving.
+- Revise §5 oracle tolerances to match #551 precedent (`atol=1e-5` / `rtol=2e-4,atol=2e-5`) or justify tighter ones.
+- Add a caveat to §2.3 that flatness was measured only under uniform group sizes and a balanced tree; cite the unbalanced-size drift and caterpillar-tree constant shift (finding 2) as open follow-ups.
+- Revise S7b.2's estimate upward and add an explicit cross-block-accumulation design/test subtask.
+
+Edits applied: 2026-09-02, by the author

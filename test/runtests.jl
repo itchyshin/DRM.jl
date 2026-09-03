@@ -63,6 +63,7 @@ include("test_lss_tip_identity.jl") # Named tree-tip mapping under shuffled rows
 include("test_lss_bootstrap_contract.jl") # Marginal components, masks and REML refits
 include("test_bootstrap_thread_flags.jl") # Independent storage for parallel status flags
 include("test_lss_sparse.jl")  # #551 O(p) sparse exact marginal LSS engine
+include("test_sparse_precision_storage.jl")  # S5a (#563): no dense copy of the augmented tree precision
 include("test_lsss_multi.jl")  # #555 multi-component sd() (lsss)
 include("test_lss_reml.jl")    # #558 location-scale-scale REML
 include("test_lss_missing_response.jl") # #559 location-scale-scale missing responses
@@ -233,7 +234,10 @@ include("test_q4_objective_diagnostic.jl")
 include("test_bridge_formula_translation.jl")
 include("test_bridge_materialization_collision.jl")
 include("test_bridge_formula_labels.jl")
+include("test_bridge_base_r_names.jl")  # #563/#467: the ten design-258 constructs render base-R names
+include("test_bridge_coef_labels_echo.jl")  # #563: options["coef_labels"] echo (design 258 §7.1-7.3)
 include("test_bridge_lss_labels.jl")
+include("test_bridge_lss_routes.jl")  # #563 S6: bridge-vs-direct parity across every LSS route
 # Bridge inference for the bivariate q4 σ-phylo fit: among-axis SD CIs via bootstrap
 # (multi-row payload) + the profile→bootstrap redirect (Ayumi #2 uncertainty-via-R).
 include("test_bridge_bivariate_inference.jl")
@@ -258,9 +262,12 @@ include("test_phylo_count_largep_gate.jl")
 # NOTE (HANDOVER step, #465 remainder): test_analytic_grad.jl and
 # test_q4_laplace.jl were investigated and NOT wired — see the #465 after-task
 # note for why (superseded by test_qgate_fd_gradient.jl / obsolete bench POC).
-# test_lambda_p100.jl is WIRED as a #472 CHARACTERISATION: it asserts the
-# measured defect (mstep_Lambda descends the true marginal at p=100) so a
-# future repair trips it loudly and must revisit the fence.
+# test_lambda_p100.jl was WIRED as a #472 characterisation of a measured defect
+# (mstep_Lambda descends the true marginal at p=100) so that a future repair
+# would trip it loudly and have to revisit the fence. On 2026-09-02 it tripped:
+# the descent was the #577 sparsity-pattern artefact. The file now asserts the
+# repaired ASCENT and stays a tripwire in the other direction. #472 itself stays
+# OPEN — the synthetic pure-noise p=100 case still descends, unexplained.
 include("test_lambda_p100.jl")
 
 # Always-on R-parity HARNESS smoke test (machinery only, no R, no fixtures).
@@ -271,6 +278,11 @@ include("test_parity_harness.jl")
 include("test_parity_biv_q4_phylo_reml.jl")       # #445 Option A: #433/#434 same-target fixture
 include("test_parity_gaussian_phylo_mean.jl")     # #445 Option A: #437/#438 Route A fixture
 include("test_q4_reml_warm_restart.jl")           # #484: public drm() converges the q4 phylo REML cell
+include("test_reml_objective_at.jl")              # #575: objective-at-point diagnostic primitive
+include("test_bridge_objective_at.jl")             # #563: drm_bridge_objective_at (bridge-boundary reml_objective_at)
+include("test_575_exact_reml_gradient.jl")        # #575: exact REML gradient vs a tight central difference
+include("test_575_q4_optimum.jl")                 # #575: the q4 REML cold-start route reaches its own optimum
+include("test_reml_prior_precision_collapse.jl")  # #563: _reml_prior_precision collapsed into prior_precision after #577
 
 # Delta-method prediction standard errors (feat-predict-se).
 include("test_predict_se.jl")
@@ -444,3 +456,9 @@ include("test_joint_missing_finite_prediction.jl")
 include("test_joint_missing_bridge.jl")
 include("test_joint_missing_two_bridge.jl")
 include("test_joint_missing_finite_bridge.jl")
+
+# Issue #577: prior_precision dropped exact zeros, so at an exactly diagonal Lambda
+# the cross-axis entries of H_uu were structurally absent at non-leaf nodes and the
+# Takahashi selected inverse could not supply the logdet-H traces. Guards the root
+# fix (structurally full axis block) and the ML exact gradient it silently broke.
+include("test_577_ml_structural_zeros.jl")
