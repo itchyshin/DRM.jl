@@ -127,11 +127,15 @@ function gen_gauss_lss_sd_group(dir)
     G = 30; n_each = 20; n = G * n_each
     g = repeat(1:G, inner = n_each)
     x = randn(n); z = randn(n)
-    zg = randn(G)                                            # group-level covariate for sd(g)
+    zg = randn(G)                                            # GROUP-level covariate for sd(g) --
+                                                                # sd() predictors must be constant
+                                                                # within each level of the group
+                                                                # (drm() refuses otherwise); broadcast
+                                                                # to one column per observation below.
     sd_g = exp.(-0.4 .+ 0.4 .* zg)
     b = sd_g[g] .* randn(n)
     y = 0.4 .+ 0.6 .* x .+ b .+ exp.(-0.3 .+ 0.2 .* z) .* randn(n)
-    write_csv(joinpath(dir, "gauss_lss_sd_group.csv"), ["y", "x", "z", "g"], (y, x, z, g))
+    write_csv(joinpath(dir, "gauss_lss_sd_group.csv"), ["y", "x", "z", "zg", "g"], (y, x, z, zg[g], g))
 end
 
 function gen_gauss_lss_sd_phylo(dir)
@@ -142,11 +146,17 @@ function gen_gauss_lss_sd_phylo(dir)
     species = repeat(sp_names, inner = n_each)
     idx = indexin(species, sp_names)
     x = randn(n)
-    sd_phy = exp.(-0.4 .+ 0.35 .* randn(length(sp_names)))
+    xs = randn(length(sp_names))                             # SPECIES-level covariate for
+                                                                # sd(species, phylogenetic) -- sd()
+                                                                # predictors must be constant within
+                                                                # each species (drm() refuses `x`,
+                                                                # which varies within species, here).
+    sd_phy = exp.(-0.4 .+ 0.35 .* xs)
     u = cholesky(Symmetric(Sigma)).L * randn(length(sp_names))
     a = sd_phy .* u
     y = 1.2 .+ 0.5 .* x .+ a[idx] .+ exp.(-1.0 .- 0.2 .* x) .* randn(n)
-    write_csv(joinpath(dir, "gauss_lss_sd_phylo.csv"), ["y", "x", "species"], (y, x, species))
+    write_csv(joinpath(dir, "gauss_lss_sd_phylo.csv"), ["y", "x", "xs", "species"],
+              (y, x, xs[idx], species))
     write_newick(joinpath(dir, "gauss_lss_sd_phylo.nwk"), newick)
 end
 
@@ -232,11 +242,16 @@ function gen_large_sparse_lss(dir)
     species = repeat(sp_names, inner = n_each)
     idx = indexin(species, sp_names)
     x = randn(n)
-    sd_phy = exp.(-0.4 .+ 0.3 .* randn(length(sp_names)))
+    xs = randn(length(sp_names))                             # SPECIES-level covariate for
+                                                                # sd(species, phylogenetic), same
+                                                                # constant-within-group requirement
+                                                                # as gauss_lss_sd_phylo above.
+    sd_phy = exp.(-0.4 .+ 0.3 .* xs)
     u = cholesky(Symmetric(Sigma)).L * randn(length(sp_names))
     a = sd_phy .* u
     y = 1.0 .+ 0.4 .* x .+ a[idx] .+ exp.(-1.1 .- 0.15 .* x) .* randn(n)
-    write_csv(joinpath(dir, "large_sparse_lss_p2000.csv"), ["y", "x", "species"], (y, x, species))
+    write_csv(joinpath(dir, "large_sparse_lss_p2000.csv"), ["y", "x", "xs", "species"],
+              (y, x, xs[idx], species))
     write_newick(joinpath(dir, "large_sparse_lss_p2000.nwk"), newick)
 end
 

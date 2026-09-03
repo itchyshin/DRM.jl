@@ -58,8 +58,8 @@ function main()
     rmap = Dict(key(r) => r for r in rrows)
     all_keys = sort(collect(union(keys(jmap), keys(rmap))))
 
-    println("| workflow | leg | threads | R median (s) | Julia median (s) | ratio (R/Julia) | verdict |")
-    println("|---|---|---|---|---|---|---|")
+    println("| workflow | leg | threads | R calls | R median (s) | Julia calls | Julia median (s) | ratio (R/Julia) | verdict |")
+    println("|---|---|---|---|---|---|---|---|---|")
 
     workflow_leg_ratio = Dict{String,Vector{Tuple{String,Union{Float64,Nothing}}}}()
 
@@ -69,16 +69,18 @@ function main()
         rr = get(rmap, k, nothing)
         if jr === nothing || rr === nothing
             note = jr === nothing && rr === nothing ? "NEITHER ENGINE" :
-                   jr === nothing ? "JULIA MISSING" : "R MISSING (n/a or not run)"
-            println("| $wf | $leg | $thr | - | - | - | N/A ($note) |")
+                   jr === nothing ? "JULIA MISSING (n/a or not run)" : "R MISSING (n/a or not run)"
+            println("| $wf | $leg | $thr | - | - | - | - | - | N/A ($note) |")
             push!(get!(workflow_leg_ratio, wf, Tuple{String,Union{Float64,Nothing}}[]), (leg, nothing))
             continue
         end
         rmed = parse(Float64, rr["median_s"])
         jmed = parse(Float64, jr["median_s"])
+        rcalls = get(rr, "calls", "-")
+        jcalls = get(jr, "calls", "-")
         ratio = jmed > 0 ? rmed / jmed : Inf
         verdict = ratio > 1 ? "julia faster" : "R faster/tied"
-        println("| $wf | $leg | $thr | $(round(rmed, digits=4)) | $(round(jmed, digits=4)) | $(round(ratio, digits=2))x | $verdict |")
+        println("| $wf | $leg | $thr | $rcalls | $(round(rmed, digits=6)) | $jcalls | $(round(jmed, digits=6)) | $(round(ratio, digits=2))x | $verdict |")
         push!(get!(workflow_leg_ratio, wf, Tuple{String,Union{Float64,Nothing}}[]), (leg, ratio))
     end
 
