@@ -1,6 +1,17 @@
 using DRM, Test
 
 @testset "bridge exposes selected profile failure" begin
+    sdrows = [
+        (param=:resd_mu, coef="phylo", estimate=1.1, lower=0.6, upper=1.8),
+        (param=:resd_sigma, coef="phylo", estimate=0.9, lower=0.4, upper=1.5),
+    ]
+    @test DRM._bridge_parse_sd_parm("sd:mu") === :resd_mu
+    @test DRM._bridge_parse_sd_parm("sd:sigma") === :resd_sigma
+    @test DRM._bridge_parse_sd_parm("sd:resd") === :resd
+    @test DRM._bridge_parse_sd_parm("sd:resd_mu") === :resd_mu
+    @test DRM._bridge_parse_sd_parm("sd:resd_sigma") === :resd_sigma
+    @test DRM._bridge_pick_sd_row(sdrows, :resd_sigma).param === :resd_sigma
+    @test_throws ArgumentError DRM._bridge_parse_sd_parm("sd:rho")
     row = (param=:mu, coef="x", estimate=0.0, lower=-Inf, upper=1.0)
     good = (param=:mu, coef="y", lower_endpoint_failed=false, upper_endpoint_failed=false,
         lower_unbounded=false, upper_unbounded=false)
