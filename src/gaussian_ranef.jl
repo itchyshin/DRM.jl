@@ -12,6 +12,44 @@
 # barrier — not Inf — because LBFGS's HagerZhang line search asserts isfinite.
 const REML_NONPD_PENALTY = 1e8
 
+# A structured marker's (`phylo`/`relmat`/`animal`/`spatial`) random-effect
+# left-hand side must be the literal intercept `1` on every univariate route:
+# `_split_ranef` (below) — the shared RHS splitter for every univariate family
+# (Gaussian, Poisson, Gamma, Beta, BetaBinomial, Binomial, NegBinomial2, and
+# more) — used to keep only the grouping symbol `g` and silently discard
+# `lhs`, so e.g. `phylo(1 + x | g)` fit the exact same intercept-only model as
+# `phylo(1 | g)` with no error (silent data loss, #620). drmTMB fits a genuine
+# two-free-SD phylogenetic random INTERCEPT+SLOPE from `phylo(1 + x | g)` on
+# Gaussian; DRM.jl has no such route yet (nor an analogous one for relmat/
+# animal/spatial), so fail closed instead of silently dropping the slope.
+_structured_re_lhs_text(lhs) = if lhs isa ConstantTerm
+        string(lhs.n)
+    elseif lhs isa Term
+        string(lhs.sym)
+    elseif lhs isa FunctionTerm && lhs.f === (+)
+        join((a isa ConstantTerm ? string(a.n) : string(a.sym) for a in lhs.args), " + ")
+    else
+        string(lhs)
+    end
+
+function _check_phylo_re_lhs(lhs, grp::Symbol)
+    (lhs isa ConstantTerm && lhs.n == 1) && return nothing
+    lhs_text = _structured_re_lhs_text(lhs)
+    throw(ArgumentError("drm: `phylo($lhs_text | $grp)` is not implemented on the " *
+        "univariate routes — only `phylo(1 | $grp)` (intercept) is; drmTMB fits a " *
+        "two-SD phylogenetic random slope on Gaussian only, tracked as a follow-up"))
+end
+
+# relmat/animal/spatial share the identical parser gap but, unlike phylo, have
+# no verified drmTMB two-SD slope route to name as a follow-up — say only that
+# the construct is unimplemented (#620).
+function _check_structured_re_lhs(kind::Symbol, lhs, grp::Symbol)
+    (lhs isa ConstantTerm && lhs.n == 1) && return nothing
+    lhs_text = _structured_re_lhs_text(lhs)
+    throw(ArgumentError("drm: `$kind($lhs_text | $grp)` is not implemented on the " *
+        "univariate routes; only the intercept form is"))
+end
+
 # Split a μ right-hand side into its fixed part and any `(lhs | g)` terms.
 # `structured` is the FIRST structured marker (relmat/animal/phylo/spatial) for
 # backward compatibility; use `_collect_structured` to retrieve the full list
@@ -28,12 +66,16 @@ function _split_ranef(rhs)
         elseif t isa FunctionTerm && t.f === meta_V
             metav = t.args[1].sym
         elseif t isa FunctionTerm && t.f === relmat
+            _check_structured_re_lhs(:relmat, t.args[1].args[1], t.args[1].args[2].sym)
             structured === nothing && (structured = (:relmat, t.args[1].args[2].sym))   # inner (1 | grp)
         elseif t isa FunctionTerm && t.f === animal
+            _check_structured_re_lhs(:animal, t.args[1].args[1], t.args[1].args[2].sym)
             structured === nothing && (structured = (:animal, t.args[1].args[2].sym))
         elseif t isa FunctionTerm && t.f === phylo
+            _check_phylo_re_lhs(t.args[1].args[1], t.args[1].args[2].sym)
             structured === nothing && (structured = (:phylo, t.args[1].args[2].sym))
         elseif t isa FunctionTerm && t.f === spatial
+            _check_structured_re_lhs(:spatial, t.args[1].args[1], t.args[1].args[2].sym)
             structured === nothing && (structured = (:spatial, t.args[1].args[2].sym))
         else
             push!(fixed, t)
