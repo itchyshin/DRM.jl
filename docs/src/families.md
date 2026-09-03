@@ -118,6 +118,13 @@ fittw = drm(bf(@formula(y ~ x), @formula(sigma ~ 1), @formula(nu ~ 1)), Tweedie(
 (zeros = count(==(0.0), ytw), power = 1 + 1 / (1 + exp(-coef(fittw, :nu)[1])))   # power ≈ 1.5
 ```
 
+An ordinary `(1 | g)` random intercept, and an independent `(0 + x | g)`
+random slope, on `mu` are both supported (32-node Gauss–Hermite marginal,
+matching drmTMB's `tweedie() mu ~ x + (1 | g)` / `(0 + x | g)`); the group
+SD is `exp(coef(fit, :resd)[1])` either way. The CORRELATED random slope
+`(1 + x | g)`, random effects on `sigma`/`nu`, and structured (phylo/relmat)
+markers on `mu` remain unimplemented (drmTMB rejects the same forms).
+
 ## Counts
 
 ### Poisson — `Poisson()`
