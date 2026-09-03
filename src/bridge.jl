@@ -1409,6 +1409,15 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
         "df" => dof(fit),
         "nobs" => nobs(fit),
         "converged" => is_converged(fit),
+        # estim_method / ml_loglik / infocrit_basis are unconditional (#624): every
+        # DrmFit carries `estim_method` and an always-set `ml_loglik` (the plain ML
+        # log-likelihood, equal to `loglik` for an ML fit). Before this, an R caller
+        # reading `fit$bridge$loglik`/`$aic`/`$bic` off a `method = "REML"` bridge
+        # fit had no signal that these were REML-restricted values — only a
+        # Julia-side `@warn` that never crosses the boundary.
+        "estim_method" => String(fit.estim_method),
+        "ml_loglik" => fit.ml_loglik,
+        "infocrit_basis" => fit.estim_method === :REML ? "reml" : "ml",
         # Optimiser iterations actually taken. -1 means the fitter does not record
         # it yet, which the R side must read as "unknown" -- NOT as zero. Before
         # 2026-08-24 this key did not exist at all, so `fit$bridge$iterations` was
@@ -1421,6 +1430,19 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
         "corpairs" => _bridge_plain(corpairs(fit)),
         "dpars" => _bridge_dpars(fit),
     )
+    # `reml_loglik` is omitted rather than reported as NaN for an ML fit (matches
+    # `trials`/`meta`/`q4_point_export` below: absent, not a sentinel, when the
+    # fit genuinely does not carry it). When it IS present, also echo the same
+    # AIC/BIC cross-mean-structure caveat `_reml_infocrit_warn` already prints to
+    # the Julia log — as `"warnings"`, since that log line never reaches R (#624).
+    if fit.estim_method === :REML
+        isnan(fit.reml_loglik) ||
+            (out["reml_loglik"] = fit.reml_loglik)
+        out["warnings"] = String[
+            _reml_infocrit_warning_text("aic"),
+            _reml_infocrit_warning_text("bic"),
+        ]
+    end
     if labels !== nothing || coef_labels !== nothing
         # `coef_names`/`vcov_names` are the public R spelling.  Retain the exact
         # Julia coordinate names and a bijection for the bridge inference route;

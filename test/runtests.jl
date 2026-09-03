@@ -295,6 +295,7 @@ include("test_575_q4_optimum.jl")                 # #575: the q4 REML cold-start
 include("test_reml_q4_missing_response.jl")       # #578: _reml_border_blocks mask consistency, missing responses
 include("test_q4_reml_vcov.jl")                   # #563 S11: pin q4 REML vcov() native/bridge behaviour
 include("test_reml_prior_precision_collapse.jl")  # #563: _reml_prior_precision collapsed into prior_precision after #577
+include("test_reml_surface_contract.jl")          # #624: bridge estim_method/loglik honesty + refusal message surface
 
 # Delta-method prediction standard errors (feat-predict-se).
 include("test_predict_se.jl")
