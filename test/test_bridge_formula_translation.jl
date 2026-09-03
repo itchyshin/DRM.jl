@@ -47,6 +47,15 @@ using Test
         @test fitok("y ~ x1 + phylo(1 | species); sigma ~ phylo(1 | species)")
     end
 
+    @testset "univariate phylo random slope rejected across the bridge too" begin
+        # Silent-data-loss fix: a `phylo(<not 1> | group)` marker translated
+        # from an R formula string must hit the same univariate-route refusal
+        # as the native Julia path, not silently fit the intercept-only model.
+        rejects("y ~ x1 + phylo(1 + x1 | species); sigma ~ 1")
+        rejects("y ~ x1 + phylo(0 + x1 | species); sigma ~ 1")
+        rejects("y ~ x1; sigma ~ phylo(1 + x1 | species)")
+    end
+
     @testset "R `:` interaction + phylo no longer crashes" begin
         # The exact shape of Ayumi's MethodError |(::Int64, ::String).
         @test fitok("y ~ x1 + x2 + x1:x2 + phylo(1 | species); sigma ~ 1")
