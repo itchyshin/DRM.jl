@@ -1,6 +1,41 @@
 using DRM
 using Test, LinearAlgebra, SparseArrays, Random
 
+# --- Deterministic Julia-suite sharding (DRM_TEST_SHARD="k/N") -------------
+# Splits the TOP-LEVEL sharded include calls below across N shards by file
+# position: shard k (1-based) gets file i when (i - 1) % N == k - 1. Unset or
+# empty means "run everything", so a local `julia test/runtests.jl` is
+# unchanged. Helpers live in shard_util.jl and are exercised standalone in
+# test_shard_selection.jl, which proves the N shards partition the file list
+# exactly -- disjoint AND complete, so sharding cannot silently drop a file.
+#
+# Deliberately NOT sharded: the four includes nested inside conditionals (the
+# JET gate, which has an else-branch, and the three parity suites behind
+# DRM_PARITY_TESTS). Those are guarded by their own conditions; putting a shard
+# test in front of a conditional would change what the guard means, and the
+# parity suites are off by default in CI anyway.
+include("shard_util.jl")
+
+_shard_spec = get(ENV, "DRM_TEST_SHARD", "")
+_SHARD = isempty(_shard_spec) ? nothing : _parse_shard_spec(_shard_spec)
+
+_shard_pos = Ref(0)
+function _shard_include(path::AbstractString)
+    _shard_pos[] += 1
+    if _SHARD === nothing || (_shard_pos[] - 1) % _SHARD[2] == _SHARD[1] - 1
+        include(path)
+    end
+end
+
+# Count only the TOP-LEVEL call sites, not this line's own literal.
+_n_test_files = count("\n_shard_include(\"", read(@__FILE__, String))
+_n_selected = _SHARD === nothing ? _n_test_files :
+    length(_shard_indices(_n_test_files, _SHARD[1], _SHARD[2]))
+println(_SHARD === nothing ?
+    "DRM tests: all $_n_test_files files (unsharded)" :
+    "DRM tests: shard $(_SHARD[1])/$(_SHARD[2]) - $_n_selected of $_n_test_files files")
+
+
 @testset "DRM.jl — engine loads + phylo foundation" begin
     @testset "public API present" begin
         for f in (:fit_q4_sparse_tmb, :marginal_and_exact_grad, :make_problem,
@@ -29,145 +64,146 @@ end
 # Julia General-registry hygiene (Aqua.jl): deps_compat, stale deps, exports,
 # project-extras, unbound args, piracy. Runs early so packaging regressions
 # surface before the numerical suite.
-include("test_aqua.jl")
+_shard_include("test_shard_selection.jl")
+_shard_include("test_aqua.jl")
 
 # Gaussian location–scale front end (drm/bf public API).
-include("test_gaussian_core.jl")
+_shard_include("test_gaussian_core.jl")
 # REML estimation (opt-in, fixed-effect Gaussian location–scale) + the
 # model-selection guard for the classic REML trap (issue #11). Placed early so it
 # runs near the core Gaussian tests.
-include("test_reml.jl")
-include("test_reml_ordinary_ranef.jl")  # #445 Option A: #439/#440 Gaussian mean (1 | g) REML
-include("test_niterations.jl")  # #466: fit.niterations wired into every iterative family fitter
-include("test_bf_grammar.jl")
-include("test_gaussian_bivariate.jl")
-include("test_bivariate_lognormal.jl")
-include("test_bivariate_student.jl")
-include("test_associate_pairs.jl")
-include("test_gaussian_bivariate_phylo.jl")
-include("test_gaussian_bivariate_q4_structured.jl")
-include("test_missing_response_bivariate.jl")   # #19: per-cell missing on the bivariate q=4 phylo engine
-include("test_missing_response.jl")
-include("test_missing_response_nongaussian.jl")
-include("test_lowbatch_j7.jl")                  # #322–#326 low-severity twin-review fixes
-include("test_sigma_phylo_missing_guard.jl")
-include("test_coevo_accessors.jl")
+_shard_include("test_reml.jl")
+_shard_include("test_reml_ordinary_ranef.jl")  # #445 Option A: #439/#440 Gaussian mean (1 | g) REML
+_shard_include("test_niterations.jl")  # #466: fit.niterations wired into every iterative family fitter
+_shard_include("test_bf_grammar.jl")
+_shard_include("test_gaussian_bivariate.jl")
+_shard_include("test_bivariate_lognormal.jl")
+_shard_include("test_bivariate_student.jl")
+_shard_include("test_associate_pairs.jl")
+_shard_include("test_gaussian_bivariate_phylo.jl")
+_shard_include("test_gaussian_bivariate_q4_structured.jl")
+_shard_include("test_missing_response_bivariate.jl")   # #19: per-cell missing on the bivariate q=4 phylo engine
+_shard_include("test_missing_response.jl")
+_shard_include("test_missing_response_nongaussian.jl")
+_shard_include("test_lowbatch_j7.jl")                  # #322–#326 low-severity twin-review fixes
+_shard_include("test_sigma_phylo_missing_guard.jl")
+_shard_include("test_coevo_accessors.jl")
 # General-q coevolution block (#188): the among-trait covariance Λ generalised
 # from the q=4 PLSM to q=6/q=8 on the same sparse kron(Q_tree, Λ⁻¹) precision.
-include("test_coevo_q6.jl")
-include("test_corpairs.jl")
-include("test_gaussian_ranef.jl")
-include("test_lss_group.jl")   # #544 location-scale-scale sd(g) ~ x
-include("test_lss_phylo.jl")   # #545 sd_phylo + #548 cancellation regression
-include("test_lss_tip_identity.jl") # Named tree-tip mapping under shuffled rows
-include("test_lss_bootstrap_contract.jl") # Marginal components, masks and REML refits
-include("test_bootstrap_thread_flags.jl") # Independent storage for parallel status flags
-include("test_lss_sparse.jl")  # #551 O(p) sparse exact marginal LSS engine
-include("test_lss_sparse_multi.jl")  # #563 S7b.1 sparse multi-component block assembly + objective
-include("test_lss_sparse_multi_gradient.jl")  # #563 S7b.2/S7b.2b sparse multi-component exact gradient
-include("test_lss_sparse_multi_reml.jl")  # #563 S7b.3 sparse multi-component REML correction + gradient
-include("test_lss_sparse_multi_public.jl")  # #563 S7b.4 public drm() route wiring (D-206 router)
-include("test_sparse_precision_storage.jl")  # S5a (#563): no dense copy of the augmented tree precision
-include("test_lsss_multi.jl")  # #555 multi-component sd() (lsss)
-include("test_lss_reml.jl")    # #558 location-scale-scale REML
-include("test_lss_missing_response.jl") # #559 location-scale-scale missing responses
-include("test_inference.jl")
-include("test_inference_blas_pinning.jl") # Nested and overlapping global-BLAS restoration
-include("test_profile_ci.jl")
-include("test_profile_nuisance_status.jl")
-include("test_profile_acceptance_oracles.jl")
-include("test_bridge_profile_status.jl")
-include("test_check_drm.jl")
-include("test_bias_correct.jl")
-include("test_visualization.jl")
-include("test_makie_ext_stub.jl")   # #336: DRMMakieExt method-less stub (Makie OUT of CI)
-include("test_postfit.jl")
-include("test_meta.jl")
-include("test_simulate.jl")
-include("test_simulate_scale_conventions.jl") # NB2 size, Gamma slot conventions, owned auxiliary draws
-include("test_locscale_bootstrap_simulator.jl") # coupled marginal draws, precision and family contracts
-include("test_locscale_bootstrap_refit.jl") # same-seed public Gamma refits, serial/threaded
-include("test_gaussian_structured.jl")
-include("test_gaussian_phylo_mean_missing_response.jl")  # #482: species-subset (drop) + include refusal
+_shard_include("test_coevo_q6.jl")
+_shard_include("test_corpairs.jl")
+_shard_include("test_gaussian_ranef.jl")
+_shard_include("test_lss_group.jl")   # #544 location-scale-scale sd(g) ~ x
+_shard_include("test_lss_phylo.jl")   # #545 sd_phylo + #548 cancellation regression
+_shard_include("test_lss_tip_identity.jl") # Named tree-tip mapping under shuffled rows
+_shard_include("test_lss_bootstrap_contract.jl") # Marginal components, masks and REML refits
+_shard_include("test_bootstrap_thread_flags.jl") # Independent storage for parallel status flags
+_shard_include("test_lss_sparse.jl")  # #551 O(p) sparse exact marginal LSS engine
+_shard_include("test_lss_sparse_multi.jl")  # #563 S7b.1 sparse multi-component block assembly + objective
+_shard_include("test_lss_sparse_multi_gradient.jl")  # #563 S7b.2/S7b.2b sparse multi-component exact gradient
+_shard_include("test_lss_sparse_multi_reml.jl")  # #563 S7b.3 sparse multi-component REML correction + gradient
+_shard_include("test_lss_sparse_multi_public.jl")  # #563 S7b.4 public drm() route wiring (D-206 router)
+_shard_include("test_sparse_precision_storage.jl")  # S5a (#563): no dense copy of the augmented tree precision
+_shard_include("test_lsss_multi.jl")  # #555 multi-component sd() (lsss)
+_shard_include("test_lss_reml.jl")    # #558 location-scale-scale REML
+_shard_include("test_lss_missing_response.jl") # #559 location-scale-scale missing responses
+_shard_include("test_inference.jl")
+_shard_include("test_inference_blas_pinning.jl") # Nested and overlapping global-BLAS restoration
+_shard_include("test_profile_ci.jl")
+_shard_include("test_profile_nuisance_status.jl")
+_shard_include("test_profile_acceptance_oracles.jl")
+_shard_include("test_bridge_profile_status.jl")
+_shard_include("test_check_drm.jl")
+_shard_include("test_bias_correct.jl")
+_shard_include("test_visualization.jl")
+_shard_include("test_makie_ext_stub.jl")   # #336: DRMMakieExt method-less stub (Makie OUT of CI)
+_shard_include("test_postfit.jl")
+_shard_include("test_meta.jl")
+_shard_include("test_simulate.jl")
+_shard_include("test_simulate_scale_conventions.jl") # NB2 size, Gamma slot conventions, owned auxiliary draws
+_shard_include("test_locscale_bootstrap_simulator.jl") # coupled marginal draws, precision and family contracts
+_shard_include("test_locscale_bootstrap_refit.jl") # same-seed public Gamma refits, serial/threaded
+_shard_include("test_gaussian_structured.jl")
+_shard_include("test_gaussian_phylo_mean_missing_response.jl")  # #482: species-subset (drop) + include refusal
 # Silent-data-loss fix: `phylo(<not 1> | group)` refused on univariate routes
 # instead of silently fitting the intercept-only model.
-include("test_phylo_slope_refusal.jl")
-include("test_phylo_interaction.jl")
-include("test_two_structured_gaussian.jl")
-include("test_two_structured_gaussian_sparse.jl")
-include("test_heritability.jl")
-include("test_conjugate_em.jl")
-include("test_location_only_reml_mme.jl")
-include("test_bootstrap.jl")
-include("test_bootstrap_marginal.jl")   # #459: bootstrap must redraw random effects
-include("test_gaussian_spatial.jl")
-include("test_predict.jl")
-include("test_predict_response.jl")
-include("test_ranef.jl")
-include("test_correlated_re.jl")
-include("test_multi_re.jl")
-include("test_sigma_re.jl")
-include("test_sigma.jl")
-include("test_student.jl")
-include("test_skewnormal.jl")
-include("test_poisson.jl")
-include("test_nbinom2.jl")
-include("test_nb2_dispersion_seed.jl")
-include("test_beta.jl")
-include("test_gamma.jl")
+_shard_include("test_phylo_slope_refusal.jl")
+_shard_include("test_phylo_interaction.jl")
+_shard_include("test_two_structured_gaussian.jl")
+_shard_include("test_two_structured_gaussian_sparse.jl")
+_shard_include("test_heritability.jl")
+_shard_include("test_conjugate_em.jl")
+_shard_include("test_location_only_reml_mme.jl")
+_shard_include("test_bootstrap.jl")
+_shard_include("test_bootstrap_marginal.jl")   # #459: bootstrap must redraw random effects
+_shard_include("test_gaussian_spatial.jl")
+_shard_include("test_predict.jl")
+_shard_include("test_predict_response.jl")
+_shard_include("test_ranef.jl")
+_shard_include("test_correlated_re.jl")
+_shard_include("test_multi_re.jl")
+_shard_include("test_sigma_re.jl")
+_shard_include("test_sigma.jl")
+_shard_include("test_student.jl")
+_shard_include("test_skewnormal.jl")
+_shard_include("test_poisson.jl")
+_shard_include("test_nbinom2.jl")
+_shard_include("test_nb2_dispersion_seed.jl")
+_shard_include("test_beta.jl")
+_shard_include("test_gamma.jl")
 # eta-clamp twin parity (#324): the NB2/Gamma/Beta density guards now use the
 # ported soft-clamp (identity in the band, smooth beyond) so DRM.jl agrees with
 # drmTMB instead of hard-clamping the mean/scale predictors.
-include("test_eta_clamp_parity.jl")
-include("test_zi.jl")
-include("test_lognormal.jl")
-include("test_hurdle.jl")
-include("test_truncated_nb.jl")
-include("test_betabinomial.jl")
-include("test_zeroonebeta.jl")
-include("test_tweedie.jl")
-include("test_tweedie_ranef.jl")
-include("test_cumulative.jl")
-include("test_cumlogit_ranef.jl")
-include("test_poisson_re.jl")
-include("test_poisson_slope_re.jl")
-include("test_poisson_crossed_laplace.jl")
-include("test_poisson_phylo_laplace.jl")
-include("test_relmat_counts.jl")
-include("test_relmat_counts_nb2.jl")
-include("test_relmat_counts_beta.jl")
-include("test_spatial_coord_poisson.jl")
-include("test_nb2_phylo_laplace.jl")
-include("test_gamma_beta_phylo_laplace.jl")
-include("test_binomial_phylo_laplace.jl")
-include("test_betabinomial_phylo_laplace.jl")
-include("test_crossed_laplace_generic.jl")
-include("test_betabinomial_crossed_laplace.jl")
-include("test_crossed_selected_inverse.jl")
-include("test_locscale_kernels.jl")
-include("test_locscale_inner.jl")
-include("test_locscale_inner_status.jl")
-include("test_locscale_marginal.jl")
-include("test_locscale_fit.jl")
-include("test_locscale_grad.jl")
-include("test_locscale_precision_derivatives.jl")
-include("test_locscale_compensated_gradient.jl")
-include("test_locscale_whitened.jl")
-include("test_locscale_infer.jl")
-include("test_locscale_profile.jl")
-include("test_locscale_profile_status.jl")
-include("test_locscale_profile_threads.jl") # Finite canonical intervals and owned coefficient jobs
+_shard_include("test_eta_clamp_parity.jl")
+_shard_include("test_zi.jl")
+_shard_include("test_lognormal.jl")
+_shard_include("test_hurdle.jl")
+_shard_include("test_truncated_nb.jl")
+_shard_include("test_betabinomial.jl")
+_shard_include("test_zeroonebeta.jl")
+_shard_include("test_tweedie.jl")
+_shard_include("test_tweedie_ranef.jl")
+_shard_include("test_cumulative.jl")
+_shard_include("test_cumlogit_ranef.jl")
+_shard_include("test_poisson_re.jl")
+_shard_include("test_poisson_slope_re.jl")
+_shard_include("test_poisson_crossed_laplace.jl")
+_shard_include("test_poisson_phylo_laplace.jl")
+_shard_include("test_relmat_counts.jl")
+_shard_include("test_relmat_counts_nb2.jl")
+_shard_include("test_relmat_counts_beta.jl")
+_shard_include("test_spatial_coord_poisson.jl")
+_shard_include("test_nb2_phylo_laplace.jl")
+_shard_include("test_gamma_beta_phylo_laplace.jl")
+_shard_include("test_binomial_phylo_laplace.jl")
+_shard_include("test_betabinomial_phylo_laplace.jl")
+_shard_include("test_crossed_laplace_generic.jl")
+_shard_include("test_betabinomial_crossed_laplace.jl")
+_shard_include("test_crossed_selected_inverse.jl")
+_shard_include("test_locscale_kernels.jl")
+_shard_include("test_locscale_inner.jl")
+_shard_include("test_locscale_inner_status.jl")
+_shard_include("test_locscale_marginal.jl")
+_shard_include("test_locscale_fit.jl")
+_shard_include("test_locscale_grad.jl")
+_shard_include("test_locscale_precision_derivatives.jl")
+_shard_include("test_locscale_compensated_gradient.jl")
+_shard_include("test_locscale_whitened.jl")
+_shard_include("test_locscale_infer.jl")
+_shard_include("test_locscale_profile.jl")
+_shard_include("test_locscale_profile_status.jl")
+_shard_include("test_locscale_profile_threads.jl") # Finite canonical intervals and owned coefficient jobs
 # Optimizer / mode-accuracy robustness for the module-wired locscale + sparse-aug
 # paths: NaN (not zero) outer gradient on inner-mode failure (#314), tightened
 # fast E-step acceptance gate (#317), and Zη/Zψ threading through the profiler
 # (#325.4).
-include("test_optimizer_robustness.jl")
-include("test_locscale_gamma_e2e.jl")
-include("test_locscale_phylo_e2e.jl")
-include("test_locscale_frontend.jl")
+_shard_include("test_optimizer_robustness.jl")
+_shard_include("test_locscale_gamma_e2e.jl")
+_shard_include("test_locscale_phylo_e2e.jl")
+_shard_include("test_locscale_frontend.jl")
 # cluster ① (correlated/independent slopes rerouted onto the q2 locscale core) +
 # the structured-slope locscale path.
-include("test_locscale_structured.jl")
+_shard_include("test_locscale_structured.jl")
 # NOTE (cluster-① follow-up): test_corr_locscale_equiv.jl (Laplace≈GHQ cross-engine
 # check) is deferred from this σ-phylo landing. For Poisson (1+x|g) the two engines
 # AGREE in loglik to 0.02% (Laplace −4651.4 vs GHQ −4652.4) but the fixed-effect
@@ -178,79 +214,79 @@ include("test_locscale_structured.jl")
 # include("test_corr_locscale_equiv.jl")
 # cluster ② standalone non-Gaussian σ-axis RE (sigma ~ 1 + (1|g)) via
 # _fit_sigma_axis_re — guards the inner grad! keyword contract + Gamma recovery.
-include("test_sigma_axis_re.jl")
+_shard_include("test_sigma_axis_re.jl")
 # Non-constant dispersion (sigma ~ x) SIMULTANEOUSLY with a random effect for
 # non-Gaussian families (#164): recovery of the dispersion slope + σ-axis RE
 # covariance via the location–scale engine, an FD-vs-exact gradient gate, and a
 # guard pinning the still-open mean-RE-only Laplace sub-case.
-include("test_nonconst_sigma_re.jl")
-include("test_nbinom2_slope_re.jl")
-include("test_beta_slope_re.jl")
-include("test_gamma_slope_re.jl")
-include("test_nbinom2_re.jl")
-include("test_beta_re.jl")
-include("test_gamma_re.jl")
-include("test_student_re.jl")
-include("test_student_slope_re.jl")
-include("test_lognormal_re.jl")
-include("test_lognormal_slope_re.jl")
-include("test_lognormal_structured_mean.jl")
-include("test_betabinomial_re.jl")
-include("test_betabinomial_slope_re.jl")
-include("test_binomial.jl")
-include("test_binomial_re.jl")
-include("test_summary.jl")
-include("test_bootstrap_nongaussian.jl")
-include("test_bootstrap_nongaussian_structured.jl")   # #479: K/A/tree threaded through refit
-include("test_bootstrap_formula_structured.jl")   # #480: same fix on the formula-based surface
-include("test_aic_bic.jl")
-include("test_vcov_guard.jl")
-include("test_variational.jl")
-include("test_va_poisson_elbo.jl")
-include("test_va_frontend_poisson.jl")
-include("test_va_frontend_families.jl")
-include("test_variational_binomial.jl")
-include("test_variational_nb2.jl")
-include("test_variational_gamma.jl")
-include("test_aghq_1d.jl")                  # #448: 1-D Liu–Pierce AGHQ (lever 2)
+_shard_include("test_nonconst_sigma_re.jl")
+_shard_include("test_nbinom2_slope_re.jl")
+_shard_include("test_beta_slope_re.jl")
+_shard_include("test_gamma_slope_re.jl")
+_shard_include("test_nbinom2_re.jl")
+_shard_include("test_beta_re.jl")
+_shard_include("test_gamma_re.jl")
+_shard_include("test_student_re.jl")
+_shard_include("test_student_slope_re.jl")
+_shard_include("test_lognormal_re.jl")
+_shard_include("test_lognormal_slope_re.jl")
+_shard_include("test_lognormal_structured_mean.jl")
+_shard_include("test_betabinomial_re.jl")
+_shard_include("test_betabinomial_slope_re.jl")
+_shard_include("test_binomial.jl")
+_shard_include("test_binomial_re.jl")
+_shard_include("test_summary.jl")
+_shard_include("test_bootstrap_nongaussian.jl")
+_shard_include("test_bootstrap_nongaussian_structured.jl")   # #479: K/A/tree threaded through refit
+_shard_include("test_bootstrap_formula_structured.jl")   # #480: same fix on the formula-based surface
+_shard_include("test_aic_bic.jl")
+_shard_include("test_vcov_guard.jl")
+_shard_include("test_variational.jl")
+_shard_include("test_va_poisson_elbo.jl")
+_shard_include("test_va_frontend_poisson.jl")
+_shard_include("test_va_frontend_families.jl")
+_shard_include("test_variational_binomial.jl")
+_shard_include("test_variational_nb2.jl")
+_shard_include("test_variational_gamma.jl")
+_shard_include("test_aghq_1d.jl")                  # #448: 1-D Liu–Pierce AGHQ (lever 2)
 # Numerical-stability guards from the twin code-review pass (#303/#308/#311/#312/
 # #319/#321/#324.6/#324.7): SD-collapse, coincident coords, VA inner damping,
 # scale-aware FD Hessian, and PD-prior Cholesky barriers.
-include("test_numerical_guards.jl")
-include("test_family_accessor.jl")
-include("test_parity_accessors.jl")
-include("test_coverage_accessors.jl")  # anchors fixef + engine joint_nll/joint_grad/build_Huu/unpack_theta
-include("test_rho12_accessor.jl")
-include("test_summary_method.jl")
-include("test_predict_parameters.jl")
-include("test_prediction_grid.jl")
-include("test_bridge.jl")
-include("test_bridge_bootstrap_tree.jl") # same-tree non-Gaussian fixed-effect bootstrap
-include("test_bootstrap_provider_forwarding.jl") # K/A/tree/coords survive bootstrap refits
-include("test_bridge_profile_target.jl")
-include("test_bridge_q2_direct_export.jl")
-include("test_bridge_q4_direct_export.jl")
+_shard_include("test_numerical_guards.jl")
+_shard_include("test_family_accessor.jl")
+_shard_include("test_parity_accessors.jl")
+_shard_include("test_coverage_accessors.jl")  # anchors fixef + engine joint_nll/joint_grad/build_Huu/unpack_theta
+_shard_include("test_rho12_accessor.jl")
+_shard_include("test_summary_method.jl")
+_shard_include("test_predict_parameters.jl")
+_shard_include("test_prediction_grid.jl")
+_shard_include("test_bridge.jl")
+_shard_include("test_bridge_bootstrap_tree.jl") # same-tree non-Gaussian fixed-effect bootstrap
+_shard_include("test_bootstrap_provider_forwarding.jl") # K/A/tree/coords survive bootstrap refits
+_shard_include("test_bridge_profile_target.jl")
+_shard_include("test_bridge_q2_direct_export.jl")
+_shard_include("test_bridge_q4_direct_export.jl")
 # Missing-data handling (#49): documents that raw missing/NaN responses ERROR
 # (no silent garbage), and anchors the listwise-deletion preprocessing path
 # (drm_listwise) + MAR recovery. FIML / imputation remain follow-up (#49).
-include("test_missing_listwise.jl")
+_shard_include("test_missing_listwise.jl")
 
 # Deepened coverage of genuinely-untested exported engine entry points
 # (fit_q4_sparse_tmb end-to-end; marginal_nll / marginal_and_exact_grad return
 # contract + cross-consistency) and the bivariate bf() meta_V/relmat/animal
 # constructor guard rails.
-include("test_coverage_engine.jl")
-include("test_q4_objective_diagnostic.jl")
-include("test_bridge_formula_translation.jl")
-include("test_bridge_materialization_collision.jl")
-include("test_bridge_formula_labels.jl")
-include("test_bridge_base_r_names.jl")  # #563/#467: the ten design-258 constructs render base-R names
-include("test_bridge_coef_labels_echo.jl")  # #563: options["coef_labels"] echo (design 258 §7.1-7.3)
-include("test_bridge_lss_labels.jl")
-include("test_bridge_lss_routes.jl")  # #563 S6: bridge-vs-direct parity across every LSS route
+_shard_include("test_coverage_engine.jl")
+_shard_include("test_q4_objective_diagnostic.jl")
+_shard_include("test_bridge_formula_translation.jl")
+_shard_include("test_bridge_materialization_collision.jl")
+_shard_include("test_bridge_formula_labels.jl")
+_shard_include("test_bridge_base_r_names.jl")  # #563/#467: the ten design-258 constructs render base-R names
+_shard_include("test_bridge_coef_labels_echo.jl")  # #563: options["coef_labels"] echo (design 258 §7.1-7.3)
+_shard_include("test_bridge_lss_labels.jl")
+_shard_include("test_bridge_lss_routes.jl")  # #563 S6: bridge-vs-direct parity across every LSS route
 # Bridge inference for the bivariate q4 σ-phylo fit: among-axis SD CIs via bootstrap
 # (multi-row payload) + the profile→bootstrap redirect (Ayumi #2 uncertainty-via-R).
-include("test_bridge_bivariate_inference.jl")
+_shard_include("test_bridge_bivariate_inference.jl")
 
 # Poc-migrated foundation checks (#465): the poc's script-style includes and
 # hardcoded paths were fixed to run in-suite. `test_step1_sparse` cross-checks
@@ -259,15 +295,15 @@ include("test_bridge_bivariate_inference.jl")
 # oracle); `test_lambda_direction` checks the sparse-EM Λ M-step direction
 # ascends the true marginal (mstep_Lambda/fit_em_aug back the sparse_em_fit.jl
 # demos, off the public `drm()` path, and had no other coverage).
-include("test_step1_sparse.jl")
-include("test_sparse_aug.jl")
-include("test_lambda_direction.jl")
+_shard_include("test_step1_sparse.jl")
+_shard_include("test_sparse_aug.jl")
+_shard_include("test_lambda_direction.jl")
 
 # Julia-side standing gate for the phylo_count_large_p capability row: the row's
 # own boundary named the absence of one as its limitation (the harness was R-side
 # only). Needs no R and no fixtures. Also round-trips re_sd across tree heights,
 # which is the raw-vs-normalised covariance trap.
-include("test_phylo_count_largep_gate.jl")
+_shard_include("test_phylo_count_largep_gate.jl")
 
 # NOTE (HANDOVER step, #465 remainder): test_analytic_grad.jl and
 # test_q4_laplace.jl were investigated and NOT wired — see the #465 after-task
@@ -278,35 +314,35 @@ include("test_phylo_count_largep_gate.jl")
 # the descent was the #577 sparsity-pattern artefact. The file now asserts the
 # repaired ASCENT and stays a tripwire in the other direction. #472 itself stays
 # OPEN — the synthetic pure-noise p=100 case still descends, unexplained.
-include("test_lambda_p100.jl")
+_shard_include("test_lambda_p100.jl")
 
 # Always-on R-parity HARNESS smoke test (machinery only, no R, no fixtures).
 # Placed at the END to avoid colliding with other in-flight branches' includes.
 # API freeze gate, v0.7 line (Wave A, D-181): total classification of every export.
-include("test_api_stability.jl")
-include("test_parity_harness.jl")
-include("test_parity_biv_q4_phylo_reml.jl")       # #445 Option A: #433/#434 same-target fixture
-include("test_parity_gaussian_phylo_mean.jl")     # #445 Option A: #437/#438 Route A fixture
-include("test_q4_reml_warm_restart.jl")           # #484: public drm() converges the q4 phylo REML cell
-include("test_reml_objective_at.jl")              # #575: objective-at-point diagnostic primitive
-include("test_bridge_objective_at.jl")             # #563: drm_bridge_objective_at (bridge-boundary reml_objective_at)
-include("test_575_exact_reml_gradient.jl")        # #575: exact REML gradient vs a tight central difference
-include("test_575_q4_optimum.jl")                 # #575: the q4 REML cold-start route reaches its own optimum
-include("test_reml_q4_missing_response.jl")       # #578: _reml_border_blocks mask consistency, missing responses
-include("test_q4_reml_vcov.jl")                   # #563 S11: pin q4 REML vcov() native/bridge behaviour
-include("test_reml_prior_precision_collapse.jl")  # #563: _reml_prior_precision collapsed into prior_precision after #577
+_shard_include("test_api_stability.jl")
+_shard_include("test_parity_harness.jl")
+_shard_include("test_parity_biv_q4_phylo_reml.jl")       # #445 Option A: #433/#434 same-target fixture
+_shard_include("test_parity_gaussian_phylo_mean.jl")     # #445 Option A: #437/#438 Route A fixture
+_shard_include("test_q4_reml_warm_restart.jl")           # #484: public drm() converges the q4 phylo REML cell
+_shard_include("test_reml_objective_at.jl")              # #575: objective-at-point diagnostic primitive
+_shard_include("test_bridge_objective_at.jl")             # #563: drm_bridge_objective_at (bridge-boundary reml_objective_at)
+_shard_include("test_575_exact_reml_gradient.jl")        # #575: exact REML gradient vs a tight central difference
+_shard_include("test_575_q4_optimum.jl")                 # #575: the q4 REML cold-start route reaches its own optimum
+_shard_include("test_reml_q4_missing_response.jl")       # #578: _reml_border_blocks mask consistency, missing responses
+_shard_include("test_q4_reml_vcov.jl")                   # #563 S11: pin q4 REML vcov() native/bridge behaviour
+_shard_include("test_reml_prior_precision_collapse.jl")  # #563: _reml_prior_precision collapsed into prior_precision after #577
 
 # Delta-method prediction standard errors (feat-predict-se).
-include("test_predict_se.jl")
+_shard_include("test_predict_se.jl")
 
 # Standing Q-gate (issue #14): FD-vs-exact gradient check ≤ 1e-6 for the verified
 # q4 sparse-Laplace engine (Workflow Q).
-include("test_qgate_fd_gradient.jl")
+_shard_include("test_qgate_fd_gradient.jl")
 
 # Standing engine-quality Q-gate (issue #15): zero-allocation gate on the inner
 # Newton mode-finder's pure-Julia arithmetic (the CHOLMOD factor is excluded as
 # out-of-Julia-control). Cheap → per-PR. (Workflow Q.)
-include("test_qgate_alloc_inner.jl")
+_shard_include("test_qgate_alloc_inner.jl")
 
 # Standing Workflow Q JET gate (Karpinski): type-stability of hot lc↔Λ kernels.
 # JET lives in test/Project.toml — skip gracefully when absent (bare
@@ -325,84 +361,84 @@ end
 
 # #13 S1b: extracted Fisher / observed-information metric (natgrad solver FAIL —
 # infra only; not a public `:natgrad` path).
-include("test_lc_metric.jl")
+_shard_include("test_lc_metric.jl")
 
 # Standing FD-vs-exact gradient gate (issue #165) for the non-Gaussian (Poisson)
 # phylogenetic sparse-Laplace route — the exact implicit-logdet outer gradient.
-include("test_poisson_phylo_grad_gate.jl")
+_shard_include("test_poisson_phylo_grad_gate.jl")
 
 # Standing FD-vs-exact gradient gate (#165) for the Poisson CROSSED-random-
 # intercepts route — same full-Newton-in-basin inner-mode fix as the phylo route.
-include("test_poisson_crossed_grad_gate.jl")
+_shard_include("test_poisson_crossed_grad_gate.jl")
 
 # Standing FD-vs-exact gradient gates (#165) for the other non-Gaussian phylo
 # routes (NB2, Gamma, Binomial, Beta-binomial (#166) ≤ 1e-6; Beta reported honestly).
-include("test_nongaussian_phylo_grad_gate.jl")
+_shard_include("test_nongaussian_phylo_grad_gate.jl")
 
 # Non-Gaussian phylogenetic LOCATION–SCALE (#202): scale-axis SD recovery + the
 # ≤ 1e-6 FD gradient gate on the q=2 (mean + log-σ) Laplace marginal.
-include("test_phylo_locscale.jl")
+_shard_include("test_phylo_locscale.jl")
 # #202 closeout: PUBLIC drm() grammar B `(1 | p | phylo(species))` (tree= forward).
-include("test_public_phylo_locscale.jl")
+_shard_include("test_public_phylo_locscale.jl")
 # σ-phylo location-scale (Ayumi #2): separate/coupled/asymmetric blocks + boundary CIs.
-include("test_gaussian_locscale_phylo.jl")
-include("test_gaussian_locscale_phylo_boundary.jl")
+_shard_include("test_gaussian_locscale_phylo.jl")
+_shard_include("test_gaussian_locscale_phylo_boundary.jl")
 # A4c: penalized-MAP phylo variance components (drmTMB's drm_phylo_penalty + sweep).
-include("test_phylo_penalty.jl")
+_shard_include("test_phylo_penalty.jl")
 # #422: boundary polish when a variance component collapses onto the flat shelf.
-include("test_boundary_polish.jl")
+_shard_include("test_boundary_polish.jl")
 # Tree-scale convention: O(p) height + the sqrt(h) reporting warning.
-include("test_phylo_tree_height.jl")
-include("test_phylo_polytomy.jl")
-include("test_phylo_labels.jl")
-include("test_phylo_polytomy_kernels.jl")
+_shard_include("test_phylo_tree_height.jl")
+_shard_include("test_phylo_polytomy.jl")
+_shard_include("test_phylo_labels.jl")
+_shard_include("test_phylo_polytomy_kernels.jl")
 # A4d-2: post-fit inventories (profile_targets, structured_effects).
-include("test_introspection.jl")
+_shard_include("test_introspection.jl")
 # A8: bivariate meta-analysis with known sampling covariance (meta_vcov_bivariate).
-include("test_meta_vcov_bivariate.jl")
+_shard_include("test_meta_vcov_bivariate.jl")
 # A11: formula front end for the cross-family latent-rho route.
-include("test_cross_family_formula.jl")
+_shard_include("test_cross_family_formula.jl")
 # Profile-likelihood CIs for the bivariate q4 among-axis SDs (Ayumi #2): the calibrated,
 # no-Hessian complement to the bootstrap — collapsed axis → lower bound 0; panel-hardened
 # (straddle guard, warm-start convergence gate, consistent nll_hat).
-include("test_profile_sigma_a.jl")
+_shard_include("test_profile_sigma_a.jl")
 # Parametric bootstrap of the bivariate q=4 among-axis SDs (Ayumi #2): the
 # single-tree boundary-honest CI for sqrt.(diag(Σ_a)) — a collapsing axis reports
 # an interval that sits at ~0, where the q4 profile is singular.
-include("test_bootstrap_sigma_a.jl")
+_shard_include("test_bootstrap_sigma_a.jl")
 # REML for the σ-phylo location-scale route (Patterson–Thompson) + the fast observed-
 # information Newton (the average-information data-quadratic was proven invalid here — â is
 # the shrunk BLUP; see the second file's note). Both were orphan files; wired in here.
-include("test_reml_sigma_phylo.jl")
-include("test_reml_newton_sigma_phylo.jl")
+_shard_include("test_reml_sigma_phylo.jl")
+_shard_include("test_reml_newton_sigma_phylo.jl")
 # Bivariate q4 REML must correct ALL FOUR among-axis SDs (β_μ AND β_σ profiled), not
 # just the means — regression for the scale-axis REML gap (#18).
-include("test_reml_q4_allaxes.jl")
+_shard_include("test_reml_q4_allaxes.jl")
 # Bivariate q2 structured REML (#470): marginalises beta_mu1/beta_mu2 only (the
 # axes with a random effect on this route); sigma1/sigma2/rho12 stay outer.
-include("test_reml_q2_structured.jl")
-include("test_reml_baseline_ladder.jl")
+_shard_include("test_reml_q2_structured.jl")
+_shard_include("test_reml_baseline_ladder.jl")
 # Covariate dispersion (`sigma ~ x`) with a mean-only phylo RE for NB2 (#164):
 # the per-observation log-dispersion (vector-nuisance) generalisation of the
 # scalar phylo Laplace spine, with its own FD-vs-exact gate ≤ 1e-6.
-include("test_164_mean_re_covariate_sigma.jl")
+_shard_include("test_164_mean_re_covariate_sigma.jl")
 # Same covariate-dispersion path extended to Gamma and Beta (#164).
-include("test_164_gamma_hetero.jl")
+_shard_include("test_164_gamma_hetero.jl")
 
 # Cox–Reid (opt-in `method = :REML`) for Poisson (#465, migrated from the poc
 # and previously never run — no test covered the PR #451 Cox–Reid landing).
 # #443: the scalar `(1 | g)` GHQ route (the one certified cell). #450: phylo /
 # relmat / animal Laplace. The characterization file documents the ML default
 # and the routes still uncertified.
-include("test_cox_reid_poisson_ranef.jl")
-include("test_cox_reid_poisson_phylo.jl")
-include("test_cox_reid_characterization.jl")
+_shard_include("test_cox_reid_poisson_ranef.jl")
+_shard_include("test_cox_reid_poisson_phylo.jl")
+_shard_include("test_cox_reid_characterization.jl")
 
 # Experimental optimizer / EM-robustness fixes for the not-yet-wired sources under
 # src/experimental/ (#305 deterministic LBFGS gradient, #306 monotone conjugate EM,
 # #307 gradient-norm E-step convergence, #325.1 guarded step). Loads the standalone
 # experimental scripts into isolated modules and exercises the specific defects.
-include("test_experimental_optimizer.jl")
+_shard_include("test_experimental_optimizer.jl")
 
 # Gated real-parity suite vs committed drmTMB fixtures (off by default).
 # Native `drm()` path (#17) plus `drm_bridge` marshalling path (#370).
@@ -421,56 +457,56 @@ else
 end
 
 # Model comparison + accessor parity (lrtest / anova / aicc / weights / update).
-include("test_comparison.jl")
+_shard_include("test_comparison.jl")
 
 # Chi-bar-square boundary-corrected p-values for variance-component LR tests.
-include("test_chibar.jl")
+_shard_include("test_chibar.jl")
 
 # #304: lrtest/anova warn on a boundary variance-component drop (naive χ² invalid).
-include("test_lrtest_boundary_warn.jl")
+_shard_include("test_lrtest_boundary_warn.jl")
 
 # #320 / #323.2: coeftable/show suppress z/p for non-location blocks and Inf-SE rows.
-include("test_summary_zp_suppress.jl")
+_shard_include("test_summary_zp_suppress.jl")
 
 # #325.3: bootstrap summary indexes coefficients by stored block range, not a counter.
-include("test_bootstrap_block_index.jl")
+_shard_include("test_bootstrap_block_index.jl")
 
 # #313: heritability :profile is a TRUE profile (re-optimises nuisance), not ELR.
-include("test_heritability_true_profile.jl")
+_shard_include("test_heritability_true_profile.jl")
 
 # #310: REML-reported Wald vcov includes the restricted-penalty curvature.
-include("test_reml_vcov_curvature.jl")
+_shard_include("test_reml_vcov_curvature.jl")
 
 # Randomized quantile residuals (DHARMa/glmmTMB style) — feat-quantile-residuals.
-include("test_quantile_residuals.jl")
+_shard_include("test_quantile_residuals.jl")
 
 # S3: cross-family bivariate (shared-latent GHQ) + link-residual standardization.
-include("test_mixed_family.jl")
+_shard_include("test_mixed_family.jl")
 # Post-fit accessors (coef/aic/bic/fitted/summary) for the cross-family fit.
-include("test_mixed_family_postfit.jl")
+_shard_include("test_mixed_family_postfit.jl")
 
 # Independent validation of the cross-family latent correlation against EXTERNAL
 # references: gllvm (Gaussian × Gaussian, identical estimand; guarded — skips if
 # the fixture is absent) + an independent Monte-Carlo population reference for the
 # genuinely mixed Gaussian × Poisson case + the Gaussian × Gaussian closed form.
-include("test_xfam_external_validation.jl")
+_shard_include("test_xfam_external_validation.jl")
 
 # Shared prepared joint missing-predictor likelihood and conditional moments.
-include("test_joint_missing_predictor.jl")
-include("test_joint_missing_two_predictor.jl")
-include("test_joint_missing_finite.jl")
-include("test_joint_missing_uncertainty.jl")
-include("test_joint_missing_frontend.jl")
-include("test_joint_missing_two_frontend.jl")
-include("test_joint_missing_finite_frontend.jl")
-include("test_joint_missing_finite_factor_coding.jl")
-include("test_joint_missing_finite_prediction.jl")
-include("test_joint_missing_bridge.jl")
-include("test_joint_missing_two_bridge.jl")
-include("test_joint_missing_finite_bridge.jl")
+_shard_include("test_joint_missing_predictor.jl")
+_shard_include("test_joint_missing_two_predictor.jl")
+_shard_include("test_joint_missing_finite.jl")
+_shard_include("test_joint_missing_uncertainty.jl")
+_shard_include("test_joint_missing_frontend.jl")
+_shard_include("test_joint_missing_two_frontend.jl")
+_shard_include("test_joint_missing_finite_frontend.jl")
+_shard_include("test_joint_missing_finite_factor_coding.jl")
+_shard_include("test_joint_missing_finite_prediction.jl")
+_shard_include("test_joint_missing_bridge.jl")
+_shard_include("test_joint_missing_two_bridge.jl")
+_shard_include("test_joint_missing_finite_bridge.jl")
 
 # Issue #577: prior_precision dropped exact zeros, so at an exactly diagonal Lambda
 # the cross-axis entries of H_uu were structurally absent at non-leaf nodes and the
 # Takahashi selected inverse could not supply the logdet-H traces. Guards the root
 # fix (structurally full axis block) and the ML exact gradient it silently broke.
-include("test_577_ml_structural_zeros.jl")
+_shard_include("test_577_ml_structural_zeros.jl")

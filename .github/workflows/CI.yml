@@ -17,11 +17,18 @@ concurrency:
 
 jobs:
   test:
+    name: Julia ${{ matrix.version }} - shard ${{ matrix.shard }}/4
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        # Shard the suite 4 ways via DRM_TEST_SHARD (see test/runtests.jl), so
+        # 2 versions x 4 shards = 8 jobs each covering ~1/4 of the top-level
+        # test files instead of one multi-hour job. Measured 2026-09-03 on this
+        # repo's own run history: CI runs took 161 and 175 min, the longest of
+        # any repo here. Parallel jobs are free on a public repo.
         version: ['1.10', '1']
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v3
@@ -30,6 +37,10 @@ jobs:
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
+        env:
+          # test/runtests.jl treats an unset/empty value as "run everything", so
+          # a local `julia test/runtests.jl` and Pkg.test() are unchanged.
+          DRM_TEST_SHARD: ${{ format('{0}/4', matrix.shard) }}
 
   # Engine-quality Q-gate #16: multi-shape (balanced + caterpillar) O(p) scaling
   # sweep. NOT per-PR (the p=10k cell is minutes-scale) — manual dispatch only.
