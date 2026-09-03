@@ -630,11 +630,16 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         (ordinary_mean_intercept ||
          (isempty(re) && isempty(sigma_re) && structured === nothing &&
           metav === nothing && length(_collect_structured(rhs[:mu])) == 0)) ||
-            throw(ArgumentError("drm: method = :REML is currently implemented only for the " *
-                "fixed-effect Gaussian location–scale model and for a single Gaussian " *
-                "mean random intercept `(1 | g)` (no random slopes, no random effect on " *
-                "sigma, no structured / phylo / meta terms). Use method = :ML (the default) " *
-                "for those models."))
+            throw(ArgumentError("drm: method = :REML is not implemented for this model on the " *
+                "generic univariate Gaussian route (random slopes, a random effect on sigma, " *
+                "a structured mean marker — phylo/relmat/animal/spatial — without a matching " *
+                "sd() submodel, and meta_V() all land here). REML IS available for: the " *
+                "fixed-effect Gaussian location–scale model; a single Gaussian mean random " *
+                "intercept `(1 | g)`; every sd() LSS route (`sd(g)`, `sd_phylo` dense and " *
+                "sparse, and the multi-component sd() router); the bivariate structured " *
+                "routes (q=2 and q=4, both native and via drm_bridge); and Poisson `(1 | g)` " *
+                "and Poisson `phylo(1 | species)`. Use method = :ML (the default) for this " *
+                "model."))
     end
     if algorithm in (:em, :sparse_lbfgs)
         # The all-node sparse routes fit only the supported cell: a single
@@ -1897,11 +1902,18 @@ dof(fit::DrmFit) = length(fit.theta)
 # the other model from a single-fit accessor, so we warn once that the value is
 # only valid for variance-only comparisons. `lrtest`/`anova` (which see both fits)
 # enforce the stronger, comparison-aware guard.
+#
+# `_reml_infocrit_warning_text` is factored out so the `drm_bridge` boundary
+# (`_bridge_flatten` in bridge.jl, #624) can echo the SAME wording into the
+# returned dict's `"warnings"` entry instead of only logging to the Julia
+# console, which never reaches the R caller.
+_reml_infocrit_warning_text(which::AbstractString) =
+    "$which on a REML fit: REML log-likelihoods are only comparable across models with " *
+    "the SAME fixed-effect (mean) structure (variance-only differences). For model " *
+    "selection across mean structures, refit with method = :ML."
+
 function _reml_infocrit_warn(fit::DrmFit, which::AbstractString)
-    fit.estim_method === :REML && @warn(
-        "$which on a REML fit: REML log-likelihoods are only comparable across models with " *
-        "the SAME fixed-effect (mean) structure (variance-only differences). For model " *
-        "selection across mean structures, refit with method = :ML.", maxlog = 1)
+    fit.estim_method === :REML && @warn(_reml_infocrit_warning_text(which), maxlog = 1)
     return nothing
 end
 

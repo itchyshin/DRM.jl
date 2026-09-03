@@ -12,8 +12,13 @@ using Test, LinearAlgebra, SparseArrays, Random
 # Deliberately NOT sharded: the four includes nested inside conditionals (the
 # JET gate, which has an else-branch, and the three parity suites behind
 # DRM_PARITY_TESTS). Those are guarded by their own conditions; putting a shard
-# test in front of a conditional would change what the guard means, and the
-# parity suites are off by default in CI anyway.
+# test in front of a conditional would change what the guard means.
+#
+# MAINTENANCE NOTE: this file is REGENERATED from main on merge conflicts, not
+# hand-merged. Every top-level include line changes shape here, so git resolves
+# a conflict by keeping BOTH sides -- which silently duplicates whole blocks of
+# includes (52 of them, caught 2026-09-03). Re-apply the transform to main's
+# version instead of resolving hunks.
 include("shard_util.jl")
 
 _shard_spec = get(ENV, "DRM_TEST_SHARD", "")
@@ -165,6 +170,7 @@ _shard_include("test_tweedie.jl")
 _shard_include("test_tweedie_ranef.jl")
 _shard_include("test_cumulative.jl")
 _shard_include("test_cumlogit_ranef.jl")
+_shard_include("test_cumlogit_phylo.jl")
 _shard_include("test_poisson_re.jl")
 _shard_include("test_poisson_slope_re.jl")
 _shard_include("test_poisson_crossed_laplace.jl")
@@ -331,6 +337,7 @@ _shard_include("test_575_q4_optimum.jl")                 # #575: the q4 REML col
 _shard_include("test_reml_q4_missing_response.jl")       # #578: _reml_border_blocks mask consistency, missing responses
 _shard_include("test_q4_reml_vcov.jl")                   # #563 S11: pin q4 REML vcov() native/bridge behaviour
 _shard_include("test_reml_prior_precision_collapse.jl")  # #563: _reml_prior_precision collapsed into prior_precision after #577
+_shard_include("test_reml_surface_contract.jl")          # #624: bridge estim_method/loglik honesty + refusal message surface
 
 # Delta-method prediction standard errors (feat-predict-se).
 _shard_include("test_predict_se.jl")

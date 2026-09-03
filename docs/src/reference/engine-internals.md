@@ -114,6 +114,7 @@ DRM._BridgeFormulaLabels
 
 ```@docs
 DRM._fit_bivariate_q4_structured
+DRM._fit_cumulative_phylo_laplace
 DRM._fit_corr_locscale
 DRM._fit_fixed_gaussian_reml
 DRM._fit_gaussian_locscale_phylo

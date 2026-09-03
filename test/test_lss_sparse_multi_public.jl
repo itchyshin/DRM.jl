@@ -391,13 +391,16 @@ end
         fit_warm = _s7b6_fit_ml(fx_warm)
         @test DRM._lss_multi_route(fit_warm) === :sparse_multi
 
+        # Minimum of three timings per size: a single timing on a contended
+        # CI runner inflated the ratio to 10.7 (#622) although the fixed
+        # route sits at ~1.8 and the cubic bug at 25-48.
         fx500 = _s7b6_scaling_fixture(500)
         local fit500
-        t500 = @elapsed (fit500 = _s7b6_fit_ml(fx500))
+        t500 = minimum(@elapsed(fit500 = _s7b6_fit_ml(fx500)) for _ in 1:3)
 
         fx2000 = _s7b6_scaling_fixture(2000)
         local fit2000
-        t2000 = @elapsed (fit2000 = _s7b6_fit_ml(fx2000))
+        t2000 = minimum(@elapsed(fit2000 = _s7b6_fit_ml(fx2000)) for _ in 1:3)
 
         @test DRM._lss_multi_route(fit500) === :sparse_multi
         @test DRM._lss_multi_route(fit2000) === :sparse_multi
@@ -409,8 +412,8 @@ end
         # the router even checks `use_sparse`, giving ratio ~= 40-50 (cubic
         # in p, i.e. 4^3 = 64x, damped somewhat by the O(p) parts of the fit).
         @info "S7b.6 wall time" t500 t2000 ratio
-        @test ratio <= 8
-        @test t2000 <= 15
+        @test ratio <= 12      # cubic signature is 25-48; 12 keeps runner headroom (#622)
+        @test t2000 <= 20
     finally
         BLAS.set_num_threads(blas_before)
     end
