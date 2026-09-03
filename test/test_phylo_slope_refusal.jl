@@ -19,11 +19,17 @@
 #   - the `(1 | tag | phylo(group))` mean↔scale coupling
 #     (locscale_frontend.jl `_ls_parse_coupled`; `phylo` there wraps only the
 #     grouping symbol, never reaches `_split_ranef`'s phylo branch at all).
+#
+# #620: the same choke point (`_split_ranef`'s relmat/animal/spatial branches)
+# had the identical bug for `relmat(...)`/`animal(...)`/`spatial(...)` markers.
+# They now refuse too, with a shorter message (no drmTMB-Gaussian claim, since
+# that has not been verified for these markers): "is not implemented on the
+# univariate routes; only the intercept form is".
 using DRM
 using Test, Random, LinearAlgebra
 import Distributions
 
-@testset "phylo(<not 1> | group) refused on univariate routes" begin
+@testset "structured markers refuse non-intercept lhs (#620)" begin
     Random.seed!(20260902)
     p = 8
     phy = random_balanced_tree(p; branch_length = 0.25)
@@ -94,6 +100,120 @@ import Distributions
                    data = data, tree = phy)
         @test all(isfinite, fit.theta)
     end
+
+    @testset "relmat" begin
+        Random.seed!(20260905)
+        G = 8
+        Mm = randn(G, G); Kraw = Mm * Mm' / G + I
+        d = sqrt.(diag(Kraw)); K = Kraw ./ (d * d')
+        m = 3; n = G * m
+        id = repeat(1:G, inner = m)
+        x = randn(n)
+        y = 0.2 .+ 0.4 .* x .+ 0.3 .* randn(n)
+        data = (; y, x, id)
+
+        err1 = try
+            drm(bf(@formula(y ~ x + relmat(1 + x | id))), Gaussian(); data = data, K = K)
+            nothing
+        catch e
+            e
+        end
+        @test err1 isa ArgumentError
+        @test occursin("relmat(1 + x | id)", err1.msg)
+        @test occursin("not implemented", err1.msg)
+
+        err2 = try
+            drm(bf(@formula(y ~ x + relmat(0 + x | id))), Gaussian(); data = data, K = K)
+            nothing
+        catch e
+            e
+        end
+        @test err2 isa ArgumentError
+        @test occursin("relmat(0 + x | id)", err2.msg)
+        @test occursin("not implemented", err2.msg)
+
+        # Positive control (fixture shape copied from test_gaussian_structured.jl):
+        # the still-supported intercept-only marker still fits.
+        fit = drm(bf(@formula(y ~ x + relmat(1 | id)), @formula(sigma ~ 1)), Gaussian();
+                   data = data, K = K)
+        @test isfinite(loglik(fit))
+    end
+
+    @testset "animal" begin
+        Random.seed!(20260906)
+        G = 8
+        Mm = randn(G, G); A0 = Mm * Mm' / G + I
+        d = sqrt.(diag(A0)); A = A0 ./ (d * d')
+        m = 3; n = G * m
+        id = repeat(1:G, inner = m)
+        x = randn(n)
+        y = 0.2 .+ 0.4 .* x .+ 0.3 .* randn(n)
+        data = (; y, x, id)
+
+        err1 = try
+            drm(bf(@formula(y ~ x + animal(1 + x | id))), Gaussian(); data = data, A = A)
+            nothing
+        catch e
+            e
+        end
+        @test err1 isa ArgumentError
+        @test occursin("animal(1 + x | id)", err1.msg)
+        @test occursin("not implemented", err1.msg)
+
+        err2 = try
+            drm(bf(@formula(y ~ x + animal(0 + x | id))), Gaussian(); data = data, A = A)
+            nothing
+        catch e
+            e
+        end
+        @test err2 isa ArgumentError
+        @test occursin("animal(0 + x | id)", err2.msg)
+        @test occursin("not implemented", err2.msg)
+
+        # Positive control (fixture shape copied from test_gaussian_structured.jl):
+        # the still-supported intercept-only marker still fits.
+        fit = drm(bf(@formula(y ~ x + animal(1 | id)), @formula(sigma ~ 1)), Gaussian();
+                   data = data, A = A)
+        @test isfinite(loglik(fit))
+    end
+
+    @testset "spatial" begin
+        Random.seed!(20260907)
+        G = 8
+        coords = rand(G, 2) .* 10.0
+        m = 3; n = G * m
+        site = repeat(1:G, inner = m)
+        x = randn(n)
+        y = 0.2 .+ 0.4 .* x .+ 0.3 .* randn(n)
+        data = (; y, x, site)
+
+        err1 = try
+            drm(bf(@formula(y ~ x + spatial(1 + x | site))), Gaussian(); data = data, coords = coords)
+            nothing
+        catch e
+            e
+        end
+        @test err1 isa ArgumentError
+        @test occursin("spatial(1 + x | site)", err1.msg)
+        @test occursin("not implemented", err1.msg)
+
+        # Bare `x` (no explicit `0 +`) — the coordinator's own example shape.
+        err2 = try
+            drm(bf(@formula(y ~ x + spatial(x | site))), Gaussian(); data = data, coords = coords)
+            nothing
+        catch e
+            e
+        end
+        @test err2 isa ArgumentError
+        @test occursin("spatial(x | site)", err2.msg)
+        @test occursin("not implemented", err2.msg)
+
+        # Positive control (fixture shape copied from test_gaussian_spatial.jl):
+        # the still-supported intercept-only marker still fits.
+        fit = drm(bf(@formula(y ~ x + spatial(1 | site)), @formula(sigma ~ 1)), Gaussian();
+                   data = data, coords = coords)
+        @test isfinite(loglik(fit))
+    end
 end
 
 @testset "regression: bivariate q4 phylo (different syntax) unaffected" begin
@@ -144,5 +264,28 @@ end
     fit = drm(bf(@formula(y ~ x + (1 | p | phylo(species))),
                  @formula(sigma ~ 1 + (1 | p | phylo(species)))),
               DRM.Gamma(); data = data, tree = phy, se = false)
+    @test isfinite(loglik(fit))
+end
+
+@testset "regression: bivariate lognormal spatial(1|group) delegation unaffected" begin
+    # bivariate_lognormal.jl delegates the WHOLE fit to `drm(f, Gaussian(); ...)`
+    # (the BivariateDrmFormula route in gaussian_bivariate.jl), which parses
+    # structured markers via `_split_bivariate_q4_rhs`/`_q4_marker_group` — never
+    # `_split_ranef` — so the #620 checks above must not touch it.
+    Random.seed!(20260908)
+    G = 8
+    coords = rand(G, 2) .* 10.0
+    grp = repeat(1:G, inner = 3)
+    n = length(grp)
+    x = randn(n)
+    y1 = exp.(0.2 .+ 0.3 .* x .+ 0.2 .* randn(n))
+    y2 = exp.(-0.1 .+ 0.2 .* x .+ 0.2 .* randn(n))
+    dat = (; y1, y2, x, g = grp)
+    form = bf(mu1 = @formula(y1 ~ x + spatial(1 | g)),
+              mu2 = @formula(y2 ~ x + spatial(1 | g)),
+              sigma1 = @formula(sigma1 ~ 1 + spatial(1 | g)),
+              sigma2 = @formula(sigma2 ~ 1 + spatial(1 | g)),
+              rho12 = @formula(rho12 ~ 1))
+    fit = drm(form, LogNormal(); data = dat, coords = coords, q4_vcov = false)
     @test isfinite(loglik(fit))
 end
