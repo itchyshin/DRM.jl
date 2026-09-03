@@ -27,3 +27,26 @@ reml_restriction_note = "CORRECTED 2026-08-24. The measured numbers below stand;
 atol_loglik = 0.03
 atol_coef = 0.00251
 rtol_coef = 0.01
+
+# [se] (#563 S11 slice 6, 2026-09-02). drmTMB Wald SEs (sqrt(diag(vcov())),
+# sdr$pdHess = TRUE) on this exact committed data.csv/tree.newick, from
+# drmTMB claude/rev-parity-q4-se-receipt @ 996870366 (docs/dev-log/evidence/
+# julia-r-parity/ayumi-target/2026-09-02-q4-se-receipt.md + .R), engine pinned
+# to DRM.jl feat/575-exact-reml-gradient @ cda42b8c. ALL SEVEN are declared
+# not_comparable: the SAME receipt shows DRM.jl's bridge vcov() for this q4
+# REML route is all-NaN (uncertainty$status = "unavailable", per
+# confint.drmTMB_julia's own roxygen text) -- this is the pre-existing
+# interval_status = "wald_unavailable" capability gap above (#495), NOT a
+# boundary-pinned-reference-fit case; the drmTMB values are recorded here for
+# provenance only and must never be numerically compared until DRM.jl returns
+# a finite fixed-effect covariance for this route.
+[se]
+"mu1_(Intercept)"    = 0.39242521
+"mu1_x"              = 0.02966654
+"mu2_(Intercept)"    = 0.30270138
+"mu2_x"              = 0.05482400
+"sigma1_(Intercept)" = 0.38813154
+"sigma2_(Intercept)" = 0.25135158
+"rho12_(Intercept)"  = 0.09513290
+not_comparable = ["mu1_(Intercept)", "mu1_x", "mu2_(Intercept)", "mu2_x",
+                   "sigma1_(Intercept)", "sigma2_(Intercept)", "rho12_(Intercept)"]
