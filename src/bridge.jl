@@ -1508,6 +1508,21 @@ end
 # closed: any count mismatch, unknown dpar key, or a dpar with fixed-effect
 # columns but no supplied labels aborts naming the dpar and both counts —
 # never guesses, pads, or reorders (#563).
+#
+# EVERY block reported by `fit.blocks` needs an entry, not just `mu`/`sigma`/
+# the regression dpars — this includes `phylocov` and `sd`/`sd_phylo` random-
+# effect blocks (R now labels those too, design 258 §7.5); a block present in
+# `fit.blocks` with no matching key in `coef_labels` fails closed the same as
+# any other missing dpar.
+#
+# A value may be a `Vector{String}` (the general case) or a bare `String`
+# (accepted only for a length-1 block): JuliaCall unboxes a length-1 R
+# character vector to a scalar Julia `String` rather than `[String]`, so an
+# intercept-only dpar or a scalar `phylocov`/`sd` block can arrive unwrapped.
+# A scalar String is treated exactly like `[String]` — same count check
+# against the block's coefficient count, same fail-closed behaviour on a
+# mismatch. Any other non-String, non-vector-of-String value (e.g. an `Int`)
+# fails closed rather than being coerced (#563 follow-up to #594).
 function _bridge_echo_coef_labels(coef_labels, block_ranges::Vector{Pair{Symbol,UnitRange{Int}}},
         raw_names::Vector{String})
     supplied = Dict{String,Any}(String(k) => v for (k, v) in pairs(coef_labels))
@@ -1525,7 +1540,18 @@ function _bridge_echo_coef_labels(coef_labels, block_ranges::Vector{Pair{Symbol,
             error("drm_bridge: coef_labels is missing an entry for dpar \"$dpar\" " *
                   "($n_actual fixed-effect columns; Julia names: $(raw_names[range])); " *
                   "the R side must supply names for every dpar when sending coef_labels")
-        dpar_labels = supplied[dpar]
+        raw_dpar_labels = supplied[dpar]
+        # JuliaCall unboxes a length-1 R character vector to a bare Julia
+        # `String` rather than `[String]` (R list-wraps as a workaround
+        # today); treat a scalar String exactly like a length-1 vector.
+        # Anything else that is not a vector of strings fails closed instead
+        # of silently coercing (e.g. an `Int` must not stringify into a
+        # plausible-looking label) (#563 follow-up to #594).
+        dpar_labels = raw_dpar_labels isa AbstractString ?
+            String[raw_dpar_labels] : raw_dpar_labels
+        dpar_labels isa AbstractVector && all(x -> x isa AbstractString, dpar_labels) ||
+            error("drm_bridge: coef_labels[\"$dpar\"] must be a String (for one " *
+                  "column) or a vector of Strings; got $(typeof(raw_dpar_labels))")
         n_supplied = length(dpar_labels)
         n_supplied == n_actual ||
             error("drm_bridge: coef_labels[\"$dpar\"] supplies $n_supplied names but the " *
