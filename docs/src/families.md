@@ -237,6 +237,16 @@ fito = drm(bf(@formula(y ~ x)), CumulativeLogit(); data = (; y = Float64.(yo), x
 coef(fito, :mu)[1]      # slope ≈ 0.8
 ```
 
+An ordinary random intercept `(1 | g)` or an independent random slope
+`(0 + x | g)` on `mu` is integrated out by 32-node Gauss–Hermite quadrature
+(the same scheme as the Poisson/Gamma/Tweedie GLMM routes); the correlated
+form `(1 + x | g)` is not implemented.
+
+```julia
+fit_re = drm(bf(y ~ x + (1 | g)), CumulativeLogit(); data = dat)
+exp(coef(fit_re, :resd)[1])   # random-intercept SD
+```
+
 ## See also
 
 - [Getting started](getting-started.md) — install and a first Gaussian fit.
