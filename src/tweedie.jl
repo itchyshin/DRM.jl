@@ -45,12 +45,14 @@ semicontinuous data — an exact-zero mass plus a positive continuous part. Log
 link on the mean `μ`; `sigma` is the √dispersion (so `φ = σ²`, `coef(fit, :sigma)`
 is `log σ`); `nu` is the power `p` on a logit-`(1,2)` link
 (`p = 1 + logistic(coef(fit, :nu))`). `Var(y) = φ·μ^p`. Density via the Dunn–Smyth
-series. Mirrors `drmTMB`'s `tweedie`. An ordinary `(1 | g)` random intercept on
-`mu` is supported (32-node Gauss–Hermite marginal, #563); `sigma ~ 1` and
-`nu ~ 1` remain fixed-effect sub-models on that route. Correlated random
-slopes `(1 + x | g)`, random effects on `sigma`/`nu`, and structured
+series. Mirrors `drmTMB`'s `tweedie`. An ordinary `(1 | g)` random intercept
+and an independent `(0 + x | g)` random slope on `mu` are both supported
+(32-node Gauss–Hermite marginal, #563); `sigma ~ 1` and `nu ~ 1` remain
+fixed-effect sub-models on either route. The CORRELATED random slope
+`(1 + x | g)`, random effects on `sigma`/`nu`, and structured
 (phylo/relmat/animal/spatial) markers on `mu` are not implemented — matches
-`drmTMB` 0.7.0, which rejects the same forms.
+`drmTMB` 0.7.0, which rejects the same forms ("Only independent tweedie() mu
+random intercepts and slopes are implemented in this slice").
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1, nu ~ 1), Tweedie(); data = dat)
@@ -59,6 +61,9 @@ exp(2 * coef(fit, :sigma)[1])               # dispersion φ
 
 fit_re = drm(bf(y ~ x + (1 | g), nu ~ 1), Tweedie(); data = dat)
 exp(coef(fit_re, :resd)[1])                 # random-intercept SD
+
+fit_slope = drm(bf(y ~ x + (0 + x | g), nu ~ 1), Tweedie(); data = dat)
+exp(coef(fit_slope, :resd)[1])              # random-slope SD
 ```
 """
 struct Tweedie end
@@ -91,20 +96,27 @@ function drm(f::DrmFormula, fam::Tweedie; data, g_tol::Real = 1e-8)
     st === nothing ||
         error("Tweedie() structured (phylo/relmat/animal/spatial) random effects on `mu` " *
               "are not implemented (matches drmTMB, which has no structured route for tweedie())")
-    if !isempty(re)                    # random intercept on mu → GHQ marginal (#563 S8)
+    if !isempty(re)                    # random intercept/slope on mu → GHQ marginal (#563 S8)
         length(re) == 1 ||
-            error("Tweedie() supports only a single `(1 | g)` random intercept on `mu`; " *
-                  "crossed/multiple random effects are not implemented")
-        (rk, _) = _re_kind(re[1][1]); grp = re[1][2]
-        rk === :intercept ||
-            error("Tweedie() supports only an ordinary `(1 | g)` random intercept on `mu`; " *
-                  "correlated random slopes `(1 + x | g)` are not implemented (matches " *
-                  "drmTMB 0.7.0: \"Only independent tweedie() mu random intercepts and " *
-                  "slopes are implemented in this slice\" — the independent-slope route " *
-                  "`(0 + x | g)` is not wired in DRM.jl yet either)")
+            error("Tweedie() supports only a single `(1 | g)` random intercept or " *
+                  "`(0 + x | g)` random slope on `mu`; crossed/multiple random effects " *
+                  "are not implemented")
+        (rk, var) = _re_kind(re[1][1]); grp = re[1][2]
         gidx, G = _group_index(getproperty(data, grp))
-        return _withformula(
-            _fit_tweedie_ranef(fam, y, Xμ, Xσ, Xν, gidx, G, nmμ, nmσ, nmν, grp, g_tol), f)
+        if rk === :intercept
+            return _withformula(
+                _fit_tweedie_ranef(fam, y, Xμ, Xσ, Xν, gidx, G, nmμ, nmσ, nmν, grp, g_tol), f)
+        elseif rk === :slope
+            xs = Float64.(getproperty(data, var))
+            return _withformula(
+                _fit_tweedie_slope_ranef(fam, y, Xμ, Xσ, Xν, xs, gidx, G, nmμ, nmσ, nmν, grp, g_tol), f)
+        else
+            error("Tweedie() supports only an ordinary `(1 | g)` random intercept or an " *
+                  "independent `(0 + x | g)` random slope on `mu`; correlated random " *
+                  "slopes `(1 + x | g)` are not implemented (matches drmTMB 0.7.0: " *
+                  "\"Only independent tweedie() mu random intercepts and slopes are " *
+                  "implemented in this slice\")")
+        end
     end
     return _withformula(_fit_tweedie(fam, y, Xμ, Xσ, Xν, nmμ, nmσ, nmν, g_tol), f)
 end
@@ -167,6 +179,62 @@ function _fit_tweedie_ranef(fam::Tweedie, y, Xμ, Xσ, Xν, gidx, G, nmμ, nmσ,
                 δ = rt2 * σb * z[k]; gll = logw[k]
                 for i in idx
                     μ = exp(clamp(η0[i] + δ, -30.0, 30.0)); φ = exp(2 * ησ[i]); p = _logit12(ην[i])
+                    gll += _logpdf_tweedie(y[i], μ, φ, p)
+                end
+                terms[k] = gll
+            end
+            mx = maximum(terms)
+            s -= (-0.5 * lπ + mx + log(sum(exp.(terms .- mx))))
+        end
+        return s
+    end
+    ȳ = sum(y) / n
+    θ0 = zeros(i2 + 1)
+    θ0[1] = log(ȳ + eps())            # log mean
+    θ0[pμ+1] = 0.0                     # σ = 1 (φ = 1)
+    θ0[i1+1] = 0.0                     # p = 1.5
+    θ0[i2+1] = log(0.5)                # σ_b
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):i1, :nu => (i1+1):i2, :resd => (i2+1):(i2+1)]
+    names = [:mu => nmμ, :sigma => nmσ, :nu => nmν, :resd => [String(grp)]]
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):i1]),
+                  :nu => _logit12.(Xν * θ̂[(i1+1):i2]))
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
+end
+
+# Tweedie compound Poisson–Gamma GLMM with an INDEPENDENT random slope
+# (0 + x | g) on the log mean: η_i = Xμβ_μ + b_g·x_i, b_g ~ N(0, σ_b²),
+# integrated out per group by 32-node Gauss–Hermite quadrature
+# (b = √2 σ_b z). Same scheme as `_fit_tweedie_ranef` (the ordinary random
+# intercept), with the group perturbation weighted by x_i per observation
+# instead of added flat. Matches drmTMB's independent-slope route for
+# tweedie() mu (`(0 + x | id)`, distinct from the still-unimplemented
+# correlated `(1 + x | id)`). #563 S8.
+function _fit_tweedie_slope_ranef(fam::Tweedie, y, Xμ, Xσ, Xν, xs, gidx, G, nmμ, nmσ, nmν, grp, g_tol)
+    n = length(y); pμ, pσ, pν = size(Xμ, 2), size(Xσ, 2), size(Xν, 2)
+    i1 = pμ + pσ; i2 = i1 + pν
+    members = [Int[] for _ in 1:G]
+    for i in 1:n
+        push!(members[gidx[i]], i)
+    end
+    z, w = _gauss_hermite(32); logw = log.(w); K = length(z); rt2 = sqrt(2.0); lπ = log(π)
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:i1]; βν = θ[i1+1:i2]; σb = exp(θ[i2+1])
+        η0 = clamp.(Xμ * βμ, -30.0, 30.0)
+        ησ = clamp.(Xσ * βσ, -15.0, 15.0)
+        ην = clamp.(Xν * βν, -12.0, 12.0)
+        s = zero(eltype(θ))
+        for idx in members
+            isempty(idx) && continue
+            terms = Vector{eltype(θ)}(undef, K)
+            for k in 1:K
+                δ = rt2 * σb * z[k]; gll = logw[k]
+                for i in idx
+                    μ = exp(clamp(η0[i] + δ * xs[i], -30.0, 30.0)); φ = exp(2 * ησ[i]); p = _logit12(ην[i])
                     gll += _logpdf_tweedie(y[i], μ, φ, p)
                 end
                 terms[k] = gll
