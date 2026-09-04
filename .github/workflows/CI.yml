@@ -48,6 +48,28 @@ jobs:
       - name: Say which way it went
         run: echo "code=${{ steps.filter.outputs.code }}"
 
+      # If we are about to skip the suite, the diff that skips it must at least be
+      # clean. Ported from gllvmTMB's "Fast pass for ignored-source/process change",
+      # which has had this gate all along -- and which caught a real defect on
+      # 2026-09-04 that this repo's version would have waved through: two restored
+      # documents carrying 17 lines of trailing whitespace.
+      - name: Fast-path validation (a prose-only diff must still be clean)
+        if: steps.filter.outputs.code != 'true'
+        run: |
+          set -euo pipefail
+          base='${{ github.event.pull_request.base.sha }}'
+          # non-zero on trailing whitespace or a conflict marker in ADDED lines
+          git diff --check "$base" HEAD
+          {
+            echo "### Fast-path validation"
+            echo
+            echo "Julia suite skipped: prose-only change."
+            echo
+            echo "Validation run:"
+            echo "- \`git diff --check\` over the changed-file range"
+            echo "  (trailing whitespace, conflict markers)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   test:
     needs: changes
     runs-on: ubuntu-latest
