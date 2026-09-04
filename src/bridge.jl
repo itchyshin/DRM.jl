@@ -471,7 +471,28 @@ function _bridge_pick_fixef_row(rows, target)
         "`fixef:$(target.param):$(target.coef)` in the result; got [$(got)]."))
 end
 
+# The complete set of `options` keys `_bridge_fit` knows how to forward, PLUS
+# any key `drm_bridge` (or a sibling entry point) legitimately reads off the
+# SAME `options` dict before it reaches `_bridge_fit` — `:coef_labels`
+# (design 258 §7.1) is extracted and consumed by `drm_bridge` itself (the
+# public coefficient-name echo), never forwarded as a `drm(...)` kwarg, but it
+# is still a real key on the dict `_bridge_fit` sees, so it must not trip the
+# fail-closed check below. Kept as a literal set (not derived from `kwargs`
+# below) so that check is a simple, auditable diff against this list rather
+# than depending on which branches happened to fire for a given fit.
+const _BRIDGE_KNOWN_OPTION_KEYS = Set((
+    :g_tol, :algorithm, :method, :se, :profile_ci, :phylo_coupled, :sparse,
+    :q4_g_tol, :q4_iterations, :q4_n_newton, :q4_vcov, :coef_labels,
+))
+
 function _bridge_fit(bundle, fam, data; tree, K, A, coords, options)
+    # Fail closed on an unknown option key (#527-adjacent): a typo'd or
+    # not-yet-wired key must error loudly and NAME the key, rather than being
+    # silently dropped and the caller left believing it took effect.
+    unknown = setdiff(keys(options), _BRIDGE_KNOWN_OPTION_KEYS)
+    isempty(unknown) || throw(ArgumentError(
+        "drm_bridge: unknown option key(s) `$(join(sort(String.(unknown)), "`, `"))`; " *
+        "known keys are: $(join(sort(String.(collect(_BRIDGE_KNOWN_OPTION_KEYS))), ", "))."))
     kwargs = Dict{Symbol,Any}()
     tree !== nothing && (kwargs[:tree] = _bridge_tree(tree))
     K !== nothing && (kwargs[:K] = K)
@@ -494,6 +515,13 @@ function _bridge_fit(bundle, fam, data; tree, K, A, coords, options)
     end
     if haskey(options, :phylo_coupled)
         kwargs[:phylo_coupled] = Bool(options[:phylo_coupled])
+    end
+    if haskey(options, :sparse)
+        # Native `drm(...)` keyword alias for `algorithm = :sparse`/`:sparse_lbfgs`
+        # (forces the O(p) sparse whole-tree engine on large phylogenetic LSS
+        # fits). Previously reachable natively but silently dropped by the
+        # bridge — the exact control an R caller needs on a many-species fit.
+        kwargs[:sparse] = Bool(options[:sparse])
     end
     if _bridge_is_bivariate_phylo_q4(bundle, fam, tree) && !haskey(options, :q4_vcov)
         # The bridge's q4 uncertainty route is profile/bootstrap over among-axis
@@ -1456,6 +1484,25 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
             _reml_infocrit_warning_text("aic"),
             _reml_infocrit_warning_text("bic"),
         ]
+    end
+    # `gradient` is the Julia-side objective gradient at θ̂ — the diagnostic an R
+    # caller wants when a fit looks off (e.g. non-convergence, a boundary
+    # estimate). Only some routes attach `fit.nllgrad` (an in-place callback
+    # `(g, θ) -> g`, not a precomputed vector), so — matching `reml_loglik`
+    # above (#625) — the key is OMITTED, never zeros/NaN, when the route
+    # carries none. `_bridge_coef_vector` already asserts (with an error) that
+    # `cnames` is in exact 1:1 covariance order with `coef(fit)` (every raw
+    # coordinate covered, no gaps), so `gradient_names` can reuse `cnames`
+    # unchanged and stay index-aligned with `gradient`.
+    if fit.nllgrad !== nothing
+        θ̂ = coef(fit)
+        g = zeros(length(θ̂))
+        fit.nllgrad(g, θ̂)
+        length(g) == length(cnames) || error(
+            "drm_bridge: internal error — gradient length $(length(g)) does not match " *
+            "the $(length(cnames)) named coefficients; refusing to mislabel gradient entries.")
+        out["gradient"] = g
+        out["gradient_names"] = cnames
     end
     if labels !== nothing || coef_labels !== nothing
         # `coef_names`/`vcov_names` are the public R spelling.  Retain the exact

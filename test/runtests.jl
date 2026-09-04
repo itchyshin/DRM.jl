@@ -228,6 +228,7 @@ include("test_summary_method.jl")
 include("test_predict_parameters.jl")
 include("test_prediction_grid.jl")
 include("test_bridge.jl")
+include("test_bridge_option_passthrough.jl")  # #527-adjacent: control-option forwarding + gradient exposure
 include("test_bridge_bootstrap_tree.jl") # same-tree non-Gaussian fixed-effect bootstrap
 include("test_bootstrap_provider_forwarding.jl") # K/A/tree/coords survive bootstrap refits
 include("test_bridge_profile_target.jl")
