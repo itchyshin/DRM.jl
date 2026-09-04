@@ -256,10 +256,22 @@ function _fit_phylo_gaussian_lss_sparse(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G,
     end
 
     # Random effects (BLUPs)
+    # #631: the destructured latent mean MUST NOT be named `â`.  `eval_core`
+    # assigns `â` internally, so a second assignment to that name in THIS
+    # enclosing scope makes it ONE shared `Core.Box` for the closure and the
+    # function body -- the same defect class as #549's `V`.  `nll_ml_only` and
+    # `nllgrad!` are stored on the fit and called CONCURRENTLY by a threaded
+    # profile (`confint(...; method = :profile, threads = true)` runs the lower
+    # and upper endpoint arms in parallel), so both arms wrote the same box:
+    # measured on a 600-tip sparse LSS fit, 122/300 concurrent objective pairs
+    # disagreed with the serial value by up to 2.0e-2 in the NLL and 7.4e-1 in
+    # the gradient, which starved the nuisance solve of convergence and made the
+    # endpoint search report a failed arm (returned as +/-Inf).  Bare CHOLMOD and
+    # BLAS were exonerated on the same matrices; the box was the whole cause.
     βμ_hat, βσ_hat, α_hat = unpack(θ̂)
-    _, _, _, â, _, _, _, _, _, _ = eval_core(βμ_hat, βσ_hat, α_hat; want_grad = false, use_ref = false)
+    _, _, _, â_hat, _, _, _, _, _, _ = eval_core(βμ_hat, βσ_hat, α_hat; want_grad = false, use_ref = false)
     σa_hat = exp.(Zg * α_hat)
-    u_phylo = [σa_hat[t] * inv_sd[t] * â[leaf_pos[t]] for t in 1:G]
+    u_phylo = [σa_hat[t] * inv_sd[t] * â_hat[leaf_pos[t]] for t in 1:G]
     re_dict = Dict(Symbol(grp) => u_phylo)
 
     blocks = [:mu => iβμ, :sigma => iβσ, block => iα]

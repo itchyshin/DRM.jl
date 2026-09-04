@@ -342,6 +342,20 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
             _bridge_pick_sd_row(result.ci, target.param)
         outcome = _bridge_profile_outcome(result, row)
         target !== nothing && target.kind === :fixef && (row = merge(row, (coef = target.coef,)))
+        # DRM.jl#631: `profile_failed` means the endpoint search could not certify a
+        # root, and the row carries the ±Inf placeholder for the failed arm. R reads
+        # this payload straight into `confint()`'s `lower`/`upper` columns, where an
+        # infinite bound is indistinguishable from a real confidence limit (the
+        # `conf.status` column that says otherwise is columns away, and easy to miss).
+        # Raise instead: an R caller sees an error, never a bound it can quote.
+        # A genuinely UNBOUNDED profile (the likelihood never crosses the LR
+        # threshold in the searched range) keeps status "profile" and is unaffected.
+        outcome.status == "profile_failed" && throw(ArgumentError(
+            "drm_bridge_inference: profile endpoint search did not converge for " *
+            "`$(row.param):$(row.coef)` — $(outcome.message). A non-converged " *
+            "endpoint is NOT a confidence limit, so it is refused here rather " *
+            "than returned as an infinite bound. Use `method = \"wald\"` or " *
+            "`method = \"bootstrap\"` for this target."))
         return _bridge_inference_flatten(
             row;
             method = "profile",
@@ -2528,6 +2542,13 @@ function _bridge_inference_flatten(row; method::AbstractString,
         failed::Integer, elapsed::Real, threaded::Bool,
         worker_threads::Integer, julia_threads::Integer,
         blas_threads::Integer, message::AbstractString)
+    # DRM.jl#631 backstop: a failed-status row must never carry a bound at all.
+    # The profile branch above raises before reaching here; this catches any
+    # future status that pairs an infinite endpoint with a non-"profile" status.
+    (status == "profile_failed" && !(isfinite(row.lower) && isfinite(row.upper))) &&
+        throw(ArgumentError(
+            "drm_bridge_inference: refusing to return an infinite bound for " *
+            "`$(row.param):$(row.coef)` under status `$status` — $message"))
     return Dict{String,Any}(
         "method" => String(method),
         "param" => String(row.param),
