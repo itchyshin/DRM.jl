@@ -518,6 +518,5 @@ _shard_include("test_joint_missing_finite_bridge.jl")
 # the cross-axis entries of H_uu were structurally absent at non-leaf nodes and the
 # Takahashi selected inverse could not supply the logdet-H traces. Guards the root
 # fix (structurally full axis block) and the ML exact gradient it silently broke.
-include("test_577_ml_structural_zeros.jl")
-include("test_609_varying_scale.jl")
 _shard_include("test_577_ml_structural_zeros.jl")
+_shard_include("test_609_varying_scale.jl")
