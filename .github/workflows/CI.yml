@@ -17,10 +17,11 @@ concurrency:
 
 jobs:
   # Is there anything in this PR that the Julia suite could possibly affect?
-  # `test (1)` and `test (1.10)` are REQUIRED status checks on `main`, so this
-  # must NOT be done with `paths-ignore`: a required check that never reports
-  # leaves the PR pending forever. The jobs below therefore always RUN and
-  # always report -- they just do no work when only prose changed.
+  # The suite's checks are REQUIRED on `main` (today by matrix-leg name; after
+  # the ci-ok aggregator below, by `ci-ok`), so this must NOT be done with
+  # `paths-ignore`: a required check that never reports leaves the PR pending
+  # forever. The jobs below therefore always RUN and always report -- they just
+  # do no work when only prose changed.
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -71,12 +72,19 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   test:
+    name: Julia ${{ matrix.version }} - shard ${{ matrix.shard }}/4
     needs: changes
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        # Shard the suite 4 ways via DRM_TEST_SHARD (see test/runtests.jl), so
+        # 2 versions x 4 shards = 8 jobs each covering ~1/4 of the top-level
+        # test files instead of one multi-hour job. Measured 2026-09-03 on this
+        # repo's own run history: CI runs took 161 and 175 min, the longest of
+        # any repo here. Parallel jobs are free on a public repo.
         version: ['1.10', '1']
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v6
       - if: needs.changes.outputs.code == 'true'
@@ -89,8 +97,35 @@ jobs:
         uses: julia-actions/julia-buildpkg@v1
       - if: needs.changes.outputs.code == 'true'
         uses: julia-actions/julia-runtest@v1
+        env:
+          # test/runtests.jl treats an unset/empty value as "run everything", so
+          # a local `julia test/runtests.jl` and Pkg.test() are unchanged.
+          DRM_TEST_SHARD: ${{ format('{0}/4', matrix.shard) }}
       - if: needs.changes.outputs.code != 'true'
         run: echo "Prose-only change -- Julia suite skipped, this check still reports."
+
+  # ONE stable required check for branch protection. Protection on main used to
+  # require the matrix legs by name (`test (1.10)`, `test (1)`); sharding renamed
+  # them and #626 sat fully green and BLOCKED forever. Requiring only `ci-ok`
+  # makes the rule independent of how the matrix is shaped -- and it composes
+  # with the `changes` prose-skip above: a skipped suite still SUCCEEDS its legs
+  # (they echo and report), so ci-ok passes on a docs-only PR exactly as the
+  # comment on `changes` intends.
+  #
+  # `if: always()` is load-bearing: without it a failed or cancelled shard makes
+  # this job SKIP, and GitHub counts a skipped required check as PASSING.
+  # `needs.test.result` is the aggregate over every matrix leg -- "success" only
+  # when all eight succeeded; "failure" / "cancelled" / "skipped" otherwise.
+  ci-ok:
+    name: ci-ok
+    needs: [test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every shard must have succeeded
+        run: |
+          echo "aggregate result of the test matrix: ${{ needs.test.result }}"
+          test "${{ needs.test.result }}" = "success"
 
   # Engine-quality Q-gate #16: multi-shape (balanced + caterpillar) O(p) scaling
   # sweep. NOT per-PR (the p=10k cell is minutes-scale) — manual dispatch only.
