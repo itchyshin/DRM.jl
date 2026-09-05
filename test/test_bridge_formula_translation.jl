@@ -47,12 +47,21 @@ using Test
         @test fitok("y ~ x1 + phylo(1 | species); sigma ~ phylo(1 | species)")
     end
 
-    @testset "univariate phylo random slope rejected across the bridge too" begin
+    @testset "univariate phylo random slope: the two-SD form fits, the rest reject" begin
         # Silent-data-loss fix: a `phylo(<not 1> | group)` marker translated
         # from an R formula string must hit the same univariate-route refusal
         # as the native Julia path, not silently fit the intercept-only model.
-        rejects("y ~ x1 + phylo(1 + x1 | species); sigma ~ 1")
+        # #620 landed the ONE admitted slope form on the Gaussian mean, so it
+        # now fits across the bridge as well -- and must expose BOTH field SDs,
+        # never the intercept-only fit this testset was written to catch.
+        two_sd = drm_bridge(; formula = "y ~ x1 + phylo(1 + x1 | species); sigma ~ 1",
+                            family = "gaussian", data = dat, tree = phy)
+        @test isfinite(two_sd["loglik"])
+        @test two_sd["coef_names"] ==
+            ["mu_(Intercept)", "mu_x1", "sigma_(Intercept)", "resd_species", "resd_species:x1"]
+        # every other slope shape still refuses
         rejects("y ~ x1 + phylo(0 + x1 | species); sigma ~ 1")
+        rejects("y ~ x1 + phylo(1 + x1 + x2 | species); sigma ~ 1")
         rejects("y ~ x1; sigma ~ phylo(1 + x1 | species)")
     end
 

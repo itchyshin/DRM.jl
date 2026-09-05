@@ -134,6 +134,7 @@ _shard_include("test_gaussian_phylo_mean_missing_response.jl")  # #482: species-
 # Silent-data-loss fix: `phylo(<not 1> | group)` refused on univariate routes
 # instead of silently fitting the intercept-only model.
 _shard_include("test_phylo_slope_refusal.jl")
+_shard_include("test_phylo_slope_two_sd.jl")
 _shard_include("test_phylo_interaction.jl")
 _shard_include("test_two_structured_gaussian.jl")
 _shard_include("test_two_structured_gaussian_sparse.jl")

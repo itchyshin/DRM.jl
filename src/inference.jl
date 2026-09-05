@@ -1902,7 +1902,14 @@ function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothi
     (fit.family isa Gaussian && !haskey(fit.scales, :sigma)) && return nothing
     rhs = Dict(fit.formula.forms)
     haskey(rhs, :mu) || return nothing
-    _, re, _, structured = _split_ranef(rhs[:mu])
+    _, re, _, structured, structured_slope = _split_ranef(rhs[:mu]; allow_phylo_slope = true)
+    # A Gaussian `phylo(1 + x | g)` fit (#620) carries TWO phylogenetic fields;
+    # the simulator below draws a single structured intercept, so building it
+    # would silently bootstrap the wrong (intercept-only) model. Refuse.
+    structured_slope === nothing ||
+        throw(ArgumentError("bootstrap: the marginal simulator for the Gaussian " *
+            "`phylo(1 + $(structured_slope) | $(structured[2]))` two-SD random-slope fit is " *
+            "not implemented (#620); use `profile` intervals or the Wald `vcov`"))
     # No random effect on the mean: conditional and marginal coincide, and the
     # plain `simulate` is already correct. Nothing to build.
     (isempty(re) && structured === nothing) && return nothing

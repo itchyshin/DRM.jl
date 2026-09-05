@@ -223,6 +223,86 @@ function _fit_two_structured_gaussian(fam::Gaussian, y, Xμ, gidx1, G1, C1, gidx
         Optim.converged(res), means, obs, scales), nll), blup)
 end
 
+# Gaussian phylogenetic random INTERCEPT + SLOPE with two SDs (#620) — the
+# model drmTMB fits for `phylo(1 + x | species, tree = tree)` on `mu`
+# (`src/drmTMB.cpp` `has_phylo_mu`, q = 2, both dpars on mu):
+#     yᵢ = xᵢᵀβ + a_{s(i)} + b_{s(i)} xᵢ + εᵢ,
+#     a ~ N(0, σₐ² C),  b ~ N(0, σ_b² C),  a ⊥ b,  ε ~ N(0, D),  D = diag(σᵢ²),
+# with C the tree correlation (tip covariance / tree height, drmTMB
+# `drm_phylo_tip_covariance(correlation = TRUE)` ≡ `_phylo_correlation`) and
+# σᵢ = exp(xσᵢᵀβσ) the fixed-effect residual scale. There is NO intercept–slope
+# correlation: drmTMB's C++ adds one `exp(-2·log_sd_k)·uₖᵀQuₖ` term per field
+# and never a cross term (the correlated branch there is the mu↔sigma q = 2
+# cell only). The marginal stays exactly Gaussian, so the ML fit is the
+# closed-form
+#     y ~ N(Xβ, V),  V = D + σₐ² Z C Zᵀ + σ_b² Zₓ C Zₓᵀ,  Zₓ = diag(x) Z,
+# which is drmTMB's Laplace objective evaluated exactly (Gaussian-linear).
+# DENSE assembly (n×n), like `_fit_two_structured_gaussian`; a sparse/Woodbury
+# spine is a follow-up. θ = [βμ; βσ; log σₐ; log σ_b].
+function _fit_phylo_slope_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, C, xs, nmμ, nmσ,
+                                   grp, var, g_tol)
+    n = length(y)
+    length(xs) == n || error("drm: slope variable `$(var)` has $(length(xs)) rows, expected $n")
+    pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    Z = _structured_Z(gidx, G)          # n×G intercept indicator
+    Zx = Z .* xs                        # n×G slope design: row i of Z scaled by xᵢ
+    ZCZt_a = Z * C * Z'                 # constant building blocks (C fixed)
+    ZCZt_b = Zx * C * Zx'
+
+    function nll(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; lσa = θ[pμ+pσ+1]; lσb = θ[pμ+pσ+2]
+        ημ = Xμ * βμ; ησ = Xσ * βσ
+        σa² = exp(2 * lσa); σb² = exp(2 * lσb)
+        V = σa² .* ZCZt_a .+ σb² .* ZCZt_b
+        @inbounds for i in 1:n
+            V[i, i] += exp(2 * ησ[i])
+        end
+        # `check = false` + a large FINITE penalty: a line-search step into a
+        # non-PD region must not throw nor return Inf (HagerZhang asserts finite).
+        Vfac = cholesky(Symmetric(V); check = false)
+        issuccess(Vfac) || return convert(eltype(θ), 1e18)
+        r = y .- ημ
+        quad = dot(r, Vfac \ r)
+        return 0.5 * (logdet(Vfac) + quad) + 0.5 * n * log(2π)
+    end
+
+    βμ0 = Xμ \ y; res0 = y - Xμ * βμ0
+    s0 = std(res0)
+    θ0 = zeros(pμ + pσ + 2)
+    θ0[1:pμ] .= βμ0
+    θ0[pμ+1] = log(s0 / sqrt(3) + eps())              # balanced split: resid + 2 fields
+    θ0[pμ+pσ+1] = log(s0 / sqrt(3) + eps())
+    θ0[pμ+pσ+2] = log(s0 / sqrt(3) / (std(xs) + eps()) + eps())
+    res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    θ̂ = Optim.minimizer(res)
+    Vθ = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
+
+    # :resd carries the two field SDs (log σₐ, log σ_b): the intercept field keyed
+    # by the bare group name (the single-structured convention), the slope field
+    # by `<group>:<x>` — drmTMB's `phylo(1 | g)` / `phylo(0 + x | g)` rows.
+    blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+2)]
+    names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp), "$(grp):$(var)"]]
+    means = Dict(:mu => Xμ * θ̂[1:pμ])
+    obs = Dict(:mu => Vector{Float64}(y))
+    scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
+    # Conditional field estimates (BLUPs) at θ̂: â = σₐ² C Zᵀ V⁻¹ r, b̂ = σ_b² C Zₓᵀ V⁻¹ r.
+    blup = let
+        βμ = θ̂[1:pμ]; βσ = θ̂[(pμ+1):(pμ+pσ)]
+        σa² = exp(2 * θ̂[pμ+pσ+1]); σb² = exp(2 * θ̂[pμ+pσ+2])
+        Vh = σa² .* ZCZt_a .+ σb² .* ZCZt_b
+        ση² = exp.(2 .* (Xσ * βσ))
+        @inbounds for i in 1:n
+            Vh[i, i] += ση²[i]
+        end
+        Vinvr = cholesky(Symmetric(Vh)) \ (y .- Xμ * βμ)
+        a = σa² .* (C * (Z' * Vinvr))
+        b = σb² .* (C * (Zx' * Vinvr))
+        Dict(Symbol(grp) => a, Symbol("$(grp):$(var)") => b)
+    end
+    fit = DrmFit(fam, blocks, names, θ̂, Vθ, -nll(θ̂), n, Optim.converged(res), means, obs, scales)
+    return _withranef(_withnll(fit, nll), blup)
+end
+
 # Coordinate-spatial structured intercept: K(ρ) = exp(-d/ρ) from site distances,
 # with the range ρ estimated jointly (θ gains log σ_s and log ρ). K depends on θ
 # so it is rebuilt each evaluation; otherwise the closed-form marginal is as in
