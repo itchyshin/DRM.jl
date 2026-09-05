@@ -7,6 +7,29 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 ## Unreleased
 
 - **REML on the residual-only bivariate Gaussian route (#624; drmTMB #1142).** `drm(bf(mu1 = y1 ~ x, mu2 = y2 ~ x, sigma1 = ~1, sigma2 = ~1, rho12 = ~1), Gaussian(); method = :REML)` fits instead of refusing. The old message ("`method = :REML` needs random effects to restrict") mistook "no random effects" for "nothing to restrict": REML here integrates the MEAN fixed effects `beta_mu1`/`beta_mu2` out of the Gaussian likelihood under the row-wise 2x2 residual covariance — the classical Patterson–Thompson/SUR case, and the same set native drmTMB hands to TMB's Laplace approximation for this cell (whose Laplace step is EXACT, the integrand being quadratic). Closed form: profile `beta` by GLS, add `-0.5*logdet(sum_i Z_i' S_i^-1 Z_i)` and the `+(p_beta/2)*log(2*pi)` normalising constant, and optimise over `(beta_sigma1, beta_sigma2, beta_rho)` alone. Same-target against drmTMB `engine = "tmb"` with `REML = TRUE` on the committed fixture: logLik `-97.021205818372` on both engines (difference 0.0 at 12 decimal places), coefficients to 4.33e-7, standard errors to 6.54e-7 relative. `vcov` reports the joint mean block `H^-1 + G Var(phi) G'` that TMB's `sdreport()` reports. The ML route is unchanged (same fixture, `-90.202703298791` on both engines, difference 4.8e-13). `meta_V` plus `:REML` keeps its permanent refusal — that route marginalises nothing. `test/test_reml_reml_biv_residual.jl`.
+- **Inference on a missing-response ("response mask") Gaussian fit: `is_converged` read false on a
+  converged fit, and every bootstrap replicate failed (#646).** Both defects sat downstream of the
+  fit itself -- the point estimates were already right, matching drmTMB's `engine = "tmb"` to ~7e-06
+  on the qualification fixture -- which is why nothing caught them until bridge-side inference was
+  measured. (1) `_nondegenerate_fit` (`src/summary.jl`) took its scale-free degeneracy bar as
+  `std(fit.obs[:mu])`, but the missing-response routes keep the full-design response there with NaN
+  in the masked positions, so `yscale` was NaN and `smax > 1e-6 * max(NaN, eps)` was false for every
+  `smax` under IEEE-754. `is_converged` therefore returned false on EVERY masked Gaussian fit,
+  independent of the optimiser: measured on the fixture, `Optim.converged` true, `|grad|inf`
+  6.41e-12 against `g_tol` 1e-8, and `theta` bit-identical to the complete-case fit (max abs diff
+  0.0), yet `is_converged` false. The bar is now taken over the observed (finite) responses only;
+  a genuinely degenerate sigma is still rejected. (2) `_simulate_once` (`src/gaussian_core.jl`)
+  drew `randn(rng, fit.nobs)` -- the count that entered the likelihood, 54 on the fixture -- and
+  broadcast it against the length-60 `means`/`scales` that `_with_full_fixed_gaussian_rows` rebuilds
+  over the full design, throwing `DimensionMismatch` deterministically on every replicate, so
+  `bootstrap_result` raised `"all B bootstrap replicates failed"`. Draws are now taken per row of
+  the design, which is also the length `_bootstrap_data` needs to merge back into the caller's
+  table. (3) Found while fixing those: `_with_full_fixed_gaussian_rows` and `_with_full_response_rows`
+  used the 19-argument compatibility constructor, silently resetting `iterations` to -1
+  ("not recorded") -- the identical complete-case fit reported 7 -- and dropping the MAP penalty
+  slots; both now pass all 22 fields. Guarded by `test/test_bridge_response_mask_inference.jl`
+  (21 assertions: converged status, a 5-replicate bootstrap on a masked response, the iteration
+  count, and a degenerate-sigma control proving the widened bar still rejects).
 
 - **Gaussian two-SD phylogenetic random slope `phylo(1 + x | species)` on the mean (#620).** The
   #621 refusal is replaced by the fit on the Gaussian mean route: two INDEPENDENT phylogenetic
