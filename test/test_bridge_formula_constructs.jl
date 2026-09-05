@@ -35,7 +35,10 @@ const _FC_Y = 0.6 .+ 0.35 .* _FC_X .- 0.08 .* _FC_X .^ 2 .+ 0.25 .* _FC_Z .+
     [grp == "lo" ? 0.2 : grp == "mid" ? -0.15 : 0.0 for grp in _FC_GRP] .+
     [0.05 * sin(7.0 * i) for i in 1:_FC_N]
 const _FC_Y2 = 0.2 .- 0.15 .* _FC_X .+ [0.04 * cos(5.0 * i) for i in 1:_FC_N]
-const _FC_DATA = (; y = _FC_Y, y2 = _FC_Y2, x = _FC_X, z = _FC_Z, grp = _FC_GRP)
+# A logical covariate: R names its one treatment column `flagTRUE`; Julia
+# keeps the Bool vector continuous (same 0/1 column) and must render R's name.
+const _FC_FLAG = [_FC_X[i] > 0 for i in 1:_FC_N]
+const _FC_DATA = (; y = _FC_Y, y2 = _FC_Y2, x = _FC_X, z = _FC_Z, grp = _FC_GRP, flag = _FC_FLAG)
 
 function _fc_try(formula; family = "gaussian", options = Dict{String,Any}())
     try
@@ -74,6 +77,12 @@ const _FC_CONSTRUCTS = [
      expected = Dict("mu" => ["(Intercept)", "x"], "sigma" => ["(Intercept)"])),
     (label = "sigma-side factor", formula = "y ~ x; sigma ~ grp",
      expected = Dict("mu" => ["(Intercept)", "x"], "sigma" => ["(Intercept)", "grplo", "grpmid"])),
+    (label = "logical covariate", formula = "y ~ x + flag",
+     expected = Dict("mu" => ["(Intercept)", "x", "flagTRUE"], "sigma" => ["(Intercept)"])),
+    (label = "logical in an interaction", formula = "y ~ x * flag",
+     expected = Dict("mu" => ["(Intercept)", "x", "flagTRUE", "x:flagTRUE"], "sigma" => ["(Intercept)"])),
+    (label = "logical under factor()", formula = "y ~ x + factor(flag)",
+     expected = Dict("mu" => ["(Intercept)", "x", "factor(flag)TRUE"], "sigma" => ["(Intercept)"])),
 ]
 
 # One disagreement per row: the SAME column count as DRM.jl's design, a

@@ -1840,7 +1840,8 @@ function _bridge_render_formula_block(form, param::Symbol, rhs,
     ft = apply_schema(ft, schema(ft, schema_data), StatisticalModel)
     raw = String.(vec(coefnames(ft.rhs)))
     public = _bridge_public_term_labels(
-        ft.rhs, labels.atoms, _bridge_formula_symbol_order(fixed_rhs),
+        ft.rhs, _bridge_bool_column_atoms(labels.atoms, fixed_rhs, schema_data),
+        _bridge_formula_symbol_order(fixed_rhs),
         get(labels.function_labels, label_scope, Dict{String,String}()))
     if length(public) != length(raw)
         _bridge_term_uses_atoms(ft.rhs, labels.atoms) && error(
@@ -1848,6 +1849,30 @@ function _bridge_render_formula_block(form, param::Symbol, rhs,
         return raw, raw
     end
     return raw, public
+end
+
+# R codes a logical covariate as a two-level factor (levels FALSE, TRUE) under
+# treatment contrasts, so its single design column is named `<sym>TRUE`;
+# StatsModels keeps a `Vector{Bool}` continuous -- the SAME 0/1 column -- and
+# names it `<sym>`. Render R's spelling for such columns (plain and inside
+# interactions), so the coef_labels fidelity check compares like with like
+# rather than refusing a design the two engines actually agree on (measured
+# through drmTMB 2026-09-05: `y ~ x + flag` was refused as "flagTRUE" vs
+# "flag" with max|coef diff| 2.6e-14). Scalar function terms keep their
+# recorded source spelling and are not affected. Materialised atoms win.
+function _bridge_bool_column_atoms(atoms::Dict{Symbol,String}, rhs, data)
+    out = copy(atoms)
+    for sym in keys(_bridge_formula_symbol_order(rhs))
+        haskey(out, sym) && continue
+        col = try
+            _table_column(data, sym)
+        catch
+            nothing
+        end
+        col isa AbstractVector{Bool} || continue
+        out[sym] = String(sym) * "TRUE"
+    end
+    return out
 end
 
 function _bridge_formula_symbol_order(rhs)
