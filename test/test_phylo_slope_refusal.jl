@@ -73,16 +73,14 @@ import Distributions
         y = 0.2 .+ 0.4 .* x .+ 0.3 .* randn(n)
         data = (; y, x, species)
 
-        err1 = try
-            drm(bf(@formula(y ~ x + phylo(1 + x | species))), Gaussian();
-                data = data, tree = phy)
-            nothing
-        catch e
-            e
-        end
-        @test err1 isa ArgumentError
-        @test occursin("phylo(1 + x | species)", err1.msg)
-        @test occursin("not implemented", err1.msg)
+        # #620 follow-up landed: the Gaussian MEAN now fits `phylo(1 + x | g)` as
+        # drmTMB's two-SD (intercept + slope, independent fields) model — see
+        # test_phylo_slope_two_sd.jl. It must produce a TWO-row :resd block, not
+        # the intercept-only fit this file was written to catch.
+        fit_slope = drm(bf(@formula(y ~ x + phylo(1 + x | species))), Gaussian();
+                        data = data, tree = phy)
+        @test all(isfinite, fit_slope.theta)
+        @test first(cn[2] for cn in fit_slope.coefnames if cn[1] === :resd) == ["species", "species:x"]
 
         err2 = try
             drm(bf(@formula(y ~ x + phylo(0 + x | species))), Gaussian();
