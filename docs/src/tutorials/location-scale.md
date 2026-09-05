@@ -39,6 +39,11 @@ exp(2 * coef(fit, :sigma)[2]) # the residual-VARIANCE ratio
     `log σ` — quote the scale explicitly when comparing to DHGLM / O'Dea-style
     variance models.
 
+Working in R? The [drmTMB companion tutorial](https://itchyshin.github.io/drmTMB/articles/location-scale.html)
+reports the same explicit SD and variance ratios with R syntax. The two packages
+have distinct APIs, fitting implementations, and route-specific evidence, so
+follow the diagnostics and inference guidance for the package you fit with.
+
 ## Does the scale model earn its keep?
 
 Compare the location–scale fit to a constant-σ fit by log-likelihood:
