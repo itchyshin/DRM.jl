@@ -1,0 +1,13 @@
+{
+  "command": [
+    "julia",
+    "--startup-file=no",
+    "--project=/private/tmp/drm-parity-20260830/integration/DRM.jl",
+    "/private/tmp/drm-parity-20260830/locscale-bootstrap-s11/precision-contract.jl"
+  ],
+  "status": 0,
+  "elapsed": 3.0492045839782804,
+  "estimate_seconds": 10,
+  "cap_seconds": 15,
+  "script_sha256": "b785afc303b0a3bd86eed668decaa61857f6083659979fce259bc5424537460f"
+}

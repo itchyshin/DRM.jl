@@ -1,0 +1,18 @@
+ERROR: LoadError: AssertionError: independent Gamma derivative control failed
+Stacktrace:
+ [1] (::var"#7#12"{Int64})()
+   @ Main /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:107
+ [2] setprecision(f::var"#7#12"{Int64}, ::Type{BigFloat}, prec::Int64; kws::@Kwargs{})
+   @ Base.MPFR ./mpfr.jl:1041
+ [3] setprecision
+   @ ./mpfr.jl:1037 [inlined]
+ [4] numeric_derivative_control
+   @ /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:85 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:286
+in expression starting at /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:284
+S11_WHITE_SOURCE_SHA256=d8727b67ae76c66fcc76cdd9f672b1f2bed72c165bf47e526caf50f769998434
+S11_WHITE_PACKING=(G=4,Q=I4,latents=:interleaved_a_mu1_a_psi1_to_a_mu4_a_psi4,engine_theta=[0.3869272019658678, 0.24110734234901768, 1.5435207241481925, -1.1607129362846789, -0.09792051946355967, -7.743898208574272])
+S11_WHITE_DERIVATIVE_FORMULA=g_eta=s-r*y; g_psi=s*(digamma(s)-log(r)-1-log(y))+r*y; H=(r*y,s-r*y,g_psi-s+s^2*trigamma(s))
+S11_WHITE_TRIGAMMA_EVALUATION=Richardson4_central_derivative_of_BigFloat_digamma(h128=1e-8,h256=1e-16)
+S11_WHITE_GAMMA_DENSITY_ANCHOR=(bits = 128, shape = 3.0, rate = 2.0, mean = 1.5, y = 4.0, expected_nll = 3.841116916640328143496607271250940591557, gamma_nll = 3.841116916640328143496607271250940591557, gamma_data_nll = 3.841116916640328143496607271250940591557, gate = 1.000000000000000000000000000000000000000000000000000000000000000000000000000007e-30)

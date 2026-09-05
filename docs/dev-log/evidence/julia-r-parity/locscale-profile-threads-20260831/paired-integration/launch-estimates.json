@@ -1,0 +1,10 @@
+{
+  "source": "Assistant launch justification in current task tool history, retained after execution",
+  "thread_status": {
+    "launch_justification": "May I finish the threaded failure-status and BLAS-restoration checks locally (15-second estimate, 30-second cap)?",
+    "recorded_wrapper_estimate_seconds": 30,
+    "cap_seconds": 30,
+    "actual_seconds": 19.49834687495604,
+    "qualification": "Launch narration and wrapper estimate differed; completed before the next poll, no retrospective timing change"
+  }
+}

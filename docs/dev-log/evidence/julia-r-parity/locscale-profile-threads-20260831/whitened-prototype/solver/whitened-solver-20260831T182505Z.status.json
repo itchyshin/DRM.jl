@@ -1,0 +1,19 @@
+{
+  "command": [
+    "julia",
+    "--project=.",
+    "--startup-file=no",
+    "--history-file=no",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-prototype/solver/diagnose.jl"
+  ],
+  "hard_cap_seconds": 60,
+  "kind": "whitened_solver_foreground_cap",
+  "log": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-prototype/solver/whitened-solver-20260831T182505Z.log",
+  "pid": 49916,
+  "process_group": 49916,
+  "returncode": 0,
+  "script": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-prototype/solver/diagnose.jl",
+  "stamp": "20260831T182505Z",
+  "timed_out": false,
+  "wall_seconds": 6.81601619720459
+}

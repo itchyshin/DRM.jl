@@ -1,0 +1,5 @@
+converged=false
+iterations=40
+finite_minimizer=true
+finite_minimum=true
+value=0.8034616192008257

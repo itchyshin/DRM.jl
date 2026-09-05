@@ -1,19 +1,24 @@
-# Arcs — DRM.jl tip idle after #404
+# Arcs
 
-Status: `pending` | `in_progress` | `done` | `blocked`
-Gates: `[GATE]` = pause for human.
-
-| id | status | slice | what | gate? |
-|---|---|---|---|---|
-| S0 | done | recon | `git fetch`; tip `733ae972`; issue 136 OPEN; no competing ship PR; branch from `origin/main` | no |
-| S1 | done | handover | `docs/dev-log/handover/2026-08-13-cursor-handover-drm-idle-after-404.md`; banner 2026-08-09 Julia-lane historical | no |
-| S2 | done | LOOP + coord | overwrite LOOP (idle, not wait-#404); refresh Active-Lane-Split; drmTMB row kept | no |
-| S3 | done | DoD docs | check-log.d + after-task (`closeout.py` PASS) + Melissa plan-actual | no |
-| S4 | done | PR | [#405](https://github.com/itchyshin/DRM.jl/pull/405) open, MERGEABLE; issue 136 still OPEN; no closer keywords | **[GATE]** owner merge |
-| NEXT | blocked | first Julia G0 after idle | owner names it; then ultra-plan | **[GATE]** owner names G0 |
-| drmTMB | sibling | `engine="julia"` Workflow G | **other repo** — possibly in progress; unknown here | do not start from DRM.jl |
-| later-136 | parked | two-part / ZI×RE | epic stays OPEN; 136e public Gamma report already on main | owner-named only |
-| #49 | parked | FIML / missing data | issue stays open | owner-named only |
-
-STOP on DRM.jl after S4 until owner merges, then a fresh chat asks for G0.
-Do not autoload later-136 / #49 / drmTMB.
+| Slice | Status | Next gate |
+|---|---|---|
+| S0 | doing | executable leaf + independent review |
+| S1 | doing | executable leaf + independent review |
+| S2 | doing | executable leaf + independent review |
+| S3 | todo | executable leaf + independent review |
+| S4a | todo | executable leaf + independent review |
+| S4b | todo | executable leaf + independent review |
+| S5 | todo | executable leaf + independent review |
+| S6 | todo | executable leaf + independent review |
+| S7 | todo | executable leaf + independent review |
+| S8 | todo | executable leaf + independent review |
+| S9 | doing | two direct-Julia joint routes + imputation uncertainty reviewed; Bern native-fit parity red; bridge and remaining24native obligations open |
+| S10 | doing | reviewed prediction components retained; remaining methods and native stopping discrepancies open |
+| S11 | todo | executable leaf + independent review |
+| S12 | todo | executable leaf + independent review |
+| S13 | doing | Strict 52-page source build and reviewed local reference audit pass; all-page visual, external links and deployed-site verification remain open |
+| S14 | todo | executable leaf + independent review |
+| S15 | todo | executable leaf + independent review |
+| S16 | doing | bounded Melissa checkpoints retained; final original-promise reconciliation remains open |
+| S17 | doing | Served Mission Control refreshed with nine completed test files; keep the active run and next action current |
+| R1 | todo | executable leaf + independent review |

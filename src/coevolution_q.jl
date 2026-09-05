@@ -230,7 +230,20 @@ function coevo_marginal_cov(prob::CoevoProblem, Q_cond::SparseMatrixCSC,
     Dinv = inv(Symmetric(D))
     P = prior_precision(Q_cond, inv(Λ))
     H = coevo_Huu(prob, P, Dinv)
-    chH = cholesky(Symmetric(H))                 # PD: P + PSD data term, root-conditioned
+    # #503 (follow-up): this was `cholesky(Symmetric(H))`, unguarded, behind the
+    # comment "PD: P + PSD data term, root-conditioned". PD by construction in
+    # exact arithmetic -- but H inherits inv(Λ), and at extreme Λ it lands on the
+    # definiteness boundary, where LAPACK detects the indefiniteness on some
+    # builds and not others. Observed throwing PosDefException on CI's Julia
+    # 1.12.7 while passing on 1.12.6 and on macOS 1.10.
+    #
+    # Guarded HERE, at the source, rather than at each caller: three separate
+    # call sites reached this one factorisation, and guarding them one at a time
+    # took two CI rounds to find the third. Note the SAME pattern is already
+    # applied to `chP` twelve lines below, with its own explanation -- that guard
+    # was written and this one was missed, which is exactly the shape of #503.
+    chH = cholesky(Symmetric(H); check = false)
+    issuccess(chH) || return (-Inf, zeros(size(H, 1)), chH, P)
     rhs = coevo_rhs(prob, β, Dinv)
     û = chH \ rhs                                 # conjugate mode (one solve)
 
@@ -436,10 +449,25 @@ function fit_coevolution_q2_residual(prob::CoevoProblem, Q_cond::SparseMatrixCSC
                                        f_reltol = 1e-10, successive_f_tol = 2))
     θ̂ = Optim.minimizer(res)
     β̂, Λ̂, D̂, σ̂, ρ̂ = coevo_q2_residual_unpack(prob, θ̂)
-    ℓ, û, _, _ = coevo_marginal_cov(prob, Q_cond, β̂, Λ̂, D̂)
+    # #503 (follow-up): `negℓ` above already catches a throw from
+    # `coevo_marginal_cov` and returns Inf, but this FINAL evaluation at θ̂ was
+    # unprotected -- and it does throw on CI's Julia 1.12.7, where LAPACK
+    # detects an indefiniteness other builds miss. A fit that cannot evaluate
+    # its own objective at the point it reports is not converged in any useful
+    # sense, so say so rather than returning a NaN likelihood beside
+    # `converged = true`.
+    local ℓ, û, cholesky_ok
+    try
+        ℓ, û, _, _ = coevo_marginal_cov(prob, Q_cond, β̂, Λ̂, D̂)
+        cholesky_ok = true
+    catch e
+        (e isa DomainError || e isa LinearAlgebra.PosDefException ||
+         e isa LinearAlgebra.SingularException) || rethrow(e)
+        ℓ = NaN; û = zeros(prob.q * prob.N); cholesky_ok = false
+    end
     return (; β = β̂, Λ = Λ̂, residual_cov = D̂, σ_res = σ̂, rho12 = ρ̂,
             loglik = ℓ,
-            converged = Optim.converged(res),
+            converged = cholesky_ok && Optim.converged(res),
             iterations = Optim.iterations(res),
             θ = θ̂,
             u_hat = û)

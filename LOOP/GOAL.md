@@ -1,29 +1,56 @@
-# GOAL — DRM.jl tip IDLE after #404 (IMMUTABLE — re-read every arc)
-Read this first, every cycle. Auto-compact eats messages, not this file. Unsure after a compaction?
-Re-read THIS, then checkpoint.md, then continue.
+# GOAL — complete Julia–R parity and better
 
-## Mission
-Land one **docs-only** PR from `origin/main` @ `733ae972` (Merge [#404](https://github.com/itchyshin/DRM.jl/pull/404))
-that writes the tip-idle START HERE kit. Then the desk is **IDLE** pending an
-owner-named G0. Issue **136 stays OPEN**. Do **not** invent a ship G0. Do **not**
-start drmTMB from this tree. Do **not** start later #136 two-part/ZI×RE or #49
-unless the owner names them.
+Approved by Shinichi in Codex task `01a05261-cd5c-7ca3-a654-cebea9f187fb`, 2026-08-30.
+Read this file and checkpoint.md at every continuation. The active app goal is the same programme.
+The approved execution plan is docs/dev-log/plans/2026-08-30-julia-r-parity.md.
+LOOP/ultra-plan.md is an inherited unrelated Cox-Reid plan; do not use it for this programme.
 
-## Headline
-Tip pointer says **IDLE pending owner G0** — not “merge #404 / 136e in flight”.
+All currently implemented native drmTMB capabilities must work directly in Julia and through
+`engine = "julia"`, with retained correctness evidence. Every registered warm full-workflow
+benchmark must beat a comparably configured R baseline using a reliable automatic thread policy.
+Cold startup is reported separately. Polish the whole Documenter/VitePress site, repair the R
+bridge documentation, preserve/reconcile unfinished work in both repos, and update Mission Control.
 
-## Invariants
-- One *DRM.jl* docs lane for this run (`docs/tip-idle-after-404`). drmTMB = sibling.
-- Fence: no `src/`; no q=4 core rewrite; ML default; issue 136 stays OPEN; #49 parked;
-  no GPL vendoring; never stage `.worktrees/` or `.codex/agents/shannon-coordinator.toml`;
-  D-111 OFF; no inventing ship from ROADMAP; no Experimental → Implemented.
-- START HERE: `docs/dev-log/handover/2026-08-13-cursor-handover-drm-idle-after-404.md`.
-- 2026-08-09 Julia-lane note is historical. Active-Lane-Split on
-  `docs/dev-log/coordination-board.md`.
-- Authoritative WHAT: `LOOP/ultra-plan.md`.
+## Immutable choices
+- Full native-R scope, not the older 12-row bridge ledger. Keep experimental boundaries honest.
+- Separate complete capability/output coverage from the finite benchmark manifest.
+- Targeted validation, not a universal interval-coverage claim. Native bugs need independent adjudication.
+- Warm timing includes preparation, transfers, construction, requested uncertainty and return conversion.
+- Report 1/2/4/8 threads; calibration fixtures are separate from policy evaluation fixtures.
+- Missing, skipped required, stale or absent output evidence never passes a required gate.
+- A remaining speed loss keeps the programme open. Re-estimate after the 8–20 agent-hour reserve;
+  never silently drop cases or run an unbounded further optimization campaign.
 
-## Definition of done (this hygiene slice)
-- Handover + LOOP + coordination-board match tip `733ae972` / #404 MERGED
-- Issue 136 confirmed OPEN; PR body has no closer keywords for that issue
-- Next Immediate Steps = rehydrate → STOP and ask owner for next G0
-- PR open; **owner merge** is the OPEN GATE (do not merge from this lane)
+## Approved boundaries
+Routine scoped edits, tests, builds, checkpoints and local commits proceed without repeat permission.
+Both repositories are in scope; current source checkouts and other lanes are preserved. Named branch
+PR preparation is in scope. Engine/grammar changes follow the approved mathematical contracts with
+Noether/Rose review. Do not change an estimator merely to agree with a buggy reference.
+No release, registration, collaborator message, credentials/security changes, forced Git operation,
+or deletion of historical work. Retire worktrees only against a concrete recoverability/disposition list.
+Respect separate repository merge/ownership gates. No new publication workflow or permission changes.
+Estimate every fit/benchmark before running; >30 min campaigns need measured pre-run + owner approval.
+Totoro CPU <=150 cores, BLAS=1; DRAC allocated jobs only. No campaigns in GitHub Actions.
+
+## Completion
+All required unlazy gates reverified on final sources; Rose independent verdict; Melissa reconciles
+original promises plus this plan. First-pass completion is not programme completion.
+
+## Current execution locations (integration continuation)
+
+Continue in `/private/tmp/drm-parity-20260830/integration/DRM.jl` and sibling
+`drmTMB`, both on `codex/parity-integration-20260831`. These are the active paired
+integration worktrees. The original worktrees listed below are preserved; do not
+resume edits there. The latest operational state is in `LOOP/checkpoint.md`.
+
+## Original execution locations (preserved history)
+
+- Julia: `/private/tmp/drm-parity-20260830/DRM.jl`, branch `codex/julia-r-parity`.
+- R: `/private/tmp/drm-parity-20260830/drmTMB`, branch `codex/julia-r-parity`.
+- Preserve these branches as durable checkpoints. `/private/tmp` itself is not durable storage.
+- Initial sources: DRM f47789646f27221ba4fad29a8ba1b3b8a790b521;
+  drmTMB b35642b4560072cadba7e595e66e00209ebdeb40.
+
+The goal skill wrapper could not resolve its launcher; the canonical launcher inspected was
+Claude-specific and rewrote permission settings. Used isolated git worktrees with unchanged
+permissions and the required codex/ prefix instead. This is not a permission workaround.

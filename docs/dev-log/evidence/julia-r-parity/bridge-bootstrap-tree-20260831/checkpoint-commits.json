@@ -1,0 +1,6 @@
+{
+  "R": "48e362e96de8bd75f909b747a4bd00886c838c48",
+  "MissionControl": "5cf820c",
+  "Julia": "Containing commit: git log -1 -- src/bridge.jl; exact source hashes in final-source.json",
+  "R_report_correction": "761941c9579356a1ae3fa5a904b9255fd7dc9a55"
+}

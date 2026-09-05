@@ -1,0 +1,3 @@
+Test Summary:                                          | Pass  Total  Time
+Gamma covariance gradient at retained profile failures |   24     24  3.3s
+LOCSCALE_PRECISION_REFERENCE_OK

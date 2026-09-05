@@ -1,0 +1,4 @@
+Full R parse-expression echo omitted from the MIT repository to avoid vendoring GPL source.
+Raw log retained outside DRM.jl: /private/tmp/drm-parity-20260830/R-source-parse-logs/r-parse-green.log
+Original SHA256: c64809e96af2f16bb61a0b8d5ac2456cdc71b817b79d75c2b657875d69d1ed38
+Verdict: R_PARSE_PASS

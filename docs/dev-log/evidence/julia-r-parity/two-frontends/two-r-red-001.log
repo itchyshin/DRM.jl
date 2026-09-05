@@ -1,0 +1,21 @@
+
+══ Testing test-julia-joint-two.R ══════════════════════════════════════════════
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 1 | WARN 0 | SKIP 0 | PASS 0 ]
+
+── Error ('test-julia-joint-two.R:12:3'): two Gaussian Julia preparation preserves both native designs and all masks ──
+Error in `drm_julia_joint_mi_setup(entries)`: The Julia joint missing-predictor adapter requires exactly one mi() term in mu.
+x Found 2 mi() terms.
+Backtrace:
+    ▆
+ 1. └─two_joint_prepare() at test-julia-joint-two.R:12:3
+ 2.   └─drmTMB:::drm_julia_joint_prepare(...) at test-julia-joint-two.R:6:3
+ 3.     └─drmTMB:::drm_julia_joint_mi_setup(entries) at drmTMB/R/julia-joint-missing.R:252:3
+ 4.       └─cli::cli_abort(...) at drmTMB/R/julia-joint-missing.R:75:5
+ 5.         └─rlang::abort(...)
+
+[ FAIL 1 | WARN 0 | SKIP 0 | PASS 0 ]
+Error:
+! Test failures.
+Execution halted

@@ -65,6 +65,7 @@ t.pvalue       # < 0.05 when x is truly predictive
 function lrtest(reduced::DrmFit, full::DrmFit)
     _reml_compare_guard(reduced, full, "lrtest")
     _marginal_compare_guard(reduced, full, "lrtest")
+    _map_compare_guard(reduced, full, "lrtest")
     Δdof = dof(full) - dof(reduced)
     Δdof > 0 || throw(ArgumentError(
         "lrtest: `full` must have more parameters than `reduced` " *
@@ -82,7 +83,7 @@ end
 # the parameter space, where the LR statistic is NOT χ²(Δdof) — the correct
 # reference is a chi-bar-square mixture (see `lrt_boundary`/`chibar_pvalue`).
 const _VARIANCE_COMPONENT_BLOCKS =
-    (:resd, :resid, :recov, :phylocov, :resd_mu, :resd_sigma)
+    (:resd, :resid, :recov, :phylocov, :resd_mu, :resd_sigma, :sd, :sd_phylo)
 
 # Variance-component block symbols present in `fit` (with a non-empty range).
 function _variance_component_blocks(fit::DrmFit)
@@ -138,6 +139,22 @@ function _reml_compare_guard(a::DrmFit, b::DrmFit, verb::AbstractString)
             "variance structures). Refit both with method = :ML for a cross-mean-structure test."))
     end
     return nothing
+end
+
+# Penalized-MAP guard (A4c): a penalized fit is a maximum-a-posteriori estimate,
+# so its variance components are deliberately shrunk toward zero. The likelihood
+# ratio of two such fits does not have the usual chi-square reference
+# distribution — the prior is doing part of the work the test would attribute to
+# the data. drmTMB flags the same hazard as a note from `check_penalized_fit()`;
+# because a silent wrong p-value is worse than a refusal, DRM.jl errors here and
+# surfaces the same information through `check_drm(fit).penalized_map`.
+function _map_compare_guard(a::DrmFit, b::DrmFit, verb::AbstractString)
+    (a.estim_method === :MAP || b.estim_method === :MAP) || return nothing
+    throw(ArgumentError(
+        "$verb: cannot compare penalized (MAP) fits — a `penalty = drm_phylo_penalty(...)` " *
+        "fit shrinks its variance components, so the likelihood-ratio statistic does not have " *
+        "the usual chi-square distribution. Refit both without `penalty` to test, or compare " *
+        "the penalized fits on their own terms."))
 end
 
 # Mixed-marginal guard (#136 Arc 0): a VA `loglik` is an ELBO, not a Laplace

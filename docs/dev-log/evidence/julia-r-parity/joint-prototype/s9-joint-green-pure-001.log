@@ -1,0 +1,32 @@
+ERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_predictor.jl:98
+Test Summary:                        | Pass  Total  Time
+prepared joint missing-predictor API |    6      6  0.0s
+Test Summary:                                       | Pass  Total  Time
+Gaussian predictor exact row likelihood and moments |   15     15  1.7s
+Bernoulli predictor finite-state likelihood and moments: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_predictor.jl:98
+  Got exception outside of a @test
+  ArgumentError: Bernoulli x must contain only 0, 1, or missing
+  Stacktrace:
+    [1] prepared_joint_model(y::Vector{Union{Missing, Float64}}, x::Vector{Union{Missing, Float64}}, Xmu::Matrix{Float64}, Xsigma::Matrix{Float64}, Xpredictor::Matrix{Float64}; predictor::Symbol, mu_names::Vector{String}, sigma_names::Vector{String}, predictor_names::Vector{String}, original_row::Vector{Int64})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_predictor.jl:115
+    [2] prepared_joint_model
+      @ /private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_predictor.jl:101 [inlined]
+    [3] _joint_fixture(predictor::Symbol; eta_extreme::Float64)
+      @ Main /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_predictor.jl:30
+    [4] _joint_fixture(predictor::Symbol)
+      @ Main /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_predictor.jl:21
+    [5] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_predictor.jl:99 [inlined]
+    [6] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [7] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_predictor.jl:99
+    [8] include(mod::Module, _path::String)
+      @ Base ./Base.jl:495
+    [9] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:318
+   [10] _start()
+      @ Base ./client.jl:552
+Test Summary:                                           | Error  Total  Time
+Bernoulli predictor finite-state likelihood and moments |     1      1  0.4s

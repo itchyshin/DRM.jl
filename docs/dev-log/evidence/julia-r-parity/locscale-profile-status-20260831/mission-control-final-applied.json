@@ -1,0 +1,15 @@
+{
+  "commit": "3e80247c31cd2be0d662bc5f75512429515fae68",
+  "changed_file": "Shinichi/Dashboards/mission-control/live/status/drmTMB.json",
+  "changed_fields": [
+    "now.next_safe_action",
+    "now.active_lane"
+  ],
+  "source_before_sha256": "5431a07a1531c905c104c7e3925c6c0a439fd0decc6043ba905c47a429beb0f9",
+  "source_after_sha256": "dc1e113221c1e7d1538e965d4bcd4cef95efc7aadbb7cd858c1d195eaf070bdc",
+  "foreign_staged_raw_before_after_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "foreign_staged_unchanged": true,
+  "served_url": "http://127.0.0.1:8823/p/drmTMB/status.json",
+  "served_fields_match": true,
+  "scope": "Exact status fields and resume path only; no foreign memory or intake read or edited"
+}

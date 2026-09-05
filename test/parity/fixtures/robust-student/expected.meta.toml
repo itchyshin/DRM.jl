@@ -1,5 +1,5 @@
-drmtmb_version = "0.6.0"
-generated_on = "2026-08-05"
+drmtmb_version = "0.7.0"
+generated_on = "2026-08-24"
 r_call = "drmTMB(drm_formula(y ~ x, sigma ~ 1, nu ~ 1), family = student(), data = dat)"
 seed = 20260607
 note = "Generated outputs only; no drmTMB source vendored. Student nu on shared log(nu - 2) scale (nu = 2 + exp(eta)); no transform."

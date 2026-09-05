@@ -1,0 +1,9 @@
+capability_id	label	status	max_abs_coef_diff	loglik_tmb	loglik_julia	loglik_diff	tolerance	note
+base_gaussian_location_scale	Gaussian location-scale, fixed effects	PARITY_FAIL	NA	-147.200318336657	-147.200318332073	4.58354065813182e-09	1e-04	coefficient key sets differ
+base_gaussian_intercept_only	Gaussian, intercept-only sigma	PARITY_FAIL	NA	-111.916606161749	-111.916606161748	5.25801624462474e-13	1e-04	coefficient key sets differ
+fe_poisson	Poisson, fixed effects	PARITY_FAIL	NA	-244.763152612771	-244.763152612771	1.70530256582424e-13	1e-04	R-via-Julia bridge parity (engine='julia'), drmTMB 0.7.0; coefficient key sets differ
+fe_nbinom2	NegBinomial2, fixed effects	PARITY_FAIL	NA	-259.886625779688	-259.886625779688	1.13686837721616e-13	1e-04	R-via-Julia bridge parity (engine='julia'), drmTMB 0.7.0; coefficient key sets differ
+fe_gamma	Gamma (log link), fixed effects	PARITY_FAIL	NA	-172.781768721901	-172.781768719151	2.74985723081045e-09	1e-04	R-via-Julia bridge parity (engine='julia'), drmTMB 0.7.0; coefficient key sets differ
+plain_binomial_nonphylo	Binomial (logit, trials), fixed effects	PARITY_FAIL	NA	-281.60182353557	-281.601823535571	1.02318153949454e-12	1e-04	R-via-Julia bridge parity (engine='julia'), drmTMB 0.7.0; coefficient key sets differ
+biv_lognormal	Bivariate lognormal, fixed effects	PARITY_FAIL	NA	-963.280401630484	-963.280401630477	7.38964445190504e-12	1e-04	capability parity vs DRM.jl bridge payload; not bridge admission; coefficient key sets differ
+biv_student	Bivariate Student-t, fixed effects	PARITY_FAIL	NA	-2239.20897620934	-2239.20897620831	1.02591002359986e-09	1e-04	capability parity vs DRM.jl bridge payload; not bridge admission; coefficient key sets differ

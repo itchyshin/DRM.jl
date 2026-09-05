@@ -1,0 +1,61 @@
+[ Info: SetupBuildDirectory: setting up build directory.
+[ Info: Doctest: running doctests.
+[ Info: ExpandTemplates: expanding markdown templates.
+WARNING: replacing module __atexample__named__fam.
+[ Info: CrossReferences: building cross-references.
+┌ Error: Cannot resolve @ref for md"[`AugProblem`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.AugProblem`.
+│ - No docstring found in doc for binding `DRM.AugProblem`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+┌ Error: Cannot resolve @ref for md"[`fit_q4_sparse_tmb`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.fit_q4_sparse_tmb`.
+│ - No docstring found in doc for binding `DRM.fit_q4_sparse_tmb`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+┌ Error: Cannot resolve @ref for md"[`make_problem`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.make_problem`.
+│ - No docstring found in doc for binding `DRM.make_problem`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+┌ Error: Cannot resolve @ref for md"[`fit_q4_sparse_tmb`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM.fit_q4_sparse_tmb`.
+│ - No docstring found in doc for binding `DRM.fit_q4_sparse_tmb`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+┌ Error: Cannot resolve @ref for md"[`_group_index`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM._group_index`.
+│ - No docstring found in doc for binding `Main._group_index`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+┌ Error: Cannot resolve @ref for md"[`_fit_crossed_mean_laplace_nuisance`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM._fit_crossed_mean_laplace_nuisance`.
+│ - No docstring found in doc for binding `Main._fit_crossed_mean_laplace_nuisance`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+┌ Error: Cannot resolve @ref for md"[`_fit_phylo_mean_laplace_nuisance`](@ref)" in docs/src/reference/engine-internals.md.
+│ - No docstring found in doc for binding `DRM._fit_phylo_mean_laplace_nuisance`.
+│ - No docstring found in doc for binding `Main._fit_phylo_mean_laplace_nuisance`.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:47
+[ Info: CheckDocument: running document checks.
+[ Info: Populate: populating indices.
+ERROR: LoadError: `makedocs` encountered an error [:cross_references] -- terminating build before rendering.
+Stacktrace:
+  [1] error(s::String)
+    @ Base ./error.jl:35
+  [2] runner(::Type{Documenter.Builder.RenderDocument}, doc::Documenter.Document)
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/builder_pipeline.jl:259
+  [3] dispatch(::Type{Documenter.Builder.DocumentPipeline}, x::Documenter.Document)
+    @ Documenter.Selectors ~/.julia/packages/Documenter/AXNMp/src/utilities/Selectors.jl:170
+  [4] #90
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:283 [inlined]
+  [5] withenv(::Documenter.var"#90#92"{Documenter.Document}, ::Pair{String, Nothing}, ::Vararg{Pair{String, Nothing}})
+    @ Base ./env.jl:256
+  [6] #89
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:282 [inlined]
+  [7] cd(f::Documenter.var"#89#91"{Documenter.Document}, dir::String)
+    @ Base.Filesystem ./file.jl:112
+  [8] #makedocs#88
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:281 [inlined]
+  [9] main(args::Vector{String})
+    @ Main /private/tmp/drm-parity-20260830/DRM.jl/tools/parity_docs_subset.jl:60
+ [10] top-level scope
+    @ /private/tmp/drm-parity-20260830/DRM.jl/tools/parity_docs_subset.jl:74
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/tools/parity_docs_subset.jl:74
+DOCS_RUNTIME julia=1.10.0 threads=1 blas=1 loaded_drm=/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl
+DOCS_SELECTED=api-stability.md,capabilities.md,changelog.md,cross-family.md,developer-notes/adding-families.md,developer-notes/formula-grammar.md,developer-notes/source-map.md,diagnostics-and-validation/exact-gaussian-diagnostics.md,diagnostics-and-validation/figure-gallery.md,diagnostics-and-validation/implementation-map.md,diagnostics-and-validation/prediction-and-postfit.md,diagnostics-and-validation/profile-likelihood.md,diagnostics-and-validation/simulation-plot-grammar.md,diagnostics-and-validation/small-sample-behaviour.md,diagnostics-and-validation/testing-likelihoods.md,families.md,get-started.md,getting-started.md,index.md,model-guides/convergence.md,model-guides/cross-family-methods.md,model-guides/distribution-families.md,model-guides/large-data.md,model-guides/marginal-la-vs-va.md,model-guides/meta-analysis.md,model-guides/model-map.md,model-guides/model-selection.md,model-guides/model-workflow.md,model-guides/which-scale.md,r-julia-bridge.md,reference/deprecated-marker-internals.md,reference/engine-internals.md,reference/model-fitting-and-postfit.md,reference/model-specification.md,reference/package.md,reference/structured-effect-markers.md,reference/visualization.md,rosetta.md,tutorials/animal-models.md,tutorials/bivariate-coscale.md,tutorials/bivariate-nongaussian.md,tutorials/count-nbinom2.md,tutorials/location-scale-scale.md,tutorials/location-scale.md,tutorials/meta-analysis.md,tutorials/phylogenetic-models.md,tutorials/phylogenetic-spatial.md,tutorials/proportion-beta-binomial.md,tutorials/relmat-known-matrices.md,tutorials/robust-student.md,tutorials/spatial-models.md,tutorials/structural-dependence.md
+DOCS_PRODUCTION_NAVIGATION visible=51 emitted=52

@@ -1,0 +1,51 @@
+START_B2 threads=false
+B2_RESULT (summary = @NamedTuple{param::Symbol, coef::String, estimate::Float64, std_error::Float64, lower::Float64, upper::Float64}[(param = :mu, coef = "(Intercept)", estimate = 0.6370343867318893, std_error = NaN, lower = 0.6133751720522754, upper = 0.6133751720522754), (param = :mu, coef = "x", estimate = 0.24410011044847893, std_error = NaN, lower = 0.4276331534601082, upper = 0.4276331534601082), (param = :sigma, coef = "(Intercept)", estimate = 1.4752150428282675, std_error = NaN, lower = 1.7123107361491918, upper = 1.7123107361491918), (param = :recov, coef = "species:L11", estimate = -1.6628472527725517, std_error = NaN, lower = -2.596447964379107, upper = -2.596447964379107), (param = :recov, coef = "species:L22", estimate = -10.766724573939975, std_error = NaN, lower = -10.700989010383479, upper = -10.700989010383479), (param = :recov, coef = "species:L21", estimate = -0.09607986606146585, std_error = NaN, lower = -0.08627476645890564, upper = -0.08627476645890564)], failures = @NamedTuple{replicate::Int64, seed::UInt64, message::String}[(replicate = 1, seed = 0xa444911bddf134b8, message = "refit did not converge or landed on a degenerate optimum")], attempted = 2, used = 1, failed = 1, seeds = UInt64[0xa444911bddf134b8, 0x3895c920bae1a5f4], threaded = false, worker_threads = 1, julia_threads = 4, blas_threads = 1, blas_oversubscribed = false, elapsed = 1.770111958, check_converged = true)
+coupled Gamma public bootstrap B2: Test Failed at /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/refit-threads4-20260831T201405Z.jl:50
+  Expression: (result.attempted, result.used, result.failed) == (2, 2, 0)
+   Evaluated: (2, 1, 1) == (2, 2, 0)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/refit-threads4-20260831T201405Z.jl:50 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/refit-threads4-20260831T201405Z.jl:41
+START_B2 threads=true
+B2_RESULT (summary = @NamedTuple{param::Symbol, coef::String, estimate::Float64, std_error::Float64, lower::Float64, upper::Float64}[(param = :mu, coef = "(Intercept)", estimate = 0.6370343867318893, std_error = NaN, lower = 0.6133751720522754, upper = 0.6133751720522754), (param = :mu, coef = "x", estimate = 0.24410011044847893, std_error = NaN, lower = 0.4276331534601082, upper = 0.4276331534601082), (param = :sigma, coef = "(Intercept)", estimate = 1.4752150428282675, std_error = NaN, lower = 1.7123107361491918, upper = 1.7123107361491918), (param = :recov, coef = "species:L11", estimate = -1.6628472527725517, std_error = NaN, lower = -2.596447964379107, upper = -2.596447964379107), (param = :recov, coef = "species:L22", estimate = -10.766724573939975, std_error = NaN, lower = -10.700989010383479, upper = -10.700989010383479), (param = :recov, coef = "species:L21", estimate = -0.09607986606146585, std_error = NaN, lower = -0.08627476645890564, upper = -0.08627476645890564)], failures = @NamedTuple{replicate::Int64, seed::UInt64, message::String}[(replicate = 1, seed = 0xa444911bddf134b8, message = "refit did not converge or landed on a degenerate optimum")], attempted = 2, used = 1, failed = 1, seeds = UInt64[0xa444911bddf134b8, 0x3895c920bae1a5f4], threaded = true, worker_threads = 2, julia_threads = 4, blas_threads = 1, blas_oversubscribed = false, elapsed = 1.479766959, check_converged = true)
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+ERROR: LoadError: Some tests did not pass: 6 passed, 3 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/refit-threads4-20260831T201405Z.jl:40
+coupled Gamma public bootstrap B2: Test Failed at /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/refit-threads4-20260831T201405Z.jl:50
+  Expression: (result.attempted, result.used, result.failed) == (2, 2, 0)
+   Evaluated: (2, 1, 1) == (2, 2, 0)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/refit-threads4-20260831T201405Z.jl:50 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/refit-threads4-20260831T201405Z.jl:41
+coupled Gamma public bootstrap B2: Test Failed at /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/refit-threads4-20260831T201405Z.jl:57
+  Expression: result.summary == serial_result.summary
+   Evaluated: @NamedTuple{param::Symbol, coef::String, estimate::Float64, std_error::Float64, lower::Float64, upper::Float64}[(param = :mu, coef = "(Intercept)", estimate = 0.6370343867318893, std_error = NaN, lower = 0.6133751720522754, upper = 0.6133751720522754), (param = :mu, coef = "x", estimate = 0.24410011044847893, std_error = NaN, lower = 0.4276331534601082, upper = 0.4276331534601082), (param = :sigma, coef = "(Intercept)", estimate = 1.4752150428282675, std_error = NaN, lower = 1.7123107361491918, upper = 1.7123107361491918), (param = :recov, coef = "species:L11", estimate = -1.6628472527725517, std_error = NaN, lower = -2.596447964379107, upper = -2.596447964379107), (param = :recov, coef = "species:L22", estimate = -10.766724573939975, std_error = NaN, lower = -10.700989010383479, upper = -10.700989010383479), (param = :recov, coef = "species:L21", estimate = -0.09607986606146585, std_error = NaN, lower = -0.08627476645890564, upper = -0.08627476645890564)] == @NamedTuple{param::Symbol, coef::String, estimate::Float64, std_error::Float64, lower::Float64, upper::Float64}[(param = :mu, coef = "(Intercept)", estimate = 0.6370343867318893, std_error = NaN, lower = 0.6133751720522754, upper = 0.6133751720522754), (param = :mu, coef = "x", estimate = 0.24410011044847893, std_error = NaN, lower = 0.4276331534601082, upper = 0.4276331534601082), (param = :sigma, coef = "(Intercept)", estimate = 1.4752150428282675, std_error = NaN, lower = 1.7123107361491918, upper = 1.7123107361491918), (param = :recov, coef = "species:L11", estimate = -1.6628472527725517, std_error = NaN, lower = -2.596447964379107, upper = -2.596447964379107), (param = :recov, coef = "species:L22", estimate = -10.766724573939975, std_error = NaN, lower = -10.700989010383479, upper = -10.700989010383479), (param = :recov, coef = "species:L21", estimate = -0.09607986606146585, std_error = NaN, lower = -0.08627476645890564, upper = -0.08627476645890564)]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/refit-threads4-20260831T201405Z.jl:57 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/refit-threads4-20260831T201405Z.jl:41
+Test Summary:                     | Pass  Fail  Total   Time
+coupled Gamma public bootstrap B2 |    6     3      9  16.9s

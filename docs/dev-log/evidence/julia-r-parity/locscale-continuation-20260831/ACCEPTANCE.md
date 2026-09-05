@@ -1,0 +1,1 @@
+Estimate 2–5 minutes; cap 300 seconds, one Julia/BLAS thread. CHECK: 327 expected hashes match; before/after unchanged; exit0; all 14 original includes complete and LOCSCALE_CORE_COMPLETE. EXPECT: unchanged tests pass; failure/timeouts remain incomplete. Commented-out corr_locscale_equiv is not executed and is not a pass. No whole-suite/native-R/calibration/performance claim.

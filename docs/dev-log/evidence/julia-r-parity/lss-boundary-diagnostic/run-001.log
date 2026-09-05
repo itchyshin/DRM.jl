@@ -1,0 +1,22 @@
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    2-element Vector{Int64}:
+│     5
+│     6
+│   rcond = 6.782743189577404e-21
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+ERROR: LoadError: UndefVarError: `eigvalsh` not defined
+Stacktrace:
+ [1] _fit_report(label::String, fit::DrmFit{Gaussian}, d::@NamedTuple{phy::DRM.AugmentedPhy{Float64}, rows::Vector{Int64}, tree_species::Vector{Int64}, z_tip::Vector{Float64}, x_tree::Vector{Float64}, study_tree::Vector{Int64}, y_tree::Vector{Float64}, y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, study::Vector{Int64}, species::Vector{String}}; multi::Bool)
+   @ Main /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:126
+ [2] main()
+   @ Main /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:208
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:222
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/tools/lss_boundary_diagnostic.jl:222
+LSS_BOUNDARY_META julia=1.10.0 threads=1 openblas=1 source_sha256=4465956f8786436b72827366032178f1a81f0b76582df7f232d155ed624191f9 test_sha256=9e8f2522841c1294d4cfac6aa11d26fe7c8bd2b1c6d501f2fe22b8391e283068 runner_sha256=1899b8e15ee4c4d1541d51aba7e8b68ab1849746e89132d26ad21432dc4efc4e
+LSS_BOUNDARY_META oracle=hard_correlation_no_test_import=true

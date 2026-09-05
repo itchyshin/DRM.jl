@@ -1,0 +1,22 @@
+[
+  {
+    "source": "src/locscale_grad.jl",
+    "snapshot": "locscale_grad.jl.txt",
+    "sha256": "c036952855ab78d8e2c354eeac4be5903c0b173c53db91a3baf50b43ffbb6dd1"
+  },
+  {
+    "source": "test/test_locscale_precision_derivatives.jl",
+    "snapshot": "test_locscale_precision_derivatives.jl.txt",
+    "sha256": "60d13d50faba58dd9c3a792217a7c01157a110fd650602cf0ee48ba582812525"
+  },
+  {
+    "source": "test/fixtures/locscale_precision/locscale_gamma_l21.toml",
+    "snapshot": "locscale_gamma_l21.toml.txt",
+    "sha256": "8c117983397f05ad6d4c9201702cd8d0b2282a26f68f696395d00ed558ceae73"
+  },
+  {
+    "source": "test/runtests.jl",
+    "snapshot": "runtests.jl.txt",
+    "sha256": "f01119b022b52988ff9fccde1f89b6a4443ac46f072eac9312a85fd455c0e3ff"
+  }
+]

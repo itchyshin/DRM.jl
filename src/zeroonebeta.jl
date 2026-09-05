@@ -34,6 +34,7 @@ function drm(f::DrmFormula, fam::ZeroOneBeta; data, g_tol::Real = 1e-8)
     end
     missing_fit !== nothing && return missing_fit
 
+    _lss_only_gaussian_guard(f, fam)   # #544: refuse, never silently drop, sd() parts
     rhs = Dict(f.forms)
     for (_, r) in f.forms
         _, re, mv, st = _split_ranef(r)
@@ -82,7 +83,7 @@ function _fit_zeroonebeta(fam::ZeroOneBeta, y, Xμ, Xσ, Xz, Xc, nmμ, nmσ, nmz
     θ0[i1+1] = log(fb / (1 - fb))             # logit zoi
     θ0[i2+1] = log(co0 / (1 - co0))           # logit coi
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):i1, :zoi => (i1+1):i2, :coi => (i2+1):i3]
     names = [:mu => nmμ, :sigma => nmσ, :zoi => nmz, :coi => nmc]
     μ̂ = _logistic.(Xμ * θ̂[1:pμ])
@@ -93,5 +94,7 @@ function _fit_zeroonebeta(fam::ZeroOneBeta, y, Xμ, Xσ, Xz, Xc, nmμ, nmσ, nmz
                   :sigma => exp.(Xσ * θ̂[(pμ+1):i1]),
                   :zoi => zoî,
                   :coi => coî)
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end

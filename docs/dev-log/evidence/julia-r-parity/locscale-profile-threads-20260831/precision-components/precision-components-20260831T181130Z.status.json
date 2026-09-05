@@ -1,0 +1,24 @@
+{
+  "blas_threads": 1,
+  "command": [
+    "julia",
+    "--project=.",
+    "--startup-file=no",
+    "--history-file=no",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/precision-components/diagnose.jl",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/precision-components/precision-components-20260831T181130Z.jls"
+  ],
+  "hard_cap_seconds": 20,
+  "julia_threads": 1,
+  "kind": "fixed_precision_components_capped",
+  "log": "/private/tmp/drm-parity-20260830/profile-threads-s11/precision-components/precision-components-20260831T181130Z.log",
+  "mode": "both",
+  "pid": 40674,
+  "process_group": 40674,
+  "returncode": 0,
+  "script": "/private/tmp/drm-parity-20260830/profile-threads-s11/precision-components/diagnose.jl",
+  "script_sha256": "9aea9375ef7b0e9577428e86ec0a2f4b2bc13684cbbe98bdad5a570986fcba37",
+  "stamp": "20260831T181130Z",
+  "timed_out": false,
+  "wall_seconds": 6.64197301864624
+}

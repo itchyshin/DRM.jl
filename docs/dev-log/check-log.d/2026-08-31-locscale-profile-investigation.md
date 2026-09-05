@@ -1,0 +1,1 @@
+| 2026-08-31 | **Location-scale profile defects** (#563) | Pure roots + Gamma thread admission + enabled slow baseline | Two defects reproduced; source repair pending; slow baseline901s exit124, no completed testsets; all327 hashes unchanged; no parity/speed claim | Ada, Fisher, Karpinski, Rose |

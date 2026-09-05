@@ -18,9 +18,10 @@ using DRM
 using Test, Random, LinearAlgebra, SparseArrays
 import Distributions
 
-_nb2_draw(ημ, ηψ) = (r = exp(-2 * ηψ); μ = exp(ημ);
-                     Float64(rand(Distributions.NegativeBinomial(r, r / (r + μ)))))
-_gamma_draw(ημ, ηψ) = (α = exp(ηψ); μ = exp(ημ); rand(Distributions.Gamma(α, μ / α)))
+_public_phylo_nb2_draw(ημ, ηψ) = (r = exp(-2 * ηψ); μ = exp(ημ);
+                                  Float64(rand(Distributions.NegativeBinomial(r, r / (r + μ)))))
+_public_phylo_gamma_draw(ημ, ηψ) = (α = exp(ηψ); μ = exp(ημ);
+                                        rand(Distributions.Gamma(α, μ / α)))
 
 @testset "public phylo location–scale (#202 closeout)" begin
 
@@ -43,8 +44,8 @@ _gamma_draw(ημ, ηψ) = (α = exp(ηψ); μ = exp(ημ); rand(Distributions.Ga
         x = randn(n)
         βμ = [0.30, 0.45]
         βψ = [-0.35]                              # log σ intercept (r = exp(0.70))
-        y = [_nb2_draw(βμ[1] + βμ[2] * x[i] + A[species[i], 1],
-                       βψ[1] + A[species[i], 2]) for i in 1:n]
+        y = [_public_phylo_nb2_draw(βμ[1] + βμ[2] * x[i] + A[species[i], 1],
+                                    βψ[1] + A[species[i], 2]) for i in 1:n]
         data = (; y, x, species)
 
         fit = drm(bf(@formula(y ~ x + (1 | p | phylo(species))),
@@ -76,13 +77,13 @@ _gamma_draw(ημ, ηψ) = (α = exp(ηψ); μ = exp(ημ); rand(Distributions.Ga
         A = LC * randn(p, 2) * Diagonal([0.45, 0.40])
         species = repeat(1:p, inner = m)
         x = randn(n)
-        y = [_gamma_draw(0.2 + 0.35 * x[i] + A[species[i], 1],
-                         0.6 + A[species[i], 2]) for i in 1:n]
+        y = [_public_phylo_gamma_draw(0.2 + 0.35 * x[i] + A[species[i], 1],
+                                      0.6 + A[species[i], 2]) for i in 1:n]
         data = (; y, x, species)
 
         fit = drm(bf(@formula(y ~ x + (1 | p | phylo(species))),
                      @formula(sigma ~ 1 + (1 | p | phylo(species)))),
-                  Gamma(); data = data, tree = phy, se = false, g_tol = 1e-5)
+                  DRM.Gamma(); data = data, tree = phy, se = false, g_tol = 1e-5)
 
         Λ = vc(fit)[:species]
         @test size(Λ) == (2, 2)

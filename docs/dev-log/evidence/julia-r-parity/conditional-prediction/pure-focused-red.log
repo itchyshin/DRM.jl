@@ -1,0 +1,15 @@
+julia-conditional-prediction: 1...
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Error ('test-julia-conditional-prediction.R:46:3'): stored Gaussian ordinary random-intercept mu uses validated BLUPs
+Error in `predict(fit, dpar = "mu", type = "link")`: `predict()` cannot reconstruct a conditional stored `mu` prediction: the Julia bridge did not retain its random-effect payload.
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_equal(...) at test-julia-conditional-prediction.R:46:3
+ 2. ├─stats::predict(fit, dpar = "mu", type = "link")
+ 3. └─drmTMB:::predict.drmTMB_julia(fit, dpar = "mu", type = "link")
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+Error:
+! Test failures.
+Execution halted

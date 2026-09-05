@@ -1,0 +1,9 @@
+{
+  "served_now_matches": true,
+  "vault_commit": "7e41d0543a78ec98befc55641277edcd6a7c6253",
+  "foreign_staged_unchanged": true,
+  "foreign_staged_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "protected_intake_not_read": true,
+  "scope": "Only drmTMB status committed with --only. An earlier guard saw two foreign staged paths; final commit observed unchanged empty foreign staging. Protected intake was not read.",
+  "foreign_staged_empty_at_commit": true
+}

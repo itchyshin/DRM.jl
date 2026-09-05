@@ -70,6 +70,17 @@ spatial(x) = x
 function _fit_structured_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, K, nmμ, nmσ, grp, g_tol)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    # #548: with a NON-CONSTANT residual scale the Woodbury quadratic below
+    # (`q1 - dot(C, Mfac \ C)`) loses every digit as σ_e,i → 0 — measured, it
+    # returned logLik +1.1e105 with `converged = true` at a point whose true dense
+    # value was −1873.48 (drmTMB: −70.38). Route that case through the stable
+    # dense assembly added for #545, which reproduces drmTMB to 7 s.f. The
+    # homoscedastic path (pσ == 1) is the verified one and is left untouched.
+    if pσ > 1
+        return _fit_structured_gaussian_lss(fam, y, Xμ, Xσ, ones(G, 1), gidx, G, K,
+                                            nmμ, nmσ, [String(grp)], grp, g_tol;
+                                            block = :resd)
+    end
     Kfac = cholesky(Symmetric(K))
     Kinv = inv(Kfac)            # constant (K fixed)
     logdetK = logdet(Kfac)
@@ -103,7 +114,7 @@ function _fit_structured_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, K, nmμ, 
     θ0[pμ+pσ+1] = log(std(res0) / 2 + eps())
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
 
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ), :resd => (pμ+pσ+1):(pμ+pσ+1)]
     names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
@@ -190,7 +201,7 @@ function _fit_two_structured_gaussian(fam::Gaussian, y, Xμ, gidx1, G1, C1, gidx
     θ0[pμ+3] = log(s0 / sqrt(3) + eps())
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
 
     # :resd carries BOTH structured SD parameters (logσ₁, logσ₂) so `re_sd` and
     # `vc` report them per grouping factor; :resid carries the residual logσ.
@@ -259,7 +270,7 @@ function _fit_spatial_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, coords, nmμ
     θ0[pμ+pσ+2] = log(max(meandist, eps()))   # meandist>0 by the G/coincidence guards
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
 
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ),
         :resd => (pμ+pσ+1):(pμ+pσ+1), :range => (pμ+pσ+2):(pμ+pσ+2)]
@@ -388,7 +399,7 @@ function _phylo_aug_comp(gidx, G, tree, grp::Symbol)
     phy.n_leaves == G ||
         error("phylo($grp): tree has $(phy.n_leaves) tips but `$grp` has $G levels")
     Q, leaf_pos, q = augmented_tree_precision(phy)
-    Qs = dropzeros!(sparse(Symmetric(Matrix(Q))))   # symmetric, sparse, PD over kept nodes
+    Qs = dropzeros!(sparse(Symmetric(Q, :U)))   # symmetric, sparse, PD over kept nodes
     chQ = cholesky(Symmetric(Qs); check = false)
     issuccess(chQ) ||
         error("phylo($grp): root-conditioned augmented precision is not PD")

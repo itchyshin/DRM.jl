@@ -1,0 +1,27 @@
+{
+  "status": "READ_ONLY_PROTOTYPE_NOT_PRODUCTION_ACCEPTANCE",
+  "production_sha256": "2c534141d8439a4ee339bfc6d795e4a4836fea885f986f677b418016a4afc32f",
+  "files": [
+    {
+      "file": "locscale_prior_direction_prototype.jl",
+      "sha256": "bfc85c5fbdd5effccc75d6da476494f40cc0b42c929995a8fde1f017bb8df289"
+    },
+    {
+      "file": "locscale_prior_direction_prototype-001.log",
+      "sha256": "0a93d35d3eabea3588389322c79eaf032144e16c7a650a5f02c10158ec5c2e3d"
+    },
+    {
+      "file": "locscale_prior_direction_prototype-002.log",
+      "sha256": "3dff30a57c65679a18a71c9448d0eb1309697ee5547f9850b6060c6a2a19279d"
+    },
+    {
+      "file": "locscale_prior_direction_prototype-003.log",
+      "sha256": "62bccfab11c4d11c15549353c56bfddb5861e82830d85311867028813e06c921"
+    },
+    {
+      "file": "connectivity-resume-20260831.json",
+      "sha256": "c34c7053c14716ac7aaf9d1e39800a75e6089377ee867dd057ef6ce46ee055ce"
+    }
+  ],
+  "caveat": "Final script corresponds to 003. Earlier attempt logs retained; earlier script bytes not asserted identical. Current production error margin unchanged; Gamma sixth case still refuses."
+}

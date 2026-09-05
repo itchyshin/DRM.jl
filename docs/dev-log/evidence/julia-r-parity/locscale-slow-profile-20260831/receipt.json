@@ -1,0 +1,23 @@
+{
+  "source_head": "479f1e06464d06592b2d845798a27fdd8a5ac544",
+  "source_hashes": 327,
+  "source_unchanged": true,
+  "hash_check": "against immutable git object",
+  "host": "Totoro",
+  "runtime": "Julia 1.10.10",
+  "julia_threads": 1,
+  "blas_threads": 1,
+  "elapsed_seconds": 901,
+  "exit_status": 124,
+  "group_complete": false,
+  "completed_files": [],
+  "incomplete_files": [
+    "test_locscale_profile.jl"
+  ],
+  "not_started_files": [],
+  "printed_passing_assertions": 0,
+  "testsets": 0,
+  "summaries": [],
+  "skips": [],
+  "scope": "Attempted slow-profile baseline: first testset incomplete, second not reached; no correctness verdict. Zero printed summaries cannot count executed assertions or failures. No performance benchmark."
+}

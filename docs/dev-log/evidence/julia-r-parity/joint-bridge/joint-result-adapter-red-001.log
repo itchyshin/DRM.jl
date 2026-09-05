@@ -1,0 +1,32 @@
+transport_names=gaussian,bernoulli
+gaussian:list
+bernoulli:list
+result_schema=
+result_n=0
+EXPECTED_RED=Julia joint result adapter requires a joint_missing_v1 prepared payload.
+4: value[[3L]](cond)
+3: tryCatchOne(expr, names, parentenv, handlers[[1L]])
+2: tryCatchList(expr, classes, parentenv, handlers)
+1: tryCatch({
+       fit <- drmTMB:::drm_julia_joint_result(result, prepared, 
+           quote(joint_transport), transport$formula, transport$family)
+       cat("UNEXPECTED_PASS=", paste(class(fit), collapse = ","), 
+           "\n", sep = "")
+   }, error = function(e) {
+       cat("EXPECTED_RED=", conditionMessage(e), "\n", sep = "")
+       traceback(2)
+   })
+
+family=gaussian fields=result,prepared,data,formula,family
+result_fields=nobs,family,fitted,dpars,sigma,imputation,coefficient_blocks,original_row,observed_y,converged,vcov,residuals,schema,coef,optimizer_status,observed_x,covariance_status,vcov_names,df,bic,iterations,loglik,corpairs,coef_names,aic,coefficient_terms,coefficients
+prepared_fields=payload,spec
+ACTUAL_RED=gaussian: object 'drm_julia_joint_result' not found
+
+family=bernoulli fields=result,prepared,data,formula,family
+result_fields=nobs,family,fitted,dpars,sigma,imputation,coefficient_blocks,original_row,observed_y,converged,vcov,residuals,schema,coef,optimizer_status,observed_x,covariance_status,vcov_names,df,bic,iterations,loglik,corpairs,coef_names,aic,coefficient_terms,coefficients
+prepared_fields=payload,spec
+ACTUAL_RED=bernoulli: object 'drm_julia_joint_result' not found
+CONSTRUCTOR_RED=gaussian: Julia joint result fitted, residual, and sigma vectors must be finite
+and match the payload rows.
+CONSTRUCTOR_RED=bernoulli: Julia joint result fitted, residual, and sigma vectors must be finite
+and match the payload rows.

@@ -1,0 +1,1 @@
+| 2026-08-30 | S10 conditional/state #563 | Native8fit regression + pure neighbours pass;24/24dense adapter outputs pass;2/3independentfitcases pass, remaining loss retained | R snapshot extraction + typed-label conditional bridge; noJulia src change; no full-parity claim |

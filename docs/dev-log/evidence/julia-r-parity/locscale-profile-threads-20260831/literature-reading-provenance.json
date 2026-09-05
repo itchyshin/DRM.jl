@@ -1,0 +1,23 @@
+{
+  "date": "2026-08-31",
+  "scope": "Public-paper reading; exact user attachment paths were absent; no intake scan or raw paper copied to repository",
+  "zhang": {
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC9481677/fullTextXML",
+    "local_download_sha256": "aa6a1682601408b346a2b995b8a931fe8d297ccfa103c7f970a2f95e7e210c99",
+    "method": "curl public full text; parsed XML methods, tables and discussion"
+  },
+  "leckie": {
+    "url": "https://journals.sagepub.com/doi/10.3102/10769986231210808",
+    "method": "web publisher full text, especially Section3 and Software"
+  },
+  "mixregls": {
+    "url": "https://www.jstatsoft.org/article/view/v052i12",
+    "method": "child paper review; root publisher abstract; Rose detailed PDF not independently verified"
+  },
+  "erratum": {
+    "url": "https://www.jstatsoft.org/index.php/jss/article/downloadSuppFile/v052i12/erratum-2013-09-24.txt",
+    "retrieval": "child urllib.request.urlopen timeout20, direct response; no local raw file retained",
+    "finding": "P-values in accompanying R code corrected; these were not shown in manuscript. mixregls_function.R in MIXREGLS.zip updated.",
+    "independent_root_retrieval": "web failed; rely on explicit child retrieval receipt, not independent replication"
+  }
+}

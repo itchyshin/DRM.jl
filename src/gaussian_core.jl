@@ -99,9 +99,51 @@ function bf(mu::FormulaTerm, dpars::FormulaTerm...)
     forms = Pair{Symbol,Any}[:mu => mu.rhs]
     seen = Set{Symbol}()
     for f in dpars
-        f.lhs isa Term || throw(ArgumentError("bf: each distributional-parameter formula " *
+        flhs = f.lhs
+        # Location–scale–scale (#544): `sd(g) ~ …` puts a linear predictor on the
+        # log SD of the `(1 | g)` random effect (drmTMB grammar). Stored under a
+        # prefixed key so the family routers can extract or refuse it explicitly.
+        if flhs isa FunctionTerm && (flhs.f === sd || flhs.f === sd_phylo)
+            marker = flhs.f === sd ? "sd" : "sd_phylo"
+            (1 <= length(flhs.args) <= 2 && all(a -> a isa Term, flhs.args)) ||
+                throw(ArgumentError("bf: `$marker()` takes the grouping variable of the random " *
+                    "effect and an optional dependence level, e.g. `sd(g) ~ x` or " *
+                    "`sd(species, phylogenetic) ~ x`."))
+            grpsym = flhs.args[1].sym
+            # Canonical grammar mirrors drmTMB: `sd(group)` for the iid (1 | g)
+            # random effect, `sd(group, phylogenetic)` for the phylogenetic SD
+            # (drmTMB: `sd(group, level = "phylogenetic")`; @formula does not
+            # parse keyword arguments or string literals, so the level is a bare
+            # symbol here). `sd_phylo(group)` is the DEPRECATED legacy spelling,
+            # kept working like the twin keeps it, and canonicalised identically.
+            is_phylo = if flhs.f === sd_phylo
+                length(flhs.args) == 1 ||
+                    throw(ArgumentError("bf: `sd_phylo()` already names the phylogenetic level — " *
+                        "use `sd($grpsym, phylogenetic) ~ …` for the canonical spelling."))
+                Base.depwarn("`sd_phylo(g) ~ …` is deprecated; use `sd(g, phylogenetic) ~ …` " *
+                             "(drmTMB: `sd(g, level = \"phylogenetic\")`).", :sd_phylo)
+                true
+            elseif length(flhs.args) == 2
+                lvl = flhs.args[2].sym
+                lvl in (:phylogenetic, :spatial, :animal, :relmat) ||
+                    throw(ArgumentError("bf: `sd($grpsym, $lvl)` — the dependence level must be " *
+                        "one of phylogenetic, spatial, animal, relmat."))
+                lvl === :phylogenetic ||
+                    throw(ArgumentError("bf: `sd(group, $lvl)` random-effect SD models are " *
+                        "planned but not implemented yet — `phylogenetic` is the supported level."))
+                true
+            else
+                false
+            end
+            key = Symbol(is_phylo ? "sdphy_" : "sd_", grpsym)
+            any(p -> first(p) === key, forms) &&
+                throw(ArgumentError("bf: duplicate `$marker($grpsym) ~ …` formula."))
+            push!(forms, key => f.rhs)
+            continue
+        end
+        flhs isa Term || throw(ArgumentError("bf: each distributional-parameter formula " *
             "must read `param ~ …` with a parameter name on the left (got `$(f.lhs)`)."))
-        name = _check_dpar_name!(seen, f.lhs.sym)
+        name = _check_dpar_name!(seen, flhs.sym)
         push!(forms, name => f.rhs)
     end
     any(p -> first(p) === :sigma, forms) || push!(forms, :sigma => ConstantTerm(1))
@@ -132,10 +174,13 @@ struct DrmFit{F}
     nll::Any                               # objective θ ↦ nll(θ) (for profile intervals)
     nllgrad::Any                           # optional gradient callback (g, θ) -> g
     ranef::Any                             # per-group conditional RE estimates (BLUPs); nothing if no RE
-    estim_method::Symbol                   # :ML (default) or :REML — the estimator used
+    estim_method::Symbol                   # :ML (default), :REML, or :MAP (penalized) — the estimator used
     reml_loglik::Float64                   # REML log-likelihood (NaN unless estim_method == :REML)
     ml_loglik::Float64                     # ML log-likelihood (always set; for cross-structure comparison)
     marginal::Symbol                       # :LA (default Laplace) or :VA (ELBO; #136)
+    phylo_penalty::Float64                 # penalty at the optimum (NaN unless estim_method == :MAP)
+    penalty::Any                           # the PhyloPenalty spec that produced it; nothing for ML/REML
+    iterations::Int                        # optimiser iterations actually taken; -1 = not recorded
 end
 
 # 11-arg outer constructor: formula + nll + nllgrad + ranef default to nothing;
@@ -147,34 +192,106 @@ DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, o
     DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales,
            nothing, nothing, nothing, nothing, :ML, NaN, loglik, :LA)
 
+# 19-arg compatibility constructor: the penalized-MAP slots default to "absent".
+# Every pre-existing fitter builds a fit with 11 or 19 positional arguments, so
+# adding `phylo_penalty` / `penalty` to the struct must not force ~70 call sites
+# across 20 family files to change. `_withmap` is the only way to set them.
+DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales,
+       formula, nll, nllgrad, ranef, estim_method, reml_loglik, ml_loglik, marginal) =
+    DrmFit(family, blocks, coefnames, theta, vcov, loglik, nobs, converged, means, obs, scales,
+           formula, nll, nllgrad, ranef, estim_method, reml_loglik, ml_loglik, marginal, NaN, nothing, -1)
+
 _withformula(fit::DrmFit, f) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, f, fit.nll, fit.nllgrad, fit.ranef,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty, fit.iterations)
 
 # Attach the (negative) log-likelihood closure so profile intervals can re-optimise
 # the nuisance parameters at each fixed value. nll(θ) must accept the full θ vector.
 _withnll(fit::DrmFit, nll, nllgrad = nothing) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, nll, nllgrad, fit.ranef,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty, fit.iterations)
 
 # Attach per-group conditional random-effect estimates (BLUPs). `re` is a
 # Dict{Symbol,...} keyed by grouping factor; see ranef(fit) for the public accessor.
 _withranef(fit::DrmFit, re) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, re,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty, fit.iterations)
 
 # Mark the fit as REML-estimated, recording both the REML and ML log-likelihoods.
 # The public `loglik` slot is set to the REML value (with the documented
 # cross-structure caveat); `ml_loglik` stays available for ML-style comparison.
 _withreml(fit::DrmFit, reml_ll::Real, ml_ll::Real) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, Float64(reml_ll), fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
-    :REML, Float64(reml_ll), Float64(ml_ll), fit.marginal)
+    :REML, Float64(reml_ll), Float64(ml_ll), fit.marginal, fit.phylo_penalty, fit.penalty, fit.iterations)
+
+# Mark the fit as penalized-MAP. `loglik` is left as the UNPENALIZED data
+# log-likelihood (drmTMB keeps `fit$logLik` unpenalized too) and the penalty at
+# the optimum is recorded separately, so `-objective == loglik - phylo_penalty`.
+_withmap(fit::DrmFit, pen_value::Real, spec) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
+    :MAP, fit.reml_loglik, fit.ml_loglik, fit.marginal, Float64(pen_value), spec, fit.iterations)
 
 # Tag the integral approximation (`:LA` Laplace default, `:VA` ELBO). Does not
 # change `loglik`; the caller is responsible for putting an ELBO in that slot.
 _withmarginal(fit::DrmFit, m::Symbol) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
     fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
-    fit.estim_method, fit.reml_loglik, fit.ml_loglik, m)
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, m, fit.phylo_penalty, fit.penalty, fit.iterations)
+
+# Record how many iterations the optimiser actually took. Separate from the
+# `iterations` OPTION (a cap on the maximum); this is the achieved count, and it
+# is what the R bridge surfaces as `fit$bridge$iterations`. Defaults to -1 --
+# "not recorded" -- so a fitter that has not been wired up reports honestly
+# rather than reporting 0, which would read as "converged instantly".
+_withiterations(fit::DrmFit, n::Integer) = DrmFit(fit.family, fit.blocks, fit.coefnames, fit.theta,
+    fit.vcov, fit.loglik, fit.nobs, fit.converged, fit.means, fit.obs, fit.scales, fit.formula, fit.nll, fit.nllgrad, fit.ranef,
+    fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal, fit.phylo_penalty, fit.penalty, Int(n))
+
+"""
+    niterations(fit) -> Int
+
+Optimiser iterations actually taken, or `-1` when the fitter does not record it.
+
+Deliberately NOT named `iterations`: `Optim.iterations` already means this, and
+DRM.jl also uses `iterations` as a fitting OPTION (the cap). Keeping the accessor
+distinct stops "max allowed" and "actually taken" being confused for each other.
+
+`-1` is not a placeholder to be filled in later on every route — it is the
+honest answer for a fit that has no single outer optimiser call to count, and
+it is preferred over any approximated or borrowed number (#466).
+
+# Coverage by family
+
+Wired (reports `Optim.iterations(res)` from the LBFGS run that produced `θ̂`):
+`Gaussian` (both the plain ML fixed-effects fit and the Cox–Reid REML
+fixed-effects fit), `Student`, `SkewNormal`, `Poisson`, `NegBinomial2`,
+`TruncatedNegBinomial2`, `Beta`, `BetaBinomial`, `Binomial`, `Gamma`,
+`LogNormal`, `ZeroOneBeta`, `Tweedie`, `CumulativeLogit` — for their fixed-effects
+fit and, where the family has one, its scalar `(1 | g)` random-intercept,
+correlated `(1 + x | g)`, zero-inflated (`zi`), hurdle (`hu`), and (Poisson only)
+AGHQ / coordinate-spatial-range variants. The bivariate residual routes
+(`Gaussian`/`Gaussian`, `Student`/`Student`, `LogNormal`/`LogNormal`) are wired
+the same way; `LogNormal`'s bivariate fit borrows the Gaussian-on-log-y
+optimiser run wholesale (only the reported likelihood is Jacobian-shifted), so
+it carries that run's iteration count rather than re-deriving one.
+`fit_mixed_family`'s cross-family latent-`rho` route reports its own optimiser
+run too, but through the returned `NamedTuple`'s `iterations` field — that route
+does not produce a `DrmFit`, so `niterations` does not apply to it.
+
+Still `-1` (no single outer LBFGS call to attribute the count to, or not yet
+wired): Gaussian's `meta_V`, `phylo`/`relmat`/`animal`/`spatial`, and
+multi-random-effect routes (the Cox–Reid REML *random-intercept* route, e.g.
+Poisson `(1 | g)` with `method = :REML`, also stays `-1` — its reported `θ̂`
+comes from a secondary restricted refit, not the counted LBFGS run, so
+attributing that run's count to it would be a mismatch, not a full count); the
+bivariate Gaussian `phylo`/structured (q2/q4) sparse-Laplace routes; and every
+family's `phylo`/`relmat`/`animal`/coordinate-spatial random-effect routes other
+than Poisson's spatial-range fit above. These share the sparse augmented-state
+Laplace engine (`src/sparse_*.jl`, `src/*_phylo.jl`) rather than a single
+top-level `Optim.optimize` call, so there is no one iteration count to report
+honestly; do not infer non-iteration (e.g. "closed form") from `-1` on these
+routes — check the family/route, not just the flag.
+"""
+niterations(fit::DrmFit) = fit.iterations
 
 # Response-missing helpers. R's `NA_real_` may reach Julia as either `missing`
 # or `NaN`, so the Gaussian response path treats both as absent observations.
@@ -256,15 +373,16 @@ Univariate Gaussian fits support fixed effects plus the structured-effect
 markers documented under [`phylo`](@ref), [`spatial`](@ref), [`animal`](@ref),
 [`relmat`](@ref), and [`meta_V`](@ref).
 
-## `algorithm` — solver selection
+## `algorithm` and `sparse` — solver selection
 
-`algorithm` (default `:auto`) chooses how the model is fit:
+`algorithm` (default `:auto`) and `sparse` choose how the model is fit:
 
 - `:auto` (default) — uses the all-node sparse L-BFGS route for the
-  Gaussian phylogenetic-mean cell: a single `phylo(1 | g)` structured mean
-  random effect (with `tree = …`) and a **constant** residual scale
-  (`sigma ~ 1`, no random effect on `sigma`). Other Gaussian cells keep their
-  cell-specific default fitters.
+  Gaussian phylogenetic-mean cell (`phylo(1 | g)` on mean with `sigma ~ 1`).
+  For phylogenetic location-scale-scale models (`sd(species, phylogenetic) ~ z`),
+  `:auto` selects the O(p) sparse augmented GMRF engine when G > 500 species
+  and the dense scaled-covariance engine for smaller trees. Other Gaussian cells
+  keep their cell-specific default fitters.
 - `:gls`, `:lbfgs` — legacy dense leaf-covariance fitters for the Gaussian
   phylogenetic-mean cell and aliases for the usual default fitters elsewhere.
 - `:em` — force the all-node sparse conjugate-EM route for the Gaussian
@@ -276,14 +394,13 @@ markers documented under [`phylo`](@ref), [`spatial`](@ref), [`animal`](@ref),
   inference. `re_sd(fit)` reports the EM's Brownian phylo SD `σ_phy` (a
   different scale from the GLS fit's correlation-matrix `σ_s`).
 - `:sparse` — force the verified sparse structured-Gaussian route where one is
-  implemented, including the two-structured `phylo + animal/relmat` sparse path.
-- `:sparse_lbfgs` — force the default all-node sparse L-BFGS route for the same
-  Gaussian phylogenetic-mean cell. It profiles the mean fixed effects by sparse
-  GLS at each variance trial, optimises the residual and phylogenetic SDs on the
-  log scale with exact Takahashi trace gradients, attaches a sparse
-  full-objective closure and gradient for profile intervals, and stores the
-  cheap fixed-effect covariance block. Variance-component uncertainty should
-  use profile or bootstrap intervals in this first slice.
+  implemented, including the two-structured `phylo + animal/relmat` sparse path
+  and the O(p) sparse phylogenetic location-scale-scale engine.
+- `:sparse_lbfgs` — force the default all-node sparse L-BFGS route for the
+  Gaussian phylogenetic-mean cell, or the O(p) augmented-state Takahashi selected
+  inverse engine for phylogenetic location-scale-scale models.
+- `sparse = true` — keyword alias to select sparse solvers (e.g. for whole-tree
+  phylogenetic LSS or two-structured Gaussian models).
 
 ```julia
 fit = drm(bf(y ~ x + phylo(1 | sp), sigma ~ 1), Gaussian();
@@ -294,20 +411,109 @@ Bivariate Gaussian fits use [`BivariateDrmFormula`](@ref); with no structured
 marker they fit the residual `rho12` model, and with shared `phylo(1 | group)`
 markers on `mu1`, `mu2`, `sigma1`, and `sigma2` they route to the verified q=4
 phylogenetic engine.
+
+## `method` — ML (default) or REML
+
+`method` (default `:ML`) selects the estimator. `:REML` is opt-in and is
+implemented for:
+(a) the fixed-effect Gaussian location–scale cell,
+(b) a single Gaussian mean random intercept `(1 | g)` on the Woodbury spine (#439),
+(c) Location–Scale–Scale (LSS) models (`sd(g) ~ z`, `sd(species, phylogenetic) ~ z`,
+    and multi-component LSS models; #558), and
+(d) the bivariate q=4 PLSM Laplace engine (`reml_q4`).
+
+σ-RE, random slopes, and non-Gaussian REML stay rejected. REML likelihoods are
+not comparable across fixed-effect structures.
+
+## Missing response handling
+
+Incomplete responses (`missing` or `NaN` in `y`) are supported under the
+observed-rows pattern (matching `response = "include"` in the R bridge).
+For Location-Scale-Scale models (#559), the group index and scale design Z_g
+are parameterised over all G levels, while the likelihood is evaluated on
+observed rows.
 """
-function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false, phylo_coupled::Bool = false)
+function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree = nothing, coords = nothing, g_tol::Real = 1e-8, algorithm::Symbol = :auto, method::Symbol = :ML, profile_ci::Bool = false, phylo_coupled::Bool = false, penalty = nothing, sparse = nothing, impute = nothing, missing = nothing)
     algorithm in (:auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs) ||
         throw(ArgumentError("drm: `algorithm` must be one of :auto, :gls, :lbfgs, :em, :sparse, :sparse_lbfgs (got :$algorithm)"))
     method in (:ML, :REML) ||
         throw(ArgumentError("drm: `method` must be :ML (default) or :REML (got :$method)"))
+    if _has_joint_mi(f)
+        return _fit_joint_formula(f, data; impute=impute,
+            missing=missing === nothing ? miss_control() : missing,
+            g_tol=g_tol, method=method, algorithm=algorithm, K=K, A=A,
+            tree=tree, coords=coords, profile_ci=profile_ci,
+            phylo_coupled=phylo_coupled, penalty=penalty, sparse=sparse)
+    end
+    (impute === nothing && missing === nothing) ||
+        throw(ArgumentError("drm: `impute` and `missing` controls currently require an additive mi(x) joint-model formula; they are not ignored on other routes"))
     rhs = Dict(f.forms)
     fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat/animal/phylo/spatial(1|g)
     fixed_sigma, sigma_re, _, structured_sigma = _split_ranef(rhs[:sigma])  # (1|g)→GHQ; structured_sigma = phylo(1|g) on σ
+    # Penalized MAP (A4c). Validated here, once, so that a `penalty` handed to a
+    # route that cannot honour it ERRORS instead of being silently dropped —
+    # a dropped penalty would return an ML fit wearing a MAP label.
+    if penalty !== nothing
+        penalty isa PhyloPenalty ||
+            throw(ArgumentError("drm: `penalty` must be a `drm_phylo_penalty(...)` specification (got $(typeof(penalty)))"))
+        _has_phylo = (structured !== nothing && structured[1] === :phylo) ||
+                     (structured_sigma !== nothing && structured_sigma[1] === :phylo)
+        _has_phylo ||
+            throw(ArgumentError("drm: `penalty` requires a phylogenetic term in the model " *
+                                "(a `phylo(1 | g)` marker on `mu` and/or `sigma`)."))
+        method === :REML &&
+            throw(ArgumentError("drm: `penalty` and `method = :REML` cannot be combined — a penalized " *
+                                "fit is a maximum-a-posteriori (MAP) estimator and REML is a " *
+                                "restricted-likelihood estimator. Use `method = :ML` (the default)."))
+    end
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, fixed_sigma, data)
     response_observed = _observed_response_mask(y)
     has_missing_response = !all(response_observed)
     all_structured = _collect_structured(rhs[:mu])
+    # Location–scale–scale (#544): `sd(g) ~ …` — dispatch before every other route
+    # so an unsupported combination ERRORS instead of silently dropping the sd()
+    # part (the issue-#2 silent-drop class).
+    sdpp = _sdphylo_parts(f)
+    sdp = _sd_parts(f)
+    if !isempty(sdpp) || !isempty(sdp)
+        # Shared refusals for every sd() route (single or multi component).
+        length(sdpp) ≤ 1 ||
+            throw(ArgumentError("drm: one `sd(group, phylogenetic) ~ …` formula per model."))
+        structured_sigma === nothing ||
+            throw(ArgumentError("drm: sd() submodels with a σ-phylo random effect are not " *
+                "supported — the residual scale takes FIXED-effect predictors here."))
+        metav === nothing ||
+            throw(ArgumentError("drm: sd() submodels cannot be combined with `meta_V(...)`."))
+        isempty(sigma_re) ||
+            throw(ArgumentError("drm: sd() submodels cannot be combined with a random effect " *
+                "on `sigma`."))
+        penalty === nothing ||
+            throw(ArgumentError("drm: `penalty` is not wired for sd() submodel routes."))
+        re_kinds_sd = [_re_kind(rl) for (rl, _) in re]
+        # The two verified single-component engines keep their exact routes
+        # (#544 Woodbury with REML; #545 dense phylo); every COMBINATION —
+        # several iid REs, iid + phylo, an RE without its own sd() part —
+        # goes to the multi-component dense engine (#555).
+        if isempty(sdpp) && structured === nothing && length(re) == 1 && length(sdp) == 1
+            return _withformula(_drm_gaussian_lss(f, fam, sdp, re, re_kinds_sd, structured,
+                structured_sigma, sigma_re, metav, has_missing_response,
+                y, Xμ, Xσ, nmμ, nmσ, data, g_tol, method), f)
+        elseif isempty(sdp) && isempty(re) && structured !== nothing && length(sdpp) == 1
+            return _withformula(_drm_gaussian_lss_phylo(f, fam, sdpp, re, structured,
+                structured_sigma, sigma_re, metav, has_missing_response,
+                y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method, penalty;
+                algorithm = algorithm, sparse = sparse), f)
+        else
+            # #563 S7b.4: forward algorithm/sparse so the multi-component sd()
+            # router (D-206) can honour an explicit sparse request instead of
+            # silently dropping it — the same forwarding the sibling
+            # `_drm_gaussian_lss_phylo` call two lines above already does.
+            return _withformula(_drm_gaussian_lss_multi(f, fam, sdp, sdpp, re, re_kinds_sd,
+                structured, has_missing_response, y, Xμ, Xσ, nmμ, nmσ, data, tree, g_tol, method;
+                algorithm = algorithm, sparse = sparse), f)
+        end
+    end
     # σ-phylo location-scale (B0–B2): a structured phylo marker on `sigma` routes to
     # the Gaussian location-scale Laplace engine (separate / coupled / asymmetric
     # blocks + boundary-aware profile CIs). The 4th `_split_ranef` value used to be
@@ -322,6 +528,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         end
         tree === nothing && error("phylo(1 | $(sigma_grp)) on sigma needs `tree = …`")
         phy = tree isa AbstractString ? augmented_phy(tree) : tree
+        _warn_if_tree_not_unit_height(phy)
         labels_sigma = getproperty(data, sigma_grp)
         Q_sigma, gidx_sigma, G_sigma = _locscale_phylo_setup(phy, labels_sigma)
 
@@ -391,7 +598,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                                                nmμ, nmσ, String(sigma_grp);
                                                coupled = phylo_coupled, asymmetric = false,
                                                se = true, profile_ci = profile_ci,
-                                               reml = reml, g_tol = g_tol)
+                                               reml = reml, g_tol = g_tol, penalty = penalty)
             return _withformula(fit, f)
         end
 
@@ -405,22 +612,34 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                                            nmμ, nmσ, String(sigma_grp);
                                            coupled = false, asymmetric = true,
                                            se = true, profile_ci = profile_ci,
-                                           reml = reml, g_tol = g_tol)
+                                           reml = reml, g_tol = g_tol, penalty = penalty)
         return _withformula(fit, f)
     end
     phylo_coupled &&
         throw(ArgumentError("drm: `phylo_coupled` is an internal bridge option for Gaussian mu+sigma phylo ML fits"))
     if method === :REML
-        # REML (opt-in, experimental) is implemented only for the fixed-effect
-        # univariate Gaussian location–scale cell in this slice (the standard
-        # Patterson–Thompson correction for β_μ). Random-effect / structured /
-        # meta cells and the bivariate q=4 path are gated by their own REML work
-        # (report/reml-wiring-design.md, slice 1 / #187); reject them clearly.
-        (isempty(re) && isempty(sigma_re) && structured === nothing && metav === nothing &&
-         length(_collect_structured(rhs[:mu])) == 0) ||
-            throw(ArgumentError("drm: method = :REML is currently implemented only for the " *
-                "fixed-effect Gaussian location–scale model (no random effects, no structured " *
-                "/ phylo / meta terms). Use method = :ML (the default) for those models."))
+        # REML (opt-in) is implemented for (a) the fixed-effect univariate
+        # Gaussian location–scale cell and (b) a single mean random intercept
+        # `(1 | g)` on the Woodbury spine (#439). σ-RE, slopes, multi-ranef,
+        # structured / phylo / meta, and non-Gaussian REML stay rejected.
+        # The bivariate q=4 path has its own REML gate.
+        ordinary_mean_intercept = length(re) == 1 &&
+            _re_kind(re[1][1])[1] === :intercept &&
+            isempty(sigma_re) && structured === nothing && metav === nothing &&
+            length(_collect_structured(rhs[:mu])) == 0
+        (ordinary_mean_intercept ||
+         (isempty(re) && isempty(sigma_re) && structured === nothing &&
+          metav === nothing && length(_collect_structured(rhs[:mu])) == 0)) ||
+            throw(ArgumentError("drm: method = :REML is not implemented for this model on the " *
+                "generic univariate Gaussian route (random slopes, a random effect on sigma, " *
+                "a structured mean marker — phylo/relmat/animal/spatial — without a matching " *
+                "sd() submodel, and meta_V() all land here). REML IS available for: the " *
+                "fixed-effect Gaussian location–scale model; a single Gaussian mean random " *
+                "intercept `(1 | g)`; every sd() LSS route (`sd(g)`, `sd_phylo` dense and " *
+                "sparse, and the multi-component sd() router); the bivariate structured " *
+                "routes (q=2 and q=4, both native and via drm_bridge); and Poisson `(1 | g)` " *
+                "and Poisson `phylo(1 | species)`. Use method = :ML (the default) for this " *
+                "model."))
     end
     if algorithm in (:em, :sparse_lbfgs)
         # The all-node sparse routes fit only the supported cell: a single
@@ -438,11 +657,51 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                 "random effect (no additional `(1 | g)` / meta_V terms)."))
     end
     if has_missing_response
-        (isempty(re) && isempty(sigma_re) && structured === nothing && metav === nothing &&
-         length(all_structured) == 0) ||
+        # The phylo-MEAN cell accepts masked responses by fitting the observed
+        # rows against the FULL tree, matching drmTMB's
+        # `miss_control(response = "include")` semantics. This is measured, not
+        # assumed (D-179 #2, 2026-08-27): native drmTMB's own include and drop
+        # fits on this cell are byte-identical — with rows conditionally
+        # independent given the latent field, a missing Gaussian response
+        # integrates out of its own likelihood factor entirely, so no
+        # missing-response likelihood exists to derive. The subset-tolerant
+        # leaf matching (#482) keeps a fully-masked species in the phylo prior
+        # with no likelihood term, exactly like the σ-phylo route above. Only
+        # this exact cell is unwrapped: the dense structured fallback
+        # (non-constant sigma design), relmat/animal/spatial, `(1|g)`, and
+        # `meta_V` match rows to levels POSITIONALLY, which is not subset-safe
+        # (#482's trap), so they still refuse below.
+        phylo_mean_cell = structured !== nothing && structured[1] === :phylo &&
+            length(all_structured) == 1 && isempty(re) && isempty(sigma_re) &&
+            metav === nothing && size(Xσ, 2) == 1 &&
+            algorithm in (:auto, :em, :sparse, :sparse_lbfgs)
+        if phylo_mean_cell
+            keep = collect(response_observed)
+            n_obs = count(keep)
+            total_dof = size(Xμ, 2) + size(Xσ, 2) + 1   # + the phylo variance
+            n_obs >= total_dof ||
+                error("drm (Gaussian mean-phylo): only $(n_obs) observed responses for a model " *
+                      "with $(total_dof) parameters — too few to fit.")
+            grp_ms = structured[2]
+            labels_kept = getproperty(data, grp_ms)[keep]
+            y = Float64.(y[keep]); Xμ = Xμ[keep, :]; Xσ = Xσ[keep, :]
+            data = NamedTuple{(grp_ms,)}((labels_kept,))
+            response_observed = trues(n_obs)
+            has_missing_response = false
+        elseif !(isempty(re) && isempty(sigma_re) && structured === nothing &&
+                 metav === nothing && length(all_structured) == 0)
             throw(ArgumentError("drm: missing Gaussian responses are currently supported for " *
-                "fixed-effect univariate location-scale models. Structured, random-effect, " *
-                "and meta-analysis response-missing support need their own likelihood slice."))
+                "fixed-effect univariate location-scale models, the σ-phylo location-scale " *
+                "route, and the phylo-MEAN cell (`phylo(1 | g)` on the mean with `sigma ~ 1`, " *
+                "fitted as observed rows + full tree, matching drmTMB's " *
+                "`response = \"include\"`). This is a ROUTE-level restriction, not a " *
+                "family-level one — DRM.jl's engine has no missing-response handling for a " *
+                "relmat/animal/spatial mean term, a random effect, `meta_V`, or a phylo mean " *
+                "with a non-constant sigma design, whose positional row-to-level matching is " *
+                "not subset-safe (#482). Dropping the missing-response rows before calling " *
+                "`drm` (matching `missing = miss_control(response = \"drop\")` at the R " *
+                "bridge, or `drm_listwise` natively) is the supported route there."))
+        end
     end
     if !isempty(sigma_re)                                      # random effect on log σ
         (isempty(re) && structured === nothing && metav === nothing) ||
@@ -507,11 +766,35 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                 isempty(sigma_re) && size(Xσ, 2) == 1
             if use_sparse_phylo
                 phy = tree isa AbstractString ? augmented_phy(tree) : tree
+        _warn_if_tree_not_unit_height(phy)
+                # Match rows to tree LEAVES BY NAME/tip-index (#482), not by the
+                # generic `_group_index` position used above for relmat/animal/
+                # spatial. `_group_index` numbers levels by first-seen order in
+                # `data`, independent of the tree — fine when every leaf is
+                # present, but a SPECIES SUBSET (e.g. after a caller drops
+                # missing-response rows upstream) renumbers the remaining species
+                # 1:(fewer), silently pointing rows at the WRONG tree leaves
+                # instead of just failing the `G == phy.n_leaves` count check.
+                # `_phylo_mean_leaf_index` is subset-tolerant: an absent leaf gets
+                # no observation and stays in the phylo prior only, matching the
+                # σ-phylo route's identical convention.
+                gidx_phy = _phylo_mean_leaf_index(phy, getproperty(data, grp))
                 algorithm in (:auto, :sparse_lbfgs) && return _withformula(
-                    _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol), f)
+                    _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx_phy, phy.n_leaves, phy, nmμ, nmσ, grp, g_tol;
+                                                          penalty = penalty), f)
+                # The conjugate-EM variant maximises a different surrogate; adding a
+                # prior to it is a separate derivation, not a wiring change.
+                penalty === nothing ||
+                    throw(ArgumentError("drm: `penalty` is not wired for `algorithm = :$(algorithm)` " *
+                                        "(the conjugate-EM phylo variant). Use `algorithm = :auto` or " *
+                                        "`:sparse_lbfgs` for a penalized phylo fit."))
                 return _withformula(
-                    _fit_structured_gaussian_em(fam, y, Xμ, Xσ, gidx, G, phy, nmμ, nmσ, grp, g_tol), f)
+                    _fit_structured_gaussian_em(fam, y, Xμ, Xσ, gidx_phy, phy.n_leaves, phy, nmμ, nmσ, grp, g_tol), f)
             end
+            penalty === nothing ||
+                throw(ArgumentError("drm: `penalty` is only wired for the sparse phylo route. This model " *
+                                    "fell back to the dense structured fitter (extra random effects, " *
+                                    "`meta_V`, or a non-constant `sigma` design alongside `phylo(1 | $grp)`)."))
             _phylo_correlation(tree)
         end
         size(Kmat) == (G, G) || error("structured matrix must be $(G)×$(G) (the number of `$grp` levels)")
@@ -544,7 +827,9 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
         (_, grp) = re[1]; (kind, var) = re_kinds[1]
         gidx, G = _group_index(getproperty(data, grp))
         w = kind === :intercept ? ones(length(y)) : Float64.(getproperty(data, var))
-        return _withformula(_fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol), f)
+        reml_here = method === :REML && kind === :intercept
+        return _withformula(_fit_ranef_gaussian(fam, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol;
+                                               reml = reml_here), f)
     end
     comps = map(zip(re, re_kinds)) do ((_, grp), (kind, var))  # multiple scalar components
         w = kind === :intercept ? ones(length(y)) : Float64.(getproperty(data, var))
@@ -574,13 +859,15 @@ function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     θ0[pμ+1] = log(std(y - Xμ * βμ0) + eps())
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
-    V = inv(ForwardDiff.hessian(nll, θ̂))
+    V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :sigma => (pμ+1):(pμ+pσ)]
     names = [:mu => nmμ, :sigma => nmσ]
     means = Dict(:mu => Xμ * θ̂[1:pμ])
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end
 
 function _with_full_fixed_gaussian_rows(fit::DrmFit, y_full, Xμ_full, Xσ_full)
@@ -882,7 +1169,7 @@ function _fit_fixed_gaussian_reml(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
         return s + const_2pi
     end
     fit = DrmFit(fam, blocks, names, θ̂, V, reml_ll, n, Optim.converged(res), means, obs, scales)
-    return _withreml(_withnll(fit, nll_full), reml_ll, ml_ll)
+    return _withiterations(_withreml(_withnll(fit, nll_full), reml_ll, ml_ll), Optim.iterations(res))
 end
 
 # ---- accessors -----------------------------------------------------------
@@ -1399,7 +1686,7 @@ end
 
 # One residual-level replicate (the per-draw kernel). Returns a response Vector
 # for univariate / RE / meta fits, or a Dict(:mu1, :mu2) for bivariate Gaussian.
-function _simulate_once(fit::DrmFit, rng)
+function _simulate_once(fit::DrmFit, rng; mu = nothing, sigma = nothing)
     n = fit.nobs
     fam = fit.family
     if fam isa Gaussian && haskey(fit.scales, :sigma1)   # bivariate Gaussian
@@ -1414,7 +1701,14 @@ function _simulate_once(fit::DrmFit, rng)
     # Non-Gaussian families: draw from the fitted distribution. μ is on the
     # response scale (fit.means[:mu]); per-row auxiliary parameters are stored in
     # `fit.scales` by the family fitters.
-    μ = fit.means[:mu]
+    # `mu` overrides the FITTED conditional mean. The parametric bootstrap needs to
+    # draw at a mean built from freshly redrawn random effects, and it must reuse
+    # this function's per-family draw logic rather than duplicate it (#462).
+    # Private auxiliary override for joint location-scale bootstrap draws. It
+    # retains the stored slot convention: NB2/Beta/BB use sigma, whereas the
+    # canonical coupled Gamma route stores shape (as in quantile residuals).
+    # Neither override mutates the fitted object.
+    μ = mu === nothing ? fit.means[:mu] : mu
     if fam isa Poisson
         if haskey(fit.scales, :zi)
             zi = fit.scales[:zi]
@@ -1425,7 +1719,8 @@ function _simulate_once(fit::DrmFit, rng)
         end
         return Float64[rand(rng, Distributions.Poisson(max(m, 0.0))) for m in μ]
     elseif fam isa NegBinomial2
-        θ = _scale_vector(fit, :sigma)
+        σ = sigma === nothing ? _scale_vector(fit, :sigma) : sigma
+        θ = @. 1 / (σ * σ)
         if haskey(fit.scales, :zi)
             zi = fit.scales[:zi]
             return Float64[rand(rng) < zi[i] ? 0 : rand(rng, Distributions.NegativeBinomial(θ[i], θ[i] / (θ[i] + μ[i]))) for i in 1:n]
@@ -1435,20 +1730,24 @@ function _simulate_once(fit::DrmFit, rng)
         end
         return Float64[rand(rng, Distributions.NegativeBinomial(θ[i], θ[i] / (θ[i] + μ[i]))) for i in 1:n]
     elseif fam isa TruncatedNegBinomial2
-        θ = _scale_vector(fit, :sigma)
+        σ = sigma === nothing ? _scale_vector(fit, :sigma) : sigma
+        θ = @. 1 / (σ * σ)
         return Float64[_rand_positive_negbin(rng, θ[i], θ[i] / (θ[i] + μ[i])) for i in 1:n]
     elseif fam isa Beta
-        σ = _scale_vector(fit, :sigma); φ = @. 1 / (σ * σ)
+        σ = sigma === nothing ? _scale_vector(fit, :sigma) : sigma
+        φ = @. 1 / (σ * σ)
         return Float64[rand(rng, Distributions.Beta(clamp(μ[i], eps(), 1 - eps()) * φ[i], (1 - clamp(μ[i], eps(), 1 - eps())) * φ[i])) for i in 1:n]
     elseif fam isa BetaBinomial
-        σ = _scale_vector(fit, :sigma); φ = @. 1 / (σ * σ)
+        σ = sigma === nothing ? _scale_vector(fit, :sigma) : sigma
+        φ = @. 1 / (σ * σ)
         ntr = round.(Int, _scale_vector(fit, :trials))
         return Float64[rand(rng, Distributions.BetaBinomial(ntr[i], clamp(μ[i], eps(), 1 - eps()) * φ[i], (1 - clamp(μ[i], eps(), 1 - eps())) * φ[i])) for i in 1:n]
     elseif fam isa Binomial
         ntr = round.(Int, _scale_vector(fit, :trials))
         return Float64[rand(rng, Distributions.Binomial(ntr[i], clamp(μ[i], eps(), 1 - eps()))) for i in 1:n]
     elseif fam isa Gamma
-        σ = _scale_vector(fit, :sigma); a = @. 1 / (σ * σ)
+        σ = sigma === nothing ? _scale_vector(fit, :sigma) : sigma
+        a = _gamma_sigma_is_shape(fit) ? σ : inv.(abs2.(σ))
         return Float64[rand(rng, Distributions.Gamma(a[i], μ[i] / a[i])) for i in 1:n]
     elseif fam isa LogNormal
         σ = _scale_vector(fit, :sigma)
@@ -1553,6 +1852,30 @@ estimation_method(fit::DrmFit) = fit.estim_method
 
 The restricted (REML) log-likelihood. Returns `NaN` for an ML fit (REML was not
 used). See [`loglik`](@ref) for the cross-structure-comparison caveat.
+
+# A convention gap on the bivariate q=2/q=4 routes (#477)
+
+For the **univariate** fixed-effect Gaussian location–scale REML and the
+Gaussian mean `(1 | g)` REML, this value is the **normalised** Patterson–
+Thompson restricted log-likelihood — the same convention lme4, glmmTMB and TMB
+report, so it is directly comparable to `logLik()` from those packages.
+
+The **bivariate q=2 and q=4 Laplace REML routes** (`src/reml_q2.jl`,
+`src/reml_q4.jl` — reached via structured/phylo bivariate fits with
+`method = :REML`) now report the **same normalised scale** (#477, 2026-08-25).
+
+They previously omitted the `(n_β/2)·log(2π)` constant while these univariate
+routes included it, so `reml_loglik(fit)` meant different things depending on
+which route produced the fit. For the q=4 phylo layout with `n_β = 6` the gap was
+`3·log(2π) ≈ 5.51` — large enough to read as a real disagreement between engines
+rather than a labelling difference, which is exactly how it misled this project
+once (see the corrected note in
+`test/parity/q4-reml/biv-q4-phylo-reml/expected.toml`).
+
+Every REML route in DRM.jl now reports the normalised form, matching lme4,
+glmmTMB, TMB and drmTMB. See `fit_q4_reml`'s docstring in `src/reml_q4.jl` for
+the derivation and for the evidence: the q=4 parity gate's `atol_loglik` fell
+from 5.5436 to 0.03 once the constant was no longer being absorbed.
 """
 reml_loglik(fit::DrmFit) = fit.reml_loglik
 
@@ -1579,11 +1902,18 @@ dof(fit::DrmFit) = length(fit.theta)
 # the other model from a single-fit accessor, so we warn once that the value is
 # only valid for variance-only comparisons. `lrtest`/`anova` (which see both fits)
 # enforce the stronger, comparison-aware guard.
+#
+# `_reml_infocrit_warning_text` is factored out so the `drm_bridge` boundary
+# (`_bridge_flatten` in bridge.jl, #624) can echo the SAME wording into the
+# returned dict's `"warnings"` entry instead of only logging to the Julia
+# console, which never reaches the R caller.
+_reml_infocrit_warning_text(which::AbstractString) =
+    "$which on a REML fit: REML log-likelihoods are only comparable across models with " *
+    "the SAME fixed-effect (mean) structure (variance-only differences). For model " *
+    "selection across mean structures, refit with method = :ML."
+
 function _reml_infocrit_warn(fit::DrmFit, which::AbstractString)
-    fit.estim_method === :REML && @warn(
-        "$which on a REML fit: REML log-likelihoods are only comparable across models with " *
-        "the SAME fixed-effect (mean) structure (variance-only differences). For model " *
-        "selection across mean structures, refit with method = :ML.", maxlog = 1)
+    fit.estim_method === :REML && @warn(_reml_infocrit_warning_text(which), maxlog = 1)
     return nothing
 end
 
@@ -1638,6 +1968,12 @@ log-σ scale — the two are NOT directly comparable, and the suffix keeps them
 distinct so a side-by-side read is not silently mixing scales.
 """
 function re_sd(fit::DrmFit)
+    # Location–scale–scale fits (#544) model the RE SD with covariates, so a
+    # single per-grouping SD is ill-defined — refuse rather than misreport.
+    any(p -> first(p) in (:sd, :sd_phylo), fit.blocks) &&
+        throw(ArgumentError("re_sd: this fit models the random-effect SD with covariates " *
+            "(`sd(group) ~ …`), so a single SD per grouping is not defined. Use " *
+            "`coef(fit, :sd)` for the log-SD coefficients."))
     d = Dict{Symbol,Float64}()
     for (p, r) in fit.blocks
         p === :resd || continue

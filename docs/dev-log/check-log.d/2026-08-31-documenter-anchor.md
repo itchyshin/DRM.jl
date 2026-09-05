@@ -1,0 +1,1 @@
+| 2026-08-31 | General section-anchor clearance (#563 / G6) | Fresh 52-page / 134-example build; HTML render; upstream CSS byte comparison; four inspected screenshots and geometry; unchanged raw audit failures | Measured heading P2 fixed locally; global G6 and deployment remain open | Pat / Ada |

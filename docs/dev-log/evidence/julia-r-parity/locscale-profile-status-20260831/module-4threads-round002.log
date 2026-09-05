@@ -1,0 +1,65 @@
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+ERROR: LoadError: Some tests did not pass: 76 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:27
+DRM_SOURCE /private/tmp/drm-parity-20260830/integration/DRM.jl/src/DRM.jl
+public canonical result propagates failed-arm diagnostics: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:211
+  Got exception outside of a @test
+  ArgumentError: matrix contains Infs or NaNs
+  Stacktrace:
+    [1] chkfinite
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/LinearAlgebra/src/lapack.jl:86 [inlined]
+    [2] getrf!(A::Matrix{Float64}; check::Bool)
+      @ LinearAlgebra.LAPACK ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/LinearAlgebra/src/lapack.jl:559
+    [3] getrf!
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/LinearAlgebra/src/lapack.jl:557 [inlined]
+    [4] #lu!#158
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/LinearAlgebra/src/lu.jl:82 [inlined]
+    [5] lu!
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/LinearAlgebra/src/lu.jl:81 [inlined]
+    [6] #lu#164
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/LinearAlgebra/src/lu.jl:300 [inlined]
+    [7] lu (repeats 2 times)
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/LinearAlgebra/src/lu.jl:299 [inlined]
+    [8] inv(A::Matrix{Float64})
+      @ LinearAlgebra ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/LinearAlgebra/src/dense.jl:917
+    [9] _ls_vcov(kind::Val{:gamma}, y::Vector{Float64}, Xμ::Matrix{Float64}, Xψ::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, θ::Vector{Float64}, Zη::Matrix{Float64}, Zψ::Matrix{Float64}; h::Float64, a0::Vector{Float64})
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_infer.jl:38
+   [10] _fit_locscale(kind::Val{:gamma}, y::Vector{Float64}, Xμ::Matrix{Float64}, Xψ::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}; βμ0::Nothing, βψ0::Nothing, λ0::Vector{Float64}, Zη::Matrix{Float64}, Zψ::Matrix{Float64}, g_tol::Float64, iterations::Int64, se::Bool)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_fit.jl:143
+   [11] _fit_locscale_frontend(kind::Val{:gamma}, fam::Gamma, f::DrmFormula, rhs::Dict{Symbol, Any}, lc::@NamedTuple{group::Symbol, structkind::Symbol, fixed_mu::StatsModels.Term, fixed_sigma::StatsModels.ConstantTerm{Int64}}, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{Int64}}; g_tol::Float64, se::Bool, tree::Nothing, K::Nothing, A::Nothing, coords::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_frontend.jl:184
+   [12] drm(f::DrmFormula, fam::Gamma; data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{Int64}}, tree::Nothing, K::Nothing, A::Nothing, coords::Nothing, g_tol::Float64, se::Bool, marginal::Symbol, method::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/gamma.jl:59
+   [13] drm
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/src/gamma.jl:39 [inlined]
+   [14] _ls_profile_status_smoke_fit()
+      @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:20
+   [15] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:212 [inlined]
+   [16] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [17] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:212 [inlined]
+   [18] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [19] top-level scope
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:28
+   [20] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [21] top-level scope
+      @ none:4
+   [22] eval
+      @ Core ./boot.jl:385 [inlined]
+   [23] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [24] _start()
+      @ Base ./client.jl:552
+Test Summary:                                               | Pass  Error  Total   Time
+location-scale profile endpoint status                      |   76      1     77  13.9s
+  legacy and structured CI helpers retain doc bindings      |    2             2   0.0s
+  iteration limits are not certified endpoints              |   14            14   0.1s
+  valid roots and no-crossing remain distinct               |   45            45   0.3s
+  absolute-NLL cancellation cannot certify a root           |    7             7   0.1s
+  finite exhausted nuisance solution is rejected            |    8             8   3.3s
+  public canonical result propagates failed-arm diagnostics |           1      1  10.0s

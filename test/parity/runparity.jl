@@ -28,11 +28,11 @@ function _parity_family(family::AbstractString)
     fam == "gaussian_bivariate" && return Gaussian()
     fam == "student" && return Student()
     fam == "nbinom2" && return NegBinomial2()
-    fam == "beta" && return Beta()
-    fam == "poisson" && return Poisson()
-    fam == "gamma" && return Gamma()
-    fam == "binomial" && return Binomial()
-    fam == "lognormal" && return LogNormal()
+    fam == "beta" && return DRM.Beta()
+    fam == "poisson" && return DRM.Poisson()
+    fam == "gamma" && return DRM.Gamma()
+    fam == "binomial" && return DRM.Binomial()
+    fam == "lognormal" && return DRM.LogNormal()
     return nothing
 end
 
@@ -119,6 +119,30 @@ let fixtures_root = joinpath(@__DIR__, "fixtures")
                 if casename == "xfam-external-gllvm"
                     @info "Skipping `$casename`: out of Workflow G / #370 cohort (cross-package gllvm estimand)"
                     @test_skip xfam_out_of_cohort
+                    continue
+                end
+                # bridge-* fixtures (#467) exercise R-only formula constructs —
+                # `I(...)`, `scale(...)`, `factor(...)`, `(...)^k` crossing,
+                # general `- term` removal — that `_parity_formula`'s plain
+                # `@formula` translation below cannot express (#489: it either
+                # errors, e.g. `I` resolving to `LinearAlgebra.I`, or silently
+                # misparses, e.g. `(x+z)^2` as literal elementwise power). Route
+                # these through `drm_bridge`/`compare_bridge` instead — the same
+                # marshalling path `runparity_bridge_formula.jl` already verifies
+                # for this exact cohort — rather than reimplementing the R-formula
+                # translation `src/bridge.jl` already owns.
+                if startswith(casename, "bridge-")
+                    expected = load_expected(dir)
+                    fit_meta = TOML.parsefile(joinpath(dir, "expected.toml"))["fit"]
+                    formula_text = String(get(fit_meta, "formula", ""))
+                    family = String(get(fit_meta, "family", expected.family))
+                    data = load_data(dir)
+                    out = drm_bridge(; formula = formula_text, family = family, data = data)
+                    result = compare_bridge(out, expected)
+                    if !result.passed
+                        @error "Parity FAILED for case `$casename`" failures = result.failures
+                    end
+                    @test result.passed
                     continue
                 end
                 expected = load_expected(dir)

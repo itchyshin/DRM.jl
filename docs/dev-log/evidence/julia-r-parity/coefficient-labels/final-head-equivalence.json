@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "heads": {
+    "DRM.jl": "6d35b1336e84314d97093104fa5a338d1dda5294",
+    "drmTMB": "2cd1f2ce3f3cdc4b07c2778861b152c9c93bc35c"
+  },
+  "head_matches": {
+    "DRM.jl": 107,
+    "drmTMB": 46
+  },
+  "preserved_working_bytes": {
+    "/private/tmp/drm-parity-20260830/DRM.jl/test/runtests.jl": "ee73a86f4b4a4e955638b17630800c70c138f20ea20bd1fadd517cc71ce7a597",
+    "/private/tmp/drm-parity-20260830/DRM.jl/test/test_sparse_precision_storage.jl": "3410d6092be94c717e77fd68771cca02e5a7408150cd606f43c626035e2304c5",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-bridge.R": "99ae417227baf00c962c899fdb1045e5a0d23115384b490f376648008b315a5c",
+    "/private/tmp/drm-parity-20260830/drmTMB/tests/testthat/test-julia-zero-one-beta.R": "8d251fb7323877f4b0c114e1d3538f85922da1356f5508eb00b92d1393968e0f"
+  },
+  "limitation": "Source-blob equivalence to tested owned-only candidates; not full-suite, release, merge or deployment qualification. Manifest remains the recorded untracked runtime dependency.",
+  "reviewed_checker_blobs": {
+    "DRM.jl/tools/check_coefficient_label_receipt.py": "aa1487519bee0164cff24f77fea1cb666dc6dcdea050f8efd50e3e9a28f77b3b",
+    "drmTMB/tools/check-julia-coefficient-labels-receipt.R": "ac90513ebdeca316a845c30f2796cb9504dca342be564510edc520e5a67dd7cc"
+  }
+}

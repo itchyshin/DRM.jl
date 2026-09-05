@@ -1,0 +1,33 @@
+{
+  "scope": "Isolated S10 Gaussian component adapter; excludes all unfinished ZOB changes",
+  "R_base_head": "10a140c1594fe67f21e247aee3807d3c391af622",
+  "Julia_source_anchor": "f47789646f27221ba4fad29a8ba1b3b8a790b521",
+  "candidate_bridge_sha256": "1b43bcd7c3a57ef8125b191c155472f71b768e312bdd82f152fbddcb189aa3db",
+  "candidate_fit_sha256": "1fb01724a4d6060f22f2d4062f09cb0f9ecd5d17f4626d0cbb919fe0a0796b59",
+  "patch_sha256": "04680cd28310f53ebaadaa61bd288ca4ba02625df9b76b30806d31ca29b2c894",
+  "native_methods_sha256": "9822cce16be5d732b9d5b14f93a0be1cbe480ec3a9164611d11256633526ba1f",
+  "native_DLL_sha256": "37ecda8a20e59c7309717865948928fc186bca853cda65b2c23c27805de60174",
+  "selected_old_hunk_starts": [
+    487,
+    499,
+    522,
+    534,
+    545,
+    1109,
+    1125,
+    1134,
+    1790,
+    1801,
+    1887,
+    2532,
+    2540,
+    3933,
+    3983,
+    4074,
+    4130
+  ],
+  "DLL_note": "pkgload temporary copied DLL path no longer exists after R exit; retained src/drmTMB.so has identical SHA256",
+  "historical_stale_receipt": "Initial copied candidate contained a prior RI provenance file; never used to establish executed source. Archived privately and replaced after Rose identified it.",
+  "R_checkpoint": "97b7eee37da93af11ae8fb1475ec05d2063a79bd",
+  "committed_bridge_matches_executed": true
+}

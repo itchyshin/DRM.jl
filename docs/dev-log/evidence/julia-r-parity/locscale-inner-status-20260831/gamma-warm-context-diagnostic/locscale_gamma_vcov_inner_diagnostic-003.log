@@ -1,0 +1,12 @@
+GAMMA_VCOV_INNER_DIAGNOSTIC
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+ERROR: LoadError: ParseError:
+# Error @ /private/tmp/locscale_gamma_vcov_inner_diagnostic.jl:125:59
+println("GAMMA_VCOV_INNER_DIAGNOSTIC")
+println("SOURCE_SHA ",bytes2hex(sha256(read(joinpath(ROOT,\"src/locscale_inner.jl\")))))
+#                                                         ╙ ── not a unary operator
+Stacktrace:
+ [1] top-level scope
+   @ /private/tmp/locscale_gamma_vcov_inner_diagnostic.jl:125
+in expression starting at /private/tmp/locscale_gamma_vcov_inner_diagnostic.jl:125

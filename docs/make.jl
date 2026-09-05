@@ -2,27 +2,29 @@ using Documenter
 using DocumenterVitepress
 using DRM
 
-# Sidebar mirrors drmTMB's pkgdown navbar (5 dropdowns + Reference + Changelog).
+# Five compact menus keep all reference and tutorial routes reachable.
 # The site uses the DocumenterVitepress backend (a VitePress/Vue build, the
 # docs.makie.org look). Node is supplied by NodeJS_20_jll — no system install.
-# warnonly = true while some pages are stubs that reference planned symbols /
-# cross-refs that do not exist yet; tighten this as those pages are filled.
+# Fail on broken examples, links and omitted module docstrings.
 makedocs(
     sitename = "DRM.jl",
     authors = "Shinichi Nakagawa",
     modules = [DRM],
-    warnonly = true,
+    warnonly = false,
     format = DocumenterVitepress.MarkdownVitepress(
-        repo = "https://github.com/itchyshin/DRM.jl",
+        repo = "github.com/itchyshin/DRM.jl",
         devbranch = "main",
         devurl = "dev",
     ),
     pages = [
-        "Home" => "index.md",
-        "Getting started" => "getting-started.md",
-        "Get started" => "get-started.md",
-        "Capabilities" => "capabilities.md",
-        "Model Guides" => [
+        "Start here" => [
+            "Home" => "index.md",
+            "Getting started" => "getting-started.md",
+            "Capabilities" => "capabilities.md",
+            "R ↔ Julia bridge" => "r-julia-bridge.md",
+            "Rosetta (R ↔ Julia)" => "rosetta.md",
+        ],
+        "Model guides" => [
             "model-guides/model-map.md",
             "model-guides/which-scale.md",
             "model-guides/distribution-families.md",
@@ -32,14 +34,18 @@ makedocs(
             "model-guides/convergence.md",
             "model-guides/marginal-la-vs-va.md",
             "model-guides/cross-family-methods.md",
+            "model-guides/meta-analysis.md",
             "model-guides/large-data.md",
+            "Cross-family bivariate" => "cross-family.md",
         ],
         "Tutorials" => [
             "tutorials/location-scale.md",
+            "tutorials/location-scale-scale.md",
             "tutorials/robust-student.md",
             "tutorials/count-nbinom2.md",
             "tutorials/proportion-beta-binomial.md",
             "tutorials/bivariate-coscale.md",
+            "tutorials/bivariate-nongaussian.md",
             "tutorials/meta-analysis.md",
             "tutorials/structural-dependence.md",
             "tutorials/animal-models.md",
@@ -48,8 +54,7 @@ makedocs(
             "tutorials/relmat-known-matrices.md",
             "tutorials/phylogenetic-spatial.md",
         ],
-        "Cross-family bivariate" => "cross-family.md",
-        "Diagnostics & Validation" => [
+        "Diagnostics" => [
             "diagnostics-and-validation/figure-gallery.md",
             "diagnostics-and-validation/prediction-and-postfit.md",
             "diagnostics-and-validation/profile-likelihood.md",
@@ -57,11 +62,7 @@ makedocs(
             "diagnostics-and-validation/exact-gaussian-diagnostics.md",
             "diagnostics-and-validation/testing-likelihoods.md",
             "diagnostics-and-validation/simulation-plot-grammar.md",
-        ],
-        "Developer Notes" => [
-            "developer-notes/formula-grammar.md",
-            "developer-notes/adding-families.md",
-            "developer-notes/source-map.md",
+            "diagnostics-and-validation/small-sample-behaviour.md",
         ],
         "Reference" => [
             "reference/package.md",
@@ -70,10 +71,18 @@ makedocs(
             "reference/deprecated-marker-internals.md",
             "reference/model-fitting-and-postfit.md",
             "reference/visualization.md",
+            "reference/engine-internals.md",
+
+            "Development" => [
+                "developer-notes/formula-grammar.md",
+                "developer-notes/adding-families.md",
+                "developer-notes/source-map.md",
+                "developer-notes/reml-q4-exact-gradient.md",
+                "developer-notes/lss-sparse-multi-component.md",
+                "API stability" => "api-stability.md",
+                "Changelog" => "changelog.md",
+            ],
         ],
-        "R ↔ Julia bridge" => "r-julia-bridge.md",
-        "Rosetta (R ↔ Julia)" => "rosetta.md",
-        "Changelog" => "changelog.md",
     ],
 )
 

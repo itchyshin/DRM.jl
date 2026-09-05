@@ -1,0 +1,2 @@
+PROFILE_DIAGNOSTICS_VALID cases=3 nonconverged_solves=1 inference_certified=false
+PROFILE_DIAGNOSTIC_DAMAGES_REJECTED 6

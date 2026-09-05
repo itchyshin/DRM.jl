@@ -16,4 +16,30 @@ relmat
 
 ```@docs
 meta_V
+meta_vcov_bivariate
+MetaVcovBivariate
+```
+
+## Location–scale–scale submodel markers
+
+```@docs
+sd
+sd_phylo
+```
+
+## Advanced tree preparation helpers
+
+These exported helpers prepare or inspect phylogenetic covariance inputs for
+advanced workflows. They do not make every tree or structured-effect
+combination an admitted fitting route; use the capability matrix for that
+boundary.
+
+```@docs
+augmented_phy
+random_balanced_tree
+random_caterpillar_tree
+phylo_tree_height
+augmented_tree_precision
+sigma_phy_dense
+phylo_correlation
 ```

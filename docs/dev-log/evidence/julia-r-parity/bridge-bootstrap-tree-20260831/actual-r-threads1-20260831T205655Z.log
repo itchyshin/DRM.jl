@@ -1,0 +1,122 @@
+$source_loaded_R
+[1] "/private/tmp/drm-parity-20260830/integration/drmTMB"
+
+$DRM_JL_PATH
+[1] "/private/tmp/drm-parity-20260830/integration/DRM.jl"
+
+$R_version
+[1] "R version 4.6.0 (2026-04-24)"
+
+$dll_paths
+                                                                                        base 
+                                                                                      "base" 
+                                                                                     methods 
+    "/Library/Frameworks/R.framework/Versions/4.6/Resources/library/methods/libs/methods.so" 
+                                                                                       utils 
+        "/Library/Frameworks/R.framework/Versions/4.6/Resources/library/utils/libs/utils.so" 
+                                                                                   grDevices 
+"/Library/Frameworks/R.framework/Versions/4.6/Resources/library/grDevices/libs/grDevices.so" 
+                                                                                    graphics 
+  "/Library/Frameworks/R.framework/Versions/4.6/Resources/library/graphics/libs/graphics.so" 
+                                                                                       stats 
+        "/Library/Frameworks/R.framework/Versions/4.6/Resources/library/stats/libs/stats.so" 
+                                                                                       rlang 
+                           "/Users/z3437171/Library/R/arm64/4.6/library/rlang/libs/rlang.so" 
+                                                                                         cli 
+                               "/Users/z3437171/Library/R/arm64/4.6/library/cli/libs/cli.so" 
+                                                                                        grid 
+          "/Library/Frameworks/R.framework/Versions/4.6/Resources/library/grid/libs/grid.so" 
+                                                                                     lattice 
+    "/Library/Frameworks/R.framework/Versions/4.6/Resources/library/lattice/libs/lattice.so" 
+                                                                                      Matrix 
+      "/Library/Frameworks/R.framework/Versions/4.6/Resources/library/Matrix/libs/Matrix.so" 
+                                                                                         TMB 
+                               "/Users/z3437171/Library/R/arm64/4.6/library/TMB/libs/TMB.so" 
+                                                                                       tools 
+        "/Library/Frameworks/R.framework/Versions/4.6/Resources/library/tools/libs/tools.so" 
+                                                                                      drmTMB 
+"/var/folders/7x/ytfpq14s0v18frbm9v_w9f4c0000gq/T//RtmpWZwEl4/pkgload920524dbe41c/drmTMB.so" 
+                                                                                        brio 
+                             "/Users/z3437171/Library/R/arm64/4.6/library/brio/libs/brio.so" 
+                                                                                    magrittr 
+                     "/Users/z3437171/Library/R/arm64/4.6/library/magrittr/libs/magrittr.so" 
+                                                                                    testthat 
+                     "/Users/z3437171/Library/R/arm64/4.6/library/testthat/libs/testthat.so" 
+                                                                                     mvtnorm 
+                       "/Users/z3437171/Library/R/arm64/4.6/library/mvtnorm/libs/mvtnorm.so" 
+                                                                                         zoo 
+                               "/Users/z3437171/Library/R/arm64/4.6/library/zoo/libs/zoo.so" 
+                                                                                     splines 
+    "/Library/Frameworks/R.framework/Versions/4.6/Resources/library/splines/libs/splines.so" 
+                                                                                    survival 
+  "/Library/Frameworks/R.framework/Versions/4.6/Resources/library/survival/libs/survival.so" 
+                                                                                        MASS 
+          "/Library/Frameworks/R.framework/Versions/4.6/Resources/library/MASS/libs/MASS.so" 
+                                                                                        nlme 
+          "/Library/Frameworks/R.framework/Versions/4.6/Resources/library/nlme/libs/nlme.so" 
+
+ℹ Starting Julia (first call in a session takes ~30-60 s; later calls are
+  fast)...
+Julia version 1.10.0 at location /Users/z3437171/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/bin will be used.
+Loading setup script for JuliaCall...
+Finish loading setup script for JuliaCall.
+drmTMB_drm_bridge (generic function with 1 method)
+  
+drmTMB_drm_bridge_conditional_gaussian_ri (generic function with 1 method)
+  
+drmTMB_drm_bridge_q2_phylo (generic function with 1 method)
+  
+drmTMB_drm_bridge_inference (generic function with 1 method)
+  
+drmTMB_drm_bridge_fixef_inference (generic function with 1 method)
+  
+drmTMB_drm_bridge_structured (generic function with 1 method)
+  
+drmTMB_mixed_family (generic function with 1 method)
+  
+[1] "/private/tmp/drm-parity-20260830/integration/DRM.jl/src/DRM.jl"
+$formula
+$formula$mu
+[1] "y ~ x + (1 | tree_boot | phylo(species))"
+
+$formula$sigma
+[1] "sigma ~ 1 + (1 | tree_boot | phylo(species))"
+
+
+$options
+$options$g_tol
+[1] 1e-08
+
+
+$coefficients
+$coefficients$mu
+(Intercept)           x 
+  0.6688428   0.2666550 
+
+$coefficients$sigma
+(Intercept) 
+  0.8649247 
+
+
+$ci
+        parm level      lower     upper scale   transformation tmb_parameter
+1 fixef:mu:x  0.95 -0.0435313 0.7503841  link linear_predictor          mu_x
+  index    method profile.engine conf.status profile.boundary
+1     2 bootstrap           <NA>   bootstrap            FALSE
+        profile.message julia.threaded julia.workers julia.threads
+1 2/2 successful refits          FALSE             1             1
+  julia.blas_threads julia.elapsed bootstrap.n bootstrap.failed
+1                  1      4.253417           2                0
+  bootstrap.parallel bootstrap.workers
+1               none                 1
+
+Error: isTRUE(all.equal(observed, unname(unlist(expected[1, c("estimate",  .... is not TRUE
+Execution halted
+Julia exit.
+  Activating project at `/private/tmp/drm-parity-20260830/integration/DRM.jl`
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121

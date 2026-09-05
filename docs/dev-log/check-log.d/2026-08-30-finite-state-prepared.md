@@ -1,0 +1,1 @@
+| 2026-08-30 | **Finite-state prepared kernel** (#563) | Targeted/48nativepoint/neighbour tests; independent18+17damage controls; developerpage3examples | 7slice gates met,1defaultfit gate FAILED at unchanged4e-6; fullprogramme open | Ada, Noether, Rose, Melissa |

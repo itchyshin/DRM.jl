@@ -1,0 +1,32 @@
+{
+  "scope": "representative visual review only; not all-page visual or deployed-site verification",
+  "url": "http://127.0.0.1:50253/",
+  "default_viewport": [
+    1280,
+    720
+  ],
+  "mobile_viewport": [
+    390,
+    844
+  ],
+  "observations": [
+    "Homepage and reference navigation readable on desktop",
+    "Model fitting reference readable in light/dark at phone width",
+    "Mobile table of contents navigates to new finite-state section",
+    "No document horizontal overflow on checked390px reference page",
+    "No browser warning/error entries at homepage inspection",
+    "Viewport restored to default after responsive testing",
+    "Separate completed local preview: genuine local-only version metadata served200, version menu exposesdev link to root, no browser warning/error entries. Original182renderfiles unchanged."
+  ],
+  "screenshots": {
+    "home-desktop-light.png": "cfe50308ff49e13565c0658699a92d2c45fe13e26b0af941d8c2dc23cfd355a2",
+    "reference-mobile-dark.png": "650b3f94ea089e274fc4473964549eb868a8eb5179dbcdd37367c539f8faf5ab",
+    "preview-version-menu.png": "048df33d361ee5ec8ef57110a76c220de8b88d2f1f4e232c806535fd8f4f598f",
+    "reference-menu-desktop-light.png": "96268c312eeb2b21735fab94aff1855f465be8044f8df7aa05d3038b1d07ad22",
+    "reference-desktop-dark.png": "c469b263713f2c9d7f7bb234844683fd6c55e0eae0025370ba1b83884641d5cb",
+    "reference-mobile-light.png": "e081f13353568a0daea64063002480000f180197d7ef8449a526d3dcf89d5f38",
+    "engine-internals-desktop-light.png": "5ca06e095d18bb06d8cafac6ce5bc20f2fec545ac1d5484a8d65a113e86d2efa",
+    "finite-reference-mobile-dark.png": "0f3d39c9b816c4151349d1e7e6416fe0913ca71416fd1064727e8cf2444b7225"
+  },
+  "completed_preview_url": "http://127.0.0.1:51129/"
+}

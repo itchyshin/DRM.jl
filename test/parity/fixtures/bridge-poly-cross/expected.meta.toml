@@ -1,0 +1,5 @@
+drmtmb_version = "0.7.0"
+generated_on = "2026-08-25"
+r_call = "drmTMB(drm_formula(y ~ z * poly(x, 2), sigma ~ 1), family = gaussian(), data = dat)"
+seed = 20260824
+note = "Generated outputs only; no drmTMB source vendored (MIT-clean). drm_bridge #492: poly() under `*` crossing. poly rewrites to a `+` group, so this checks the group crosses the way R crosses the matrix columns."

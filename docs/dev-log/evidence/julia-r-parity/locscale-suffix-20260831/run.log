@@ -1,0 +1,29 @@
+2026-08-31T11:47:27Z
+9c958c8f83243bc4664ea272f5ebfcf3f1369cc34a5084afbd8a2619b84b460f  Project.toml
+3352aa55d3cca25d17195987efaaa5e5e6050f064dbf5036ab53e5808e51e899  test/Project.toml
+b1fc84ff68aab61a70d58db505fc5041a43af20cf91dc749290b2a50ac57f51e  test/Manifest.toml
+da8c3168ba55a7b965947327cdf16368fa8435b8a0e097b7d5a7368698edff98  locscale-suffix-pilot-001/run.jl
+d66d16d37209f8c4d899c103926dea12784c025a3806446434dc36f731216deb  locscale-suffix-pilot-001/run.sh
+RUNTIME julia=1.10.10 JuliaThreads=1 BLAS=1 source=/home/snakagaw/drm_parity_blas_c0675b16_001/src/DRM.jl
+START_FILE test_locscale_structured.jl
+Test Summary:                                      | Pass  Total   Time
+structured non-Gaussian location–scale (cluster ④) |   27     27  52.6s
+COMPLETE_FILE test_locscale_structured.jl
+START_FILE test_sigma_axis_re.jl
+Test Summary:                                 | Pass  Total  Time
+σ-axis RE (cluster 2): grad! keyword contract |    3      3  0.6s
+Test Summary:                                    | Pass  Total  Time
+σ-axis RE (cluster 2): Gamma end-to-end recovery |    4      4  6.5s
+COMPLETE_FILE test_sigma_axis_re.jl
+START_FILE test_nonconst_sigma_re.jl
+Test Summary:                                                             | Pass  Total     Time
+non-constant sigma (sigma ~ x) WITH a random effect — non-Gaussian (#164) |   21     21  1m06.3s
+COMPLETE_FILE test_nonconst_sigma_re.jl
+LOCSCALE_SUFFIX_COMPLETE
+┌ Info: cluster ④ Beta relmat gradient gate
+│   abs_diff = 8.786022638984647e-6
+└   rel_bound = 1.7038176826834654e-5
+┌ Info: cluster ④ BetaBinomial relmat gradient gate (5-point)
+│   abs_diff = 2.3540525084797537e-10
+└   rel_bound = 2.2232707714093617e-5
+ELAPSED_SECONDS 126

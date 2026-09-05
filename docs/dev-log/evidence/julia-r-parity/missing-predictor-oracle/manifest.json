@@ -1,0 +1,26 @@
+{
+  "source_hashes": {
+    "tools/missing_predictor_oracle.R": "5253eaa648c9caee3018988bc484ef5d4d11ec833b532b962b07cc2e6e47d01d",
+    "tools/check_missing_predictor_oracle.R": "34bc0bf6648de1456e00e0cfbfa953049a5c9c80ee311917c41a33d2548e07ab",
+    "tools/tests/test_missing_predictor_oracle.R": "d9a9b119c7a8487d2516940de4154ac634405a950bddb6f849bca0375a85025d"
+  },
+  "artifacts": {
+    "native-mi-oracle-001.json": "710a6e7ea54585abbf91b581d3578a0dcdda4e5368f6fa6e9f1028d36872faa0",
+    "native-mi-oracle-001.log.gz": "d4f5844d437bbe72f70757a1f4394c7f75ea85e0933393a2bb7d511a2b499475",
+    "native-mi-oracle-002.json": "21914f47531ed7e73df1f50b031ff860877c1b55666d4ad8d5e1b74b523fedec",
+    "native-mi-oracle-002.log.gz": "f3a7257702e5c42f6d5016bc7b1f06069468b72336279207dfa56f86ca1be0fb",
+    "native-mi-oracle-003.json": "7b9c4fe582296a7f305cd70daf2678ec17927bca9ef689bcce4c0d06decf9880",
+    "native-mi-oracle-003.log.gz": "80a4a97bdce5d770d12367a449e4faa03c82c92ab71f6900962079e2b32124fe",
+    "native-mi-oracle-004.log.gz": "1fbd12609429342650ae4a7fd070912e56f849f9aad6ecf5c3dff38a7925fea1"
+  },
+  "loaded_runtime_files": {
+    "/private/tmp/drm-parity-20260830/R-lib/drmTMB/libs/drmTMB.so": {
+      "recorded_md5": "34c2fee2ac2a12f994f54622e507244a",
+      "sha256": "37ecda8a20e59c7309717865948928fc186bca853cda65b2c23c27805de60174"
+    },
+    "/private/tmp/drm-parity-20260830/R-lib/drmTMB/R/drmTMB.rdb": {
+      "recorded_md5": "dfc7ee290c13f3dd5bbc25e531457bc0",
+      "sha256": "fa84bbf1549bae5340a2b58c4a1b469dd80bc0406e0e5f6100bdcfca3e6fa7fc"
+    }
+  }
+}

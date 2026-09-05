@@ -1,0 +1,22 @@
+{
+  "compensated-objective-baseline-20260831T175112Z.jls": "4dcfe29acd10e30023e9ebede11064782075ac84995eda0c5b1bbcdfc3722d3c",
+  "compensated-objective-baseline-20260831T175112Z.log": "1210b48eed2b90b6fb0ee845958d15e5fd455edcf135e359ea25e2e9d496d765",
+  "compensated-objective-baseline-20260831T175112Z.script-snapshot.jl": "0ffab46ed0334e4b7cfbf082fb9249fae8ee80c350470e4eef30de3a7307e671",
+  "compensated-objective-baseline-20260831T175112Z.status.json": "4e7bccb8206e3530e420323aa57b8ab342713146bd05c8c67ba2829877877945",
+  "compensated-objective-both-20260831T175145Z.jls": "d2975cc983c134227b8f785fdc13dd0d872caa35d708a61cc914b865ddde3743",
+  "compensated-objective-both-20260831T175145Z.log": "88c4685d5c196bb62878778c3c9449277d602d266c045dc1c19ca2adafa505bd",
+  "compensated-objective-both-20260831T175145Z.script-snapshot.jl": "0ffab46ed0334e4b7cfbf082fb9249fae8ee80c350470e4eef30de3a7307e671",
+  "compensated-objective-both-20260831T175145Z.status.json": "23097e1052a292fb99db12ee29b6c8b15d3b76fa276df95267caadc60ab04cd5",
+  "compensated-objective-gradient-20260831T175135Z.jls": "77fcc93a18731fa6049e803091734e56a60082998be51e3172ee6608c4d68bf1",
+  "compensated-objective-gradient-20260831T175135Z.log": "a11f2eecc0b3b4c2a7060674fd16e11663a51abeba595ab6ac2e5cf62bc7dbf1",
+  "compensated-objective-gradient-20260831T175135Z.script-snapshot.jl": "0ffab46ed0334e4b7cfbf082fb9249fae8ee80c350470e4eef30de3a7307e671",
+  "compensated-objective-gradient-20260831T175135Z.status.json": "e354b8969abed5b2f1033ec254bb522102cbaf7b68b42a7e682e7aa2ace2db3b",
+  "compensated-objective-objective-20260831T175140Z.jls": "92dd5981210e609ee3633a37c70909e7408047ac9606d09819b8cbecf04ec697",
+  "compensated-objective-objective-20260831T175140Z.log": "8d19e7f00d03d18445b6d2666f183fbf5e01c33f1441ac4b894727419b646794",
+  "compensated-objective-objective-20260831T175140Z.script-snapshot.jl": "0ffab46ed0334e4b7cfbf082fb9249fae8ee80c350470e4eef30de3a7307e671",
+  "compensated-objective-objective-20260831T175140Z.status.json": "6d4049ff6cfff63c7070a9bfff16447b1ba98662a76ce52680fbff534e784806",
+  "compensated_objective_experiment.jl": "0ffab46ed0334e4b7cfbf082fb9249fae8ee80c350470e4eef30de3a7307e671",
+  "read_results.jl": "325c55ed8fbc34a87458b687e741f496e052ef26159cdcebc4f4b29667a53a3f",
+  "read_saved_direction.jl": "18cc540783227087d94afc3b6c14f591ca8bdc63dae3c15bc4be076f8a4c1fff",
+  "run_compensated_objective_capped.py": "3619b88a6d922731dc17266cd9fdda4beb8e90547415101b2fc26cb56d4773ef"
+}

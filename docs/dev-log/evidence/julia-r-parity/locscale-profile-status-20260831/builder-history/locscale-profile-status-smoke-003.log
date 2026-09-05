@@ -1,0 +1,4 @@
+┌ Info: canonical location-scale profile smoke status
+└   failed = 1
+Test Summary:                                 | Pass  Total  Time
+canonical location-scale profile status smoke |   15     15  6.3s

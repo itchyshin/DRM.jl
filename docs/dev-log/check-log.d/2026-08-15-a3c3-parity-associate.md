@@ -1,0 +1,3 @@
+| slice | date | change | check | result |
+|---|---|---|---|---|
+| A3c-3 staged parity | 2026-08-15 | `tools/parity_associate.R` — staged-association parity vs drmTMB 0.7.0; `_assoc_require_converged` refuses non-converged frozen margins | ran the harness across all 5 pair classes | **2 PASS / 3 BLOCKED** — `gaussian_bernoulli` 2.7e-08 and `bernoulli_bernoulli` 1.9e-08 match drmTMB; the 3 NB2 classes exposed a **DRM.jl NB2 margin non-convergence bug** (σ̂ 5.6e-7, `converged=false`, logLik 291 worse than drmTMB). Association code verified correct: endpoints match to 5e-6, likelihood peaks at truth |

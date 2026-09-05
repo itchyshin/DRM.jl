@@ -1,0 +1,128 @@
+[
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164428Z.after.sha256",
+    "sha256": "8a9aac8f9e88f3cdbad3566536ec61d97e9d7123488513951535eb2c1b301041",
+    "bytes": 1341,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164428Z.after.sha256"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164428Z.before.sha256",
+    "sha256": "851de3a40d9054f63c3355a8c4bd12c8ef9dcb4bf372fe2692ccde7b918ae974",
+    "bytes": 1159,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164428Z.before.sha256"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164428Z.jls",
+    "sha256": "b35c46716d059f67d6917054d15cc52a406c687785efac5b3ab3d150a4cb1958",
+    "bytes": 822,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164428Z.jls"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164428Z.log",
+    "sha256": "11d5501418a1ba8d8124e3a17804428bb3f30868949b789b7b29024851b2209a",
+    "bytes": 1223,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164428Z.log"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164428Z.runner-snapshot.sh",
+    "sha256": "1719ad3b1ce3a2193b5ab7db698201e9d50b832418143094879b3cc8d25cd4bc",
+    "bytes": 3068,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164428Z.runner-snapshot.sh"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164428Z.script-snapshot.jl",
+    "sha256": "b4b9c2d87d62f2961a90741bd292fbd1872de196234289204f221f3a96a8fe41",
+    "bytes": 5410,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164428Z.script-snapshot.jl"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164428Z.status.json",
+    "sha256": "5cfca3fe83ce13706ddab029a2903a542f6f959507fa404cd3dc4e85cee6e316",
+    "bytes": 498,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164428Z.status.json"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164725Z.after.sha256",
+    "sha256": "4e37c5b6e38549e359b06c2b4ffff0368749ac3e4907e7f547bfef6e2962acc9",
+    "bytes": 1341,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164725Z.after.sha256"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164725Z.before.sha256",
+    "sha256": "5a0e09a731e597704a7305a0db7dd31342adcddb89d24e7564c167cab39ee813",
+    "bytes": 1159,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164725Z.before.sha256"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164725Z.jls",
+    "sha256": "d650f848231c2d7da2d135092720c96c5875dc83621d3e4a45404e6e6bd0baf2",
+    "bytes": 683308,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164725Z.jls"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164725Z.log",
+    "sha256": "c8ea1a6fa35580a4228283a98b6971d9564b7038924516a93a9dfd4f737a045b",
+    "bytes": 7724,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164725Z.log"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164725Z.runner-snapshot.sh",
+    "sha256": "1719ad3b1ce3a2193b5ab7db698201e9d50b832418143094879b3cc8d25cd4bc",
+    "bytes": 3068,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164725Z.runner-snapshot.sh"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164725Z.script-snapshot.jl",
+    "sha256": "159fa7e5ebd0d9760319118d6c10d7f94bb2b2886a3206cbf7544bf5bc041418",
+    "bytes": 7586,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164725Z.script-snapshot.jl"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-20260831T164725Z.status.json",
+    "sha256": "7dbfa200151c4f15befb3b64b13adbb7a5cb42b8b37e8e94cb8538bf74ec0a23",
+    "bytes": 497,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164725Z.status.json"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional-l21-expansion-current.pid",
+    "sha256": "db7c14dccddea4e8fc8cf39f35f664edec1522e583e11cc295a8fc92fc76c229",
+    "bytes": 253,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-current.pid"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/directional_l21_expansion.jl",
+    "sha256": "159fa7e5ebd0d9760319118d6c10d7f94bb2b2886a3206cbf7544bf5bc041418",
+    "bytes": 7586,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional_l21_expansion.jl"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/export_l21_tdd_fixture.jl",
+    "sha256": "8f3117745a35fe4cf6d9ef0ebefe3c58f5560a287c5d1376de45830d30657088",
+    "bytes": 5758,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/export_l21_tdd_fixture.jl"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/freeze_passing_pilot.jl",
+    "sha256": "70e80b957c3dfec2adfd401583baf8983bdfe162ab0d6035a225cc652f1f5ef5",
+    "bytes": 1134,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/freeze_passing_pilot.jl"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/locscale_gamma_l21.export-receipt.jls",
+    "sha256": "7d64957fecb459843ee708d8156d400a9efc1472d49b51a1dec42604010de9df",
+    "bytes": 3236,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/locscale_gamma_l21.export-receipt.jls"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/locscale_gamma_l21.toml",
+    "sha256": "8c117983397f05ad6d4c9201702cd8d0b2282a26f68f696395d00ed558ceae73",
+    "bytes": 3100,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/locscale_gamma_l21.toml"
+  },
+  {
+    "path": "docs/dev-log/evidence/julia-r-parity/locscale-profile-threads-20260831/whitened-oracle/run-directional-l21-expansion-cap.sh",
+    "sha256": "1719ad3b1ce3a2193b5ab7db698201e9d50b832418143094879b3cc8d25cd4bc",
+    "bytes": 3068,
+    "source": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/run-directional-l21-expansion-cap.sh"
+  }
+]

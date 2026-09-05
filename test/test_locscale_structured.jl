@@ -10,9 +10,11 @@
 #       (A plain Binomial has no free dispersion, so the overdispersed-binomial
 #       leaf IS the beta-binomial — its φ axis is the scale axis.)
 #
-# Engine-lane test: builds `(Q, gidx, G)` directly via `_locscale_relmat_setup`
-# and calls `_fit_locscale` / `_ls_marginal_grad`, exactly as the phylo lane uses
-# `_locscale_phylo_setup` (test_phylo_locscale.jl). The public drm() coupled
+# Engine-lane test: builds `(Q, gidx, G)` directly via `_locscale_relmat_setup`.
+# The Beta recovery keeps the historical raw-engine oracle. Beta-Binomial uses
+# the certified whitened route selected by the canonical coupled frontend; its
+# raw mathematics remains covered by the separate off-optimum gradient gate.
+# The public drm() coupled
 # `(1 | tag | g)` route for these families is exercised in test_nonconst_sigma_re
 # (i.i.d.) and the structured `(1 | tag | relmat(g))` route in
 # test_locscale_frontend.jl.
@@ -35,14 +37,16 @@
 #
 # Identifiability / honesty notes (mirroring test_phylo_locscale §):
 #   * m ≥ 2 obs/level is REQUIRED (the scale-axis latent is unbounded below at one
-#     obs/level); both recovery fixtures use m ≥ 20.
+#     obs/level); the recovery fixtures use m = 22 (Beta) and m = 12
+#     (Beta-Binomial).
 #   * The σ-axis SD is the near-singular (Watanabe) direction — only well
-#     identified with enough levels AND replicates, so the recovery fixture is
-#     deliberately large (G ≈ 70, m ≈ 22) at a locked seed; tolerances are
-#     loose-but-meaningful.
+#     identified with enough levels AND replicates. The raw Beta fixture remains
+#     large (G = 70, m = 22); the certified Beta-Binomial fixture uses G = 30,
+#     m = 12 at its locked seed and retains meaningful recovery bounds.
 #   * Intercepts (βμ1, βψ1) carry a small-sample Laplace/Jensen bias and are NOT
-#     asserted tightly; `fit.converged` is NOT asserted (variance-boundary
-#     plateau) — stationarity (gmax < 1e-3) is the convergence proof.
+#     asserted tightly. The historical raw Beta fit uses exact-gradient
+#     stationarity because its optimizer flag can stop on a variance plateau;
+#     the certified Beta-Binomial fit must report convergence as well.
 using DRM
 using Test, Random, LinearAlgebra, SparseArrays
 import Distributions
@@ -132,7 +136,7 @@ _ls_grad_ok(ga, gfd; tol = 1e-6) =
     # =====================================================================
     @testset "BetaBinomial + relmat: recovery through C⁻¹" begin
         Random.seed!(3031)
-        G = 70; m = 22; n = G * m
+        G = 30; m = 12; n = G * m
         id = repeat(1:G, inner = m)
         C = _ls_random_corr(MersenneTwister(131), G)
         LC = cholesky(C).L
@@ -156,9 +160,11 @@ _ls_grad_ok(ga, gfd; tol = 1e-6) =
         end
 
         Q, gidx, Gd = DRM._locscale_relmat_setup(C, id)
-        fit = DRM._fit_locscale(Val(:betabinomial), y, Xμ, Xψ, gidx, Gd, Q; se = false)
+        fit = DRM._fit_locscale(Val(:betabinomial), y, Xμ, Xψ, gidx, Gd, Q;
+                                se = false, whitened = true)
         comp = fit.components
 
+        @test fit.converged
         @test isfinite(fit.nll)
         @test isposdef(Symmetric(fit.Lambda))
         @test fit.beta_mu[2] ≈ βμ[2] atol = 0.12
@@ -167,8 +173,12 @@ _ls_grad_ok(ga, gfd; tol = 1e-6) =
         @test comp.sd_psi ≈ sd_psi_true atol = 0.22
         @test comp.sd_psi > 0.20
         @test isfinite(comp.cor_mu_psi) && -1.0 ≤ comp.cor_mu_psi ≤ 1.0
-        gmax = maximum(abs, DRM._ls_marginal_grad(Val(:betabinomial), y, Xμ, Xψ, gidx, Gd, Q, fit.θ))
-        @test gmax < 1e-3
+        certified = DRM._ls_whitened_eval(
+            Val(:betabinomial), y, Xμ, Xψ, gidx, Gd, Q, fit.θ,
+            DRM._ls_canonical_Zeta(length(y)), DRM._ls_canonical_Zpsi(length(y)),
+        )
+        @test certified.status.ok
+        @test maximum(abs, certified.gradient) < 1e-3
     end
 
     # =====================================================================

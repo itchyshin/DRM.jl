@@ -1,0 +1,15 @@
+{
+  "source_head": "479f1e06464d06592b2d845798a27fdd8a5ac544",
+  "files": [
+    "test_locscale_profile.jl"
+  ],
+  "DRM_SLOW_TESTS": 1,
+  "estimate_seconds": [
+    300,
+    900
+  ],
+  "cap_seconds": 900,
+  "julia_threads": 1,
+  "blas_threads": 1,
+  "scope": "Both previously gated original profile testsets; baseline correctness, not speed"
+}

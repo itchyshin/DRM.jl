@@ -6,6 +6,75 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## Unreleased
 
+(nothing yet)
+
+## v0.7.0 — 2026-08-28
+
+**The twin-parity release.** Versioning now twin-tracks drmTMB (D-181, like GLLVM.jl↔gllvmTMB):
+v0.7.0 means "at parity with drmTMB 0.7.0", pinned at drmTMB commit `a6de6bb71`; drmTMB's
+fast-moving mi() missing-data axis is a named, fenced delta (D-180 #1) and the designated
+post-0.7 headline. Registration in Julia General is planned at v0.7.1, mirroring the twin.
+
+- **The API freeze** — every one of the 159 exports classified into Stable / Experimental /
+  Engine tiers, machine-checked by `test/test_api_stability.jl` (total classification: a new
+  export cannot appear untiered, a stable name cannot vanish silently). The promise and its
+  honest Julia-0.x framing: `docs/src/api-stability.md`.
+- **The comprehensive engine speed grid** (`report/engine-speed-grid.md`) — Julia wins 14 of 15
+  comparable warm-fit cells (2.3×–42×); the one loss (q4 phylo REML, 0.46×) was diagnosed (the
+  inner alternation burned 15 iterations per objective evaluation against a never-firing exit)
+  and fixed to ~parity (0.94×, 2.1× faster).
+- **The user-journey sweep** (`tools/user_journey_sweep.R`) — 29 models typed the way users type
+  them, both engines: 25 matches at 1e-6..1e-11, refusal quality graded, and one real bug found
+  and fixed (drmTMB#1099: `predict(newdata)` on factors/interactions failed on
+  Julia-vs-R coefficient-name conventions).
+- **The threaded bootstrap, demonstrated** — `confint(fit, parm, method = "bootstrap",
+  threads = TRUE)` from R: 10× native TMB at R=199 on the same model and data
+  (`docs/dev-log/evidence/2026-08-28-engine-julia-usability-demo.md`).
+- Wave Q quality debt to zero: drmTMB#1090 (univariate `nu` tripping the bivariate bridge
+  branch) fixed; #526 (q4 REML flag folds in the inner alternation, measured criterion);
+  #527 hardening both repos; #482 and #8 closed.
+
+## v0.2.0 — 2026-08-28
+
+### The completion arc (2026-08-24 → 2026-08-27, D-179)
+
+- **The R↔Julia capability ledger is COMPLETE** (drmTMB PRs #1085, #1087, and
+  the Phase 2 promotions): every one of the 11 rows in drmTMB's generated
+  `julia-capabilities.tsv` is now `covered` (9), an owner-signed permanent
+  boundary (`cross_family_latent`, drmTMB #1089 — with a retraction: the route
+  IS reachable from R), or unsupported by design (`engine_control_surface`).
+  Every promotion is backed by SE-grade parity on a stamped comparator build.
+  `covered` remains a capability claim, never interval coverage — the
+  `coverage_claimed` fences are permanent documented boundaries by owner
+  decision (D-179 #4).
+- **`converged` answers a fixed question (#491, #517)** — the sparse-Laplace
+  flag now tests the mean per-observation gradient against 1e-6 and no longer
+  short-circuits on `Optim.converged`; a deliberately sloppy `g_tol` can no
+  longer buy a green flag ("converged is not for sale" gate).
+- **The large-p SE gap is fixed at source (#517)** — the outer vcov
+  finite-difference step now grows with n (`clamp(2.5e-7·n, 1e-4, 1e-2)`);
+  measured SE parity vs native TMB at p=1000 went 1.2e-03 → 4.0e-06 and at
+  p=3000 9.0e-04 → 4.5e-06. Below n=400 nothing changes.
+- **`response = "include"` fits the Gaussian phylo-mean cell (#517)** —
+  measured byte-identical to `drop` on drmTMB's own route, so it is
+  implemented as observed-rows + full tree (the σ-phylo convention); the
+  wrapper deliberately does not extend to positional-matching routes.
+- **q4 `converged` is gated on Λ admissibility (#509, #518)** — success is no
+  longer claimed at a numerically singular Λ (the saturated-fixture regime);
+  the smoke fixture is de-saturated and the saturated one kept as the
+  negative control.
+- **`mstep_Lambda`'s descent is a wired characterisation (#472, #519)** — the
+  measured negative result now runs in the default suite as a tripwire, and
+  `src/experimental/` carries per-file verdicts (#520).
+- **Per-family speed table (#9, #521)** — `report/speed-per-family.md`
+  consolidates every engine-vs-engine timing with its caveats; README swept to
+  match the promoted ledger (its REML sentence was three routes stale).
+- Earlier in the same arc: bivariate q=2 structured REML (#470,
+  `reml_q2.jl`), per-coefficient `parm` for `confint` (#495, #514), comparator
+  provenance stamping in all four parity harnesses (#473, #512), and the inner
+  `newton_tol` tightening whose SE effect was measured, not assumed (#513).
+
+
 - **VA Rung 2+3 (#136)** — scaffold anchors a/b/c in `test/test_variational.jl`
   are live (RE→0 ELBO = GLM loglik; ELBO ≤ adaptive GHQ; NB2 `r→∞` ≈ Poisson-VA).
   `aicc` on a VA fit errors even when `n − k − 1 ≤ 0` (no `Inf` short-circuit).

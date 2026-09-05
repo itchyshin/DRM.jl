@@ -1,0 +1,12 @@
+{
+  "source_head": "479f1e06464d06592b2d845798a27fdd8a5ac544",
+  "source_files": {
+    "src/inference.jl": "c0675b16ec4b0c64acfa81a45543959b256fb8e5b200c50c704b4aafb585bc0e",
+    "src/locscale_profile.jl": "c6ca8e2d9d76c372be17f61f2edc00fcef299ed897b05742ef035b3f6d29c2b5"
+  },
+  "stage2_fixture_sha256": "ca1d9db86c33fb8046028c0e9833d1e0cc0af095509d5580b48375a390bd7ad4",
+  "stage1": "NB2 fixture timed out; log retained but exact test bytes were not snapshotted before replacement, so no exact fixture hash is claimed",
+  "stage2": "Gamma fixture: builder reports62s12pass4fail; two expected behavioral failures: threaded=false/worker_threads=1; two finite-only expectations need status-aware correction",
+  "status": "threading implementation deferred while confirmed endpoint failure-disclosure defect is repaired",
+  "scope": "No passing threading regression, speedup or Ayumi dataset reproduction claimed"
+}

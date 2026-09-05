@@ -1,0 +1,5 @@
+Test Summary:                    | Pass  Total  Time
+finite-state primitive transport |   16     16  1.6s
+Test Summary:                                                     | Pass  Total   Time
+finite-state fit result retains raw order and conditional outputs |   22     22  10.5s
+FINITE_BRIDGE_PASS

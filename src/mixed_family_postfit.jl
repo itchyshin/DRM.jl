@@ -87,7 +87,7 @@ length-`size(X_k, 1)` vector. The inverse link `g_k⁻¹` is the family's own
 (identity for Gaussian, exp for Poisson/NB2/Gamma, logistic for
 Binomial/Beta — see `_mf_mean`).
 
-NOTE: this is the conditional mean at `u = 0`, NOT the marginal mean E[y_k]
+NOTE: this is the conditional mean at `u = 0`, NOT the marginal mean `E[y_k]`
 (which for a non-identity link differs from `g_k⁻¹(Xβ)` by a Jensen term in the
 shared latent). The `u = 0` convention matches the link-scale linear predictor
 used everywhere else in the model.
@@ -100,6 +100,25 @@ function mf_fitted(fit, X1, X2)
     mu1 = _mf_mean.(Ref(fit.fam1), X1 * fit.β1)
     mu2 = _mf_mean.(Ref(fit.fam2), X2 * fit.β2)
     return (; mu1, mu2)
+end
+
+"""
+    mf_fitted(fit)
+
+Fitted means for a cross-family fit produced by the **formula** route
+(`drm(bf(...), (Fam1(), Fam2()); data = …)`), which carries its own design
+matrices. A fit built from raw matrices via `fit_mixed_family` does not, so
+there they must still be supplied: `mf_fitted(fit, X1, X2)`.
+
+Same `u = 0` convention as the three-argument method above.
+"""
+function mf_fitted(fit)
+    (haskey(fit, :X1) && haskey(fit, :X2)) || throw(ArgumentError(
+        "mf_fitted: this fit does not carry its design matrices, so they must be " *
+        "supplied: `mf_fitted(fit, X1, X2)`. Fits made through the formula route " *
+        "`drm(bf(...), (Fam1(), Fam2()); data = …)` carry them and work with " *
+        "`mf_fitted(fit)`."))
+    return mf_fitted(fit, fit.X1, fit.X2)
 end
 
 """

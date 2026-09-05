@@ -1,0 +1,84 @@
+bridge formula-derived coefficient labels: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:9
+  Got exception outside of a @test
+  MethodError: no method matching coefnames(::Term)
+  
+  Closest candidates are:
+    coefnames(!Matched::StatsModels.ContrastsMatrix)
+     @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/contrasts.jl:120
+    coefnames(!Matched::StatsModels.ModelFrame)
+     @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/modelframe.jl:157
+    coefnames(!Matched::StatsModels.MatrixTerm)
+     @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/terms.jl:581
+    ...
+  
+  Stacktrace:
+    [1] _bridge_raw_term_labels(t::Term)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1361
+    [2] _bridge_public_term_labels(t::Term, atoms::Dict{Symbol, String}, order::Dict{Symbol, Int64})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1443
+    [3] _bridge_one_public_term_label(t::Term, atoms::Dict{Symbol, String}, order::Dict{Symbol, Int64})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1367
+    [4] (::DRM.var"#1446#1447"{Dict{Symbol, String}, Dict{Symbol, Int64}})(arg::Term)
+      @ DRM ./none:0
+    [5] iterate(g::Base.Generator{Vector{Any}, Test.var"#44#45"{Int64}}, s::Int64)
+      @ Base ./generator.jl:47 [inlined]
+    [6] collect_to!(dest::Vector{String}, itr::Base.Generator{Vector{StatsModels.AbstractTerm}, DRM.var"#1446#1447"{Dict{Symbol, String}, Dict{Symbol, Int64}}}, offs::Int64, st::Int64)
+      @ Base ./array.jl:892
+    [7] collect_to_with_first!(dest::Vector{String}, v1::String, itr::Base.Generator{Vector{StatsModels.AbstractTerm}, DRM.var"#1446#1447"{Dict{Symbol, String}, Dict{Symbol, Int64}}}, st::Int64)
+      @ Base ./array.jl:870
+    [8] collect(itr::Base.Generator{Vector{StatsModels.AbstractTerm}, DRM.var"#1446#1447"{Dict{Symbol, String}, Dict{Symbol, Int64}}})
+      @ Base ./array.jl:844
+    [9] _bridge_public_term_labels(t::StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}, atoms::Dict{Symbol, String}, order::Dict{Symbol, Int64})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1387
+   [10] _bridge_one_public_term_label(t::StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}, atoms::Dict{Symbol, String}, order::Dict{Symbol, Int64})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1367
+   [11] #1446
+      @ ./none:0 [inlined]
+   [12] iterate
+      @ ./generator.jl:47 [inlined]
+   [13] collect(itr::Base.Generator{Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}, DRM.var"#1446#1447"{Dict{Symbol, String}, Dict{Symbol, Int64}}})
+      @ Base ./array.jl:834
+   [14] _bridge_public_term_labels(t::StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}, atoms::Dict{Symbol, String}, order::Dict{Symbol, Int64})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1387
+   [15] #1452
+      @ DRM ./none:0 [inlined]
+   [16] MappingRF
+      @ Base ./reduce.jl:100 [inlined]
+   [17] afoldl
+      @ Base ./operators.jl:545 [inlined]
+   [18] _foldl_impl
+      @ Base ./reduce.jl:68 [inlined]
+   [19] foldl_impl
+      @ Base ./reduce.jl:48 [inlined]
+   [20] mapfoldl_impl
+      @ Base ./reduce.jl:44 [inlined]
+   [21] mapfoldl
+      @ Base ./reduce.jl:175 [inlined]
+   [22] mapreduce
+      @ Base ./reduce.jl:307 [inlined]
+   [23] reduce
+      @ Base ./reduce.jl:490 [inlined]
+   [24] _bridge_public_term_labels(t::StatsModels.MatrixTerm{Tuple{StatsModels.InterceptTerm{true}, StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}}}, atoms::Dict{Symbol, String}, order::Dict{Symbol, Int64})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1441
+   [25] _bridge_render_formula_block(form::DrmFormula, param::Symbol, rhs::StatsModels.FunctionTerm{typeof(log1p), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}, labels::DRM._BridgeFormulaLabels)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1320
+   [26] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:202 [inlined]
+   [27] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [28] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:10
+   [29] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [30] top-level scope
+      @ none:1
+   [31] eval
+      @ Core ./boot.jl:385 [inlined]
+   [32] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [33] _start()
+      @ Base ./client.jl:552
+Test Summary:                             | Pass  Error  Total   Time
+bridge formula-derived coefficient labels |  684      1    685  25.2s
+ERROR: LoadError: Some tests did not pass: 684 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:9

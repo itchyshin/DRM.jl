@@ -1,0 +1,29 @@
+{
+  "command": [
+    "julia",
+    "--startup-file=no",
+    "--project=/private/tmp/drm-parity-20260830/integration/DRM.jl",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/covariance-direct-derivatives-diagnostic.jl",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/profile-nuisance-corrected-replay-20260831T160339Z.jls"
+  ],
+  "pid": 66471,
+  "log": "/private/tmp/drm-parity-20260830/profile-threads-s11/covariance-direct-20260831T163125Z.log",
+  "status": 0,
+  "seconds": 4.940285749966279,
+  "before": {
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/covariance-direct-derivatives-diagnostic.jl": "c962b827f5a75bdc20e4169e4991c031b902e141a333df9003b68fc1b85637de",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/profile-nuisance-corrected-replay-20260831T160339Z.jls": "d8727b67ae76c66fcc76cdd9f672b1f2bed72c165bf47e526caf50f769998434",
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_grad.jl": "2863ec63c5a9519de3093f8c4ccbc39ff53a47295ab9abcfcbf36afa3f02e0e8",
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_inner.jl": "7f9571e775cef5cced81ab124a77f284225b85f57a4a054e565b36ddfe04fae0",
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl/src/inference.jl": "8f483d5bd679ed6cc4f5f368920204b1093322cd8f170db82371abac6bee9f3c",
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl": "ca1d9db86c33fb8046028c0e9833d1e0cc0af095509d5580b48375a390bd7ad4"
+  },
+  "after": {
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/covariance-direct-derivatives-diagnostic.jl": "c962b827f5a75bdc20e4169e4991c031b902e141a333df9003b68fc1b85637de",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/profile-nuisance-corrected-replay-20260831T160339Z.jls": "d8727b67ae76c66fcc76cdd9f672b1f2bed72c165bf47e526caf50f769998434",
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_grad.jl": "2863ec63c5a9519de3093f8c4ccbc39ff53a47295ab9abcfcbf36afa3f02e0e8",
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_inner.jl": "7f9571e775cef5cced81ab124a77f284225b85f57a4a054e565b36ddfe04fae0",
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl/src/inference.jl": "8f483d5bd679ed6cc4f5f368920204b1093322cd8f170db82371abac6bee9f3c",
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_threads.jl": "ca1d9db86c33fb8046028c0e9833d1e0cc0af095509d5580b48375a390bd7ad4"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "scope": "Current progress against frozen native axis obligations; not the final valid-case denominator",
+  "baseline": "missing-predictor-obligations.json is an immutable initial audit; its absence-of-engine statement is historical.",
+  "programme_gates": "G0-G8 OPEN",
+  "verified_case": "mp-gaussian-gaussian-k2-indep: fixed Gaussian response, two independent fixed Gaussian predictor models, ML, all8masks; direct Julia and real R JuliaCall route on retained160rowfixture",
+  "receipt": "two-frontends/two-public-002.json",
+  "native_tolerance": 4e-06,
+  "not_proven": [
+    "full axis output/argument coverage",
+    "recovery/coverage",
+    "profile/bootstrap",
+    "warm workflow performance",
+    "all native missing-predictor cases"
+  ],
+  "next": [
+    "Complete direct finite newdata/schema retention, retaining typed categorical/ordered factor support asrequired",
+    "Retain training schemas and implement direct finite newdata prediction with explicit missing-state semantics",
+    "Reconcile direct raw/public cutpoints, transformed native covariance, and interval conventions",
+    "Resolve strict native4e-6 losses without changing defaults, comparators or tolerance; refresh final-source evidence"
+  ],
+  "finite_state_progress": {
+    "scope": "Gaussian response with one ordinal/categorical predictor: prepared kernel, direct Julia formula admission and real R JuliaCall route; bounded development scope",
+    "native_reference": "finite-state/finite-native-003.json",
+    "fixed_point_receipt": "finite-state/finite-julia-002.toml",
+    "default_fit_receipt": "finite-state/finite-fit-002.toml",
+    "default_fit_parity": "both fail unchanged4e-6; no wholecell closed",
+    "public_receipt": "finite-frontends/finite-public-005.json",
+    "required_gaps": [
+      "strict native default-fit numerical parity",
+      "full public accessor/argument matrix",
+      "whole native missing-predictor denominator",
+      "direct Julia raw coef/vcov includes ordinal cuts while native-public R excludes them: explicit accessor/coordinate reconciliation required",
+      "direct Julia finite newdata predict absent; retain training contrasts/levels and specify state conditioning",
+      "positive predictor scales, mixture probabilities and random-predictor summaries need full covariance Jacobians",
+      "native log-Wald versus bridge natural-scale delta-Wald conventions need reconciliation",
+      "ordinary ordered exogenous factors and broader factor/predictor formula contracts require explicit parity"
+    ],
+    "stopping_diagnostic": "finite-stopping/diagnostic-001.json explains localdisplacement; no paritywaiver",
+    "native_regression_covariance": "drmTMB05cf5ee64: first/second predictor regression slots repaired;101assertions; positive-scale and mixture transforms remainrequired",
+    "factor_coding": "20generatednativeformula designs match;109assertions; plainString/Symbol/Boolmeanfactors andinteractions; typedcategorical/orderedexogenousvalues stillrequired",
+    "concurrency": "MacJulia1.10.0 andTotoroJulia1.10.10,4Julia/1BLAS;8concurrentvs2independentfrozenserialfits;278assertions each including109factor/86frontend/83concurrency. WiderG4/G5OPEN."
+  }
+}

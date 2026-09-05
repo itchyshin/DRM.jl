@@ -1,0 +1,1 @@
+| 2026-08-31 | **Non-Gaussian tree-bootstrap bridge** (#563/S11) | Coupled label projection and original-tree forwarding; same-fixture direct/bridge comparison | Julia18/18 at1/4threads; adjacent858/858. Actual R Gamma mu-slope bootstrap passes1/4threads within1e-12; not coverage or native Gamma parity | Ada / Hopper / Rose |

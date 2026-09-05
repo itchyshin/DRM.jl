@@ -63,6 +63,19 @@ A formula per distributional parameter is the core grammar (`bf(...)`,
 | Random effect on the **scale** axis (`sigma ~ (1\|g)`, Gauss–Hermite) | `src/gaussian_core.jl` | **Tested** — `test/test_sigma_re.jl` |
 | `sigma(fit)` / `corpairs(fit)` scale + correlation accessors | `src/summary.jl`, `src/gaussian_core.jl` | **Tested** — `test/test_sigma.jl`, `test/test_corpairs.jl` |
 
+## Location–scale–scale models (LSS, `sd()`)
+
+A third submodel putting a linear predictor on the log standard deviation of a random effect (`sd(group) ~ z` or `sd(species, phylogenetic) ~ z`, `src/gaussian_lss.jl`, `src/gaussian_sparse_lss.jl`).
+
+| Capability | Source | Status |
+|---|---|---|
+| Plain iid LSS `sd(group) ~ z` (ML + REML) | `src/gaussian_lss.jl` | **Tested** — `test/test_lss_group.jl`, `test/test_lss_reml.jl` |
+| Phylogenetic LSS `sd(species, phylogenetic) ~ z` (ML + REML; sparse automatically above 500 species) | `src/gaussian_lss.jl` | **Tested** — `test/test_lss_phylo.jl`, `test/test_lss_reml.jl`, `test/test_lss_sparse.jl` |
+| Sparse $O(p)$ phylogenetic LSS engine (`sparse = true` / `algorithm = :sparse_lbfgs`) | `src/gaussian_sparse_lss.jl` | **Tested** — `test/test_lss_sparse.jl` (exact match to dense comparator on logLik, SEs, BLUPs) |
+| Multi-component LSS (e.g. multi-iid, iid + phylo) | `src/gaussian_lss.jl` | **Tested** — `test/test_lsss_multi.jl`, `test/test_lss_reml.jl` |
+| Incomplete response handling (`missing` / `NaN` in `y`, observed-rows pattern) | `src/gaussian_lss.jl` | **Tested** — `test/test_lss_missing_response.jl` |
+
+
 ## Random-effect structures
 
 ### Plain (unstructured) random effects on the mean
@@ -133,7 +146,7 @@ residual correlation ρ12. This is the verified core engine (`src/sparse_phy.jl`
 
 | Capability | Source | Status |
 |---|---|---|
-| Verified q=4 sparse-Laplace single fit + exact O(p) gradient | `src/fit_q4_sparse_tmb.jl` | **Tested** — `test/test_q4_laplace.jl`, `test/test_sparse_aug.jl`, FD gradient gate `test/test_qgate_fd_gradient.jl`, zero-alloc inner gate `test/test_qgate_alloc_inner.jl` |
+| Verified q=4 sparse-Laplace single fit + exact O(p) gradient | `src/fit_q4_sparse_tmb.jl` | **Tested** — `test/test_sparse_aug.jl`, FD gradient gate `test/test_qgate_fd_gradient.jl`, zero-alloc inner gate `test/test_qgate_alloc_inner.jl` |
 | Sparse augmented phylo precision `kron(Q, Λ⁻¹)` foundation | `src/sparse_phy.jl` | **Tested** — `test/runtests.jl:13`, `test/test_step1_sparse.jl`, `test/test_crossed_selected_inverse.jl` |
 | Takahashi selected inverse | `src/takahashi_selinv.jl` | **Tested** — `test/test_crossed_selected_inverse.jl`, used throughout the gradient gates |
 | Public `bf(mu1=…, mu2=…, sigma1=…, sigma2=…, rho12=…)` q=4 front end | `src/gaussian_bivariate.jl` | **Tested** — `test/test_gaussian_bivariate_phylo.jl` (recovers Σ_a, β; validates marker constraints) |
@@ -164,14 +177,14 @@ support.
 |---|---|---|
 | Bivariate Gaussian with residual `rho12` (`cbind` / `mu1`,`mu2`) | `src/gaussian_bivariate.jl` | **Tested** — `test/test_gaussian_bivariate.jl` |
 | `rho12(fit)` accessor | `src/summary.jl:65` | **Tested** — `test/test_rho12_accessor.jl` |
-| Cross-family bivariate (different families on `y1` vs `y2`) | — | **Absent** — the bivariate path is Gaussian-only (`src/gaussian_bivariate.jl`); no cross-family bivariate model is implemented |
+| Cross-family bivariate (different families on `y1` vs `y2`) | `src/mixed_family.jl`, `src/mixed_family_postfit.jl` | **Experimental — implemented, not absent.** `drm(bf(...), (Gaussian(), Poisson()); data = …)` fits two responses from different families coupled by a **latent-scale scalar** correlation, read from `fit.rho_latent`. Tested: `test/test_mixed_family.jl`, `test/test_mixed_family_postfit.jl`, `test/test_cross_family_formula.jl`. Methods reference: [Cross-family methods](model-guides/cross-family-methods.md). **Not release-ready** (`cross_family_latent` is `experimental`): single-fixture evidence, no interval coverage. `rho12 ~ x` is **rejected** on this route — the correlation is latent and scalar, so a per-observation formula would imply a model it does not fit; that is the two-Gaussian residual route above. |
 
 ## Meta-analysis
 
 | Capability | Source | Status |
 |---|---|---|
 | `gaussian()` + `meta_V(v)` with **known diagonal** sampling variances; τ on the σ intercept | `src/gaussian_meta.jl:17` | **Tested** — `test/test_meta.jl` |
-| Dense / bivariate known sampling covariance | — | **Absent** (documented as planned in `src/gaussian_meta.jl:15`) |
+| Bivariate known sampling covariance (`meta_vcov_bivariate`) | `src/meta_vcov_bivariate.jl` (A8, `src/DRM.jl:72`) | **Tested** (corrected 2026-09-02: was listed Absent; exported at `src/DRM.jl:183`) — `test/test_meta_vcov_bivariate.jl` (`test/runtests.jl:338`) |
 | Deprecated `meta_known_V` parity stub | — | **Absent** in this worktree (no such symbol) |
 
 ## Inference
@@ -182,17 +195,33 @@ support.
 | Profile-likelihood CIs (`profile_result`, `confint(:profile)`) | `src/inference.jl:124` | **Tested** — `test/test_profile_ci.jl` |
 | Parametric bootstrap (`bootstrap_ci`/`_summary`/`_result`, serial + threaded) | `src/inference.jl:708` | **Tested** — `test/test_bootstrap.jl`, `test/test_bootstrap_nongaussian.jl` |
 | REML for the **fixed-effect Gaussian location–scale** fit (`method=:REML`), with the model-selection guard | `src/gaussian_core.jl`, `src/comparison.jl:84` | **Tested** — `test/test_reml.jl` |
+| REML for **Gaussian mean `(1 \| g)`** (`method=:REML`, Woodbury Patterson–Thompson) | `src/gaussian_core.jl`, `src/gaussian_ranef.jl` | **Tested** (corrected 2026-09-02: `test/test_reml_ordinary_ranef.jl` is included at `test/runtests.jl:40`, not standalone) |
 | `reml_loglik` / `ml_loglik` / `estimation_method` accessors | `src/gaussian_core.jl` (exported `src/DRM.jl:89`) | **Tested** — `test/test_reml.jl` |
 | Epsilon-method bias correction (`bias_correct`, TMB sdreport analogue) | `src/bias_correct.jl:97` | **Tested** — `test/test_bias_correct.jl` |
 | **χ̄² (chi-bar-square) boundary inference** (Self–Liang / Stram–Lee mixture) | `src/chibar.jl` | **Tested** — `test/test_chibar.jl` (corrects older audit text that listed this as Absent) |
 | REML on the q=4 Laplace model (`method = :REML`, `reml_q4`) | `src/reml_q4.jl` | **Tested** — wired into the module; `test/test_reml_q4_allaxes.jl` (corrects older audit text that left this in `experimental/`) |
+| REML on Location–Scale–Scale models (`method = :REML`, iid, phylo, multi) | `src/gaussian_lss.jl`, `src/gaussian_sparse_lss.jl` | **Tested** — `test/test_lss_reml.jl`, `test/test_lss_sparse.jl` |
 
 !!! warning "REML scope"
-    `method=:REML` is wired for the fixed-effect Gaussian location–scale model
-    (`test/test_reml.jl`) and for the bivariate q=4 location–scale engine
-    (`test/test_reml_q4_allaxes.jl`). Ordinary random effects under REML remain
-    rejected. **ML is the default** (REML likelihoods are not comparable across
-    fixed-effect structures).
+    `method=:REML` is opt-in. **ML is the default** (REML likelihoods are not
+    comparable across fixed-effect structures). Wired cells: the fixed-effect
+    Gaussian location–scale model (`test/test_reml.jl`); a single Gaussian mean
+    intercept `(1 | g)` on the Woodbury spine (`test/test_reml_ordinary_ranef.jl`,
+    in the default suite at `test/runtests.jl:40`; #439); Location–Scale–Scale models
+    (`sd(g) ~ z`, `sd(species, phylogenetic) ~ z`, and multi-component LSS;
+    `test/test_lss_reml.jl`, `test/test_lss_sparse.jl`; #558); and the
+    bivariate q=4 location–scale engine (`test/test_reml_q4_allaxes.jl`).
+    σ-RE, random slopes, and non-Gaussian REML stay rejected. This is not AI-REML.
+
+    **Normalisation convention (#477, resolved 2026-08-25):** every REML route
+    in DRM.jl now reports the **normalised** Patterson–Thompson restricted
+    log-likelihood, so `reml_loglik` is directly comparable to lme4's,
+    glmmTMB's, TMB's and drmTMB's `logLik()`. The bivariate q=2/q=4 Laplace
+    routes previously omitted the `(n_β/2)·log(2π)` constant while the
+    fixed-effect location–scale and mean `(1 | g)` routes included it, so one
+    package reported two scales under one name. Evidence: the q=4 parity gate's
+    `atol_loglik` fell from **5.5436 to 0.03** once the constant was no longer
+    being absorbed by the tolerance.
 
 ## Model comparison & accessors
 
@@ -246,31 +275,66 @@ A marshalling-friendly boundary for `drmTMB(..., engine = "julia")`
 
 To avoid overclaiming, these are confirmed **not** implemented in this worktree:
 
-- **Missing-data handling** (NA dropping, `na.action`, missing-response bridge):
-  no implementation in `src/` (no `skipmissing`/`ismissing`/`na_action` code
-  path). (A `codex/missing-response-bridge` branch exists separately and is not
-  merged here.)
+- **Missing-data handling** (corrected 2026-09-02: this bullet was stale —
+  several routes are implemented on `main`). What exists: (1) listwise-deletion
+  predictor preprocessing, `src/missing_data.jl` (#49, `src/DRM.jl:136`) — pure
+  data preprocessing, explicitly documented as NOT FIML; (2) the exported joint
+  missing-predictor routes (`mi()`, `JointDrmFit`/`JointTwoDrmFit`/
+  `JointFiniteDrmFit`, `imputed`, `miss_control`) — five files included at
+  `src/DRM.jl:137–143` (#563), tested by `test/test_joint_missing_*.jl`
+  (`test/runtests.jl:435–446`) — **Experimental**: exported for evaluation;
+  fenced for v1.0 (D-181); API and numerics may change; not covered by the
+  R-parity scoreboard; (3) the Gaussian observed-response mask route,
+  `src/gaussian_core.jl` (`_observed_response_mask`, `:320`; #517, commit
+  `53141006`); (4) missing-response handling on the location-scale-scale
+  `sd()` routes, `src/gaussian_lss.jl` (`has_missing_response`; #559, commit
+  `140460a0`), **Tested** — `test/test_lss_missing_response.jl`
+  (`test/runtests.jl:68`). Still absent: general multiple imputation for
+  missing predictors outside the joint-model routes, and an `na.action`-style
+  option.
 - **χ̄² boundary inference** — see Inference table.
 - **Cross-family bivariate models** — see Bivariate table.
 - **Variational (VA/ELBO) public path beyond `(1\|g)` on Poisson / Binomial / NB2 / Gamma / Beta** — Experimental random-intercept VA only (`sigma ~ 1` where the family has a scale). Phylo, crossed, correlated slopes, ZI/hu remain open on #136. `_fit_va` still errors for unwired families. Scoped #136e public Gamma RI smoke: `report/va-vs-laplace-bias.md` (LA ≈ VA on shape `α`; LA faster; does not close #136).
-- **Dense/bivariate `meta_V`** — diagonal known variances only.
-- **Labelled q=4 coevolution-correlation accessor with CIs** — `Σ_a` is stored
-  and surfaced, but no derived-correlation-with-interval accessor exists.
-- **`src/experimental/`** (`reml_q4`, `location_only`, EM variants, dense
-  oracles) — migrated but **not** in the `DRM.jl` include list and not covered by
-  the default suite.
+- ~~**Dense/bivariate `meta_V`** — diagonal known variances only.~~ (corrected
+  2026-09-02: false — bivariate known sampling covariance is implemented via
+  `meta_vcov_bivariate`; see the Meta-analysis table.)
+- ~~**Labelled q=4 coevolution-correlation accessor with CIs** — `Σ_a` is
+  stored and surfaced, but no derived-correlation-with-interval accessor
+  exists.~~ (corrected 2026-09-02: false, and contradicted the Coevolution
+  table above in the same page — `coevolution_cor(fit)` is the labelled
+  accessor, `src/coevo_accessors.jl`, and `bootstrap_sigma_a(fit)`,
+  `src/bootstrap_q4_phylo.jl`, adds bootstrap CIs to it for tree-driven phylo
+  fits; **Tested** — `test/test_coevo_accessors.jl`, `test/test_bootstrap_sigma_a.jl`.)
+- **`src/experimental/`** (corrected 2026-09-02: `reml_q4` and `location_only`
+  were promoted and are wired — see the Inference table and `src/DRM.jl:55`/`:81`
+  — this bullet listed them as unmigrated by mistake). What remains in
+  `src/experimental/` (`ls src/experimental`, per its own README) is: two
+  recorded negative results not exposed (`fit_em_natgrad.jl` — #13 decision-gate
+  FAIL; `fit_em_closed.jl`, `em_squarem_fit.jl` — #472, the closed-form Λ step
+  descends the marginal); four superseded predecessors of the production engine
+  (`fit_q4_tmbgrad.jl`, `fit_ml_q4.jl`, `fit_ml_warm.jl`, `fit_q4_p100_tmb.jl`,
+  and the four `estep_*.jl` mode-finder hardenings); two diagnostic oracles
+  (`q4_em_dense.jl`, `fit_sparse_direct.jl`); and a stale pre-promotion copy of
+  `location_only.jl` (the wired file is `src/location_only.jl`). None of these
+  are in the `DRM.jl` include list or the default suite.
 
 ## Follow-up test targets (implemented but untested)
 
 The highest-value gaps where code exists but no default-suite test guards it:
 
-1. **`src/experimental/` promotions.** If/when `reml_q4`, `fit_em_natgrad`, the
-   `estep_*` mode-finder candidates, `q4_em_dense`, or `fit_q4_tmbgrad` are wired
-   into the public API, each needs its own recovery/gradient test. Today they are
-   unreachable from `DRM.jl` and untested in the default suite.
-2. **Labelled q=4 coevolution-correlation accessor.** `Σ_a` is tested as stored;
-   a derived ρ_a-with-CI accessor (analogous to `heritability`) would be the
-   natural next public surface and should ship with a delta + profile CI test.
+1. **`src/experimental/` promotions.** (corrected 2026-09-02: `reml_q4` is
+   already promoted and tested — see the Inference table; drop it from this
+   list.) If/when `fit_em_natgrad`, the `estep_*` mode-finder candidates,
+   `q4_em_dense`, or `fit_q4_tmbgrad` were wired into the public API, each would
+   need its own recovery/gradient test — but per `src/experimental/README.md`
+   several of these are recorded *negative* results (e.g. `fit_em_natgrad`
+   failed the #13 decision gate) that the project has decided not to expose,
+   not pending promotions. Today none of `src/experimental/` is reachable from
+   `DRM.jl` or tested in the default suite.
+2. **Labelled q=4 coevolution-correlation accessor.** (corrected 2026-09-02:
+   this already exists and is tested — `coevolution_cor(fit)` +
+   `bootstrap_sigma_a(fit)`, see the Coevolution table and the "Absent"
+   section above; remove this as a follow-up target.)
 3. **`drm_bridge_inference` beyond `:resd`.** The bridge inference primitive is
    tested only for the Gaussian phylogenetic SD block; broadening it to other
    parameters (with the R-side response-scale transforms) needs matching tests.

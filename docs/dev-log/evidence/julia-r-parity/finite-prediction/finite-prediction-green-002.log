@@ -1,0 +1,17 @@
+Test Summary:                                   | Pass  Total   Time
+finite-state direct newdata prediction contract |   30     30  20.2s
+FINITE_JOINT_PREDICTION_TEST_READY
+FINITE_PREDICTION_PASS
+Test Summary:                                                       | Pass  Total  Time
+finite-state direct formula frontend API and ordinal payload design |   33     33  5.6s
+Test Summary:                                          | Pass  Total  Time
+finite-state contrast construction and marker ordering |   16     16  1.3s
+Test Summary:                                    | Pass  Total  Time
+finite-state categorical direct formula frontend |   12     12  2.8s
+Test Summary:                                 | Pass  Total  Time
+finite-state direct frontend admission guards |   25     25  2.4s
+FINITE_JOINT_FRONTEND_TEST_READY
+Test Summary:                              | Pass  Total  Time
+finite-state native factor coding contract |  109    109  5.7s
+FINITE_JOINT_FACTOR_CODING_TEST_READY
+FINITE_PREDICTION_NEIGHBOURS_PASS

@@ -1,0 +1,41 @@
+ERROR: LoadError: Some tests did not pass: 9 passed, 2 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/sampler-20260831T195735Z.jl:2
+i.i.d. coupled public fit: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:85
+  Expression: simulator isa Function
+   Evaluated: nothing isa Function
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:85 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:62 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:59
+relmat coupled public fit: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:85
+  Expression: simulator isa Function
+   Evaluated: ErrorException("type FunctionTerm has no field sym") isa Function
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:85 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:62 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:59
+Test Summary:                                           | Pass  Fail  Total  Time
+bounded bootstrap regression                            |    9     2     11  7.8s
+  canonical location-scale marginal bootstrap simulator |    9     2     11  5.8s
+    i.i.d. coupled public fit                           |    3     1      4  5.2s
+    relmat coupled public fit                           |    6     1      7  0.6s

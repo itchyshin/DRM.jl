@@ -1,0 +1,77 @@
+2026-08-31T11:08:42Z
+9c958c8f83243bc4664ea272f5ebfcf3f1369cc34a5084afbd8a2619b84b460f  Project.toml
+3352aa55d3cca25d17195987efaaa5e5e6050f064dbf5036ab53e5808e51e899  test/Project.toml
+b1fc84ff68aab61a70d58db505fc5041a43af20cf91dc749290b2a50ac57f51e  test/Manifest.toml
+6be629b2d635440d3edfd7748faddcaa1f323399ffae990e3e034d9d7fb1a89d  family-core-pilot-001/run.jl
+65e408861a5b8b88101d8aad9c9cb8fb687607972386c13c0cc489bad6e758c8  family-core-pilot-001/run.sh
+RUNTIME julia=1.10.10 threads=1 BLAS=1 DRM=/home/snakagaw/drm_parity_integration_567fec06_001/src/DRM.jl
+START_FILE test_student.jl
+Test Summary:                       | Pass  Total  Time
+Student-t location–scale — recovery |    5      5  7.6s
+COMPLETE_FILE test_student.jl
+START_FILE test_skewnormal.jl
+Test Summary:                               | Pass  Total  Time
+Skew-normal location–scale–shape — recovery |    7      7  1.0s
+COMPLETE_FILE test_skewnormal.jl
+START_FILE test_poisson.jl
+Test Summary:                         | Pass  Total  Time
+Poisson (counts, log link) — recovery |    4      4  1.4s
+COMPLETE_FILE test_poisson.jl
+START_FILE test_nbinom2.jl
+Test Summary:                                            | Pass  Total  Time
+Negative binomial (NB2, overdispersed counts) — recovery |    5      5  2.2s
+Test Summary:                                                  | Pass  Total  Time
+NB2 FE sigma ~ x does not DomainError under ForwardDiff (#385) |    4      4  0.7s
+COMPLETE_FILE test_nbinom2.jl
+START_FILE test_nb2_dispersion_seed.jl
+Test Summary:                                 | Pass  Total  Time
+NB2 dispersion seed is on the log-sigma scale |   13     13  0.2s
+COMPLETE_FILE test_nb2_dispersion_seed.jl
+START_FILE test_beta.jl
+Test Summary:                             | Pass  Total  Time
+Beta (proportions, logit link) — recovery |    5      5  1.7s
+COMPLETE_FILE test_beta.jl
+START_FILE test_gamma.jl
+Test Summary:                                    | Pass  Total  Time
+Gamma (positive continuous, log link) — recovery |    5      5  1.3s
+COMPLETE_FILE test_gamma.jl
+START_FILE test_eta_clamp_parity.jl
+Test Summary:                                                 | Pass  Total  Time
+eta-clamp twin parity (#324): soft-clamp ports drmTMB's guard |   38     38  0.9s
+COMPLETE_FILE test_eta_clamp_parity.jl
+START_FILE test_zi.jl
+Test Summary:                | Pass  Total  Time
+Zero-inflation modifier (zi) |    8      8  2.0s
+COMPLETE_FILE test_zi.jl
+START_FILE test_lognormal.jl
+Test Summary:                              | Pass  Total  Time
+LogNormal (positive continuous) — recovery |    5      5  0.9s
+COMPLETE_FILE test_lognormal.jl
+START_FILE test_hurdle.jl
+Test Summary:                            | Pass  Total  Time
+Hurdle Poisson: y ~ x, hu ~ 1 — recovery |    4      4  0.8s
+Test Summary:                                      | Pass  Total  Time
+Hurdle negative-binomial: y ~ x, hu ~ 1 — recovery |    4      4  1.0s
+COMPLETE_FILE test_hurdle.jl
+START_FILE test_truncated_nb.jl
+Test Summary:                                  | Pass  Total  Time
+Truncated NB2 (positive counts ≥ 1) — recovery |    5      5  1.1s
+COMPLETE_FILE test_truncated_nb.jl
+START_FILE test_betabinomial.jl
+Test Summary:                            | Pass  Total  Time
+Beta-binomial cbind(s, f) ~ x — recovery |    5      5  2.1s
+COMPLETE_FILE test_betabinomial.jl
+START_FILE test_zeroonebeta.jl
+Test Summary:                     | Pass  Total  Time
+Zero-one-inflated beta — recovery |    6      6  1.4s
+COMPLETE_FILE test_zeroonebeta.jl
+START_FILE test_tweedie.jl
+Test Summary:                              | Pass  Total  Time
+Tweedie (semicontinuous, 1<p<2) — recovery |    6      6  1.9s
+COMPLETE_FILE test_tweedie.jl
+START_FILE test_cumulative.jl
+Test Summary:                         | Pass  Total  Time
+Cumulative logit (ordinal) — recovery |    4      4  1.1s
+COMPLETE_FILE test_cumulative.jl
+FAMILY_CORE_COMPLETE
+ELAPSED_SECONDS 31

@@ -1,0 +1,20 @@
+ℹ Testing drmTMB
+julia-joint-binary-levels: 1
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Error ('test-julia-joint-binary-levels.R:2:13'): joint Julia numeric binar
+Error in `drmTMB:::drm_julia_joint_binary_data(data.frame(x = x), "x", levels)`: Joint Julia prediction requires a binary predictor coded as 0/1 or retained fitted levels.
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_equal(...) at test-julia-joint-binary-levels.R:3:3
+ 2. │ └─testthat::quasi_label(enquo(object), label)
+ 3. │   └─rlang::eval_bare(expr, quo_get_env(quo))
+ 4. └─drmTMB (local) encode(c(1, 2, NA_real_), c("1", "2"))
+ 5.   └─drmTMB:::drm_julia_joint_binary_data(data.frame(x = x), "x", levels) at test-julia-joint-binary-levels.R:2:13
+ 6.     └─cli::cli_abort("Joint Julia prediction requires a binary predictor coded as 0/1 or retained fitted levels.") at drmTMB/R/julia-joint-methods.R:293:7
+ 7.       └─rlang::abort(...)
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+Error:
+! Test failures.
+Execution halted

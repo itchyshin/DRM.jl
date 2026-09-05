@@ -1,0 +1,61 @@
+  [environment-bearing process line redacted; original hash retained]
+  
+  Stacktrace:
+    [1] pipeline_error
+      @ Base ./process.jl:565 [inlined]
+    [2] (::Base.var"#791#792"{Base.Process})()
+      @ Base ./process.jl:342
+    [3] iterate(itr::Base.EachLine{Base.PipeEndpoint}, state::Nothing)
+      @ Base ./io.jl:1073
+    [4] iterate(itr::Base.EachLine, state::Any)
+      @ Base ./io.jl:1073 [inlined]
+    [5] _collect(cont::UnitRange{Int64}, itr::Base.EachLine{Base.PipeEndpoint}, ::Base.HasEltype, isz::Base.SizeUnknown)
+      @ Base ./array.jl:770
+    [6] collect
+      @ ./array.jl:759 [inlined]
+    [7] readlines(s::Cmd; kw::@Kwargs{})
+      @ Base ./io.jl:603
+    [8] readlines
+      @ ./io.jl:603 [inlined]
+    [9] get_all_tagged_release_versions()
+      @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/writer.jl:427
+   [10] render(doc::Documenter.Document, settings::MarkdownVitepress)
+      @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/writer.jl:251
+   [11] runner(::Type{DocumenterVitepress.MarkdownFormat}, fmt::MarkdownVitepress, doc::Documenter.Document)
+      @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/DocumenterVitepress.jl:28
+   [12] dispatch(::Type{Documenter.FormatSelector}, ::MarkdownVitepress, ::Vararg{Any})
+      @ Documenter.Selectors ~/.julia/packages/Documenter/AXNMp/src/utilities/Selectors.jl:170
+   [13] render(doc::Documenter.Document)
+      @ Documenter ~/.julia/packages/Documenter/AXNMp/src/writers.jl:45
+   [14] runner(::Type{Documenter.Builder.RenderDocument}, doc::Documenter.Document)
+      @ Documenter ~/.julia/packages/Documenter/AXNMp/src/builder_pipeline.jl:266
+   [15] dispatch(::Type{Documenter.Builder.DocumentPipeline}, x::Documenter.Document)
+      @ Documenter.Selectors ~/.julia/packages/Documenter/AXNMp/src/utilities/Selectors.jl:170
+   [16] #90
+      @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:283 [inlined]
+   [17] withenv(::Documenter.var"#90#92"{Documenter.Document}, ::Pair{String, Nothing}, ::Vararg{Pair{String, Nothing}})
+      @ Base ./env.jl:256
+   [18] #89
+      @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:282 [inlined]
+   [19] cd(f::Documenter.var"#89#91"{Documenter.Document}, dir::String)
+      @ Base.Filesystem ./file.jl:112
+   [20] #makedocs#88
+      @ ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:281 [inlined]
+   [21] makedocs
+      @ ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:274 [inlined]
+   [22] nested_probe(broken::Bool)
+      @ Main /private/tmp/drm-parity-20260830/DRM.jl/tools/tests/test_documenter_nested.jl:15
+   [23] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/tools/tests/test_documenter_nested.jl:27 [inlined]
+   [24] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [25] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/tools/tests/test_documenter_nested.jl:27
+   [26] include(mod::Module, _path::String)
+      @ Base ./Base.jl:495
+   [27] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:318
+   [28] _start()
+      @ Base ./client.jl:552
+Test Summary:                        | Error  Total  Time
+Nested Documenter execution contract |     1      1  4.6s

@@ -1,0 +1,28 @@
+ERROR: LoadError: Some tests did not pass: 5 passed, 2 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite.jl:115
+finite-state prepared joint API: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite.jl:116
+  Expression: isdefined(DRM, :PreparedFiniteJointModel)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite.jl:116 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite.jl:116
+finite-state prepared joint API: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite.jl:117
+  Expression: isdefined(DRM, :PreparedFiniteJointFit)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite.jl:117 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite.jl:116
+Test Summary:                   | Pass  Fail  Total  Time
+finite-state prepared joint API |    5     2      7  0.5s

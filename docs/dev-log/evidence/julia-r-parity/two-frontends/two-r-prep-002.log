@@ -1,0 +1,24 @@
+
+══ Testing test-julia-joint-two.R ══════════════════════════════════════════════
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 1 | WARN 0 | SKIP 0 | PASS 0 ]
+
+── Error ('test-julia-joint-two.R:12:3'): two Gaussian Julia preparation preserves both native designs and all masks ──
+Error in `drm_validate_named_impute_entry(impute, variable, n_expected = n_expected)`: `impute` names must match the `mi()` predictors.
+x Unexpected name: "x2".
+Backtrace:
+    ▆
+ 1. └─two_joint_prepare() at test-julia-joint-two.R:12:3
+ 2.   └─drmTMB:::drm_julia_joint_prepare(...) at test-julia-joint-two.R:6:3
+ 3.     └─base::lapply(...) at drmTMB/R/julia-joint-missing.R:255:3
+ 4.       └─drmTMB (local) FUN(X[[i]], ...)
+ 5.         └─drmTMB:::drm_julia_joint_impute_formula(impute, variable, length(mi_setup$variable)) at drmTMB/R/julia-joint-missing.R:256:5
+ 6.           └─drmTMB:::drm_validate_named_impute_entry(impute, variable, n_expected = n_expected) at drmTMB/R/julia-joint-missing.R:93:3
+ 7.             └─cli::cli_abort(...) at drmTMB/R/missing-data.R:841:7
+ 8.               └─rlang::abort(...)
+
+[ FAIL 1 | WARN 0 | SKIP 0 | PASS 0 ]
+Error:
+! Test failures.
+Execution halted

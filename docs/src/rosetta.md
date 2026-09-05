@@ -94,7 +94,8 @@ bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
 | Animal model | `y ~ x + animal(1 \| id)`, `A = A` | `@formula(y ~ x + animal(1 \| id))`, `A = A` |
 | Phylogenetic | `y ~ x + phylo(1 \| species)`, `tree = tree` | `@formula(y ~ x + phylo(1 \| species))`, `tree = tree` |
 | Spatial | `y ~ x + spatial(1 \| site)`, `coords = xy` | `@formula(y ~ x + spatial(1 \| site))`, `coords = xy` |
-| Meta-analysis | `gaussian()` + `meta_V(v)` | `Gaussian()` + `meta_V(v)` |
+| Meta-analysis (univariate) | `gaussian()` + `meta_V(v)` | `Gaussian()` + `meta_V(v)` |
+| Meta-analysis (bivariate, known sampling covariance) | `meta_V(V = meta_vcov_bivariate(...))` **inside** `mu1` | `meta_vcov_bivariate(...)` passed as `drm(...; V = V)` — see [meta-analysis](model-guides/meta-analysis.md) |
 
 ## Post-fit accessors
 
@@ -114,7 +115,7 @@ bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
 | random-effect SDs | `re_sd(fit)` / `vc(fit)` |
 | `sigma(fit)` | `sigma(fit)` |
 | `rho12(fit)` | planned (parity gap) |
-| `corpair(fit)` / `corpairs(fit)` | `corpairs(fit)` / `corpairs_data(fit)` |
+| `corpairs(fit)` | `corpairs(fit)` / `corpairs_data(fit)` |
 | `fitted(fit)` / `residuals(fit)` | `fitted(fit)` / `residuals(fit)` |
 | `predict(fit, newdata)` (response mean) | `predict(fit, newdata; type = :response)` |
 | predict **every** distributional parameter at new data | `predict_parameters(fit, newdata; type = :response)` |

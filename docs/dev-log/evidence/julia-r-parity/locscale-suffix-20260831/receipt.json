@@ -1,0 +1,26 @@
+{
+  "source_head": "479f1e06464d06592b2d845798a27fdd8a5ac544",
+  "source_hashes": 327,
+  "source_unchanged": true,
+  "hash_check": "against immutable git object, not later working-tree changes",
+  "host": "Totoro",
+  "runtime": "Julia 1.10.10",
+  "julia_threads": 1,
+  "blas_threads": 1,
+  "elapsed_seconds": 126,
+  "exit_status": 0,
+  "completed_files": [
+    "test_locscale_structured.jl",
+    "test_sigma_axis_re.jl",
+    "test_nonconst_sigma_re.jl"
+  ],
+  "passing_assertions": 55,
+  "testsets": 4,
+  "summaries": [
+    "structured non-Gaussian location\u2013scale (cluster \u2463) |   27     27  52.6s",
+    "\u03c3-axis RE (cluster 2): grad! keyword contract |    3      3  0.6s",
+    "\u03c3-axis RE (cluster 2): Gamma end-to-end recovery |    4      4  6.5s",
+    "non-constant sigma (sigma ~ x) WITH a random effect \u2014 non-Gaussian (#164) |   21     21  1m06.3s"
+  ],
+  "scope": "Unfinished three-file suffix only; slow profiles remain skipped in earlier group; no full-suite/parity/calibration/performance claim"
+}

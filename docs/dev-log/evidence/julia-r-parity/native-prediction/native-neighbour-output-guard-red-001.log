@@ -1,0 +1,6 @@
+Warning message:
+In max(abs(fitted_value - expected)) :
+  no non-missing arguments to max; returning -Inf
+Original empty fitted output accepted: TRUE 
+Error: !accepted is not TRUE
+Execution halted

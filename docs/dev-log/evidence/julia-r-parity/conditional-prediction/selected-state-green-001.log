@@ -1,0 +1,29 @@
+selected-state-prediction: ...1....2......3.
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Failure ('test-selected-state-prediction.R:36:5'): Gaussian conditional pr
+Expected `as.numeric(predict(a, dpar = "mu"))` to equal `selected_state_dense_mu(a, varying)`.
+Differences:
+`names(actual)` is absent
+`names(expected)` is a character vector ('80', '27', '53', '29', '65', ...)
+
+
+── 2. Failure ('test-selected-state-prediction.R:36:5'): Gaussian conditional pr
+Expected `as.numeric(predict(a, dpar = "mu"))` to equal `selected_state_dense_mu(a, varying)`.
+Differences:
+`names(actual)` is absent
+`names(expected)` is a character vector ('80', '27', '53', '29', '65', ...)
+
+
+── 3. Failure ('test-selected-state-prediction.R:54:3'): selected-state extracti
+Expected `as.numeric(predict(a, dpar = "mu"))` to equal `selected_state_dense_mu(a, FALSE)`.
+Differences:
+`names(actual)` is absent
+`names(expected)` is a character vector ('80', '27', '53', '29', '65', ...)
+
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+Frustration is a natural part of programming :)
+Error:
+! Test failures.
+Execution halted

@@ -40,17 +40,26 @@ fit_va = drm(bf(@formula(y ~ x + (1 | g))), Binomial(); data = dat, marginal = :
 """
 struct Binomial end
 
-function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, g_tol::Real = 1e-8,
+# `K` / `A` / `coords` are ACCEPTED BUT NOT SUPPORTED: Binomial admits `phylo`
+# alone among the structured markers. Without them in the signature a user
+# writing `relmat(1 | g)` with `K = K` got a bare
+#     MethodError: no method matching drm(::DrmFormula, ::Binomial; K=…)
+# — a dispatch failure instead of the explanation this method already carries a
+# few lines below. Taking the arguments lets that refusal actually be reached.
+function drm(f::DrmFormula, fam::Binomial; data, tree = nothing, K = nothing,
+             A = nothing, coords = nothing, g_tol::Real = 1e-8,
              se::Bool = true, marginal::Symbol = :LA, method = nothing)
     _reject_method_as_marginal(fam, method)
     missing_fit = _fit_observed_response_rows(f, data) do data_observed
-        drm(f, fam; data = data_observed, tree = tree, g_tol = g_tol, se = se,
-            marginal = marginal, method = method)
+        drm(f, fam; data = data_observed, tree = tree, K = K, A = A, coords = coords,
+            g_tol = g_tol, se = se, marginal = marginal, method = method)
     end
     missing_fit !== nothing && return missing_fit
 
     marg = _marginal_method(marginal)                     # :LA (default) or :VA (#136)
+    marg isa AGHQ && _aghq_reject(fam, "this family")
     isva = marg isa Variational
+    _lss_only_gaussian_guard(f, fam)   # #544: refuse, never silently drop, sd() parts
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
     mv === nothing ||
@@ -125,12 +134,14 @@ function _fit_binomial(fam::Binomial, s, ntr, Xμ, nmμ, g_tol)
     p̄ = clamp(sum(s) / max(sum(ntr), 1), 1e-3, 1 - 1e-3)   # overall success rate
     θ0 = zeros(pμ); θ0[1] = log(p̄ / (1 - p̄))               # logit p̄
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ]; names = [:mu => nmμ]
     means = Dict(:mu => _logistic.(Xμ * θ̂))                # fitted success probability
     obs = Dict(:mu => s ./ ntr)                            # observed proportion (for residuals)
     scales = Dict(:trials => Float64.(nint))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end
 
 # Binomial logistic GLMM with a random intercept (1|g) on the logit mean.
@@ -169,10 +180,12 @@ function _fit_binomial_ranef(fam::Binomial, s, ntr, Xμ, gidx, G, nmμ, grp, g_t
     θ0 = zeros(pμ + 1)
     θ0[1] = log(p̄ / (1 - p̄)); θ0[pμ+1] = log(0.5)
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
-    θ̂ = Optim.minimizer(res); V = inv(ForwardDiff.hessian(nll, θ̂))
+    θ̂ = Optim.minimizer(res); V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
     blocks = [:mu => 1:pμ, :resd => (pμ+1):(pμ+1)]
     names = [:mu => nmμ, :resd => [String(grp)]]
     means = Dict(:mu => _logistic.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => s ./ ntr)   # population μ (b=0)
     scales = Dict(:trials => Float64.(nint))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end

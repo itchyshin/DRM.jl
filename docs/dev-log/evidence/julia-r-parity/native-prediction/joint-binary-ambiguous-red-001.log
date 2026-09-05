@@ -1,0 +1,12 @@
+ℹ Testing drmTMB
+julia-joint-binary-levels: .........1..
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Failure ('test-julia-joint-binary-levels.R:16:3'): numeric-looking distinc
+Expected `encode(1)` to throw a error.
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+No one gets it right on their first try
+Error:
+! Test failures.
+Execution halted

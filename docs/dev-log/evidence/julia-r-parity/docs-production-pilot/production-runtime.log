@@ -1,0 +1,4 @@
+julia=1.10.0 julia_threads=1 blas_threads=1
+DRM version=0.7.0 path=/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl
+Documenter version=1.17.0 path=/Users/z3437171/.julia/packages/Documenter/AXNMp/src/Documenter.jl
+DocumenterVitepress version=0.3.4 path=/Users/z3437171/.julia/packages/DocumenterVitepress/2seKb/src/DocumenterVitepress.jl

@@ -1,0 +1,182 @@
+[
+  {
+    "id": "01a05297-e931-77f1-aacf-622aa40250b7",
+    "source": {
+      "subagent": {
+        "thread_spawn": {
+          "parent_thread_id": "01a05261-cd5c-7ca3-a654-cebea9f187fb",
+          "depth": 1,
+          "agent_path": "/root/noether_plan_gate",
+          "agent_nickname": "Wegener",
+          "agent_role": "default"
+        }
+      }
+    },
+    "context": {
+      "model": "gpt-5.6-sol",
+      "effort": "high"
+    }
+  },
+  {
+    "id": "01a053cd-d16f-7950-8661-8cf6a47f957f",
+    "source": {
+      "subagent": {
+        "thread_spawn": {
+          "parent_thread_id": "01a05261-cd5c-7ca3-a654-cebea9f187fb",
+          "depth": 1,
+          "agent_path": "/root/s9_frontend_builder",
+          "agent_nickname": "Hubble",
+          "agent_role": "worker"
+        }
+      }
+    },
+    "context": {
+      "model": "gpt-5.6-terra",
+      "effort": "high"
+    }
+  },
+  {
+    "id": "01a05297-c3f3-7043-919b-4cfc126b6c46",
+    "source": {
+      "subagent": {
+        "thread_spawn": {
+          "parent_thread_id": "01a05261-cd5c-7ca3-a654-cebea9f187fb",
+          "depth": 1,
+          "agent_path": "/root/rose_plan_gate",
+          "agent_nickname": "Mendel",
+          "agent_role": "default"
+        }
+      }
+    },
+    "context": {
+      "model": "gpt-5.6-sol",
+      "effort": "high"
+    }
+  },
+  {
+    "id": "01a05265-051a-7a32-9edb-1429de14e242",
+    "source": {
+      "subagent": {
+        "thread_spawn": {
+          "parent_thread_id": "01a05261-cd5c-7ca3-a654-cebea9f187fb",
+          "depth": 1,
+          "agent_path": "/root/worktree_census",
+          "agent_nickname": "Jason",
+          "agent_role": "explorer"
+        }
+      }
+    },
+    "context": {
+      "model": "gpt-5.6-sol",
+      "effort": "medium"
+    }
+  },
+  {
+    "id": "01a05265-4f84-7be1-aa4f-04c37bdb7b78",
+    "source": {
+      "subagent": {
+        "thread_spawn": {
+          "parent_thread_id": "01a05261-cd5c-7ca3-a654-cebea9f187fb",
+          "depth": 1,
+          "agent_path": "/root/species_claims",
+          "agent_nickname": "Huygens",
+          "agent_role": "explorer"
+        }
+      }
+    },
+    "context": {
+      "model": "gpt-5.6-sol",
+      "effort": "medium"
+    }
+  },
+  {
+    "id": "01a05265-2e4e-7df1-b671-c2bdf9e78409",
+    "source": {
+      "subagent": {
+        "thread_spawn": {
+          "parent_thread_id": "01a05261-cd5c-7ca3-a654-cebea9f187fb",
+          "depth": 1,
+          "agent_path": "/root/bridge_parity",
+          "agent_nickname": "Mill",
+          "agent_role": "explorer"
+        }
+      }
+    },
+    "context": {
+      "model": "gpt-5.6-sol",
+      "effort": "medium"
+    }
+  },
+  {
+    "id": "01a05298-0d46-73c1-97dc-d0bd64d60c41",
+    "source": {
+      "subagent": {
+        "thread_spawn": {
+          "parent_thread_id": "01a05261-cd5c-7ca3-a654-cebea9f187fb",
+          "depth": 1,
+          "agent_path": "/root/melissa_plan_gate",
+          "agent_nickname": "Plato",
+          "agent_role": "default"
+        }
+      }
+    },
+    "context": {
+      "model": "gpt-5.6-terra",
+      "effort": "high"
+    }
+  },
+  {
+    "id": "01a052a3-d762-7a60-bb06-1eb6b84cf564",
+    "source": {
+      "subagent": {
+        "thread_spawn": {
+          "parent_thread_id": "01a05261-cd5c-7ca3-a654-cebea9f187fb",
+          "depth": 1,
+          "agent_path": "/root/s2_capability_manifest",
+          "agent_nickname": "Ampere",
+          "agent_role": "worker"
+        }
+      }
+    },
+    "context": {
+      "model": "gpt-5.6-terra",
+      "effort": "high"
+    }
+  },
+  {
+    "id": "01a052a3-821f-7970-af50-f267a2d8e429",
+    "source": {
+      "subagent": {
+        "thread_spawn": {
+          "parent_thread_id": "01a05261-cd5c-7ca3-a654-cebea9f187fb",
+          "depth": 1,
+          "agent_path": "/root/s1_recovery_census",
+          "agent_nickname": "Beauvoir",
+          "agent_role": "worker"
+        }
+      }
+    },
+    "context": {
+      "model": "gpt-5.6-luna",
+      "effort": "low"
+    }
+  },
+  {
+    "id": "01a057e6-52a9-77c0-b11a-6b7d9ad69595",
+    "source": {
+      "subagent": {
+        "thread_spawn": {
+          "parent_thread_id": "01a05261-cd5c-7ca3-a654-cebea9f187fb",
+          "depth": 1,
+          "agent_path": "/root/melissa_status_checkpoint",
+          "agent_nickname": "Laplace",
+          "agent_role": "default"
+        }
+      }
+    },
+    "context": {
+      "model": "gpt-5.6-terra",
+      "effort": "high"
+    }
+  }
+]

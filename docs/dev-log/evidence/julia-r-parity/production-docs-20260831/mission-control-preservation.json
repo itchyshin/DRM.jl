@@ -1,0 +1,14 @@
+{
+  "changed_fields": [
+    "focus",
+    "next_safe_action",
+    "lane",
+    "active_lane"
+  ],
+  "foreign_files_checked": 42,
+  "foreign_unchanged": true,
+  "before_sha256": "b1cfc2edee8d83bdbe99267db8b71693b583ce691e1866b07cdbf1af6eeafc4d",
+  "after_sha256": "97447dd433372e0ce0c17722da394cda8372ed85c659df3ec7cc7e3feae3fb74",
+  "local_commit": "36f628640eafd3d0e85c29515d41d95d44789b10",
+  "foreign_unchanged_at_close": true
+}

@@ -1,0 +1,1 @@
+| 2026-08-31 | **Conditional simulation scale repair** (#563 / S11) | seeded family distributions, zero/hurdle/truncated neighbours, auxiliary immutability, Gaussian/Poisson | Red1pass5fail; expanded5pass5fail4errors; green14/14 and32/32neighbours. Joint bootstrap and Gamma public normalization remain open | Ada / Fisher / Rose |

@@ -1,0 +1,26 @@
+{
+  "head": "567fec069758131804bc4d94582bc48e9338f63f",
+  "target": "Totoro",
+  "estimate_seconds": 600,
+  "timeout_seconds": 600,
+  "threads": 1,
+  "blas": 1,
+  "tests": [
+    "test_joint_missing_two_predictor.jl",
+    "test_joint_missing_two_frontend.jl",
+    "test_joint_missing_two_bridge.jl",
+    "test_joint_missing_finite.jl",
+    "test_joint_missing_finite_frontend.jl",
+    "test_joint_missing_finite_bridge.jl",
+    "test_phylo_polytomy.jl",
+    "test_phylo_labels.jl",
+    "test_phylo_polytomy_kernels.jl",
+    "test_lss_tip_identity.jl",
+    "test_lss_bootstrap_contract.jl",
+    "test_bootstrap_thread_flags.jl",
+    "test_bridge_profile_status.jl",
+    "test_bridge_formula_labels.jl"
+  ],
+  "source_archive_sha256": "50e9cfe3967d23763c7fe688a7d4315a01f127b7cd4eb98f28c1e3bae3ad802c",
+  "scope": "integration correctness only; no speed/coverage claim"
+}

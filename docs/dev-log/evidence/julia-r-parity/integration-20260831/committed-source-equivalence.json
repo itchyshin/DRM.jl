@@ -1,0 +1,24 @@
+{
+  "R_code_commit": "acfbcd0d44d26690cdc8d600aeebb120edc1d7da",
+  "Julia_source_commit": "567fec069758131804bc4d94582bc48e9338f63f",
+  "files": {
+    "R/julia-bridge.R": {
+      "sha256": "fb5ca0e67afa9696b42457e771baac0d318318b38b0160db0fb252cda7570701",
+      "matches_working": true
+    },
+    "tests/testthat/test-julia-joint-prediction-labels.R": {
+      "sha256": "d9bce44daad99f54f4c96856c5f994d677a7af68249e354599230812754dd56e",
+      "matches_working": true
+    },
+    "tools/run-julia-integration-session.R": {
+      "sha256": "42fb2a93147614687b624571787ee35e1106b5597a70a90912158fc4dfbe0db9",
+      "matches_working": true
+    },
+    "tools/check-julia-integration-session.py": {
+      "sha256": "5b3572fe510339ac286d31d22981ba6fd7f9f917cf16f2193f7930efa116dd54",
+      "matches_working": true
+    }
+  },
+  "source_manifest_check": "check-julia-integration-session.py --self-test --verify-current-files passed after R code commit; exact746 input files",
+  "whitespace_note": "Raw captured logs retain original trailing whitespace; source/test/tool/doc diff whitespace check passed excluding raw log files. No raw logs were normalized."
+}

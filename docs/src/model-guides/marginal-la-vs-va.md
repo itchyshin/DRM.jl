@@ -2,8 +2,10 @@
 
 !!! note "Status — Experimental (#136 open)"
     A variational (VA / ELBO) marginal is an **opt-in Experimental** alternative
-    for random-intercept `(1 | g)` models. **Laplace remains the default** — the
-    same family of method drmTMB and TMB use.
+    for random-intercept `(1 | g)` models. **`:LA` remains the default.** For a
+    scalar Poisson random intercept, `:LA` uses fixed, non-adaptive 32-node
+    Gauss–Hermite quadrature, not one-point Laplace or adaptive GHQ. Other
+    `:LA` routes are not identified by this statement.
 
     **Public path today (does not close #136):** Poisson, Binomial, NegBinomial2,
     Gamma, and Beta `(1 | g)` via `drm(...; marginal = :VA)` (scale families need
@@ -28,13 +30,17 @@ approximated. The quality of the approximation is not a side detail: it is what
 the dispersion, shape, and zero-inflation parameters are estimated *against*. A
 biased marginal biases exactly those parameters.
 
-### The Laplace approximation (today's default)
+### The default `:LA` route
 
-LA replaces the integrand with a Gaussian centred at the posterior mode of `z`,
-matched in curvature (the Hessian) at that mode. It is fast — one inner mode
-solve per outer step — and for a Gaussian random effect on the mean it is
-*exact*, because the integrand really is Gaussian (this is why a mean random
-intercept in a Gaussian model needs no approximation at all).
+For a scalar Poisson random intercept `(1 | g)`, the public default `:LA` route
+uses fixed, non-adaptive 32-node Gauss–Hermite quadrature. It is neither
+one-point Laplace nor adaptive Gauss–Hermite quadrature. A Laplace approximation
+in general replaces the integrand with a Gaussian centred at the posterior mode of `z`,
+matched in curvature (the Hessian) at that mode. It is exact only when the
+responses are Gaussian, a Gaussian random effect enters the mean linearly, and
+the residual variance is independent of that random effect; then the integrand
+is Gaussian. A mean random intercept in that Gaussian model needs no
+approximation.
 
 The trouble starts when the integrand is **not** close to Gaussian:
 
@@ -81,9 +87,11 @@ and pick `m` and `v` to maximise the **evidence lower bound** (ELBO):
 ELBO(θ, m, v) = E_q[ log p(y, z | θ) ] − E_q[ log q(z) ]  ≤  log L(θ).
 ```
 
-The ELBO is a *provable lower bound* on the true log marginal, which is the
-property that makes it well-behaved as an objective: optimising it cannot
-silently chase a spurious peak the way a mode-match can.
+The ELBO is a *provable lower bound* on the true log marginal for a fixed
+variational distribution. Its optimisation can still have local optima, and a
+factorised Gaussian `q` need not represent a multimodal posterior. The bound is
+an objective property, not a guarantee of global optimisation or complete
+posterior geometry.
 
 The expectations under a Gaussian `q` are tractable in the two regimes DRM.jl
 needs:
@@ -105,23 +113,25 @@ against a curvature match at a single point.
 | Situation | Recommendation |
 |---|---|
 | Fixed-effects-only model | VA adds nothing — there is no latent integral to approximate. |
-| Gaussian random effect on the mean | VA adds nothing — LA is already exact here. |
+| Gaussian response with a Gaussian RE entering the mean linearly and independent residual variance | VA adds nothing — the marginal is already exact here. |
 | Ordinary Gamma `(1\|g)` shape | LA ≈ VA in the #136e smoke; **prefer LA** (15–20× faster warm). |
 | Two-part / hurdle / ZINB geometry | VA may help (GLLVM evidence) — **not a public DRM path yet**. |
-| Speed-critical fits | LA — default; one inner solve per step. |
+| Speed-critical fits | Route-specific: `:LA` is the default; Poisson scalar random intercepts use fixed GHQ-32. |
 
-In short: **LA is faster and is the default.** On the public Gamma random-intercept
-cell, Julia matches the R/TMB pattern: the two marginals agree on `α` and LA
-wins on time (`report/va-vs-laplace-bias.md`). VA stays an opt-in for the
+In short: **`:LA` is the default and its numerical implementation is
+route-specific.** On the public Gamma random-intercept cell, Julia matches the
+R/TMB pattern: the two marginals agree on `α` and LA wins on time
+(`report/va-vs-laplace-bias.md`). VA stays an opt-in for the
 bias-sensitive *two-part / ZI* cells — those are still unwired here.
 
 ## The public API (Experimental)
 
 The marginal is selected with `marginal` (not Gaussian `method = :ML/:REML`).
-LA remains the default:
+`:LA` remains the default integration route; its numerical implementation is
+route-specific:
 
 ```julia
-# default — Laplace, as today
+# default `:LA` route; integration is route-specific
 drm(...; marginal = :LA)
 
 # opt-in variational marginal (Experimental: `(1 | g)` on Poisson / Binomial /

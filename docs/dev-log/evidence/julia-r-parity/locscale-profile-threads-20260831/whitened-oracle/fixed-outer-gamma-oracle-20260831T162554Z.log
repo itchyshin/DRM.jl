@@ -1,0 +1,63 @@
+ERROR: LoadError: KeyError: key SparseArrays [2f01184e-e22b-5df5-ae63-d93ebab69eaf] not found
+Stacktrace:
+  [1] getindex
+    @ Base ./dict.jl:498 [inlined]
+  [2] macro expansion
+    @ Base ./lock.jl:267 [inlined]
+  [3] root_module(key::Base.PkgId)
+    @ Base ./loading.jl:1872
+  [4] deserialize_module(s::Serializer{IOStream})
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:994
+  [5] handle_deserialize(s::Serializer{IOStream}, b::Int32)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:896
+  [6] deserialize(s::Serializer{IOStream})
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:814
+  [7] deserialize_datatype(s::Serializer{IOStream}, full::Bool)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:1398
+  [8] handle_deserialize(s::Serializer{IOStream}, b::Int32)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:867
+  [9] deserialize(s::Serializer{IOStream})
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:814
+ [10] deserialize_datatype(s::Serializer{IOStream}, full::Bool)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:1418
+ [11] handle_deserialize(s::Serializer{IOStream}, b::Int32)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:867
+ [12] deserialize(s::Serializer{IOStream})
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:814
+ [13] deserialize_datatype(s::Serializer{IOStream}, full::Bool)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:1423
+ [14] handle_deserialize(s::Serializer{IOStream}, b::Int32)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:867
+ [15] deserialize(s::Serializer{IOStream})
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:814
+ [16] deserialize_datatype(s::Serializer{IOStream}, full::Bool)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:1414
+ [17] handle_deserialize(s::Serializer{IOStream}, b::Int32)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:867
+ [18] deserialize(s::Serializer{IOStream})
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:814
+ [19] deserialize_datatype(s::Serializer{IOStream}, full::Bool)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:1423
+ [20] handle_deserialize(s::Serializer{IOStream}, b::Int32)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:867
+ [21] deserialize(s::Serializer{IOStream})
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:814
+ [22] handle_deserialize(s::Serializer{IOStream}, b::Int32)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:874
+ [23] deserialize(s::Serializer{IOStream})
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:814
+ [24] handle_deserialize(s::Serializer{IOStream}, b::Int32)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:920
+ [25] deserialize
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:814 [inlined]
+ [26] deserialize(s::IOStream)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:801
+ [27] open(f::typeof(deserialize), args::String; kwargs::@Kwargs{})
+    @ Base ./io.jl:396
+ [28] open
+    @ Base ./io.jl:393 [inlined]
+ [29] deserialize(filename::String)
+    @ Serialization ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Serialization/src/Serialization.jl:811
+ [30] top-level scope
+    @ /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:179
+in expression starting at /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:179

@@ -1,0 +1,1 @@
+| 2026-08-31 | **Production documentation and local preview** (#563) | Strict Documenter52pages/134examples; VitepressHTML;12 auditor tests; unlazy3localgates | Source/HTML/localpreview checks pass; raw106metadataerrors preserved; Totoro301s timeout remains incomplete; globalG0–G8open | Ada, Pat, Rose |

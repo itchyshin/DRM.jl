@@ -1,0 +1,1 @@
+| 2026-08-30 | **Nested and full documentation source execution** (#563) | Synthetic positive/negative; three-page smoke; final51-page/122-example gate111.795s; inventory8tests; Rose math review | Source execution passes; full production theme/navigation/mobile/live G6 remains open | Ada + Pat + Rose |

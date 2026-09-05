@@ -1,0 +1,19 @@
+
+══ Testing test-julia-joint-two.R ══════════════════════════════════════════════
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 1 | WARN 0 | SKIP 0 | PASS 0 ]
+
+── Error ('test-julia-joint-two.R:12:3'): two Gaussian Julia preparation preserves both native designs and all masks ──
+Error in `FUN(X[[i]], ...)`: unused argument (rhs = mi(x1) + mi(x2) + z)
+Backtrace:
+    ▆
+ 1. └─two_joint_prepare() at test-julia-joint-two.R:12:3
+ 2.   └─drmTMB:::drm_julia_joint_prepare(...) at test-julia-joint-two.R:6:3
+ 3.     └─drmTMB:::drm_julia_joint_mi_setup(entries) at drmTMB/R/julia-joint-missing.R:254:3
+ 4.       └─base::vapply(...) at drmTMB/R/julia-joint-missing.R:80:3
+
+[ FAIL 1 | WARN 0 | SKIP 0 | PASS 0 ]
+Error:
+! Test failures.
+Execution halted

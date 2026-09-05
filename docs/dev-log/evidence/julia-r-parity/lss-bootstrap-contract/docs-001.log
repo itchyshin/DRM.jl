@@ -1,0 +1,74 @@
+[ Info: SetupBuildDirectory: setting up build directory.
+[ Info: Doctest: running doctests.
+[ Info: ExpandTemplates: expanding markdown templates.
+[ Info: CrossReferences: building cross-references.
+┌ Warning: invalid local link/image: file does not exist in docs/src/tutorials/location-scale-scale.md
+│   link =
+│    @ast MarkdownAST.Link("../api-stability.md", "") do
+│      MarkdownAST.Text("API stability")
+│    end
+│    
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: invalid local link/image: file does not exist in docs/src/tutorials/location-scale-scale.md
+│   link =
+│    @ast MarkdownAST.Link("location-scale.md", "") do
+│      MarkdownAST.Text("location–scale model")
+│    end
+│    
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: invalid local link/image: file does not exist in docs/src/tutorials/location-scale-scale.md
+│   link =
+│    @ast MarkdownAST.Link("location-scale.md", "") do
+│      MarkdownAST.Text("When variance carries signal")
+│    end
+│    
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: invalid local link/image: file does not exist in docs/src/tutorials/location-scale-scale.md
+│   link =
+│    @ast MarkdownAST.Link("phylogenetic-models.md", "") do
+│      MarkdownAST.Text("Phylogenetic structured effects")
+│    end
+│    
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: invalid local link/image: file does not exist in docs/src/tutorials/location-scale-scale.md
+│   link =
+│    @ast MarkdownAST.Link("../api-stability.md", "") do
+│      MarkdownAST.Text("API stability")
+│    end
+│    
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+[ Info: CheckDocument: running document checks.
+[ Info: Populate: populating indices.
+[ Info: RenderDocument: rendering document.
+[ Info: DocumenterVitepress: rendering MarkdownVitepress pages.
+┌ Warning: Documenter could not auto-detect the building environment. Skipping deployment.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/deployconfig.jl:93
+[ Info: Automatic `version="0.7.0"` for inventory from ../Project.toml
+[ Info: Bases that will be built: [""]
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/mathjax-plugin.ts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/julia-repl-transformer.ts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/index.ts` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/style.css` file. Substituting in the default file.
+[ Info: DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/docstrings.css` file. Substituting in the default file.
+[ Info: Base is "" and ENV["CI"] is not set so this is a local build. Not adding any additional base prefix based on the repository or deploy url and instead using absolute path "/" to facilitate serving docs locally.
+┌ Warning: DocumenterVitepress: No logo.png file found in `docs/src/assets`.  Skipping logo replacement.
+└ @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/vitepress_config.jl:148
+┌ Warning: DocumenterVitepress: No favicon.ico file found in `docs/src/assets`.  Skipping favicon replacement.
+└ @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/vitepress_config.jl:162
+┌ Info: DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
+│ You can view it yourself by running the following in the `docs` folder:
+│ ```
+│ npm run docs:dev
+│ ```
+│ and if you haven't run `npm` in this repo before, install all packages by running `npm install`.
+│ 
+└ All emitted markdown can be found in `/private/tmp/drm-parity-20260830/DRM.jl/docs/build/lss-bootstrap-contract-20260830-001/.documenter`.
+DOCS_RUNTIME julia=1.10.0 threads=4 blas=1 loaded_drm=/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl
+DOCS_SELECTED=tutorials/location-scale-scale.md
+Copied: /private/tmp/drm-parity-20260830/DRM.jl/docs/build/lss-bootstrap-contract-20260830-001/.documenter/components/AuthorBadge.vue
+Copied: /private/tmp/drm-parity-20260830/DRM.jl/docs/build/lss-bootstrap-contract-20260830-001/.documenter/components/Authors.vue
+Copied: /private/tmp/drm-parity-20260830/DRM.jl/docs/build/lss-bootstrap-contract-20260830-001/.documenter/components/SidebarDrawerToggle.vue
+Copied: /private/tmp/drm-parity-20260830/DRM.jl/docs/build/lss-bootstrap-contract-20260830-001/.documenter/components/VersionPicker.vue
+DOCS_SUBSET_PASS pages=1 examples=8 seconds=25.186
+DOCS_SUBSET_BUILD=/private/tmp/drm-parity-20260830/DRM.jl/docs/build/lss-bootstrap-contract-20260830-001

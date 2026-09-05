@@ -1,0 +1,8 @@
+┌ Warning: drm: this tree's maximum tip height is 0.3, not 1, so `sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor 0.547723 = sqrt(0.3) away from the correlation scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by 1/0.3 to match. A non-ultrametric tree requires tip-wise correlation standardization, not this scalar rescaling. `phylo_tree_height(tree)` reports this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/sparse_phy.jl:710
+Test Summary:                     | Pass  Total  Time
+rooted multifurcating phylogenies |   55     55  1.9s
+PHYLO_POLYTOMY_TEST_READY
+Test Summary:                     | Pass  Total  Time
+phylo tree height + scale warning |   14     14  0.5s
+LABEL_NEIGHBOURS_PASS

@@ -1,0 +1,85 @@
+bridge formula-derived coefficient labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:229
+  Expression: public_names[2] == expected
+   Evaluated: "log1p(1 + I(x^2)/2)" == "log1p((1 + I(x^2))/2)"
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:229 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:10
+bridge formula-derived coefficient labels: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:9
+  Got exception outside of a @test
+  MethodError: no method matching &(::Float64, ::Int64)
+  
+  Closest candidates are:
+    &(::Any, ::Any, !Matched::Any, !Matched::Any...)
+     @ Base operators.jl:587
+    &(!Matched::Missing, ::Integer)
+     @ Base missing.jl:171
+    &(!Matched::T, ::T) where T<:Union{Int128, Int16, Int32, Int64, Int8, UInt128, UInt16, UInt32, UInt64, UInt8}
+     @ Base int.jl:347
+    ...
+  
+  Stacktrace:
+    [1] _broadcast_getindex_evalf
+      @ Base.Broadcast ./broadcast.jl:709 [inlined]
+    [2] _broadcast_getindex
+      @ Base.Broadcast ./broadcast.jl:682 [inlined]
+    [3] _getindex
+      @ Base.Broadcast ./broadcast.jl:706 [inlined]
+    [4] _getindex (repeats 2 times)
+      @ Base.Broadcast ./broadcast.jl:705 [inlined]
+    [5] _broadcast_getindex
+      @ Base.Broadcast ./broadcast.jl:681 [inlined]
+    [6] _getindex
+      @ Base.Broadcast ./broadcast.jl:706 [inlined]
+    [7] _broadcast_getindex
+      @ Base.Broadcast ./broadcast.jl:681 [inlined]
+    [8] getindex
+      @ Base.Broadcast ./broadcast.jl:636 [inlined]
+    [9] copy
+      @ Base.Broadcast ./broadcast.jl:942 [inlined]
+   [10] materialize(bc::Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(sqrt), Tuple{Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(+), Tuple{Vector{Float64}, Int64, Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(&), Tuple{Vector{Float64}, Int64}}}}}})
+      @ Base.Broadcast ./broadcast.jl:903
+   [11] modelcols(ft::StatsModels.FunctionTerm{typeof(sqrt), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}, d::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, __bridge_I_1::Vector{Float64}})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/terms.jl:500
+   [12] #42
+      @ ./array.jl:0 [inlined]
+   [13] iterate(g::Base.Generator{Vector{Any}, Test.var"#44#45"{Int64}}, s::Int64)
+      @ Base ./generator.jl:47 [inlined]
+   [14] collect_to!(dest::Vector{Vector{Float64}}, itr::Base.Generator{Tuple{StatsModels.InterceptTerm{true}, StatsModels.FunctionTerm{typeof(sqrt), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}}, StatsModels.var"#42#43"{@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, __bridge_I_1::Vector{Float64}}}}, offs::Int64, st::Int64)
+      @ Base ./array.jl:892
+   [15] collect_to_with_first!(dest::AbstractArray, v1::Any, itr::Any, st::Any)
+      @ Base ./array.jl:870 [inlined]
+   [16] collect(itr::Base.Generator{Tuple{StatsModels.InterceptTerm{true}, StatsModels.FunctionTerm{typeof(sqrt), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}}, StatsModels.var"#42#43"{@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, __bridge_I_1::Vector{Float64}}}})
+      @ Base ./array.jl:844
+   [17] modelcols(t::StatsModels.MatrixTerm{Tuple{StatsModels.InterceptTerm{true}, StatsModels.FunctionTerm{typeof(sqrt), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}}}, d::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, __bridge_I_1::Vector{Float64}})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/terms.jl:555
+   [18] modelcols(t::FormulaTerm{StatsModels.ContinuousTerm{Float64}, StatsModels.MatrixTerm{Tuple{StatsModels.InterceptTerm{true}, StatsModels.FunctionTerm{typeof(sqrt), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}}}}, d::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, __bridge_I_1::Vector{Float64}})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/terms.jl:552
+   [19] _design(response::Symbol, rhs::StatsModels.FunctionTerm{typeof(sqrt), Vector{StatsModels.FunctionTerm{typeof(+), Vector{StatsModels.AbstractTerm}}}}, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, z::Vector{Float64}, __bridge_I_1::Vector{Float64}})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:357
+   [20] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:227 [inlined]
+   [21] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [22] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:10
+   [23] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [24] top-level scope
+      @ none:1
+   [25] eval
+      @ Core ./boot.jl:385 [inlined]
+   [26] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [27] _start()
+      @ Base ./client.jl:552
+Test Summary:                             | Pass  Fail  Error  Total   Time
+bridge formula-derived coefficient labels |  692     1      1    694  27.6s
+ERROR: LoadError: Some tests did not pass: 692 passed, 1 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:9

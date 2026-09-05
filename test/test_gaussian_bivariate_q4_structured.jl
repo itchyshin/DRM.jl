@@ -165,9 +165,13 @@ end
 end
 
 @testset "Bivariate q=4 structured gradient wiring smoke (#189)" begin
-    # Engine FD ≤1e-6 is already gated on phylo Q_cond (`test_qgate_fd_gradient.jl`).
-    # Here we only prove the structured route wires the same nll / nllgrad closures.
-    fx = _q4s_simulate(; G = 6, nrep = 2, seed = 1895)
+    # Engine FD ≤1e-6 is gated on BOTH routes now (`test_qgate_fd_gradient.jl`,
+    # structured since #510). Here we only prove the structured route wires the
+    # same nll / nllgrad closures — on an IDENTIFIED fixture: nrep = 2 made this
+    # 4G = 24 latent values against 2n = 24 observations, a saturated model whose
+    # Λ is singular, and a smoke assertion on an unidentified fit tests very
+    # little (#509, the same lesson as #483). nrep = 4 keeps it small and posed.
+    fx = _q4s_simulate(; G = 6, nrep = 4, seed = 1895)
     fit = drm(
         _q4s_formula_relmat(), Gaussian();
         data = fx.data, K = fx.K,
@@ -184,3 +188,45 @@ end
     fit.nllgrad(gp, θp)
     @test norm(gp) > norm(g0)   # informative gradient away from the MLE
 end
+
+@testset "converged is gated on Λ admissibility (#509)" begin
+    # The gate's CONTRACT, asserted platform-robustly: the public flag never
+    # claims success at a numerically inadmissible Λ. Two earlier versions of
+    # this testset asserted the saturated fixture's OUTCOME (!converged) and
+    # were platform-flaky both ways — on one platform the 24-obs/24-latent
+    # knife-edge fixture ran to a singular Λ, on another to an admissible one
+    # (and the over-saturated 12/24 variant landed admissible too: latent
+    # unidentifiability does not force Λ itself onto the cond >= 1e12
+    # boundary). Whatever Λ a platform's optimizer reaches, the invariant the
+    # #509 fix guarantees is checkable: converged == true implies the fitted
+    # Λ passes the same admissibility test the gate uses.
+    for nrep in (1, 2)
+        fx = _q4s_simulate(; G = 6, nrep = nrep, seed = 1895)
+        fit = drm(
+            _q4s_formula_relmat(), Gaussian();
+            data = fx.data, K = fx.K,
+            q4_iterations = 100, q4_n_newton = 30, q4_vcov = false,
+        )
+        adm = DRM._q2_lambda_admissible(Matrix{Float64}(fit.ranef.Sigma_a))
+        @test !(fit.converged && !adm)   # never success at an inadmissible Λ
+        @test all(isfinite, fit.theta)   # the gate is on the claim, not the fit
+    end
+
+    # The gate function itself, deterministically: singular, non-finite, and
+    # ill-conditioned matrices refuse; a healthy matrix passes.
+    @test !DRM._q2_lambda_admissible([1.0 1.0; 1.0 1.0])
+    @test !DRM._q2_lambda_admissible([1.0 NaN; NaN 1.0])
+    @test !DRM._q2_lambda_admissible([1.0 0.0; 0.0 1e-13])
+    @test DRM._q2_lambda_admissible(Matrix{Float64}(LinearAlgebra.I, 4, 4))
+
+    # Positive control: the identified default fixture still reports converged,
+    # so the gate separates regimes rather than failing everything.
+    fx_ok = _q4s_simulate(; seed = 1894)
+    fit_ok = drm(
+        _q4s_formula_relmat(), Gaussian();
+        data = fx_ok.data, K = fx_ok.K,
+        q4_iterations = 120, q4_n_newton = 30, q4_vcov = false,
+    )
+    @test fit_ok.converged
+end
+

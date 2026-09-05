@@ -1,8 +1,10 @@
-# When variance carries signal
+# When variance carries signal, Part 1: location–scale
 
 !!! note "Status — Stable"
-    Mirrors drmTMB's [When variance carries signal](https://itchyshin.github.io/drmTMB/articles/location-scale.html).
+    Mirrors drmTMB's [When variance carries signal, Part 1](https://itchyshin.github.io/drmTMB/articles/location-scale.html).
     **In DRM.jl today:** the univariate Gaussian location–scale model fits by ML.
+    Continue with [Part 2: location–scale–scale](location-scale-scale.md) when the
+    question moves from the residual SD to the SD of a random effect.
 
 Sometimes the science is in the *spread*, not the mean. A classic case: two
 conditions with the **same** average response but different variability. A
@@ -57,7 +59,8 @@ When the *spread* itself varies across many groups (sites, individuals,
 studies), put a **random intercept on `σ`** rather than a fixed level per group.
 Because the random effect enters σ nonlinearly there is no closed-form marginal,
 so DRM.jl integrates each group's effect out with per-group **Gauss–Hermite
-quadrature** (drmTMB uses Laplace; for a 1-D effect these agree):
+quadrature**. drmTMB uses Laplace: both target the same marginal model, but
+their numerical approximations need not be identical.
 
 ```@example ls
 Random.seed!(13)
@@ -68,7 +71,7 @@ yr = exp.(log(0.5) .+ bg[grp]) .* randn(ng)
 datre = (; y = yr, grp)
 
 fitre = drm(bf(@formula(y ~ 1), @formula(sigma ~ 1 + (1 | grp))), Gaussian(); data = datre)
-re_sd(fitre)[:grp]      # recovered SD of the group-level dispersion (≈ 0.5)
+re_sd(fitre)[:grp_logsigma]  # recovered log-σ group-effect SD (≈ 0.5)
 ```
 
 `re_sd` returns the scale-RE SD; `coef(fitre, :sigma)` is the population
@@ -76,5 +79,7 @@ re_sd(fitre)[:grp]      # recovered SD of the group-level dispersion (≈ 0.5)
 
 ## See also
 
+- [Part 2: location–scale–scale](location-scale-scale.md) — predictors on the
+  SD of a random effect (iid and phylogenetic).
 - [Get started](../get-started.md) — your first fit.
 - [Changing residual coupling with rho12](bivariate-coscale.md) — two responses.

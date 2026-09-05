@@ -110,6 +110,68 @@ function make_loc_problem(phy::AugmentedPhy, y, X; species=1:(phy.n_leaves))
     )
 end
 
+"""
+    _phylo_mean_leaf_index(phy::AugmentedPhy, labels) -> Vector{Int}
+
+Map per-row group `labels` to the tree's raw leaf index (`1:phy.n_leaves`) —
+the convention `make_loc_problem`'s `species=` keyword expects. Mirrors the
+three-tier match `_poisson_phylo_setup` already uses for the Laplace phylo
+routes, most to least specific:
+
+  1. leaf NAME (`phy.leaf_names`) — subset-tolerant: `labels` may name only
+     SOME of the tree's leaves (e.g. after a caller drops missing-response
+     rows upstream — #482). A leaf that never appears in `labels` simply gets
+     no observation and stays in the phylo PRIOR only, exactly like the
+     σ-phylo route's documented "species whose every row is missing stays in
+     the prior with no likelihood term" (`gaussian_core.jl`, the σ-phylo
+     missing-response block).
+  2. integer tip index `1:phy.n_leaves`.
+  3. positional (`_group_index`, first-seen order) — the only tier with no
+     name information to anchor to, so it requires `labels` to visit every
+     tip exactly once (`G == phy.n_leaves`); this is the pre-#482 behaviour,
+     kept as a last-resort fallback.
+
+Throws an `ArgumentError` naming the mismatch if none of the three tiers
+apply (e.g. group labels that are neither tree tip names nor valid integer
+indices, and do not even form a complete one-level-per-tip bijection).
+"""
+function _phylo_mean_leaf_index(phy::AugmentedPhy, labels)
+    by_name = Dict(phy.leaf_names[i] => i for i in 1:phy.n_leaves)
+    leaf = Vector{Int}(undef, length(labels))
+    matched_names = true
+    @inbounds for i in eachindex(labels)
+        key = string(labels[i])
+        if haskey(by_name, key)
+            leaf[i] = by_name[key]
+        else
+            matched_names = false
+            break
+        end
+    end
+    matched_names && return leaf
+
+    numeric_labels = true
+    @inbounds for i in eachindex(labels)
+        li = labels[i]
+        if li isa Integer && 1 <= Int(li) <= phy.n_leaves
+            leaf[i] = Int(li)
+        else
+            numeric_labels = false
+            break
+        end
+    end
+    numeric_labels && return leaf
+
+    gidx, G = _group_index(labels)
+    G == phy.n_leaves ||
+        throw(ArgumentError("drm (Gaussian phylo mean): the group column has $(G) distinct " *
+            "level(s) but the tree has $(phy.n_leaves) leaves, and the levels are not the " *
+            "tree's leaf names or integer tip indices either — phylo group labels must match " *
+            "tree tip names, integer tip indices, or (as a last resort) supply exactly one " *
+            "level per tree tip."))
+    return gidx
+end
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Core Woodbury helpers — all O(p) via sparse Cholesky
 # ─────────────────────────────────────────────────────────────────────────────
@@ -161,10 +223,22 @@ function marginal_loglik(
     return -0.5 * (prob.n * log(2π) + ldV + quad)
 end
 
+# The Woodbury representation subtracts two O(1/σ²) terms.  Once the
+# residual variance is below machine precision relative to the phylogenetic
+# variance, that subtraction no longer represents the marginal covariance:
+# it can manufacture a large *negative* NLL and an apparently converged fit.
+# Treat that part of parameter space as numerically unavailable.  This is a
+# representation limit, not a statistical lower bound; the dense small-model
+# oracle remains available to investigate a genuine boundary estimate.
+@inline function _loconly_resolvable_scales(lσ::Real, lσ_phy::Real)
+    return lσ - lσ_phy >= 0.5 * log(eps(Float64))
+end
+
 function _loconly_marginal_nll(
     prob::LocOnlyProblem, β::AbstractVector, lσ::Real, lσ_phy::Real
 )
-    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50 &&
+     _loconly_resolvable_scales(lσ, lσ_phy)) ||
         return _LOCONLY_PENALTY
     σ²_phy = exp(2 * Float64(lσ_phy))
     σ² = exp(2 * Float64(lσ))
@@ -173,7 +247,8 @@ function _loconly_marginal_nll(
 end
 
 function _loconly_profile_beta(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
-    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50 &&
+     _loconly_resolvable_scales(lσ, lσ_phy)) ||
         return nothing, _LOCONLY_PENALTY, nothing
     σ²_phy = exp(2 * Float64(lσ_phy))
     σ² = exp(2 * Float64(lσ))
@@ -3068,7 +3143,8 @@ function _loconly_marginal_grad!(g, prob::LocOnlyProblem, θ::AbstractVector, p�
     )
     lσ = θ[pμ + 1]
     lσ_phy = θ[pμ + 2]
-    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) || return g
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50 &&
+     _loconly_resolvable_scales(lσ, lσ_phy)) || return g
     σ² = exp(2 * Float64(lσ))
     σ²_phy = exp(2 * Float64(lσ_phy))
     try
@@ -3296,7 +3372,8 @@ function _fit_structured_gaussian_em(
 end
 
 function _fit_structured_gaussian_sparse_lbfgs(
-    fam::Gaussian, y, Xμ, Xσ, gidx, G, phy::AugmentedPhy, nmμ, nmσ, grp, g_tol
+    fam::Gaussian, y, Xμ, Xσ, gidx, G, phy::AugmentedPhy, nmμ, nmσ, grp, g_tol;
+    penalty = nothing
 )
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
     pσ == 1 || error(
@@ -3319,8 +3396,17 @@ function _fit_structured_gaussian_sparse_lbfgs(
         [log(s0 / 2 + eps()), log(s0 + eps())],
     ]
 
+    # v = [log sd_residual, log sd_phylo]; the penalty is on the PHYLO SD, v[2].
+    # It is added AFTER beta is profiled out, which is exact: the penalty does not
+    # depend on beta, so the profiled beta-hat at fixed (v1, v2) is unchanged.
+    # On a failed inner solve `_loconly_profile_fg` returns a sentinel with a zero
+    # gradient — leave that alone rather than penalising a non-solution.
     function fg!(F, G, v)
-        val, grad, _, _ = _loconly_profile_fg(prob, v[1], v[2])
+        val, grad, β, _ = _loconly_profile_fg(prob, v[1], v[2])
+        if penalty !== nothing && β !== nothing
+            grad = copy(grad)
+            val += _phylo_pen_apply_single!(grad, penalty, v, 2)
+        end
         G !== nothing && copyto!(G, grad)
         return F === nothing ? nothing : val
     end
@@ -3351,11 +3437,29 @@ function _fit_structured_gaussian_sparse_lbfgs(
 
     σ² = exp(2 * θ̂[pμ + 1])
     VX = Vinv_mul(prob, chM, σ², prob.X)
-    V = fill(NaN, length(θ̂), length(θ̂))
+    V = zeros(length(θ̂), length(θ̂))
     V[1:pμ, 1:pμ] .= try
         inv(Symmetric((prob.X' * VX + VX' * prob.X) ./ 2))
     catch
         fill(NaN, pμ, pμ)
+    end
+    # #556: the variance-parameter block used to be NaN BY CONSTRUCTION, so
+    # `sigma`/`resd` SEs were NA on every fit this route serves (Mizuno M2 —
+    # caught by the acceptance matrix; drmTMB native reports finite SEs here).
+    # β is profiled out EXACTLY, so the 2×2 curvature of the profiled objective
+    # at v̂ is the correct observed information for (log σ_e, log σ_phylo), and
+    # Gaussian mean/covariance orthogonality zeroes the cross block (left 0).
+    let vhat = [θ̂[pμ + 1], θ̂[pμ + 2]]
+        fv = function (v)
+            val, _, βv, _ = _loconly_profile_fg(prob, v[1], v[2])
+            if penalty !== nothing && βv !== nothing
+                val += _phylo_pen_apply_single!(zeros(2), penalty, v, 2)
+            end
+            return val
+        end
+        Hv = _finite_hessian(fv, vhat; h = _fd_hessian_step(n))
+        V[(pμ + 1):(pμ + 2), (pμ + 1):(pμ + 2)] .=
+            _vcov_from_hessian(Hv; context = "sparse phylo-mean variance block")
     end
     e = prob.y .- prob.X * β̂
     u_post = chM \ (prob.S' * e / σ²)
@@ -3366,10 +3470,18 @@ function _fit_structured_gaussian_sparse_lbfgs(
     means = Dict(:mu => Xμ * β̂ + prob.S * u_post)
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => fill(exp(θ̂[pμ + 1]), n))
+    # `nllhat` comes from `_loconly_profile_beta`, which never sees the penalty, so
+    # `-nllhat` is the UNPENALIZED data log-likelihood — exactly what drmTMB keeps
+    # in `fit$logLik`. The penalty at the optimum is recorded separately, giving
+    # the drmTMB identity  -objective == loglik - phylo_penalty.
     fit = DrmFit(
         fam, blocks, names, θ̂, V, -nllhat, n, Optim.converged(best_res), means, obs, scales
     )
-    return _withranef(
+    fit = _withranef(
         _withnll(fit, loc_obj, nllgrad!), Dict(Symbol(grp) => u_post[prob.leaf_pos])
     )
+    if penalty !== nothing
+        fit = _withmap(fit, _phylo_pen_apply_single!(nothing, penalty, v̂, 2), penalty)
+    end
+    return fit
 end

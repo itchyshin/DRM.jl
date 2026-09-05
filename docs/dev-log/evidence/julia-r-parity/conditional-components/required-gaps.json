@@ -1,0 +1,30 @@
+{
+  "scope": "Required Gaussian conditional-mode parity gaps; not benchmark exclusions",
+  "source_anchor": "f47789646f27221ba4fad29a8ba1b3b8a790b521",
+  "items": [
+    {
+      "id": "ordinary_same_group_components",
+      "status": "required_unimplemented_payload",
+      "example": "(1 | g) + (0 + x | g)",
+      "evidence": "gaussian_ranef.jl:565-569 stores modes in a group-keyed Dict and overwrites earlier same-group entries",
+      "next": "preserve component identity in Julia fit metadata after owning-persona and source authority checks"
+    },
+    {
+      "id": "ordinary_wider_correlated_slopes",
+      "status": "required_unimplemented_engine_contract",
+      "example": "(1 + x + z | g)",
+      "evidence": "_re_kind admits only one variable; correlated fitter assumes two latent coefficients"
+    },
+    {
+      "id": "ordinary_mixed_correlated_scalar",
+      "status": "required_unimplemented_engine_contract",
+      "example": "(1 + x | g) + (1 | h)",
+      "evidence": "router supports a single correlated term, or multiple scalar terms"
+    },
+    {
+      "id": "multi_component_clamp_compatibility",
+      "status": "required_unvalidated_extreme_region",
+      "evidence": "multi-component objective and modes clamp residual/RE log-SD to \u00b130; native parity outside interior not established"
+    }
+  ]
+}

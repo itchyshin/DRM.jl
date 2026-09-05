@@ -1,0 +1,9 @@
+# Bounded finite-state concurrency pilot
+
+The pilot runs the existing109factor and86frontend assertions, then compares eight concurrent fits against two serial fits on the frozen ordinal/categorical data. Serial coefficient, covariance, likelihood, fitted values, posterior summaries and full imputation outputs are deep-copied before threads start. The original inputs and serial fit outputs must remain unchanged. All83concurrency assertions pass on the Mac with four distinct Julia threads and one BLAS thread; total278assertions,32.03seconds including startup/compilation. This is correctness evidence, not warm speed.
+
+`finite-parallel-local-001.log` predates the independent-copy repair and is historical only. Rose found that live serial reference objects could themselves be corrupted by a shared-buffer defect;002 closes that oracle hole. A deliberately corrupted concurrent coefficient is rejected with82passed/1failed/0errored and no success token. The damage log is retained.
+
+The pilot source is `tools/run_finite_parallel_pilot.jl`. `source-manifest.json` records the frozen Julia source and test bytes. The Totoro manifest also records the archive and dependency versions. The remote pilot is bounded at300seconds, four Julia threads and one BLAS thread, offline, in a new directory. The corrected Totoro run passes278assertions in46seconds including startup onJulia1.10.10. `totoro-receipt-002.json` records its result. Attempt001failed afterfive seconds because the bundle omitted a required historicalfixture; its log is preserved. No scientific failure was erased.
+
+These are two finite predictor cases and repeated independent fits. This does NOT cover bootstrap or simulation RNG scheduling, every model/provider, all concurrent-input shapes, performance wins, or whole-programme G4/G5. The source is a frozen development tree, not a clean final-head integration qualification. DRAC was only connectivity-checked; no cluster job was submitted.

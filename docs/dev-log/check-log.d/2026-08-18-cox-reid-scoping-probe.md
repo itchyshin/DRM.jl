@@ -1,0 +1,1 @@
+| 2026-08-18 | **Cox–Reid scoping probe** (#441) | `julia --project=. bench/cox_reid_probe.jl` + standalone `test/test_cox_reid_characterization.jl` (not in `runtests.jl`) | ✅ Cell B 2.871e-06; Cell A this-engine GHQ bias; Cell C hook punches through; Cell D cheap Laplace recorded, not a recovery headline | Noether |

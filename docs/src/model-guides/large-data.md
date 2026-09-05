@@ -40,7 +40,8 @@ reproduced numbers (`report/comparison-grid.md`); the harness is
 ## Why it scales
 
 - **Sparse precision, never dense covariance.** The phylogenetic prior precision
-  is sparse (≈ 8p non-zeros for a binary tree). The engine factorises that sparse
+  is sparse (3N − 2 stored non-zeros for a tree with N nodes, about 6p for
+  a binary tree with p tips). The engine factorises that sparse
   matrix with CHOLMOD; it never materialises the dense Σ.
 - **Exact O(p) gradient.** The implicit-function gradient reuses a Takahashi
   selected inverse — the entries of the inverse that the sparse Cholesky already

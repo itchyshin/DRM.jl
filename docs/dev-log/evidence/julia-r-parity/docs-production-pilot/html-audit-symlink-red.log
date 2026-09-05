@@ -1,0 +1,14 @@
+F.
+======================================================================
+FAIL: test_edge_cases (tools.tests.test_parity_html_audit.TestAudit.test_edge_cases)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/tests/test_parity_html_audit.py", line 25, in test_edge_cases
+    self.assertEqual(len(audit(r)[-1]),1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.031s
+
+FAILED (failures=1)

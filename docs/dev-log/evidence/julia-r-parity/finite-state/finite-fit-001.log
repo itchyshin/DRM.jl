@@ -1,0 +1,3 @@
+ordinal parity=false errors=Dict("theta" => 2.1630122726268297e-6, "imputation" => 5.124369249376315e-6, "loglik" => 2.9585294214484747e-9, "prediction" => 7.5605713412141284e-6, "conditional_sd" => 2.8144311779998432e-6)
+categorical parity=false errors=Dict("theta" => 1.7405252097868473e-5, "imputation" => 0.0, "loglik" => 6.2320850702235475e-9, "prediction" => 9.57633537856939e-6)
+FINITE_JOINT_FIT_MEASURED

@@ -1,0 +1,4 @@
+8f483d5bd679ed6cc4f5f368920204b1093322cd8f170db82371abac6bee9f3c  src/inference.jl
+ca1d9db86c33fb8046028c0e9833d1e0cc0af095509d5580b48375a390bd7ad4  test/test_locscale_profile_threads.jl
+ecc9199e80a7ff0e8c471983387535c7c77d71cbf95f89d27868cb79968d7c7c  /private/tmp/drm-parity-20260830/profile-threads-s11/diagnose-profile-threads.jl
+a276a248a226775358a9cb85f407a6218d35bc2eb0d2feea0b7fa885cad09799  /private/tmp/drm-parity-20260830/profile-threads-s11/run-profile-threads-diagnostic-cap.sh

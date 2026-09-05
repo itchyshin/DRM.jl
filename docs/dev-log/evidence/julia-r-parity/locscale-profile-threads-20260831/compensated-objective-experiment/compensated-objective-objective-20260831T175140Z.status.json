@@ -1,0 +1,23 @@
+{
+  "blas_threads": 1,
+  "command": [
+    "julia",
+    "--project=.",
+    "--startup-file=no",
+    "--history-file=no",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/compensated-objective-experiment/compensated_objective_experiment.jl"
+  ],
+  "hard_cap_seconds": 30,
+  "julia_threads": 1,
+  "kind": "compensated_objective_foreground_capped",
+  "log": "/private/tmp/drm-parity-20260830/profile-threads-s11/compensated-objective-experiment/compensated-objective-objective-20260831T175140Z.log",
+  "mode": "objective",
+  "pid": 27241,
+  "process_group": 27241,
+  "returncode": 0,
+  "script": "/private/tmp/drm-parity-20260830/profile-threads-s11/compensated-objective-experiment/compensated_objective_experiment.jl",
+  "script_sha256": "0ffab46ed0334e4b7cfbf082fb9249fae8ee80c350470e4eef30de3a7307e671",
+  "stamp": "20260831T175140Z",
+  "timed_out": false,
+  "wall_seconds": 4.526395797729492
+}

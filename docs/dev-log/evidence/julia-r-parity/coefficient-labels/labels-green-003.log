@@ -1,0 +1,30 @@
+bridge formula-derived coefficient labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:79
+  Expression: String.(vec(coefnames(typed.rhs))) == ["(Intercept)", "a: b: c & b: d & e"]
+   Evaluated: ["(Intercept)", "a: a & b: a", "a: b: c & b: a", "a: a & b: d & e", "a: b: c & b: d & e"] == ["(Intercept)", "a: b: c & b: d & e"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:79 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:10
+bridge formula-derived coefficient labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:80
+  Expression: DRM._bridge_public_term_labels(typed.rhs, label_plan.atoms) == ["(Intercept)", "ab: c:bd & e"]
+   Evaluated: ["(Intercept)", "aa:ba", "ab: c:ba", "aa:bd & e", "ab: c:bd & e"] == ["(Intercept)", "ab: c:bd & e"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:80 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:10
+Test Summary:                             | Pass  Fail  Total   Time
+bridge formula-derived coefficient labels |   20     2     22  20.2s
+ERROR: LoadError: Some tests did not pass: 20 passed, 2 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:9

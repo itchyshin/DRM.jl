@@ -1,0 +1,110 @@
+{
+  "scope": "Captured generated diagnostics and current private scripts. Earlier failed logs do not imply the final script revision. Arithmetic001 script/log were captured before terminal confirmation and are provisional until a separate final-hash receipt. Production remains frozen2c534141.",
+  "files": [
+    {
+      "file": "locscale_gamma_actual_context_replay-001.log",
+      "source": "/private/tmp/locscale_gamma_actual_context_replay-001.log",
+      "sha256": "90abffb886576d5ae8fcf49114242be0b9e2ba23c21d918309c5e139c5bd7a48"
+    },
+    {
+      "file": "locscale_gamma_actual_context_replay.jl",
+      "source": "/private/tmp/locscale_gamma_actual_context_replay.jl",
+      "sha256": "bc592b5b46662db88ef5e32e135ce47ddf5ef58bdb70d0b0caa0ae74caddba4c"
+    },
+    {
+      "file": "locscale_gamma_k1minus_arithmetic-001.log",
+      "source": "/private/tmp/locscale_gamma_k1minus_arithmetic-001.log",
+      "sha256": "530d0c151a73583eaf700711408e07b795099a10df9a6275903d970fdb69e0b6"
+    },
+    {
+      "file": "locscale_gamma_k1minus_arithmetic.jl",
+      "source": "/private/tmp/locscale_gamma_k1minus_arithmetic.jl",
+      "sha256": "5d0699b2825ab3bc4cd3d01be4aed06f01a6dfcc19a40ba3487e188eeb1f1bfc"
+    },
+    {
+      "file": "locscale_gamma_k1minus_trace-001.log",
+      "source": "/private/tmp/locscale_gamma_k1minus_trace-001.log",
+      "sha256": "97bd0de57fbf0ba3476c6f9665ed5d8ed4e24bf86595d77012b963b056f80268"
+    },
+    {
+      "file": "locscale_gamma_k1minus_trace-002.log",
+      "source": "/private/tmp/locscale_gamma_k1minus_trace-002.log",
+      "sha256": "aff3b1b539fa87c4f957ebaf83501ce9bd7414ab64423a33cce675a0a6a2e8c6"
+    },
+    {
+      "file": "locscale_gamma_k1minus_trace-003.log",
+      "source": "/private/tmp/locscale_gamma_k1minus_trace-003.log",
+      "sha256": "d9c1a6abab811540cb8224f780a77653f1ef7c550dfb9778399d30c64e945f53"
+    },
+    {
+      "file": "locscale_gamma_k1minus_trace.jl",
+      "source": "/private/tmp/locscale_gamma_k1minus_trace.jl",
+      "sha256": "1773cccedc0c3cbec036359814522fdcf7dfe5cd12a91dcfd9be37a9f9ba441e"
+    },
+    {
+      "file": "locscale_gamma_vcov_actual_context-001.jls",
+      "source": "/private/tmp/locscale_gamma_vcov_actual_context-001.jls",
+      "sha256": "9bb5d6507bc023e50ce3508cbf3b685f4f28f369beefabc271c37a9a60f89600"
+    },
+    {
+      "file": "locscale_gamma_vcov_inner_diagnostic-001.log",
+      "source": "/private/tmp/locscale_gamma_vcov_inner_diagnostic-001.log",
+      "sha256": "af0882400f01cabaecfcb4ad46323dad93ac566a423469b71e6a8afcfcc352cb"
+    },
+    {
+      "file": "locscale_gamma_vcov_inner_diagnostic-002.log",
+      "source": "/private/tmp/locscale_gamma_vcov_inner_diagnostic-002.log",
+      "sha256": "b603ea04ec47109ac4a71932e17b876aecbdd99f4c8467ae9987c397ba21bf5b"
+    },
+    {
+      "file": "locscale_gamma_vcov_inner_diagnostic-003.log",
+      "source": "/private/tmp/locscale_gamma_vcov_inner_diagnostic-003.log",
+      "sha256": "418d6a003d00653104fe7646e529c7db2411b603738cc0d5ecb9ca71d2e8993c"
+    },
+    {
+      "file": "locscale_gamma_vcov_inner_diagnostic-004.log",
+      "source": "/private/tmp/locscale_gamma_vcov_inner_diagnostic-004.log",
+      "sha256": "f872ea0309b2480962a892edf9ded37a44aa689b397730f1da9a6b74c180d897"
+    },
+    {
+      "file": "locscale_gamma_vcov_inner_diagnostic-005.log",
+      "source": "/private/tmp/locscale_gamma_vcov_inner_diagnostic-005.log",
+      "sha256": "34b650cfe208f94a513fc2ac6fae594d4595f1004a4704bc3d59217d9fc37ded"
+    },
+    {
+      "file": "locscale_gamma_vcov_inner_diagnostic.jl",
+      "source": "/private/tmp/locscale_gamma_vcov_inner_diagnostic.jl",
+      "sha256": "dea878d1d636f89c35434dae536eddefdb78897815da6369fdb8eaea4a54eb32"
+    },
+    {
+      "file": "locscale_gamma_vcov_warm_intercept-001.log",
+      "source": "/private/tmp/locscale_gamma_vcov_warm_intercept-001.log",
+      "sha256": "1e45efa46d20e43e5dd26745e064d08a5c5760f9247fe36909c385664a17e397"
+    },
+    {
+      "file": "locscale_gamma_vcov_warm_intercept-002.log",
+      "source": "/private/tmp/locscale_gamma_vcov_warm_intercept-002.log",
+      "sha256": "a246fe883ef4a394a7f66b0edd87eeec4e4f820f209f94e0c6a8ff3478489686"
+    },
+    {
+      "file": "locscale_gamma_vcov_warm_intercept-003.log",
+      "source": "/private/tmp/locscale_gamma_vcov_warm_intercept-003.log",
+      "sha256": "ea7a2f252cbf85263f9a9ca02f3e153001fec34c944efdacc5850f1242400161"
+    },
+    {
+      "file": "locscale_gamma_vcov_warm_intercept-004.log",
+      "source": "/private/tmp/locscale_gamma_vcov_warm_intercept-004.log",
+      "sha256": "c552e61a2e1ef0335458a2b5fc0e40ac5c2c913f4e944d88e4ad14adceea1112"
+    },
+    {
+      "file": "locscale_gamma_vcov_warm_intercept-005.log",
+      "source": "/private/tmp/locscale_gamma_vcov_warm_intercept-005.log",
+      "sha256": "0859f88109566866b93f3b1a9bc358468ee37255df34dcd9141f74c8d3d2b45b"
+    },
+    {
+      "file": "locscale_gamma_vcov_warm_intercept.jl",
+      "source": "/private/tmp/locscale_gamma_vcov_warm_intercept.jl",
+      "sha256": "ee3ac092acb33083c5df0e7858cd8a388132f476d333baab470b4d028cf5b084"
+    }
+  ]
+}

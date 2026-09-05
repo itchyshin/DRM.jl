@@ -1,0 +1,161 @@
+2026-08-31T11:32:57Z
+9c958c8f83243bc4664ea272f5ebfcf3f1369cc34a5084afbd8a2619b84b460f  Project.toml
+3352aa55d3cca25d17195987efaaa5e5e6050f064dbf5036ab53e5808e51e899  test/Project.toml
+b1fc84ff68aab61a70d58db505fc5041a43af20cf91dc749290b2a50ac57f51e  test/Manifest.toml
+396383fab47901aa42303ea438cf12ffe6e8ac95ea4db097bc2684a925aa42d5  locscale-core-pilot-001/run.jl
+3ed5e2eed22ff858c65216035a81a45442b3a46e035e2228962545b0bf3a33b6  locscale-core-pilot-001/run.sh
+RUNTIME julia=1.10.10 JuliaThreads=1 BLAS=1 source=/home/snakagaw/drm_parity_blas_c0675b16_001/src/DRM.jl
+START_FILE test_locscale_kernels.jl
+Test Summary:                                                | Pass  Total  Time
+location–scale kernels: analytic grad/Hessian vs ForwardDiff | 1500   1500  1.5s
+Test Summary:                                                       | Pass  Total  Time
+location–scale kernels: η-axis matches the fixed-dispersion kernels |   15     15  0.0s
+COMPLETE_FILE test_locscale_kernels.jl
+START_FILE test_locscale_inner.jl
+Test Summary:                            | Pass  Total  Time
+location–scale Λ log-Cholesky round-trip |    9      9  0.2s
+Test Summary:                                           | Pass  Total  Time
+location–scale inner joint: grad/Hessian vs ForwardDiff |    4      4  7.7s
+Test Summary:                                        | Pass  Total  Time
+location–scale inner mode reaches a stationary point |    3      3  0.3s
+COMPLETE_FILE test_locscale_inner.jl
+START_FILE test_locscale_marginal.jl
+Test Summary:                                                       | Pass  Total  Time
+location–scale Laplace marginal vs 2-D Gauss–Hermite (single group) |    4      4  0.6s
+Test Summary:                                                      | Pass  Total  Time
+location–scale marginal: multi-group i.i.d. factorises over groups |    2      2  0.0s
+COMPLETE_FILE test_locscale_marginal.jl
+START_FILE test_locscale_fit.jl
+Test Summary:                                            | Pass  Total   Time
+location–scale fit: i.i.d. groups (NB2) end-to-end smoke |    5      5  16.0s
+Test Summary:                                                | Pass  Total  Time
+location–scale fit: phylogenetic tree (NB2) end-to-end smoke |    3      3  2.1s
+Test Summary:                                                   | Pass  Total   Time
+location–scale fit: gradient-based convergence + recovery (NB2) |    6      6  12.6s
+COMPLETE_FILE test_locscale_fit.jl
+START_FILE test_locscale_grad.jl
+Test Summary:                                       | Pass  Total  Time
+location–scale exact gradient vs finite differences |    6      6  0.5s
+COMPLETE_FILE test_locscale_grad.jl
+START_FILE test_locscale_infer.jl
+Test Summary:                                                 | Pass  Total  Time
+location–scale observed information vs nll second differences |    2      2  0.5s
+Test Summary:                                             | Pass  Total  Time
+location–scale fit attaches valid vcov / SEs / components |    9      9  4.2s
+COMPLETE_FILE test_locscale_infer.jl
+START_FILE test_locscale_profile.jl
+COMPLETE_FILE test_locscale_profile.jl
+START_FILE test_optimizer_robustness.jl
+Test Summary:                                             | Pass  Total     Time
+optimizer robustness / mode accuracy (#314, #317, #325.4) |   20     20  2m05.0s
+COMPLETE_FILE test_optimizer_robustness.jl
+START_FILE test_locscale_gamma_e2e.jl
+Test Summary:                                    | Pass  Total  Time
+location–scale Gamma: end-to-end fit + inference |    6      6  5.5s
+COMPLETE_FILE test_locscale_gamma_e2e.jl
+START_FILE test_locscale_phylo_e2e.jl
+Test Summary:                                                 | Pass  Total     Time
+phylogenetic location–scale: end-to-end fit + inference (NB2) |    6      6  1m14.6s
+COMPLETE_FILE test_locscale_phylo_e2e.jl
+START_FILE test_locscale_frontend.jl
+Test Summary:                                | Pass  Total   Time
+drm() location–scale routing via (1|p|group) |   10     10  32.3s
+Test Summary:                                        | Pass  Total  Time
+drm() location–scale: a lone coupled tag is an error |    1      1  0.1s
+COMPLETE_FILE test_locscale_frontend.jl
+START_FILE test_locscale_structured.jl
+
+[3584678] signal (15): Terminated
+in expression starting at /home/snakagaw/drm_parity_blas_c0675b16_001/test/test_locscale_structured.jl:79
+_logabsgamma_pos at ./float.jl:0
+_logabsgamma at /home/snakagaw/.julia/packages/SpecialFunctions/vcBcV/src/logabsgamma/e_lgamma_r.jl:115
+logabsgamma at /home/snakagaw/.julia/packages/SpecialFunctions/vcBcV/src/gamma.jl:624 [inlined]
+_loggamma at /home/snakagaw/.julia/packages/SpecialFunctions/vcBcV/src/gamma.jl:662 [inlined]
+loggamma at /home/snakagaw/.julia/packages/SpecialFunctions/vcBcV/src/gamma.jl:659 [inlined]
+_ls_nll at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_kernels.jl:134
+_ls_joint at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_inner.jl:81
+#_ls_inner_mode#994 at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_inner.jl:180
+_ls_inner_mode at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_inner.jl:158 [inlined]
+#_ls_marginal_grad#1013 at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_grad.jl:54
+_ls_marginal_grad at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_grad.jl:43 [inlined]
+#_ls_obs_information#1014 at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_infer.jl:24
+_ls_obs_information at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_infer.jl:16
+unknown function (ip: 0x7775bd7e0f9b)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+h! at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_fit.jl:113
+unknown function (ip: 0x7775bd7df9e9)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+hessian!! at /home/snakagaw/.julia/packages/NLSolversBase/n7XXO/src/interface.jl:95
+hessian! at /home/snakagaw/.julia/packages/NLSolversBase/n7XXO/src/interface.jl:88 [inlined]
+update_state! at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/solvers/second_order/newton_trust_region.jl:392
+optimize at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:65
+optimize at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:43 [inlined]
+#optimize#80 at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:316 [inlined]
+optimize at /home/snakagaw/.julia/packages/Optim/gmigl/src/multivariate/optimize/interface.jl:303 [inlined]
+#_fit_locscale#1000 at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_fit.jl:118
+_fit_locscale at /home/snakagaw/drm_parity_blas_c0675b16_001/src/locscale_fit.jl:82
+unknown function (ip: 0x7775bd7d6ea7)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+jl_apply at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/julia.h:1982 [inlined]
+do_call at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:126
+eval_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:223
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:489
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:544
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:544
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:544
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:544
+jl_interpret_toplevel_thunk at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:775
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:934
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:877
+ijl_toplevel_eval_in at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:985
+eval at ./boot.jl:385 [inlined]
+include_string at ./loading.jl:2146
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+_include at ./loading.jl:2206
+include at ./client.jl:494
+unknown function (ip: 0x7775d5d02315)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+jl_apply at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/julia.h:1982 [inlined]
+do_call at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:126
+eval_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:223
+eval_stmt_value at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:174 [inlined]
+eval_body at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:617
+jl_interpret_toplevel_thunk at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/interpreter.c:775
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:934
+jl_toplevel_eval_flex at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:877
+ijl_toplevel_eval_in at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/toplevel.c:985
+eval at ./boot.jl:385 [inlined]
+include_string at ./loading.jl:2146
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+_include at ./loading.jl:2206
+include at ./Base.jl:495
+jfptr_include_46653 at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+exec_options at ./client.jl:323
+_start at ./client.jl:557
+jfptr__start_83114 at /home/snakagaw/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/lib/julia/sys.so (unknown line)
+_jl_invoke at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:2895 [inlined]
+ijl_apply_generic at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/gf.c:3077
+jl_apply at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/julia.h:1982 [inlined]
+true_main at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jlapi.c:582
+jl_repl_entrypoint at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/src/jlapi.c:731
+main at /cache/build/builder-amdci5-7/julialang/julia-release-1-dot-10/cli/loader_exe.c:58
+unknown function (ip: 0x7775dc22a1c9)
+__libc_start_main at /lib/x86_64-linux-gnu/libc.so.6 (unknown line)
+unknown function (ip: 0x4010b8)
+unknown function (ip: (nil))
+Allocations: 374740454 (Pool: 374092107; Big: 648347); GC: 941
+[ Info: locscale profile reference cross-check skipped (~minutes); set DRM_SLOW_TESTS=1 to run
+[ Info: locscale full-vector confint(:profile) testset skipped (~8+ min); set DRM_SLOW_TESTS=1 to run
+┌ Warning: Terminated early due to NaN in gradient.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:117
+┌ Warning: Terminated early due to NaN in gradient.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:117
+ELAPSED_SECONDS 301

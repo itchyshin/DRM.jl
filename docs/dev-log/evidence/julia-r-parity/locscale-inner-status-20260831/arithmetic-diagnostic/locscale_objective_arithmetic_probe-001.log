@@ -1,0 +1,9 @@
+ERROR: LoadError: ParseError:
+# Error @ /private/tmp/locscale_objective_arithmetic_probe.jl:57:51
+    Random.seed!(20_260_831); G=4; m=8; n=G*m; gidx=repeat(1:G,inner=m)
+    x=repeat(range(-1.,1.;length=m),G); eta=.70 .+.55.*x.+(.16.*randn(G))[gidx]
+#                                                 └──┘ ── invalid numeric constant
+Stacktrace:
+ [1] top-level scope
+   @ /private/tmp/locscale_objective_arithmetic_probe.jl:57
+in expression starting at /private/tmp/locscale_objective_arithmetic_probe.jl:57

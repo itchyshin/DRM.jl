@@ -1,0 +1,13 @@
+{
+  "checked_at": "2026-08-31",
+  "method": "ssh -S exact existing ControlMaster; -O check then hostname; BatchMode; ConnectTimeout=5; no jobs",
+  "sandbox_note": "Initial sandbox probes returned EPERM on sockets; escalated read-only probe succeeded. EPERM is not an auth-expiry result.",
+  "hosts": [
+    {"host": "totoro.biology.ualberta.ca", "socket": "/Users/z3437171/.ssh/cm-snakagaw@totoro.biology.ualberta.ca:22", "socket_check": "Master running (pid=9961)", "hostname": "totoro"},
+    {"host": "fir.alliancecan.ca", "socket": "/Users/z3437171/.ssh/cm-snakagaw@fir.alliancecan.ca:22", "socket_check": "Master running (pid=10383)", "hostname": "login2"},
+    {"host": "narval.alliancecan.ca", "socket": "/Users/z3437171/.ssh/cm-snakagaw@narval.alliancecan.ca:22", "socket_check": "Master running (pid=10063)", "hostname": "narval3"},
+    {"host": "rorqual.alliancecan.ca", "socket": "/Users/z3437171/.ssh/cm-snakagaw@rorqual.alliancecan.ca:22", "socket_check": "Master running (pid=10179)", "hostname": "rorqual3"},
+    {"host": "trillium.alliancecan.ca", "socket": "/Users/z3437171/.ssh/cm-snakagaw@trillium.alliancecan.ca:22", "socket_check": "Master running (pid=10469)", "hostname": "tri-login03"},
+    {"host": "killarney.alliancecan.ca", "socket": "/Users/z3437171/.ssh/cm-snakagaw@killarney.alliancecan.ca:22", "socket_check": "Master running (pid=11130)", "hostname": "klogin02"}
+  ]
+}

@@ -1,0 +1,200 @@
+{
+  "scope": "24 native missing-predictor axis obligations; not a finished valid-case denominator",
+  "native_revision": "b35642b4560072cadba7e595e66e00209ebdeb40",
+  "ledger_sha256": "79b4e987a02406413a08ff50cbf2895d05de5ccfa4822fcb10de34682ae4ca08",
+  "julia_admission": "No prepared joint missing-predictor engine or mi frontend found in targeted source audit; missing responses are a separate axis.",
+  "rows": [
+    {
+      "cell_id": "mp-gaussian-gaussian",
+      "family_route": "gaussian",
+      "route_variant": "gaussian",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-gaussian-g2",
+      "claim_boundary": "G2-adjacent evidence, weaker than its 12 sibling predictor-family cells below: tests/testthat/test-missing-predictor-gaussian.R checks the TMB objective gradient at the optimum (max|grad| < 1e-2), the missing_data$predictors$x accounting/extractor contract (model_row, counts, random$enabled, structured$enabled), and the imputed() conditional-mode extractor (tolerance 1e-8) across three predictor-model variants: fixed-effect (version MD3a, lines 65-107), grouped random-intercept (MD3b, lines 109-150), and relmat()-structured (MD4, lines 152-257), each also combined with a response mask. Unlike the 12 sibling non-Gaussian predictor families, no hand-derived manual_*_mi_loglik() function cross-checks logLik(fit) against an independent formula for this family, so its likelihood-identity leg of the G2 gate rests on gradient-optimality rather than an explicit dnorm-based reference computation. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses (mi() inside a bivariate formula is explicitly rejected: tests/testthat/test-biv-student.R:456-460). REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-gaussian-bernoulli",
+      "family_route": "gaussian",
+      "route_variant": "bernoulli",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-bernoulli-g2",
+      "claim_boundary": "G2 evidence: a hand-derived manual_bernoulli_mi_loglik() reference (defined at tests/testthat/test-missing-predictor-binary.R:26) computes the exact bernoulli mi() likelihood independently of the TMB objective and matches logLik(fit) to tolerance 1e-6 in \"binary mi() predictor model uses exact two-state likelihood\" (tests/testthat/test-missing-predictor-binary.R:75), for a plain fixed-effect fit and again combined with response masking. Missing-predictor accounting (model_row, family, counts) and the imputed() extractor are also checked. This is a fixed-effect-only route: only the gaussian predictor family (cell mp-gaussian-gaussian) admits grouped or relmat()-structured predictor-model extensions; this family rejects (1 | group) predictor-model terms with 'fixed effects only'. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-gaussian-ordinal",
+      "family_route": "gaussian",
+      "route_variant": "ordinal",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-ordinal-g2",
+      "claim_boundary": "G2 evidence: a hand-derived manual_ordinal_mi_loglik() reference (defined at tests/testthat/test-missing-predictor-ordered.R:37) computes the exact ordinal mi() likelihood independently of the TMB objective and matches logLik(fit) to tolerance 1e-6 in \"ordered mi() predictor model uses exact finite-state likelihood\" (tests/testthat/test-missing-predictor-ordered.R:82), for a plain fixed-effect fit and again combined with response masking. Missing-predictor accounting (model_row, family, counts) and the imputed() extractor are also checked. This is a fixed-effect-only route: only the gaussian predictor family (cell mp-gaussian-gaussian) admits grouped or relmat()-structured predictor-model extensions; this family rejects (1 | group) predictor-model terms with 'fixed effects only'. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-gaussian-categorical",
+      "family_route": "gaussian",
+      "route_variant": "categorical",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-categorical-g2",
+      "claim_boundary": "G2 evidence: a hand-derived manual_categorical_mi_loglik() reference (defined at tests/testthat/test-missing-predictor-categorical.R:35) computes the exact categorical mi() likelihood independently of the TMB objective and matches logLik(fit) to tolerance 1e-6 in \"categorical mi() predictor model uses exact finite-state likelihood\" (tests/testthat/test-missing-predictor-categorical.R:82), for a plain fixed-effect fit and again combined with response masking. Missing-predictor accounting (model_row, family, counts) and the imputed() extractor are also checked. This is a fixed-effect-only route: only the gaussian predictor family (cell mp-gaussian-gaussian) admits grouped or relmat()-structured predictor-model extensions; this family rejects (1 | group) predictor-model terms with 'fixed effects only'. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-gaussian-beta",
+      "family_route": "gaussian",
+      "route_variant": "beta",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-beta-g2",
+      "claim_boundary": "G2 evidence: a hand-derived manual_beta_mi_loglik() reference (defined at tests/testthat/test-missing-predictor-beta.R:25) computes the exact beta mi() likelihood independently of the TMB objective and matches logLik(fit) to tolerance 1e-6 in \"beta mi() predictor model uses quadrature likelihood\" (tests/testthat/test-missing-predictor-beta.R:79), for a plain fixed-effect fit and again combined with response masking. Missing-predictor accounting (model_row, family, counts) and the imputed() extractor are also checked. This is a fixed-effect-only route: only the gaussian predictor family (cell mp-gaussian-gaussian) admits grouped or relmat()-structured predictor-model extensions; this family rejects (1 | group) predictor-model terms with 'fixed effects only'. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-gaussian-zero-one-beta",
+      "family_route": "gaussian",
+      "route_variant": "zero_one_beta",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-zero-one-beta-g2",
+      "claim_boundary": "G2 evidence: a hand-derived manual_zero_one_beta_mi_loglik() reference (defined at tests/testthat/test-missing-predictor-zero-one-beta.R:27) computes the exact zero one beta mi() likelihood independently of the TMB objective and matches logLik(fit) to tolerance 1e-6 in \"zero-one beta mi() predictor model uses boundary mixture likelihood\" (tests/testthat/test-missing-predictor-zero-one-beta.R:85), for a plain fixed-effect fit and again combined with response masking. Missing-predictor accounting (model_row, family, counts) and the imputed() extractor are also checked. This is a fixed-effect-only route: only the gaussian predictor family (cell mp-gaussian-gaussian) admits grouped or relmat()-structured predictor-model extensions; this family rejects (1 | group) predictor-model terms with 'fixed effects only'. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-gaussian-beta-binomial",
+      "family_route": "gaussian",
+      "route_variant": "beta_binomial",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-beta-binomial-g2",
+      "claim_boundary": "G2 evidence: a hand-derived manual_beta_binomial_mi_loglik() reference (defined at tests/testthat/test-missing-predictor-beta-binomial.R:37) computes the exact beta binomial mi() likelihood independently of the TMB objective and matches logLik(fit) to tolerance 1e-6 in \"beta-binomial mi() predictor model uses success/trial likelihood\" (tests/testthat/test-missing-predictor-beta-binomial.R:89), for a plain fixed-effect fit and again combined with response masking. Missing-predictor accounting (model_row, family, counts) and the imputed() extractor are also checked. This is a fixed-effect-only route: only the gaussian predictor family (cell mp-gaussian-gaussian) admits grouped or relmat()-structured predictor-model extensions; this family rejects (1 | group) predictor-model terms with 'fixed effects only'. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290). Caveat: the package's own test documents that this fixture reports optimizer false convergence (code 1) and is BLAS/LAPACK-sensitive, skipped on CRAN (tests/testthat/test-missing-predictor-beta-binomial.R:89-94); re-run 2026-08-09 reproduced the same non-convergence warning locally while the logLik-identity assertion still passed."
+    },
+    {
+      "cell_id": "mp-gaussian-poisson",
+      "family_route": "gaussian",
+      "route_variant": "poisson",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-poisson-g2",
+      "claim_boundary": "G2 evidence: a hand-derived manual_poisson_mi_loglik() reference (defined at tests/testthat/test-missing-predictor-poisson.R:27) computes the exact poisson mi() likelihood independently of the TMB objective and matches logLik(fit) to tolerance 1e-6 in \"poisson mi() predictor model uses finite count likelihood\" (tests/testthat/test-missing-predictor-poisson.R:67), for a plain fixed-effect fit and again combined with response masking. Missing-predictor accounting (model_row, family, counts) and the imputed() extractor are also checked. This is a fixed-effect-only route: only the gaussian predictor family (cell mp-gaussian-gaussian) admits grouped or relmat()-structured predictor-model extensions; this family rejects (1 | group) predictor-model terms with 'fixed effects only'. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-gaussian-nbinom2",
+      "family_route": "gaussian",
+      "route_variant": "nbinom2",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-nbinom2-g2",
+      "claim_boundary": "G2 evidence: a hand-derived manual_nbinom2_mi_loglik() reference (defined at tests/testthat/test-missing-predictor-nbinom2.R:30) computes the exact nbinom2 mi() likelihood independently of the TMB objective and matches logLik(fit) to tolerance 1e-6 in \"nbinom2 mi() predictor model uses overdispersed count likelihood\" (tests/testthat/test-missing-predictor-nbinom2.R:81), for a plain fixed-effect fit and again combined with response masking. Missing-predictor accounting (model_row, family, counts) and the imputed() extractor are also checked. This is a fixed-effect-only route: only the gaussian predictor family (cell mp-gaussian-gaussian) admits grouped or relmat()-structured predictor-model extensions; this family rejects (1 | group) predictor-model terms with 'fixed effects only'. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-gaussian-truncated-nbinom2",
+      "family_route": "gaussian",
+      "route_variant": "truncated_nbinom2",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-truncated-nbinom2-g2",
+      "claim_boundary": "G2 evidence: a hand-derived manual_truncated_nbinom2_mi_loglik() reference (defined at tests/testthat/test-missing-predictor-truncated-nbinom2.R:48) computes the exact truncated nbinom2 mi() likelihood independently of the TMB objective and matches logLik(fit) to tolerance 1e-6 in \"truncated_nbinom2 mi() predictor uses positive-count likelihood\" (tests/testthat/test-missing-predictor-truncated-nbinom2.R:97), for a plain fixed-effect fit and again combined with response masking. Missing-predictor accounting (model_row, family, counts) and the imputed() extractor are also checked. This is a fixed-effect-only route: only the gaussian predictor family (cell mp-gaussian-gaussian) admits grouped or relmat()-structured predictor-model extensions; this family rejects (1 | group) predictor-model terms with 'fixed effects only'. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-gaussian-lognormal",
+      "family_route": "gaussian",
+      "route_variant": "lognormal",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-lognormal-g2",
+      "claim_boundary": "G2 evidence: a hand-derived manual_lognormal_mi_loglik() reference (defined at tests/testthat/test-missing-predictor-lognormal.R:23) computes the exact lognormal mi() likelihood independently of the TMB objective and matches logLik(fit) to tolerance 1e-6 in \"lognormal mi() predictor model uses log-scale quadrature likelihood\" (tests/testthat/test-missing-predictor-lognormal.R:71), for a plain fixed-effect fit and again combined with response masking. Missing-predictor accounting (model_row, family, counts) and the imputed() extractor are also checked. This is a fixed-effect-only route: only the gaussian predictor family (cell mp-gaussian-gaussian) admits grouped or relmat()-structured predictor-model extensions; this family rejects (1 | group) predictor-model terms with 'fixed effects only'. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-gaussian-gamma",
+      "family_route": "gaussian",
+      "route_variant": "gamma",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-gamma-g2",
+      "claim_boundary": "G2 evidence: a hand-derived manual_gamma_mi_loglik() reference (defined at tests/testthat/test-missing-predictor-gamma.R:24) computes the exact gamma mi() likelihood independently of the TMB objective and matches logLik(fit) to tolerance 1e-6 in \"Gamma mi() predictor model uses mean-CV quadrature likelihood\" (tests/testthat/test-missing-predictor-gamma.R:76), for a plain fixed-effect fit and again combined with response masking. Missing-predictor accounting (model_row, family, counts) and the imputed() extractor are also checked. This is a fixed-effect-only route: only the gaussian predictor family (cell mp-gaussian-gaussian) admits grouped or relmat()-structured predictor-model extensions; this family rejects (1 | group) predictor-model terms with 'fixed effects only'. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-gaussian-tweedie",
+      "family_route": "gaussian",
+      "route_variant": "tweedie",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-tweedie-g2",
+      "claim_boundary": "G2 evidence: a hand-derived manual_tweedie_mi_loglik() reference (defined at tests/testthat/test-missing-predictor-tweedie.R:29) computes the exact tweedie mi() likelihood independently of the TMB objective and matches logLik(fit) to tolerance 1e-6 in \"Tweedie mi() predictor model handles exact-zero semi-continuous predictors\" (tests/testthat/test-missing-predictor-tweedie.R:84), for a plain fixed-effect fit and again combined with response masking. Missing-predictor accounting (model_row, family, counts) and the imputed() extractor are also checked. This is a fixed-effect-only route: only the gaussian predictor family (cell mp-gaussian-gaussian) admits grouped or relmat()-structured predictor-model extensions; this family rejects (1 | group) predictor-model terms with 'fixed effects only'. It does not claim coefficient recovery against a known simulated true value, intervals, coverage, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-poisson-bernoulli",
+      "family_route": "poisson",
+      "route_variant": "bernoulli",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-poisson-bernoulli-g2",
+      "claim_boundary": "G2 evidence only: manual_poisson_response_binary_mi_loglik() (tests/testthat/test-missing-predictor-poisson-response.R:29) matches logLik(fit) to tolerance 1e-6 for the one-binary-missing-predictor route inside a poisson() response (test_that at line 66). Unlike its three sibling response-family cells below (binomial, nbinom2, beta), this route carries NO tolerance-based coefficient-recovery test against a known simulated true value: test-missing-predictor-poisson-response.R has no recovery test_that block (confirmed by inspection 2026-08-09; contrast with test-missing-predictor-{binomial,nbinom2,beta}-response.R, each of which has one). It does not claim coefficient recovery, intervals, coverage, or a non-binary missing predictor under this response family (a Poisson missing predictor under a poisson() response is explicitly rejected with 'binary missing predictor': test-missing-predictor-poisson-response.R:92-107). REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-binomial-bernoulli",
+      "family_route": "binomial",
+      "route_variant": "bernoulli",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-binomial-bernoulli-g3",
+      "claim_boundary": "G3 evidence: a single fixed deterministic DGP recovers the fitted response distributional parameters and the mi(x) predictor-model coefficients within tolerance 0.15 of their true simulated values in \"binomial-response mi() recovers the response and predictor models\" (tests/testthat/test-missing-predictor-binomial-response.R:101): unname(coef(fit, \"mu\")), c(-0.2, 0.5, 1.0)) and unname(coef(fit, \"mi_x\")), c(0.3, 0.8) (both tolerance 0.15; lines 118, 120). This sits alongside a G2 manual_binomial_response_binary_mi_loglik() exact-likelihood cross-check (tests/testthat/test-missing-predictor-binomial-response.R:34). This is a single deterministic-DGP point-fit recovery, not a replicated coverage study: no G4 interval or G5 repeated-seed coverage evidence exists for this route. It does not claim intervals, coverage, a non-binary missing predictor under this response family, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-nbinom2-bernoulli",
+      "family_route": "nbinom2",
+      "route_variant": "bernoulli",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-nbinom2-bernoulli-g3",
+      "claim_boundary": "G3 evidence: a single fixed deterministic DGP recovers the fitted response distributional parameters and the mi(x) predictor-model coefficients within tolerance 0.15 of their true simulated values in \"nbinom2-response mi() recovers mean, dispersion, and predictor model\" (tests/testthat/test-missing-predictor-nbinom2-response.R:91): unname(coef(fit, \"mu\")), c(0.4, 0.5, 0.7); unname(coef(fit, \"sigma\")), -0.5*log(3); unname(coef(fit, \"mi_x\")), c(0.3, 0.8) (all tolerance 0.15; lines 107, 109, 110). This sits alongside a G2 manual_nbinom2_response_binary_mi_loglik() exact-likelihood cross-check (tests/testthat/test-missing-predictor-nbinom2-response.R:34). This is a single deterministic-DGP point-fit recovery, not a replicated coverage study: no G4 interval or G5 repeated-seed coverage evidence exists for this route. It does not claim intervals, coverage, a non-binary missing predictor under this response family, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-beta-bernoulli",
+      "family_route": "beta",
+      "route_variant": "bernoulli",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-beta-bernoulli-g3",
+      "claim_boundary": "G3 evidence: a single fixed deterministic DGP recovers the fitted response distributional parameters and the mi(x) predictor-model coefficients within tolerance 0.15 of their true simulated values in \"beta-response mi() recovers mean, dispersion, and predictor model\" (tests/testthat/test-missing-predictor-beta-response.R:99): unname(coef(fit, \"mu\")), c(0.4, 0.5, 0.7); unname(coef(fit, \"sigma\")), -0.5*log(phi); unname(coef(fit, \"mi_x\")), c(0.3, 0.8) (all tolerance 0.15; lines 118, 120, 121). This sits alongside a G2 manual_beta_response_binary_mi_loglik() exact-likelihood cross-check (tests/testthat/test-missing-predictor-beta-response.R:48). This is a single deterministic-DGP point-fit recovery, not a replicated coverage study: no G4 interval or G5 repeated-seed coverage evidence exists for this route. It does not claim intervals, coverage, a non-binary missing predictor under this response family, or bivariate responses. REML is unavailable when a missing-data engine is active (R/drmTMB.R:277-290)."
+    },
+    {
+      "cell_id": "mp-gaussian-gaussian-k2-indep",
+      "family_route": "gaussian",
+      "route_variant": "k2_independent",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gaussian-gaussian-k2-indep-g3",
+      "claim_boundary": "G3 point-fit recovery for two independent Gaussian mi() terms on a Gaussian response (drmTMB #963 option b). tests/testthat/test-missing-predictor-two-gaussian.R recovers response coefficients under MCAR (tolerance 0.20) and MAR/outcome-dependent missingness (tolerance 0.25), retains both predictors in missing_data$predictors, and requires imputed(fit, variable=) when k=2. This is not impute_joint (no residual correlation), not FIML across a SEM, not mixed predictor families, not k>2, and not a non-Gaussian response. No G4 interval or G5 replicated coverage. Existing k=1 cell mp-gaussian-gaussian is unchanged."
+    },
+    {
+      "cell_id": "mp-gamma-bernoulli",
+      "family_route": "gamma",
+      "route_variant": "bernoulli",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-gamma-bernoulli-g3",
+      "claim_boundary": "G3 point-fit recovery for a Gamma(link=log) response with one binary mi() predictor (drmTMB #962 / S6 A7). tests/testthat/test-missing-predictor-gamma-response.R recovers mu c(0.4, 0.5, 0.7), log(CV)=log(0.3), and mi_x c(0.3, 0.8) under MCAR (tolerance 0.15, seed 13) and under outcome-dependent MAR (tolerance 0.20, seed 21). A G2 manual 2-point-sum logLik identity matches the TMB objective (tolerance 1e-6). This is not a continuous missing predictor, not k>=2, not impute_joint, not FIML across a SEM, and not lognormal/student/zi-*. No G4 interval or G5 replicated coverage. Existing k=1 Gamma-as-predictor cell mp-gaussian-gamma is unchanged."
+    },
+    {
+      "cell_id": "mp-lognormal-bernoulli",
+      "family_route": "lognormal",
+      "route_variant": "bernoulli",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-lognormal-bernoulli-g3",
+      "claim_boundary": "G3 point-fit recovery for a lognormal() response with one binary mi() predictor (drmTMB #962 / S6 A7). tests/testthat/test-missing-predictor-lognormal-response.R recovers mu c(0.4, 0.5, 0.7), log(sdlog)=log(0.3), and mi_x c(0.3, 0.8) under MCAR (tolerance 0.15, seed 13) and under outcome-dependent MAR (tolerance 0.20, seed 21). A G2 manual 2-point-sum logLik identity matches the TMB objective (tolerance 1e-6). This is not a continuous missing predictor, not k>=2, not impute_joint, not FIML across a SEM, and not student/beta_binomial/zi-*. No G4 interval or G5 replicated coverage. Existing k=1 lognormal-as-predictor cell mp-gaussian-lognormal is unchanged."
+    },
+    {
+      "cell_id": "mp-beta-binomial-bernoulli",
+      "family_route": "beta_binomial",
+      "route_variant": "bernoulli",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-beta-binomial-bernoulli-g3",
+      "claim_boundary": "G3 point-fit recovery for a beta_binomial() response with one binary mi() predictor (drmTMB #962 / S6 A7). tests/testthat/test-missing-predictor-beta-binomial-response.R recovers mu c(0.4, 0.5, 0.7), log(sigma)=log(0.3), and mi_x c(0.3, 0.8) under MCAR (tolerance 0.15, seed 13) and under outcome-dependent MAR (tolerance 0.20, seed 21). A G2 manual 2-point-sum logLik identity matches the TMB objective (tolerance 1e-6). This is not a continuous missing predictor, not k>=2, not impute_joint, not FIML across a SEM, and not student/zi-*. No G4 interval or G5 replicated coverage. Existing k=1 beta_binomial-as-predictor cell mp-gaussian-beta-binomial is unchanged."
+    },
+    {
+      "cell_id": "mp-nbinom2-gaussian",
+      "family_route": "nbinom2",
+      "route_variant": "gaussian",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-nbinom2-gaussian-g3",
+      "claim_boundary": "G3 point-fit recovery for an nbinom2() response with one Gaussian mi() predictor (drmTMB #962 / S6 A7 expand-gated cell). tests/testthat/test-missing-predictor-nbinom2-gaussian.R recovers mu c(0.4, 0.5, 0.7), log_sigma=-0.5*log(3), mi_x c(0.3, 0.8), and sigma_mi=0.40 under MCAR (tolerance 0.15, seed 27) and recovers mu / sigma / mi_x under outcome-dependent MAR (tolerance 0.20, seed 28). A G2 joint-density identity matches the TMB joint nll at the Laplace mode (tolerance 1e-6). This is not FIML, not impute_joint, not k>=2, not a grouped/structured predictor model, and not poisson/binomial/beta x gaussian. No G4 interval or G5 replicated coverage. Existing mp-nbinom2-bernoulli is unchanged."
+    },
+    {
+      "cell_id": "mp-student-bernoulli",
+      "family_route": "student",
+      "route_variant": "bernoulli",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-student-bernoulli-g3",
+      "claim_boundary": "G3 point-fit recovery for a student() response with one binary mi() predictor (drmTMB #962 / S6 A7). tests/testthat/test-missing-predictor-student-response.R recovers mu c(0.4, 0.5, 0.7), log(sigma)=log(0.3), log(nu-2)=log(6), and mi_x c(0.3, 0.8) under MCAR (tolerance 0.15/0.15/0.30/0.15, seed 13) and under outcome-dependent MAR (tolerance 0.20/0.20/0.35/0.20, seed 21). A G2 manual 2-point-sum logLik identity matches the TMB objective (tolerance 1e-6). Density is drm_student_log_density; the shared 7-arg leaf ABI is unchanged. This is not a continuous missing predictor, not k>=2, not impute_joint, not FIML across a SEM, and not zi-*. No G4 interval or G5 replicated coverage. Existing student missing-response cell is unchanged."
+    },
+    {
+      "cell_id": "mp-zi-poisson-bernoulli",
+      "family_route": "zi_poisson",
+      "route_variant": "bernoulli",
+      "estimator": "ML",
+      "primary_evidence_id": "ev-mp-zi-poisson-bernoulli-g3",
+      "claim_boundary": "G3 point-fit recovery for a zi_poisson response with one binary mi() predictor in mu only and zi ~ 1 (drmTMB #962 / S6 A7 / D-23). tests/testthat/test-missing-predictor-zi-poisson-response.R recovers mu c(0.4, 0.5, 0.7), zi intercept logit(pi)=-0.8, and mi_x c(0.3, 0.8) under MCAR (tolerance 0.15, seed 13) and under outcome-dependent MAR (tolerance 0.20, seed 21). A G2 manual ZIP-mixture 2-point-sum logLik identity matches the TMB objective (tolerance 1e-6). A null DGP with beta_x=0 still recovers beta_x~0 so extra zeros do not load onto x. This is not a continuous missing predictor, not k>=2, not impute_joint, not FIML across a SEM, not mi() on zi, and not zi_nbinom2. No G4 interval or G5 replicated coverage. The 2-point sum inlines the ZIP mixture; it does not call the Poisson leaf."
+    }
+  ]
+}

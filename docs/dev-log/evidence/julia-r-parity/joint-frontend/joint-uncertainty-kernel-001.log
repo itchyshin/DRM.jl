@@ -1,0 +1,7 @@
+Test Summary:                            | Pass  Total  Time
+native-shaped imputation uncertainty API |    2      2  0.0s
+Test Summary:                                            | Pass  Total  Time
+Gaussian prediction error includes parameter uncertainty |   11     11  2.4s
+Test Summary:                                                     | Pass  Total  Time
+Bernoulli uncertainty is conditional, with native fit-status gate |    6      6  0.0s
+JOINT_UNCERTAINTY_KERNEL_PASS

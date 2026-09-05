@@ -1,0 +1,16 @@
+{
+  "command": [
+    "julia",
+    "--project=.",
+    "--startup-file=no",
+    "-e",
+    "using DRM, LinearAlgebra; println(\"RUNTIME \", VERSION, \" threads=\", Threads.nthreads(), \" source=\", pathof(DRM)); include(\"test/test_inference_blas_pinning.jl\")"
+  ],
+  "elapsed_seconds": 8.886766208801419,
+  "exit_status": 1,
+  "julia_threads": 4,
+  "initial_blas_threads": 2,
+  "source_sha256": "286fec89b7bc451c85778d545824a2e2e57ae073cb7305395c047864c3d239e7",
+  "test_sha256": "f1ec17fa1f79f8d46f9f58513e7acf4b2d586ba4ce4e8601c19cc807e06c9c0b",
+  "scope": "Deterministic overlapping BLAS scope reproduction; no fits"
+}

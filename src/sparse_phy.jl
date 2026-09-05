@@ -5,7 +5,7 @@
 # the dense Cholesky is already 16+ seconds per evaluation. The Felsenstein
 # (1981) / Hadfield (2010) / Bates (2015) workaround: augment the state with
 # internal ancestral nodes, then represent the tree by a SPARSE precision
-# matrix Q over all 2p − 1 nodes. Internal nodes get marginalised inside the
+# matrix Q over all leaves and internal nodes. Internal nodes get marginalised inside the
 # sparse linear solves.
 #
 # Each tree edge (parent → child) with branch length b contributes
@@ -14,8 +14,10 @@
 #     Q[parent, child ] -= 1 / b
 #     Q[child,  parent] -= 1 / b
 # i.e. a 2 × 2 block (1 / b) · [[1, -1], [-1, 1]] on rows/cols (parent, child).
-# A binary tree with p leaves has p − 1 internal nodes and 2p − 2 edges so
-# Q has 4 · (2p − 2) ≈ 8p non-zeros. Q is symmetric and rank-deficient by
+# A rooted tree with E edges has 4E input triplets before duplicate diagonal
+# accumulation. Binary trees have E = 2p − 2, hence about 8p input triplets
+# but about 6p stored nonzeros; multifurcations use fewer internal nodes and
+# edges. Q is symmetric and rank-deficient by
 # one: the constant-shift direction `z ≡ 1` lies in its null space (Brownian
 # motion is identified only up to a common offset = root value).
 #
@@ -29,9 +31,9 @@
 # the parser is ~80 lines of recursive descent and matches the minimal
 # Newick grammar at
 #     https://evolution.genetics.washington.edu/phylip/newicktree.html.
-# Only `name:length` leaves and balanced parentheses are supported (no
-# quoted names, no bootstrap labels, no internal-node names). The
-# delimiter is `;`. Whitespace is ignored.
+# Leaves use either old-compatible unquoted names or lossless single-quoted
+# Newick labels. Internal labels are parsed but discarded. The delimiter is
+# `;`; whitespace is ignored only between grammar tokens.
 
 using SparseArrays
 using LinearAlgebra
@@ -39,24 +41,26 @@ using LinearAlgebra
 """
     AugmentedPhy{T}
 
-Augmented-state sparse phylogenetic precision for a binary tree.
+Augmented-state sparse phylogenetic precision for a rooted tree, including
+multifurcations.
 
 Fields
 ------
 * `n_leaves::Int`               – number of tip species (p).
-* `n_total::Int`                – 2p − 1, leaves + internal ancestor nodes.
+* `n_total::Int`                – leaves + internal ancestor nodes.
 * `Q_topology::SparseMatrixCSC` – (n_total × n_total) topology contribution
   to the sparse precision. The actual phylogenetic precision is
-  `Q_topology / σ²_phy`. About 8p non-zeros.
+  `Q_topology / σ²_phy`. A positive-length tree stores `3n_total - 2`
+  nonzeros.
 * `leaf_indices::Vector{Int}`   – maps a leaf k ∈ 1:p to its row/col in the
   augmented state. Ordering matches the order leaves were encountered in
   the Newick string (left-to-right).
 * `leaf_names::Vector{String}`  – species names parsed from the Newick.
-* `branch_lengths::Vector{T}`   – the 2p − 2 branch lengths in the order
+* `branch_lengths::Vector{T}`   – the `n_total - 1` branch lengths in the order
   the parser walked the tree.
 * `root_index::Int`             – which augmented row is the root.
 
-`Q_topology` is positive **semi**-definite (rank 2p − 2). The all-ones
+`Q_topology` is positive **semi**-definite (rank `n_total - 1`). The all-ones
 vector is its sole zero eigenvector — fixing the root removes the
 degeneracy. The sparse log-likelihood path adds a positive contribution
 to the leaf diagonals (proportional to `λ_phy² / d_total`) which renders
@@ -81,10 +85,12 @@ end
 #     node    := leaf | internal
 #     leaf    := name [":" length]
 #     internal:= "(" node ("," node)* ")" [name] [":" length]
-#     name    := [A-Za-z0-9_.\-]+
+#     label   := unquoted | "'" quoted "'"
+#     quoted  := any character, with "''" representing one apostrophe
 #     length  := [0-9]+ ( "." [0-9]+ )? ( [eE] [+-]? [0-9]+ )?
 #
-# We strip whitespace before parsing. Length defaults to 0.0 if omitted.
+# Whitespace outside labels is ignored. It remains literal inside a quoted
+# label. Length defaults to 0.0 if omitted.
 
 mutable struct _NewickCursor
     s::String
@@ -96,6 +102,15 @@ end
     ch = _peek(c)
     c.i = nextind(c.s, c.i)
     return ch
+end
+
+@inline _newick_whitespace(ch::Char) = isspace(ch)
+
+function _skip_newick_whitespace!(c::_NewickCursor)
+    while _newick_whitespace(_peek(c))
+        _advance(c)
+    end
+    return nothing
 end
 
 function _parse_number!(c::_NewickCursor)
@@ -114,18 +129,62 @@ function _parse_number!(c::_NewickCursor)
     return val
 end
 
-function _parse_name!(c::_NewickCursor)
-    j = c.i
-    while j <= lastindex(c.s)
-        ch = c.s[j]
-        if ch == ',' || ch == ')' || ch == ':' || ch == ';' || ch == '('
-            break
-        end
-        j = nextind(c.s, j)
+"""Parse one Newick label, retaining quoted Unicode/control characters exactly."""
+function _parse_label!(c::_NewickCursor)
+    ch = _peek(c)
+    if ch == '\0' || ch == ',' || ch == ')' || ch == ':' || ch == ';' || ch == '('
+        throw(ArgumentError("expected Newick label at position $(c.i)"))
     end
-    name = c.s[c.i:prevind(c.s, j)]
-    c.i = j
-    return name
+    if ch == '\''
+        _advance(c)
+        label = IOBuffer()
+        while true
+            ch = _peek(c)
+            ch == '\0' && throw(ArgumentError(
+                "unterminated quoted label beginning before position $(c.i)"))
+            if ch == '\''
+                _advance(c)
+                if _peek(c) == '\''
+                    write(label, '\'')
+                    _advance(c)
+                else
+                    return String(take!(label))
+                end
+            else
+                write(label, ch)
+                _advance(c)
+            end
+        end
+    end
+
+    first = c.i
+    while true
+        ch = _peek(c)
+        if ch == '\0' || ch == ',' || ch == ')' || ch == ':' || ch == ';' || ch == '('
+            break
+        elseif _newick_whitespace(ch)
+            # Whitespace separates grammar tokens, so `A : 1` retains the
+            # old accepted spelling. It cannot split an unquoted label such
+            # as `two words`.
+            label = c.s[first:prevind(c.s, c.i)]
+            _skip_newick_whitespace!(c)
+            next = _peek(c)
+            if next == ':' || next == ',' || next == ')' || next == ';' || next == '\0'
+                return label
+            end
+            throw(ArgumentError(
+                "unquoted label cannot contain whitespace at position $(c.i); quote the label"))
+        elseif ch == '\''
+            throw(ArgumentError(
+                "single quote in an unquoted label at position $(c.i); quote the whole label"))
+        elseif ch == '[' || ch == ']'
+            throw(ArgumentError(
+                "Newick comments are unsupported at position $(c.i); quote literal brackets in a label"))
+        end
+        _advance(c)
+    end
+    first == c.i && throw(ArgumentError("expected Newick label at position $(c.i)"))
+    return c.s[first:prevind(c.s, c.i)]
 end
 
 # Internal builder: walks the Newick string and writes nodes + edges into
@@ -137,33 +196,41 @@ function _parse_node!(c::_NewickCursor,
                       node_length::Vector{Float64},
                       leaf_indices::Vector{Int},
                       leaf_names::Vector{String})
+    _skip_newick_whitespace!(c)
     children_local = Int[]
     if _peek(c) == '('
         _advance(c)                       # consume "("
+        _skip_newick_whitespace!(c)
         # parse comma-separated children
         push!(children_local, _parse_node!(c, node_parent, node_is_leaf,
                                            node_name, node_length,
                                            leaf_indices, leaf_names))
+        _skip_newick_whitespace!(c)
         while _peek(c) == ','
             _advance(c)
             push!(children_local, _parse_node!(c, node_parent, node_is_leaf,
                                                node_name, node_length,
                                                leaf_indices, leaf_names))
+            _skip_newick_whitespace!(c)
         end
         _peek(c) == ')' ||
-            error("expected ')' at position $(c.i) in Newick string")
+            throw(ArgumentError("expected delimiter ',' or ')' at position $(c.i) in Newick string"))
         _advance(c)
+        _skip_newick_whitespace!(c)
         # internal node label (optional, discarded — minimal grammar)
         name = ""
         if _peek(c) != ':' && _peek(c) != ',' && _peek(c) != ')' && _peek(c) != ';'
-            name = _parse_name!(c)
+            name = _parse_label!(c)
         end
+        _skip_newick_whitespace!(c)
         # branch length (to PARENT, optional)
         blen = 0.0
         if _peek(c) == ':'
             _advance(c)
+            _skip_newick_whitespace!(c)
             blen = _parse_number!(c)
         end
+        _skip_newick_whitespace!(c)
         # allocate this internal node and patch children's parents
         push!(node_parent, 0)             # parent set by caller
         push!(node_is_leaf, false)
@@ -176,12 +243,15 @@ function _parse_node!(c::_NewickCursor,
         return my_idx
     else
         # leaf
-        name = _parse_name!(c)
+        name = _parse_label!(c)
+        _skip_newick_whitespace!(c)
         blen = 0.0
         if _peek(c) == ':'
             _advance(c)
+            _skip_newick_whitespace!(c)
             blen = _parse_number!(c)
         end
+        _skip_newick_whitespace!(c)
         push!(node_parent, 0)             # parent set by caller
         push!(node_is_leaf, true)
         push!(node_name, name)
@@ -193,6 +263,89 @@ function _parse_node!(c::_NewickCursor,
     end
 end
 
+function _phy_branch_length(value, label::AbstractString)
+    value isa Real && !(value isa Bool) || throw(ArgumentError(
+        "branch length for $label must be a real number"))
+    length = Float64(value)
+    isfinite(length) && length > 0 || throw(ArgumentError(
+        "branch length for $label must be finite and > 0 (got $value)"))
+    isfinite(inv(length)) || throw(ArgumentError(
+        "branch length for $label is too small for a finite sparse precision"))
+    return length
+end
+
+function _phy_validate_leaf_names(names::AbstractVector{<:AbstractString}, p::Int)
+    length(names) == p || throw(ArgumentError(
+        "leaf_names must contain exactly $p names"))
+    result = String.(names)
+    all(!isempty, result) || throw(ArgumentError("leaf names must be nonempty"))
+    length(unique(result)) == p || throw(ArgumentError("leaf names must be unique"))
+    return result
+end
+
+"""Validate a rooted acyclic tree and return `(root, children)` without Q assembly."""
+function _phy_validate_topology(parent::Vector{Int}, is_leaf::Vector{Bool};
+                                root_index::Union{Nothing,Int} = nothing)
+    n = length(parent)
+    n > 0 && length(is_leaf) == n || throw(ArgumentError(
+        "phylogenetic topology must contain aligned nonempty nodes"))
+    children = [Int[] for _ in 1:n]
+    for child in 1:n
+        ancestor = parent[child]
+        ancestor == 0 && continue
+        1 <= ancestor <= n || throw(ArgumentError(
+            "phylogenetic parent id $ancestor is outside 1:$n"))
+        ancestor != child || throw(ArgumentError("phylogenetic edges cannot be self edges"))
+        push!(children[ancestor], child)
+    end
+    roots = findall(==(0), parent)
+    length(roots) == 1 || throw(ArgumentError(
+        "phylogenetic topology must have exactly one root (found $(length(roots)))"))
+    root = only(roots)
+    root_index === nothing || root_index == root || throw(ArgumentError(
+        "root_index $root_index is not the unique topology root $root"))
+    for node in 1:n
+        if is_leaf[node]
+            isempty(children[node]) || throw(ArgumentError(
+                "leaf node $node cannot be a parent"))
+        elseif length(children[node]) < 2
+            throw(ArgumentError(
+                "internal node $node must have at least two children; unary nodes are currently unsupported"))
+        end
+    end
+    seen = falses(n)
+    queue = [root]
+    cursor = 1
+    while cursor <= length(queue)
+        node = queue[cursor]
+        cursor += 1
+        seen[node] && throw(ArgumentError("phylogenetic topology contains a cycle"))
+        seen[node] = true
+        append!(queue, children[node])
+    end
+    all(seen) || throw(ArgumentError(
+        "phylogenetic topology must be connected and acyclic from its root"))
+    return root, children
+end
+
+function _phy_topology_precision(edges::AbstractVector{<:Tuple}, n_total::Int)
+    I = Int[]; J = Int[]; V = Float64[]
+    branch_lengths = Float64[]
+    for (parent, child, length) in edges
+        b = _phy_branch_length(length, "edge $parent -> $child")
+        inv_b = inv(b)
+        push!(branch_lengths, b)
+        push!(I, parent); push!(J, parent); push!(V, inv_b)
+        push!(I, child);  push!(J, child);  push!(V, inv_b)
+        push!(I, parent); push!(J, child);  push!(V, -inv_b)
+        push!(I, child);  push!(J, parent); push!(V, -inv_b)
+    end
+    Q = sparse(I, J, V, n_total, n_total)
+    all(isfinite, nonzeros(Q)) || throw(ArgumentError(
+        "branch precisions overflow the assembled sparse topology diagonal"))
+    return Q, branch_lengths
+end
+
 """
     augmented_phy(newick::AbstractString) :: AugmentedPhy{Float64}
 
@@ -201,11 +354,13 @@ precision representation.
 
 Restrictions
 ------------
-* Binary (bifurcating) trees only — every internal node has exactly two
-  children. Multifurcations and unary nodes are rejected.
-* Leaf names follow `[A-Za-z0-9_.\\-]+`. Internal node labels are tolerated
-  but discarded.
-* Branch lengths must all be > 0 (otherwise 1/b blows up).
+* Rooted multifurcating trees are admitted: every internal node must have at
+  least two children. Unary nodes are currently unsupported.
+* Leaf names may be old-compatible unquoted labels or lossless single-quoted
+  labels. Doubled apostrophes inside a quoted label represent one apostrophe.
+  Internal labels are tolerated but discarded.
+* Literal NUL bytes are invalid Newick input and are rejected before parsing.
+* Non-root branch lengths must be finite, > 0, and have finite reciprocal.
 * The root has no parent branch; the optional root length in
   `(…):0.0;` is read but does not enter Q.
 
@@ -216,15 +371,15 @@ phy = augmented_phy("((A:0.1,B:0.2):0.3,C:0.5);")
 phy.n_leaves      # 3
 phy.n_total       # 5  (3 leaves + 2 internal)
 length(phy.branch_lengths)   # 4
-nnz(phy.Q_topology)          # 16  (4 per edge × 4 edges)
+nnz(phy.Q_topology)          # 13  (5 diagonal + 8 off-diagonal entries)
 ```
 """
 function augmented_phy(newick::AbstractString)
-    s = filter(!isspace, String(newick))
-    !endswith(s, ";") &&
-        error("Newick string must end with ';'")
-    s = s[1:prevind(s, lastindex(s))]    # strip trailing ;
+    s = String(newick)
+    occursin('\0', s) && throw(ArgumentError(
+        "Newick strings cannot contain literal NUL bytes"))
     c = _NewickCursor(s, firstindex(s))
+    _skip_newick_whitespace!(c)
 
     node_parent = Int[]
     node_is_leaf = Bool[]
@@ -236,16 +391,22 @@ function augmented_phy(newick::AbstractString)
     root_idx = _parse_node!(c, node_parent, node_is_leaf, node_name,
                             node_length, leaf_indices, leaf_names)
 
-    c.i <= lastindex(c.s) &&
-        error("extra characters after end of tree at position $(c.i)")
+    _skip_newick_whitespace!(c)
+    _peek(c) == ';' || throw(ArgumentError(
+        "Newick string must end with ';' at position $(c.i)"))
+    _advance(c)
+    _skip_newick_whitespace!(c)
+    _peek(c) == '\0' || throw(ArgumentError(
+        "extra characters after end of tree at position $(c.i)"))
 
     # Reindex: place leaves first (1:p) in the order they were encountered,
     # then internal nodes in the order they were added (post-order, so the
     # root is last). This is the convention the likelihood code uses.
     n_total = length(node_parent)
     p = length(leaf_indices)
-    n_total == 2 * p - 1 ||
-        error("tree is not binary (got $n_total nodes for $p leaves; expected $(2p - 1))")
+    p > 0 || throw(ArgumentError("phylogenetic tree must contain at least one leaf"))
+    leaf_names = _phy_validate_leaf_names(leaf_names, p)
+    root_idx, _ = _phy_validate_topology(node_parent, node_is_leaf)
     perm = Vector{Int}(undef, n_total)   # perm[new_idx] = old_idx
     new_idx_of = Vector{Int}(undef, n_total)
     for (new_i, old_i) in enumerate(leaf_indices)
@@ -262,36 +423,21 @@ function augmented_phy(newick::AbstractString)
     next_new == n_total + 1 ||
         error("internal indexing error: expected $next_new == $(n_total + 1)")
 
-    # Build sparse Q: walk every edge (non-root nodes have a parent edge of
-    # length node_length[child]). 4 entries per edge: 2 diagonal + 2 off.
-    I = Int[]
-    J = Int[]
-    V = Float64[]
-    branch_lengths = Float64[]
+    # Build sparse Q: every non-root node has one parent edge whose supplied
+    # branch length is retained exactly. No binary resolution or normalization
+    # is introduced for multifurcating trees.
+    edges = Tuple{Int,Int,Float64}[]
     new_root_idx = new_idx_of[root_idx]
     for old_child in 1:n_total
         parent_old = node_parent[old_child]
         parent_old == 0 && continue       # root has no parent edge
-        b = node_length[old_child]
-        b > 0 ||
-            error("branch length must be > 0; node $old_child has length $b")
-        push!(branch_lengths, b)
         new_child  = new_idx_of[old_child]
         new_parent = new_idx_of[parent_old]
-        inv_b = 1.0 / b
-        # 2 × 2 block (1/b) · [[1, -1], [-1, 1]]
-        push!(I, new_parent); push!(J, new_parent); push!(V,  inv_b)
-        push!(I, new_child);  push!(J, new_child);  push!(V,  inv_b)
-        push!(I, new_parent); push!(J, new_child);  push!(V, -inv_b)
-        push!(I, new_child);  push!(J, new_parent); push!(V, -inv_b)
+        push!(edges, (new_parent, new_child, node_length[old_child]))
     end
-    Q = sparse(I, J, V, n_total, n_total)
-
-    # Verify bifurcating: every internal node should have exactly two
-    # children among `node_parent`, and the topology should now be a tree
-    # (n_total - 1 edges).
+    Q, branch_lengths = _phy_topology_precision(edges, n_total)
     length(branch_lengths) == n_total - 1 ||
-        error("expected $(n_total - 1) edges, got $(length(branch_lengths))")
+        throw(ArgumentError("expected $(n_total - 1) edges, got $(length(branch_lengths))"))
 
     leaf_idx_new = collect(1:p)           # by construction
     leaf_names_new = leaf_names           # already in encounter order
@@ -304,9 +450,10 @@ end
              root_index::Integer = -1) :: AugmentedPhy{Float64}
 
 Convenience constructor: build an `AugmentedPhy` from a list of edges
-`(parent_id, child_id, branch_length)` with integer node ids 1..n_total
-(leaves first, internals last is the recommended convention but not
-required).
+`(parent_id, child_id, branch_length)` with contiguous integer node ids
+`1:n_total`. Leaves must be exactly `1:n_leaves`; internal nodes follow them.
+The root may have any internal id. Every internal node must have at least two
+children, and every non-root node must have one parent.
 
 If `root_index < 0` it is auto-detected as the unique node that is not a
 child in any edge.
@@ -317,42 +464,69 @@ arrive from another tool already as edge lists.
 function make_phy(edges::AbstractVector, n_leaves::Integer;
                   root_index::Integer = -1,
                   leaf_names::Union{Nothing,AbstractVector{<:AbstractString}} = nothing)
-    n_total = 0
-    for (p_i, c_i, _) in edges
-        n_total = max(n_total, p_i, c_i)
-    end
-    n_total == 2 * n_leaves - 1 ||
-        error("edge list spans $n_total nodes but n_leaves = $n_leaves " *
-              "implies $(2 * n_leaves - 1) total nodes")
+    n_leaves isa Bool && throw(ArgumentError("n_leaves must be an integer, not Bool"))
+    n_leaves > 1 || throw(ArgumentError(
+        "make_phy edge-list trees require at least two leaves"))
+    root_index isa Bool && throw(ArgumentError("root_index must be an integer, not Bool"))
 
-    if root_index < 0
-        is_child = falses(n_total)
-        for (_, c_i, _) in edges
-            is_child[c_i] = true
-        end
-        roots = findall(.!is_child)
-        length(roots) == 1 ||
-            error("could not auto-detect root: $(length(roots)) candidates")
-        root_index = roots[1]
+    # Validate values and contiguity from the edge records themselves before
+    # allocating a node-indexed vector. In particular an accidental id such as
+    # one billion must fail as a non-contiguous topology, not reserve memory.
+    normalized = Tuple{Int,Int,Float64}[]
+    node_ids = Int[]
+    seen_edges = Set{Tuple{Int,Int}}()
+    for edge in edges
+        edge isa Tuple && length(edge) == 3 || throw(ArgumentError(
+            "each phylogenetic edge must be `(parent, child, branch_length)`"))
+        parent, child, branch = edge
+        parent isa Integer && !(parent isa Bool) || throw(ArgumentError(
+            "phylogenetic parent ids must be positive integers"))
+        child isa Integer && !(child isa Bool) || throw(ArgumentError(
+            "phylogenetic child ids must be positive integers"))
+        parent > 0 && child > 0 || throw(ArgumentError(
+            "phylogenetic node ids must be positive"))
+        parent == child && throw(ArgumentError("phylogenetic edges cannot be self edges"))
+        parent <= typemax(Int) && child <= typemax(Int) || throw(ArgumentError(
+            "phylogenetic node id is not representable as Int"))
+        parent_i, child_i = Int(parent), Int(child)
+        (parent_i, child_i) in seen_edges && throw(ArgumentError(
+            "phylogenetic edges must be unique"))
+        push!(seen_edges, (parent_i, child_i))
+        length_value = _phy_branch_length(branch, "edge $parent_i -> $child_i")
+        push!(normalized, (parent_i, child_i, length_value))
+        push!(node_ids, parent_i, child_i)
     end
+    isempty(normalized) && throw(ArgumentError("make_phy requires at least one edge"))
+    ids = unique(node_ids)
+    n_total = length(ids)
+    all(id -> 1 <= id <= n_total, ids) || throw(ArgumentError(
+        "phylogenetic node ids must be contiguous integers 1:$n_total"))
+    n_total > n_leaves || throw(ArgumentError(
+        "phylogenetic topology must contain internal nodes beyond leaves 1:$n_leaves"))
 
-    I = Int[]; J = Int[]; V = Float64[]
-    branch_lengths = Float64[]
-    for (p_i, c_i, b) in edges
-        b > 0 || error("branch length must be > 0; got $b")
-        inv_b = 1.0 / b
-        push!(branch_lengths, b)
-        push!(I, p_i); push!(J, p_i); push!(V,  inv_b)
-        push!(I, c_i); push!(J, c_i); push!(V,  inv_b)
-        push!(I, p_i); push!(J, c_i); push!(V, -inv_b)
-        push!(I, c_i); push!(J, p_i); push!(V, -inv_b)
+    parent_of = zeros(Int, n_total)
+    is_leaf = [node <= n_leaves for node in 1:n_total]
+    for (parent, child, _) in normalized
+        is_leaf[parent] && throw(ArgumentError("leaf node $parent cannot be a parent"))
+        parent_of[child] == 0 || throw(ArgumentError(
+            "non-root node $child must have exactly one parent"))
+        parent_of[child] = parent
     end
-    Q = sparse(I, J, V, n_total, n_total)
-    leaf_idx = collect(1:n_leaves)        # convention: leaves are 1:p
-    names = leaf_names === nothing ?
-        ["L$(t)" for t in 1:n_leaves] : collect(String.(leaf_names))
-    return AugmentedPhy{Float64}(n_leaves, n_total, Q, leaf_idx, names,
-                                 branch_lengths, Int(root_index))
+    requested_root = if root_index < 0
+        nothing
+    elseif 1 <= root_index <= n_total
+        Int(root_index)
+    else
+        throw(ArgumentError("root_index $root_index is outside 1:$n_total"))
+    end
+    root, _ = _phy_validate_topology(parent_of, is_leaf; root_index = requested_root)
+    names = leaf_names === nothing ? ["L$(t)" for t in 1:n_leaves] :
+        _phy_validate_leaf_names(leaf_names, Int(n_leaves))
+    Q, branch_lengths = _phy_topology_precision(normalized, n_total)
+    length(normalized) == n_total - 1 || throw(ArgumentError(
+        "phylogenetic tree must have $(n_total - 1) edges, got $(length(normalized))"))
+    return AugmentedPhy{Float64}(Int(n_leaves), n_total, Q, collect(1:n_leaves), names,
+                                 branch_lengths, root)
 end
 
 """
@@ -452,7 +626,7 @@ end
 
 Return the **root-conditioned augmented topology precision** `Q =
 Q_topology[keep, keep]` — a sparse, O(p)-nnz, positive-definite matrix over the
-`q = 2p-2` non-root augmented nodes — together with the map `leaf_pos[t]` from
+`q = n_total - 1` non-root augmented nodes — together with the map `leaf_pos[t]` from
 leaf `t ∈ 1:p` to its row/column in `Q`, and `q`. This is the sparse precision
 the end-to-end O(p) Gaussian path feeds DIRECTLY as `Qₖ`, bypassing the dense
 leaf-correlation inversion.
@@ -464,4 +638,84 @@ function augmented_tree_precision(phy::AugmentedPhy)
     pos = Dict(node => i for (i, node) in enumerate(keep))
     leaf_pos = [pos[phy.leaf_indices[t]] for t in 1:phy.n_leaves]
     return Q, leaf_pos, q
+end
+
+"""
+    phylo_tree_height(phy::AugmentedPhy) -> Float64
+
+Maximum root-to-tip path length of `phy`. For an ultrametric tree this is the
+common **tip variance** its covariance implies when `σ²_phy = 1`; for a
+non-ultrametric tree it is the largest tip variance.
+
+O(p): a breadth-first walk over the sparse topology, where an edge's length is
+recovered as `-1/Q_topology[i, j]`. `sigma_phy_dense` would give the same number
+but inverts a dense matrix, so it is unusable as a routine check.
+
+**Why this matters.** DRM.jl builds its phylogenetic covariance from the branch
+lengths **as supplied**. On an ultrametric tree of height `h`, the fitted
+`sd_phylo` carries a factor `sqrt(h)` relative to unit-tip-variance correlation
+scale. R's drmTMB instead standardises via `ape::vcv(tree, corr = TRUE)`, whose
+tips always have variance 1. A non-ultrametric conversion is tip-wise, not one
+scalar. See [`drm_phylo_penalty`](@ref), where these choices change what `sd_u`
+*means*.
+
+For an **ultrametric** tree, divide all branch lengths by `h` before fitting to
+match drmTMB's unit-tip-variance correlation scale. A non-ultrametric tree
+needs the tip-wise standardization `D^{-1/2} Σ D^{-1/2}`, not one scalar branch
+rescaling; this raw-branch constructor deliberately performs neither transform.
+"""
+function phylo_tree_height(phy::AugmentedPhy)
+    Q = phy.Q_topology
+    n = phy.n_total
+    depth = fill(-1.0, n)
+    depth[phy.root_index] = 0.0
+    queue = [phy.root_index]
+    cursor = 1
+    @inbounds while cursor <= length(queue)
+        i = queue[cursor]
+        cursor += 1
+        for k in nzrange(Q, i)
+            j = rowvals(Q)[k]
+            j == i && continue
+            qij = nonzeros(Q)[k]
+            qij == 0 && continue
+            len = -1.0 / qij            # off-diagonal is -1/branch_length
+            len > 0 || continue
+            if depth[j] < 0
+                depth[j] = depth[i] + len
+                push!(queue, j)
+            end
+        end
+    end
+    h = 0.0
+    @inbounds for t in 1:phy.n_leaves
+        d = depth[phy.leaf_indices[t]]
+        d > h && (h = d)
+    end
+    return h
+end
+
+# One warning per tree per session: the scale is a REPORTING convention, not an
+# error, so it must not shout on every fit in a loop.
+const _PHYLO_HEIGHT_WARNED = Set{UInt64}()
+
+function _warn_if_tree_not_unit_height(phy::AugmentedPhy)
+    h = try
+        phylo_tree_height(phy)
+    catch
+        return nothing       # a diagnostic must never break a fit
+    end
+    (isfinite(h) && h > 0) || return nothing
+    isapprox(h, 1.0; rtol = 1e-6) && return nothing
+    key = hash((phy.n_leaves, round(h; digits = 12)))
+    key in _PHYLO_HEIGHT_WARNED && return nothing
+    push!(_PHYLO_HEIGHT_WARNED, key)
+    @warn "drm: this tree's maximum tip height is $(round(h; digits = 6)), not 1, so " *
+          "`sd_phylo` is on the RAW branch-length scale. For an ultrametric tree it is a factor " *
+          "$(round(sqrt(h); digits = 6)) = sqrt($(round(h; digits = 6))) away from the correlation " *
+          "scale R's drmTMB reports (via `ape::vcv(tree, corr = TRUE)`); rescale branches by " *
+          "1/$(round(h; digits = 6)) to match. A non-ultrametric tree requires tip-wise correlation " *
+          "standardization, not this scalar rescaling. " *
+          "`phylo_tree_height(tree)` reports this."
+    return nothing
 end

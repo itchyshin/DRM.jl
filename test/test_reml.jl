@@ -119,12 +119,14 @@ import ForwardDiff
     end
 
     @testset "unsupported REML cells are rejected clearly" begin
-        # A random effect on the mean is outside slice 2's scope → ArgumentError.
+        # Ordinary mean (1 | g) REML is #439 (`test/test_reml_ordinary_ranef.jl`).
+        # Slopes and unknown method symbols stay rejected here.
         Random.seed!(7)
         g = repeat(1:10, inner = 6)
+        x2 = randn(60)
         yy = 1.0 .+ randn(10)[g] .+ 0.5 .* randn(60)
-        d2 = (; y = yy, g = g)
-        @test_throws ArgumentError drm(bf(@formula(y ~ 1 + (1 | g)), @formula(sigma ~ 1)),
+        d2 = (; y = yy, g = g, x = x2)
+        @test_throws ArgumentError drm(bf(@formula(y ~ 1 + x + (0 + x | g)), @formula(sigma ~ 1)),
                                        Gaussian(); data = d2, method = :REML)
         # An unknown method symbol errors.
         @test_throws ArgumentError drm(bf(@formula(y ~ 1), @formula(sigma ~ 1)),

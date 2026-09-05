@@ -1,0 +1,7 @@
+{
+  "scope": "Local preview only. The deployment hook supplies real versions on the live site. No published versions are asserted here.",
+  "files": {
+    "siteinfo.js": "var DOCUMENTER_CURRENT_VERSION = \"local-preview\";\n",
+    "versions.js": "var DOC_VERSIONS = [];\n"
+  }
+}

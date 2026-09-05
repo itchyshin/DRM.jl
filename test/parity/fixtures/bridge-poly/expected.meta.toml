@@ -1,0 +1,5 @@
+drmtmb_version = "0.7.0"
+generated_on = "2026-08-25"
+r_call = "drmTMB(drm_formula(y ~ poly(x, 3), sigma ~ 1), family = gaussian(), data = dat)"
+seed = 20260824
+note = "Generated outputs only; no drmTMB source vendored (MIT-clean). drm_bridge #492: poly(x, k) is R's ORTHOGONAL basis (raw = FALSE, the default), reproduced by centring, QR of the Vandermonde, rescaling by column norms, and dropping the constant column. Three materialised columns, one per degree. This fixture is the check that the transcription matches R rather than merely looking like it."

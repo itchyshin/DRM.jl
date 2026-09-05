@@ -1,0 +1,41 @@
+....FFFF..
+======================================================================
+FAIL: test_srcset_fails_with_explicit_scope_diagnostic (tools.tests.test_parity_html_audit.TestAudit.test_srcset_fails_with_explicit_scope_diagnostic)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/tests/test_parity_html_audit.py", line 82, in test_srcset_fails_with_explicit_scope_diagnostic
+    self.assertEqual(len(failures), 1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_stylesheet_icon_and_preload_require_exact_assets (tools.tests.test_parity_html_audit.TestAudit.test_stylesheet_icon_and_preload_require_exact_assets) (rel='stylesheet')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/tests/test_parity_html_audit.py", line 74, in test_stylesheet_icon_and_preload_require_exact_assets
+    self.assertEqual(len(audit(root)[-1]), 1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_stylesheet_icon_and_preload_require_exact_assets (tools.tests.test_parity_html_audit.TestAudit.test_stylesheet_icon_and_preload_require_exact_assets) (rel='icon')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/tests/test_parity_html_audit.py", line 74, in test_stylesheet_icon_and_preload_require_exact_assets
+    self.assertEqual(len(audit(root)[-1]), 1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_stylesheet_icon_and_preload_require_exact_assets (tools.tests.test_parity_html_audit.TestAudit.test_stylesheet_icon_and_preload_require_exact_assets) (rel='preload')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/tests/test_parity_html_audit.py", line 74, in test_stylesheet_icon_and_preload_require_exact_assets
+    self.assertEqual(len(audit(root)[-1]), 1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.077s
+
+FAILED (failures=4)

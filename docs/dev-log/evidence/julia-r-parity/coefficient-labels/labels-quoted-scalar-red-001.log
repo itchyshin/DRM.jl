@@ -1,0 +1,42 @@
+bridge formula-derived coefficient labels: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:10
+  Got exception outside of a @test
+  ArgumentError: drm_bridge: cannot render scalar source `ifelse(g == "a", x, 0)` as an R coefficient label
+  Stacktrace:
+    [1] _bridge_r_scalar_source_label(text::String)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:830
+    [2] _bridge_register_source_labels!(ctx::DRM._BridgeXlateCtx, part::SubString{String})
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:890
+    [3] _bridge_parse_formula_part(part::SubString{String}, ctx::DRM._BridgeXlateCtx)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:1216
+    [4] #1395
+      @ /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:462 [inlined]
+    [5] iterate(g::Base.Generator, s::Vararg{Any})
+      @ Base ./generator.jl:47 [inlined]
+    [6] _collect(c::Vector{SubString{String}}, itr::Base.Generator{Vector{SubString{String}}, DRM.var"#1395#1397"{DRM._BridgeXlateCtx}}, ::Base.EltypeUnknown, isz::Base.HasShape{1})
+      @ Base ./array.jl:854
+    [7] collect_similar
+      @ ./array.jl:763 [inlined]
+    [8] map
+      @ ./abstractarray.jl:3282 [inlined]
+    [9] _bridge_formula(formula::String, family::String, data::@NamedTuple{x::Vector{Float64}, y::Vector{Float64}, g::Vector{String}}; labels::Bool)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/bridge.jl:462
+   [10] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:290 [inlined]
+   [11] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [12] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:11
+   [13] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [14] top-level scope
+      @ none:1
+   [15] eval
+      @ Core ./boot.jl:385 [inlined]
+   [16] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [17] _start()
+      @ Base ./client.jl:552
+Test Summary:                             | Pass  Error  Total   Time
+bridge formula-derived coefficient labels |  758      1    759  36.4s
+ERROR: LoadError: Some tests did not pass: 758 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_bridge_formula_labels.jl:10

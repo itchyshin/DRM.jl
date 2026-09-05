@@ -1,0 +1,1 @@
+| 2026-08-30 | Joint R bridge development (#563) | Two public fits; independent320row oracle;20damages normal/-O; focused tests | Adapters PASS; native prediction/parameter parity FAIL retained; no full programme closure | Ada / Hopper / Rose |

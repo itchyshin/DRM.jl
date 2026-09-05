@@ -1,0 +1,108 @@
+ERROR: LoadError: Some tests did not pass: 4 passed, 6 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:26
+fixed-precision Gamma inner gradient at retained failed point: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:44
+  Expression: maximum(abs, BigFloat.(actual) - reference) < big"1e-12"
+   Evaluated: 7.65274223419097903728440715188182966283773457087379167741474400100343755921354e-10 < 9.999999999999999999999999999999999999999999999999999999999999999999999999999957e-13
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:44 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:28 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:27
+fixed-precision Gamma inner gradient at retained failed point: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:46
+  Expression: ok
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:46 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:28 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:27
+fixed-precision Gamma inner gradient at retained failed point: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:49
+  Expression: norm(exact_residual) <= big"1e-9" * (1 + norm(BigFloat.(mode)))
+   Evaluated: 2.08628972326954116223990611475816913484052828939357109840340840726355468147498e-09 <= 1.32258235121502855660901880264150908169452348129607281660023600106961553321648e-09
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:49 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:28 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:27
+fixed-precision joint objective retains Newton descent: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:99
+  Expression: abs(BigFloat(actual(v)) - frozen_reference(v)) <= 2 * eps(actual(v))
+   Evaluated: 1.566763490479685865206538176668793361814804503681867158408471030112933589209329e-10 <= 1.4210854715202004e-14
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:99 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:71 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:27
+fixed-precision joint objective retains Newton descent: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:99
+  Expression: abs(BigFloat(actual(v)) - frozen_reference(v)) <= 2 * eps(actual(v))
+   Evaluated: 4.171554485396466513408077399837164299384119559446073068337141452039466291649921e-11 <= 1.4210854715202004e-14
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:99 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:71 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:27
+fixed-precision joint objective retains Newton descent: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:102
+  Expression: actual(trial) < actual(a)
+   Evaluated: 39.591771227714716 < 39.591771227516894
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:102 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:71 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_compensated_gradient.jl:27
+Test Summary:                                                         | Pass  Fail  Total  Time
+location-scale compensated arithmetic                                 |    4     6     10  4.3s
+  fixed-precision Gamma inner gradient at retained failed point       |    1     3      4  2.9s
+  fixed-precision gradient preserves general loadings and dual inputs |    2            2  1.4s
+  fixed-precision joint objective retains Newton descent              |    1     3      4  0.0s

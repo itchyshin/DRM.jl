@@ -1,0 +1,1 @@
+| 2026-09-03 | **S7b.6 scaling tripwire hardened** (#623, closes #622) | `test/test_lss_sparse_multi_public.jl` | ✅ merged `7a5672e0`; min of 3 timings/size, ratio bar 8→12, cap 15→20s; local verification measured ratio 2.77 (cubic-bug signature stays 25-48, contended-runner noise was 10.7) | Shannon (Rose after-task pass) |

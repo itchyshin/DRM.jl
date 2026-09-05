@@ -1,0 +1,5 @@
+ERROR: LoadError: ArgumentError: invalid type for argument number 1 in method definition for _ls_joint at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:9
+Stacktrace:
+ [1] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:9
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:9

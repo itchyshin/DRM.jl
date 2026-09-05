@@ -1,0 +1,112 @@
+[ Info: SetupBuildDirectory: setting up build directory.
+[ Info: Doctest: running doctests.
+[ Info: ExpandTemplates: expanding markdown templates.
+WARNING: replacing module __atexample__named__fam.
+[ Info: CrossReferences: building cross-references.
+[ Info: CheckDocument: running document checks.
+[ Info: Populate: populating indices.
+[ Info: RenderDocument: rendering document.
+[ Info: DocumenterVitepress: rendering MarkdownVitepress pages.
+┌ Warning: Documenter could not auto-detect the building environment. Skipping deployment.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/deployconfig.jl:93
+[ Info: Automatic `version="0.7.0"` for inventory from ../Project.toml
+ERROR: LoadError: IOError: open("/Users/z3437171/.julia/logs/manifest_usage.toml.pid", 2562, 292): operation not permitted (EPERM)
+Stacktrace:
+  [1] uv_error
+    @ Base ./libuv.jl:100 [inlined]
+  [2] open(path::String, flags::UInt32, mode::UInt16)
+    @ Base.Filesystem ./filesystem.jl:121
+  [3] tryopen_exclusive(path::String, mode::UInt16)
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:212
+  [4] open_exclusive(path::String; mode::UInt16, poll_interval::Int64, wait::Bool, stale_age::Int64, refresh::Float64)
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:239
+  [5] open_exclusive
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:232 [inlined]
+  [6] mkpidlock(at::String, pid::Int32; stale_age::Int64, refresh::Float64, kwopts::@Kwargs{})
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:67
+  [7] mkpidlock
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:62 [inlined]
+  [8] mkpidlock(f::Pkg.Types.var"#51#54"{String, String, Dates.DateTime, String}, at::String, pid::Int32; kwopts::@Kwargs{stale_age::Int64})
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:91
+  [9] mkpidlock
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:90 [inlined]
+ [10] mkpidlock
+    @ FileWatching.Pidfile ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/FileWatching/src/pidfile.jl:88 [inlined]
+ [11] write_env_usage(source_file::String, usage_filepath::String)
+    @ Pkg.Types ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Pkg/src/Types.jl:539
+ [12] Pkg.Types.EnvCache(env::Nothing)
+    @ Pkg.Types ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Pkg/src/Types.jl:377
+ [13] EnvCache
+    @ Pkg.Types ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Pkg/src/Types.jl:356 [inlined]
+ [14] dependencies
+    @ Pkg.API ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Pkg/src/API.jl:85 [inlined]
+ [15] build_dep_info_dicts(doc::Documenter.Document)
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/documents.jl:762
+ [16] get_src_to_uuid
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/documents.jl:774 [inlined]
+ [17] (::Documenter.var"#36#37"{Documenter.Document, Vector{Documenter.RemoteRepository}})(directory::String)
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/documents.jl:870
+ [18] find_root_parent(f::Documenter.var"#36#37"{Documenter.Document, Vector{Documenter.RemoteRepository}}, path::String)
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:401
+ [19] relpath_from_remote_root(doc::Documenter.Document, path::String)
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/documents.jl:839
+ [20] source_url(doc::Documenter.Document, mod::Module, file::String, linerange::UnitRange{Int64})
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/documents.jl:935
+ [21] source_url(doc::Documenter.Document, docstring::Base.Docs.DocStr)
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/documents.jl:915
+ [22] renderdoc(io::IOStream, mime::MIME{Symbol("text/plain")}, node::MarkdownAST.Node{Nothing}, page::Documenter.Page, doc::Documenter.Document; kwargs::@Kwargs{inventory::DocInventories.Inventory})
+    @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/writer.jl:533
+ [23] renderdoc
+    @ ~/.julia/packages/DocumenterVitepress/2seKb/src/writer.jl:523 [inlined]
+ [24] render(io::IOStream, mime::MIME{Symbol("text/plain")}, node::MarkdownAST.Node{Nothing}, docs::Documenter.DocsNode, page::Documenter.Page, doc::Documenter.Document; kwargs::@Kwargs{inventory::DocInventories.Inventory})
+    @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/writer.jl:519
+ [25] render(io::IOStream, mime::MIME{Symbol("text/plain")}, node::MarkdownAST.Node{Nothing}, children::MarkdownAST.NodeChildren{MarkdownAST.Node{Nothing}}, page::Documenter.Page, doc::Documenter.Document; kwargs::@Kwargs{inventory::DocInventories.Inventory})
+    @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/writer.jl:446
+ [26] render
+    @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/writer.jl:444 [inlined]
+ [27] #render#36
+    @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/writer.jl:483 [inlined]
+ [28] render(io::IOStream, mime::MIME{Symbol("text/plain")}, node::MarkdownAST.Node{Nothing}, page::Documenter.Page, doc::Documenter.Document; kwargs::@Kwargs{inventory::DocInventories.Inventory})
+    @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/writer.jl:440
+ [29] render
+    @ ~/.julia/packages/DocumenterVitepress/2seKb/src/writer.jl:439 [inlined]
+ [30] #13
+    @ ~/.julia/packages/DocumenterVitepress/2seKb/src/writer.jl:234 [inlined]
+ [31] open(::DocumenterVitepress.var"#13#15"{Documenter.Document, DocInventories.Inventory, MIME{Symbol("text/plain")}, Documenter.Page}, ::String, ::Vararg{String}; kwargs::@Kwargs{})
+    @ Base ./io.jl:396
+ [32] open
+    @ ./io.jl:393 [inlined]
+ [33] render(doc::Documenter.Document, settings::MarkdownVitepress)
+    @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/writer.jl:232
+ [34] runner(::Type{DocumenterVitepress.MarkdownFormat}, fmt::MarkdownVitepress, doc::Documenter.Document)
+    @ DocumenterVitepress ~/.julia/packages/DocumenterVitepress/2seKb/src/DocumenterVitepress.jl:28
+ [35] dispatch(::Type{Documenter.FormatSelector}, ::MarkdownVitepress, ::Vararg{Any})
+    @ Documenter.Selectors ~/.julia/packages/Documenter/AXNMp/src/utilities/Selectors.jl:170
+ [36] render(doc::Documenter.Document)
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/writers.jl:45
+ [37] runner(::Type{Documenter.Builder.RenderDocument}, doc::Documenter.Document)
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/builder_pipeline.jl:266
+ [38] dispatch(::Type{Documenter.Builder.DocumentPipeline}, x::Documenter.Document)
+    @ Documenter.Selectors ~/.julia/packages/Documenter/AXNMp/src/utilities/Selectors.jl:170
+ [39] #90
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:283 [inlined]
+ [40] withenv(::Documenter.var"#90#92"{Documenter.Document}, ::Pair{String, Nothing}, ::Vararg{Pair{String, Nothing}})
+    @ Base ./env.jl:256
+ [41] #89
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:282 [inlined]
+ [42] cd(f::Documenter.var"#89#91"{Documenter.Document}, dir::String)
+    @ Base.Filesystem ./file.jl:112
+ [43] #makedocs#88
+    @ Documenter ~/.julia/packages/Documenter/AXNMp/src/makedocs.jl:281 [inlined]
+ [44] main(args::Vector{String})
+    @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/tools/parity_docs_subset.jl:60
+ [45] top-level scope
+    @ /private/tmp/drm-parity-20260830/integration/DRM.jl/tools/parity_docs_subset.jl:74
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/tools/parity_docs_subset.jl:74
+DOCS_RUNTIME julia=1.10.0 threads=1 blas=1 loaded_drm=/private/tmp/drm-parity-20260830/integration/DRM.jl/src/DRM.jl
+DOCS_SELECTED=api-stability.md,capabilities.md,changelog.md,cross-family.md,developer-notes/adding-families.md,developer-notes/formula-grammar.md,developer-notes/source-map.md,diagnostics-and-validation/exact-gaussian-diagnostics.md,diagnostics-and-validation/figure-gallery.md,diagnostics-and-validation/implementation-map.md,diagnostics-and-validation/prediction-and-postfit.md,diagnostics-and-validation/profile-likelihood.md,diagnostics-and-validation/simulation-plot-grammar.md,diagnostics-and-validation/small-sample-behaviour.md,diagnostics-and-validation/testing-likelihoods.md,families.md,get-started.md,getting-started.md,index.md,model-guides/convergence.md,model-guides/cross-family-methods.md,model-guides/distribution-families.md,model-guides/large-data.md,model-guides/marginal-la-vs-va.md,model-guides/meta-analysis.md,model-guides/model-map.md,model-guides/model-selection.md,model-guides/model-workflow.md,model-guides/which-scale.md,r-julia-bridge.md,reference/deprecated-marker-internals.md,reference/engine-internals.md,reference/model-fitting-and-postfit.md,reference/model-specification.md,reference/package.md,reference/structured-effect-markers.md,reference/visualization.md,rosetta.md,tutorials/animal-models.md,tutorials/bivariate-coscale.md,tutorials/bivariate-nongaussian.md,tutorials/count-nbinom2.md,tutorials/location-scale-scale.md,tutorials/location-scale.md,tutorials/meta-analysis.md,tutorials/phylogenetic-models.md,tutorials/phylogenetic-spatial.md,tutorials/proportion-beta-binomial.md,tutorials/relmat-known-matrices.md,tutorials/robust-student.md,tutorials/spatial-models.md,tutorials/structural-dependence.md
+DOCS_PRODUCTION_NAVIGATION visible=51 emitted=52
+Copied: /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-inner-005/.documenter/components/AuthorBadge.vue
+Copied: /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-inner-005/.documenter/components/Authors.vue
+Copied: /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-inner-005/.documenter/components/SidebarDrawerToggle.vue
+Copied: /private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-inner-005/.documenter/components/VersionPicker.vue

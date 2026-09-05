@@ -1,0 +1,31 @@
+$kind
+[1] "ordinal"
+
+$names
+[1] "flagFALSE" "flagTRUE"  "mi(x).L"   "mi(x).Q"  
+
+$dim
+[1] 36  4
+
+$false_range
+[1] 1 1
+
+$true_range
+[1] 0 0
+
+$kind
+[1] "categorical"
+
+$names
+[1] "flagFALSE"   "flagTRUE"    "mi(x)medium" "mi(x)high"  
+
+$dim
+[1] 36  4
+
+$false_range
+[1] 1 1
+
+$true_range
+[1] 0 0
+
+NATIVE_SINGLETON_LOGICAL_DESIGN_PASS

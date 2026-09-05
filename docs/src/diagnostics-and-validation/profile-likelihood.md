@@ -13,7 +13,7 @@ good as the quadratic approximation there. A **profile** interval fixes one
 target at a sequence of values, re-optimises every other parameter at each one,
 and keeps the values whose likelihood-ratio distance is still compatible with the
 fitted model. When a parameter sits near a boundary or its likelihood is skewed,
-the two intervals can differ noticeably, and the profile is the more honest read.
+the two intervals can differ noticeably, and a successfully computed profile can reveal asymmetry that Wald misses.
 
 ## Fit a small model
 
@@ -81,24 +81,36 @@ res.ci                                # same rows as confint(...; method = :prof
  autodiff = res.autodiff, level = res.level)
 ```
 
-The `stats` field carries one row per profiled endpoint, including how many
-likelihood evaluations and bracket expansions the root-search needed, and whether
-either arm ran to an unbounded (non-crossing) endpoint:
+The `stats` field carries one row per coefficient, with diagnostics for both
+endpoints: likelihood evaluations, bracket expansions, endpoint failures and
+searched-range limits. The generic profiler also records each arm's last
+nuisance method, fallback use and acceptance reason:
 
 ```@example prof
 res.stats
 ```
 
-If an arm reports `lower_unbounded` or `upper_unbounded` as `true`, the profile
-curve never crossed the cutoff on that side — treat that interval as diagnostic
-evidence rather than a finished uncertainty summary.
+Check `lower_endpoint_failed` and `upper_endpoint_failed` first. A failed arm
+has no valid endpoint: its signed infinity is a failure placeholder, not evidence
+for an unbounded statistical interval. `confint` warns when an endpoint fails;
+use `profile_result` to retain the diagnostics. The generic path rejects
+non-finite or unsuccessfully terminated nuisance solves. Optimizer termination
+alone does not prove a global optimum or a sufficiently small score.
+
+If `lower_unbounded` or `upper_unbounded` is `true` without endpoint failure,
+the threshold was not crossed **within the searched range**. This is a useful
+diagnostic, not proof that the mathematical interval is infinite. Specialized
+location-only and location-scale profilers retain their separate solver contracts;
+the generic nuisance diagnostics do not certify those paths.
 
 ## Inspect the likelihood-ratio curve
 
 To *see* the profile rather than only its endpoints, [`profile_curve`](@ref)
 returns the data for a 1-D likelihood-ratio plot of one coefficient (by its
 global index `k`). At each grid value of `θ[k]` the nuisance parameters are
-re-optimised, so the curve is a genuine profile, not a parabola. It returns the
+re-optimised. Failed generic grid solves raise an error identifying the grid
+location. A profiled objective materially below the reference fit also raises
+an error instead of being clamped to zero. It returns the
 grid `x`, the profile `deviance` (`2(ℓ̂ − ℓ_profile)`), the fitted `estimate`, and
 the `χ²₁` `cutoff` the interval uses.
 
@@ -121,9 +133,10 @@ equals `cutoff` are exactly the profile endpoints reported above:
 [(x = xi, deviance = di) for (xi, di) in zip(curve.x, curve.deviance)][1:5]
 ```
 
-A profile interval is trustworthy only because the curve crosses the cutoff on
-*both* sides of the estimate. If one side does not cross, the corresponding
-endpoint is unbounded — read it as a boundary diagnostic, not a number to quote.
+Crossings on both sides are useful checks, but do not by themselves certify
+optimizer accuracy, interval coverage or the absence of other optima. Inspect
+solver diagnostics and the curve. A nonmonotone curve requires investigation;
+the numerical search does not guarantee finding its first crossing.
 
 ## When to reach for which
 

@@ -1,0 +1,44 @@
+ERROR: LoadError: Some tests did not pass: 5 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:32
+finite-state direct formula frontend API and ordinal payload design: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:32
+  Got exception outside of a @test
+  MethodError: Cannot `convert` an object of type JointMissingControl to an object of type String
+  
+  Closest candidates are:
+    convert(::Type{String}, !Matched::Base.JuliaSyntax.Kind)
+     @ Base /Users/julia/.julia/scratchspaces/a66863c6-20e8-4ff4-8a62-49f30b1f605e/agent-cache/default-honeycrisp-HL2F7YQ3XH.0/build/default-honeycrisp-HL2F7YQ3XH-0/julialang/julia-release-1-dot-10/base/JuliaSyntax/src/kinds.jl:975
+    convert(::Type{String}, !Matched::String)
+     @ Base essentials.jl:321
+    convert(::Type{T}, !Matched::T) where T<:AbstractString
+     @ Base strings/basic.jl:231
+    ...
+  
+  Stacktrace:
+    [1] convert(::Type{Union{Missing, String}}, x::JointMissingControl)
+      @ Base ./missing.jl:70
+    [2] setindex!(A::Vector{Union{Missing, String}}, x::JointMissingControl, i1::Int64)
+      @ Base ./array.jl:1021
+    [3] _fit_finite_joint_formula(f::DrmFormula, data::@NamedTuple{y::Vector{Union{Missing, Float64}}, x::Vector{Union{Missing, String}}, z::Vector{Float64}}, variable::Symbol, fixed_mu::StatsModels.Term, rhs_sigma::StatsModels.ConstantTerm{Int64}, spec::JointImputeModel{CumulativeLogit, Vector{String}}; missing::JointMissingControl, g_tol::Float64)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_frontend.jl:460
+    [4] _fit_joint_formula(f::DrmFormula, data::@NamedTuple{y::Vector{Union{Missing, Float64}}, x::Vector{Union{Missing, String}}, z::Vector{Float64}}; impute::@NamedTuple{x::JointImputeModel{CumulativeLogit, Vector{String}}}, missing::JointMissingControl, g_tol::Float64, method::Symbol, algorithm::Symbol, K::Nothing, A::Nothing, tree::Nothing, coords::Nothing, profile_ci::Bool, phylo_coupled::Bool, penalty::Nothing, sparse::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_frontend.jl:596
+    [5] drm(f::DrmFormula, fam::Gaussian; data::@NamedTuple{y::Vector{Union{Missing, Float64}}, x::Vector{Union{Missing, String}}, z::Vector{Float64}}, K::Nothing, A::Nothing, tree::Nothing, coords::Nothing, g_tol::Float64, algorithm::Symbol, method::Symbol, profile_ci::Bool, phylo_coupled::Bool, penalty::Nothing, sparse::Nothing, impute::@NamedTuple{x::JointImputeModel{CumulativeLogit, Vector{String}}}, missing::JointMissingControl)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_core.jl:442
+    [6] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:48 [inlined]
+    [7] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [8] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:33
+    [9] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [10] top-level scope
+      @ none:1
+   [11] eval
+      @ Core ./boot.jl:385 [inlined]
+   [12] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [13] _start()
+      @ Base ./client.jl:552
+Test Summary:                                                       | Pass  Error  Total  Time
+finite-state direct formula frontend API and ordinal payload design |    5      1      6  9.6s

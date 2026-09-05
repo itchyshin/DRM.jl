@@ -1,0 +1,15 @@
+ERROR: LoadError: MethodError: no method matching float_terms(::@NamedTuple{kind::Val{:gamma}, y::Vector{Float64}, eta::Vector{Float64}, psi::Vector{Float64}, gidx::Vector{Int64}, G::Int64, P::SparseMatrixCSC{Float64, Int64}, Zeta::Matrix{Float64}, Zpsi::Matrix{Float64}, a::Vector{Float64}, trial::Vector{Float64}, grad::Vector{Float64}, step::Vector{Float64}, f0::Float64, ft::Float64, tol::Float64}, ::Vector{Float64}; reverse::Bool)
+
+Closest candidates are:
+  float_terms(::Any, ::Any; rev) got unsupported keyword argument "reverse"
+   @ Main /private/tmp/locscale_objective_arithmetic_followup.jl:17
+
+Stacktrace:
+ [1] kwerr(::@NamedTuple{reverse::Bool}, ::Function, ::@NamedTuple{kind::Val{:gamma}, y::Vector{Float64}, eta::Vector{Float64}, psi::Vector{Float64}, gidx::Vector{Int64}, G::Int64, P::SparseMatrixCSC{Float64, Int64}, Zeta::Matrix{Float64}, Zpsi::Matrix{Float64}, a::Vector{Float64}, trial::Vector{Float64}, grad::Vector{Float64}, step::Vector{Float64}, f0::Float64, ft::Float64, tol::Float64}, ::Vector{Float64})
+   @ Base ./error.jl:165
+ [2] line(name::String, s::@NamedTuple{kind::Val{:gamma}, y::Vector{Float64}, eta::Vector{Float64}, psi::Vector{Float64}, gidx::Vector{Int64}, G::Int64, P::SparseMatrixCSC{Float64, Int64}, Zeta::Matrix{Float64}, Zpsi::Matrix{Float64}, a::Vector{Float64}, trial::Vector{Float64}, grad::Vector{Float64}, step::Vector{Float64}, f0::Float64, ft::Float64, tol::Float64})
+   @ Main /private/tmp/locscale_objective_arithmetic_followup.jl:63
+ [3] top-level scope
+   @ /private/tmp/locscale_objective_arithmetic_followup.jl:86
+in expression starting at /private/tmp/locscale_objective_arithmetic_followup.jl:86
+STATE_SHA 040645c9751dbedd57bb7021937a388d5b3f1fda9c0d89309fdbb79be5ec849a

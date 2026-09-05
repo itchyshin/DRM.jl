@@ -1,0 +1,53 @@
+
+══ Testing test-julia-phylo-labels.R ═══════════════════════════════════════════
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 1 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 3 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 3 | WARN 0 | SKIP 0 | PASS 1 ]
+[ FAIL 4 | WARN 0 | SKIP 0 | PASS 1 ]
+[ FAIL 4 | WARN 0 | SKIP 0 | PASS 2 ]
+[ FAIL 4 | WARN 0 | SKIP 0 | PASS 3 ]JULIA_PHYLO_LABELS_TEST_READY
+
+
+── Error ('test-julia-phylo-labels.R:8:3'): Julia Newick serializer escapes and preserves non-simple tip labels ──
+Error in `drm_julia_phylo_newick(tree)`: `engine = "julia"` can serialize only simple phylogenetic tip labels in this slice.
+x Unsupported tip label: "Homo sapiens".
+Backtrace:
+    ▆
+ 1. └─drmTMB:::drm_julia_phylo_newick(tree) at test-julia-phylo-labels.R:8:3
+ 2.   └─cli::cli_abort(...) at drmTMB/R/julia-bridge.R:1811:5
+ 3.     └─rlang::abort(...)
+
+── Error ('test-julia-phylo-labels.R:35:3'): Julia Newick serialization preserves row identity after edge reordering ──
+Error in `drm_julia_phylo_newick(tree)`: `engine = "julia"` can serialize only simple phylogenetic tip labels in this slice.
+x Unsupported tip label: "a b".
+Backtrace:
+    ▆
+ 1. └─drmTMB:::drm_julia_phylo_newick(tree) at test-julia-phylo-labels.R:35:3
+ 2.   └─cli::cli_abort(...) at drmTMB/R/julia-bridge.R:1811:5
+ 3.     └─rlang::abort(...)
+
+── Error ('test-julia-phylo-labels.R:50:3'): Julia Newick serializer keeps accepted control whitespace literally ──
+Error in `drm_julia_phylo_newick(tree)`: `engine = "julia"` can serialize only simple phylogenetic tip labels in this slice.
+x Unsupported tip label: "tab\tlabel".
+Backtrace:
+    ▆
+ 1. └─drmTMB:::drm_julia_phylo_newick(tree) at test-julia-phylo-labels.R:50:3
+ 2.   └─cli::cli_abort(...) at drmTMB/R/julia-bridge.R:1811:5
+ 3.     └─rlang::abort(...)
+
+── Error ('test-julia-phylo-labels.R:67:3'): Julia Newick serializer keeps collision-prone spaces and old simple labels distinct ──
+Error in `drm_julia_phylo_newick(tree)`: `engine = "julia"` can serialize only simple phylogenetic tip labels in this slice.
+x Unsupported tip label: "A B".
+Backtrace:
+    ▆
+ 1. └─drmTMB:::drm_julia_phylo_newick(tree) at test-julia-phylo-labels.R:67:3
+ 2.   └─cli::cli_abort(...) at drmTMB/R/julia-bridge.R:1811:5
+ 3.     └─rlang::abort(...)
+
+[ FAIL 4 | WARN 0 | SKIP 0 | PASS 3 ]
+Error:
+! Test failures.
+Execution halted

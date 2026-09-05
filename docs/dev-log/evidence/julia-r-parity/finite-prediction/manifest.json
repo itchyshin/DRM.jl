@@ -1,0 +1,19 @@
+{
+  "scope": "Bounded finite known-state prediction and refreshed joint adapter checks; programme open",
+  "sha256": {
+    "src/joint_missing_frontend.jl": "34e715491f4b967ed119a22bd2abce5a76095d69ebfaeca99910d0585fcd4964",
+    "test/test_joint_missing_finite_prediction.jl": "478fba446c10bb8c2d1ec52f080174c3c2be950a16bf72615f02b5fe6b1a6bf9",
+    "tools/check_joint_bridge_public_receipt.py": "3ba8239c0089ef777ec35243746355ef11d9f1963be3315abd12dfec33915586",
+    "tools/test_joint_bridge_public_receipt.py": "4739b8b6a1507f037cc1cfc56d4e0bc9c2528516b5bc61629701d8697b04db07",
+    "docs/src/reference/engine-internals.md": "37e8cfd6a15a105582297e056d920edaf5121a78d1db3bc5f88a628dc50dba13"
+  },
+  "native_R_repair_commit": "6ca8f9377",
+  "source_frozen_during_runs": true,
+  "focused_assertions": 246,
+  "unlazy_leaf": {
+    "met": 3,
+    "unmet": 0
+  },
+  "full_programme_gates": "OPEN",
+  "foreign_work_in_tested_tree": "Preserved R bridge ZOB edits; Julia S5 runner hunk unexecuted in focused tests"
+}

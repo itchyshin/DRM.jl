@@ -1,0 +1,30 @@
+journey	status	max_coef_diff	julia_methods_ok	julia_methods_err	tmb_error	julia_error	drmtmb_code_hash
+gaussian_basic	OK_MATCH	2.61637452259045e-08	print,summary,coef,fixef,vcov,confint,residuals,predict				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+gaussian_sigma_covar	OK_MATCH	7.1552963762378e-07	print,summary,coef,fixef,vcov,confint,residuals,predict				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+factor_covariate	OK_MATCH	2.61637451148822e-08	print,summary,coef,fixef,vcov,confint,residuals,predict				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+interaction_star	OK_MATCH	3.59914875680545e-11	print,summary,coef,fixef,vcov,confint,residuals,predict				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+interaction_colon	OK_MATCH	3.59914875680545e-11	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+I_square	OK_MATCH	2.61637452259045e-08	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+poly_2	OK_MATCH	2.61637452814156e-08	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+scale_x	OK_MATCH	2.61637451148822e-08	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+minus_one_intercept	OK_MATCH	4.20580274940185e-07	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+crossing_power	OK_MATCH	3.59914875680545e-11	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+poisson_basic	OK_MATCH	1.43615674907949e-11	print,summary,coef,fixef,vcov,confint,residuals,predict				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+gamma_log	OK_MATCH	2.35990332497771e-07	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+beta_basic	OK_MATCH	8.69101425937657e-07	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+binomial_cbind	OK_MATCH	9.17815823342494e-12	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+meta_V	OK_MATCH	1.09636156347959e-06	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+missing_y_default	OK_MATCH	2.67219474880953e-08	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+missing_y_include	OK_MATCH	2.67219474880953e-08	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+gaussian_reml	OK_MATCH	2.62849176868585e-08	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+phylo_gaussian	OK_MATCH	9.37592081751148e-09	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+phylo_species_chr	OK_MATCH	9.37592081751148e-09	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+phylo_poisson	OK_MATCH	6.58770626937866e-08	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+phylo_missing_include	OK_MATCH	1.33174957950288e-07	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+relmat_gaussian	OK_MATCH	3.25118477584319e-07	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+biv_gaussian	OK_MATCH	8.52287818986497e-07	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+student_nu	OK_MATCH	1.51345867682728e-06	print,summary,coef,fixef,vcov,confint,residuals				610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+cross_family	NO_NATIVE_COMPARATOR	NA			Mixed-response bivariate families are not implemented yet. | ✖ Requested families: "gaussian" and "poisson". | ℹ Only `family = c(gaussian(), gaussian())` or `family = list(gaussian(), |   gaussian())` is currently route		610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+weights_gated	JULIA_REFUSED	NA				`engine = "julia"` does not support `weights` yet. | ℹ Use native `engine = "tmb"` for weighted fits until the bridge has a weights |   payload.	610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+unknown_column	BOTH_ERROR	NA			undefined columns selected	`engine = "julia"` could not find model variable "nosuchcol" in `data`.	610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033
+probit_binomial	JULIA_REFUSED	NA				The DRM.jl bridge supports `binomial(link = "logit")` only. | ✖ Received binomial link "probit". | ℹ drmTMB fits this link natively; use `engine = "tmb"`. | ℹ DRM.jl's Binomial likelihood is logit-mean only, so routing t	610ff4a287e6a3d20c5d1d162a28ded0df24bc50c5a796b338a9fe4ef2595033

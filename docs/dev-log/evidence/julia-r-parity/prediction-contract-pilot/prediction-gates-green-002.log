@@ -1,0 +1,23 @@
+APPROVAL REQUIRED leaf-S10-prediction:G1
+    CHECK: Rscript tools/parity_prediction.R /private/tmp/drm-parity-20260830/s10-candidate /private/tmp/drm-parity-20260830/DRM.jl /private/tmp/drm-parity-20260830/prediction-green-002.json
+    EXPECT: PREDICTION_CONTRACT_PASS cases=4 predictions=32
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH: [redacted local command-search path]
+    APPROVED: /Users/z3437171/.unlazy/approved/4df6816d1570fa6207cb1f3b60352700b67049334462bad1f844685288092fed.json
+APPROVAL REQUIRED leaf-S10-prediction:G2
+    CHECK: python3 -c "import json; r=json.load(open('/private/tmp/drm-parity-20260830/prediction-green-002.json')); assert r['completed_predictions']==32 and r['adapter_status']=='PASS' and r['bridge_unchanged_during_run']; print('ADAPTER_ONLY_PASS; independently fitted native baseline remains separately gated')"
+    EXPECT: ADAPTER_ONLY_PASS
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH: [redacted local command-search path]
+    APPROVED: /Users/z3437171/.unlazy/approved/71bff9de4d769450dbd065b70d917185e63ef4f67a737939eaac54d2155adf60.json
+  RUN  leaf-S10-prediction:G1 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=[redacted local command-search path]
+  RUN  leaf-S10-prediction:G2 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=[redacted local command-search path]
+  FAIL leaf-S10-prediction:G1: Four fixed-effect Gaussian cases agree for 32 stored/newdata link/response outputs
+       exit=1; EXPECT=not matched; output=drmTMB_drm_bridge (generic function with 1 method) | drmTMB_drm_bridge_q2_phylo (generic function with 1 method) | drmTMB_drm_bridge_inference (generic function with 1 method) | drmTMB_drm_bridge_fixef_inference (generic function with 1 method) | drmTMB_drm_bridge_structured (generic function with 1 method) | drmTMB_mixed_family (generic function with 1 method) | ... | Activating project at `/private/tmp/drm-parity-20260830/DRM.jl` | Julia exit.
+  FAIL leaf-S10-prediction:G2: Adapter-only diagnostic agrees with native prediction at identical coefficients for all 32 outputs
+       exit=1; EXPECT=matched; output=Traceback (most recent call last): | File "<string>", line 1, in <module> | import json; r=json.load(open('/private/tmp/drm-parity-20260830/prediction-green-002.json')); assert r['completed_predictions']==32 and r['adapter_status']=='PASS' and r['bridge_unchanged_during_run']; print('ADAPTER_ONLY_PASS; independently fitted native baseline remains separately gated') | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ | Assertio
+leaf-S10-prediction.md: 2 gates
+UNMET: 2 (met: 0)
+  leaf-S10-prediction:G1, leaf-S10-prediction:G2

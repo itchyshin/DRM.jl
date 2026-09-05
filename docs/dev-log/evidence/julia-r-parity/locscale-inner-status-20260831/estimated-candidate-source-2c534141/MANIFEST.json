@@ -1,0 +1,21 @@
+{
+  "status": "Candidate preserved, NOT integrated acceptance; Gamma covariance still fails",
+  "files": [
+    {
+      "file": "src/locscale_inner.jl",
+      "sha256": "2c534141d8439a4ee339bfc6d795e4a4836fea885f986f677b418016a4afc32f"
+    },
+    {
+      "file": "test/test_locscale_inner_status.jl",
+      "sha256": "194b91bd750d3dc4a24c0a84cf9e2686e46f048da3ff0746eb7e66b4a1f9a4ec"
+    },
+    {
+      "file": "test/runtests.jl",
+      "sha256": "8253bba4d55b02c7d0a538db6ad07de2a02aa2096ff7c45d43854c0cbf4fcde0"
+    },
+    {
+      "file": "test/test_locscale_grad.jl",
+      "sha256": "5a9e4ca3a668e7e35a4b573f8a0e1ca8c8e49f3970f1c41a5cbbe69abc75e3da"
+    }
+  ]
+}

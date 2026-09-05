@@ -1,5 +1,12 @@
 # Session Handoff: IDLE pending owner G0 after #404
 
+> **HISTORICAL (2026-08-14).** This 2026-08-13 Cursor idle note was the DRM.jl
+> START HERE after [#405](https://github.com/itchyshin/DRM.jl/pull/405) merged
+> @ `d0fac9d7`. Live START HERE (Claude pickup):
+> [`2026-08-14-claude-handover-drm-idle.md`](2026-08-14-claude-handover-drm-idle.md).
+> Keep this file as the post-#404 Cursor idle record. Do not treat it as the
+> current DRM.jl pointer.
+
 Meta: 2026-08-13 · from **Cursor** (Shannon) · TARGET **Cursor** · AUTHOR **cursor**
 
 You are **Cursor**, picking up **DRM.jl** with **no chat context**. Rehydrate
