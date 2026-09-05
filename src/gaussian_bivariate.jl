@@ -111,10 +111,15 @@ With matching structured markers on `mu1` and `mu2` only, this routes to the
 q=2 exact-Gaussian point-fit cell, `method = :ML` (default) or `method =
 :REML` (Patterson–Thompson; marginalises `beta_mu1`/`beta_mu2` only — see
 `reml_q2.jl`). The q=2 route currently accepts `phylo(1 | group)` with
-`tree`, `relmat(1 | group)` with `K`, or `animal(1 | group)` with `A`; it
-requires complete responses, identical mean fixed-effect designs, and
-intercept-only `sigma1`, `sigma2`, and `rho12`. `spatial(1 | group)` remains
-outside the formula route here.
+`tree`, `relmat(1 | group)` with `K`, `animal(1 | group)` with `A`, or
+`spatial(1 | group)` with `coords`; it requires complete responses, identical
+mean fixed-effect designs, and intercept-only `sigma1`, `sigma2`, and `rho12`.
+`spatial(1 | group)` supplies a covariance exactly as `relmat`/`animal` do: the
+exponential kernel `exp(-d / rho)` at a FIXED range `rho` (keyword
+`spatial_range`, else the mean off-diagonal pairwise distance), the same rule
+the q=4 structured route uses. It does NOT estimate the range jointly the way
+the univariate spatial route (`_fit_spatial_gaussian`) does, so the two are not
+the same model and must not be compared as one.
 
 With the same `phylo(1 | group)` marker on all four location/scale predictors
 (`mu1`, `mu2`, `sigma1`, and `sigma2`) and a supplied `tree`, this routes to the
@@ -186,10 +191,15 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
             method = method,
         )
     elseif structured_marker !== nothing && structured_marker[1] === :structured_q2
-        coords === nothing ||
-            throw(ArgumentError("drm: bivariate q=2 spatial(coords) is not implemented; use a known covariance relmat route or method = :ML native TMB."))
+        # No route-wide `coords` guard here: each provider branch below refuses
+        # when ITS OWN input is missing (relmat needs `K`, animal needs `A`,
+        # spatial needs `coords`), so the fail-closed rule is stated once, next
+        # to the provider it constrains. The guard this replaced fired on the
+        # presence of `coords` alone and so refused a perfectly ordinary
+        # relmat/animal q=2 fit that merely carried a stray `coords =` kwarg.
         return _fit_bivariate_q2_structured(
-            f, fam, data, fixed, structured_marker, tree, K, A;
+            f, fam, data, fixed, structured_marker, tree, K, A, coords;
+            spatial_range = spatial_range,
             g_tol = Float64(g_tol),
             method = method,
         )
@@ -359,8 +369,8 @@ function _bivariate_q4_marker(rhs)
     if marker_keys == Set((:mu1, :mu2))
         marker_vals = [markers[p] for p in (:mu1, :mu2)]
         kind = marker_vals[1][1]
-        kind in (:phylo, :relmat, :animal) ||
-            error("the bivariate q=2 front end currently supports only `phylo(...)`, `relmat(...)`, or `animal(...)` markers")
+        kind in (:phylo, :relmat, :animal, :spatial) ||
+            error("the bivariate q=2 front end currently supports only `phylo(...)`, `relmat(...)`, `animal(...)`, or `spatial(...)` markers")
         all(m -> m[1] === kind, marker_vals) ||
             error("the q=2 structured markers on mu1 and mu2 must use the same structured type")
         groups = [m[2] for m in marker_vals]
@@ -479,7 +489,8 @@ function _structured_marker_kind(t)
 end
 
 function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, data,
-                                      fixed, marker, tree, K, A;
+                                      fixed, marker, tree, K, A, coords;
+                                      spatial_range = nothing,
                                       g_tol::Float64, method::Symbol = :ML)
     marker[1] === :structured_q2 || error("internal error: expected q2 structured marker")
     kind = marker[2]
@@ -518,6 +529,14 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
         A === nothing && error("animal(1 | $grp) needs `A = …`")
         C = Matrix{Float64}(A)
         size(C) == (G, G) || error("animal relatedness matrix must be $(G)×$(G) (the number of `$grp` levels)")
+        make_coevo_problem_from_covariance(C, Y, Matrix{Float64}(X1); group = gidx)
+    elseif kind === :spatial
+        # `spatial` supplies a covariance exactly as `relmat`/`animal` do; the
+        # only difference is that the G×G matrix is BUILT from the coordinates
+        # by the same fixed-range rule the q=4 route uses. Identical solver call
+        # below, so `spatial(coords)` and `relmat(K = that same matrix)` are one
+        # model reached by two names.
+        C = _spatial_covariance_from_coords(grp, G, coords, spatial_range)
         make_coevo_problem_from_covariance(C, Y, Matrix{Float64}(X1); group = gidx)
     else
         error("internal error: unsupported q2 structured marker `$kind`")
@@ -626,6 +645,38 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
     return _withranef(_withformula(_withnll(fit, nll), f), re)
 end
 
+# Exponential spatial covariance over the G levels of `grp`, at a FIXED range.
+#
+# Shared by the q=2 and q=4 bivariate structured routes so both cells build the
+# same G×G matrix from the same coordinates, and so every fail-closed check on
+# `coords` is stated exactly once. The range is `spatial_range` when supplied,
+# else the mean off-diagonal pairwise distance; the 1e-8 ridge keeps the kernel
+# positive definite at near-coincident sites. Row k of `coords` is the k-th
+# level of `grp` in `_group_index` order (stable FIRST-SEEN order in the data),
+# which is the same contract the q=4 route has always had.
+#
+# This is NOT the univariate spatial route: `_fit_spatial_gaussian`
+# (gaussian_structured.jl) carries log rho as a free parameter and rebuilds the
+# kernel each evaluation. Here rho is fixed, so the two are different models.
+function _spatial_covariance_from_coords(grp::Symbol, G::Int, coords, spatial_range)
+    coords === nothing && error("spatial(1 | $grp) needs `coords = …`")
+    G >= 2 || error("spatial(1 | $grp) needs at least 2 distinct sites; got G=$G")
+    Cmat = Matrix{Float64}(coords)
+    size(Cmat, 1) == G ||
+        error("spatial coords must have $G rows (one per `$grp` level); got $(size(Cmat, 1))")
+    size(Cmat, 2) >= 1 || error("spatial coords must have at least one coordinate column")
+    Ddist = [sqrt(sum(abs2, Cmat[k, :] .- Cmat[l, :])) for k in 1:G, l in 1:G]
+    any(Ddist .> 0) ||
+        error("spatial(1 | $grp): all site coordinates coincide; the spatial range is not identified")
+    rho = if spatial_range === nothing
+        sum(Ddist) / (G^2 - G)
+    else
+        Float64(spatial_range)
+    end
+    rho > 0 || error("spatial_range must be positive (got $rho)")
+    return Matrix{Float64}(exp.(-Ddist ./ rho) + 1e-8 * I)
+end
+
 # Build a G×G SPD precision for level-indexed q=4 structured providers (#189).
 # Spatial uses a *fixed* range (keyword `spatial_range`, else mean pairwise
 # distance) — joint ρ estimation is deferred.
@@ -644,22 +695,7 @@ function _q4_structured_precision(kind::Symbol, grp::Symbol, G::Int;
         isposdef(Symmetric(C)) || error("animal A must be positive definite")
         return Matrix(inv(cholesky(Symmetric(C))))
     elseif kind === :spatial
-        coords === nothing && error("spatial(1 | $grp) needs `coords = …`")
-        G >= 2 || error("spatial(1 | $grp) needs at least 2 distinct sites; got G=$G")
-        Cmat = Matrix{Float64}(coords)
-        size(Cmat, 1) == G ||
-            error("spatial coords must have $G rows (one per `$grp` level); got $(size(Cmat, 1))")
-        size(Cmat, 2) >= 1 || error("spatial coords must have at least one coordinate column")
-        Ddist = [sqrt(sum(abs2, Cmat[k, :] .- Cmat[l, :])) for k in 1:G, l in 1:G]
-        any(Ddist .> 0) ||
-            error("spatial(1 | $grp): all site coordinates coincide; the spatial range is not identified")
-        ρ = if spatial_range === nothing
-            sum(Ddist) / (G^2 - G)
-        else
-            Float64(spatial_range)
-        end
-        ρ > 0 || error("spatial_range must be positive (got $ρ)")
-        Ksp = exp.(-Ddist ./ ρ) + 1e-8 * I
+        Ksp = _spatial_covariance_from_coords(grp, G, coords, spatial_range)
         return Matrix(inv(cholesky(Symmetric(Matrix{Float64}(Ksp)))))
     else
         error("internal error: unsupported q4 structured kind `$kind`")
