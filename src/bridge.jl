@@ -1574,6 +1574,13 @@ function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = 
         names = _bridge_echo_coef_labels(coef_labels, block_ranges, raw_names)
         length(unique(names)) == length(names) ||
             error("drm_bridge: echoed coef_labels public names are not unique")
+        # The echo is positional: it pastes R's names onto whatever columns
+        # this fit built. Before trusting it, compare every regression block
+        # DRM.jl can render itself against the supplied spelling, so a design
+        # that disagrees (factor level order, contrasts, term order) is
+        # refused BY NAME rather than reported silently under R's names.
+        labels === nothing ||
+            _bridge_check_coef_labels_fidelity(fit, labels, block_ranges, raw_names, names)
         public_to_raw = Dict{String,String}(pub => raw for (pub, raw) in zip(names, raw_names))
         return names, vals, raw_names, public_to_raw
     end
@@ -1670,14 +1677,19 @@ function _bridge_validate_coordinate_axes(blocks, names, p::Integer,
     return nothing
 end
 
-# `coefnames` records raw matrix columns.  Render public R spellings from the
-# typed, schema-applied RHS instead of parsing those strings: factor levels may
-# themselves contain `:`/spaces, so text substitution would corrupt them.
-function _bridge_public_to_raw_coef_map(fit, labels::_BridgeFormulaLabels,
-        raw_names::Vector{String})
-    raw_to_public = Dict{String,String}(raw => raw for raw in raw_names)
+# Render every REGRESSION block (mu/sigma/…, mu1/mu2/…; not the `sd`/`sd_phylo`
+# location-scale-scale blocks, which `_bridge_lss_public_to_raw!` handles) from
+# the fit's own typed schema. Returns `(param, raw, public, vouched)` tuples in
+# `form.forms` order, where `raw` equals the fitted block's `coefnames` (checked
+# here, so a caller never labels columns the schema did not build) and
+# `public` is the base-R spelling. `vouched` is `false` on the one fallback
+# path in `_bridge_render_formula_block` where no public spelling could be
+# derived and `raw` is returned in its place — a caller comparing spellings
+# must skip such a block rather than compare Julia-internal names to R's.
+function _bridge_rendered_regression_blocks(fit, labels::_BridgeFormulaLabels)
+    out = Tuple{Symbol,Vector{String},Vector{String},Bool}[]
     form = hasproperty(fit, :formula) ? fit.formula : nothing
-    form === nothing && return Dict{String,String}(raw => raw for raw in raw_names)
+    form === nothing && return out
     forms = hasproperty(form, :forms) ? form.forms : Pair{Symbol,Any}[]
     block_names = Dict(p => ns for (p, ns) in fit.coefnames)
     for (param, rhs) in forms
@@ -1693,17 +1705,75 @@ function _bridge_public_to_raw_coef_map(fit, labels::_BridgeFormulaLabels,
         rendered = _bridge_render_formula_block(form, param, rhs, labels)
         rendered === nothing && continue
         raw, public = rendered
+        vouched = !(public === raw)
         if fit isa DrmFit{<:CumulativeLogit} && param === :mu
             # Proportional-odds cutpoints absorb the location intercept.  The
             # ordinal fitter drops it after `_design` but deliberately retains
             # the user formula for prediction, so bridge label rendering must
             # make the same known family-specific projection.
             intercept = findfirst(==("(Intercept)"), raw)
-            intercept === nothing || (deleteat!(raw, intercept); deleteat!(public, intercept))
+            intercept === nothing || (deleteat!(raw, intercept); vouched && deleteat!(public, intercept))
         end
         expected = block_names[param]
         raw == expected || error("drm_bridge: typed schema labels do not match fitted raw columns for `$param`")
         length(public) == length(raw) || error("drm_bridge: public label width mismatch for `$param`")
+        push!(out, (param, raw, public, vouched))
+    end
+    return out
+end
+
+# Fidelity check for an R-supplied `options["coef_labels"]` echo. The echo
+# itself is positional — `_bridge_echo_coef_labels` only counts columns — so
+# on its own it will happily print R's names over a design DRM.jl built
+# differently: a factor whose levels reached Julia in another order (a
+# different baseline), an ordered factor R codes with `contr.poly`, a user
+# `contr.sum`, or a term order the two engines disagree on. Every one of
+# those has the SAME column count on both sides, so the count check passes
+# and the coefficients are silently wrong under the right names (measured
+# through drmTMB on 2026-09-04: an ordered factor differed by 1.25 in the
+# baseline coefficient, name-identical). Here every regression block DRM.jl
+# can render itself (`_bridge_rendered_regression_blocks`) must render to
+# exactly the supplied base-R names, in order; otherwise refuse, naming the
+# dpar and BOTH spellings. Blocks DRM.jl cannot render (`vouched == false`)
+# and blocks with no formula counterpart (`phylocov`, `resd`, `sd`) are not
+# compared — the R side names those itself and there is nothing on this side
+# to compare them to.
+function _bridge_check_coef_labels_fidelity(fit, labels::_BridgeFormulaLabels,
+        block_ranges::Vector{Pair{Symbol,UnitRange{Int}}}, raw_names::Vector{String},
+        echoed::Vector{String})
+    ranges = Dict(param => range for (param, range) in block_ranges)
+    for (param, raw, public, vouched) in _bridge_rendered_regression_blocks(fit, labels)
+        vouched || continue
+        haskey(ranges, param) || continue
+        range = ranges[param]
+        raw_names[range] == ["$(param)_$(r)" for r in raw] || error(
+            "drm_bridge: internal error — rendered raw columns for `$param` do not align with the coefficient block")
+        prefix = "$(param)_"
+        supplied = String[name[nextind(name, firstindex(name), length(prefix)):end] for name in echoed[range]]
+        supplied == public || error(
+            "drm_bridge: coef_labels[\"$param\"] does not match the design DRM.jl built for `$param`: " *
+            "R supplied $(supplied) but DRM.jl renders $(public) from its own model matrix " *
+            "(Julia raw columns: $(raw)). The two engines disagree on the design columns — " *
+            "usually a factor whose level order or contrasts differ between the R data and " *
+            "what reached Julia (DRM.jl codes every factor with treatment contrasts against " *
+            "its first level, in the level order it received). Refusing to report DRM.jl's " *
+            "coefficients under R's names. Give the column an explicit, treatment-coded " *
+            "level order in R before fitting (`factor(x, levels = c(...))`, not an ordered " *
+            "factor or a `contrasts` attribute), or use `engine = \"tmb\"`.")
+    end
+    return nothing
+end
+
+# `coefnames` records raw matrix columns.  Render public R spellings from the
+# typed, schema-applied RHS instead of parsing those strings: factor levels may
+# themselves contain `:`/spaces, so text substitution would corrupt them.
+function _bridge_public_to_raw_coef_map(fit, labels::_BridgeFormulaLabels,
+        raw_names::Vector{String})
+    raw_to_public = Dict{String,String}(raw => raw for raw in raw_names)
+    form = hasproperty(fit, :formula) ? fit.formula : nothing
+    form === nothing && return Dict{String,String}(raw => raw for raw in raw_names)
+    block_names = Dict(p => ns for (p, ns) in fit.coefnames)
+    for (param, raw, public, _) in _bridge_rendered_regression_blocks(fit, labels)
         for (rawname, publicname) in zip(raw, public)
             raw_to_public["$(param)_$(rawname)"] = "$(param)_$(publicname)"
         end
@@ -1775,7 +1845,8 @@ function _bridge_render_formula_block(form, param::Symbol, rhs,
     ft = apply_schema(ft, schema(ft, schema_data), StatisticalModel)
     raw = String.(vec(coefnames(ft.rhs)))
     public = _bridge_public_term_labels(
-        ft.rhs, labels.atoms, _bridge_formula_symbol_order(fixed_rhs),
+        ft.rhs, _bridge_bool_column_atoms(labels.atoms, fixed_rhs, schema_data),
+        _bridge_formula_symbol_order(fixed_rhs),
         get(labels.function_labels, label_scope, Dict{String,String}()))
     if length(public) != length(raw)
         _bridge_term_uses_atoms(ft.rhs, labels.atoms) && error(
@@ -1783,6 +1854,30 @@ function _bridge_render_formula_block(form, param::Symbol, rhs,
         return raw, raw
     end
     return raw, public
+end
+
+# R codes a logical covariate as a two-level factor (levels FALSE, TRUE) under
+# treatment contrasts, so its single design column is named `<sym>TRUE`;
+# StatsModels keeps a `Vector{Bool}` continuous -- the SAME 0/1 column -- and
+# names it `<sym>`. Render R's spelling for such columns (plain and inside
+# interactions), so the coef_labels fidelity check compares like with like
+# rather than refusing a design the two engines actually agree on (measured
+# through drmTMB 2026-09-05: `y ~ x + flag` was refused as "flagTRUE" vs
+# "flag" with max|coef diff| 2.6e-14). Scalar function terms keep their
+# recorded source spelling and are not affected. Materialised atoms win.
+function _bridge_bool_column_atoms(atoms::Dict{Symbol,String}, rhs, data)
+    out = copy(atoms)
+    for sym in keys(_bridge_formula_symbol_order(rhs))
+        haskey(out, sym) && continue
+        col = try
+            _table_column(data, sym)
+        catch
+            nothing
+        end
+        col isa AbstractVector{Bool} || continue
+        out[sym] = String(sym) * "TRUE"
+    end
+    return out
 end
 
 function _bridge_formula_symbol_order(rhs)

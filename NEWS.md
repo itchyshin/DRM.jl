@@ -13,6 +13,30 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   Both packages use the same public moment parameterisation (`mu` = mean,
   `sigma` = SD, `nu` = Azzalini slant), so the bridged coefficients are the
   native ones. Fixed effects only, ML only — exactly what `SkewNormal()` fits.
+- **Inference on a missing-response ("response mask") Gaussian fit: `is_converged` read false on a
+  converged fit, and every bootstrap replicate failed (#646).** Both defects sat downstream of the
+  fit itself -- the point estimates were already right, matching drmTMB's `engine = "tmb"` to ~7e-06
+  on the qualification fixture -- which is why nothing caught them until bridge-side inference was
+  measured. (1) `_nondegenerate_fit` (`src/summary.jl`) took its scale-free degeneracy bar as
+  `std(fit.obs[:mu])`, but the missing-response routes keep the full-design response there with NaN
+  in the masked positions, so `yscale` was NaN and `smax > 1e-6 * max(NaN, eps)` was false for every
+  `smax` under IEEE-754. `is_converged` therefore returned false on EVERY masked Gaussian fit,
+  independent of the optimiser: measured on the fixture, `Optim.converged` true, `|grad|inf`
+  6.41e-12 against `g_tol` 1e-8, and `theta` bit-identical to the complete-case fit (max abs diff
+  0.0), yet `is_converged` false. The bar is now taken over the observed (finite) responses only;
+  a genuinely degenerate sigma is still rejected. (2) `_simulate_once` (`src/gaussian_core.jl`)
+  drew `randn(rng, fit.nobs)` -- the count that entered the likelihood, 54 on the fixture -- and
+  broadcast it against the length-60 `means`/`scales` that `_with_full_fixed_gaussian_rows` rebuilds
+  over the full design, throwing `DimensionMismatch` deterministically on every replicate, so
+  `bootstrap_result` raised `"all B bootstrap replicates failed"`. Draws are now taken per row of
+  the design, which is also the length `_bootstrap_data` needs to merge back into the caller's
+  table. (3) Found while fixing those: `_with_full_fixed_gaussian_rows` and `_with_full_response_rows`
+  used the 19-argument compatibility constructor, silently resetting `iterations` to -1
+  ("not recorded") -- the identical complete-case fit reported 7 -- and dropping the MAP penalty
+  slots; both now pass all 22 fields. Guarded by `test/test_bridge_response_mask_inference.jl`
+  (21 assertions: converged status, a 5-replicate bootstrap on a masked response, the iteration
+  count, and a degenerate-sigma control proving the widened bar still rejects).
+
 - **Gaussian two-SD phylogenetic random slope `phylo(1 + x | species)` on the mean (#620).** The
   #621 refusal is replaced by the fit on the Gaussian mean route: two INDEPENDENT phylogenetic
   fields, `a ~ N(0, σₐ² C)` for the intercept and `b ~ N(0, σ_b² C)` for the slope on the same
