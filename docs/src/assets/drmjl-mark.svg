@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">DRM.jl location-scale mark</title>
+  <desc id="desc">A rounded hexagonal badge containing two density curves with the same mean and different spread.</desc>
+  <path d="M256 20 448 132Q464 141 464 160V352Q464 371 448 380L272 492Q256 502 240 492L64 380Q48 371 48 352V160Q48 141 64 132L240 20Q256 10 272 20Z" fill="#0B1F3A"/>
+  <path d="M256 35 435 140Q448 147 448 162V350Q448 365 435 372L269 477Q256 485 243 477L77 372Q64 365 64 350V162Q64 147 77 140L243 35Q256 27 269 35Z" fill="none" stroke="#4D6FE3" stroke-width="11"/>
+  <path d="M256 132V382" stroke="#D7E0F0" stroke-dasharray="12 14" stroke-linecap="round" stroke-width="8" opacity=".75"/>
+  <path d="M111 356C159 356 179 336 202 274C218 231 233 183 256 183C279 183 294 231 310 274C333 336 353 356 401 356" fill="#0F8E8E" fill-opacity=".14"/>
+  <path d="M111 356C159 356 179 336 202 274C218 231 233 183 256 183C279 183 294 231 310 274C333 336 353 356 401 356" fill="none" stroke="#0F8E8E" stroke-linecap="round" stroke-width="17"/>
+  <path d="M102 356C142 356 170 346 197 319C221 295 235 274 256 274C277 274 291 295 315 319C342 346 370 356 410 356" fill="#4D6FE3" fill-opacity=".16"/>
+  <path d="M102 356C142 356 170 346 197 319C221 295 235 274 256 274C277 274 291 295 315 319C342 346 370 356 410 356" fill="none" stroke="#4D6FE3" stroke-linecap="round" stroke-width="17"/>
+  <circle cx="256" cy="183" r="12" fill="#F7F9FC"/><circle cx="256" cy="274" r="12" fill="#F7F9FC"/>
+</svg>
