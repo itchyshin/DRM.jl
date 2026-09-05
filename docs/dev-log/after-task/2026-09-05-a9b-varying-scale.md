@@ -2,7 +2,7 @@
 
 - **Date:** 2026-09-05
 - **Issue:** #609 item 2 (S10 `varying_scale` `CONDITIONAL_FIT_PARITY_FAIL`); parity
-  programme leaf A9b; branch `claude/parity-a9b-drmjl` off `430ef64cc`
+  programme leaf A9b; PR #642, branch `claude/parity-a9b-drmjl` off `430ef64cc`
 - **Perspectives:** Gauss (engine), Rose (after-task)
 
 ## 1. Goal
