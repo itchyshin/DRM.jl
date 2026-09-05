@@ -42,6 +42,26 @@ jobs:
           # a local `julia test/runtests.jl` and Pkg.test() are unchanged.
           DRM_TEST_SHARD: ${{ format('{0}/4', matrix.shard) }}
 
+  # ONE stable required check for branch protection. Protection on main used to
+  # require the matrix legs by name (`test (1.10)`, `test (1)`); sharding renamed
+  # them and #626 sat fully green and BLOCKED forever. Requiring only `ci-ok`
+  # makes the rule independent of how the matrix is shaped.
+  #
+  # `if: always()` is load-bearing: without it a failed or cancelled shard makes
+  # this job SKIP, and GitHub counts a skipped required check as PASSING.
+  # `needs.test.result` is the aggregate over every matrix leg -- "success" only
+  # when all eight succeeded; "failure" / "cancelled" / "skipped" otherwise.
+  ci-ok:
+    name: ci-ok
+    needs: [test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every shard must have succeeded
+        run: |
+          echo "aggregate result of the test matrix: ${{ needs.test.result }}"
+          test "${{ needs.test.result }}" = "success"
+
   # Engine-quality Q-gate #16: multi-shape (balanced + caterpillar) O(p) scaling
   # sweep. NOT per-PR (the p=10k cell is minutes-scale) — manual dispatch only.
   # Default grid is {100, 1000}; set run_p10k=true to add the p=10k cell.
