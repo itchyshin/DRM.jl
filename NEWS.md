@@ -13,6 +13,28 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   Both packages use the same public moment parameterisation (`mu` = mean,
   `sigma` = SD, `nu` = Azzalini slant), so the bridged coefficients are the
   native ones. Fixed effects only, ML only — exactly what `SkewNormal()` fits.
+- **Gaussian two-SD phylogenetic random slope `phylo(1 + x | species)` on the mean (#620).** The
+  #621 refusal is replaced by the fit on the Gaussian mean route: two INDEPENDENT phylogenetic
+  fields, `a ~ N(0, σₐ² C)` for the intercept and `b ~ N(0, σ_b² C)` for the slope on the same
+  tree correlation `C`, no intercept–slope correlation. That is drmTMB's Gaussian model
+  term for term (`src/drmTMB.cpp`, `model_type == 1`, `has_phylo_mu` with `q_phylo == 2`: both
+  fields sit on `mu`, so `has_cross_dpar_phylo` is false and the else-branch adds one
+  `exp(-2·log_sd_phylo(k))·uₖᵀQuₖ` term per field with no cross term). Fitted here as the
+  closed-form dense marginal `V = D + σₐ² Z C Zᵀ + σ_b² Zₓ C Zₓᵀ`, which is that Laplace
+  objective evaluated exactly. Reported as a two-row `:resd` block (`species`, `species:x`;
+  `re_sd`/`vc`/`ranef` all carry both fields), five free parameters — the same five drmTMB
+  optimizes. Measured same-target against drmTMB 67703f541 on the committed fixture: logLik,
+  both SDs, β and log σ all agree to ≤ 6.7e-13 (`test/test_phylo_slope_two_sd.jl`).
+  BOUNDARY: drmTMB fits `phylo(1 + x | g)` on further families as well, and for Poisson and
+  NegBinomial2 it fits a DIFFERENT model there — an estimated intercept–slope correlation
+  (`has_phylo_mu_q2_covariance`, reported in `corpars`). DRM.jl refuses every non-Gaussian
+  family rather than fit the independent model under that name. `phylo(0 + x | g)`, multi-slope
+  forms, a second structured component, ordinary and `sigma`-side random effects, a structured
+  (`phylo`) `sigma`, the `sd(...)`/`sd_phylo(...)` location-scale-scale submodels, REML, missing
+  responses, the sparse algorithms and the parametric-bootstrap simulator all stay refused with
+  a named error. Those refusals are raised next to `_split_ranef`, ABOVE every route that can
+  return, so no engine written for the intercept-only cell can receive this formula and quietly
+  fit `phylo(1 | g)` instead.
 
 ## v0.7.0 — 2026-08-28
 

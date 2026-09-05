@@ -75,12 +75,42 @@ rows; each has a `test/test_*.jl` file cited in `docs/src/capabilities.md`'s
 | Gaussian random slope (mean) | implemented |
 | Gaussian random effect on sigma (scale) | implemented |
 | Gaussian phylogenetic random intercept (mean) | implemented |
+| Gaussian phylogenetic random intercept + slope, two SDs (mean) | implemented |
 | Gaussian spatial random intercept (mean) | implemented |
 | Gaussian animal-model random intercept (mean) | implemented |
 | Gaussian relmat random intercept (mean) | implemented |
 | Non-Gaussian phylogenetic random intercept (mean) | implemented |
 | Non-Gaussian phylogenetic location-scale (μ + log σ) | implemented |
 | Tweedie random intercept (mean) | implemented |
+
+`Gaussian phylogenetic random intercept + slope, two SDs (mean)` is
+`implemented` (#620; was `refused` by #621 at the previous pin):
+`phylo(1 + x | species)` on the Gaussian mean fits drmTMB's model — two
+independent phylogenetic fields (intercept `a ~ N(0, σₐ² C)`, slope
+`b ~ N(0, σ_b² C)`, no correlation). In `src/drmTMB.cpp` that is
+`model_type == 1` + `has_phylo_mu` with `q_phylo == 2` and both fields on `mu`,
+so `has_cross_dpar_phylo` is false and the per-field
+`exp(-2·log_sd_phylo(k))·uₖᵀQuₖ` branch runs with no cross term. DRM.jl fits it
+as the closed-form dense marginal `V = D + σₐ² Z C Zᵀ + σ_b² Zₓ C Zₓᵀ`
+(`src/gaussian_structured.jl` `_fit_phylo_slope_gaussian`), the same five free
+parameters drmTMB optimizes. Measured same target as drmTMB 67703f541 on the
+committed fixture in `test/test_phylo_slope_two_sd.jl`: logLik, both SDs, β and
+log σ agree to ≤ 6.7e-13.
+
+BOUNDARY (written, not silent): drmTMB fits `phylo(1 + x | g)` on further
+families too, and for Poisson/NegBinomial2 it fits a **different** model —
+an estimated intercept–slope correlation (`has_phylo_mu_q2_covariance`,
+surfaced in `corpars`). DRM.jl refuses every non-Gaussian family here rather
+than fit the independent model under that name. `phylo(0 + x | g)`, multi-slope
+forms, a second structured component, ordinary and `sigma`-side random effects, a
+structured (`phylo`) `sigma`, the `sd(...)`/`sd_phylo(...)` location-scale-scale
+submodels, REML, missing responses, the sparse algorithms and the
+parametric-bootstrap marginal simulator all stay refused with a named error --
+and those refusals are raised next to `_split_ranef`, ABOVE every route that can
+return, so no engine written for the intercept-only cell can receive this formula
+and quietly fit `phylo(1 | g)` instead. The R-side bridge
+receipt (coef labels for the two-row `resd` block, design 258) is the drmTMB
+lane's, after this lands.
 
 `Non-Gaussian phylogenetic random intercept (mean)` is `implemented` via the
 sparse augmented-state Laplace engine (`src/sparse_laplace_glmm.jl`) for
