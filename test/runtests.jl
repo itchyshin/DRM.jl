@@ -78,6 +78,7 @@ include("test_profile_ci.jl")
 include("test_profile_nuisance_status.jl")
 include("test_profile_acceptance_oracles.jl")
 include("test_bridge_profile_status.jl")
+include("test_profile_infinite_bound.jl")  # #631 no infinite bound from a failed endpoint
 include("test_check_drm.jl")
 include("test_bias_correct.jl")
 include("test_visualization.jl")

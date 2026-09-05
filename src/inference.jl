@@ -167,6 +167,11 @@ Confidence intervals for every coefficient, as a vector of
   This is a guarded local search, not a guarantee of the globally first LR
   crossing; a `nonmonotone` flag is set on the profile stats row so callers can
   inspect that limitation.
+  An endpoint arm that the search cannot certify is REFUSED, not returned: this
+  method throws an `ArgumentError` naming the coefficient, the arm, and the
+  nuisance-solve reason rather than reporting the failed side as a signed `Inf`
+  (DRM.jl#631). Use [`profile_result`](@ref) when you want the same rows plus
+  the per-endpoint diagnostics instead of an exception.
   Pass `threads = true` to profile coefficients in parallel when the fitted
   objective is thread-safe; if only one coefficient is profiled, its lower and
   upper endpoint searches are run in parallel instead. Canonical location–scale
@@ -183,14 +188,46 @@ function confint(
     method === :wald && return _wald_ci(fit, level, parm)
     if method === :profile
         result = profile_result(fit; level, threads, parm)
-        if result.failed > 0
-            failed = ["$(s.param):$(s.coef)" for s in result.stats if
-                      s.lower_endpoint_failed || s.upper_endpoint_failed]
-            @warn "profile confidence interval has failed endpoint arm(s); failed side(s) are reported as signed Inf" failed
-        end
+        result.failed > 0 && _throw_profile_endpoint_failure(result)
         return result.ci
     end
     throw(ArgumentError("confint: method must be :wald or :profile (got :$method)"))
+end
+
+# DRM.jl#631: a failed endpoint arm must NEVER leave the user-facing interval
+# routine as a bound. `profile_result` is the AUDITABLE surface -- it keeps the
+# ±Inf convention alongside `lower_endpoint_failed` / `upper_endpoint_failed` so
+# a caller that asked for diagnostics can read them. `confint` is the surface a
+# user reads a number off, and there `-Inf` is indistinguishable from a real
+# confidence limit the moment it is printed, copied into a table, or written into
+# a paper. Refuse instead, naming the coefficient, the arm, the nuisance-solve
+# reason, and what to use in its place.
+function _profile_failed_arm_descriptions(result)
+    arms = String[]
+    for s in result.stats
+        (s.lower_endpoint_failed || s.upper_endpoint_failed) || continue
+        sides = String[]
+        s.lower_endpoint_failed &&
+            push!(sides, "lower (nuisance solve: $(s.lower_nuisance_reason))")
+        s.upper_endpoint_failed &&
+            push!(sides, "upper (nuisance solve: $(s.upper_nuisance_reason))")
+        push!(arms, "$(s.param):$(s.coef) — " * join(sides, ", "))
+    end
+    return arms
+end
+
+function _throw_profile_endpoint_failure(result)
+    arms = _profile_failed_arm_descriptions(result)
+    detail = isempty(arms) ? "$(result.failed) coefficient(s); per-arm diagnostics unavailable" :
+        join(arms, "; ")
+    throw(ArgumentError(
+        "confint (method = :profile): the endpoint search did not converge for " *
+        "$(result.failed) of $(result.attempted) coefficient(s) — $detail. " *
+        "A non-converged endpoint is NOT a confidence limit, so it is refused " *
+        "here rather than returned as a signed Inf. Use `method = :wald`, or " *
+        "`bootstrap_ci` / `bootstrap_result`, for an interval on this " *
+        "coefficient; call `profile_result(fit; ...)` if you need the same rows " *
+        "with the per-endpoint diagnostics that explain the failure."))
 end
 
 # Build CI rows from the σ-phylo location-scale route's PRECOMPUTED boundary-aware profile CIs
@@ -216,7 +253,10 @@ end
 
 Auditable profile-likelihood confidence intervals. Returns a `NamedTuple` with:
 
-- `ci` — the same rows returned by `confint(fit; method = :profile)`;
+- `ci` — the same rows `confint(fit; method = :profile)` returns, except that a
+  FAILED endpoint arm is kept here as a signed `Inf` alongside its
+  `lower_endpoint_failed` / `upper_endpoint_failed` flag. This is the auditable
+  surface; `confint` refuses such a row rather than returning it (DRM.jl#631);
 - `stats` — per-coefficient endpoint work counts;
 - `endpoint_diagnostics` — canonical location–scale endpoint reason, last
   evaluated candidate, and residual for each arm; other profile backends omit
