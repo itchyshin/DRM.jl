@@ -2,7 +2,10 @@ using Documenter
 using DocumenterVitepress
 using DRM
 
-# Five compact menus keep all reference and tutorial routes reachable.
+# Five compact menus keep all reference and tutorial routes reachable.  The
+# labels follow the reader's usual sequence: orient, choose, fit, check, then
+# look up details.  Routes are deliberately retained so existing links keep
+# working.
 # The site uses the DocumenterVitepress backend (a VitePress/Vue build, the
 # docs.makie.org look). Node is supplied by NodeJS_20_jll — no system install.
 # Fail on broken examples, links and omitted module docstrings.
@@ -17,10 +20,10 @@ makedocs(
         devurl = "dev",
     ),
     pages = [
-        "Start here" => [
+        "Start" => [
             "Home" => "index.md",
             "Getting started" => "getting-started.md",
-            "Capabilities" => "capabilities.md",
+            "Evidence & limits" => "capabilities.md",
             "R ↔ Julia bridge" => "r-julia-bridge.md",
             "Rosetta (R ↔ Julia)" => "rosetta.md",
         ],

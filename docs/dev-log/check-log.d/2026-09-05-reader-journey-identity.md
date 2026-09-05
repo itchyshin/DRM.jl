@@ -1,0 +1,1 @@
+| 2026-09-05 | **Reader journey and visual identity** (docs-only review lane) | `cd docs && julia --project=. make.jl`; desktop, mobile (390 × 844), and dark-mode local render inspection | ✅ full Documenter + VitePress render exited 0; all existing routes rendered; accessible SVG mark and responsive route cards verified | Codex / Pat + Florence + Rose lenses |
