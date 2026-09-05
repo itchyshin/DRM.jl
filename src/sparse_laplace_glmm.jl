@@ -83,6 +83,27 @@ function _poisson_laplace_mode(y, η0, Z, compid, logσ; b0 = nothing,
     return b, ch, iters, ch !== nothing
 end
 
+# The FD step for the outer vcov Hessian must GROW with n. The objective under
+# the stencil is the summed Laplace marginal, evaluated through an inner Newton
+# solve, so its evaluation noise scales with n while the /h^2 amplification is
+# fixed -- at the old constant h = 1e-4 the noise floor overtakes the truncation
+# error somewhere below n = 4000, and the reported SEs drift off the true
+# curvature in exactly the coordinate whose marginal curvature is smallest (the
+# intercept, correlated with the phylo-SD axis). Measured against native TMB on
+# identical data (2026-08-27, phylo Poisson, seed 20260824): at n = 4000
+# (p = 1000) h = 1e-4 gives 1.5e-3 relative SE error vs 2.5e-5 at h = 1e-3; at
+# n = 12000 (p = 3000) it gives 3.6e-3 vs 6.6e-6 at h = 3e-3; at n = 1200
+# (p = 300) h in [1e-4, 1e-3] is uniformly <= 1.2e-6, so the larger step costs
+# nothing at small n. The three optima fit h ~ 2.5e-7 * n; clamped below at the
+# old default (small fixtures) and above at 1e-2. NOTE (audit 2026-08-27): the
+# clamp bounds the BASE step only — _finite_hessian then scales it per
+# coordinate by (1 + |θ_i|), so the step actually evaluated on a
+# large-magnitude coordinate exceeds the base bound by that factor. The
+# measured optima above were measured through that same scaling, so the
+# calibration stands; the ceiling is a guard on the base step, not a hard cap
+# on every stencil.
+_fd_hessian_step(n::Integer) = clamp(2.5e-7 * n, 1e-4, 1e-2)
+
 function _finite_hessian(f, x; h::Real = 1e-4)
     n = length(x)
     H = zeros(n, n)
@@ -103,12 +124,14 @@ function _finite_hessian(f, x; h::Real = 1e-4)
         end
     end
     # Flag a non-usable Hessian so a fabricated covariance does not pass silently.
-    # The callers wrap `inv(Symmetric(H))` in a `try/catch` that substitutes the
-    # identity (unit-variance SEs) when the inverse throws. A non-finite H is the
-    # only input that makes `inv` throw, so replace non-finite entries with a
-    # large finite curvature (SE→0, visibly degenerate rather than exactly 1.0)
-    # and warn; also warn when H is finite but not positive definite so the
-    # user knows the reported SEs are not trustworthy.
+    # The callers pass this H to `_vcov_from_hessian` (src/vcov_guard.jl, #488),
+    # which decides invert-vs-pseudo-invert from the eigenvalues and warns on a
+    # boundary — so it needs a finite H to do that eigenvalue analysis at all.
+    # Replace non-finite entries with a large finite curvature (SE→0, visibly
+    # degenerate rather than exactly 1.0) and warn; also warn when H is finite
+    # but not positive definite so the user knows the reported SEs are not
+    # trustworthy — this warning is about the FD Hessian's own quality and is
+    # independent of (and can fire alongside) the guard's singularity warning.
     if !all(isfinite, H)
         @warn "sparse-Laplace vcov: finite-difference Hessian is non-finite " *
               "(a step likely straddled a clamp); reported SEs are unreliable."
@@ -126,11 +149,74 @@ function _finite_hessian(f, x; h::Real = 1e-4)
     return H
 end
 
+# ---------------------------------------------------------------------------
+# Boundary polish for a collapsed variance component (issue #422).
+#
+# When the structured SD collapses, the outer objective goes FLAT in `log_sd`:
+# measured on the issue's fixture, nll at log_sd = -12.3 and at -81.6 are
+# identical to TWELVE DIGITS. LBFGS chases that flat direction to -81 and stops
+# there on the gradient norm, leaving the REMAINING coordinates (chiefly the
+# scale intercept) short of their conditional optimum -- ~7e-05 of nll on the
+# recorded case, which is what a parity harness sees as a near-tolerance failure
+# against native drmTMB.
+#
+# The fix is to stop chasing the flat direction: freeze `log_sd` at a floor where
+# the objective is already indistinguishable, then re-optimise the rest
+# conditionally. Adopted ONLY if it strictly lowers the objective, so it can
+# never make a fit worse; ties keep the original so behaviour stays stable.
+#
+# PRECONDITION: `log_sd` is the LAST coordinate. Only applied at the routes whose
+# trailing `:resd` block is a single coordinate -- several routes in this file
+# carry q>=2 variance blocks where that is false, and they are deliberately left
+# alone.
+const _LAPLACE_LOG_SD_FLOOR = log(1e-6)
+
+function _laplace_boundary_polish(nll, grad!, θ̂, nllhat; iterations::Int = 100)
+    length(θ̂) >= 2 || return (θ̂, nllhat)
+    θ̂[end] < _LAPLACE_LOG_SD_FLOOR || return (θ̂, nllhat)
+    k = length(θ̂) - 1
+    floor_sd = _LAPLACE_LOG_SD_FLOOR
+    sub_nll(v) = nll(vcat(v, floor_sd))
+    function sub_grad!(Gout, v)
+        gfull = zeros(eltype(Gout), k + 1)
+        grad!(gfull, vcat(v, floor_sd))
+        Gout .= @view gfull[1:k]
+        return Gout
+    end
+    return try
+        v0 = θ̂[1:k]
+        odv = Optim.OnceDifferentiable(sub_nll, sub_grad!, v0)
+        resv = Optim.optimize(odv, v0, Optim.LBFGS(),
+                              Optim.Options(iterations = iterations))
+        θnew = vcat(Optim.minimizer(resv), floor_sd)
+        nnew = nll(θnew)
+        (isfinite(nnew) && nnew < nllhat) ? (θnew, nnew) : (θ̂, nllhat)
+    catch
+        (θ̂, nllhat)
+    end
+end
+
+# The reported `converged` flag answers a FIXED, scale-invariant question --
+# is the mean per-observation gradient small at the optimum -- rather than "did
+# the optimiser meet whatever tolerance it was asked for". Two prior designs
+# failed here (#491): an n-independent absolute limit got HARDER to pass as n
+# grew (gfinal is the gradient of the SUMMED penalized marginal NLL, so its
+# norm scales with n while the limit did not), and short-circuiting on
+# `Optim.converged(res)` made the flag ANTI-correlated with care -- a loose
+# g_tol makes Optim's own criterion trivially satisfiable, so g_tol = 10.0
+# reported converged at relative gradient 1.18e-03 while the default g_tol =
+# 1e-8 reported NOT converged at 1.39e-07. Measured separation on this path:
+# careful fits sit at 1.2e-07..1.5e-07, deliberately sloppy ones at ~1e-03, so
+# 1e-6 has orders of magnitude of margin on both sides (owner decision
+# 2026-08-27, D-179 #1). A fit that genuinely met a tight optimiser tolerance
+# passes this check a fortiori, so no short-circuit is needed; `res` and
+# `g_tol` stay in the signature so the eight call sites and their tests do not
+# churn on a reporting-policy change.
+const _LAPLACE_OUTER_RELTOL = 1e-6
+
 function _laplace_outer_converged(res, nllhat, gfinal, θ, n::Int, g_tol)
     isfinite(nllhat) && nllhat < 1e17 || return false
-    Optim.converged(res) && return true
-    grad_limit = max(1e-4 * (1 + norm(θ, Inf)), g_tol * max(n, 1))
-    return norm(gfinal, Inf) <= grad_limit
+    return norm(gfinal, Inf) / max(n, 1) <= _LAPLACE_OUTER_RELTOL
 end
 
 function _poisson_fixed_start(y, X)
@@ -296,7 +382,20 @@ introduces. Returns `(val[, grad], b, ok)`; on a non-PD inner solve `ok = false`
 """
 function _poisson_phylo_laplace_fg(y, Xμ, leaf_node, Q, logdetQ, lf, θ;
                                    grad::Bool = false, b0 = nothing,
-                                   newton_tol::Real = 1e-8, newton_maxiter::Int = 60)
+                                   newton_tol::Real = 1e-10, newton_maxiter::Int = 60)
+    # newton_tol was 1e-8 until 2026-08-26. That is tight enough for coefficients
+    # and logLik (parity ~1e-8) but NOT for the SECOND-derivative quantity: the
+    # inner mode's residual error propagates into the Hessian, and therefore into
+    # every reported SE. Measured on the Poisson relmat cell against native TMB:
+    #     newton_tol   SE(beta0) gap vs TMB
+    #        1e-6           5.6 %
+    #        1e-8           1.29 %      <- the old default
+    #        1e-10          1.1e-05
+    # Two to three orders, at NO extra iteration cost (newton_maxiter unchanged at
+    # 60; the solve simply stops later). The control that rules out a "different
+    # information convention" explanation: Gaussian shares the identical
+    # downstream _finite_hessian/_vcov_from_hessian pipeline and shows NO gap
+    # (3.4e-07), so the divergence is the inner solve, not the outer machinery.
     n = length(y)
     pμ = length(θ) - 1
     q = size(Q, 1)
@@ -366,10 +465,12 @@ non-root tree node and the mode/logdet computations stay sparse.
 """
 function _fit_poisson_phylo_laplace(fam::Poisson, y, Xμ, labels, tree, nmμ, grp,
                                     g_tol; se::Bool = true,
-                                    polish_iterations::Int = 15)
+                                    polish_iterations::Int = 15,
+                                    reml::Bool = false)
     Q, leaf_node, _ = _poisson_phylo_setup(tree, labels)
     return _fit_poisson_general_laplace(fam, y, Xμ, Q, leaf_node, nmμ, grp, g_tol;
-                                        se = se, polish_iterations = polish_iterations)
+                                        se = se, polish_iterations = polish_iterations,
+                                        reml = reml)
 end
 
 """
@@ -410,10 +511,12 @@ unchanged.
 """
 function _fit_poisson_relmat_laplace(fam::Poisson, y, Xμ, C, labels, nmμ, grp,
                                      g_tol; se::Bool = true,
-                                     polish_iterations::Int = 15)
+                                     polish_iterations::Int = 15,
+                                     reml::Bool = false)
     Q, leaf_node = _general_cov_setup(C, labels)
     return _fit_poisson_general_laplace(fam, y, Xμ, Q, leaf_node, nmμ, grp, g_tol;
-                                        se = se, polish_iterations = polish_iterations)
+                                        se = se, polish_iterations = polish_iterations,
+                                        reml = reml)
 end
 
 # Shared body: Poisson sparse-Laplace fit for an arbitrary precision `Q` and
@@ -422,7 +525,8 @@ end
 # (`_fit_poisson_relmat_laplace`); see those for the two front ends.
 function _fit_poisson_general_laplace(fam::Poisson, y, Xμ, Q, leaf_node, nmμ, grp,
                                       g_tol; se::Bool = true,
-                                      polish_iterations::Int = 15)
+                                      polish_iterations::Int = 15,
+                                      reml::Bool = false)
     n = length(y)
     pμ = size(Xμ, 2)
     q = size(Q, 1)
@@ -484,17 +588,14 @@ function _fit_poisson_general_laplace(fam::Poisson, y, Xμ, Q, leaf_node, nmμ, 
         res_fast
     end
     θ̂ = Optim.minimizer(res)
+    nllhat = nll(θ̂)
+    θ̂, nllhat = _laplace_boundary_polish(nll, grad!, θ̂, nllhat)   # issue #422
     gfinal = zeros(length(θ̂))
     grad!(gfinal, θ̂)
-    nllhat = nll(θ̂)
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
-        Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        Hθ = _finite_hessian(nll, θ̂; h = _fd_hessian_step(n))
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace Poisson (general covariance)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -504,7 +605,17 @@ function _fit_poisson_general_laplace(fam::Poisson, y, Xμ, Q, leaf_node, nmμ, 
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict{Symbol,Vector{Float64}}()
     fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
-    return _withnll(fit, nll, grad!)
+    fit = _withnll(fit, nll, grad!)
+    reml || return fit
+    # Opt-in Cox–Reid (#450): same helpers as the Poisson GHQ cell (#443 / #444).
+    # This spine already has an analytic `grad!`; wrap it as `grad_fn(θ)`.
+    grad_fn = θ -> (g = zeros(length(θ)); grad!(g, θ); g)
+    θ̂, conv, ml_nll, reml_nll, _ =
+        _glsp_reml_refit_clean(nll, grad_fn, θ̂, pμ; ml_converged = converged)
+    V = _glsp_reml_vcov(grad_fn, θ̂, pμ)
+    means = Dict(:mu => exp.(Xμ * θ̂[1:pμ]))
+    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -ml_nll, n, conv, means, obs, scales)
+    return _withreml(_withnll(fit, nll, grad!), -reml_nll, -ml_nll)
 end
 
 function _phylo_mean_mode(kind, aux, η0, leaf_node, Q, logσ; b0 = nothing,
@@ -579,7 +690,7 @@ end
 
 function _phylo_mean_laplace_nuisance_fg(kind, aux_from, n::Int, Xμ, leaf_node,
                                          Q, logdetQ, θ; grad::Bool = false,
-                                         b0 = nothing, newton_tol::Real = 1e-8,
+                                         b0 = nothing, newton_tol::Real = 1e-10,
                                          newton_maxiter::Int = 60)
     pμ = length(θ) - 2
     βμ = θ[1:pμ]
@@ -749,17 +860,14 @@ function _fit_general_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, Q,
         res_fast
     end
     θ̂ = Optim.minimizer(res)
+    nllhat = nll(θ̂)
+    θ̂, nllhat = _laplace_boundary_polish(nll, grad!, θ̂, nllhat)   # issue #422
     gfinal = zeros(length(θ̂))
     grad!(gfinal, θ̂)
-    nllhat = nll(θ̂)
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
-        Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        Hθ = _finite_hessian(nll, θ̂; h = _fd_hessian_step(n))
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace GLMM (general-mean nuisance)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -792,7 +900,7 @@ A one-column constant `Xσ` reproduces `_phylo_mean_laplace_nuisance_fg` exactly
 """
 function _phylo_mean_laplace_hetero_fg(kind, aux_from, n::Int, Xμ, Xσ, leaf_node,
                                        Q, logdetQ, θ; grad::Bool = false,
-                                       b0 = nothing, newton_tol::Real = 1e-8,
+                                       b0 = nothing, newton_tol::Real = 1e-10,
                                        newton_maxiter::Int = 60)
     pσ = size(Xσ, 2)
     pμ = length(θ) - pσ - 1
@@ -944,17 +1052,14 @@ function _fit_phylo_mean_laplace_hetero(fam, kind, aux_from, n::Int, Xμ, Xσ,
         res_fast
     end
     θ̂ = Optim.minimizer(res)
+    nllhat = nll(θ̂)
+    θ̂, nllhat = _laplace_boundary_polish(nll, grad!, θ̂, nllhat)   # issue #422
     gfinal = zeros(length(θ̂))
     grad!(gfinal, θ̂)
-    nllhat = nll(θ̂)
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
-        Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        Hθ = _finite_hessian(nll, θ̂; h = _fd_hessian_step(n))
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace GLMM (phylo-mean, covariate dispersion)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -971,7 +1076,7 @@ end
 
 function _phylo_mean_laplace_fg(kind, aux, n::Int, Xμ, leaf_node, Q, logdetQ, θ;
                                 grad::Bool = false, b0 = nothing,
-                                newton_tol::Real = 1e-8, newton_maxiter::Int = 60)
+                                newton_tol::Real = 1e-10, newton_maxiter::Int = 60)
     pμ = length(θ) - 1
     βμ = θ[1:pμ]
     logσ = clamp(θ[pμ+1], -8.0, 3.0)
@@ -1098,17 +1203,14 @@ function _fit_phylo_mean_laplace(fam, kind, aux, n::Int, Xμ, labels, tree, nmμ
         res_fast
     end
     θ̂ = Optim.minimizer(res)
+    nllhat = nll(θ̂)
+    θ̂, nllhat = _laplace_boundary_polish(nll, grad!, θ̂, nllhat)   # issue #422
     gfinal = zeros(length(θ̂))
     grad!(gfinal, θ̂)
-    nllhat = nll(θ̂)
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
-        Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        Hθ = _finite_hessian(nll, θ̂; h = _fd_hessian_step(n))
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace GLMM (phylo-mean)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -1584,7 +1686,7 @@ inner mode (the same recipe the q4 Q-gate / the Poisson-phylo gate use to reach
 """
 function _poisson_crossed_laplace_fg(y, Xμ, gidx, G, hidx, Hh, lf, θ;
                                      grad::Bool = false, b0 = nothing,
-                                     newton_tol::Real = 1e-8, newton_maxiter::Int = 60)
+                                     newton_tol::Real = 1e-10, newton_maxiter::Int = 60)
     n = length(y)
     pμ = length(θ) - 2
     logσ = clamp.(θ[pμ+1:pμ+2], -8.0, 3.0)
@@ -1711,12 +1813,8 @@ function _fit_poisson_crossed_intercepts_laplace(fam::Poisson, y, Xμ, gidx, G, 
     nllhat = nll(θ̂)
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
-        Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        Hθ = _finite_hessian(nll, θ̂; h = _fd_hessian_step(n))
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace Poisson (crossed intercepts)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -1886,12 +1984,8 @@ function _fit_poisson_crossed_laplace(fam::Poisson, y, Xμ, comps, nmμ, g_tol; 
     end
     θ̂ = Optim.minimizer(res)
     V = if se
-        H = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(H))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        H = _finite_hessian(nll, θ̂; h = _fd_hessian_step(n))
+        _vcov_from_hessian(H; context = "sparse-Laplace Poisson (crossed)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -1901,7 +1995,17 @@ function _fit_poisson_crossed_laplace(fam::Poisson, y, Xμ, comps, nmμ, g_tol; 
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ]))
     obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict{Symbol,Vector{Float64}}()
-    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nll(θ̂), n, Optim.converged(res), means, obs, scales)
+    # #491 audit catch: this was the ONE fit function in the file still
+    # reporting raw `Optim.converged(res)` — the exact anti-correlated design
+    # the header documents as rejected. It never called
+    # `_laplace_outer_converged` at all, so the Wave A sweep over that
+    # helper's call sites could not find it. Same fixed relative criterion as
+    # every sibling route now.
+    nllhat = nll(θ̂)
+    gfinal = zeros(length(θ̂))
+    grad!(gfinal, θ̂)
+    converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
+    fit = DrmFit(fam, blocks, names, θ̂, Matrix(V), -nllhat, n, converged, means, obs, scales)
     return _withnll(fit, nll, grad!)
 end
 
@@ -2769,12 +2873,8 @@ function _fit_crossed_mean_laplace(fam, kind, aux, n::Int, Xμ, gidx, G, hidx, H
     nllhat = nll(θ̂)
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
-        Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        Hθ = _finite_hessian(nll, θ̂; h = _fd_hessian_step(n))
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace GLMM (crossed-mean)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end
@@ -2936,12 +3036,8 @@ function _fit_crossed_mean_laplace_nuisance(fam, kind, aux_from, n::Int, Xμ, gi
     nllhat = nll(θ̂)
     converged = _laplace_outer_converged(res, nllhat, gfinal, θ̂, n, g_tol)
     V = if se
-        Hθ = _finite_hessian(nll, θ̂)
-        try
-            inv(Symmetric(Hθ))
-        catch
-            Matrix{Float64}(I, length(θ̂), length(θ̂))
-        end
+        Hθ = _finite_hessian(nll, θ̂; h = _fd_hessian_step(n))
+        _vcov_from_hessian(Hθ; context = "sparse-Laplace GLMM (crossed-mean nuisance)")
     else
         fill(NaN, length(θ̂), length(θ̂))
     end

@@ -1,0 +1,45 @@
+FUNCTION_SHA256 5ce951a7f943bd58eebc8958fd8b1db5390d2fab614bcce90993dd86593bb9f8
+TEST_SHA256 df961a611e59d3024fd4ab56639c9dfb21bb2dd44437326624c611cfe7dac589
+ERROR: Some tests did not pass: 14 passed, 3 failed, 0 errored, 0 broken.
+bridge exposes selected profile failure: Test Failed at none:70
+  Expression: occursin("endpoint=max_iterations", root_outcome.message)
+   Evaluated: occursin("endpoint=max_iterations", "profile endpoint solve failed: lower (nuisance=not_converged; lbfgs_finite; fallback=false)")
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ none:70 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ none:40
+bridge exposes selected profile failure: Test Failed at none:71
+  Expression: occursin("candidate=-3.0", root_outcome.message)
+   Evaluated: occursin("candidate=-3.0", "profile endpoint solve failed: lower (nuisance=not_converged; lbfgs_finite; fallback=false)")
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ none:71 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ none:40
+bridge exposes selected profile failure: Test Failed at none:72
+  Expression: occursin("residual=4.0", root_outcome.message)
+   Evaluated: occursin("residual=4.0", "profile endpoint solve failed: lower (nuisance=not_converged; lbfgs_finite; fallback=false)")
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ none:72 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ none:40
+Test Summary:                           | Pass  Fail  Total  Time
+bridge exposes selected profile failure |   14     3     17  0.8s
+EXIT 1 ELAPSED 1.7191557078622282

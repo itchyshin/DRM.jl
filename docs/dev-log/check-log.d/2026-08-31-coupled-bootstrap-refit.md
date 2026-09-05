@@ -1,0 +1,1 @@
+| 2026-08-31 | **Coupled bootstrap and bounded refit continuation** (#563/S11) | Q precision, coupled latent axes, family draws, row/trial validation, serial/thread ownership, public Gamma B2 and finite-profile neighbour | Final145/145 at1/4Julia threads; profile16/16. Original failures retained. Full bridge/coverage/performance remain open | Ada / Fisher / Rose |

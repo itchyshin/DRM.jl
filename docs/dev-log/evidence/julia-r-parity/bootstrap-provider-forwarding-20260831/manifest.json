@@ -1,0 +1,23 @@
+{
+  "README.md": "1025de70aa25f453513b9913fc2df7eb3e9926b6a8093bd3c8df934227648a3e",
+  "acceptance-ledger.md": "a3911194ceb75f2d51956d7825d411d16852636c7da4b5fb0d562252d741946d",
+  "actual-r-relmat-bootstrap-profile-final.log": "0072100bb2e38d3f4662f7242b7caaea181b977ed55d429b6240daba95c26863",
+  "actual-r-relmat-final.log": "b47a99bb72d01a92cb6d08a18b73807a4bc3bbb2f7f7fb971132b0a637ec17db",
+  "actual-r-relmat.R": "74bac059f0bb9f12e73a591cc2295f872a52cc76da7a0cb25f9eed8dbce566be",
+  "checkpoint-commits.json": "8e700ebbadd69e0644ef942751cf862eb9e964a2e80a5fd46d043772b0527d0d",
+  "final-source.json": "01d26acfe68b6da0ce8e742b6d28904f2ab556b8a2ff551ee755c320e38964b0",
+  "integrity-negative-check.txt": "79c3d36f9ab2e7f9d7c9aaf7d6a2367f64baf4584ffc518a8f78e93ce4bcb0cc",
+  "mission-control-verification.json": "cca25f32ed005b8f14d4571f9d541978c2587f06e03e83f14c185f7a2a4866b0",
+  "previous-tree-driver.R": "cab6cdfa171f81c591ec142cb9cd6108edb11084f25c2cafe556d8c89d374294",
+  "pure-r-focused-20260831T000003Z.log": "95deb47638d6d9890ca4778eb58b9588bd1db2d39dbccf64ca4e4a07dfd06a0b",
+  "pure-r-focused-bootstrap-provider-20260831T000005Z.log": "db8b451f102523f693448da51928c61419bc4fe7b28eb4ae313626a44415b49c",
+  "pure-r-focused-rose-wording-20260831T000007Z.log": "db8b451f102523f693448da51928c61419bc4fe7b28eb4ae313626a44415b49c",
+  "pure-r-green-20260831T000002Z.log": "7c6605b566319b53bc86dd96347863aa70d48b1ce83e85894b8c13c9557012b0",
+  "pure-r-green-bootstrap-provider-20260831T000006Z.log": "21f557429852fce937ab1f642fb9d042467cdd0a9cb4641278434f48e563de68",
+  "pure-r-red-20260831T000000Z.log": "1f7fbf8d1a52068c831bc390e9e7361f65fb04b0b113ecc8e5134901c1966696",
+  "pure-r-red-bootstrap-provider-20260831T000004Z.log": "ba1ae5ea7472aeab3f513eca655da08d1b67a43dd147a8089743357c6dc126f1",
+  "pure-r-red-provider-20260831T000001Z.log": "37e2b732c773c3bb5083d05755d30fbe085508333ce5921c720596606a5dd027",
+  "reconciliation.md": "6936340e6d391723e31bcbbfe9579709e9f7039ddada8262d4b51c36063f412a",
+  "review.md": "8b181264343f6f2d204c1504d8e32878f6212b9b314b8df09410d18086c9bcce",
+  "verify.py": "13aa30c18c0cc540bbd3355f8562cf67f30e57319ad6bfa817e77c27249334e5"
+}

@@ -1,0 +1,60 @@
+DIRECT_TREE_BOOTSTRAP (2, 2, 0) failures=@NamedTuple{replicate::Int64, seed::UInt64, message::String}[]
+ERROR: LoadError: Some tests did not pass: 2 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/bridge-bootstrap-tree/tree-threads1-20260831T204158Z.jl:2
+non-Gaussian phylogenetic bootstrap bridge: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_bridge_bootstrap_tree.jl:6
+  Got exception outside of a @test
+  ArgumentError: There isn't a variable called 'tree_boot' in your data; the nearest names appear to be: 
+  Stacktrace:
+    [1] concrete_term(t::StatsModels.Term, dt::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{String}}, hints::Dict{Symbol, Any})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:184
+    [2] (::StatsModels.var"#62#63"{@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{String}}, Dict{Symbol, Any}})(t::StatsModels.Term)
+      @ StatsModels ./none:0
+    [3] iterate
+      @ ./generator.jl:47 [inlined]
+    [4] Dict{StatsModels.Term, StatsModels.AbstractTerm}(kv::Base.Generator{Vector{StatsModels.AbstractTerm}, StatsModels.var"#62#63"{@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{String}}, Dict{Symbol, Any}}})
+      @ Base ./dict.jl:85
+    [5] Schema
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:37 [inlined]
+    [6] schema(ts::Vector{StatsModels.AbstractTerm}, dt::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{String}}, hints::Dict{Symbol, Any})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:124
+    [7] schema(f::StatsModels.FormulaTerm{StatsModels.Term, Tuple{StatsModels.Term, StatsModels.FunctionTerm{typeof(|), Vector{StatsModels.FunctionTerm}}}}, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{String}}, hints::Dict{Symbol, Any})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:128
+    [8] schema(f::StatsModels.FormulaTerm{StatsModels.Term, Tuple{StatsModels.Term, StatsModels.FunctionTerm{typeof(|), Vector{StatsModels.FunctionTerm}}}}, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{String}})
+      @ StatsModels ~/.julia/packages/StatsModels/nRZJH/src/schema.jl:131
+    [9] _bridge_render_formula_block(form::DrmFormula, param::Symbol, rhs::Tuple{StatsModels.Term, StatsModels.FunctionTerm{typeof(|), Vector{StatsModels.FunctionTerm}}}, labels::DRM._BridgeFormulaLabels; label_scope::Symbol)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/bridge.jl:1444
+   [10] _bridge_render_formula_block(form::DrmFormula, param::Symbol, rhs::Tuple{StatsModels.Term, StatsModels.FunctionTerm{typeof(|), Vector{StatsModels.FunctionTerm}}}, labels::DRM._BridgeFormulaLabels)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/bridge.jl:1426
+   [11] _bridge_public_to_raw_coef_map(fit::DrmFit{Gamma}, labels::DRM._BridgeFormulaLabels, raw_names::Vector{String})
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/bridge.jl:1362
+   [12] _bridge_coef_vector(fit::DrmFit{Gamma}; labels::DRM._BridgeFormulaLabels)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/bridge.jl:1323
+   [13] _bridge_coef_vector
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/src/bridge.jl:1297 [inlined]
+   [14] _bridge_raw_fixef_target(fit::DrmFit{Gamma}, labels::DRM._BridgeFormulaLabels, target::@NamedTuple{param::Symbol, coef::String})
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/bridge.jl:1598
+   [15] drm_bridge_inference(; formula::String, family::String, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{String}}, tree::String, options::Dict{String, Any}, method::String, level::Float64, B::Int64, seed::Int64, threads::Bool, parm::String)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/bridge.jl:199
+   [16] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_bridge_bootstrap_tree.jl:44 [inlined]
+   [17] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [18] top-level scope
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_bridge_bootstrap_tree.jl:7
+   [19] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+   [20] macro expansion
+      @ /private/tmp/drm-parity-20260830/bridge-bootstrap-tree/tree-threads1-20260831T204158Z.jl:3 [inlined]
+   [21] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [22] top-level scope
+      @ /private/tmp/drm-parity-20260830/bridge-bootstrap-tree/tree-threads1-20260831T204158Z.jl:3
+   [23] include(mod::Module, _path::String)
+      @ Base ./Base.jl:495
+   [24] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:318
+   [25] _start()
+      @ Base ./client.jl:552
+Test Summary:                                | Pass  Error  Total   Time
+bounded bootstrap regression                 |    2      1      3  21.2s
+  non-Gaussian phylogenetic bootstrap bridge |    2      1      3  21.0s

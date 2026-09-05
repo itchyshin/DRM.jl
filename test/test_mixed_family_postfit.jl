@@ -24,7 +24,7 @@ end
     y2 = Float64[_rpois_pf(rng, exp(clamp(η2[i], -20.0, 20.0))) for i in 1:n]
 
     fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gaussian(),
-                               y2 = y2, X2 = X2, fam2 = Poisson(),
+                               y2 = y2, X2 = X2, fam2 = DRM.Poisson(),
                                confint = false)
     @test fit.converged
 

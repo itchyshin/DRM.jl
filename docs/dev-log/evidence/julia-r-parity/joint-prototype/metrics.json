@@ -1,0 +1,22 @@
+{
+  "scope": "Two Gaussian-response prepared prototypes only; no complete S9/bridge/performance claim",
+  "fit_seconds": 10.391417980194092,
+  "cases": {
+    "bernoulli": {
+      "gradient_max": 2.3506085966573664e-11,
+      "hessian_inverse_error": 4.440892098500626e-16,
+      "native_theta_max_difference": 1.0015094105086941e-05,
+      "native_theta_tolerance": 4e-06,
+      "native_theta_pass": false,
+      "loglik_improvement_over_native": 4.203229764243588e-09
+    },
+    "gaussian": {
+      "gradient_max": 6.738656299631884e-10,
+      "hessian_inverse_error": 5.551115123125783e-16,
+      "native_theta_max_difference": 2.7546376548670537e-06,
+      "native_theta_tolerance": 4e-06,
+      "native_theta_pass": true,
+      "loglik_improvement_over_native": 4.1825387597782537e-10
+    }
+  }
+}

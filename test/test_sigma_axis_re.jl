@@ -16,7 +16,8 @@ import Distributions
 
 # Gamma draw matching the locscale leaf parameterisation (cf. test_locscale_gamma_e2e):
 # η = log mean, ψ = log shape; scale = μ/α.
-_gamma_draw(η, ψ) = (α = exp(ψ); μ = exp(η); rand(Distributions.Gamma(α, μ / α)))
+_sigma_axis_gamma_draw(η, ψ) = (α = exp(ψ); μ = exp(η);
+                                  rand(Distributions.Gamma(α, μ / α)))
 
 @testset "σ-axis RE (cluster 2): grad! keyword contract" begin
     Random.seed!(202)
@@ -25,7 +26,7 @@ _gamma_draw(η, ψ) = (α = exp(ψ); μ = exp(η); rand(Distributions.Gamma(α, 
     τ = 0.6
     u = τ .* randn(G)
     β0μ = log(3.0); β0ψ = log(1.5)          # mean 3, base log-shape
-    y = [_gamma_draw(β0μ, β0ψ + u[gidx[i]]) for i in 1:n]
+    y = [_sigma_axis_gamma_draw(β0μ, β0ψ + u[gidx[i]]) for i in 1:n]
     Xμ = ones(n, 1); Xψ = ones(n, 1)
     Q = sparse(1.0 * I, G, G)
     Zη, Zψ = DRM._sigma_re_loadings(n)
@@ -49,10 +50,10 @@ end
     τ = 0.5
     u = τ .* randn(G)
     β0μ = log(4.0); β0ψ = log(2.0)
-    y = [_gamma_draw(β0μ, β0ψ + u[gidx[i]]) for i in 1:n]
+    y = [_sigma_axis_gamma_draw(β0μ, β0ψ + u[gidx[i]]) for i in 1:n]
     Xμ = ones(n, 1); Xψ = ones(n, 1)
 
-    fit = DRM._fit_sigma_axis_re(Gamma(), Val(:gamma), y, Xμ, Xψ, gidx, G,
+    fit = DRM._fit_sigma_axis_re(DRM.Gamma(), Val(:gamma), y, Xμ, Xψ, gidx, G,
                                  ["(Intercept)"], ["(Intercept)"], "g";
                                  link = :log, se = false)
     @test is_converged(fit)

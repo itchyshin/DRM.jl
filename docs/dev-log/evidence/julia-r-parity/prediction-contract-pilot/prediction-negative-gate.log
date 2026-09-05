@@ -1,0 +1,12 @@
+APPROVAL REQUIRED leaf-S10-prediction-negative:G1
+    CHECK: python3 -c "import json; r=json.load(open('/private/tmp/drm-parity-20260830/prediction-negative-001.json')); a=[p for c in r['cases'].values() for p in c['observations'].values()]; assert r['status']=='FAIL' and r['adapter_status']=='FAIL' and len(a)==32 and all(p['adapter_status']=='FAIL' and abs(p['adapter_max_abs_diff']-0.1)<1e-12 for p in a); print('DAMAGED_PREDICTIONS_REJECTED=32')"
+    EXPECT: DAMAGED_PREDICTIONS_REJECTED=32
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH: [redacted local command-search path]
+    APPROVED: /Users/z3437171/.unlazy/approved/617db1cfb8ef116c1e608a5dc6d96530c2d8681bc96242545b9dd71dde9c025e.json
+  RUN  leaf-S10-prediction-negative:G1 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=[redacted local command-search path]
+  PASS leaf-S10-prediction-negative:G1: The executed +0.1 prediction fault is rejected for every registered output
+       exit=0; EXPECT=matched; output=DAMAGED_PREDICTIONS_REJECTED=32
+leaf-S10-prediction-negative.md: 1 gates
+ALL MET (1 met)

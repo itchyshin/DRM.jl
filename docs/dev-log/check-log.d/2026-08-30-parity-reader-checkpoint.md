@@ -1,0 +1,1 @@
+| 2026-08-30 | **Parity reader checkpoint** (#563) | 8 inventory tests; 9 executed first-fit examples; Rose output review | Bounded Markdown/source check passes; theme/live site and full G0–G8 remain open | Ada + Pat + Rose |

@@ -1,0 +1,247 @@
+ERROR: LoadError: Some tests did not pass: 53 passed, 4 failed, 9 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:141
+estimated-error identity fallback: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:308
+  Expression: recovered !== nothing
+   Evaluated: nothing !== nothing
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:308 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+estimated-error identity fallback: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:309
+  Test threw exception
+  Expression: recovered.estimate < 0
+  type Nothing has no field estimate
+  Stacktrace:
+   [1] getproperty(x::Nothing, f::Symbol)
+     @ Base ./Base.jl:37
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:309 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+   [6] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [7] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+estimated-error identity fallback: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:310
+  Test threw exception
+  Expression: recovered.margin < 0
+  type Nothing has no field margin
+  Stacktrace:
+   [1] getproperty(x::Nothing, f::Symbol)
+     @ Base ./Base.jl:37
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:310 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+   [6] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [7] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+estimated-error identity fallback: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:311
+  Test threw exception
+  Expression: recovered.directional_scale > 0
+  type Nothing has no field directional_scale
+  Stacktrace:
+   [1] getproperty(x::Nothing, f::Symbol)
+     @ Base ./Base.jl:37
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:311 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+   [6] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [7] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+estimated-error identity fallback: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:312
+  Test threw exception
+  Expression: recovered.prior_scale > 0
+  type Nothing has no field prior_scale
+  Stacktrace:
+   [1] getproperty(x::Nothing, f::Symbol)
+     @ Base ./Base.jl:37
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:312 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+   [6] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [7] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+estimated-error identity fallback: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:313
+  Test threw exception
+  Expression: recovered.quadrature_scale > 0
+  type Nothing has no field quadrature_scale
+  Stacktrace:
+   [1] getproperty(x::Nothing, f::Symbol)
+     @ Base ./Base.jl:37
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:313 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+   [6] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [7] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+estimated-error identity fallback: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:326
+  Expression: reordered !== nothing && unshifted !== nothing
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:326 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+estimated-error identity fallback: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:327
+  Test threw exception
+  Expression: ≈(reordered.estimate, recovered.estimate, atol = 1.0e-22, rtol = 1.0e-12)
+  type Nothing has no field estimate
+  Stacktrace:
+   [1] getproperty(x::Nothing, f::Symbol)
+     @ Base ./Base.jl:37
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:327 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+   [6] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [7] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+estimated-error identity fallback: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:328
+  Test threw exception
+  Expression: ≈(unshifted.estimate, recovered.estimate, atol = 1.0e-22, rtol = 1.0e-12)
+  type Nothing has no field estimate
+  Stacktrace:
+   [1] getproperty(x::Nothing, f::Symbol)
+     @ Base ./Base.jl:37
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:328 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+   [6] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [7] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+estimated-error identity fallback: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:333
+  Expression: uphill !== nothing
+   Evaluated: nothing !== nothing
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:333 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+estimated-error identity fallback: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:334
+  Test threw exception
+  Expression: !(uphill.margin < 0)
+  type Nothing has no field margin
+  Stacktrace:
+   [1] getproperty(x::Nothing, f::Symbol)
+     @ Base ./Base.jl:37
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:334 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+   [6] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [7] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+estimated-error identity fallback: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:340
+  Expression: flat !== nothing
+   Evaluated: nothing !== nothing
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:340 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+estimated-error identity fallback: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:341
+  Test threw exception
+  Expression: !(flat.margin < 0)
+  type Nothing has no field margin
+  Stacktrace:
+   [1] getproperty(x::Nothing, f::Symbol)
+     @ Base ./Base.jl:37
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:341 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:296 [inlined]
+   [6] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [7] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:142
+Test Summary:                                            | Pass  Fail  Error  Total  Time
+location-scale inner-mode stationarity acceptance        |   53     4      9     66  3.6s
+  synthetic strictly convex controls                     |   26                  26  0.0s
+  guarded ULP-scale Newton polish                        |   14                  14  0.0s
+  unchanged undamped step still tries damping directions |    4                   4  0.0s
+  actual Gamma kernel reports only a certified mode      |    7                   7  0.1s
+  estimated-error identity fallback                      |    2     4      9     15  3.5s

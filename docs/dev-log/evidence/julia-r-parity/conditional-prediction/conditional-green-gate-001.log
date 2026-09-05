@@ -1,0 +1,13 @@
+APPROVAL REQUIRED leaf-S10-conditional-pilot:G1
+    CHECK: cd /private/tmp/drm-parity-20260830/DRM.jl && Rscript tools/parity_conditional_prediction.R /private/tmp/drm-parity-20260830/s10-conditional-candidate /private/tmp/drm-parity-20260830/DRM.jl /private/tmp/drm-parity-20260830/conditional-green-001.json
+    EXPECT: CONDITIONAL_FIT_PARITY_PASS
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH=[local environment redacted; raw log retained in private task directory]
+    APPROVED: /Users/z3437171/.unlazy/approved/1a5f7406089500692971bf40b60af6c51515487b6e82cc400b83a295dea42c0d.json
+  RUN  leaf-S10-conditional-pilot:G1 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=[local environment redacted; raw log retained in private task directory]
+  FAIL leaf-S10-conditional-pilot:G1: Both independent native fits match all16prediction outputs
+       exit=1; EXPECT=not matched; output=drmTMB_drm_bridge (generic function with 1 method) | drmTMB_drm_bridge_conditional_gaussian_ri (generic function with 1 method) | drmTMB_drm_bridge_q2_phylo (generic function with 1 method) | drmTMB_drm_bridge_inference (generic function with 1 method) | drmTMB_drm_bridge_fixef_inference (generic function with 1 method) | drmTMB_drm_bridge_structured (generic function with 1 method) | ... | Activating project at `/private/tmp/drm-parity-20260830/DRM.jl` | Julia exit.
+leaf-S10-conditional-pilot.md: 1 gates
+UNMET: 1 (met: 0)
+  leaf-S10-conditional-pilot:G1

@@ -23,29 +23,58 @@ A random intercept `(1 | g)` or a correlated random intercept+slope `(1 + x | g)
 may be placed on the log-mean `μ`; the group effect is integrated out by
 Gauss–Hermite quadrature (`re_sd(fit)[:g]` / `vc(fit)[:g]`).
 
+## Structured markers (`phylo`/`relmat`)
+
+`phylo(1 | group)` (needs `tree = ...`) and `relmat(1 | group)` (needs
+`K = ...`) may be placed on the mean, exactly as drmTMB's `lognormal` family
+supports. `log(y)` is exactly Gaussian, so a structured call delegates
+WHOLESALE to `drm(f, Gaussian(); data = data-with-logged-response, tree = ...,
+K = ...)` — the same identity `biv_lognormal()` already uses
+(`src/bivariate_lognormal.jl`) — and shifts the reported log-likelihood by the
+parameter-free Jacobian `-sum(log y)`. `theta`/`vcov`/`ranef` and the fitted
+objective's gradient carry over untouched from the Gaussian-on-log(y) fit;
+only `loglik` (and everything derived from it: aic/bic/deviance) shifts.
+`animal`/`spatial` markers and `meta_V` are not implemented for `LogNormal()`
+(no R parity cell) and stay refused, as does any marker on a formula other
+than the mean.
+
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), LogNormal(); data = dat)
 coef(fit, :mu)                 # on the log scale
 exp(coef(fit, :sigma)[1])      # SD of log y
+
+fit_phy = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)),
+              LogNormal(); data = dat, tree = tr)
 ```
 """
 struct LogNormal end
 
-function drm(f::DrmFormula, fam::LogNormal; data, g_tol::Real = 1e-8)
+function drm(f::DrmFormula, fam::LogNormal; data, tree = nothing, K = nothing, g_tol::Real = 1e-8)
     missing_fit = _fit_observed_response_rows(f, data) do data_observed
-        drm(f, fam; data = data_observed, g_tol = g_tol)
+        drm(f, fam; data = data_observed, tree = tree, K = K, g_tol = g_tol)
     end
     missing_fit !== nothing && return missing_fit
 
+    _lss_only_gaussian_guard(f, fam)   # #544: refuse, never silently drop, sd() parts
     rhs = Dict(f.forms)
     fixed_mu, re, mv, st = _split_ranef(rhs[:mu])
-    (mv === nothing && st === nothing) ||
-        error("LogNormal() does not support meta_V / structured markers")
+    mv === nothing ||
+        error("LogNormal() does not support meta_V markers")
     for (pname, r) in f.forms          # only the mean may carry a random effect
         pname === :mu && continue
         _, re2, mv2, st2 = _split_ranef(r)
         (isempty(re2) && mv2 === nothing && st2 === nothing) ||
             error("LogNormal(): only the mean formula may carry a random effect")
+    end
+    if st !== nothing                  # structured marker on the mean (#563 S8)
+        st[1] in (:phylo, :relmat) ||
+            error("LogNormal() supports `phylo`/`relmat` structured markers on the mean " *
+                  "(got `$(st[1])`); drmTMB's `lognormal` family does not implement " *
+                  "`animal`/`spatial` markers")
+        isempty(re) ||
+            error("LogNormal() supports a single structured marker OR random-effect term " *
+                  "on the mean, not both")
+        return _withformula(_fit_lognormal_structured(fam, f, data, st[1], st[2]; tree = tree, K = K, g_tol = g_tol), f)
     end
     y, Xμ, nmμ = _design(f.response, fixed_mu, data)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
@@ -112,7 +141,9 @@ function _fit_lognormal_ranef(fam::LogNormal, y, Xμ, Xσ, gidx, G, nmμ, nmσ, 
     names = [:mu => nmμ, :sigma => nmσ, :resd => [String(grp)]]
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end
 
 # LogNormal GLMM with a CORRELATED random intercept+slope (1 + x | g) on the
@@ -164,7 +195,9 @@ function _fit_lognormal_corr_ranef(fam::LogNormal, y, Xμ, Xσ, xs, gidx, G, nm�
     names = [:mu => nmμ, :sigma => nmσ, :recov => ["$(grp):L11", "$(grp):L22", "$(grp):L21"]]
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end
 
 function _fit_lognormal(fam::LogNormal, y, Xμ, Xσ, nmμ, nmσ, g_tol)
@@ -190,5 +223,44 @@ function _fit_lognormal(fam::LogNormal, y, Xμ, Xσ, nmμ, nmσ, g_tol)
     names = [:mu => nmμ, :sigma => nmσ]
     means = Dict(:mu => exp.(Xμ * θ̂[1:pμ])); obs = Dict(:mu => Vector{Float64}(y))  # response-scale median
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]))
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
+end
+
+# A `phylo(1 | group)` or `relmat(1 | group)` marker on the log-mean μ (#563
+# S8). `log(y)` is exactly Gaussian, so this delegates the WHOLE fit to the
+# public Gaussian dispatcher on a logged copy of the response — the same
+# identity `src/bivariate_lognormal.jl` already uses for the bivariate family
+# — rather than duplicating the phylo/relmat structured engine here. Requires
+# strictly positive responses (checked before logging).
+function _fit_lognormal_structured(fam::LogNormal, f::DrmFormula, data, kind::Symbol, grp::Symbol; tree, K, g_tol)
+    if kind === :phylo
+        tree === nothing && error("LogNormal(): phylo(1 | $grp) needs `tree = ...`")
+    else # :relmat
+        K === nothing && error("LogNormal(): relmat(1 | $grp) needs `K = ...`")
+    end
+    cols = NamedTuple(pairs(data))
+    y = Vector{Float64}(getproperty(cols, f.response))
+    all(yi -> yi > 0, y) || error("LogNormal() requires strictly positive responses")
+    logdata = merge(cols, NamedTuple{(f.response,)}((log.(y),)))
+    gfit = drm(f, Gaussian(); data = logdata, tree = tree, K = K, g_tol = g_tol)
+    return _lognormal_jacobian_shift(fam, gfit, y)
+end
+
+# log f_Y(y) = log phi(log y; .) - sum(log y). Parameter-free, so theta-hat,
+# vcov, and ranef carry over untouched from the Gaussian fit on log(y); only
+# the likelihood VALUE (and everything derived from it: aic/bic/deviance)
+# shifts by the Jacobian — mirrors `_lognormal_jacobian_shift` in
+# src/bivariate_lognormal.jl for the univariate case.
+function _lognormal_jacobian_shift(fam::LogNormal, gfit::DrmFit, y::Vector{Float64})
+    jac = sum(log, y)
+    gnll = gfit.nll
+    lnll = gnll === nothing ? nothing : (θ -> gnll(θ) + jac)   # nll = -loglik, so the Jacobian ADDS
+    reml_ll = isnan(gfit.reml_loglik) ? gfit.reml_loglik : gfit.reml_loglik - jac
+    return DrmFit(fam, gfit.blocks, gfit.coefnames, gfit.theta, gfit.vcov,
+                 gfit.loglik - jac, gfit.nobs, gfit.converged, gfit.means,
+                 Dict(:mu => y), gfit.scales, gfit.formula, lnll, gfit.nllgrad, gfit.ranef,
+                 gfit.estim_method, reml_ll, gfit.ml_loglik - jac, gfit.marginal,
+                 gfit.phylo_penalty, gfit.penalty, gfit.iterations)
 end

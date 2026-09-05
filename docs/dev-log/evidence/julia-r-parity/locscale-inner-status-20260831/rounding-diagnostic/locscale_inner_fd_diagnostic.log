@@ -1,0 +1,9 @@
+ERROR: LoadError: ParseError:
+# Error @ /private/tmp/locscale_inner_fd_diagnostic.jl:22:27
+            if issuccess(F)
+                step = F \\ grad
+#                         ╙ ── not a unary operator
+Stacktrace:
+ [1] top-level scope
+   @ /private/tmp/locscale_inner_fd_diagnostic.jl:22
+in expression starting at /private/tmp/locscale_inner_fd_diagnostic.jl:22

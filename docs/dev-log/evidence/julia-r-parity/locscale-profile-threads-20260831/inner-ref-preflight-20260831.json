@@ -1,0 +1,72 @@
+[
+  {
+    "ref": "shannon/cluster1-corrslopes",
+    "sha256": "7915b9cc780e723cd9928b2a71c3f22884d21df5f0b57c1ea1f0e2db334f8bcb",
+    "hunks": [
+      "@@ -4,2 +4 @@",
+      "@@ -24 +23 @@ using LinearAlgebra: Symmetric, cholesky, issuccess, norm, dot, I",
+      "@@ -159,360 +157,0 @@ _ls_hess_chol(kind, y, \u03b70, \u03c80, gidx, G, a, P) =",
+      "@@ -526,8 +165,3 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -536 +169,0 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -541 +173,0 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -549,6 +181 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -557,7 +183,0 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -573,2 +193,2 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,"
+    ],
+    "conclusion": "Historical version lacks the current stationarity/rounding acceptance machinery; retain current general loadings and prior nonthrowing inverse."
+  },
+  {
+    "ref": "origin/claude/202-grad-fit",
+    "sha256": "1b62430bfe386476d49c50405c3a11683fc218a88c0a4876138aecfd249716a3",
+    "hunks": [
+      "@@ -4,2 +4 @@",
+      "@@ -24 +23 @@ using LinearAlgebra: Symmetric, cholesky, issuccess, norm, dot, I",
+      "@@ -52,24 +51,2 @@ end",
+      "@@ -79,4 +56 @@ function _ls_joint(kind, y, \u03b70, \u03c80, gidx, a, P, Z\u03b7, Z\u03c8)",
+      "@@ -87,2 +61,2 @@ end",
+      "@@ -96,6 +70,3 @@ function _ls_joint_grad(kind, y, \u03b70, \u03c80, gidx, a, P, Z\u03b7, Z\u03c8)",
+      "@@ -106,4 +77,2 @@ end",
+      "@@ -111 +80 @@ function _ls_joint_hess(kind, y, \u03b70, \u03c80, gidx, G, a, P, Z\u03b7, Z\u03c8)",
+      "@@ -114,8 +83,2 @@ function _ls_joint_hess(kind, y, \u03b70, \u03c80, gidx, G, a, P, Z\u03b7, Z\u03c8)",
+      "@@ -125,4 +88,4 @@ function _ls_joint_hess(kind, y, \u03b70, \u03c80, gidx, G, a, P, Z\u03b7, Z\u03c8)",
+      "@@ -135,14 +97,0 @@ end",
+      "@@ -150,2 +99 @@ _ls_hess_chol(kind, y, \u03b70, \u03c80, gidx, G, a, P) =",
+      "@@ -159,363 +107 @@ _ls_hess_chol(kind, y, \u03b70, \u03c80, gidx, G, a, P) =",
+      "@@ -525,9 +111,4 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -535,3 +116,2 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -541 +120,0 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -548,7 +127,2 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -557,7 +130,0 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -571 +138 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -573,2 +140,2 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,"
+    ],
+    "conclusion": "Historical version lacks the current stationarity/rounding acceptance machinery; retain current general loadings and prior nonthrowing inverse."
+  },
+  {
+    "ref": "origin/claude/202-marginal",
+    "sha256": "1b7ec40ec7d1e06d16bbd6fe2680a1028c2fb59b42f6a5819e403194f70d6074",
+    "hunks": [
+      "@@ -4,2 +4 @@",
+      "@@ -24 +23 @@ using LinearAlgebra: Symmetric, cholesky, issuccess, norm, dot, I",
+      "@@ -41,35 +40,2 @@ end",
+      "@@ -79,4 +45 @@ function _ls_joint(kind, y, \u03b70, \u03c80, gidx, a, P, Z\u03b7, Z\u03c8)",
+      "@@ -87,2 +50,2 @@ end",
+      "@@ -96,6 +59,3 @@ function _ls_joint_grad(kind, y, \u03b70, \u03c80, gidx, a, P, Z\u03b7, Z\u03c8)",
+      "@@ -106,4 +66,2 @@ end",
+      "@@ -111 +69 @@ function _ls_joint_hess(kind, y, \u03b70, \u03c80, gidx, G, a, P, Z\u03b7, Z\u03c8)",
+      "@@ -114,8 +72,2 @@ function _ls_joint_hess(kind, y, \u03b70, \u03c80, gidx, G, a, P, Z\u03b7, Z\u03c8)",
+      "@@ -125,4 +77,4 @@ function _ls_joint_hess(kind, y, \u03b70, \u03c80, gidx, G, a, P, Z\u03b7, Z\u03c8)",
+      "@@ -135,14 +86,0 @@ end",
+      "@@ -150,2 +88 @@ _ls_hess_chol(kind, y, \u03b70, \u03c80, gidx, G, a, P) =",
+      "@@ -159,363 +96 @@ _ls_hess_chol(kind, y, \u03b70, \u03c80, gidx, G, a, P) =",
+      "@@ -525,9 +100,4 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -535,3 +105,2 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -541 +109,0 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -548,7 +116,2 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -557,7 +119,0 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -571 +127 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,",
+      "@@ -573,2 +129,2 @@ function _ls_inner_mode(kind, y, \u03b70, \u03c80, gidx, G, P,"
+    ],
+    "conclusion": "Historical version lacks the current stationarity/rounding acceptance machinery; retain current general loadings and prior nonthrowing inverse."
+  }
+]

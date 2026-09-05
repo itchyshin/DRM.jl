@@ -1,0 +1,27 @@
+{
+  "status": "SOURCE_REVIEWED_REGRESSIONS_PENDING",
+  "source_sha256": "7f9571e775cef5cced81ab124a77f284225b85f57a4a054e565b36ddfe04fae0",
+  "files": [
+    {
+      "file": "test_locscale_inner_status.jl",
+      "sha256": "59fb2c4581f3097a99aa47ef757e5ccc8a81de241b7bbeb97cf461740ccf8625"
+    },
+    {
+      "file": "locscale_tracked_prior-green-006.log",
+      "sha256": "acd168adccb786ccfe79e57698db81e3ae322410436dbd3363431be475a3add3"
+    },
+    {
+      "file": "locscale_tracked_prior_six_state.jl",
+      "sha256": "ea5ca8765c9cd3f91b4fd250fc1d73bf8a58010fcfbea6ee616846a49a0c7d11"
+    },
+    {
+      "file": "locscale_tracked_prior-six-state-001.log",
+      "sha256": "8e2eb69bd3c6f77c80eb06f060cb2176229770660a055cc7a26c7fb0d87cbd99"
+    },
+    {
+      "file": "locscale_tracked_prior-six-state-002.log",
+      "sha256": "dc21234ddde3261a89324a05f848b5361e42f61776fb0b5e5fd583bad7e2d12b"
+    }
+  ],
+  "note": "Six-state002 reports margins only, independent NLL evidence is saved-oracle-tracked001. Earlier001 attempt bytes do not assert final script provenance."
+}

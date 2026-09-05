@@ -1,0 +1,13 @@
+APPROVAL REQUIRED leaf-S13-full-source:G1
+    CHECK: env JULIA_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 julia --project=docs tools/parity_docs_subset.jl --build-dir docs/build/full-source-001 --pages-file .unlazy/julia-r-parity/docs-pages.txt > /private/tmp/drm-parity-20260830/full-docs-source-001.log 2>&1 && cat /private/tmp/drm-parity-20260830/full-docs-source-001.log
+    EXPECT: DOCS_SUBSET_PASS pages=51 examples=119
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg02PZEgp:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+    APPROVED: /Users/z3437171/.unlazy/approved/716ac491cc4ef2e7db598a8e8c0b82af18430dd40097ab6287cf2f34c1b4fba8.json
+  RUN  leaf-S13-full-source:G1 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=/opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg02PZEgp:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+  FAIL leaf-S13-full-source:G1: Every source page emits and every executable example succeeds
+       exit=1; EXPECT=not matched; output=(no output)
+leaf-S13-full-source.md: 1 gates
+UNMET: 1 (met: 0, reran: 1, previously met reverified: 0)
+  leaf-S13-full-source:G1

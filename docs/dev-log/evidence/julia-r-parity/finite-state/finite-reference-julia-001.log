@@ -1,0 +1,3 @@
+Test Summary:                        | Pass  Total  Time
+finite-state frozen native reference |   48     48  9.9s
+FINITE_JOINT_NATIVE_PASS

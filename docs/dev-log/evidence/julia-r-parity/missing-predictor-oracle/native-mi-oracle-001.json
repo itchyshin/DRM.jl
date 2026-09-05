@@ -1,0 +1,39 @@
+{
+  "scope": "Two native fixed-effect ML joint likelihoods at identical fitted parameters; SE disabled; not Julia parity",
+  "package_version": "0.7.0",
+  "loaded_package": "/private/tmp/drm-parity-20260830/R-lib/drmTMB",
+  "cases": {
+    "gaussian": {
+      "native_loglik": -334.32568228280229,
+      "oracle_loglik": -434.07196458670472,
+      "abs_diff": 99.746282303902433,
+      "tolerance": 9.9999999999999995e-07,
+      "row_contract": true,
+      "masks": {
+        "TRUETRUE": 147,
+        "TRUEFALSE": 3,
+        "FALSETRUE": 9,
+        "FALSEFALSE": 1
+      },
+      "native_convergence": 0,
+      "native_gradient_max": 0.00028704977189744228,
+      "pass": false
+    },
+    "bernoulli": {
+      "native_loglik": -299.50641636498972,
+      "oracle_loglik": -299.5064163649912,
+      "abs_diff": 1.4779288903810084e-12,
+      "tolerance": 9.9999999999999995e-07,
+      "row_contract": true,
+      "masks": {
+        "TRUETRUE": 147,
+        "TRUEFALSE": 3,
+        "FALSETRUE": 9,
+        "FALSEFALSE": 1
+      },
+      "native_convergence": 0,
+      "native_gradient_max": 0.00066968365301356414,
+      "pass": true
+    }
+  }
+}

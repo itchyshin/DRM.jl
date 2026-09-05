@@ -1,0 +1,1 @@
+| 2026-08-16 | **biv_q4_phylo_reml same-target fixture** (#433) | standalone `julia --project=. -e 'using DRM, Test; include("test/test_parity_biv_q4_phylo_reml.jl")'` + R generator log | ✅ 33/33; fixture numbers exist; status recorded; no src/; no runtests.jl; no TSV flip; declared [tol] = measured gap (TMB mean-only REML vs Julia mean+scale) | Shannon |

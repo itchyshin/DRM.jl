@@ -1,0 +1,1 @@
+Estimate 2–5 minutes; cap 300 seconds, one Julia/BLAS thread. CHECK: all 327 expected source/test hashes match; before/after manifests unchanged; exit 0; 15 complete-file markers and STRUCTURED_CORE_COMPLETE. EXPECT: each original file passes unchanged. Missing markers, failures and timeouts remain incomplete. Not full-suite, native-R parity, calibration or performance evidence.

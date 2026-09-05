@@ -1,0 +1,29 @@
+ERROR: LoadError: Some tests did not pass: 33 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:32
+finite-state direct formula frontend API and ordinal payload design: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:57
+  Test threw exception
+  Expression: ≈(fit.prepared.prepared.X_mu_state, _finite_frontend_state_design(reference), atol = 2.0e-14)
+  MethodError: no method matching Matrix{Float64}(::Vector{Vector{Union{Float64, Int64}}})
+  
+  Closest candidates are:
+    Array{T, N}(::AbstractArray{S, N}) where {T, N, S}
+     @ Base array.jl:673
+    Matrix{T}(!Matched::UndefInitializer, !Matched::Tuple{Int64, Int64}) where T
+     @ Core boot.jl:487
+    Matrix{T}(!Matched::UndefInitializer, !Matched::Int64, !Matched::Int64) where T
+     @ Core boot.jl:479
+    ...
+  
+  Stacktrace:
+   [1] _finite_frontend_state_design(reference::Dict{String, Any})
+     @ Main /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:23
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:57 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] top-level scope
+     @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:33
+Test Summary:                                                       | Pass  Error  Total   Time
+finite-state direct formula frontend API and ordinal payload design |   33      1     34  13.4s

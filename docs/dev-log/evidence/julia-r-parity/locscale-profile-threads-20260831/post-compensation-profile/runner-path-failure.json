@@ -1,0 +1,6 @@
+{
+  "stage": "before Julia spawn",
+  "exception": "FileNotFoundError: stale compensated-objective-experiment/diagnose.jl path",
+  "returncode": 1,
+  "numerical_process_started": false
+}

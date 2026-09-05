@@ -6,6 +6,50 @@
 # and the Woodbury identity reduce everything to O(n) accumulations plus a
 # diagonal G×G capacitance (one random-intercept term), all ForwardDiff-friendly.
 
+# Barrier used when the REML restriction matrix Xμ′V⁻¹Xμ fails its Cholesky.
+# It is PSD by construction but built by Woodbury SUBTRACTION, so as σb² → ∞ it
+# tends to 0 and rounding can flip its determinant negative (#499). A finite
+# barrier — not Inf — because LBFGS's HagerZhang line search asserts isfinite.
+const REML_NONPD_PENALTY = 1e8
+
+# A structured marker's (`phylo`/`relmat`/`animal`/`spatial`) random-effect
+# left-hand side must be the literal intercept `1` on every univariate route:
+# `_split_ranef` (below) — the shared RHS splitter for every univariate family
+# (Gaussian, Poisson, Gamma, Beta, BetaBinomial, Binomial, NegBinomial2, and
+# more) — used to keep only the grouping symbol `g` and silently discard
+# `lhs`, so e.g. `phylo(1 + x | g)` fit the exact same intercept-only model as
+# `phylo(1 | g)` with no error (silent data loss, #620). drmTMB fits a genuine
+# two-free-SD phylogenetic random INTERCEPT+SLOPE from `phylo(1 + x | g)` on
+# Gaussian; DRM.jl has no such route yet (nor an analogous one for relmat/
+# animal/spatial), so fail closed instead of silently dropping the slope.
+_structured_re_lhs_text(lhs) = if lhs isa ConstantTerm
+        string(lhs.n)
+    elseif lhs isa Term
+        string(lhs.sym)
+    elseif lhs isa FunctionTerm && lhs.f === (+)
+        join((a isa ConstantTerm ? string(a.n) : string(a.sym) for a in lhs.args), " + ")
+    else
+        string(lhs)
+    end
+
+function _check_phylo_re_lhs(lhs, grp::Symbol)
+    (lhs isa ConstantTerm && lhs.n == 1) && return nothing
+    lhs_text = _structured_re_lhs_text(lhs)
+    throw(ArgumentError("drm: `phylo($lhs_text | $grp)` is not implemented on the " *
+        "univariate routes — only `phylo(1 | $grp)` (intercept) is; drmTMB fits a " *
+        "two-SD phylogenetic random slope on Gaussian only, tracked as a follow-up"))
+end
+
+# relmat/animal/spatial share the identical parser gap but, unlike phylo, have
+# no verified drmTMB two-SD slope route to name as a follow-up — say only that
+# the construct is unimplemented (#620).
+function _check_structured_re_lhs(kind::Symbol, lhs, grp::Symbol)
+    (lhs isa ConstantTerm && lhs.n == 1) && return nothing
+    lhs_text = _structured_re_lhs_text(lhs)
+    throw(ArgumentError("drm: `$kind($lhs_text | $grp)` is not implemented on the " *
+        "univariate routes; only the intercept form is"))
+end
+
 # Split a μ right-hand side into its fixed part and any `(lhs | g)` terms.
 # `structured` is the FIRST structured marker (relmat/animal/phylo/spatial) for
 # backward compatibility; use `_collect_structured` to retrieve the full list
@@ -22,12 +66,16 @@ function _split_ranef(rhs)
         elseif t isa FunctionTerm && t.f === meta_V
             metav = t.args[1].sym
         elseif t isa FunctionTerm && t.f === relmat
+            _check_structured_re_lhs(:relmat, t.args[1].args[1], t.args[1].args[2].sym)
             structured === nothing && (structured = (:relmat, t.args[1].args[2].sym))   # inner (1 | grp)
         elseif t isa FunctionTerm && t.f === animal
+            _check_structured_re_lhs(:animal, t.args[1].args[1], t.args[1].args[2].sym)
             structured === nothing && (structured = (:animal, t.args[1].args[2].sym))
         elseif t isa FunctionTerm && t.f === phylo
+            _check_phylo_re_lhs(t.args[1].args[1], t.args[1].args[2].sym)
             structured === nothing && (structured = (:phylo, t.args[1].args[2].sym))
         elseif t isa FunctionTerm && t.f === spatial
+            _check_structured_re_lhs(:spatial, t.args[1].args[1], t.args[1].args[2].sym)
             structured === nothing && (structured = (:spatial, t.args[1].args[2].sym))
         else
             push!(fixed, t)
@@ -91,11 +139,28 @@ end
 
 # Gaussian location–scale with one random intercept (1 | g) on the mean.
 # θ = [β_μ; β_σ (log σ); log σ_b].
-function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol)
+# `reml=true` (#439) keeps β_μ in θ and adds the Patterson–Thompson term
+# ½ logdet(Xμ′ V⁻¹ Xμ) to the Woodbury nll. ML (`reml=false`) is the default
+# and uses the historical nll byte-for-byte.
+"""
+    _fit_ranef_gaussian(..., reml=false) -> DrmFit
+
+Gaussian location–scale with one mean random intercept `(1 | g)` on the
+Woodbury spine. `reml=false` (default) is ML, byte-for-byte with the
+historical nll. `reml=true` (#439) adds `½ logdet(Xμ′ V⁻¹ Xμ) − ½ pμ log(2π)`
+to that nll (Patterson–Thompson). Reached via `drm(...; method = :REML)` for
+a single intercept only — σ-RE, slopes, and multi-ranef stay rejected.
+Worked example: `test/test_reml_ordinary_ranef.jl` (not in the default suite yet).
+"""
+function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ, grp, g_tol;
+                             reml::Bool = false)
     n = length(y)
     pμ, pσ = size(Xμ, 2), size(Xσ, 2)
+    const_2pi = 0.5 * n * log(2π)
+    const_pμ = 0.5 * pμ * log(2π)
 
-    function nll(θ)
+    # Historical ML Woodbury nll — do not change this loop (byte-for-byte default).
+    function nll_ml(θ)
         βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; lσb = θ[pμ+pσ+1]
         ημ = Xμ * βμ; ησ = Xσ * βσ                 # ησ = log σ_i
         σb² = exp(2lσb)
@@ -121,8 +186,68 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
         end
         quad = q1 - q2
         logdetV = logdetD + logdetCap
-        return 0.5 * (logdetV + quad) + 0.5 * n * log(2π)
+        return 0.5 * (logdetV + quad) + const_2pi
     end
+
+    # Restricted nll: ML Woodbury + ½ logdet(Xμ′ V⁻¹ Xμ) − ½ pμ log(2π).
+    # Xμ′ V⁻¹ Xμ = Xμ′ D⁻¹ Xμ − (Z′ D⁻¹ Xμ)′ diag(1/M) (Z′ D⁻¹ Xμ) with the
+    # same capacitance M_k = 1/σb² + S_k as the ML nll.
+    function nll_reml(θ)
+        βμ = θ[1:pμ]; βσ = θ[pμ+1:pμ+pσ]; lσb = θ[pμ+pσ+1]
+        ημ = Xμ * βμ; ησ = Xσ * βσ
+        σb² = exp(2lσb)
+        T = eltype(θ)
+        S = zeros(T, G); C = zeros(T, G)
+        ZtDinvX = zeros(T, G, pμ)
+        XtDinvX = zeros(T, pμ, pμ)
+        q1 = zero(T); logdetD = zero(T)
+        @inbounds for i in 1:n
+            invD = exp(-2 * ησ[i])
+            r = y[i] - ημ[i]
+            a = r * invD
+            k = gidx[i]
+            wi = w[i]
+            S[k] += wi * wi * invD
+            C[k] += wi * a
+            q1 += r * a
+            logdetD += 2 * ησ[i]
+            @inbounds for j in 1:pμ
+                xj = Xμ[i, j]
+                ZtDinvX[k, j] += wi * invD * xj
+                @inbounds for l in 1:pμ
+                    XtDinvX[j, l] += invD * xj * Xμ[i, l]
+                end
+            end
+        end
+        q2 = zero(T); logdetCap = zero(T)
+        XtVinvX = copy(XtDinvX)
+        @inbounds for k in 1:G
+            Mk = 1 / σb² + S[k]
+            invMk = 1 / Mk
+            q2 += C[k]^2 * invMk
+            logdetCap += log(1 + σb² * S[k])
+            @inbounds for j in 1:pμ
+                zj = ZtDinvX[k, j]
+                @inbounds for l in 1:pμ
+                    XtVinvX[j, l] -= zj * invMk * ZtDinvX[k, l]
+                end
+            end
+        end
+        nll_ml_θ = 0.5 * (logdetD + logdetCap + q1 - q2) + const_2pi
+        # Xμ′V⁻¹Xμ is PSD by construction, but it is formed by Woodbury SUBTRACTION.
+        # As σb² → ∞ the group means absorb the mean signal, Xμ′V⁻¹Xμ → 0, and rounding
+        # noise can make its determinant NEGATIVE (measured at lσb ≈ 16, σb² ≈ 8e13).
+        # `logdet` has no Symmetric method: it falls through to the LU path, where
+        # logabsdet returns sign -1 and log(-1.0) throws DomainError (#499). Reject the
+        # step instead. NOTE: it must be a LARGE FINITE barrier, not +Inf — LBFGS's
+        # default HagerZhang line search asserts `isfinite(phi_c)` and would trade
+        # the DomainError for an AssertionError.
+        cholXtVinvX = cholesky(Symmetric(XtVinvX); check=false)
+        issuccess(cholXtVinvX) || return nll_ml_θ + T(REML_NONPD_PENALTY)
+        return nll_ml_θ + 0.5 * logdet(cholXtVinvX) - const_pμ
+    end
+
+    nll = reml ? nll_reml : nll_ml
 
     βμ0 = Xμ \ y
     res0 = y - Xμ * βμ0
@@ -131,6 +256,47 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
     θ0[pμ+1] = log(std(res0) + eps())
     θ0[pμ+pσ+1] = log(std(res0) / 2 + eps())
 
+    # WHY THIS ROUTE NEEDS NO n-SCALED CONVERGENCE FALLBACK (measured 2026-08-26).
+    #
+    # `nll_ml` is a raw SUM over observations, and `g_tol` is an ABSOLUTE gradient
+    # tolerance, so the #491 question applies here too: does `converged` become
+    # unreliable at large n? #491 was exactly this on the sparse-Laplace route,
+    # where a flat threshold graded an n-scaled gradient and good large-n fits
+    # were reported as failures. INVESTIGATED AND THE ANSWER IS NO -- the flag is
+    # trustworthy here, and the reason is structural rather than lucky.
+    #
+    # MEASURED, n = 500 .. 1,000,000 (Gaussian random intercept, StableRNG):
+    #   g_converged = TRUE at every n, on the GRADIENT criterion specifically
+    #   (f_converged and x_converged are false throughout, so nothing weaker is
+    #   propping it up). Iteration count is 11 at every n up to 5e5, 13 at 1e6.
+    #
+    # THE MECHANISM. The achievable gradient floor here is MACHINE EPSILON times
+    # the objective scale, not an inner-solve noise floor -- measured floor/nll is
+    # constant at 2.3e-16 .. 5.8e-16 across three decades of n:
+    #
+    #        n        nll        achievable floor    floor/nll   headroom to 1e-8
+    #      1e3        954          2.27e-13           2.4e-16      43,980x
+    #      1e4        9,913        4.26e-12           4.3e-16       2,346x
+    #      1e5        99,823       5.82e-11           5.8e-16         172x
+    #      1e6        998,477      2.33e-10           2.3e-16          43x
+    #
+    # That is because the marginal here is EXACT (Woodbury + matrix-determinant
+    # lemma, see the header) -- no inner Newton mode solve, so no stopping noise.
+    # `sparse_laplace_glmm.jl` has five iterative-solve constructs, and its floor
+    # was ~1e-4 at n = 512, some NINE ORDERS larger than the 2.3e-13 here at
+    # n = 1000. That gap is the whole difference between #491 and this route.
+    #
+    # NOTE `autodiff = :forward` does NOT make this scale-invariant, which is the
+    # tempting wrong explanation. Measured away from the optimum, the gradient
+    # scales LINEARLY with n (||g|| = 249 / 2,215 / 21,610 at n = 1e3/1e4/1e5,
+    # per-observation flat at ~0.22). Optim sees the true summed gradient.
+    #
+    # SO THE MARGIN IS FINITE AND SHRINKS AS 1/n. Since floor is proportional to n
+    # and g_tol is absolute, headroom falls from ~44,000x to ~43x over 1e3 .. 1e6.
+    # EXTRAPOLATED (not measured, and flagged as such): it would reach g_tol = 1e-8
+    # near n ~ 4e7. Far outside any dataset this route is built for, but if that
+    # ever changes, normalise the objective by n the way fit_q4_sparse_tmb.jl and
+    # reml_q4.jl do -- do NOT add a #491-style fallback, which only papers over it.
     res = Optim.optimize(nll, θ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
     θ̂ = Optim.minimizer(res)
     V = _vcov_from_hessian(ForwardDiff.hessian(nll, θ̂))
@@ -154,7 +320,12 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
         [C[k] / (1 / σb² + S[k]) for k in 1:G]
     end
     re = Dict(Symbol(grp) => blup)
-    return _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll), re)
+    # Profile intervals reuse the ML Woodbury nll (same convention as FE REML).
+    fit = _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll_ml), re)
+    if reml
+        return _withreml(fit, -nll_reml(θ̂), -nll_ml(θ̂))
+    end
+    return fit
 end
 
 # Correlated random intercept+slope (1 + x | g): per group (b0,b1) ~ N(0, Σ_re),
@@ -273,6 +444,11 @@ Random-effect covariance summary per grouping factor.
   grouping factor.
 """
 function vc(fit::DrmFit)
+    # Location-scale-scale fits (#544): the RE variance varies by group-level
+    # covariates, so a single component matrix is ill-defined -- refuse.
+    any(p -> first(p) in (:sd, :sd_phylo), fit.blocks) &&
+        throw(ArgumentError("vc: this fit models the random-effect SD with covariates " *
+            "(`sd(group) ~ ...`); use `coef(fit, :sd)` for the log-SD coefficients."))
     d = Dict{Symbol,Matrix{Float64}}()
     # q=4 phylogenetic coevolution: the raw 4×4 group-level Σ_a is stashed on
     # `ranef` (axes mu1,mu2,sigma1,sigma2); surface it here per #192.

@@ -1,0 +1,514 @@
+diff --git a/src/DRM.jl b/src/DRM.jl
+index 9411a47a..dd6475e9 100644
+--- a/src/DRM.jl
++++ b/src/DRM.jl
+@@ -111,6 +111,7 @@ include("locscale_marginal.jl")  # #202 groundwork: q=2 Laplace marginal
+ include("locscale_fit.jl")       # #202 groundwork: end-to-end location–scale fit
+ include("locscale_grad.jl")      # #202 groundwork: exact O(p) outer gradient
+ include("locscale_infer.jl")     # #202 groundwork: Wald inference + RE summaries
++include("locscale_whitened.jl")  # paired latent-coordinate value/gradient/information
+ include("locscale_profile.jl")   # #202: profile-likelihood CIs (trust-region inner solve)
+ include("locscale_frontend.jl")  # #202 slice 3b: drm() routing for (1|tag|group)
+ include("locscale_corr.jl")      # cluster ①: (1+x|g)/(0+x|g) reroute onto the q2 core
+diff --git a/src/inference.jl b/src/inference.jl
+index 05822788..0e39cb2b 100644
+--- a/src/inference.jl
++++ b/src/inference.jl
+@@ -229,11 +229,14 @@ Auditable profile-likelihood confidence intervals. Returns a `NamedTuple` with:
+ 
+ For generic thread-safe objectives, set `threads = true` to parallelise
+ independent profile coefficients; when one coefficient is profiled, its endpoint
+-arms may run in parallel. Canonical location–scale profiles are serial until the
+-per-job cache/thread-safety contract is implemented.
++arms may run in parallel. Canonical location–scale profile jobs use only the
++coefficient-level policy: each job owns its nuisance state, while its lower and
++upper endpoint chains remain serial.
+ """
+ function profile_result(fit::DrmFit; level::Real=0.95, threads::Bool=false, parm=nothing)
+-    fit.nll isa LocScaleObjective && return _ls_profile_result(fit; level=level, parm=parm)
++    fit.nll isa LocScaleObjective && return _ls_profile_result(
++        fit; level=level, threads=threads, parm=parm
++    )
+     if fit.nll isa LocOnlyObjective
+         jobs = _profile_jobs(fit, parm)
+         if !isempty(jobs) && all(job.param === :resd for job in jobs)
+@@ -446,7 +449,7 @@ end
+ # packs [logL11, L21, logL22]; the permutation below (an involution that swaps
+ # the last two covariance entries) maps a DrmFit coefficient index to the engine
+ # index the profiler expects, and the engine θ̂ back from the stored `theta`.
+-function _ls_profile_result(fit::DrmFit; level::Real=0.95, parm=nothing)
++function _ls_profile_result(fit::DrmFit; level::Real=0.95, threads::Bool=false, parm=nothing)
+     obj = fit.nll::LocScaleObjective
+     base = size(obj.Xμ, 2) + size(obj.Xψ, 2)
+     perm = vcat(collect(1:base), [base + 1, base + 3, base + 2])  # involution
+@@ -456,9 +459,14 @@ function _ls_profile_result(fit::DrmFit; level::Real=0.95, parm=nothing)
+     rows = Vector{_CIRow}(undef, length(jobs))
+     stats = Vector{_ProfileStatsRow}(undef, length(jobs))
+     endpoint_diagnostics = Vector{NamedTuple}(undef, length(jobs))
++    # Only coefficient jobs are independent.  Each call below allocates its
++    # own profile `lastsol`/typed-seed Refs, and retains the serial lower→upper
++    # endpoint chain required by `_ls_profile_ci_result`.
++    threaded = threads && Threads.nthreads() > 1 && length(jobs) > 1
+     elapsed = @elapsed begin
+         nmin = obj(θengine)                               # marginal NLL at θ̂ (once)
+-        for (i, job) in enumerate(jobs)
++        function profile_one(i)
++            job = jobs[i]
+             s = se[job.k]
+             se_arg = (isfinite(s) && s > 0) ? s : nothing
+             ci = _ls_profile_ci_result(
+@@ -474,8 +482,9 @@ function _ls_profile_result(fit::DrmFit; level::Real=0.95, parm=nothing)
+                 level=level,
+                 nll_min=nmin,
+                 se=se_arg,
++                whitened=obj.whitened,
+             )
+-            rows[i] = (
++            row = (
+                 param=job.param,
+                 coef=job.coef,
+                 estimate=fit.theta[job.k],
+@@ -486,7 +495,7 @@ function _ls_profile_result(fit::DrmFit; level::Real=0.95, parm=nothing)
+             upper_status = ci.upper_status
+             lower_nuisance = lower_status.nuisance
+             upper_nuisance = upper_status.nuisance
+-            stats[i] = (
++            stat = (
+                 param=job.param,
+                 coef=job.coef,
+                 evaluations=lower_status.evaluations + upper_status.evaluations,
+@@ -507,7 +516,7 @@ function _ls_profile_result(fit::DrmFit; level::Real=0.95, parm=nothing)
+                 lower_nuisance_reason=lower_nuisance === nothing ? :not_checked : lower_nuisance.reason,
+                 upper_nuisance_reason=upper_nuisance === nothing ? :not_checked : upper_nuisance.reason,
+             )
+-            endpoint_diagnostics[i] = (
++            diagnostic = (
+                 param=job.param,
+                 coef=job.coef,
+                 lower=(reason=lower_status.reason, candidate=lower_status.candidate,
+@@ -531,6 +540,18 @@ function _ls_profile_result(fit::DrmFit; level::Real=0.95, parm=nothing)
+                        root_iterations=upper_status.root_iterations,
+                        nuisance=upper_nuisance),
+             )
++            return row, stat, diagnostic
++        end
++        if threaded
++            _with_pinned_blas(true) do
++                Threads.@threads for i in eachindex(jobs)
++                    rows[i], stats[i], endpoint_diagnostics[i] = profile_one(i)
++                end
++            end
++        else
++            for i in eachindex(jobs)
++                rows[i], stats[i], endpoint_diagnostics[i] = profile_one(i)
++            end
+         end
+     end
+     return (
+@@ -540,11 +561,11 @@ function _ls_profile_result(fit::DrmFit; level::Real=0.95, parm=nothing)
+         used=length(rows),
+         failed=count(s -> s.lower_endpoint_failed || s.upper_endpoint_failed, stats),
+         endpoint_diagnostics=endpoint_diagnostics,
+-        threaded=false,
+-        worker_threads=1,
++        threaded=threaded,
++        worker_threads=_worker_threads(threaded, length(jobs)),
+         julia_threads=Threads.nthreads(),
+         blas_threads=BLAS.get_num_threads(),
+-        blas_oversubscribed=false,
++        blas_oversubscribed=_blas_oversubscribed(threaded),
+         elapsed=elapsed,
+         autodiff=:locscale,
+         level=float(level),
+@@ -2094,7 +2115,7 @@ function _check_max_abs_grad(fit::DrmFit)
+         o = fit.nll
+         base = size(o.Xμ, 2) + size(o.Xψ, 2)
+         perm = vcat(collect(1:base), [base + 1, base + 3, base + 2])  # recov→engine
+-        g = _ls_marginal_grad(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, fit.theta[perm])
++        g = _ls_objective_gradient(o, fit.theta[perm])
+         return maximum(abs, g)
+     end
+     if fit.nllgrad !== nothing
+diff --git a/src/locscale_fit.jl b/src/locscale_fit.jl
+index ed191efd..929bf1e4 100644
+--- a/src/locscale_fit.jl
++++ b/src/locscale_fit.jl
+@@ -49,9 +49,25 @@ struct LocScaleObjective{K,Y,MX,PX,GI,QT}
+     gidx::GI
+     G::Int
+     Q::QT
++    whitened::Bool
+ end
+ 
+-(o::LocScaleObjective)(θ) = _ls_fit_nll(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ)
++# Preserve the original private constructor and its raw-precision semantics.
++LocScaleObjective(kind, y, Xμ, Xψ, gidx, G, Q; whitened::Bool=false) =
++    LocScaleObjective(kind, y, Xμ, Xψ, gidx, G, Q, whitened)
++
++function (o::LocScaleObjective)(θ)
++    o.whitened || return _ls_fit_nll(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ)
++    result = _ls_whitened_eval(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ,
++        _ls_canonical_Zeta(length(o.y)), _ls_canonical_Zpsi(length(o.y)); gradient=false)
++    return result.status.ok ? result.value : 1e18
++end
++
++function _ls_objective_gradient(o::LocScaleObjective, θ)
++    o.whitened || return _ls_marginal_grad(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ)
++    return _ls_whitened_eval(o.kind, o.y, o.Xμ, o.Xψ, o.gidx, o.G, o.Q, θ,
++        _ls_canonical_Zeta(length(o.y)), _ls_canonical_Zpsi(length(o.y))).gradient
++end
+ 
+ # Family-appropriate mean-axis intercept start. NB2/Gamma use a log link, so the
+ # Poisson IRLS warm start applies directly. Beta/BetaBinomial use a logit link
+@@ -84,7 +100,8 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
+                        λ0 = [log(0.3), 0.0, log(0.3)],
+                        Zη = _ls_canonical_Zeta(length(y)),
+                        Zψ = _ls_canonical_Zpsi(length(y)),
+-                       g_tol = 1e-6, iterations = 1000, se::Bool = false)
++                       g_tol = 1e-6, iterations = 1000, se::Bool = false,
++                       whitened::Bool = false)
+     pμ = size(Xμ, 2); pψ = size(Xψ, 2)
+     βμ0 === nothing && (βμ0 = _ls_default_betastart(kind, y, Xμ))
+     βψ0 === nothing && (βψ0 = zeros(pψ))
+@@ -100,8 +117,15 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
+     #    information as Hessian), which converges quadratically and tolerates the
+     #    ill-conditioning/indefiniteness that makes LBFGS stall on trees. LBFGS
+     #    then Nelder–Mead are kept as fallbacks.
+-    warm = Ref{Union{Nothing,Vector{Float64}}}(nothing)
++    warm = whitened ? Ref{Union{Nothing,_LSWhitenedSeed}}(nothing) :
++                      Ref{Union{Nothing,Vector{Float64}}}(nothing)
+     function nll(θ)
++        if whitened
++            result = _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ;
++                                      seed=warm[], gradient=false)
++            result.status.ok && (warm[] = result.seed)
++            return result.status.ok ? result.value : 1e18
++        end
+         βμ = @view θ[1:pμ]; βψ = @view θ[pμ+1:pμ+pψ]
+         Λ = _ls_lc_to_Λ(θ[pμ+pψ+1:pμ+pψ+3])
+         P = prior_precision(Q, _ls_inv2x2(Λ))
+@@ -109,8 +133,18 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
+         ok && (warm[] = copy(a))
+         return ok ? val : 1e18
+     end
+-    g!(grad, θ) = (grad .= _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0 = warm[]); grad)
+-    h!(H, θ) = (H .= _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0 = warm[]); H)
++    function g!(grad, θ)
++        grad .= whitened ?
++            _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; seed=warm[]).gradient :
++            _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0=warm[])
++        return grad
++    end
++    function h!(H, θ)
++        H .= whitened ?
++            _ls_whitened_information(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; seed=warm[]) :
++            _ls_obs_information(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0=warm[])
++        return H
++    end
+     opts = Optim.Options(g_tol = g_tol, iterations = iterations)
+     nm() = (warm[] = nothing; Optim.optimize(nll, θ0, Optim.NelderMead(),
+                           Optim.Options(iterations = max(iterations, 2000))))
+@@ -140,7 +174,9 @@ function _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q;
+     Λ̂ = _ls_lc_to_Λ(θ̂[pμ+pψ+1:pμ+pψ+3])
+     nll(θ̂)                       # ensure warm[] holds the mode at θ̂ for the SE solve
+     # Wald inference (opt-in): observed information = Hessian of the exact gradient.
+-    V = se ? _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ; a0 = warm[]) : nothing
++    V = !se ? nothing : whitened ?
++        _ls_whitened_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ; seed=warm[]) :
++        _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ; a0=warm[])
+     return (θ = θ̂,
+             beta_mu = θ̂[1:pμ],
+             beta_psi = θ̂[pμ+1:pμ+pψ],
+diff --git a/src/locscale_frontend.jl b/src/locscale_frontend.jl
+index c39d57dd..2360f4b4 100644
+--- a/src/locscale_frontend.jl
++++ b/src/locscale_frontend.jl
+@@ -181,11 +181,11 @@ function _fit_locscale_frontend(kind, fam, f, rhs, lc, data; g_tol, se,
+                                 tree = nothing, K = nothing, A = nothing, coords = nothing)
+     y, Xμ, Xψ, nmμ, nmσ, obs_prop, trials = _ls_frontend_design(kind, f, lc, data)
+     Q, gidx, G = _ls_frontend_grouping(lc, data, tree, K, A, coords)
+-    fitres = _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q; g_tol = g_tol, se = se)
++    fitres = _fit_locscale(kind, y, Xμ, Xψ, gidx, G, Q; g_tol=g_tol, se=se, whitened=true)
+     fit = _build_locscale_drmfit(kind, fam, fitres, y, Xμ, Xψ, nmμ, nmσ, String(lc.group);
+                                  obs_prop = obs_prop, trials = trials)
+     # Carry the structured design so `confint(:profile)` can route to the robust
+     # location–scale profiler. The objective uses the engine packing; the DrmFit
+     # `theta` is in `:recov` order, so the profile router permutes between them.
+-    return _withnll(fit, LocScaleObjective(kind, y, Xμ, Xψ, gidx, G, Q))
++    return _withnll(fit, LocScaleObjective(kind, y, Xμ, Xψ, gidx, G, Q; whitened=true))
+ end
+diff --git a/src/locscale_grad.jl b/src/locscale_grad.jl
+index 9b9a846a..2b431696 100644
+--- a/src/locscale_grad.jl
++++ b/src/locscale_grad.jl
+@@ -31,6 +31,24 @@ function _dΛ_dλ(λ, k::Int)
+     return derivative(t -> _ls_lc_to_Λ([i == k ? t : λ[i] for i in 1:3]), λ[k])
+ end
+ 
++# Derivatives of L^{-T}L^{-1} in log-Cholesky coordinates. Construct them
++# directly: -Λinv*dΛ*Λinv subtracts large nearly equal products when L22 is
++# small, losing enough precision to reverse a profile nuisance gradient.
++function _ls_precision_derivatives(λ)
++    u, c, v = λ
++    e1 = exp(-2 * u)
++    e2 = exp(-2 * v)
++    inv_diag_product = exp(-(u + v))
++    scaled_c = c * inv_diag_product
++    cross = exp(-u - 2 * v)
++    A = e1 + scaled_c * scaled_c
++    B = -c * cross
++    z = zero(A)
++    return ([-2 * A -B; -B z],
++            [2 * scaled_c * inv_diag_product -cross; -cross z],
++            [-2 * scaled_c * scaled_c -2 * B; -2 * B -2 * e2])
++end
++
+ """
+     _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ) -> Vector
+ 
+@@ -128,9 +146,9 @@ function _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ,
+ 
+     # λ components: only P depends on λ, so ∂H/∂λ = ∂P/∂λ = kron(Q, Mk).
+     qrows = rowvals(Q); qvals = nonzeros(Q)
++    precision_derivatives = _ls_precision_derivatives(λ)
+     @inbounds for k in 1:3
+-        dΛk = _dΛ_dλ(λ, k)
+-        Mk = -Λinv * dΛk * Λinv               # ∂Λ⁻¹/∂λ_k
++        Mk = precision_derivatives[k]         # ∂Λ⁻¹/∂λ_k
+         t_quad = 0.0; t_adj = 0.0; t_tr = 0.0
+         for h in 1:G
+             for idx in nzrange(Q, h)
+@@ -147,10 +165,10 @@ function _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ,
+                              hb21 * Mk[1, 2] + hb22 * Mk[2, 2])
+             end
+         end
+-        # −½ logdet P derivative = +½ G·tr(Λ⁻¹ ∂Λ/∂λ_k)
+-        trLP = Λinv[1, 1] * dΛk[1, 1] + Λinv[1, 2] * dΛk[2, 1] +
+-               Λinv[2, 1] * dΛk[1, 2] + Λinv[2, 2] * dΛk[2, 2]
+-        grad[pμ+pψ+k] = 0.5 * t_quad + 0.5 * t_tr - t_adj + 0.5 * G * trLP
++        # −½ logdet P = G*(logL11 + logL22) + a Q-only constant.
++        # Its derivative is exact without a cancellation-prone trace product.
++        normalization = k == 2 ? 0.0 : Float64(G)
++        grad[pμ+pψ+k] = 0.5 * t_quad + 0.5 * t_tr - t_adj + normalization
+     end
+ 
+     return grad
+diff --git a/src/locscale_inner.jl b/src/locscale_inner.jl
+index e9715d93..bb64cab3 100644
+--- a/src/locscale_inner.jl
++++ b/src/locscale_inner.jl
+@@ -103,6 +103,88 @@ function _ls_joint_grad(kind, y, η0, ψ0, gidx, a, P, Zη, Zψ)
+     return grad
+ end
+ 
++# Float64 sparse fits can have large cancelling prior terms even when their
++# final objective and gradient are modest. Track product residuals as well as
++# sums so line-search descent and the existing stationarity certificate see
++# the same fixed-P objective accurately. The generic methods above remain the
++# AD/non-Float64 path and the fallback when error-free arithmetic is unsupported.
++# Bounds describe arithmetic on the evaluated kernel values, not kernel error.
++function _ls_joint_grad(kind,
++                            y::Vector{Float64}, eta0::Vector{Float64}, psi0::Vector{Float64},
++                            gidx::Vector{Int}, a::Vector{Float64},
++                            P::SparseMatrixCSC{Float64,Int},
++                            Zeta::Matrix{Float64}, Zpsi::Matrix{Float64})
++    hi = zeros(Float64, length(a)); lo = zeros(Float64, length(a)); bound = zeros(Float64, length(a))
++    @inbounds for col in axes(P, 2), ptr in nzrange(P, col)
++        row = P.rowval[ptr]
++        pieces = _ls_twoprod_finite(P.nzval[ptr], a[col])
++        pieces === nothing && return invoke(_ls_joint_grad, Tuple{Any,Any,Any,Any,Any,Any,Any,Any,Any}, kind, y, eta0, psi0, gidx, a, P, Zeta, Zpsi)
++        for term in pieces
++            acc = _ls_tracked_add(hi[row], lo[row], bound[row], term)
++            acc === nothing && return invoke(_ls_joint_grad, Tuple{Any,Any,Any,Any,Any,Any,Any,Any,Any}, kind, y, eta0, psi0, gidx, a, P, Zeta, Zpsi)
++            hi[row], lo[row], bound[row] = acc
++        end
++    end
++    @inbounds for i in eachindex(y)
++        group = gidx[i]; u, v = 2group-1, 2group
++        etai = eta0[i] + Zeta[i,1]*a[u] + Zeta[i,2]*a[v]
++        psii = psi0[i] + Zpsi[i,1]*a[u] + Zpsi[i,2]*a[v]
++        ge, gp = _ls_grad(kind, y[i], etai, psii)
++        for (row, q, z) in ((u,ge,Zeta[i,1]), (u,gp,Zpsi[i,1]),
++                            (v,ge,Zeta[i,2]), (v,gp,Zpsi[i,2]))
++            pieces = _ls_twoprod_finite(q, z)
++            pieces === nothing && return invoke(_ls_joint_grad, Tuple{Any,Any,Any,Any,Any,Any,Any,Any,Any}, kind, y, eta0, psi0, gidx, a, P, Zeta, Zpsi)
++            for term in pieces
++                acc = _ls_tracked_add(hi[row], lo[row], bound[row], term)
++                acc === nothing && return invoke(_ls_joint_grad, Tuple{Any,Any,Any,Any,Any,Any,Any,Any,Any}, kind, y, eta0, psi0, gidx, a, P, Zeta, Zpsi)
++                hi[row], lo[row], bound[row] = acc
++            end
++        end
++    end
++    grad = Vector{Float64}(undef, length(a))
++    @inbounds for row in eachindex(grad)
++        final = _ls_tracked_finalize(hi[row], lo[row], bound[row])
++        final === nothing && return invoke(_ls_joint_grad, Tuple{Any,Any,Any,Any,Any,Any,Any,Any,Any}, kind, y, eta0, psi0, gidx, a, P, Zeta, Zpsi)
++        grad[row] = final[1]
++    end
++    return grad
++end
++
++function _ls_joint(kind,
++                       y::Vector{Float64}, eta0::Vector{Float64}, psi0::Vector{Float64},
++                       gidx::Vector{Int}, a::Vector{Float64},
++                       P::SparseMatrixCSC{Float64,Int},
++                       Zeta::Matrix{Float64}, Zpsi::Matrix{Float64})
++    # A single accumulator deliberately retains every low part through the
++    # data/prior combination and only then performs the final rounding.
++    hi = lo = bound = 0.0
++    @inbounds for i in eachindex(y)
++        group = gidx[i]; u, v = 2group-1, 2group
++        etai = eta0[i] + Zeta[i,1]*a[u] + Zeta[i,2]*a[v]
++        psii = psi0[i] + Zpsi[i,1]*a[u] + Zpsi[i,2]*a[v]
++        term = _ls_nll(kind, y[i], etai, psii)
++        acc = _ls_tracked_add(hi, lo, bound, term)
++        acc === nothing && return invoke(_ls_joint, Tuple{Any,Any,Any,Any,Any,Any,Any,Any,Any}, kind, y, eta0, psi0, gidx, a, P, Zeta, Zpsi)
++        hi, lo, bound = acc
++    end
++    @inbounds for col in axes(P,2), ptr in nzrange(P,col)
++        row = P.rowval[ptr]
++        pieces = _ls_tripleprod_pieces(a[row], P.nzval[ptr], a[col])
++        pieces === nothing && return invoke(_ls_joint, Tuple{Any,Any,Any,Any,Any,Any,Any,Any,Any}, kind, y, eta0, psi0, gidx, a, P, Zeta, Zpsi)
++        for rawterm in pieces
++            term = 0.5 * rawterm
++            (isfinite(term) && (term == 0.0 || abs(term) >= floatmin(Float64))) ||
++                return invoke(_ls_joint, Tuple{Any,Any,Any,Any,Any,Any,Any,Any,Any}, kind, y, eta0, psi0, gidx, a, P, Zeta, Zpsi)
++            acc = _ls_tracked_add(hi, lo, bound, term)
++            acc === nothing && return invoke(_ls_joint, Tuple{Any,Any,Any,Any,Any,Any,Any,Any,Any}, kind, y, eta0, psi0, gidx, a, P, Zeta, Zpsi)
++            hi, lo, bound = acc
++        end
++    end
++    final = _ls_tracked_finalize(hi, lo, bound)
++    final === nothing && return invoke(_ls_joint, Tuple{Any,Any,Any,Any,Any,Any,Any,Any,Any}, kind, y, eta0, psi0, gidx, a, P, Zeta, Zpsi)
++    return final[1]
++end
++
+ # Hessian of the joint: P + block-diagonal data part (a 2×2 block per group),
+ # general loadings. Per obs the block accrues hηη·zη zηᵀ + hηψ·(zη zψᵀ+zψ zηᵀ)
+ # + hψψ·zψ zψᵀ; the canonical loadings recover the (ηη, ηψ, ψψ) layout.
+diff --git a/src/locscale_profile.jl b/src/locscale_profile.jl
+index c20816d0..ea194171 100644
+--- a/src/locscale_profile.jl
++++ b/src/locscale_profile.jl
+@@ -80,13 +80,21 @@ function _ls_profile_nll_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, idx::Int, v
+                                 Zη = _ls_canonical_Zeta(length(y)),
+                                 Zψ = _ls_canonical_Zpsi(length(y)),
+                                 x0 = nothing,
+-                                mwarm = Ref{Union{Nothing,Vector{Float64}}}(nothing),
++                                whitened::Bool = false,
++                                mwarm = whitened ? Ref{Union{Nothing,_LSWhitenedSeed}}(nothing) :
++                                                   Ref{Union{Nothing,Vector{Float64}}}(nothing),
+                                 iterations::Int = 200)
+     p = length(θ̂); pμ = size(Xμ, 2); pψ = size(Xψ, 2)
+     free = [k for k in 1:p if k != idx]
+     build(θf) = (θ = collect(float.(θ̂)); θ[free] .= θf; θ[idx] = val; θ)
+     function f(θf)
+         θ = build(θf)
++        if whitened
++            result = _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ;
++                                      seed=mwarm[], gradient=false)
++            result.status.ok && (mwarm[] = result.seed)
++            return result.status.ok ? result.value : _LS_PROFILE_INFEASIBLE
++        end
+         βμ = @view θ[1:pμ]; βψ = @view θ[pμ+1:pμ+pψ]
+         Λ = _ls_lc_to_Λ(θ[pμ+pψ+1:pμ+pψ+3])
+         P = prior_precision(Q, _ls_inv2x2(Λ))
+@@ -95,7 +103,9 @@ function _ls_profile_nll_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, idx::Int, v
+         return ok ? v : _LS_PROFILE_INFEASIBLE
+     end
+     function g!(gf, θf)
+-        gfull = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, build(θf), Zη, Zψ; a0 = mwarm[])
++        gfull = whitened ?
++            _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q, build(θf), Zη, Zψ; seed=mwarm[]).gradient :
++            _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, build(θf), Zη, Zψ; a0=mwarm[])
+         gf .= gfull[free]
+         return gf
+     end
+@@ -106,10 +116,18 @@ function _ls_profile_nll_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, idx::Int, v
+     # The
+     # `_LS_PROFILE_INFEASIBLE` sentinel still fences the line search off the
+     # near-singular-Λ boundary, so boundary robustness is preserved.
++    # On the paired route, floating-point equality of successive objective
++    # values must not stop a solve before its required gradient tolerance.
++    # NaN disables only the x/f stopping comparisons in Optim; the existing
++    # gradient threshold, iteration budget and fresh postcheck are unchanged.
++    opts = whitened ? Optim.Options(g_tol=1e-7, iterations=iterations,
++                                   x_abstol=NaN, x_reltol=NaN,
++                                   f_abstol=NaN, f_reltol=NaN) :
++                      Optim.Options(g_tol=1e-7, iterations=iterations)
+     res = try
+         Optim.optimize(f, g!, init,
+                        Optim.LBFGS(linesearch = Optim.LineSearches.BackTracking()),
+-                       Optim.Options(g_tol = 1e-7, iterations = iterations))
++                       opts)
+     catch err
+         err isa InterruptException && rethrow()
+         return _ls_profile_nuisance_result(Inf, init, false, :exception)
+@@ -297,22 +315,33 @@ fit must pass its own `Zη`/`Zψ` here for the CI to be correct.
+ function _ls_profile_ci_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; idx::Int, level::Real = 0.95,
+                                nll_min = nothing, se = nothing,
+                                Zη = _ls_canonical_Zeta(length(y)),
+-                               Zψ = _ls_canonical_Zpsi(length(y)))
+-    nmin = nll_min === nothing ? _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ) : nll_min
++                               Zψ = _ls_canonical_Zpsi(length(y)),
++                               whitened::Bool = false)
++    nmin = if nll_min !== nothing
++        nll_min
++    elseif whitened
++        result = _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ; gradient=false)
++        result.status.ok ? result.value : _LS_PROFILE_INFEASIBLE
++    else
++        _ls_fit_nll(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ)
++    end
+     half = Distributions.quantile(Distributions.Chisq(1), level) / 2
+     z = Distributions.quantile(Distributions.Normal(), 1 - (1 - level) / 2)
+     if se === nothing
+-        V = _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ)
++        V = whitened ? _ls_whitened_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ) :
++                       _ls_vcov(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, Zη, Zψ)
+         se = (V === nothing || V[idx, idx] ≤ 0) ? abs(θ̂[idx]) + 1.0 : sqrt(V[idx, idx])
+     end
+     step0 = max(z * se, 1e-3)
+     p = length(θ̂); free = [k for k in 1:p if k != idx]
+-    mwarm = Ref{Union{Nothing,Vector{Float64}}}(nothing)
++    mwarm = whitened ? Ref{Union{Nothing,_LSWhitenedSeed}}(nothing) :
++                      Ref{Union{Nothing,Vector{Float64}}}(nothing)
+     lastsol = Ref{Union{Nothing,Vector{Float64}}}(nothing)
+     # Profile gap, its envelope-theorem slope, and feasibility at θ[idx] = val.
+     function evalh(val)
+         nuisance = _ls_profile_nll_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂, idx, val;
+-                                           Zη=Zη, Zψ=Zψ, x0=lastsol[], mwarm=mwarm)
++                                           Zη=Zη, Zψ=Zψ, x0=lastsol[], mwarm=mwarm,
++                                           whitened=whitened)
+         nuisance.accepted || return (gap=NaN, slope=NaN, ok=false,
+                                      reason=nuisance.reason, nuisance=nuisance)
+         lastsol[] = nuisance.minimizer
+@@ -320,7 +349,9 @@ function _ls_profile_ci_result(kind, y, Xμ, Xψ, gidx, G, Q, θ̂; idx::Int, le
+         # exact full gradient (free-parameter components ≈ 0 by stationarity).
+         θ = collect(float.(θ̂)); θ[free] .= nuisance.minimizer; θ[idx] = val
+         slope = try
+-            g = _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0=mwarm[])
++            g = whitened ?
++                _ls_whitened_eval(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; seed=mwarm[]).gradient :
++                _ls_marginal_grad(kind, y, Xμ, Xψ, gidx, G, Q, θ, Zη, Zψ; a0=mwarm[])
+             (length(g) == p && isfinite(g[idx])) ? g[idx] : NaN
+         catch err
+             err isa InterruptException && rethrow()
+diff --git a/test/runtests.jl b/test/runtests.jl
+index 3823978b..fe20c203 100644
+--- a/test/runtests.jl
++++ b/test/runtests.jl
+@@ -137,9 +137,13 @@ include("test_locscale_inner_status.jl")
+ include("test_locscale_marginal.jl")
+ include("test_locscale_fit.jl")
+ include("test_locscale_grad.jl")
++include("test_locscale_precision_derivatives.jl")
++include("test_locscale_compensated_gradient.jl")
++include("test_locscale_whitened.jl")
+ include("test_locscale_infer.jl")
+ include("test_locscale_profile.jl")
+ include("test_locscale_profile_status.jl")
++include("test_locscale_profile_threads.jl") # Finite canonical intervals and owned coefficient jobs
+ # Optimizer / mode-accuracy robustness for the module-wired locscale + sparse-aug
+ # paths: NaN (not zero) outer gradient on inner-mode failure (#314), tightened
+ # fast E-step acceptance gate (#317), and Zη/Zψ threading through the profiler

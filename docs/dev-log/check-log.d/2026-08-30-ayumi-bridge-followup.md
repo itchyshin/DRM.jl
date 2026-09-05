@@ -1,0 +1,1 @@
+| 2026-08-30 | #563 Ayumi batch startup and exact profile targets | Julia 36 target +132 bridge; R7+34 guards; source-stamped public batch12 checks; actual marked R CMD check child passes | Bounded correctness only; whole-tree speed, broader labels/controls/diagnostics and programme G0–G8 remain open. See after-task/2026-08-30-ayumi-bridge-followup.md. |

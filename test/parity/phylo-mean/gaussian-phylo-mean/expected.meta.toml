@@ -1,0 +1,30 @@
+drmtmb_version = "0.7.0"
+drmtmb_built = "R 4.6.0; aarch64-apple-darwin23; 2026-08-15 01:49:56 UTC; unix"
+drmtmb_code_hash = "8dc7c6cd77f8d5cf8bebc9adb29a5a53900d2d320de074bde43cba8fa4e1bb7e"
+generated_on = "2026-08-24"
+r_call = "drmTMB(bf(y ~ x + phylo(1 | species, tree = tree), sigma ~ 1), family = gaussian(), data = dat, engine = \"tmb\")"
+seed = 404
+n_tip = 18
+n_each = 4
+sd_phylo_true = 1.5e+00
+sd_resid_true = 2.9999999999999999e-01
+with_x = true
+tree_height = 2.4738053235707165e+00
+
+[identifiability]
+boundary_adjacent = false
+# log_sd_phylo's fitted value and Wald SE (sdr$par.fixed / sdr$cov.fixed).
+# A boundary-adjacent estimate would show se >> 1 log-unit; it does not.
+log_sd_phylo_est = -8.7108712806169206e-02
+log_sd_phylo_se = 3.1232556431546754e-01
+# Curvature evidence (the #483 seed-selection criterion): cost, in nll
+# units, of moving log_sd_phylo 1 unit off the estimate (full grid in
+# nll_profile.csv), versus the cost of pushing all the way out to the
+# retired fixture's [-30,-10] plateau (proves the minimum is interior,
+# not a boundary artifact).
+nll_delta_at_plus_1_log_unit = 5.6202720150246392e+00
+nll_delta_at_boundary_plateau = 2.0005089980597731e+01
+nll_profile_file = "nll_profile.csv"
+heights_file = "heights.toml"
+
+note = "Generated outputs only; no drmTMB source vendored. Workflow G fixtures remain 0.6.0 / ML / no tree. This cell is 0.7.0 ML + tree, outside the fixtures/ glob. Not a TSV supported flip. Not the last fixture-gap. ML, univariate, sigma ~ 1. Tight ML tols (not #434 atol_loglik=6). #483: reseeded off the retired seed-111 Route A cell, whose 'phylo' effect was actually IID NOISE with no tree structure (rnorm() per species, not chol(vcv(tree)) %*% rnorm()) and 1 obs/tip -- undetectable and unidentifiable (profiled nll moved < 1e-4 over 20 orders of magnitude of log_sd_phylo). This cell instead simulates a genuinely tree-correlated random effect with real signal and n_each=4 replicate obs/tip; see [identifiability] below and nll_profile.csv for the curvature evidence that this seed was chosen by measuring, not guessing. Multi-height round trip (#483, kept): heights.toml records three native drmTMB refits (heights 0.5/1.0/3.0, same data) confirming sd_phylo's correlation-scale height-invariance on THIS identifiable cell (the retired cell only established the scale convention; it could not evidence numeric phylo-SD agreement)."

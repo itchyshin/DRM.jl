@@ -1,0 +1,50 @@
+{
+  "julia_integration_head": "567fec069758131804bc4d94582bc48e9338f63f",
+  "r_integration_base": "06518a5a5cd6888d57efc421a45b8fafd1e7f32c",
+  "r_repair_sha256": "fb5ca0e67afa9696b42457e771baac0d318318b38b0160db0fb252cda7570701",
+  "r_test_sha256": "d9bce44daad99f54f4c96856c5f994d677a7af68249e354599230812754dd56e",
+  "r_pure": {
+    "passed": 1019,
+    "skipped": 1,
+    "files": 23,
+    "elapsed": 14.551586151123047
+  },
+  "ordinary_batch": {
+    "status": "PASS",
+    "elapsed": 28.705,
+    "julia_threads": 4,
+    "blas_threads": 1
+  },
+  "one_session": {
+    "status": "PASS",
+    "cases": 8,
+    "elapsed": 49.9,
+    "julia_threads": 1,
+    "blas_threads": 1
+  },
+  "totoro": {
+    "passed": 1798,
+    "broken": 2,
+    "files": 14,
+    "elapsed": 124,
+    "julia_threads": 1,
+    "blas_threads": 1
+  },
+  "totoro_thread4": {
+    "passed": 62,
+    "elapsed": 31,
+    "julia_threads": 4,
+    "blas_threads": 1
+  },
+  "programme_status": "ACTIVE",
+  "programme_gates": "G0-G8 OPEN",
+  "limitations": [
+    "not full package/CI checks",
+    "not native numerical parity clearance",
+    "not large-tree profiling or coverage",
+    "not performance comparison",
+    "R DLL reused for package loading",
+    "two LSS boundary checks remain broken",
+    "no remote publication or retirement"
+  ]
+}

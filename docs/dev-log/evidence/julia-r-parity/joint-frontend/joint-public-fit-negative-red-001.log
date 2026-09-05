@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/test_joint_frontend_fit_receipt.py", line 59, in main
+    check(data, uncertainty, bad, root)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/check_joint_frontend_fit_receipt.py", line 203, in check
+    check_table(actual.get("imputed_all", {}), frozen, actual["theta"], actual["covariance"], kind, "all", kind + ": imputed all")
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/check_joint_frontend_fit_receipt.py", line 136, in check_table
+    require(isinstance(values, list) and len(values) == len(ids) and all(isinstance(value, str) for value in values), label + ": source/status")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/check_joint_frontend_fit_receipt.py", line 14, in require
+    raise ValueError(message)
+ValueError: gaussian: imputed all: source/status
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/test_joint_frontend_fit_receipt.py", line 70, in <module>
+    main()
+    ~~~~^^
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/test_joint_frontend_fit_receipt.py", line 62, in main
+    raise RuntimeError("wrong failure for " + label + ": " + str(error))
+RuntimeError: wrong failure for source/status source: gaussian: imputed all: source/status

@@ -1,0 +1,1 @@
+| 2026-08-30 | **Full parity Wave A checkpoint** (#563) | Census self-test/verify, manifest structure, R article parse/render; original allocation regression | Partial: structural checks pass; numerical regression red; all programme gates remain open | Ada / Rose |

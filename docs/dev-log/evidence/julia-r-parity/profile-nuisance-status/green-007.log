@@ -1,0 +1,29 @@
+ERROR: LoadError: Some tests did not pass: 65 passed, 1 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:22
+endpoint is the coordinate whose reevaluated profile hits target: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:117
+  Expression: abs(endpoint ^ 2 / 2 - 2.0) < 1.0e-7
+   Evaluated: 1.1825224950356983e-6 < 1.0e-7
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:117 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:112 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_profile_nuisance_status.jl:23
+Test Summary:                                                      | Pass  Fail  Total   Time
+generic profile nuisance acceptance and status                     |   65     1     66  10.7s
+  accepted solve is reevaluated at the reported minimizer          |    7            7   1.8s
+  one-parameter profile is a valid direct evaluation               |   10           10   0.2s
+  Nelder-Mead fallback is accepted only on successful termination  |    9            9   0.0s
+  failed nuisance arm is not unbounded or warm-started             |    9            9   0.5s
+  endpoint is the coordinate whose reevaluated profile hits target |    6     1      7   3.4s
+  flat direct profile is validly unbounded, not a solver failure   |    9            9   2.2s
+  failed profile rows warn without changing CI shape               |    5            5   0.5s
+  diagnostics and visual data refuse invalid profiled values       |   10           10   2.0s

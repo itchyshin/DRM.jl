@@ -1,0 +1,20 @@
+{
+  "purpose": "Owned-only label patch validation; foreign ZOB and S5 not overlaid",
+  "R_base": "6c25d5d8292ca66a8880455f54c1d1da82b62292",
+  "Julia_base": "5cd6e6fd82190283828b148822a0990c7afa91cd",
+  "reused_R_DLL_source": "/private/tmp/drm-parity-20260830/drmTMB/src/drmTMB.so",
+  "reused_R_DLL_sha256": "37ecda8a20e59c7309717865948928fc186bca853cda65b2c23c27805de60174",
+  "limitation": "Existing native DLL reused to load R package. Not a fresh native compilation or native TMB numerical qualification. Public label runner uses independent R model.matrix/OLS and actual Julia fits.",
+  "R_owned_paths": [
+    "R/julia-coefficient-labels.R",
+    "tests/testthat/test-julia-bridge-coef-labels.R",
+    "tools/probe-julia-coefficient-labels.R",
+    "tools/run-julia-coefficient-labels-public.R",
+    "tools/check-julia-coefficient-labels-receipt.R",
+    "tools/generate-julia-numeric-label-fixture.R",
+    "tools/generate-julia-nested-label-fixture.R",
+    "tools/generate-julia-scalar-label-fixture.R",
+    "vignettes/julia-engine.Rmd",
+    "R/julia-bridge.R"
+  ]
+}

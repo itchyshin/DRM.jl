@@ -1,0 +1,13 @@
+ERROR: LoadError: MethodError: no method matching production_parts(::@NamedTuple{y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}}, ::Vector{Float64})
+The applicable method may be too new: running in world age 31525, while current world is 31569.
+
+Closest candidates are:
+  production_parts(::Any, ::Any) (method too new to be called from this world context.)
+   @ Main none:56
+
+Stacktrace:
+ [1] main()
+   @ Main /private/tmp/drm-parity-20260830/profile-threads-s11/compensated-inner-experiment/objective-direction/objective_direction.jl:103
+ [2] top-level scope
+   @ /private/tmp/drm-parity-20260830/profile-threads-s11/compensated-inner-experiment/objective-direction/objective_direction.jl:139
+in expression starting at /private/tmp/drm-parity-20260830/profile-threads-s11/compensated-inner-experiment/objective-direction/objective_direction.jl:133

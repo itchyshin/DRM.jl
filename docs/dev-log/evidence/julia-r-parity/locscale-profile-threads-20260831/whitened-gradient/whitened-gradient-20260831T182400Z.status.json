@@ -1,0 +1,16 @@
+{
+  "command": [
+    "julia",
+    "--project=.",
+    "--startup-file=no",
+    "--history-file=no",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-gradient/diagnose.jl",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-gradient/whitened-gradient-20260831T182400Z.jls"
+  ],
+  "script_sha256": "6f4c6fd72d4ab7183f21728f5e2aaf7460e82c1dd8ff50ba5d1e3afa366e0e28",
+  "wall_seconds": 6.9832666660659015,
+  "hard_cap_seconds": 60,
+  "timed_out": false,
+  "returncode": 0,
+  "pid": 48909
+}

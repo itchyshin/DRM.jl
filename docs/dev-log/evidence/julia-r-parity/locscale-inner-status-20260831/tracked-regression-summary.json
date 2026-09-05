@@ -1,0 +1,40 @@
+{
+  "source_sha256": "7f9571e775cef5cced81ab124a77f284225b85f57a4a054e565b36ddfe04fae0",
+  "focused_test_sha256": "59fb2c4581f3097a99aa47ef757e5ccc8a81de241b7bbeb97cf461740ccf8625",
+  "runs": [
+    {
+      "file": "docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/module-1threads-tracked001.json",
+      "exit_code": 0,
+      "elapsed_seconds": 34.214445957913995,
+      "inputs_unchanged": true,
+      "timed_out": false
+    },
+    {
+      "file": "docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/perturbations-1threads-tracked001.json",
+      "exit_code": 0,
+      "elapsed_seconds": 5.638836583122611,
+      "inputs_unchanged": true,
+      "timed_out": false
+    },
+    {
+      "file": "docs/dev-log/evidence/julia-r-parity/locscale-profile-status-20260831/module-1threads-tracked001.json",
+      "exit_code": 0,
+      "elapsed_seconds": 19.253110749879852,
+      "inputs_unchanged": true,
+      "timed_out": false
+    },
+    {
+      "file": "docs/dev-log/evidence/julia-r-parity/locscale-profile-status-20260831/module-4threads-tracked002.json",
+      "exit_code": 0,
+      "elapsed_seconds": 18.954689875012264,
+      "inputs_unchanged": true,
+      "timed_out": false
+    }
+  ],
+  "six_state_negative_control": {
+    "relative_failures": 96,
+    "all_failures": 184,
+    "passes": 296
+  },
+  "caveat": "All6LOCALrepairgatespass; globalG0-G8 remainopen. OptimNaNHessianwarning persists in passingNB2smoke module."
+}

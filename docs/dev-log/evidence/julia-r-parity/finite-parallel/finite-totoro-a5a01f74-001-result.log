@@ -1,0 +1,22 @@
+SOURCE_FILES_VERIFIED
+totoro
+079f21182d747154bce08179aaa547c8d261bd3d24c1a4d1e0b7b56ff9d26f64  source.tar
+ERROR: LoadError: "/home/snakagaw/drm_parity_finite_a5a01f74_20260830_001/test/../docs/dev-log/evidence/julia-r-parity/finite-factor-coding/native-design-001.toml": No such file
+Stacktrace:
+ [1] error(::String, ::String)
+   @ Base ./error.jl:44
+ [2] readstring
+   @ ~/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/share/julia/stdlib/v1.10/TOML/src/TOML.jl:21 [inlined]
+ [3] parsefile(f::String)
+   @ TOML ~/.julia/juliaup/julia-1.10.10+0.x64.linux.gnu/share/julia/stdlib/v1.10/TOML/src/TOML.jl:43
+ [4] top-level scope
+   @ ~/drm_parity_finite_a5a01f74_20260830_001/test/test_joint_missing_finite_factor_coding.jl:47
+ [5] include(fname::String)
+   @ Base.MainInclude ./client.jl:494
+ [6] top-level scope
+   @ ~/drm_parity_finite_a5a01f74_20260830_001/tools/run_finite_parallel_pilot.jl:10
+in expression starting at /home/snakagaw/drm_parity_finite_a5a01f74_20260830_001/test/test_joint_missing_finite_factor_coding.jl:47
+in expression starting at /home/snakagaw/drm_parity_finite_a5a01f74_20260830_001/tools/run_finite_parallel_pilot.jl:10
+RUNTIME julia=1.10.10 threads=4 blas=1 source=/home/snakagaw/drm_parity_finite_a5a01f74_20260830_001/src/DRM.jl
+ELAPSED_SECONDS 5
+1

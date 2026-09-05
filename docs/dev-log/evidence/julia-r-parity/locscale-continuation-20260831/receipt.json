@@ -1,0 +1,72 @@
+{
+  "source_head": "479f1e06464d06592b2d845798a27fdd8a5ac544",
+  "runtime": "Julia1.10.10",
+  "host": "Totoro",
+  "julia_threads": 1,
+  "blas_threads": 1,
+  "source_hashes": 327,
+  "source_unchanged": true,
+  "elapsed_seconds": 301,
+  "exit_status": 124,
+  "group_complete": false,
+  "printed_passing_assertions": 1611,
+  "testsets": 18,
+  "completed_includes": [
+    "test_locscale_kernels.jl",
+    "test_locscale_inner.jl",
+    "test_locscale_marginal.jl",
+    "test_locscale_fit.jl",
+    "test_locscale_grad.jl",
+    "test_locscale_infer.jl",
+    "test_locscale_profile.jl",
+    "test_optimizer_robustness.jl",
+    "test_locscale_gamma_e2e.jl",
+    "test_locscale_phylo_e2e.jl",
+    "test_locscale_frontend.jl"
+  ],
+  "completed_files_with_tests": [
+    "test_locscale_kernels.jl",
+    "test_locscale_inner.jl",
+    "test_locscale_marginal.jl",
+    "test_locscale_fit.jl",
+    "test_locscale_grad.jl",
+    "test_locscale_infer.jl",
+    "test_optimizer_robustness.jl",
+    "test_locscale_gamma_e2e.jl",
+    "test_locscale_phylo_e2e.jl",
+    "test_locscale_frontend.jl"
+  ],
+  "fully_gated_file": "test_locscale_profile.jl",
+  "skipped_testsets": [
+    "[ Info: locscale profile reference cross-check skipped (~minutes); set DRM_SLOW_TESTS=1 to run",
+    "[ Info: locscale full-vector confint(:profile) testset skipped (~8+ min); set DRM_SLOW_TESTS=1 to run"
+  ],
+  "incomplete_files": [
+    "test_locscale_structured.jl"
+  ],
+  "not_started_files": [
+    "test_sigma_axis_re.jl",
+    "test_nonconst_sigma_re.jl"
+  ],
+  "summaries": [
+    "location\u2013scale kernels: analytic grad/Hessian vs ForwardDiff | 1500   1500  1.5s",
+    "location\u2013scale kernels: \u03b7-axis matches the fixed-dispersion kernels |   15     15  0.0s",
+    "location\u2013scale \u039b log-Cholesky round-trip |    9      9  0.2s",
+    "location\u2013scale inner joint: grad/Hessian vs ForwardDiff |    4      4  7.7s",
+    "location\u2013scale inner mode reaches a stationary point |    3      3  0.3s",
+    "location\u2013scale Laplace marginal vs 2-D Gauss\u2013Hermite (single group) |    4      4  0.6s",
+    "location\u2013scale marginal: multi-group i.i.d. factorises over groups |    2      2  0.0s",
+    "location\u2013scale fit: i.i.d. groups (NB2) end-to-end smoke |    5      5  16.0s",
+    "location\u2013scale fit: phylogenetic tree (NB2) end-to-end smoke |    3      3  2.1s",
+    "location\u2013scale fit: gradient-based convergence + recovery (NB2) |    6      6  12.6s",
+    "location\u2013scale exact gradient vs finite differences |    6      6  0.5s",
+    "location\u2013scale observed information vs nll second differences |    2      2  0.5s",
+    "location\u2013scale fit attaches valid vcov / SEs / components |    9      9  4.2s",
+    "optimizer robustness / mode accuracy (#314, #317, #325.4) |   20     20  2m05.0s",
+    "location\u2013scale Gamma: end-to-end fit + inference |    6      6  5.5s",
+    "phylogenetic location\u2013scale: end-to-end fit + inference (NB2) |    6      6  1m14.6s",
+    "drm() location\u2013scale routing via (1|p|group) |   10     10  32.3s",
+    "drm() location\u2013scale: a lone coupled tag is an error |    1      1  0.1s"
+  ],
+  "scope": "Partial capped default run; two substantive profile testsets skipped; no complete-group/full-suite/native-R/calibration/performance claim"
+}

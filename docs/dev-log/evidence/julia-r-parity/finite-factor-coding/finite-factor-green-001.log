@@ -1,0 +1,28 @@
+ERROR: LoadError: Some tests did not pass: 4 passed, 0 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:71
+finite-state native factor coding contract: Error During Test at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:71
+  Got exception outside of a @test
+  ArgumentError: joint missing-predictor frontend: finite-state marker contrasts do not match declared levels
+  Stacktrace:
+    [1] _joint_finite_state_column_map(Xstate::Array{Float64, 3}, K::Int64)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_frontend.jl:490
+    [2] _joint_finite_native_state_design(f::DrmFormula, data::@NamedTuple{y::Vector{Float64}, x::Vector{Union{Missing, String}}, a::Vector{String}, b::Vector{String}, z::Vector{Float64}}, variable::Symbol, labels::Vector{String}, predictor::Symbol)
+      @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/joint_missing_frontend.jl:521
+    [3] macro expansion
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:87 [inlined]
+    [4] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [5] top-level scope
+      @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+    [6] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [7] top-level scope
+      @ none:1
+    [8] eval
+      @ Core ./boot.jl:385 [inlined]
+    [9] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [10] _start()
+      @ Base ./client.jl:552
+Test Summary:                              | Pass  Error  Total  Time
+finite-state native factor coding contract |    4      1      5  5.8s

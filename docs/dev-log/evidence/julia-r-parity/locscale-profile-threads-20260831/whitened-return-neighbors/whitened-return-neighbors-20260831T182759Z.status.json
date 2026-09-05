@@ -1,0 +1,16 @@
+{
+  "command": [
+    "julia",
+    "--project=.",
+    "--startup-file=no",
+    "--history-file=no",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-return-neighbors/diagnose.jl",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-return-neighbors/whitened-return-neighbors-20260831T182759Z.jls"
+  ],
+  "script_sha256": "2368c8f752b5273fe5dca5ac13a9b79be58eaad054648253e9e5f40825e1c5d6",
+  "wall_seconds": 3.333838541060686,
+  "hard_cap_seconds": 30,
+  "timed_out": false,
+  "returncode": 0,
+  "pid": 54144
+}

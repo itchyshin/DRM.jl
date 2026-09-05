@@ -1,0 +1,44 @@
+{
+  "status": "UNACCEPTED_CANDIDATE_REVIEW_AND_REGRESSIONS_PENDING",
+  "files": [
+    {
+      "file": "src/locscale_inner.jl",
+      "sha256": "7f9571e775cef5cced81ab124a77f284225b85f57a4a054e565b36ddfe04fae0"
+    },
+    {
+      "file": "test/test_locscale_inner_status.jl",
+      "sha256": "08b48beb1446cf4276d207d6840676f0c5c4aa4d23526f4323d61720e0d214a4"
+    },
+    {
+      "file": "locscale_tracked_prior-green-001.log",
+      "sha256": "6b722d61dce6e9926585937fef486683e319b4e392d7b803c42987a1dcaa5db7"
+    },
+    {
+      "file": "locscale_tracked_prior-green-002.log",
+      "sha256": "d6e7af29bc59f6642211cd79ef9dbfed549b12410a969f1d5e32a6aff52b4448"
+    },
+    {
+      "file": "locscale_tracked_prior-green-003.log",
+      "sha256": "4d5689b48f8bf2028e620c6f700349d0feffa695e51299721e5392d11fed1fd1"
+    },
+    {
+      "file": "locscale_tracked_prior-green-004.log",
+      "sha256": "505d47b5b02cfc8d0456d399929824174c000784cd9ec865715038d372d6e8a2"
+    },
+    {
+      "file": "locscale_tracked_prior-green-005.log",
+      "sha256": "e0003237497f427b8fab8f2964f3ef5cd82ca195e8172894e063883130785b92"
+    },
+    {
+      "file": "locscale_tracked_prior-red-001.log",
+      "sha256": "f3eafb43bae2736637a3e8ddf30399b0dd755f24fc877736b862f1283fa8051a"
+    },
+    {
+      "file": "locscale_tracked_prior-six-state-001.log",
+      "sha256": "8e2eb69bd3c6f77c80eb06f060cb2176229770660a055cc7a26c7fb0d87cbd99"
+    }
+  ],
+  "focused": "green005:78existing+29new; prior failed attempts retained",
+  "independent_oracle": "varied-oracle-tracked001:294pass; tracked-negative001:198pass96expectedfail",
+  "scope": "No integrated correctness, performance or global gate claim"
+}

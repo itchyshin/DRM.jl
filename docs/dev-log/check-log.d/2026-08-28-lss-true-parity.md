@@ -1,0 +1,1 @@
+| 2026-08-28 | LSS True Parity Arc (#558, #559, #551, Row 12) | Noether, Fisher, Curie, Hopper, Rose | REML + missing responses + O(p) sparse LSS engine + Capability Row 12 covered | 221/221 tests pass; CLOSURE: PASS |

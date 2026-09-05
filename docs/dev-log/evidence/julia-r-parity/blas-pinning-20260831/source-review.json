@@ -1,0 +1,13 @@
+{
+  "base_head": "39150792e4ed8c3cdbd38760901ef5641e63d1a7",
+  "source": {
+    "src/inference.jl": "c0675b16ec4b0c64acfa81a45543959b256fb8e5b200c50c704b4aafb585bc0e",
+    "test/test_inference_blas_pinning.jl": "82a0499af5f348c2ed1aae1eb06dbdf5ee629b16488d1ed05a74ca74de20123f",
+    "test/runtests.jl": "cc26ddf5ee55170052ff4c386dcb9ac3309a0d1966b78b408bb8131c3355a74c"
+  },
+  "red_test_reconstruction": "Recovered exact stage-1 bytes by removing the added initially-one-thread test; SHA256 matches original pre-run red receipt.",
+  "red_runtime": "Mac Julia1.10.0,4Julia threads;13pass1fail;2==1failed at overlap assertion",
+  "local_green": "unlazyB1/B2 pass17assertions each at1and4Julia threads; runnerexit1onlybecause manualB3reviewwasunmarked",
+  "source_review": "Rose Sol/high approved bounded lock/referencecount repair; external uncoordinated BLAS changes outside contract",
+  "totoro_regression": "Complete: five files,181testset assertions+1finalBLASassertion,58s,exit0;327hashesverified;fourJulia/initial4/final4BLAS. See totoro-receipt.json."
+}

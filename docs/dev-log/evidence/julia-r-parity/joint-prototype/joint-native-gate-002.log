@@ -1,0 +1,30 @@
+APPROVAL REQUIRED leaf-S9-joint-native:G1
+    CHECK: JULIA_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 julia --project=. tools/check_joint_predictor_reference.jl test/fixtures/joint_missing_predictor/native_reference.toml /private/tmp/drm-parity-20260830/joint-native-002.toml > /private/tmp/drm-parity-20260830/joint-native-002.raw.log 2>&1; run_status=$?; cat /private/tmp/drm-parity-20260830/joint-native-002.raw.log; exit "$run_status"
+    EXPECT: JOINT_REFERENCE_EXECUTED cases=2 rows=320
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg02PZEgp:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+gate-check: could not record approval for leaf-S9-joint-native:G1: EPERM: operation not permitted, open '/Users/z3437171/.unlazy/approved/7f31f309c7588c4b07144d77a2e9c4130525e6122118949d648d2f64b7113048.json.lock'
+APPROVAL REQUIRED leaf-S9-joint-native:G2
+    CHECK: /opt/homebrew/bin/python3 tools/check_joint_predictor_receipt.py test/fixtures/joint_missing_predictor/native_reference.toml /private/tmp/drm-parity-20260830/joint-native-002.toml .
+    EXPECT: JOINT_RECEIPT_PASS cases=2 rows=320 likelihoods=2 conditional_moments=640
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg02PZEgp:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+gate-check: could not record approval for leaf-S9-joint-native:G2: EPERM: operation not permitted, open '/Users/z3437171/.unlazy/approved/a9104ac341ee0e0881d169884b2a0f3f571d28a93fb330b6e388a0bdc17a52cb.json.lock'
+APPROVAL REQUIRED leaf-S9-joint-native:G3
+    CHECK: /opt/homebrew/bin/python3 tools/test_joint_predictor_receipt.py test/fixtures/joint_missing_predictor/native_reference.toml /private/tmp/drm-parity-20260830/joint-native-002.toml .
+    EXPECT: JOINT_RECEIPT_NEGATIVES_PASS=11
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg02PZEgp:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+gate-check: could not record approval for leaf-S9-joint-native:G3: EPERM: operation not permitted, open '/Users/z3437171/.unlazy/approved/5c8c944f6176b4432de44ebf8d402a81748abfba73eb418ea1c7cf173ae08d15.json.lock'
+APPROVAL REQUIRED leaf-S9-joint-native:G4
+    CHECK: /opt/homebrew/bin/python3 -O tools/test_joint_predictor_receipt.py test/fixtures/joint_missing_predictor/native_reference.toml /private/tmp/drm-parity-20260830/joint-native-002.toml .
+    EXPECT: JOINT_RECEIPT_NEGATIVES_PASS=11
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH: /opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/z3437171/.codex/tmp/arg0/codex-arg02PZEgp:/Users/z3437171/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/z3437171/.antigravity-ide/antigravity-ide/bin:/Users/z3437171/.antigravity/antigravity/bin:/Users/z3437171/miniconda3/bi...
+gate-check: could not record approval for leaf-S9-joint-native:G4: EPERM: operation not permitted, open '/Users/z3437171/.unlazy/approved/da9a885dc7fba92bae18a6f51c26d5c28e5b59e44b62f2a1291d74cce86a0ece.json.lock'
+leaf-S9-joint-native.md: 4 gates
+gate-check: infrastructure failure prevented 4 approval(s)

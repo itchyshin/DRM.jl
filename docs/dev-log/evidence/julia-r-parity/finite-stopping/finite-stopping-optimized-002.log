@@ -1,0 +1,2 @@
+FINITE_STOPPING_DIAGNOSTIC_PASS {'ordinal': {'native_max_gradient': 0.001573169705340634, 'julia_independent_max_gradient': 1.1368683772161601e-08, 'displacement_residual_max': 6.356001848094714e-11}, 'categorical': {'native_max_gradient': 0.0009399121840727998, 'julia_independent_max_gradient': 8.526512829121202e-09, 'displacement_residual_max': 1.9967956024348845e-10}}
+FINITE_STOPPING_DAMAGES_REJECTED 6

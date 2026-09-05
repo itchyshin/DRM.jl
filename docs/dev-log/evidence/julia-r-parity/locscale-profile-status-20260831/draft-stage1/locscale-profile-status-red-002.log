@@ -1,0 +1,102 @@
+┌ Info: canonical location-scale profile status fixture
+│   attempted = 1
+│   failed = 1
+│   lower_reason = :not_converged
+└   upper_reason = :not_converged
+ERROR: LoadError: Some tests did not pass: 67 passed, 2 failed, 2 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:27
+valid roots and no-crossing remain distinct: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:72
+  Expression: shifted.value == 2.0
+   Evaluated: 1.9999999535388526 == 2.0
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:72 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:59 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:28
+valid roots and no-crossing remain distinct: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:74
+  Expression: shifted.residual == 0.0
+   Evaluated: 9.292229696811205e-8 == 0.0
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:74 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:59 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:28
+valid roots and no-crossing remain distinct: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:58
+  Got exception outside of a @test
+  DomainError with 1.0:
+  test evaluation failure
+  Stacktrace:
+    [1] (::var"#callback_error#15")(t::Float64)
+      @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:120
+    [2] (::DRM.var"#evaluate#1027"{Float64, var"#callback_error#15", Float64, Base.RefValue{Any}, Base.RefValue{Int64}, Base.RefValue{Int64}})(t::Float64)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_profile.jl:154
+    [3] _ls_profile_root_result(evalh::var"#callback_error#15", x0::Float64; dir::Float64, init::Float64, maxexpand::Int64, maxnewton::Int64, ftol::Float64, xtol::Float64)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_profile.jl:182
+    [4] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:121 [inlined]
+    [5] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [6] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:59 [inlined]
+    [7] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [8] top-level scope
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:28
+    [9] include(mod::Module, _path::String)
+      @ Base ./Base.jl:495
+   [10] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:318
+   [11] _start()
+      @ Base ./client.jl:552
+absolute-NLL cancellation cannot certify a root: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:138
+  Got exception outside of a @test
+  MethodError: no method matching _ls_profile_root_result(::var"#rounded#17"{Float64, Float64}, ::Float64; dir::Float64, init::Float64, cancellation::Float64)
+  
+  Closest candidates are:
+    _ls_profile_root_result(::Any, ::Any; dir, init, maxexpand, maxnewton, ftol, xtol) got unsupported keyword argument "cancellation"
+     @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_profile.jl:146
+  
+  Stacktrace:
+   [1] kwerr(::@NamedTuple{dir::Float64, init::Float64, cancellation::Float64}, ::Function, ::Function, ::Float64)
+     @ Base ./error.jl:165
+   [2] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:145 [inlined]
+   [3] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [4] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:139 [inlined]
+   [5] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [6] top-level scope
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:28
+   [7] include(mod::Module, _path::String)
+     @ Base ./Base.jl:495
+   [8] exec_options(opts::Base.JLOptions)
+     @ Base ./client.jl:318
+   [9] _start()
+     @ Base ./client.jl:552
+Test Summary:                                               | Pass  Fail  Error  Total   Time
+location-scale profile endpoint status                      |   67     2      2     71  36.6s
+  iteration limits are not certified endpoints              |   14                  14   0.1s
+  valid roots and no-crossing remain distinct               |   30     2      1     33   2.7s
+  absolute-NLL cancellation cannot certify a root           |    2            1      3   0.4s
+  finite exhausted nuisance solution is rejected            |    8                   8   3.2s
+  public canonical result propagates failed-arm diagnostics |   13                  13  30.2s

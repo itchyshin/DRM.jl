@@ -1,0 +1,1 @@
+| 2026-08-30 | **Production documentation checkpoint** (#563) | Strict52pages/122examples111.082s; theme6.94s; static53HTML/0failures; navigation16 + inventory8 + HTML8; Rose | Local source/theme pass; mobile/live and fullG0–G8 open | Ada + Pat + Rose |

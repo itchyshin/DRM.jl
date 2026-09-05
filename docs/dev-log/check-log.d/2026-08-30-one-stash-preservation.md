@@ -1,0 +1,1 @@
+| 2026-08-30 | **One R stash preserved** (#563) | Optimized-Python corruption test + exact saved-base replay + Rose immutable review | 1 bounded gate met; superseded WIP retained, zero retirements; full G1 open | Ada + Rose |

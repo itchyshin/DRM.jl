@@ -1,0 +1,17 @@
+RUNTIME julia=1.10.0 threads=4 blas=1 source=/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl
+Test Summary:                              | Pass  Total   Time
+finite-state native factor coding contract |  109    109  21.1s
+FINITE_JOINT_FACTOR_CODING_TEST_READY
+Test Summary:                                                       | Pass  Total  Time
+finite-state direct formula frontend API and ordinal payload design |   33     33  4.8s
+Test Summary:                                          | Pass  Total  Time
+finite-state contrast construction and marker ordering |   16     16  1.2s
+Test Summary:                                    | Pass  Total  Time
+finite-state categorical direct formula frontend |   12     12  0.4s
+Test Summary:                                 | Pass  Total  Time
+finite-state direct frontend admission guards |   25     25  2.4s
+FINITE_JOINT_FRONTEND_TEST_READY
+Test Summary:                             | Pass  Total  Time
+finite fits in separate thread workspaces |   82     82  0.1s
+FINITE_PARALLEL_THREADS 1,2,3,4
+FINITE_PARALLEL_PILOT_PASS cases=2 serial=2 concurrent=8

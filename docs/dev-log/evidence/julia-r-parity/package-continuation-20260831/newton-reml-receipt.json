@@ -1,0 +1,25 @@
+{
+  "source_head": "d9d29ef4c89e9cd69473fcdfaf96ee98853be53e",
+  "runtime": "Julia 1.10.10",
+  "host": "Totoro",
+  "julia_threads": 1,
+  "blas_threads": 1,
+  "expected_source_hashes": 326,
+  "source_unchanged": true,
+  "elapsed_seconds": 107,
+  "exit_status": 0,
+  "file_complete": true,
+  "passing_assertions": 39,
+  "testsets": 8,
+  "summaries": [
+    "REML \u03c3-phylo: clean-gradient refit matches FD-REML (asymmetric route) |    3      3  24.7s",
+    "REML \u03c3-phylo: observed-information Newton (asymmetric route) |    4      4  1.5s",
+    "REML \u03c3-phylo: observed-info Newton, separate block (both axes, K=2) |    5      5  1.8s",
+    "REML \u03c3-phylo: no crash at the variance boundary (homoscedastic data) |   12     12  9.0s",
+    "REML \u03c3-phylo: collinear mean design \u21d2 NaN loglik, not a 1e18-poisoned value |    2      2  6.9s",
+    "REML \u03c3-phylo: asymmetric route, weak \u03c3-signal \u2014 returns a fit, does not throw |    2      2  15.0s",
+    "REML \u03c3-phylo: missing responses compose (drm + bridge), Ayumi #2 |    6      6  9.8s",
+    "REML \u03c3-phylo: boundary inference exposed (confint + bridge), Ayumi #2 |    5      5  37.6s"
+  ],
+  "scope": "Entire unchanged test_reml_newton_sigma_phylo.jl only; not full-suite, R parity, coverage or warm timing evidence"
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/Users/z3437171/.julia/artifacts/34a516c9d97d925f9ae668de15ecaa6eeeb8df32/bin/node",
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-production-002/node_modules/vitepress/dist/node/cli.js",
+    "build",
+    "/private/tmp/drm-parity-20260830/integration/DRM.jl/docs/build/integration-production-002/.documenter"
+  ],
+  "exit_code": 0,
+  "elapsed": 8.803445874946192,
+  "timeout": false,
+  "scope": "all-page local Vitepress HTML rendering; no deployment"
+}

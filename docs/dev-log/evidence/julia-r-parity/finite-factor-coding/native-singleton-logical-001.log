@@ -1,0 +1,13 @@
+Error in `drm_build_ordinal_missing_predictor_model()` at drmTMB/R/missing-data.R:1171:5:
+! `miss_control(predictor = "model")` requires at least one missing
+  `mi()` predictor value.
+ℹ Use ordinary predictor syntax when `x` is complete.
+Backtrace:
+    ▆
+ 1. └─drmTMB:::drm_julia_joint_prepare(...)
+ 2.   └─drmTMB:::drm_build_gaussian_ls_spec(...) at drmTMB/R/julia-joint-missing.R:264:3
+ 3.     └─drmTMB:::drm_build_gaussian_missing_predictor_model(...) at drmTMB/R/drmTMB.R:3585:3
+ 4.       └─drmTMB:::drm_build_ordinal_missing_predictor_model(setup, data_model, env = env) at drmTMB/R/missing-data.R:1171:5
+ 5.         └─cli::cli_abort(...) at drmTMB/R/missing-data.R:1558:5
+ 6.           └─rlang::abort(...)
+Execution halted

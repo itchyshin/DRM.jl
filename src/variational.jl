@@ -7,33 +7,58 @@
 """
     MarginalMethod
 
-How a model's random-effect integral is approximated. Subtypes: [`Laplace`](@ref)
-(mode + curvature; the default, what drmTMB/TMB use) and [`Variational`](@ref)
-(maximize an ELBO over a Gaussian q; opt-in, steadier on dispersion/shape — #136).
+How a model's random-effect integral is approximated. Subtypes: `Laplace`
+(mode + curvature; the default, what drmTMB/TMB use), `Variational`
+(maximize an ELBO over a Gaussian q; opt-in, steadier on dispersion/shape — #136),
+and `AGHQ` (1-D Liu–Pierce adaptive Gauss–Hermite; opt-in Poisson `(1 | g)` only — #448).
 """
 abstract type MarginalMethod end
 
 """    Laplace <: MarginalMethod
 
-Laplace marginal: Gaussian approximation at the posterior mode. The default."""
+Laplace marginal: Gaussian approximation at the posterior mode. The default.
+On Poisson `(1 | g)` the public `:LA` path is **non-adaptive GHQ-32**, not
+1-point Laplace and not AGHQ."""
 struct Laplace <: MarginalMethod end
 
 """    Variational <: MarginalMethod
 
-Gaussian-variational (VA/ELBO) marginal — opt-in alternative to [`Laplace`](@ref)
+Gaussian-variational (VA/ELBO) marginal — opt-in alternative to `Laplace`
 for bias-sensitive random-effect models (#136). Public `drm` path (Experimental):
 Poisson / Binomial / NegBinomial2 / Gamma / Beta random intercept `(1 | g)` via
 `marginal = :VA` (scale families need `sigma ~ 1`). Phylo, crossed, correlated
 slopes, ZI/hu, and 136e stay unwired; #136 stays open."""
 struct Variational <: MarginalMethod end
 
-# Resolve a user-facing `method` symbol (:LA/:VA, case-insensitive) to a type.
+"""    AGHQ <: MarginalMethod
+
+1-D Liu–Pierce adaptive Gauss–Hermite quadrature (#448). Opt-in via
+`marginal = :AGHQ` on Poisson `(1 | g)` only (`nAGQ=5` default). This is
+plumbing — k=1 ≡ 1-point Laplace; k≈5 nll agrees with GHQ-32. Not a
+recovery headline, not a capability-chip flip, not tensor AGHQ on phylo
+Laplace. `:REML` is not wired to `:AGHQ` this slice."""
+struct AGHQ <: MarginalMethod end
+
+# Resolve a user-facing `method` symbol (:LA/:VA/:AGHQ, case-insensitive) to a type.
 _marginal_method(m::MarginalMethod) = m
 function _marginal_method(s::Symbol)
     t = Symbol(uppercase(String(s)))
     t === :LA && return Laplace()
     t === :VA && return Variational()
-    throw(ArgumentError("unknown marginal method `:$s`; use :LA (Laplace, default) or :VA (variational, #136)"))
+    t === :AGHQ && return AGHQ()
+    throw(ArgumentError("unknown marginal method `:$s`; use :LA (Laplace, default), :VA (variational, #136), or :AGHQ (1-D Liu–Pierce, Poisson (1|g) only, #448)"))
+end
+
+# Route-or-reject for the public `marginal = :AGHQ` front end (#448). The only
+# certified cell this slice is Poisson `(1 | g)`. Every other family or
+# structure must error rather than silently falling back to GHQ-32 / Laplace
+# (that would mislabel `loglik` as AGHQ).
+function _aghq_reject(fam, what)
+    throw(ArgumentError(
+        "marginal = :AGHQ (1-D Liu–Pierce, #448) is not available for $(nameof(typeof(fam)))() with $what. " *
+        "The public AGHQ path covers Poisson with a single random intercept `(1 | g)` only. " *
+        "Phylo, crossed, relmat, `(1 + x | g)`, associate_pairs QuadGK, and other families stay on " *
+        "marginal = :LA (the default; on `(1 | g)` that is GHQ-32, not AGHQ)."))
 end
 
 # Generic stub entry point. Public VA kernels live on the per-family
@@ -66,23 +91,50 @@ function _va_reject(fam, what)
         "Use marginal = :LA (Laplace, the default) for this model."))
 end
 
-# `method` is the Gaussian ML/REML selector. LA/VA is `marginal` (Q1 / #136).
+# `method` is the ML/REML selector. LA/VA is `marginal` (Q1 / #136).
 # Non-Gaussian `drm()` accepts `method = :ML` as a no-op and rejects `:VA`/`:LA`
 # with a pointer to `marginal`, matching the Poisson Arc 0 message.
-function _reject_method_as_marginal(fam, method)
+#
+# `allow_reml` opens the opt-in Cox–Reid restricted route (#443). A family only sets it
+# when at least one of its routes can honour `:REML`; the family's route dispatch is then
+# responsible for calling `_reject_reml_route` on the routes that cannot. Returns the
+# normalised selector (`nothing` / `:ML` / `:REML`) so the caller can branch on it.
+function _reject_method_as_marginal(fam, method; allow_reml::Bool = false)
     method === nothing && return nothing
     ms = Symbol(uppercase(String(method)))
     famname = nameof(typeof(fam))
-    if ms === :VA || ms === :LA
+    if ms === :VA || ms === :LA || ms === :AGHQ
         throw(ArgumentError(
-            "drm ($famname): `method = :$ms` is not the Laplace/VA selector. " *
-            "Use `marginal = :$ms` (`:LA` default Laplace; `:VA` opt-in ELBO, #136). " *
-            "`method` is reserved for `:ML`/`:REML` on Gaussian models."))
+            "drm ($famname): `method = :$ms` is not the Laplace/VA/AGHQ selector. " *
+            "Use `marginal = :$ms` (`:LA` default; `:VA` opt-in ELBO, #136; " *
+            "`:AGHQ` 1-D Liu–Pierce on Poisson (1|g) only, #448). " *
+            "`method` is reserved for `:ML`/`:REML`."))
     end
-    ms === :ML && return nothing
+    ms === :ML && return :ML
+    if ms === :REML
+        allow_reml && return :REML
+        throw(ArgumentError(
+            "drm ($famname): unknown `method = :$method`. $famname is ML-only; " *
+            "for Laplace vs variational vs AGHQ use `marginal = :LA`, `:VA` (#136), or `:AGHQ` (#448)."))
+    end
     throw(ArgumentError(
         "drm ($famname): unknown `method = :$method`. $famname is ML-only; " *
-        "for Laplace vs variational use `marginal = :LA` or `marginal = :VA` (#136)."))
+        "for Laplace vs variational vs AGHQ use `marginal = :LA`, `:VA` (#136), or `:AGHQ` (#448)."))
+end
+
+# `method = :REML` reached a route the restricted (Cox–Reid) objective is not certified
+# on. Erroring is the honest answer: silently falling back to ML would report
+# `estimation_method(fit) === :ML` for a caller who asked for REML, and silently applying
+# the penalty would ship an uncharacterised estimator. `what` names the offending
+# structure. Scope and evidence: #443, probe #441.
+function _reject_reml_route(fam, what)
+    famname = nameof(typeof(fam))
+    throw(ArgumentError(
+        "drm ($famname): `method = :REML` is not available with $what. " *
+        "Restricted (Cox–Reid) estimation on non-Gaussian families is currently wired " *
+        "for Poisson scalar `(1 | g)` (#443) and Poisson phylo/relmat/animal Laplace " *
+        "(#450). ML is the default and is available here: omit `method` or pass " *
+        "`method = :ML`."))
 end
 
 # ──────────────────────────────────────────────────────────────────────────────

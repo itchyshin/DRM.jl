@@ -73,14 +73,22 @@ import Distributions
         Q = sparse(1.0 * I, G, G)
         θ̂ = [0.3, 0.4, 0.1, -0.05, log(0.4), 0.1, log(0.5)]
 
-        ci_def = DRM._ls_profile_ci(Val(:nb2), y, Xμ, Xψ, gidx, G, Q, θ̂; idx = 2, level = 0.95)
+        # This hand-written θ̂ is a loading-contract reference, not a fitted
+        # optimum. Strict nuisance checks may therefore report an explicit
+        # failed endpoint; the contract here is that omitted and explicitly
+        # canonical loadings produce the same complete result and diagnostics.
+        ci_def = DRM._ls_profile_ci_result(
+            Val(:nb2), y, Xμ, Xψ, gidx, G, Q, θ̂; idx = 2, level = 0.95,
+        )
         Zη = DRM._ls_canonical_Zeta(n); Zψ = DRM._ls_canonical_Zpsi(n)
-        ci_exp = DRM._ls_profile_ci(Val(:nb2), y, Xμ, Xψ, gidx, G, Q, θ̂;
-                                    idx = 2, level = 0.95, Zη = Zη, Zψ = Zψ)
-        @test ci_def.lower == ci_exp.lower    # explicit canonical == default
-        @test ci_def.upper == ci_exp.upper
-        @test isfinite(ci_def.lower) && isfinite(ci_def.upper)
-        @test ci_def.lower < θ̂[2] < ci_def.upper
+        ci_exp = DRM._ls_profile_ci_result(
+            Val(:nb2), y, Xμ, Xψ, gidx, G, Q, θ̂;
+            idx = 2, level = 0.95, Zη = Zη, Zψ = Zψ,
+        )
+        @test isequal(ci_def, ci_exp)          # explicit canonical == default
+        @test all(s -> s.accepted || s.endpoint_failed || s.unbounded,
+                  (ci_def.lower_status, ci_def.upper_status))
+        @test !isnan(ci_def.lower) && !isnan(ci_def.upper)
     end
 
     # ---------------------------------------------------------------------------

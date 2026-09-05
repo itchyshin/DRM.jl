@@ -74,7 +74,7 @@ const _ASSOC_BOUND = 8.0
 _assoc_eta(alpha) = _ASSOC_ETA_GUARD * tanh(alpha)
 
 """
-    associate_pairs(fit_1, fit_2; kernel, association = nothing)
+    associate_pairs(fit_1, fit_2; kernel, association = nothing, marginal = :LA)
 
 Estimate a staged latent-normal association between two **already-fitted**
 univariate models — drmTMB's `associate_pairs()`.
@@ -99,7 +99,15 @@ a.eta
 ```
 """
 function associate_pairs(fit_1::DrmFit, fit_2::DrmFit; kernel = nothing,
-                         association = nothing)
+                         association = nothing, marginal::Symbol = :LA)
+    # QuadGK rectangle integration (when used) is not Liu–Pierce AGHQ. Reject
+    # the keyword rather than silently relabelling (#448).
+    if Symbol(uppercase(String(marginal))) === :AGHQ
+        throw(ArgumentError(
+            "associate_pairs: `marginal = :AGHQ` is not available (#448). " *
+            "Staged association uses a closed form or QuadGK rectangle integration — " *
+            "neither is 1-D Liu–Pierce AGHQ. Omit `marginal` or pass `:LA`."))
+    end
     kernel isa LatentNormal ||
         throw(ArgumentError("associate_pairs: supply an explicit " *
             "`kernel = latent_normal()` declaration — there is no implicit " *

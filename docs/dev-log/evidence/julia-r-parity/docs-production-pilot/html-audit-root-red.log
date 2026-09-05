@@ -1,0 +1,22 @@
+.....F
+======================================================================
+FAIL: test_valid_encoded_and_current_fragments (tools.tests.test_parity_html_audit.TestAudit.test_valid_encoded_and_current_fragments)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/DRM.jl/tools/tests/test_parity_html_audit.py", line 15, in test_valid_encoded_and_current_fragments
+    self.assertEqual(audit(root)[-1], [])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ['/private/var/folders/7x/ytfpq14s0v18frbm[54 chars]t /'] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+'/private/var/folders/7x/ytfpq14s0v18frbm9v_w9f4c0000gq/T/tmpvdjlsnuy/index.html: outside target /'
+
++ []
+- ['/private/var/folders/7x/ytfpq14s0v18frbm9v_w9f4c0000gq/T/tmpvdjlsnuy/index.html: '
+-  'outside target /']
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.052s
+
+FAILED (failures=1)

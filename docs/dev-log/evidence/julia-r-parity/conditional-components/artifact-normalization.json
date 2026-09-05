@@ -1,0 +1,21 @@
+{
+  "note": "Displayed log copies omit runtime PATH and trim trailing whitespace. Original run logs remain in /private/tmp/drm-parity-20260830. Numerical JSON receipts and source bytes are not altered. One archived CHECK line had trailing whitespace trimmed; its executed command remains in the ignored original ledger.",
+  "trailing_whitespace_changes": {
+    "leaf-S10-components-isolated-pure.md": {
+      "before_sha256": "f8b07d9d1f23dc52ebdd63edf9a7608ef26451695a6717d04e2725d49fd3136e",
+      "after_sha256": "1f7611fb398ba60d2766132775f5012a1d330de2ab943396fed2c56575b0fe6c"
+    },
+    "components-setup-failure-001.log": {
+      "before_sha256": "0113f71111f144b49a15741dc256e52a253397239308f3e48a45eaef3119968e",
+      "after_sha256": "1a9528b59beaf94def677adbccc83664f807f1fedfa72ce7de26a257092ba3f1"
+    },
+    "conditional-components-regression-001.raw.log": {
+      "before_sha256": "96caf231322b09864a5f3fa16f90274cc353215e3a6959deeb306ebc1f435f2d",
+      "after_sha256": "f425c67bf9ad4bf57039220e082aadf13ae56ec4b3f0dec6dfdab7063d437590"
+    },
+    "components-green-002.raw.log": {
+      "before_sha256": "b0b1c858356597792eaad26d1ef7f6c760f1f58381c1b84da42dedc6d03b16ec",
+      "after_sha256": "940ef48b72dd9762e0792ede8b0c47acb0a303e9e9605d30843706bb6d4f6f51"
+    }
+  }
+}

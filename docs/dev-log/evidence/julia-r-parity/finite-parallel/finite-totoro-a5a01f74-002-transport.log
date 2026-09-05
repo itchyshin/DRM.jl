@@ -1,0 +1,21 @@
+SOURCE_FILES_VERIFIED
+totoro
+ac0f38a058385f4dbd7074b14f7098cb59f2392e4f4724afe4fa89d3028e94f4  source.tar
+RUNTIME julia=1.10.10 threads=4 blas=1 source=/home/snakagaw/drm_parity_finite_a5a01f74_20260830_002/src/DRM.jl
+Test Summary:                              | Pass  Total   Time
+finite-state native factor coding contract |  109    109  28.0s
+FINITE_JOINT_FACTOR_CODING_TEST_READY
+Test Summary:                                                       | Pass  Total  Time
+finite-state direct formula frontend API and ordinal payload design |   33     33  5.2s
+Test Summary:                                          | Pass  Total  Time
+finite-state contrast construction and marker ordering |   16     16  1.9s
+Test Summary:                                    | Pass  Total  Time
+finite-state categorical direct formula frontend |   12     12  0.6s
+Test Summary:                                 | Pass  Total  Time
+finite-state direct frontend admission guards |   25     25  3.6s
+FINITE_JOINT_FRONTEND_TEST_READY
+Test Summary:                             | Pass  Total  Time
+finite fits in separate thread workspaces |   83     83  0.4s
+FINITE_PARALLEL_THREADS 1,2,3,4
+FINITE_PARALLEL_PILOT_PASS cases=2 serial=2 concurrent=8
+ELAPSED_SECONDS 46

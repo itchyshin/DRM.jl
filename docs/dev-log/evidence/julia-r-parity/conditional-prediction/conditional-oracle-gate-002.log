@@ -1,0 +1,15 @@
+APPROVAL REQUIRED leaf-S10-conditional-oracle:G2
+    CHECK: cd /private/tmp/drm-parity-20260830/DRM.jl && python3 tools/test_conditional_receipt.py /private/tmp/drm-parity-20260830/conditional-green-002.json
+    EXPECT: CHECKER_NORMAL_AND_OPTIMIZED_PASS=8
+    CWD: /private/tmp/drm-parity-20260830/DRM.jl
+    SHELL: /bin/sh
+    PATH=[local environment redacted; raw retained privately]
+    APPROVED: /Users/z3437171/.unlazy/approved/0ad4e1fa5d2fb214974e3b0b35baeefb2020db1ce510c391a5ddb9059cc6bc04.json
+  RUN  leaf-S10-conditional-oracle:G1 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=[local environment redacted; raw retained privately]
+  RUN  leaf-S10-conditional-oracle:G2 shell=/bin/sh cwd=/private/tmp/drm-parity-20260830/DRM.jl PATH=[local environment redacted; raw retained privately]
+  PASS leaf-S10-conditional-oracle:G1: All24adapter outputs pass independently recomputed comparisons; altered predictions and a missing row are rejected
+       exit=0; EXPECT=matched; output=CONDITIONAL_ADAPTER_RECOMPUTED=24; DAMAGED_REJECTED=6; MISSING_ROW_REJECTED=1 | Independent-fit parity is a separate gate; this checker does not close it.
+  PASS leaf-S10-conditional-oracle:G2: Acceptance remains fail-closed with Python optimization enabled
+       exit=0; EXPECT=matched; output=CHECKER_NORMAL_AND_OPTIMIZED_PASS=8
+leaf-S10-conditional-oracle.md: 2 gates
+ALL MET (2 met, reran: 2, previously met reverified: 1)

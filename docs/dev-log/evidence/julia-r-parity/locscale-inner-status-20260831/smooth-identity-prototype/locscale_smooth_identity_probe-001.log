@@ -1,0 +1,36 @@
+ERROR: LoadError: MethodError: no method matching _trigamma(::BigFloat)
+
+Closest candidates are:
+  _trigamma(!Matched::Union{Float32, ComplexF32})
+   @ SpecialFunctions ~/.julia/packages/SpecialFunctions/MPNkH/src/gamma.jl:524
+  _trigamma(!Matched::Union{Float16, ComplexF16})
+   @ SpecialFunctions ~/.julia/packages/SpecialFunctions/MPNkH/src/gamma.jl:524
+  _trigamma(!Matched::Union{Float64, ComplexF64})
+   @ SpecialFunctions ~/.julia/packages/SpecialFunctions/MPNkH/src/gamma.jl:65
+
+Stacktrace:
+ [1] trigamma(x::BigFloat)
+   @ SpecialFunctions ~/.julia/packages/SpecialFunctions/MPNkH/src/gamma.jl:63
+ [2] _ls_hess(::Val{:gamma}, y::BigFloat, η::BigFloat, ψ::BigFloat)
+   @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_kernels.jl:118
+ [3] (::var"#5#6"{@NamedTuple{kind::Val{:gamma}, y::Vector{Float64}, eta::Vector{Float64}, psi::Vector{Float64}, gidx::Vector{Int64}, G::Int64, P::SparseMatrixCSC{Float64, Int64}, Zeta::Matrix{Float64}, Zpsi::Matrix{Float64}, a::Vector{Float64}, trial::Vector{Float64}, grad::Vector{Float64}, step::Vector{Float64}, f0::Float64, ft::Float64, tol::Float64}, Vector{Float64}, Int64, Int64})()
+   @ Main /private/tmp/locscale_smooth_identity_probe.jl:72
+ [4] setprecision(f::var"#5#6"{@NamedTuple{kind::Val{:gamma}, y::Vector{Float64}, eta::Vector{Float64}, psi::Vector{Float64}, gidx::Vector{Int64}, G::Int64, P::SparseMatrixCSC{Float64, Int64}, Zeta::Matrix{Float64}, Zpsi::Matrix{Float64}, a::Vector{Float64}, trial::Vector{Float64}, grad::Vector{Float64}, step::Vector{Float64}, f0::Float64, ft::Float64, tol::Float64}, Vector{Float64}, Int64, Int64}, ::Type{BigFloat}, prec::Int64; kws::@Kwargs{})
+   @ Base.MPFR ./mpfr.jl:1041
+ [5] setprecision
+   @ ./mpfr.jl:1037 [inlined]
+ [6] smooth_components
+   @ /private/tmp/locscale_smooth_identity_probe.jl:53 [inlined]
+ [7] report_actual(name::String, s::@NamedTuple{kind::Val{:gamma}, y::Vector{Float64}, eta::Vector{Float64}, psi::Vector{Float64}, gidx::Vector{Int64}, G::Int64, P::SparseMatrixCSC{Float64, Int64}, Zeta::Matrix{Float64}, Zpsi::Matrix{Float64}, a::Vector{Float64}, trial::Vector{Float64}, grad::Vector{Float64}, step::Vector{Float64}, f0::Float64, ft::Float64, tol::Float64})
+   @ Main /private/tmp/locscale_smooth_identity_probe.jl:102
+ [8] top-level scope
+   @ /private/tmp/locscale_smooth_identity_probe.jl:135
+in expression starting at /private/tmp/locscale_smooth_identity_probe.jl:135
+STATE_SHA 040645c9751dbedd57bb7021937a388d5b3f1fda9c0d89309fdbb79be5ec849a
+QUADRATIC_CONTROL exact=0.161374999999999993331376013649958021035818417572004530529881599003172602305594 identity=0.161374999999999993331376013649958021035818417572004530529881599003172602305594 difference=0.0
+QUARTIC_CONTROL GL1 total=0.07660592800000000000000000000000000000000000000000000000000000000000000000000127 exact=0.07659355199999999999999999999999999999999999999999999999999999999999999999998226 difference=1.237600000000000000000000000000000000000000000000000000000000000000000001900952e-05
+QUARTIC_CONTROL GL2 total=0.07659355200000000000143407112292972937804000785031890502020802252974157608989101 exact=0.07659355199999999999999999999999999999999999999999999999999999999999999999998226 difference=1.434071122929729378040007850318905020208022529741576089908753843139632839908787e-21
+QUARTIC_CONTROL GL4 total=0.07659355199999999992618699778820326048192650035590442043347646986790740769348925 exact=0.07659355199999999999999999999999999999999999999999999999999999999999999999998226 difference=-7.381300221179673951807349964409557956652353013209259230649300915594404926595665e-20
+QUARTIC_CONTROL GL8 total=0.07659355200000000020260041832083683331702724270700622903384223232148325911567636 exact=0.07659355199999999999999999999999999999999999999999999999999999999999999999998226 difference=2.026004183208368333170272427070062290338422323214832591156940965627116570753501e-19
+CASE gamma SEGMENT_CLAMP_RANGES (eta = (0.19832304069859824, 1.0151411927741778), psi = (1.4072913779904714, 1.5738335417109073), nb2_rate = (-3.1476670834218146, -2.814582755980943))
+BITS 128 FULL_REFERENCE delta=-4.565766336920823564343432389216162899456727297980186160961156918713932384434884e-20

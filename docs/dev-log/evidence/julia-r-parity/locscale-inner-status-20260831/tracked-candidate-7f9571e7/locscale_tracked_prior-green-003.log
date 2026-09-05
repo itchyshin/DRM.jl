@@ -1,0 +1,36 @@
+ERROR: LoadError: Some tests did not pass: 12 passed, 0 failed, 2 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:472
+Test Summary:                                     | Pass  Total  Time
+location-scale inner-mode stationarity acceptance |   78     78  0.2s
+tracked prior directional arithmetic: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:39
+  Test threw exception
+  Expression: BigFloat(tracked.value) == reference
+  type NamedTuple has no field value
+  Stacktrace:
+   [1] getproperty(x::Nothing, f::Symbol)
+     @ Base ./Base.jl:37 [inlined]
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:39 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] _tracked_prior_tests()
+     @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:33
+tracked prior directional arithmetic: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:46
+  Test threw exception
+  Expression: sparse_tracked.value == tracked.value
+  type NamedTuple has no field value
+  Stacktrace:
+   [1] getproperty(x::Nothing, f::Symbol)
+     @ Base ./Base.jl:37 [inlined]
+   [2] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:669 [inlined]
+   [3] macro expansion
+     @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:46 [inlined]
+   [4] macro expansion
+     @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [5] _tracked_prior_tests()
+     @ Main /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_inner_status.jl:33
+Test Summary:                        | Pass  Error  Total  Time
+tracked prior directional arithmetic |   12      2     14  2.4s

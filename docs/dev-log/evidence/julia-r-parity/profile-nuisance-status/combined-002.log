@@ -1,0 +1,20 @@
+WARNING: using Distributions.Poisson in module Main conflicts with an existing identifier.
+Test Summary:                                  | Pass  Total  Time
+generic profile nuisance acceptance and status |   74     74  7.3s
+Test Summary:                          | Pass  Total  Time
+independent profile acceptance oracles |   13     13  0.4s
+Test Summary:                           | Pass  Total  Time
+bridge exposes selected profile failure |   10     10  0.1s
+Test Summary:                                        | Pass  Total  Time
+Profile-likelihood CI: confint(fit; method=:profile) |   27     27  5.2s
+Test Summary:                                 | Pass  Total  Time
+Gaussian crossed profile uses stored gradient |    9      9  5.0s
+Test Summary:                                   | Pass  Total  Time
+Profile CI on crossed Poisson random-effect SDs |    9      9  3.4s
+Test Summary:                                  | Pass  Total  Time
+Profile CI on the scale parameter (asymmetric) |   11     11  0.3s
+Test Summary:                | Pass  Total  Time
+visualization data providers |   23     23  3.6s
+Test Summary:                                  | Pass  Total  Time
+bridge profiles only the requested coefficient |   36     36  0.5s
+PROFILE_COMBINED_PASS

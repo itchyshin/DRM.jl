@@ -1,0 +1,134 @@
+{
+  "source_head": "479f1e06464d06592b2d845798a27fdd8a5ac544",
+  "source_hashes": 327,
+  "source_unchanged": true,
+  "hash_check": "against immutable git object",
+  "host": "Totoro",
+  "runtime": "Julia 1.10.10",
+  "julia_threads": 1,
+  "blas_threads": 1,
+  "elapsed_seconds": 65,
+  "exit_status": 0,
+  "group_complete": true,
+  "completed_files": [
+    "test_nbinom2_slope_re.jl",
+    "test_beta_slope_re.jl",
+    "test_gamma_slope_re.jl",
+    "test_nbinom2_re.jl",
+    "test_beta_re.jl",
+    "test_gamma_re.jl",
+    "test_student_re.jl",
+    "test_student_slope_re.jl",
+    "test_lognormal_re.jl",
+    "test_lognormal_slope_re.jl",
+    "test_betabinomial_re.jl",
+    "test_betabinomial_slope_re.jl",
+    "test_binomial.jl",
+    "test_binomial_re.jl",
+    "test_summary.jl"
+  ],
+  "incomplete_files": [],
+  "not_started_files": [],
+  "printed_passing_assertions": 91,
+  "testsets": 16,
+  "summaries": [
+    {
+      "file": "test_nbinom2_slope_re.jl",
+      "pass_count": 4,
+      "total": 4,
+      "summary": "NB2 correlated random slope (1+x|g) \u2014 recovery |    4      4  12.8s"
+    },
+    {
+      "file": "test_beta_slope_re.jl",
+      "pass_count": 4,
+      "total": 4,
+      "summary": "Beta correlated random slope (1+x|g) \u2014 recovery |    4      4  6.5s"
+    },
+    {
+      "file": "test_gamma_slope_re.jl",
+      "pass_count": 4,
+      "total": 4,
+      "summary": "Gamma correlated random slope (1+x|g) \u2014 recovery |    4      4  5.3s"
+    },
+    {
+      "file": "test_nbinom2_re.jl",
+      "pass_count": 5,
+      "total": 5,
+      "summary": "NB2 random intercept (1|g) \u2014 recovery |    5      5  1.5s"
+    },
+    {
+      "file": "test_beta_re.jl",
+      "pass_count": 4,
+      "total": 4,
+      "summary": "Beta random intercept (1|g) \u2014 recovery |    4      4  1.6s"
+    },
+    {
+      "file": "test_gamma_re.jl",
+      "pass_count": 4,
+      "total": 4,
+      "summary": "Gamma random intercept (1|g) \u2014 recovery |    4      4  1.6s"
+    },
+    {
+      "file": "test_student_re.jl",
+      "pass_count": 5,
+      "total": 5,
+      "summary": "Student-t random intercept (1|g) \u2014 recovery |    5      5  2.3s"
+    },
+    {
+      "file": "test_student_slope_re.jl",
+      "pass_count": 6,
+      "total": 6,
+      "summary": "Student-t correlated random slope (1+x|g) \u2014 recovery |    6      6  4.9s"
+    },
+    {
+      "file": "test_lognormal_re.jl",
+      "pass_count": 4,
+      "total": 4,
+      "summary": "LogNormal random intercept (1|g) \u2014 recovery |    4      4  1.5s"
+    },
+    {
+      "file": "test_lognormal_slope_re.jl",
+      "pass_count": 4,
+      "total": 4,
+      "summary": "LogNormal correlated random slope (1+x|g) \u2014 recovery |    4      4  2.8s"
+    },
+    {
+      "file": "test_betabinomial_re.jl",
+      "pass_count": 5,
+      "total": 5,
+      "summary": "Beta-binomial random intercept (1|g) \u2014 recovery |    5      5  3.5s"
+    },
+    {
+      "file": "test_betabinomial_slope_re.jl",
+      "pass_count": 6,
+      "total": 6,
+      "summary": "Beta-binomial correlated random slope (1+x|g) \u2014 recovery |    6      6  12.0s"
+    },
+    {
+      "file": "test_binomial.jl",
+      "pass_count": 5,
+      "total": 5,
+      "summary": "Binomial cbind(s, f) ~ x \u2014 logit \u03b2 recovery |    5      5  1.6s"
+    },
+    {
+      "file": "test_binomial.jl",
+      "pass_count": 6,
+      "total": 6,
+      "summary": "Binomial 0/1 Bernoulli y ~ x \u2014 logit \u03b2 recovery |    6      6  0.6s"
+    },
+    {
+      "file": "test_binomial_re.jl",
+      "pass_count": 7,
+      "total": 7,
+      "summary": "Binomial logistic GLMM (1|g) \u2014 \u03c3_b recovery |    7      7  1.7s"
+    },
+    {
+      "file": "test_summary.jl",
+      "pass_count": 18,
+      "total": 18,
+      "summary": "DrmFit summary (show + coeftable) |   18     18  4.2s"
+    }
+  ],
+  "skips": [],
+  "scope": "Original family-RE regression batch, no fullsuite/parity/performance claim; raw failure/skip/warning inspection required; not fullsuite/native-R/calibration/performance evidence"
+}

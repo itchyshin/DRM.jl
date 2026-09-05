@@ -1,0 +1,28 @@
+{
+  "routing": {
+    "scout": "explicit Luna/low",
+    "builder": "explicit Terra/high",
+    "independent_reviewer": "explicit Sol/high",
+    "telemetry": "Dispatch settings retained; no independent provider billing/runtime telemetry or active-agent-hour instrumentation"
+  },
+  "rose": {
+    "frontend_sha256": "8bfc53ae2ecc382ee68e51def44a3373415f2fd6db1ae57f7956d8d5b7e4c15a",
+    "public_checker_sha256": "3532921f39d5371c0677039488d8fa18fa804a9de7b86a1b61cafea4db51c9ab",
+    "verdict": "bounded code and evidence approved; no full parity or interval coverage verdict",
+    "independent_runs": [
+      "14normal/-O accessor damages",
+      "17normal/-O public-fit damages",
+      "native theta gate fails specificallyBernoulli"
+    ]
+  },
+  "melissa": {
+    "role": "bounded reconciliation lens in existingTerra/highbuilder, not independent code review",
+    "found": [
+      "finaldocs detail needed",
+      "explicit remaining performance obligations",
+      "inherited unrelatedLOOPplan",
+      "stale checkpoint"
+    ],
+    "disposition": "report and resume pointers corrected; allG0-G8stayopen"
+  }
+}

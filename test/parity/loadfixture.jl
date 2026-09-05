@@ -84,6 +84,25 @@ function load_expected(dir)::ParityExpected
         end
     end
 
+    # Optional [se] block: per-coefficient Wald standard errors, keyed by the same
+    # flat "<param>_<coefname>" convention as [coef]. The reserved `not_comparable`
+    # array key is NOT an SE value — it names parameters whose SE must be declined
+    # rather than compared (e.g. a variance component pinned at DRM.jl's
+    # _LAPLACE_LOG_SD_FLOOR, a boundary drmTMB does not share). Absent ⇒ SE checks
+    # are skipped entirely, so every pre-existing fixture keeps passing unchanged.
+    se = Dict{String,Float64}()
+    se_not_comparable = String[]
+    if haskey(t, "se")
+        s = t["se"]
+        for (k, v) in s
+            if String(k) == "not_comparable"
+                se_not_comparable = Vector{String}(String.(v))
+            else
+                se[String(k)] = Float64(v)
+            end
+        end
+    end
+
     return ParityExpected(;
         family = String(fit["family"]),
         coef = Dict{String,Float64}(String(k) => Float64(v) for (k, v) in coef),
@@ -95,7 +114,9 @@ function load_expected(dir)::ParityExpected
         vcov = vcov,
         tol = tol,
         ranef_group = ranef_group,
-        ranef = ranef)
+        ranef = ranef,
+        se = se,
+        se_not_comparable = se_not_comparable)
 end
 
 """
@@ -105,6 +126,13 @@ Read `joinpath(dir, "data.csv")` with `readdlm(...; header = true)` and return a
 NamedTuple of column vectors keyed by the (Symbol) header, so it drops straight
 into `drm(...; data = nt)`. Numeric columns become `Vector{Float64}`; any
 non-numeric column is kept as-is (e.g. string grouping factors).
+
+#474: `readdlm` returns a `Matrix{Any}` the moment ANY column in the file is
+non-numeric, so every column's *container* eltype reads `Any` even where a
+column's own values are all numbers — a per-column `eltype(col) <: Number`
+check is blind to that and silently drops the column to categorical. Decide
+numeric-ness from the column's actual values instead, so one string column
+cannot contaminate its numeric neighbours.
 """
 function load_data(dir)::NamedTuple
     path = joinpath(dir, "data.csv")
@@ -112,7 +140,7 @@ function load_data(dir)::NamedTuple
     cols = Symbol.(strip.(string.(vec(header))))
     pairs = map(enumerate(cols)) do (j, name)
         col = raw[:, j]
-        coltyped = eltype(col) <: Number ? Vector{Float64}(col) : col
+        coltyped = all(v -> v isa Number, col) ? Float64.(col) : col
         name => coltyped
     end
     return NamedTuple(pairs)

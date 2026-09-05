@@ -1,0 +1,55 @@
+{
+  "scope": "Terminal generated diagnostics and current private scripts; earlier failed logs do not imply they used the final script revision. Production remains frozen2c534141.",
+  "files": [
+    {
+      "file": "inner-estimated-error-green-001.log",
+      "source": "/private/tmp/drm-parity-20260830/integration/DRM.jl/.unlazy/inner-estimated-error-green-001.log",
+      "sha256": "6b722d61dce6e9926585937fef486683e319b4e392d7b803c42987a1dcaa5db7"
+    },
+    {
+      "file": "inner-estimated-error-green-002.log",
+      "source": "/private/tmp/drm-parity-20260830/integration/DRM.jl/.unlazy/inner-estimated-error-green-002.log",
+      "sha256": "e3d1a516017b65d939d1db0d3ca4b842d4b28a762c60dda6e8bdcc4f925c46ac"
+    },
+    {
+      "file": "inner-estimated-error-green-003.log",
+      "source": "/private/tmp/drm-parity-20260830/integration/DRM.jl/.unlazy/inner-estimated-error-green-003.log",
+      "sha256": "72db831f044b4b1bcaf95cf96b5835bc3d8fb0ce01ad8a11e6ce7559e32368b7"
+    },
+    {
+      "file": "inner-estimated-error-green-004.log",
+      "source": "/private/tmp/drm-parity-20260830/integration/DRM.jl/.unlazy/inner-estimated-error-green-004.log",
+      "sha256": "59a9063500ba750bf5fc139b1acbfe27b482138aee4bfb07ce0218efa6bdd09e"
+    },
+    {
+      "file": "inner-estimated-error-green-005.log",
+      "source": "/private/tmp/drm-parity-20260830/integration/DRM.jl/.unlazy/inner-estimated-error-green-005.log",
+      "sha256": "5ffba10f04d41a54bf23400aa9c178983d63e43695f3a1d42ab0958c30c7fb43"
+    },
+    {
+      "file": "inner-estimated-error-green-006.log",
+      "source": "/private/tmp/drm-parity-20260830/integration/DRM.jl/.unlazy/inner-estimated-error-green-006.log",
+      "sha256": "656e0adc5371414a3ce6268230cab75a34f9ab7bcdcc68e87d7187457ef032bd"
+    },
+    {
+      "file": "inner-estimated-error-green-007.log",
+      "source": "/private/tmp/drm-parity-20260830/integration/DRM.jl/.unlazy/inner-estimated-error-green-007.log",
+      "sha256": "a2333aa78f4871256c4a907c45aedff5e15718ca16e6fd9fbeec59a0a72f00df"
+    },
+    {
+      "file": "inner-estimated-error-green-008.log",
+      "source": "/private/tmp/drm-parity-20260830/integration/DRM.jl/.unlazy/inner-estimated-error-green-008.log",
+      "sha256": "a2333aa78f4871256c4a907c45aedff5e15718ca16e6fd9fbeec59a0a72f00df"
+    },
+    {
+      "file": "inner-estimated-error-green-009.log",
+      "source": "/private/tmp/drm-parity-20260830/integration/DRM.jl/.unlazy/inner-estimated-error-green-009.log",
+      "sha256": "1bb45dea1ed61d508d09ae3539de5e624d56e9e50cc0d41e3fb6df5709d44988"
+    },
+    {
+      "file": "inner-estimated-error-red-001.log",
+      "source": "/private/tmp/drm-parity-20260830/integration/DRM.jl/.unlazy/inner-estimated-error-red-001.log",
+      "sha256": "300e074303aa22e1ebabf9b46591486b1d6ca8c8f2649b4a13f6ff6adacfee5c"
+    }
+  ]
+}

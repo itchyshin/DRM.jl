@@ -1,0 +1,9 @@
+ERROR: LoadError: ParseError:
+# Error @ /private/tmp/locscale_gamma_vcov_inner_diagnostic.jl:72:64
+                        last=(;f0,ft,raw=ft-f0,trial,trial_finite=all(isfinite,trial),
+                               displacement=norm(trial-a),local=sqrt(eps(Float64))*(1+norm(a)),
+#                                                              ╙ ── unexpected `=`
+Stacktrace:
+ [1] top-level scope
+   @ /private/tmp/locscale_gamma_vcov_inner_diagnostic.jl:72
+in expression starting at /private/tmp/locscale_gamma_vcov_inner_diagnostic.jl:72

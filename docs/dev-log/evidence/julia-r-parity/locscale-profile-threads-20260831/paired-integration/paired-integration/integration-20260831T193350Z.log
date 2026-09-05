@@ -1,0 +1,13 @@
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+Test Summary:                                            | Pass  Total  Time
+location–scale fit: i.i.d. groups (NB2) end-to-end smoke |    5      5  6.5s
+Test Summary:                                                | Pass  Total  Time
+location–scale fit: phylogenetic tree (NB2) end-to-end smoke |    3      3  1.0s
+Test Summary:                                                   | Pass  Total  Time
+location–scale fit: gradient-based convergence + recovery (NB2) |    6      6  0.8s
+Test Summary:                          | Pass  Total  Time
+independent profile acceptance oracles |   13     13  1.3s
+Test Summary:                           | Pass  Total  Time
+bridge exposes selected profile failure |   17     17  0.2s
+REGRESSION_BUNDLE_PASS

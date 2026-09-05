@@ -1,0 +1,85 @@
+ERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 3 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:7
+iteration limits are not certified endpoints: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:10
+  Got exception outside of a @test
+  UndefVarError: `_ls_profile_root_result` not defined
+  Stacktrace:
+    [1] getproperty(x::Module, f::Symbol)
+      @ Base ./Base.jl:31
+    [2] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:13 [inlined]
+    [3] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [4] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:13 [inlined]
+    [5] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [6] top-level scope
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:8
+    [7] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [8] top-level scope
+      @ none:1
+    [9] eval
+      @ Core ./boot.jl:385 [inlined]
+   [10] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [11] _start()
+      @ Base ./client.jl:552
+valid roots and no-crossing remain distinct: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:38
+  Got exception outside of a @test
+  UndefVarError: `_ls_profile_root_result` not defined
+  Stacktrace:
+    [1] getproperty(x::Module, f::Symbol)
+      @ Base ./Base.jl:31
+    [2] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:39 [inlined]
+    [3] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [4] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:39 [inlined]
+    [5] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [6] top-level scope
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:8
+    [7] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [8] top-level scope
+      @ none:1
+    [9] eval
+      @ Core ./boot.jl:385 [inlined]
+   [10] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [11] _start()
+      @ Base ./client.jl:552
+finite exhausted nuisance solution is rejected: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:69
+  Got exception outside of a @test
+  UndefVarError: `_ls_profile_nll_result` not defined
+  Stacktrace:
+    [1] getproperty(x::Module, f::Symbol)
+      @ Base ./Base.jl:31
+    [2] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:78 [inlined]
+    [3] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [4] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:70 [inlined]
+    [5] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [6] top-level scope
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_profile_status.jl:8
+    [7] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [8] top-level scope
+      @ none:1
+    [9] eval
+      @ Core ./boot.jl:385 [inlined]
+   [10] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:291
+   [11] _start()
+      @ Base ./client.jl:552
+Test Summary:                                    | Error  Total  Time
+location-scale profile endpoint status           |     3      3  0.7s
+  iteration limits are not certified endpoints   |     1      1  0.6s
+  valid roots and no-crossing remain distinct    |     1      1  0.0s
+  finite exhausted nuisance solution is rejected |     1      1  0.1s

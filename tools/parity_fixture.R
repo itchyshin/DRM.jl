@@ -10,6 +10,7 @@
 #
 # Writes a TSV of results next to this script's --out argument (default below).
 
+source("tools/parity_numeric.R")
 suppressMessages(library(drmTMB))
 
 out_path <- "docs/dev-log/evidence/parity-fixtures.tsv"
@@ -60,7 +61,22 @@ fe_cells <- list(
   list(id = "fe_gamma", label = "Gamma (log link), fixed effects", jfam = "gamma",
        family = function() Gamma(link = "log"),
        build = function() { set.seed(4242); n <- 150; x <- rnorm(n)
-                            data.frame(y = rgamma(n, shape = 4, rate = 4 / exp(0.5 + 0.3 * x)), x = x) })
+                            data.frame(y = rgamma(n, shape = 4, rate = 4 / exp(0.5 + 0.3 * x)), x = x) }),
+  # plain_binomial_nonphylo. Added 2026-08-24: tools/parity_crosscheck.py found this
+  # capability row carried a committed Route-1 fixture (test/parity/fixtures/
+  # binomial-trials, drmTMB 0.6.0) but NO live engine="tmb" vs engine="julia"
+  # measurement -- offline replay only. Mirrors that fixture's shape
+  # (cbind(successes, failures), logit link, mean-only) so the two routes are
+  # about the same capability, while remaining a separate draw.
+  list(id = "plain_binomial_nonphylo", label = "Binomial (logit, trials), fixed effects",
+       jfam = "binomial",
+       family = function() binomial(),
+       formula = function() bf(cbind(successes, failures) ~ x),
+       build = function() { set.seed(4242); n <- 150; x <- rnorm(n)
+                            size <- 12L
+                            p <- plogis(0.3 + 0.7 * x)
+                            s <- rbinom(n, size, p)
+                            data.frame(successes = s, failures = size - s, x = x) })
 )
 
 # Bivariate lognormal (drmTMB biv_lognormal). Compared native-TMB vs the DRM.jl
@@ -119,15 +135,14 @@ for (cell in cells) {
     res$status <- "JULIA_FAILED"; res$note <- conditionMessage(attr(fj, "condition"))
   } else {
     ct <- unlist(fixef(ft)); cj <- unlist(fixef(fj))
-    common <- intersect(names(ct), names(cj))
-    if (length(common) == 0L && length(ct) == length(cj)) common <- seq_along(ct)
-    res$max_abs_coef_diff <- max(abs(ct[common] - cj[common]))
+    comparison <- parity_numeric(ct, cj, tol)
+    res$max_abs_coef_diff <- comparison$max_abs_diff
     res$loglik_tmb <- as.numeric(logLik(ft))
     res$loglik_julia <- as.numeric(logLik(fj))
     res$loglik_diff <- abs(res$loglik_tmb - res$loglik_julia)
-    agree <- res$max_abs_coef_diff < tol && res$loglik_diff < tol
+    agree <- comparison$pass && is.finite(res$loglik_diff) && res$loglik_diff < tol
     res$status <- if (agree) "PARITY_PASS" else "PARITY_FAIL"
-    res$note <- sprintf("%d coefficient(s) compared", length(common))
+    res$note <- comparison$reason
   }
   rows[[length(rows) + 1L]] <- as.data.frame(res, stringsAsFactors = FALSE)
   cat(sprintf("%-32s %-14s coef_diff=%.3e  loglik_diff=%.3e\n",
@@ -142,22 +157,35 @@ for (cell in fe_cells) {
     capability_id = cell$id, label = cell$label,
     status = NA_character_, max_abs_coef_diff = NA_real_,
     loglik_tmb = NA_real_, loglik_julia = NA_real_, loglik_diff = NA_real_,
-    tolerance = tol, note = "R-via-Julia bridge parity (engine='julia'), drmTMB 0.7.0"
+    ## MEASURE the drmTMB version, never assert it. This note used to hardcode
+    ## "drmTMB 0.7.0", so the TSV claimed a version it had not checked. That is
+    ## not hypothetical: on 2026-08-24 a concurrent `devtools::test()` in the
+    ## drmTMB checkout transiently put 0.6.0.9000 on the search path, and a run
+    ## in that window would have recorded "0.7.0" while measuring something else.
+    tolerance = tol,
+    note = sprintf("R-via-Julia bridge parity (engine='julia'), drmTMB %s",
+                   as.character(utils::packageVersion("drmTMB")))
   )
-  ft <- try(drmTMB(bf(y ~ x), family = cell$family(), data = d, engine = "tmb"), silent = TRUE)
-  jb <- try(drmTMB(bf(y ~ x), family = cell$family(), data = d, engine = "julia"), silent = TRUE)
+  # Most FE cells are a plain `y ~ x`. A cell may override this when its response
+  # is not a bare `y` -- e.g. the binomial trials cell, whose response is
+  # cbind(successes, failures). Without the override the loop would silently fit
+  # the wrong formula rather than erroring.
+  fml <- if (is.null(cell$formula)) bf(y ~ x) else cell$formula()
+  ft <- try(drmTMB(fml, family = cell$family(), data = d, engine = "tmb"), silent = TRUE)
+  jb <- try(drmTMB(fml, family = cell$family(), data = d, engine = "julia"), silent = TRUE)
   if (inherits(ft, "try-error")) {
     res$status <- "NATIVE_FAILED"
   } else if (inherits(jb, "try-error")) {
     res$status <- "JULIA_FAILED"
   } else {
     ct <- unlist(fixef(ft)); cj <- unlist(fixef(jb))
-    k <- min(length(ct), length(cj))
-    res$max_abs_coef_diff <- max(abs(ct[seq_len(k)] - cj[seq_len(k)]))
+    comparison <- parity_numeric(ct, cj, tol)
+    res$max_abs_coef_diff <- comparison$max_abs_diff
     res$loglik_tmb <- as.numeric(logLik(ft)); res$loglik_julia <- as.numeric(logLik(jb))
     res$loglik_diff <- abs(res$loglik_tmb - res$loglik_julia)
-    res$status <- if (res$max_abs_coef_diff < tol && res$loglik_diff < tol)
+    res$status <- if (comparison$pass && is.finite(res$loglik_diff) && res$loglik_diff < tol)
       "PARITY_PASS" else "PARITY_FAIL"
+    res$note <- paste(res$note, comparison$reason, sep = "; ")
   }
   rows[[length(rows) + 1L]] <- as.data.frame(res, stringsAsFactors = FALSE)
   cat(sprintf("%-32s %-14s coef_diff=%.3e  loglik_diff=%.3e\n",
@@ -181,13 +209,16 @@ for (cell in biv_cells) {
   } else if (inherits(jb, "try-error")) {
     res$status <- "JULIA_FAILED"
   } else {
-    ct <- unlist(fixef(ft)); cj <- jb$coefficients
-    k <- min(length(ct), length(cj))
-    res$max_abs_coef_diff <- max(abs(ct[seq_len(k)] - cj[seq_len(k)]))
+    ct <- unlist(fixef(ft))
+    cj <- unlist(jb$coefficients, use.names = FALSE)
+    if (length(jb$coef_names) == length(cj)) names(cj) <- as.character(jb$coef_names)
+    comparison <- parity_numeric(ct, cj, tol)
+    res$max_abs_coef_diff <- comparison$max_abs_diff
     res$loglik_tmb <- as.numeric(logLik(ft)); res$loglik_julia <- jb$loglik
     res$loglik_diff <- abs(res$loglik_tmb - res$loglik_julia)
-    res$status <- if (res$max_abs_coef_diff < tol && res$loglik_diff < tol)
+    res$status <- if (comparison$pass && is.finite(res$loglik_diff) && res$loglik_diff < tol)
       "PARITY_PASS" else "PARITY_FAIL"
+    res$note <- paste(res$note, comparison$reason, sep = "; ")
   }
   rows[[length(rows) + 1L]] <- as.data.frame(res, stringsAsFactors = FALSE)
   cat(sprintf("%-32s %-14s coef_diff=%.3e  loglik_diff=%.3e\n",
@@ -199,3 +230,6 @@ dir.create(dirname(out_path), showWarnings = FALSE, recursive = TRUE)
 write.table(tab, out_path, sep = "\t", row.names = FALSE, quote = FALSE)
 cat("\nwrote ", out_path, "\n", sep = "")
 cat("OVERALL: ", if (all(tab$status == "PARITY_PASS")) "ALL CELLS PASS" else "SOME CELLS FAILED", "\n", sep = "")
+
+# A failed row must also fail automation, after preserving the complete table.
+if (!all(tab$status == "PARITY_PASS")) quit(status = 1L)

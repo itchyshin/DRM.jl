@@ -1,0 +1,5 @@
+Test Summary:                                         | Pass  Total  Time
+bridge materialized columns never overwrite user data |   14     14  2.8s
+Test Summary:                             | Pass  Total   Time
+bridge formula-derived coefficient labels |   45     45  16.9s
+BRIDGE_FORMULA_LABELS_PASS

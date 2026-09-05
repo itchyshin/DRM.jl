@@ -1,0 +1,25 @@
+ERROR: LoadError: Some tests did not pass: 13 passed, 1 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite.jl:302
+Test Summary:                   | Pass  Total  Time
+finite-state prepared joint API |    7      7  0.0s
+Test Summary:                                                     | Pass  Total  Time
+ordinal finite-state likelihood, all masks, and posterior moments |   18     18  2.1s
+Test Summary:                                                        | Pass  Total  Time
+categorical finite-state likelihood, label mapping, and no metric SE |   10     10  0.3s
+Test Summary:                                  | Pass  Total  Time
+finite-state stable derivatives and validation |   22     22  5.4s
+finite-state fit snapshot, covariance status, and copy isolation: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite.jl:327
+  Expression: blocks[:mi_severity] == 5:5
+   Evaluated: 4:4 == 5:5
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite.jl:327 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite.jl:303
+Test Summary:                                                    | Pass  Fail  Total  Time
+finite-state fit snapshot, covariance status, and copy isolation |   13     1     14  8.7s

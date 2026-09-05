@@ -1,0 +1,29 @@
+ERROR: LoadError: MethodError: no method matching _trigamma(::BigFloat)
+
+Closest candidates are:
+  _trigamma(!Matched::Union{Float32, ComplexF32})
+   @ SpecialFunctions ~/.julia/packages/SpecialFunctions/MPNkH/src/gamma.jl:524
+  _trigamma(!Matched::Union{Float16, ComplexF16})
+   @ SpecialFunctions ~/.julia/packages/SpecialFunctions/MPNkH/src/gamma.jl:524
+  _trigamma(!Matched::Union{Float64, ComplexF64})
+   @ SpecialFunctions ~/.julia/packages/SpecialFunctions/MPNkH/src/gamma.jl:65
+
+Stacktrace:
+ [1] trigamma(x::BigFloat)
+   @ SpecialFunctions ~/.julia/packages/SpecialFunctions/MPNkH/src/gamma.jl:63
+ [2] gamma_data(y::BigFloat, eta::BigFloat, psi::BigFloat)
+   @ Main /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:33
+ [3] (::var"#1#2"{Int64})()
+   @ Main /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:50
+ [4] setprecision(f::var"#1#2"{Int64}, ::Type{BigFloat}, prec::Int64; kws::@Kwargs{})
+   @ Base.MPFR ./mpfr.jl:1041
+ [5] setprecision(f::Function, ::Type{BigFloat}, prec::Int64)
+   @ Base.MPFR ./mpfr.jl:1037
+ [6] gamma_density_anchor(bits::Int64)
+   @ Main /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:44
+ [7] top-level scope
+   @ /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:257
+in expression starting at /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/fixed_outer_gamma_oracle.jl:256
+S11_WHITE_SOURCE_SHA256=d8727b67ae76c66fcc76cdd9f672b1f2bed72c165bf47e526caf50f769998434
+S11_WHITE_PACKING=(G=4,Q=I4,latents=:interleaved_a_mu1_a_psi1_to_a_mu4_a_psi4,engine_theta=[0.3869272019658678, 0.24110734234901768, 1.5435207241481925, -1.1607129362846789, -0.09792051946355967, -7.743898208574272])
+S11_WHITE_DERIVATIVE_FORMULA=g_eta=s-r*y; g_psi=s*(digamma(s)-log(r)-1-log(y))+r*y; H=(r*y,s-r*y,g_psi-s+s^2*trigamma(s))

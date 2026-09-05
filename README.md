@@ -38,7 +38,7 @@ Same model, same real `q4_p100` data, same Laplace ML marginal as drmTMB
 |---|---|---|
 | single fit (p=100) | 2.48 s, false-conv | **1.14 s, converged → 2.18× faster** |
 | logLik | −256.52 | −256.51 (matches) |
-| O(p) scaling to p=10,000 | infeasible (dense) | **~113 s, k≈1.08 (near-linear)** |
+| O(p) scaling to p=10,000 | not attempted at that scale (measured O(p^1.27) to p=3000, #486) | **~113 s, k≈1.08 (near-linear)** |
 | Wald SEs at the variance boundary | all-NaN (non-PD Hessian) | **valid for 16/17 params** |
 
 Full grid and honest caveats: [report/comparison-grid.md](report/comparison-grid.md).
@@ -86,7 +86,7 @@ sigma: x            0.39537  0.0335957   11.768    <1e-31   0.329524   0.461217
 ─────────────────────────────────────────────────────────────────────────
 ```
 
-The same `bf(...)` grammar carries the full audited surface — 13 families, random
+The same `bf(...)` grammar carries the full audited surface — 14 families, random
 effects on the mean **and** scale, structured (`relmat` / `animal` / `phylo` /
 `spatial`) effects, `meta_V` meta-analysis, the bivariate `rho12` model, and the
 q=4 phylogenetic location–scale (PLSM) route — see
@@ -111,7 +111,7 @@ src/experimental/   leftover prototypes NOT wired into the public API
                     in src/: method=:REML, algorithm=:em, lc_metric (Fisher infra).
 bench/              runnable benchmarks + the q4_p100 fixtures + R fixture gen
 test/               runtests.jl + migrated correctness checks
-report/             13 design/provenance reports (the full poc record)
+report/             53 design/provenance/benchmark reports (the full poc record)
 docs/               Documenter site (mirrors drmTMB navbar) + dev-log; CONTRACT.md
 AGENTS.md ROADMAP.md   the 12-persona team + the phase plan
 .claude/workflows/  10 scripted workflows (W0/Q/A/B/D/F/G/H/S/R)
@@ -137,7 +137,7 @@ General registration. S2/S3 hygiene already landed (#340–#342).
   `phylo` / `spatial`), `meta_V`, and the bivariate q=4 phylogenetic
   location-scale route with `Σ_a` stored on the fit; Wald + profile + bootstrap
   intervals; `predict` / `simulate`.
-- **13 families** — Gaussian, Student-t, Poisson, NegBinomial2,
+- **14 families** — Gaussian, Student-t, SkewNormal, Poisson, NegBinomial2,
   TruncatedNegBinomial2, Beta, BetaBinomial, Binomial, Gamma, LogNormal,
   ZeroOneBeta, Tweedie, and CumulativeLogit — plus `zi` / `hu` count modifiers
   and beta boundary modifiers `zoi` / `coi`.
@@ -151,20 +151,34 @@ closed).
 
 **Verified engine (foundation):** the q=4 ML location-scale single fit — 2.18×
 over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
+**Interval claims are capability parity, not coverage** — the R↔Julia ledger's
+`coverage_claimed` fences are permanent documented boundaries by owner decision
+(D-179 #4, reaffirmed D-180 #2); measured coverage campaigns exist in the
+dev-log evidence but no route claims calibrated intervals as a supported
+guarantee.
+Per-family engine-vs-engine timings, with their caveats stated, are
+consolidated in [report/speed-per-family.md](report/speed-per-family.md); the
+R↔Julia capability ledger itself lives in drmTMB's generated
+`inst/extdata/julia-capabilities.tsv`, where rows are promoted only on
+measured evidence.
 
-**Inference:** Wald + profile + parametric bootstrap; opt-in **REML** for the
-fixed-effect Gaussian location–scale fit (`method = :REML`, with the
-model-selection guard); epsilon-method bias correction; `heritability` /
+**Inference:** Wald + profile + parametric bootstrap; opt-in **REML**
+(`method = :REML`, with the model-selection guard) across the fixed-effect
+Gaussian location–scale fit, a single Gaussian mean intercept `(1|g)` (#439),
+the σ-phylo route, the bivariate q=4 all-axes route (`reml_q4.jl`, #11), and
+the bivariate q=2 structured route (`reml_q2.jl`, #470); epsilon-method bias
+correction; `heritability` /
 `repeatability` / `icc` with delta + profile CIs. Julia-side R↔Julia helpers
 (`drm_bridge` / `drm_bridge_inference`) are in-tree; **Phase 1.5 /
 [#5](https://github.com/itchyshin/DRM.jl/issues/5)** is **closed** at the
 experimental Hopper finish-matrix bar (#349 + drmTMB #878) — not a CRAN /
 “supported” promotion.
 
-**Not fully wired / still open:** remaining `src/experimental/` prototypes
-(SQUAREM / `fit_em_natgrad` [#13 FAIL — not a public solver], E-step variants,
-dense oracle, leftover `location_only` copy — public `method = :REML`,
-`algorithm = :em`, and `lc_metric` Fisher infra are already in `src/`);
+**Not fully wired / still open:** `src/experimental/` holds only classified
+material — recorded negative results (#13, #472), superseded predecessors, and
+oracles; see [src/experimental/README.md](src/experimental/README.md) for the
+per-file verdicts (public `method = :REML`, `algorithm = :em`, and `lc_metric`
+Fisher infra are already in `src/`);
 **χ̄² boundary inference** where not yet exported; the **variational (VA/ELBO)**
 marginal track (#136, deferred). See
 [Capabilities](docs/src/capabilities.md),

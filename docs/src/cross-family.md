@@ -231,6 +231,16 @@ variances `v1`/`v2`, the `loglik`, `converged`, and `iterations`.
 DRM.link_residual
 ```
 
+### Post-fit accessors
+
+```@docs
+mf_coef
+mf_summary
+mf_fitted
+mf_aic
+mf_bic
+```
+
 ## References
 
 - Nakagawa, S. & Schielzeth, H. (2010). Repeatability for Gaussian and

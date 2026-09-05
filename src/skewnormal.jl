@@ -43,6 +43,7 @@ coef(fit, :nu)[1]           # estimated slant α (identity)
 struct SkewNormal end
 
 function drm(f::DrmFormula, fam::SkewNormal; data, g_tol::Real = 1e-8)
+    _lss_only_gaussian_guard(f, fam)   # #544: refuse, never silently drop, sd() parts
     rhs = Dict(f.forms)
     _, re, mv, st = _split_ranef(rhs[:mu])
     (mv === nothing && st === nothing) ||
@@ -105,5 +106,7 @@ function _fit_skewnormal(fam::SkewNormal, y, Xμ, Xσ, Xν, nmμ, nmσ, nmν, g_
     means = Dict(:mu => Xμ * θ̂[1:pμ]); obs = Dict(:mu => Vector{Float64}(y))   # μ = response-scale mean
     scales = Dict(:sigma => exp.(Xσ * θ̂[(pμ+1):(pμ+pσ)]),
                   :nu => Xν * θ̂[(pμ+pσ+1):(pμ+pσ+pν)])
-    return _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll)
+    return _withiterations(
+        _withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll),
+        Optim.iterations(res))
 end

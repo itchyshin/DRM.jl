@@ -1,0 +1,3 @@
+Test Summary:                         | Pass  Total  Time
+location-scale compensated arithmetic |   13     13  4.3s
+LOCSCALE_COMPENSATED_GRADIENT_OK

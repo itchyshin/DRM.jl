@@ -1,0 +1,23 @@
+[
+  {
+    "run": "module-1threads-final001",
+    "exit_code": 1,
+    "elapsed_seconds": 29.207776834024116,
+    "timed_out": false,
+    "inputs_unchanged": true
+  },
+  {
+    "run": "module-1threads-inner001",
+    "exit_code": 1,
+    "elapsed_seconds": 24.500456375069916,
+    "timed_out": false,
+    "inputs_unchanged": true
+  },
+  {
+    "run": "module-4threads-inner002",
+    "exit_code": 1,
+    "elapsed_seconds": 24.076859707944095,
+    "timed_out": false,
+    "inputs_unchanged": true
+  }
+]

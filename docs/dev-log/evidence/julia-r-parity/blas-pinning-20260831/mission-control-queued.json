@@ -1,0 +1,17 @@
+{
+  "status": "QUEUED_NOT_APPLIED",
+  "target": "Shinichi/Dashboards/mission-control/live/status/drmTMB.json",
+  "reason": "Live claude:shinichi-brain lease covers Shinichi/Dashboards/; no overlap authorized.",
+  "apply_after": "Repair committed and dashboard lease cleared; re-read current status and rebase selected fields before applying.",
+  "observed_file_sha256": "7f17608a923b273acbcc9946b5ff5164e559a9d5a445b8596bd7566a87e9d2ec",
+  "observed_fields": {
+    "next_safe_action": "Continue the paired integration checkpoint on codex/parity-integration-20260831. Nine unchanged test files now complete; next run test_predict_response.jl, test_ranef.jl, test_correlated_re.jl and test_multi_re.jl, then the sigma/family files, with fresh bounded estimates on Totoro. Preserve earlier timeouts and every original parity/performance obligation; denied source files remain untouched.",
+    "lane": "Codex paired integration worktrees; root Sol/medium, builder/reconciler Terra/high, reviewer Sol/high, scout Luna/low. Independent receipt review and report reconciliation performed for bounded completed slices. Agent-hours uninstrumented.",
+    "active_lane": "Local documentation build and reviewed local-reference audit passed; broader visual and deployed-site gates remain open. Totoro continuation completed nine unchanged files: 788 assertions. Newton-REML passed 39 in 107 seconds; bootstrap/spatial/prediction passed 79 in 41 seconds. Earlier full-suite/group timeouts and boundary-Hessian warnings are retained, not hidden. All 326 source/test hashes matched. No fits running. Full suite, native-R parity, canonical-tree inference and performance gates remain open."
+  },
+  "proposed_fields": {
+    "next_safe_action": "Continue the paired integration checkpoint on codex/parity-integration-20260831. The overlapping BLAS scope repair is verified locally and on Totoro. Continue remaining default-suite files from test_poisson_re.jl on the updated Totoro source copy, with fresh estimates; retain every original native-parity, large-tree inference and performance obligation.",
+    "lane": "Codex paired integration worktrees; root Sol/medium, builder/reconciler Terra/high, reviewer Sol/high, scout Luna/low. The deterministic concurrency failure was reproduced before the repair; Rose reviewed source and Melissa reconciled evidence. Agent-hours uninstrumented.",
+    "active_lane": "Pre-repair baseline: 31 completed files, 971 assertions. Repaired BLAS scope helper: local checks pass 17 assertions at one and four Julia threads; five focused Totoro files pass 181 testset assertions plus final BLAS restoration in 58 seconds. All 327 repaired-source hashes matched. No fit jobs running. No measured speedup or full-suite/native-R parity claim; global gates remain open."
+  }
+}

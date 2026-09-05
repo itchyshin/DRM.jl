@@ -1,0 +1,1 @@
+| 2026-08-31 | **Paired location-scale profiles** (#563 / S11) | independent reference kernels, finite1/4thread profiles, frontend/legacy neighbours, failure/BLAS/bridge status | All bounded checks pass; unchanged finite fixture16/16 at asserted1/4threads; bootstrap defect and global gates open | Ada / Noether / Fisher / Rose |

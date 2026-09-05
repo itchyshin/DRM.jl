@@ -1,0 +1,14 @@
+ERROR: LoadError: MethodError: no method matching prior_precision(::Matrix{Float64}, ::Matrix{Float64})
+
+Closest candidates are:
+  prior_precision(!Matched::SparseMatrixCSC, ::AbstractMatrix)
+   @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/sparse_aug_plsm.jl:79
+
+Stacktrace:
+ [1] production_components(design::@NamedTuple{y::Vector{Float64}, Xmu::Matrix{Float64}, Xpsi::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::Matrix{Float64}}, theta::Vector{Float64})
+   @ Main /private/tmp/drm-parity-20260830/profile-threads-s11/wald-stencil-diagnostic/exact_theta_reference_rounding.jl:65
+ [2] main()
+   @ Main /private/tmp/drm-parity-20260830/profile-threads-s11/wald-stencil-diagnostic/exact_theta_reference_rounding.jl:149
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/profile-threads-s11/wald-stencil-diagnostic/exact_theta_reference_rounding.jl:179
+in expression starting at /private/tmp/drm-parity-20260830/profile-threads-s11/wald-stencil-diagnostic/exact_theta_reference_rounding.jl:179

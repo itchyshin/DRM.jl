@@ -1,0 +1,21 @@
+{
+  "scope": "Positive-length rooted polytomies; two default GaussianML workflows, not full phylogenetic/inference parity",
+  "sha256": {
+    "src/sparse_phy.jl": "18c72189e6eddc6ee325f8ce70e26d7055bbdf7492fe303bcdc8c988941bcfff",
+    "test/test_phylo_polytomy.jl": "ba637ad1f3ec0bba7be15a747f683effd8acdebeec9aafcd8ce345ed33a39350",
+    "test/test_phylo_polytomy_kernels.jl": "69deedbd7e126ca2bcf8cd70262ca8a7542b15e06b3f4b4d80628b2be1a75ff1",
+    "tools/check_polytomy_public_receipt.py": "a03c00e80444e86d8bab894db8338307b5411f9caae63b34918bc5e3efdffc1f",
+    "docs/src/r-julia-bridge.md": "8f5f896ae6a2a4e8f4b0d99ffb6c80e5d651be353ae6d1abb755295b86277ab2",
+    "docs/src/model-guides/large-data.md": "7b80550bfcbbc72f9b719814854a0ba0a2967495f5759863a475cebea4921c60"
+  },
+  "Julia_assertions": 91,
+  "R_assertions": 155,
+  "public_cases": [
+    "star",
+    "mixed"
+  ],
+  "public_rows_total": 120,
+  "native_tolerance": 4e-06,
+  "full_programme_gates": "OPEN",
+  "native_source": "public-003.json binds R source and loaded DLL; tested development tree retains foreign ZOB edits"
+}

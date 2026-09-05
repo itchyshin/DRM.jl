@@ -1,0 +1,4 @@
+Full R parse-expression echo omitted from the MIT repository to avoid vendoring GPL source.
+Raw log retained outside DRM.jl: /private/tmp/drm-parity-20260830/R-source-parse-logs/r-parse-numeric-label-green.log
+Original SHA256: 3a73719ceae5309d28c74f37feb8a47280a4a93c608f044fee21aeedf72f92ac
+Verdict: R_PARSE_NUMERIC_LABEL_PASS

@@ -1,0 +1,29 @@
+START_UTC 2026-08-30T21:24:44Z
+totoro
+1a132a9fd4003d55f328c1328f3f73d539ab054ef933714886d8d70470957f4c  source.tar
+RUNTIME julia=1.10.10 threads=1 blas=1 source=/home/snakagaw/drm_parity_20260830_f67eeb80/src/DRM.jl
+Test Summary:                               | Pass  Total  Time
+prepared two-Gaussian missing-predictor API |    3      3  0.0s
+Test Summary:                                                | Pass  Total  Time
+two Gaussian exact likelihood and conditional 2-by-2 moments |   29     29  4.6s
+Test Summary:                                         | Pass  Total  Time
+two Gaussian derivatives, masks, and input validation |   10     10  3.5s
+Test Summary:                                                        | Pass  Total  Time
+two Gaussian stable large-scale arithmetic and predictor permutation |   10     10  0.2s
+Test Summary:                                        | Pass  Total  Time
+two Gaussian imputation uses the full raw covariance |   25     25  3.3s
+Test Summary:                                                 | Pass  Total  Time
+two Gaussian fit freezes inputs and reports covariance status |    6      6  5.2s
+S9_TWO_GAUSSIAN_TARGETED_PASS
+Test Summary:                                          | Pass  Total  Time
+two Gaussian missing-predictor direct formula frontend |   43     43  7.6s
+Test Summary:                         | Pass  Total  Time
+two Gaussian direct frontend refusals |   19     19  1.5s
+TWO_JOINT_FRONTEND_TEST_READY
+Test Summary:                      | Pass  Total  Time
+two Gaussian primitive preparation |   22     22  2.7s
+Test Summary:                               | Pass  Total  Time
+two Gaussian primitive fit and native order |   23     23  7.3s
+TWO_BRIDGE_NEW_PASS
+TOTORO_TWO_FRONTENDS_PASS
+ELAPSED_SECONDS 67

@@ -1,0 +1,18 @@
+┌ Warning: Terminated early due to NaN in Hessian.
+└ @ Optim ~/.julia/packages/Optim/gmigl/src/multivariate/optimize/optimize.jl:121
+ERROR: LoadError: UndefVarError: `serialize` not defined
+Stacktrace:
+ [1] _ls_vcov(kind::Val{:gamma}, y::Vector{Float64}, Xμ::Matrix{Float64}, Xψ::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}, θ::Vector{Float64}, Zη::Matrix{Float64}, Zψ::Matrix{Float64}; h::Float64, a0::Vector{Float64})
+   @ DRM /private/tmp/locscale_gamma_vcov_warm_intercept.jl:12
+ [2] _fit_locscale(kind::Val{:gamma}, y::Vector{Float64}, Xμ::Matrix{Float64}, Xψ::Matrix{Float64}, gidx::Vector{Int64}, G::Int64, Q::SparseMatrixCSC{Float64, Int64}; βμ0::Nothing, βψ0::Nothing, λ0::Vector{Float64}, Zη::Matrix{Float64}, Zψ::Matrix{Float64}, g_tol::Float64, iterations::Int64, se::Bool)
+   @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_fit.jl:143
+ [3] _fit_locscale_frontend(kind::Val{:gamma}, fam::Gamma, f::DrmFormula, rhs::Dict{Symbol, Any}, lc::@NamedTuple{group::Symbol, structkind::Symbol, fixed_mu::StatsModels.Term, fixed_sigma::StatsModels.ConstantTerm{Int64}}, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{Int64}}; g_tol::Float64, se::Bool, tree::Nothing, K::Nothing, A::Nothing, coords::Nothing)
+   @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/locscale_frontend.jl:184
+ [4] drm(f::DrmFormula, fam::Gamma; data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, species::Vector{Int64}}, tree::Nothing, K::Nothing, A::Nothing, coords::Nothing, g_tol::Float64, se::Bool, marginal::Symbol, method::Nothing)
+   @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/gamma.jl:59
+ [5] top-level scope
+   @ /private/tmp/locscale_gamma_vcov_warm_intercept.jl:56
+in expression starting at /private/tmp/locscale_gamma_vcov_warm_intercept.jl:56
+GAMMA_VCOV_WARM_INTERCEPT
+SOURCE_SHA 2c534141d8439a4ee339bfc6d795e4a4836fea885f986f677b418016a4afc32f
+VCOV_INTERCEPT a0=[-0.19461120443594232, 0.09859649213346595, 0.13400068536422194, -0.0678899460768282, 0.12409547734767255, -0.06287024953287514, -0.1075471663780886, 0.054487480395986596] a0_finite=true

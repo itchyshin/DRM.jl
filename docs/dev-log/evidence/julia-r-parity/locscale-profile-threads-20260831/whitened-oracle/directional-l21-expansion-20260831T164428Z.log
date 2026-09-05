@@ -1,0 +1,8 @@
+┌ Warning: Assignment to `manifest` in soft scope is ambiguous because a global variable by the same name exists: `manifest` will be treated as a new local. Disambiguate by using `local manifest` to suppress this warning or `global manifest` to assign to the existing global variable.
+└ @ /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional_l21_expansion.jl:96
+ERROR: LoadError: UndefVarError: `manifest` not defined
+Stacktrace:
+ [1] top-level scope
+   @ /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional_l21_expansion.jl:95
+in expression starting at /private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional_l21_expansion.jl:60
+S11_WHITE_EXPANSION_START=(output = "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-oracle/directional-l21-expansion-20260831T164428Z.jls", planned_objective_evaluations = 104, planned_mode_solves = 208, hsteps = (0.0001000000000000000000000000000000000000000000000000000000000000000000000000000005, 5.000000000000000000000000000000000000000000000000000000000000000000000000000023e-05, 2.500000000000000000000000000000000000000000000000000000000000000000000000000011e-05), bits = (128, 256))

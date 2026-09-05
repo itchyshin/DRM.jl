@@ -33,3 +33,7 @@ deps/deps.jl
 /bench/fixtures/phylo_poisson/
 /bench/fixtures/phylo_nb2/
 /bench/results/
+
+# unlazy acceptance ledger (run state, not a deliverable)
+.unlazy/
+.unlazy-hook-state.json

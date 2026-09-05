@@ -108,11 +108,13 @@ With no structured-effect marker, this is the residual-correlation model:
 effect formula.
 
 With matching structured markers on `mu1` and `mu2` only, this routes to the
-q=2 exact-Gaussian ML point-fit cell. The q=2 route currently accepts
-`phylo(1 | group)` with `tree`, `relmat(1 | group)` with `K`, or
-`animal(1 | group)` with `A`; it requires complete responses, identical mean
-fixed-effect designs, and intercept-only `sigma1`, `sigma2`, and `rho12`.
-`spatial(1 | group)` remains outside the formula route here.
+q=2 exact-Gaussian point-fit cell, `method = :ML` (default) or `method =
+:REML` (Patterson–Thompson; marginalises `beta_mu1`/`beta_mu2` only — see
+`reml_q2.jl`). The q=2 route currently accepts `phylo(1 | group)` with
+`tree`, `relmat(1 | group)` with `K`, or `animal(1 | group)` with `A`; it
+requires complete responses, identical mean fixed-effect designs, and
+intercept-only `sigma1`, `sigma2`, and `rho12`. `spatial(1 | group)` remains
+outside the formula route here.
 
 With the same `phylo(1 | group)` marker on all four location/scale predictors
 (`mu1`, `mu2`, `sigma1`, and `sigma2`) and a supplied `tree`, this routes to the
@@ -139,11 +141,31 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
              spatial_range = nothing,
              g_tol::Real = 1e-8, q4_g_tol::Real = 1e-3,
              q4_iterations::Int = 300, q4_n_newton::Int = 40,
-             q4_vcov::Bool = true, method::Symbol = :ML)
+             q4_vcov::Bool = true, method::Symbol = :ML, V = nothing)
     method in (:ML, :REML) ||
         throw(ArgumentError("drm: `method` must be :ML (default) or :REML (got :$method)"))
     rhs = Dict(f.forms)
     fixed, structured_marker = _bivariate_q4_marker(rhs)
+    # A8: known bivariate sampling covariance (drmTMB's meta_vcov_bivariate) is
+    # consumed by the residual route only in this slice.
+    V !== nothing && structured_marker !== nothing &&
+        throw(ArgumentError("drm: known sampling covariance `V` is implemented for the " *
+            "residual bivariate route only; combining it with structured " *
+            "phylo/relmat/animal/spatial markers is a later slice."))
+    # #470: `V` is accepted only on the residual-only route (checked just above),
+    # and that route computes each row's Gaussian density directly from
+    # V_i + Sigma_het with no random effect marginalised — so there is no
+    # Schur-complement axis for this package's (single) REML formulation to
+    # correct, the same reason method = :REML is rejected for the residual-only
+    # model without `V` (below). A meta-analytic REML that profiles the fixed
+    # effects via GLS under V_i + Sigma_het (as e.g. metafor's `rma`) would be a
+    # legitimate but DIFFERENT derivation on a route this task does not touch;
+    # this is a scope boundary, not a temporary gap, hence the permanent wording.
+    V !== nothing && method === :REML &&
+        throw(ArgumentError("drm: `V` (known sampling covariance) has no REML target in this " *
+            "package: it is accepted only on the bivariate residual-correlation route, which " *
+            "marginalises no random effect and so has nothing for a restricted likelihood to " *
+            "correct — use method = :ML."))
     if structured_marker !== nothing && structured_marker[1] === :phylo_q4
         return _fit_bivariate_q4_phylo(
             f, fam, data, fixed, structured_marker, tree;
@@ -164,25 +186,24 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
             method = method,
         )
     elseif structured_marker !== nothing && structured_marker[1] === :structured_q2
-        method === :REML &&
-            throw(ArgumentError("drm: method = :REML is not implemented for the bivariate " *
-                "q=2 structured residual-correlation route; use method = :ML."))
         coords === nothing ||
             throw(ArgumentError("drm: bivariate q=2 spatial(coords) is not implemented; use a known covariance relmat route or method = :ML native TMB."))
         return _fit_bivariate_q2_structured(
             f, fam, data, fixed, structured_marker, tree, K, A;
             g_tol = Float64(g_tol),
+            method = method,
         )
     end
     # The residual-only bivariate route has no random effects / structured terms;
     # REML (Patterson–Thompson) is implemented only for the q=4 structured paths,
     # so reject it here as the univariate core does (gaussian_core.jl:383-393).
     method === :REML &&
-        throw(ArgumentError("drm: method = :REML is implemented only for the bivariate q=4 " *
-            "location–scale engine (shared `phylo`/`relmat`/`animal`/`spatial` on mu1, mu2, " *
-            "sigma1, sigma2). The residual-only bivariate Gaussian model has no random " *
-            "effects; use method = :ML (the default)."))
-    return _fit_bivariate_residual(f, fam, data, rhs, g_tol)
+        throw(ArgumentError("drm: method = :REML needs random effects to restrict, and the " *
+            "residual-only bivariate Gaussian model has no random effects — use method = :ML (the " *
+            "default). REML IS available on the structured bivariate routes: q=4 " *
+            "(shared `phylo`/`relmat`/`animal`/`spatial` on mu1, mu2, sigma1, sigma2) " *
+            "and q=2 (#470)."))
+    return _fit_bivariate_residual(f, fam, data, rhs, g_tol; V = V)
 end
 
 # Finite, data-scaled log-σ seed for a residual-σ intercept. `resid` is the OLS
@@ -197,7 +218,7 @@ function _seed_ls(resid::AbstractVector, yobs::AbstractVector)
     return 0.5 * log(max(v_resid, v_floor))
 end
 
-function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rhs, g_tol::Real)
+function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rhs, g_tol::Real; V = nothing)
     y1, X1, nm1 = _design(f.response1, rhs[:mu1], data)
     y2, X2, nm2 = _design(f.response2, rhs[:mu2], data)
     _, Xs1, nms1 = _design(f.response1, rhs[:sigma1], data)   # reuse a real LHS;
@@ -221,26 +242,62 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
     offs = cumsum([0, ps...])
     rng(k) = (offs[k]+1):offs[k+1]
 
+    # A8: known per-row 2x2 sampling covariance (bivariate meta-analysis).
+    # `nothing` keeps the original per-row expressions byte-identical below; a
+    # resolved V routes every row through the general 2x2 form
+    #   S = V_i + Sigma_het,i,  Sigma_het = [[s1^2, rho*s1*s2], [., s2^2]]
+    # with a positive-definiteness sentinel where the guarded rho cannot save us
+    # (V's own correlation plus the heterogeneity correlation can exceed 1).
+    meta_v = _resolve_biv_meta_v(V, n)
+
     function nll(θ)
         b1 = θ[rng(1)]; b2 = θ[rng(2)]; bs1 = θ[rng(3)]; bs2 = θ[rng(4)]; br = θ[rng(5)]
         η1 = X1 * b1; η2 = X2 * b2; ls1 = Xs1 * bs1; ls2 = Xs2 * bs2; ηr = Xr * br
         s = zero(eltype(θ))
-        @inbounds for i in 1:n
-            if obs1[i] && obs2[i]
-                ρ = RHO_GUARD * tanh(ηr[i])    # guard ρ off ±1 (tanh saturates to ±1.0 in
-                om = 1 - ρ * ρ                 # Float64 for large η → om=0 → NaN); matches the
-                                               # q4 engine's RHO_GUARD + drmTMB's guarded link
-                z1 = (y1[i] - η1[i]) * exp(-ls1[i])     # standardised residuals
-                z2 = (y2[i] - η2[i]) * exp(-ls2[i])
-                # −log φ₂ = log(2π) + (½ log|Σ|) + (½ rᵀΣ⁻¹r)
-                s += log(2π) + ls1[i] + ls2[i] + 0.5 * log(om) +
-                     0.5 * (z1 * z1 - 2ρ * z1 * z2 + z2 * z2) / om
-            elseif obs1[i]
-                z1 = (y1[i] - η1[i]) * exp(-ls1[i])
-                s += 0.5 * log(2π) + ls1[i] + 0.5 * z1 * z1
-            elseif obs2[i]
-                z2 = (y2[i] - η2[i]) * exp(-ls2[i])
-                s += 0.5 * log(2π) + ls2[i] + 0.5 * z2 * z2
+        if meta_v === nothing
+            @inbounds for i in 1:n
+                if obs1[i] && obs2[i]
+                    ρ = RHO_GUARD * tanh(ηr[i])    # guard ρ off ±1 (tanh saturates to ±1.0 in
+                    om = 1 - ρ * ρ                 # Float64 for large η → om=0 → NaN); matches the
+                                                   # q4 engine's RHO_GUARD + drmTMB's guarded link
+                    z1 = (y1[i] - η1[i]) * exp(-ls1[i])     # standardised residuals
+                    z2 = (y2[i] - η2[i]) * exp(-ls2[i])
+                    # −log φ₂ = log(2π) + (½ log|Σ|) + (½ rᵀΣ⁻¹r)
+                    s += log(2π) + ls1[i] + ls2[i] + 0.5 * log(om) +
+                         0.5 * (z1 * z1 - 2ρ * z1 * z2 + z2 * z2) / om
+                elseif obs1[i]
+                    z1 = (y1[i] - η1[i]) * exp(-ls1[i])
+                    s += 0.5 * log(2π) + ls1[i] + 0.5 * z1 * z1
+                elseif obs2[i]
+                    z2 = (y2[i] - η2[i]) * exp(-ls2[i])
+                    s += 0.5 * log(2π) + ls2[i] + 0.5 * z2 * z2
+                end
+            end
+        else
+            @inbounds for i in 1:n
+                if obs1[i] && obs2[i]
+                    ρ = RHO_GUARD * tanh(ηr[i])
+                    σ1 = exp(ls1[i]); σ2 = exp(ls2[i])
+                    S11 = meta_v.v1[i] + σ1 * σ1
+                    S22 = meta_v.v2[i] + σ2 * σ2
+                    S12 = meta_v.cov12[i] + ρ * σ1 * σ2
+                    det = S11 * S22 - S12 * S12
+                    # V's correlation and rho can conspire past PD; the RHO_GUARD
+                    # alone cannot prevent it here. Sentinel, matching the coupled
+                    # phylo block's house style.
+                    det > 0 || return oftype(s, 1e18)
+                    r1 = y1[i] - η1[i]; r2 = y2[i] - η2[i]
+                    s += log(2π) + 0.5 * log(det) +
+                         0.5 * (S22 * r1 * r1 - 2 * S12 * r1 * r2 + S11 * r2 * r2) / det
+                elseif obs1[i]
+                    var1 = meta_v.v1[i] + exp(2 * ls1[i])
+                    r1 = y1[i] - η1[i]
+                    s += 0.5 * (log(2π) + log(var1) + r1 * r1 / var1)
+                elseif obs2[i]
+                    var2 = meta_v.v2[i] + exp(2 * ls2[i])
+                    r2 = y2[i] - η2[i]
+                    s += 0.5 * (log(2π) + log(var2) + r2 * r2 / var2)
+                end
             end
         end
         return s
@@ -277,7 +334,9 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
     scales = Dict(:sigma1 => exp.(Xs1 * θ̂[rng(3)]),
                   :sigma2 => exp.(Xs2 * θ̂[rng(4)]),
                   :rho12 => RHO_GUARD .* tanh.(Xr * θ̂[rng(5)]))   # report the model's guarded ρ
-    return _withformula(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n_like, Optim.converged(res), means, obs, scales), nll), f)
+    return _withiterations(
+        _withformula(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n_like, Optim.converged(res), means, obs, scales), nll), f),
+        Optim.iterations(res))
 end
 
 function _bivariate_q4_marker(rhs)
@@ -421,7 +480,7 @@ end
 
 function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, data,
                                       fixed, marker, tree, K, A;
-                                      g_tol::Float64)
+                                      g_tol::Float64, method::Symbol = :ML)
     marker[1] === :structured_q2 || error("internal error: expected q2 structured marker")
     kind = marker[2]
     grp = marker[3]
@@ -472,16 +531,29 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
     else
         0.0
     end
-    fit_q2 = fit_coevolution_q2_residual(
-        prob,
-        Q_cond;
-        β0 = β0,
-        Λ0 = Matrix(Symmetric([0.25 0.02; 0.02 0.25])),
-        σ0 = [std(r1) + eps(), std(r2) + eps()],
-        rho0 = ρ0,
-        g_tol = g_tol,
-        iterations = 300,
-    )
+    fit_q2 = if method === :REML
+        fit_coevolution_q2_reml(
+            prob,
+            Q_cond;
+            β0 = β0,
+            Λ0 = Matrix(Symmetric([0.25 0.02; 0.02 0.25])),
+            σ0 = [std(r1) + eps(), std(r2) + eps()],
+            rho0 = ρ0,
+            g_tol = g_tol,
+            iterations = 300,
+        )
+    else
+        fit_coevolution_q2_residual(
+            prob,
+            Q_cond;
+            β0 = β0,
+            Λ0 = Matrix(Symmetric([0.25 0.02; 0.02 0.25])),
+            σ0 = [std(r1) + eps(), std(r2) + eps()],
+            rho0 = ρ0,
+            g_tol = g_tol,
+            iterations = 300,
+        )
+    end
 
     k = size(X1, 2)
     blocks = [
@@ -550,6 +622,7 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
     end
     fit = DrmFit(fam, blocks, names, θ̂, V, fit_q2.loglik, length(y1),
                  fit_q2.converged, means, obs, scales)
+    fit = method === :REML ? _withreml(fit, fit_q2.reml_loglik, fit_q2.ml_loglik) : fit
     return _withranef(_withformula(_withnll(fit, nll), f), re)
 end
 
@@ -740,7 +813,12 @@ function _fit_bivariate_q4_structured(f::BivariateDrmFormula, fam::Gaussian, dat
         prob = prob,
         n_newton = q4_n_newton,
     )
-    fit = DrmFit(fam, blocks, names, θ̂, V, r.loglik, length(y1), r.converged, means, obs, scales)
+    # #509: the optimiser reported success at a numerically singular Λ
+    # (saturated fixture, cond(Λ) = 1.3e12). Gate the public flag on the same
+    # Λ-admissibility notion the q2 route's #503 guard uses — the estimates
+    # stay available; success is just not claimed at an inadmissible Λ.
+    q4_converged = r.converged && _q2_lambda_admissible(Matrix{Float64}(r.Λ))
+    fit = DrmFit(fam, blocks, names, θ̂, V, r.loglik, length(y1), q4_converged, means, obs, scales)
     fit = method === :REML ? _withreml(fit, reml_ll, ml_ll) : fit
     return _withranef(_withformula(_withnll(fit, nll, nllgrad!), f), re)
 end
@@ -897,7 +975,9 @@ function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fi
         prob = prob,                 # AugProblem — lets profile_sigma_a re-optimise the marginal
         n_newton = q4_n_newton,      # the inner-mode iteration count this fit used
     )
-    fit = DrmFit(fam, blocks, names, θ̂, V, r.loglik, length(y1), r.converged, means, obs, scales)
+    # #509: same Λ-admissibility gate as the structured constructor above.
+    q4_converged = r.converged && _q2_lambda_admissible(Matrix{Float64}(r.Λ))
+    fit = DrmFit(fam, blocks, names, θ̂, V, r.loglik, length(y1), q4_converged, means, obs, scales)
     fit = method === :REML ? _withreml(fit, reml_ll, ml_ll) : fit
     return _withranef(_withformula(_withnll(fit, nll, nllgrad!), f), re)
 end

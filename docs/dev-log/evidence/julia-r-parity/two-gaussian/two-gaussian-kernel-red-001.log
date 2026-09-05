@@ -1,0 +1,28 @@
+ERROR: LoadError: Some tests did not pass: 0 passed, 2 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_predictor.jl:6
+prepared two-Gaussian missing-predictor API: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_predictor.jl:7
+  Expression: isdefined(DRM, :PreparedTwoJointGaussianModel)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_predictor.jl:7 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_predictor.jl:7
+prepared two-Gaussian missing-predictor API: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_predictor.jl:8
+  Expression: isdefined(DRM, :PreparedTwoJointGaussianFit)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_predictor.jl:8 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_two_predictor.jl:7
+Test Summary:                               | Fail  Total  Time
+prepared two-Gaussian missing-predictor API |    2      2  0.6s

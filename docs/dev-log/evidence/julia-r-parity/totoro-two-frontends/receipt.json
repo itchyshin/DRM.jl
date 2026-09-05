@@ -1,0 +1,81 @@
+{
+  "source_commit": "f67eeb8046417c110c2f0ce7785bd3e70f2fcb1a",
+  "remote_workdir": "/home/snakagaw/drm_parity_20260830_f67eeb80",
+  "pilot_host": "totoro",
+  "julia": "1.10.10",
+  "threads": 1,
+  "blas_threads": 1,
+  "elapsed_seconds": 67,
+  "terminal_token": "TOTORO_TWO_FRONTENDS_PASS",
+  "result": "pass",
+  "scope": "Linux single-thread correctness pilot only; not warm speed, whole-programme, or final-source proof",
+  "summary_counts": [
+    [
+      "prepared two-Gaussian missing-predictor API",
+      3,
+      3
+    ],
+    [
+      "two Gaussian exact likelihood and conditional 2-by-2 moments",
+      29,
+      29
+    ],
+    [
+      "two Gaussian derivatives, masks, and input validation",
+      10,
+      10
+    ],
+    [
+      "two Gaussian stable large-scale arithmetic and predictor permutation",
+      10,
+      10
+    ],
+    [
+      "two Gaussian imputation uses the full raw covariance",
+      25,
+      25
+    ],
+    [
+      "two Gaussian fit freezes inputs and reports covariance status",
+      6,
+      6
+    ],
+    [
+      "two Gaussian missing-predictor direct formula frontend",
+      43,
+      43
+    ],
+    [
+      "two Gaussian direct frontend refusals",
+      19,
+      19
+    ],
+    [
+      "two Gaussian primitive preparation",
+      22,
+      22
+    ],
+    [
+      "two Gaussian primitive fit and native order",
+      23,
+      23
+    ]
+  ],
+  "artifacts": {
+    "pilot_log": {
+      "path": "totoro-two-frontends-pilot.log",
+      "sha256": "a077f0b9d12925f19fc24ffc8d5d8616cb669c8c97d4971f26ac29e9fc474a2a",
+      "bytes": 1771
+    },
+    "pilot_script": {
+      "path": "totoro-two-frontends-pilot.sh",
+      "sha256": "3ba72e46f5133d03a3152e34c1f7084043a1583be6acce30b191fcdba1b57711",
+      "bytes": 876
+    },
+    "source_tar_recorded_sha256": "1a132a9fd4003d55f328c1328f3f73d539ab054ef933714886d8d70470957f4c",
+    "outer_bundle_path": "/private/tmp/drm-parity-20260830/totoro-two-frontends-f67eeb80.tar",
+    "source_tar_local_sha256": "1a132a9fd4003d55f328c1328f3f73d539ab054ef933714886d8d70470957f4c",
+    "outer_bundle_sha256": "1a132a9fd4003d55f328c1328f3f73d539ab054ef933714886d8d70470957f4c"
+  },
+  "no_remote_or_runtime_filing": true
+}

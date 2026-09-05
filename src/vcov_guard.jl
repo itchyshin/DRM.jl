@@ -22,7 +22,37 @@
 """
 Relative tolerance below which a Hessian eigenvalue counts as numerically zero.
 """
-const _VCOV_RTOL = 1e-12
+# CALIBRATED 2026-08-26 against the measured distribution, not chosen by feel.
+# Was 1e-12, which only caught Hessians singular to MACHINE PRECISION and missed
+# merely catastrophic ones -- a fit with a variance of 1.5e+07 in one direction
+# reported an SE of ~3937 with no warning at all.
+#
+# Instrumented every _vcov_from_hessian call in the full suite (1,970 calls) on
+# Linux, under both inner-solve tolerances. The distribution is BIMODAL below
+# ~1e-7 and a smooth continuum of ordinary condition numbers above it:
+#
+#   arm            non-singular degenerate cluster    next point    empty gap
+#   newton_tol 1e-8    9.84e-09 .. 1.62e-08           1.09e-07      0.83 orders
+#   newton_tol 1e-10   4.14e-12 .. 5.53e-09           1.09e-07      1.30 orders
+#
+# 3e-8 splits that confirmed-empty gap: +0.73 orders above the degenerate cluster
+# and +0.56 below the nearest other point. ZERO healthy fits are newly warned on
+# in either arm -- the 38 calls that newly fire are 23 fixtures across three
+# sparse-Laplace routes, every one with an implied SE of 2,192-6,136.
+#
+# NOTE this threshold is a fix for a specific hole, NOT a general boundary
+# detector: above ~1e-7 the distribution is continuous, so no relative-ratio
+# threshold up there could be principled.
+#
+# ALSO NOTE the hole is PRE-EXISTING, not introduced by tightening newton_tol:
+# 6 calls already sit in the missed zone at the OLD tolerance. Tightening the
+# inner solve widened it from 6 to 38 by moving fits off exact float zero onto
+# the solver's own noise floor -- it made a latent weakness visible.
+#
+# Falsified by: a genuinely healthy fixture measuring <= ~1e-7; or this cluster's
+# top (5.53e-9) creeping toward 3e-8 on another BLAS/LAPACK build -- the margin
+# is 0.73 orders, comfortable but not enormous.
+const _VCOV_RTOL = 3e-8
 
 """
     _vcov_from_hessian(H; context = "")

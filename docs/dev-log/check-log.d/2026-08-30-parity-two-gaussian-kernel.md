@@ -1,0 +1,1 @@
+| 2026-08-30 | Two-Gaussian prepared kernel (#563) | Eight-mask native reference; independent likelihood/gradient/Hessian/uncertainty; targeted neighbours;25+17damages;2doc examples | Prepared kernel PASS inclstrict4e-6; formula/Rbridge andprogramme remainOPEN | Ada / Hopper / Rose |

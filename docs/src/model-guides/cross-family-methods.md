@@ -446,15 +446,15 @@ latent-scale correlation gives
      = \rho_{12}.
 ```
 
-The marginal log-likelihood matches as well: the Gauss–Hermite quadrature of
-Section 3 integrates a Gaussian-in-``u`` integrand, which Gauss–Hermite computes
-exactly (up to the usual ``2K-1`` polynomial-degree exactness, attained here for
-the Gaussian integrand to numerical precision). Hence for Gaussian × Gaussian the
-cross-family model and the `rho12` model agree on **both** ``\log L`` and the
-reported correlation — which is precisely the identifiability statement of
-Section 5(3): the loading split is the unidentified ridge, while ``\log L`` and
-``\rho = \rho_{12}`` are the identified, trustworthy summaries. This equivalence
-is used as a correctness anchor for the engine.
+The marginal model is the same as the `rho12` bivariate Gaussian model. A finite
+Gauss–Hermite rule is still a numerical quadrature approximation here: its
+polynomial-degree exactness does not make a Gaussian-density integrand exact.
+Thus fitted likelihood values need numerical agreement checks at a stated
+tolerance. The mathematical equivalence identifies the same ``\log L`` and
+reported correlation: the loading split is the unidentified ridge, while
+``\rho = \rho_{12}`` is the trustworthy cross-axis summary. This equivalence is
+used as a correctness anchor for the engine, with numerical parity checked
+separately.
 
 ## 8. Summary of the construction
 

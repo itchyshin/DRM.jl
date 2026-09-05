@@ -1,0 +1,522 @@
+{
+  "source_before": {
+    "/var/folders/7x/ytfpq14s0v18frbm9v_w9f4c0000gq/T//RtmpiNpDM8/pkgload1458f4279782c/drmTMB.so": "37ecda8a20e59c7309717865948928fc186bca853cda65b2c23c27805de60174",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/adequacy-plots.R": "50d41a04d8305b034c0e2dfbe4209591c992ee6d4cde800f71678d742b487d16",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/adequacy.R": "7a88ca078c0931f257b5bf5a1c9d5315448f7d8e907921e1418d2f6584163d9a",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/aghq-coxreid.R": "66fcd996070128ef1feefb0845694888f8167ee7e4396b4d04a43d8480a4383d",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-bernoulli-bernoulli.R": "d6ccc65580d7e0700ab2aed7c49c8369e21f3a441eb6ee8b25c8543d411fd8b3",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-gaussian-bernoulli.R": "2129bbe7278b0912ba436aa71d9fc80cb5cbdf4822af20fb618ce4baefbc8860",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-gaussian-nbinom2.R": "578751c099044dc943cbadc144deaa403ff5340eaefba49aaa1f3e21de5e43fd",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-nbinom2-nbinom2.R": "bbbf3d78813b32fe8a61e4589bd9ecf1f7fdf6d8841995f52fd3ff5dbb5b0a43",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich.R": "ae36567f517d650af47b227ce3fc3b82ac791aa9ec484a78c41741e1cc17174c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs.R": "35c2f32a0a4f5789c97be437758331edd9acd783a83a121a3bd6c0ac9f57616c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/bf.R": "71dbc96868e020a4e32b7170989bd49142a7bddd0750d79875740283f7d5d43e",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/check.R": "a63e0551c7a6b494fef73d86b0b0f1752ae1f222893b547214d63e6dd4e6f979",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/control.R": "066b5bb4662677340f99a5ebbd7d51396379b8c85d0aee9f6526e263711fbcb3",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/distributional-outputs.R": "45f6731f6c73dec88a5700d79345de928d37e31cdc6349ceb0fb01ad2c364450",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/drmTMB-package.R": "25050f7f5002a26e1f9371ad01f6b5faf52af82d946f9ba46c484d83cd0f535f",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/drmTMB.R": "1fb01724a4d6060f22f2d4062f09cb0f9ecd5d17f4626d0cbb919fe0a0796b59",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/emmeans-preflight.R": "ca007531560c4fcd58a37a51716826e18eef952f64ee2f14167a05e83c3fccd3",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/family-dpq.R": "1b73f4cbd511f2c5c230e254f83a02483815029b725689a53031af8ba38f70ad",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/family.R": "34bef8f5ae57f4e794b8a5788e1982f9ba61168fed74c38125722ba937a29959",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/formula-markers.R": "298d1f7344308668485043c633413067560a7e02c92cbb08caf84614d91f8e02",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/gaussian-aggregation.R": "f80e3e3d81bd6589a89763a90bd1387580d3368894f134bfc2b0c8212d62a629",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-bridge.R": "1d643ec10628719379c55b50a944b800e8a912ff24993c5ba38558e62facdb12",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-joint-missing.R": "a4abdb31d42d5402e65485922afed82f66551f35de0cd4d9cae395ecf3132494",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/marginal-parameters.R": "4bb246db3341b6cc68ed0a1e60ac35682e2d7499949b21212b31ee6f00e19bea",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/mesh.R": "92ba60e72a2b467eb7ad384429912293aa38c2645c2cae4ca53dc616783a8dbb",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/meta-vcov.R": "48cbbcd5ad03689404beda6129e13bac2e80ab5394364b9aca5c982f4a5fb29a",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/methods.R": "9822cce16be5d732b9d5b14f93a0be1cbe480ec3a9164611d11256633526ba1f",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/missing-data.R": "3a11d48863e31b43fbd8ad7631f47525867ee02b2503a41cc8d49a885b1fbf84",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/mspl-estimator.R": "389633693e357910d3ecf0d23472e29dc7310df922e2f150f197dc9f149d40d5",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/mspl.R": "6f394409ab1cff8e72f73c2a01626de8177d75794c03cb5d489bf4502a33719e",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/parse-formula.R": "af4c67439321c4f15ebad64f52161879a8169389af0abd5782d88bb9d2aa0faa",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/penalty.R": "8f9124aeccddf07f978ba75cb60e0bd786f4edfac91aa993c3848cde38f67df1",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/phylo-utils.R": "dd2d36f89bd3ea47161068e480004772ac9e162c31df7b0b89dae9b759c3e7ff",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/plot-corpairs.R": "23fd048ab1c152ee325ba203210f67d5c96b88c516cff4ec7c887448a805137c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/plot-parameter-surface.R": "8a93cb9c104b086e4500ecf9b2f72b7b88fd5278667d5b1c928ea88652169421",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/predict-parameters.R": "13c3bafaee98d08a938b0be921c049b158958cc47b8ac74ae405876986f4ca7e",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/prediction-grid.R": "b599efba35c0bb8c9b3467ef69da268d9fe9b0d6aee5009fda2e8d199abe4647",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/profile.R": "cbc537c023b79af2f1a359627790b788e1a7293f0a1fc844a60ce66f29d745d5",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/random-effect-scale-formulas.R": "4fa4a0ad558fac45e294a4c1a20da87eb523c1f2de7e2a2741993750d0d53c8c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/reader-contracts.R": "c197718d279b40be047e4ee39b1243827cd8ff9406dfd4bf4af0344ed236525f",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/sparse-fixed.R": "eb38f9a4281aeb652f392eb4f4bb075fd733195b665aa666a96d2fc3c8364bfd",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/zzz.R": "43307cf57423f651b986306ee8e04ab12206b6655fee33f1a3b9042925f4cb4b"
+  },
+  "gaussian": {
+    "coef": {
+      "mu": [
+        0.3983446188604899,
+        0.3756212615245289,
+        1.1467285380848007
+      ],
+      "sigma": -0.2325206486301112,
+      "mi_x": [
+        0.19757745303659066,
+        0.6630550839145054
+      ],
+      "sigma_mi_x": 0.6423297761219653
+    },
+    "coef_names": {
+      "mu": [
+        "(Intercept)",
+        "z",
+        "mi(x)"
+      ],
+      "sigma": "(Intercept)",
+      "mi_x": [
+        "(Intercept)",
+        "z"
+      ],
+      "sigma_mi_x": "x"
+    },
+    "vcov_dim": [
+      7,
+      7
+    ],
+    "vcov_dimnames": [
+      [
+        "mu:(Intercept)",
+        "mu:z",
+        "mu:mi(x)",
+        "sigma:(Intercept)",
+        "mi_x:(Intercept)",
+        "mi_x:z",
+        "sigma_mi_x:x"
+      ],
+      [
+        "mu:(Intercept)",
+        "mu:z",
+        "mu:mi(x)",
+        "sigma:(Intercept)",
+        "mi_x:(Intercept)",
+        "mi_x:z",
+        "sigma_mi_x:x"
+      ]
+    ],
+    "vcov_diag": [
+      0.004570532469361268,
+      0.008851042953810494,
+      0.009913346036030272,
+      0.0033395371735643383,
+      "NA",
+      "NA",
+      "NA"
+    ],
+    "nobs": 156,
+    "summary_capture": [
+      "                    estimate  std_error",
+      "mu:(Intercept)     0.3983446 0.06760571",
+      "mu:z               0.3756213 0.09407998",
+      "mu:mi(x)           1.1467285 0.09956579",
+      "sigma:(Intercept) -0.2325206 0.05778873",
+      "mi_x:(Intercept)   0.1975775         NA",
+      "mi_x:z             0.6630551         NA",
+      "sigma_mi_x:x       0.6423298         NA",
+      "                 component  dpar       term  estimate std_error    scale",
+      "sigma distributional-scale sigma (constant) 0.7925334 0.0457995 response"
+    ],
+    "sigma_mi_x": 0.6423297761219653,
+    "predict_mu": {
+      "status": "OK",
+      "length": 160,
+      "head": [
+        2.4356608006994964,
+        2.266951598079414,
+        1.5571146912810805,
+        0.027344990255170742,
+        0.721357021436742,
+        1.3600920487736883
+      ],
+      "missing_x": [
+        2.266951598079414,
+        0.721357021436742,
+        0.20579256387518358,
+        0.6278655926162314,
+        0.14458518206716126,
+        -1.5352496252578267,
+        0.6498851267313595,
+        0.2966997254502468,
+        0.3144496983908077,
+        2.221674686348216
+      ]
+    },
+    "imputed": [
+      {
+        "variable": "x",
+        "original_row": 2,
+        "model_row": 2,
+        "observed": false,
+        "estimate": 1.1640617574846048,
+        "std_error": 0.6486412044633062,
+        "source": "conditional_mode",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 5,
+        "model_row": 5,
+        "observed": false,
+        "estimate": 0.8909291246293891,
+        "std_error": 0.475429321493819,
+        "source": "conditional_mode",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 8,
+        "model_row": 8,
+        "observed": false,
+        "estimate": 0.07547607479432501,
+        "std_error": 0.4725405164052357,
+        "source": "conditional_mode",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 11,
+        "model_row": 11,
+        "observed": false,
+        "estimate": 0.11694661768886483,
+        "std_error": 0.47214459331623027,
+        "source": "conditional_mode",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 14,
+        "model_row": 14,
+        "observed": false,
+        "estimate": -0.07686912399089856,
+        "std_error": 0.47250180428916955,
+        "source": "conditional_mode",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 17,
+        "model_row": 17,
+        "observed": false,
+        "estimate": -0.8636985062797774,
+        "std_error": 0.47897912171812895,
+        "source": "conditional_mode",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 20,
+        "model_row": 20,
+        "observed": false,
+        "estimate": -0.42622584296445837,
+        "std_error": 0.4754132787901448,
+        "source": "conditional_mode",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 23,
+        "model_row": 23,
+        "observed": false,
+        "estimate": -0.09079012005713165,
+        "std_error": 0.4723816407152157,
+        "source": "conditional_mode",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 26,
+        "model_row": 26,
+        "observed": false,
+        "estimate": -0.2910593236969857,
+        "std_error": 0.4730594050360963,
+        "source": "conditional_mode",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 29,
+        "model_row": 29,
+        "observed": false,
+        "estimate": 1.9395296825615538,
+        "std_error": 0.4804769106521926,
+        "source": "conditional_mode",
+        "uncertainty_status": "ok"
+      }
+    ],
+    "optimizer": {
+      "optimizer": "nlminb",
+      "optimizer_preset": "default",
+      "attempt": 1,
+      "retried": false,
+      "convergence": 0,
+      "message": "relative convergence (4)",
+      "objective": 334.3256822828023,
+      "control": []
+    },
+    "sigma_mi_x_raw_log": -0.4426534372035263,
+    "sigma_mi_x_natural_superseded": 1.9009044060859988,
+    "sigma_mi_x_scale_provenance": {
+      "public_scale": "natural SD",
+      "raw_parameter": "log_sigma_mi",
+      "raw_value": -0.4426534372035263,
+      "source_refs": [
+        "R/drmTMB.R:21382-21402",
+        "R/drmTMB.R:3736-3737",
+        "R/drmTMB.R:19754-19759"
+      ],
+      "note": "sigma_mi_x is already exp(log_sigma_mi); prior exp(sigma_mi_x) derivation is superseded/inaccurate"
+    },
+    "sigma_mi_x_natural": 0.6423297761219653
+  },
+  "bernoulli": {
+    "coef": {
+      "mu": [
+        0.34295167955122774,
+        0.24304124484580952,
+        1.2173003652206178
+      ],
+      "sigma": -0.13309136284201847,
+      "mi_x": [
+        -0.4871824714552831,
+        0.49464569866162533
+      ]
+    },
+    "coef_names": {
+      "mu": [
+        "(Intercept)",
+        "z",
+        "mi(x)"
+      ],
+      "sigma": "(Intercept)",
+      "mi_x": [
+        "(Intercept)",
+        "z"
+      ]
+    },
+    "vcov_dim": [
+      6,
+      6
+    ],
+    "vcov_dimnames": [
+      [
+        "mu:(Intercept)",
+        "mu:z",
+        "mu:mi(x)",
+        "sigma:(Intercept)",
+        "mi_x:(Intercept)",
+        "mi_x:z"
+      ],
+      [
+        "mu:(Intercept)",
+        "mu:z",
+        "mu:mi(x)",
+        "sigma:(Intercept)",
+        "mi_x:(Intercept)",
+        "mi_x:z"
+      ]
+    ],
+    "vcov_diag": [
+      0.008506470813728934,
+      0.005688294982543941,
+      0.022338125296684268,
+      0.0033141959957608447,
+      "NA",
+      "NA"
+    ],
+    "nobs": 156,
+    "summary_capture": [
+      "                    estimate  std_error",
+      "mu:(Intercept)     0.3429517 0.09223053",
+      "mu:z               0.2430412 0.07542079",
+      "mu:mi(x)           1.2173004 0.14945944",
+      "sigma:(Intercept) -0.1330914 0.05756905",
+      "mi_x:(Intercept)  -0.4871825         NA",
+      "mi_x:z             0.4946457         NA",
+      "                 component  dpar       term  estimate  std_error    scale",
+      "sigma distributional-scale sigma (constant) 0.8753851 0.05039509 response"
+    ],
+    "sigma_mi_x": {},
+    "sigma_mi_x_natural": {},
+    "predict_mu": {
+      "status": "OK",
+      "length": 160,
+      "head": [
+        0.39773349012885584,
+        1.389544355018801,
+        0.5420967996979559,
+        0.3192356148304691,
+        0.8449594698251905,
+        0.580843635130091
+      ],
+      "missing_x": [
+        1.389544355018801,
+        0.8449594698251905,
+        0.667604170588799,
+        0.8125016528159503,
+        0.6468433318214534,
+        0.10900955495067254,
+        0.8201357265307743,
+        0.6985638501218924,
+        0.7046257811182393,
+        1.3736285657663
+      ]
+    },
+    "imputed": [
+      {
+        "variable": "x",
+        "original_row": 2,
+        "model_row": 2,
+        "observed": false,
+        "estimate": 0.5581912251776079,
+        "std_error": 0.49660223651563323,
+        "source": "conditional_probability",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 5,
+        "model_row": 5,
+        "observed": false,
+        "estimate": 0.3254840271138651,
+        "std_error": 0.46855541316647475,
+        "source": "conditional_probability",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 8,
+        "model_row": 8,
+        "observed": false,
+        "estimate": 0.05704646548818053,
+        "std_error": 0.23193138266195534,
+        "source": "conditional_probability",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 11,
+        "model_row": 11,
+        "observed": false,
+        "estimate": 0.08583322220468667,
+        "std_error": 0.2801176184581176,
+        "source": "conditional_probability",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 14,
+        "model_row": 14,
+        "observed": false,
+        "estimate": 0.2261286448696399,
+        "std_error": 0.4183234165559707,
+        "source": "conditional_probability",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 17,
+        "model_row": 17,
+        "observed": false,
+        "estimate": 0.658648343562357,
+        "std_error": 0.47416316082643994,
+        "source": "conditional_probability",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 20,
+        "model_row": 20,
+        "observed": false,
+        "estimate": 0.019402882484386555,
+        "std_error": 0.1379362556969111,
+        "source": "conditional_probability",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 23,
+        "model_row": 23,
+        "observed": false,
+        "estimate": 0.012367006355577623,
+        "std_error": 0.11051725435143024,
+        "source": "conditional_probability",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 26,
+        "model_row": 26,
+        "observed": false,
+        "estimate": 0.7082757443547744,
+        "std_error": 0.45455606289374767,
+        "source": "conditional_probability",
+        "uncertainty_status": "ok"
+      },
+      {
+        "variable": "x",
+        "original_row": 29,
+        "model_row": 29,
+        "observed": false,
+        "estimate": 0.6052162804584901,
+        "std_error": 0.4888041881228928,
+        "source": "conditional_probability",
+        "uncertainty_status": "ok"
+      }
+    ],
+    "optimizer": {
+      "optimizer": "nlminb",
+      "optimizer_preset": "default",
+      "attempt": 1,
+      "retried": false,
+      "convergence": 0,
+      "message": "relative convergence (4)",
+      "objective": 299.5064163649897,
+      "control": []
+    }
+  },
+  "source_after": {
+    "/var/folders/7x/ytfpq14s0v18frbm9v_w9f4c0000gq/T//RtmpiNpDM8/pkgload1458f4279782c/drmTMB.so": "37ecda8a20e59c7309717865948928fc186bca853cda65b2c23c27805de60174",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/adequacy-plots.R": "50d41a04d8305b034c0e2dfbe4209591c992ee6d4cde800f71678d742b487d16",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/adequacy.R": "7a88ca078c0931f257b5bf5a1c9d5315448f7d8e907921e1418d2f6584163d9a",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/aghq-coxreid.R": "66fcd996070128ef1feefb0845694888f8167ee7e4396b4d04a43d8480a4383d",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-bernoulli-bernoulli.R": "d6ccc65580d7e0700ab2aed7c49c8369e21f3a441eb6ee8b25c8543d411fd8b3",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-gaussian-bernoulli.R": "2129bbe7278b0912ba436aa71d9fc80cb5cbdf4822af20fb618ce4baefbc8860",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-gaussian-nbinom2.R": "578751c099044dc943cbadc144deaa403ff5340eaefba49aaa1f3e21de5e43fd",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich-nbinom2-nbinom2.R": "bbbf3d78813b32fe8a61e4589bd9ecf1f7fdf6d8841995f52fd3ff5dbb5b0a43",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs-sandwich.R": "ae36567f517d650af47b227ce3fc3b82ac791aa9ec484a78c41741e1cc17174c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/associate-pairs.R": "35c2f32a0a4f5789c97be437758331edd9acd783a83a121a3bd6c0ac9f57616c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/bf.R": "71dbc96868e020a4e32b7170989bd49142a7bddd0750d79875740283f7d5d43e",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/check.R": "a63e0551c7a6b494fef73d86b0b0f1752ae1f222893b547214d63e6dd4e6f979",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/control.R": "066b5bb4662677340f99a5ebbd7d51396379b8c85d0aee9f6526e263711fbcb3",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/distributional-outputs.R": "45f6731f6c73dec88a5700d79345de928d37e31cdc6349ceb0fb01ad2c364450",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/drmTMB-package.R": "25050f7f5002a26e1f9371ad01f6b5faf52af82d946f9ba46c484d83cd0f535f",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/drmTMB.R": "1fb01724a4d6060f22f2d4062f09cb0f9ecd5d17f4626d0cbb919fe0a0796b59",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/emmeans-preflight.R": "ca007531560c4fcd58a37a51716826e18eef952f64ee2f14167a05e83c3fccd3",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/family-dpq.R": "1b73f4cbd511f2c5c230e254f83a02483815029b725689a53031af8ba38f70ad",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/family.R": "34bef8f5ae57f4e794b8a5788e1982f9ba61168fed74c38125722ba937a29959",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/formula-markers.R": "298d1f7344308668485043c633413067560a7e02c92cbb08caf84614d91f8e02",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/gaussian-aggregation.R": "f80e3e3d81bd6589a89763a90bd1387580d3368894f134bfc2b0c8212d62a629",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-bridge.R": "1d643ec10628719379c55b50a944b800e8a912ff24993c5ba38558e62facdb12",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/julia-joint-missing.R": "a4abdb31d42d5402e65485922afed82f66551f35de0cd4d9cae395ecf3132494",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/marginal-parameters.R": "4bb246db3341b6cc68ed0a1e60ac35682e2d7499949b21212b31ee6f00e19bea",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/mesh.R": "92ba60e72a2b467eb7ad384429912293aa38c2645c2cae4ca53dc616783a8dbb",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/meta-vcov.R": "48cbbcd5ad03689404beda6129e13bac2e80ab5394364b9aca5c982f4a5fb29a",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/methods.R": "9822cce16be5d732b9d5b14f93a0be1cbe480ec3a9164611d11256633526ba1f",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/missing-data.R": "3a11d48863e31b43fbd8ad7631f47525867ee02b2503a41cc8d49a885b1fbf84",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/mspl-estimator.R": "389633693e357910d3ecf0d23472e29dc7310df922e2f150f197dc9f149d40d5",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/mspl.R": "6f394409ab1cff8e72f73c2a01626de8177d75794c03cb5d489bf4502a33719e",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/parse-formula.R": "af4c67439321c4f15ebad64f52161879a8169389af0abd5782d88bb9d2aa0faa",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/penalty.R": "8f9124aeccddf07f978ba75cb60e0bd786f4edfac91aa993c3848cde38f67df1",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/phylo-utils.R": "dd2d36f89bd3ea47161068e480004772ac9e162c31df7b0b89dae9b759c3e7ff",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/plot-corpairs.R": "23fd048ab1c152ee325ba203210f67d5c96b88c516cff4ec7c887448a805137c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/plot-parameter-surface.R": "8a93cb9c104b086e4500ecf9b2f72b7b88fd5278667d5b1c928ea88652169421",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/predict-parameters.R": "13c3bafaee98d08a938b0be921c049b158958cc47b8ac74ae405876986f4ca7e",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/prediction-grid.R": "b599efba35c0bb8c9b3467ef69da268d9fe9b0d6aee5009fda2e8d199abe4647",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/profile.R": "cbc537c023b79af2f1a359627790b788e1a7293f0a1fc844a60ce66f29d745d5",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/random-effect-scale-formulas.R": "4fa4a0ad558fac45e294a4c1a20da87eb523c1f2de7e2a2741993750d0d53c8c",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/reader-contracts.R": "c197718d279b40be047e4ee39b1243827cd8ff9406dfd4bf4af0344ed236525f",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/sparse-fixed.R": "eb38f9a4281aeb652f392eb4f4bb075fd733195b665aa666a96d2fc3c8364bfd",
+    "/private/tmp/drm-parity-20260830/drmTMB/R/zzz.R": "43307cf57423f651b986306ee8e04ab12206b6655fee33f1a3b9042925f4cb4b"
+  },
+  "source_unchanged": true
+}

@@ -1,0 +1,58 @@
+{
+  "status": "Not integrated: Gamma covariance still fails before profiling",
+  "rows": [
+    {
+      "receipt": "docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/module-1threads-estimated001.json",
+      "exit_code": 0,
+      "elapsed_seconds": 34.66409754194319,
+      "inputs_unchanged": true,
+      "source_sha256": "2c534141d8439a4ee339bfc6d795e4a4836fea885f986f677b418016a4afc32f"
+    },
+    {
+      "receipt": "docs/dev-log/evidence/julia-r-parity/locscale-profile-status-20260831/module-1threads-estimated001.json",
+      "exit_code": 1,
+      "elapsed_seconds": 15.096080583054572,
+      "inputs_unchanged": true,
+      "source_sha256": "2c534141d8439a4ee339bfc6d795e4a4836fea885f986f677b418016a4afc32f"
+    },
+    {
+      "receipt": "docs/dev-log/evidence/julia-r-parity/locscale-profile-status-20260831/module-4threads-estimated002.json",
+      "exit_code": 1,
+      "elapsed_seconds": 14.226668374845758,
+      "inputs_unchanged": true,
+      "source_sha256": "2c534141d8439a4ee339bfc6d795e4a4836fea885f986f677b418016a4afc32f"
+    },
+    {
+      "receipt": "docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/perturbations-1threads-estimated001.json",
+      "exit_code": 0,
+      "elapsed_seconds": 5.718753834022209,
+      "inputs_unchanged": true,
+      "source_sha256": "2c534141d8439a4ee339bfc6d795e4a4836fea885f986f677b418016a4afc32f"
+    },
+    {
+      "receipt": "docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/varied-oracle-001.json",
+      "exit_code": 0,
+      "elapsed_seconds": 4.433687083888799,
+      "inputs_unchanged": true,
+      "source_sha256": "2c534141d8439a4ee339bfc6d795e4a4836fea885f986f677b418016a4afc32f"
+    },
+    {
+      "receipt": "docs/dev-log/evidence/julia-r-parity/locscale-inner-status-20260831/varied-oracle-negative-001.json",
+      "exit_code": 1,
+      "elapsed_seconds": 7.854325749911368,
+      "inputs_unchanged": true,
+      "source_sha256": "2c534141d8439a4ee339bfc6d795e4a4836fea885f986f677b418016a4afc32f"
+    }
+  ],
+  "warning": "One Optim NaN-Hessian early-termination warning remains in the passing inner module log; not all fit convergence is established.",
+  "counts": {
+    "inner_suite_assertions": 123,
+    "inner_runner_assertions": 2,
+    "profile_each_pass": 76,
+    "profile_each_error": 1,
+    "perturbation_plus_runner": 152,
+    "varied_oracle_pass": 294,
+    "varied_negative_control_pass": 198,
+    "varied_negative_control_expected_fail": 96
+  }
+}

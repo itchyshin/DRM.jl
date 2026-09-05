@@ -1,0 +1,186 @@
+ERROR: LoadError: Some tests did not pass: 63 passed, 14 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:71
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["(Intercept)", "a: b", "a: c", "mi(x).L", "mi(x).Q"] == ["(Intercept)", "ab", "ac", "mi(x).L", "mi(x).Q"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["mi(x)low", "mi(x)medium", "mi(x)high", "a: b", "a: c", "b: warm", "a: b & b: warm", "a: c & b: warm"] == ["mi(x)low", "mi(x)medium", "mi(x)high", "ab", "ac", "bwarm", "ab:bwarm", "ac:bwarm"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["mi(x)low", "mi(x)medium", "mi(x)high", "a: b", "a: c", "b: warm"] == ["mi(x)low", "mi(x)medium", "mi(x)high", "ab", "ac", "bwarm"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["mi(x)low", "mi(x)medium", "mi(x)high", "a: a & b: cold", "a: b & b: cold", "a: c & b: cold", "a: a & b: warm", "a: b & b: warm", "a: c & b: warm"] == ["mi(x)low", "mi(x)medium", "mi(x)high", "aa:bcold", "ab:bcold", "ac:bcold", "aa:bwarm", "ab:bwarm", "ac:bwarm"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["a: a", "a: b", "a: c", "b: warm", "mi(x).L", "mi(x).Q"] == ["aa", "ab", "ac", "bwarm", "mi(x).L", "mi(x).Q"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["z", "mi(x)low", "mi(x)medium", "mi(x)high", "a: b", "a: c"] == ["z", "mi(x)low", "mi(x)medium", "mi(x)high", "ab", "ac"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["a: a", "a: b", "a: c", "b: warm", "mi(x).L", "mi(x).Q", "a: b & b: warm", "a: c & b: warm"] == ["aa", "ab", "ac", "bwarm", "mi(x).L", "mi(x).Q", "ab:bwarm", "ac:bwarm"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["(Intercept)", "a: b", "a: c", "mi(x)medium", "mi(x)high"] == ["(Intercept)", "ab", "ac", "mi(x)medium", "mi(x)high"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["mi(x)low", "mi(x)medium", "mi(x)high", "a: b", "a: c", "b: warm", "a: b & b: warm", "a: c & b: warm"] == ["mi(x)low", "mi(x)medium", "mi(x)high", "ab", "ac", "bwarm", "ab:bwarm", "ac:bwarm"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["mi(x)low", "mi(x)medium", "mi(x)high", "a: b", "a: c", "b: warm"] == ["mi(x)low", "mi(x)medium", "mi(x)high", "ab", "ac", "bwarm"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["mi(x)low", "mi(x)medium", "mi(x)high", "a: a & b: cold", "a: b & b: cold", "a: c & b: cold", "a: a & b: warm", "a: b & b: warm", "a: c & b: warm"] == ["mi(x)low", "mi(x)medium", "mi(x)high", "aa:bcold", "ab:bcold", "ac:bcold", "aa:bwarm", "ab:bwarm", "ac:bwarm"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["a: a", "a: b", "a: c", "b: warm", "mi(x)medium", "mi(x)high"] == ["aa", "ab", "ac", "bwarm", "mi(x)medium", "mi(x)high"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["z", "mi(x)low", "mi(x)medium", "mi(x)high", "a: b", "a: c"] == ["z", "mi(x)low", "mi(x)medium", "mi(x)high", "ab", "ac"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+finite-state native factor coding contract: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156
+  Expression: names == String.(reference["mu_names"])
+   Evaluated: ["a: a", "a: b", "a: c", "b: warm", "mi(x)medium", "mi(x)high", "a: b & b: warm", "a: c & b: warm"] == ["aa", "ab", "ac", "bwarm", "mi(x)medium", "mi(x)high", "ab:bwarm", "ac:bwarm"]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:156 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_factor_coding.jl:72
+Test Summary:                              | Pass  Fail  Total   Time
+finite-state native factor coding contract |   63    14     77  21.4s

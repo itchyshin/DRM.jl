@@ -1,0 +1,20 @@
+{
+  "command": [
+    "julia",
+    "--project=.",
+    "--startup-file=no",
+    "--history-file=no",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/compensated-inner-experiment/objective-direction/objective_direction.jl"
+  ],
+  "hard_cap_seconds": 20,
+  "kind": "objective_direction_foreground_capped",
+  "log": "/private/tmp/drm-parity-20260830/profile-threads-s11/compensated-inner-experiment/objective-direction/objective-direction-20260831T173804Z.log",
+  "pid": 21593,
+  "process_group": 21593,
+  "returncode": 1,
+  "script": "/private/tmp/drm-parity-20260830/profile-threads-s11/compensated-inner-experiment/objective-direction/objective_direction.jl",
+  "stamp": "20260831T173804Z",
+  "started_unix": 1788197901.534836,
+  "timed_out": false,
+  "wall_seconds": 2.283660888671875
+}

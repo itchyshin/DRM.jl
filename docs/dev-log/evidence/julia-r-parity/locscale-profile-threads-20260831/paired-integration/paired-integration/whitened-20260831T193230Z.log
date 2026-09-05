@@ -1,0 +1,4 @@
+Test Summary:                                | Pass  Total  Time
+private whitened paired location-scale route |  284    284  6.1s
+LOCSCALE_WHITENED_FOCUSED_OK
+REGRESSION_BUNDLE_PASS

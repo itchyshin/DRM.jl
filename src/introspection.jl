@@ -75,7 +75,7 @@ end
 # Which coefficients live on a log scale in `theta`. The variance-component and
 # residual-scale blocks are stored as logs; mean coefficients are not.
 _profile_target_scale(param::Symbol) =
-    param in (:sigma, :resd, :resd_mu, :resd_sigma, :recov) ? :log : :identity
+    param in (:sigma, :resd, :resd_mu, :resd_sigma, :recov, :sd, :sd_phylo) ? :log : :identity
 
 """
     structured_effects(fit::DrmFit) -> Vector{NamedTuple}

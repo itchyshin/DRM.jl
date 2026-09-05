@@ -1,0 +1,30 @@
+ℹ Testing drmTMB
+julia-joint-missing: 123.................................
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Failure ('test-julia-joint-missing.R:14:3'): classed missing controls do n
+Expected `drmTMB:::drm_julia_joint_prepare(...)` to throw a error.
+
+── 2. Failure ('test-julia-joint-missing.R:26:3'): subtraction cannot hide model
+Expected `prepare(bf(y ~ mi(x) + I(y^2) - 1, sigma ~ 1))` to throw a error.
+
+── 3. Error ('test-julia-joint-missing.R:23:5'): subtraction cannot hide modelle
+Error in `stats::lm.fit(x = X_mu_start, y = y_start)`: NA/NaN/Inf in 'x'
+Backtrace:
+     ▆
+  1. ├─testthat::expect_error(...) at test-julia-joint-missing.R:27:3
+  2. │ └─testthat:::expect_condition_matching_(...)
+  3. │   └─testthat:::quasi_capture(...)
+  4. │     ├─testthat (local) .capture(...)
+  5. │     │ └─base::withCallingHandlers(...)
+  6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo))
+  7. └─drmTMB (local) prepare(bf(y ~ mi(x) + I(x^2) - 1, sigma ~ 1))
+  8.   └─drmTMB:::drm_julia_joint_prepare(...) at test-julia-joint-missing.R:23:5
+  9.     └─drmTMB:::drm_build_gaussian_ls_spec(...) at drmTMB/R/julia-joint-missing.R:246:3
+ 10.       └─drmTMB:::gaussian_ls_start(...) at drmTMB/R/drmTMB.R:3715:3
+ 11.         └─stats::lm.fit(x = X_mu_start, y = y_start) at drmTMB/R/drmTMB.R:17449:5
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+Error:
+! Test failures.
+Execution halted

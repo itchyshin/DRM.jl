@@ -1,0 +1,19 @@
+{
+  "status": "Builder confirmed final003 terminal, 3.2seconds within60secondcap; production unchanged",
+  "files": [
+    {
+      "file": "locscale_gamma_k1minus_arithmetic.jl",
+      "sha256": "866e8c2ef7dfb1bbb1fa66f9ed77de9a47958be55660b3954702303cabcd5ac6"
+    },
+    {
+      "file": "locscale_gamma_k1minus_arithmetic-002.log",
+      "sha256": "d811bd34894904f4607abbb8fa151e093b19f91f6a926ee00a3ed42c21e47a89"
+    },
+    {
+      "file": "locscale_gamma_k1minus_arithmetic-003.log",
+      "sha256": "1e3f701846cccf62d50914bc1311a86f0258e17237b4945ccb939003344f307b"
+    }
+  ],
+  "earlier001_log_matches_final_private_file": true,
+  "earlier_parent_script": "Provisional earlier script snapshot; final003 uses this subdirectory script."
+}

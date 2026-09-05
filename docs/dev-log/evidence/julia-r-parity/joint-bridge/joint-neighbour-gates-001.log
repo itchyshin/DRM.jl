@@ -1,0 +1,130 @@
+ℹ Testing drmTMB
+julia-gate-vs-engine: ..................12..........................................................................................................................
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Failure ('test-julia-gate-vs-engine.R:125:5'): dashboard Julia gate artifa
+Expected `artifact` to equal `registry`.
+Differences:
+actual vs expected
+                                                                                      syntax                                                     drmjl_status                                                        message_pattern                                                                                                      evidence
+  actual[1, ]    weights = ...                                                               unsupported payload                                              weights                                                                DRM.jl bridge payload has no weights slot.                                                                   
+- actual[2, ]    impute = list(...)                                                          unsupported payload                                              impute                                                                 DRM.jl bridge payload has no imputation contract.                                                            
++ expected[2, ]  impute supplied without missing = miss_control(predictor = "model")         joint payload requires predictor=model and an additive mi term   predictor.*model                                                       The joint Gaussian/Bernoulli predictor payload is admitted only with complete model specification.           
+  actual[3, ]    control = list(...)                                                         no R engine-control surface                                      default .*control                                                      Julia optimizer controls need an explicit engine_control surface.                                            
+- actual[4, ]    missing = miss_control(predictor = "model")                                 unsupported payload                                              missing.*route|impute                                                  DRM.jl bridge receives complete predictor columns only.                                                      
++ expected[4, ]  missing = miss_control(predictor = "model") without a matching impute model joint payload requires an explicit matching impute model         impute                                                                 Modelled predictors require a matching impute entry; unsupported families remain separate gaps.              
+  actual[5, ]    missing = miss_control(response = "include") with poisson()                 not audited for non-Gaussian masks                               missing.*route                                                         Observed-response masks are admitted only for Gaussian bridge cells.                                         
+  actual[6, ]    family = beta_binomial() through engine = "julia"                           no BetaBinomial tree/FE R bridge claim                           Gaussian one-/two-response|Workflow G fixed-effect                     BetaBinomial has no Workflow G R bridge admission; use native TMB.                                           
+  actual[7, ]    bivariate phylo on only one axis or on three axes                           bivariate phylo route admits q2 mu1/mu2 or q4 all four axes only requires either q2.*mu1/mu2|q4 all-four-axis|Missing phylogenetic axis DRM.jl bivariate phylo bridge expects either q2 terms on mu1/mu2 or q4 terms on mu1, mu2, sigma1, and sigma2.
+
+actual$syntax[1:7] vs expected$syntax[1:7]
+  "weights = ..."
+- "impute = list(...)"
++ "impute supplied without missing = miss_control(predictor = \"model\")"
+  "control = list(...)"
+- "missing = miss_control(predictor = \"model\")"
++ "missing = miss_control(predictor = \"model\") without a matching impute model"
+  "missing = miss_control(response = \"include\") with poisson()"
+  "family = beta_binomial() through engine = \"julia\""
+  "bivariate phylo on only one axis or on three axes"
+
+actual$drmjl_status[1:7] vs expected$drmjl_status[1:7]
+  "unsupported payload"
+- "unsupported payload"
++ "joint payload requires predictor=model and an additive mi term"
+  "no R engine-control surface"
+- "unsupported payload"
++ "joint payload requires an explicit matching impute model"
+  "not audited for non-Gaussian masks"
+  "no BetaBinomial tree/FE R bridge claim"
+  "bivariate phylo route admits q2 mu1/mu2 or q4 all four axes only"
+
+actual$message_pattern[1:7] vs expected$message_pattern[1:7]
+  "weights"
+- "impute"
++ "predictor.*model"
+  "default .*control"
+- "missing.*route|impute"
++ "impute"
+  "missing.*route"
+  "Gaussian one-/two-response|Workflow G fixed-effect"
+  "requires either q2.*mu1/mu2|q4 all-four-axis|Missing phylogenetic axis"
+
+actual$evidence[1:7] vs expected$evidence[1:7]
+  "DRM.jl bridge payload has no weights slot."
+- "DRM.jl bridge payload has no imputation contract."
++ "The joint Gaussian/Bernoulli predictor payload is admitted only with complete model specification."
+  "Julia optimizer controls need an explicit engine_control surface."
+- "DRM.jl bridge receives complete predictor columns only."
++ "Modelled predictors require a matching impute entry; unsupported families remain separate gaps."
+  "Observed-response masks are admitted only for Gaussian bridge cells."
+  "BetaBinomial has no Workflow G R bridge admission; use native TMB."
+  "DRM.jl bivariate phylo bridge expects either q2 terms on mu1/mu2 or q4 terms on mu1, mu2, sigma1, and sigma2."
+
+/private/tmp/drm-parity-20260830/drmTMB/docs/dev-log/dashboard/julia-gates.tsv
+
+── 2. Failure ('test-julia-gate-vs-engine.R:125:5'): dashboard Julia gate artifa
+Expected `artifact` to equal `registry`.
+Differences:
+actual vs expected
+                                                                                      syntax                                                     drmjl_status                                                        message_pattern                                                                                                      evidence
+  actual[1, ]    weights = ...                                                               unsupported payload                                              weights                                                                DRM.jl bridge payload has no weights slot.                                                                   
+- actual[2, ]    impute = list(...)                                                          unsupported payload                                              impute                                                                 DRM.jl bridge payload has no imputation contract.                                                            
++ expected[2, ]  impute supplied without missing = miss_control(predictor = "model")         joint payload requires predictor=model and an additive mi term   predictor.*model                                                       The joint Gaussian/Bernoulli predictor payload is admitted only with complete model specification.           
+  actual[3, ]    control = list(...)                                                         no R engine-control surface                                      default .*control                                                      Julia optimizer controls need an explicit engine_control surface.                                            
+- actual[4, ]    missing = miss_control(predictor = "model")                                 unsupported payload                                              missing.*route|impute                                                  DRM.jl bridge receives complete predictor columns only.                                                      
++ expected[4, ]  missing = miss_control(predictor = "model") without a matching impute model joint payload requires an explicit matching impute model         impute                                                                 Modelled predictors require a matching impute entry; unsupported families remain separate gaps.              
+  actual[5, ]    missing = miss_control(response = "include") with poisson()                 not audited for non-Gaussian masks                               missing.*route                                                         Observed-response masks are admitted only for Gaussian bridge cells.                                         
+  actual[6, ]    family = beta_binomial() through engine = "julia"                           no BetaBinomial tree/FE R bridge claim                           Gaussian one-/two-response|Workflow G fixed-effect                     BetaBinomial has no Workflow G R bridge admission; use native TMB.                                           
+  actual[7, ]    bivariate phylo on only one axis or on three axes                           bivariate phylo route admits q2 mu1/mu2 or q4 all four axes only requires either q2.*mu1/mu2|q4 all-four-axis|Missing phylogenetic axis DRM.jl bivariate phylo bridge expects either q2 terms on mu1/mu2 or q4 terms on mu1, mu2, sigma1, and sigma2.
+
+actual$syntax[1:7] vs expected$syntax[1:7]
+  "weights = ..."
+- "impute = list(...)"
++ "impute supplied without missing = miss_control(predictor = \"model\")"
+  "control = list(...)"
+- "missing = miss_control(predictor = \"model\")"
++ "missing = miss_control(predictor = \"model\") without a matching impute model"
+  "missing = miss_control(response = \"include\") with poisson()"
+  "family = beta_binomial() through engine = \"julia\""
+  "bivariate phylo on only one axis or on three axes"
+
+actual$drmjl_status[1:7] vs expected$drmjl_status[1:7]
+  "unsupported payload"
+- "unsupported payload"
++ "joint payload requires predictor=model and an additive mi term"
+  "no R engine-control surface"
+- "unsupported payload"
++ "joint payload requires an explicit matching impute model"
+  "not audited for non-Gaussian masks"
+  "no BetaBinomial tree/FE R bridge claim"
+  "bivariate phylo route admits q2 mu1/mu2 or q4 all four axes only"
+
+actual$message_pattern[1:7] vs expected$message_pattern[1:7]
+  "weights"
+- "impute"
++ "predictor.*model"
+  "default .*control"
+- "missing.*route|impute"
++ "impute"
+  "missing.*route"
+  "Gaussian one-/two-response|Workflow G fixed-effect"
+  "requires either q2.*mu1/mu2|q4 all-four-axis|Missing phylogenetic axis"
+
+actual$evidence[1:7] vs expected$evidence[1:7]
+  "DRM.jl bridge payload has no weights slot."
+- "DRM.jl bridge payload has no imputation contract."
++ "The joint Gaussian/Bernoulli predictor payload is admitted only with complete model specification."
+  "Julia optimizer controls need an explicit engine_control surface."
+- "DRM.jl bridge receives complete predictor columns only."
++ "Modelled predictors require a matching impute entry; unsupported families remain separate gaps."
+  "Observed-response masks are admitted only for Gaussian bridge cells."
+  "BetaBinomial has no Workflow G R bridge admission; use native TMB."
+  "DRM.jl bivariate phylo bridge expects either q2 terms on mu1/mu2 or q4 terms on mu1, mu2, sigma1, and sigma2."
+
+/private/tmp/drm-parity-20260830/drmTMB/inst/extdata/julia-gates.tsv
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+Error:
+! Test failures.
+Execution halted

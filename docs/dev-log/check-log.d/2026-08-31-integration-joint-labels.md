@@ -1,0 +1,1 @@
+| 2026-08-31 | Integration and joint prediction labels (#563) | R subset; ordinary Rscript; eight-route session; Totoro1/4thread checks | 1019 R passes/1skip;1798 Julia passes/2known broken;62 four-thread passes; programme gates OPEN | Ada / Rose |

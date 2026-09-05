@@ -1,0 +1,48 @@
+ERROR: LoadError: Some tests did not pass: 7 passed, 1 failed, 1 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/sampler-20260831T195505Z.jl:2
+canonical location-scale marginal bootstrap simulator: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:60
+  Expression: collect(Fq.p) != collect(1:4)
+   Evaluated: [1, 2, 3, 4] != [1, 2, 3, 4]
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:60 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:50
+canonical location-scale marginal bootstrap simulator: Error During Test at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:49
+  Got exception outside of a @test
+  type FunctionTerm has no field sym
+  Stacktrace:
+    [1] getproperty(x::StatsModels.FunctionTerm{typeof(relmat), Vector{StatsModels.Term}}, f::Symbol)
+      @ Base ./Base.jl:37
+    [2] _split_ranef(rhs::Tuple{StatsModels.Term, StatsModels.FunctionTerm{typeof(|), Vector{StatsModels.FunctionTerm}}})
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/gaussian_ranef.jl:27
+    [3] _marginal_simulator(fit::DrmFit{Gamma}, data::@NamedTuple{y::Vector{Float64}, x::Vector{Float64}, g::Vector{Int64}}; K::Matrix{Float64}, A::Nothing, tree::Nothing, coords::Nothing)
+      @ DRM /private/tmp/drm-parity-20260830/integration/DRM.jl/src/inference.jl:1829
+    [4] macro expansion
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:65 [inlined]
+    [5] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+    [6] top-level scope
+      @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_bootstrap_simulator.jl:50
+    [7] include(fname::String)
+      @ Base.MainInclude ./client.jl:489
+    [8] macro expansion
+      @ /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/sampler-20260831T195505Z.jl:3 [inlined]
+    [9] macro expansion
+      @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+   [10] top-level scope
+      @ /private/tmp/drm-parity-20260830/locscale-bootstrap-s11/sampler-20260831T195505Z.jl:3
+   [11] include(mod::Module, _path::String)
+      @ Base ./Base.jl:495
+   [12] exec_options(opts::Base.JLOptions)
+      @ Base ./client.jl:318
+   [13] _start()
+      @ Base ./client.jl:552
+Test Summary:                                           | Pass  Fail  Error  Total  Time
+bounded bootstrap regression                            |    7     1      1      9  7.5s
+  canonical location-scale marginal bootstrap simulator |    7     1      1      9  7.3s

@@ -1,0 +1,5 @@
+(idx = 1, side = :lower, selected_l2 = 3.36834937873892e-10, bound = 1.5644813439598879e-9, selected_certificate = true, selected_undamped_hpd = true, selected_strict_gamma_clamp = true, delta_J = -1.055962533617218e-26, precision_consistent = true, prospective_gate = true)
+(idx = 1, side = :upper, selected_l2 = 9.51938922545911e-10, bound = 1.6459155523829773e-9, selected_certificate = true, selected_undamped_hpd = true, selected_strict_gamma_clamp = true, delta_J = -4.864799418496813e-26, precision_consistent = true, prospective_gate = true)
+(idx = 2, side = :lower, selected_l2 = 1.4367543477957886e-9, bound = 1.4863956332807358e-9, selected_certificate = true, selected_undamped_hpd = true, selected_strict_gamma_clamp = true, delta_J = -5.672321554371261e-26, precision_consistent = true, prospective_gate = true)
+(idx = 2, side = :upper, selected_l2 = 4.229610791128875e-11, bound = 1.2380020718515886e-9, selected_certificate = true, selected_undamped_hpd = true, selected_strict_gamma_clamp = true, delta_J = -1.0034720400061638e-28, precision_consistent = true, prospective_gate = true)
+S11_FIXED_POINT_CERTIFICATE_COMPLETE

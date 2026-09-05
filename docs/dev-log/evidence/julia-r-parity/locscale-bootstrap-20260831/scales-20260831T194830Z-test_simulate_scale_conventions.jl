@@ -1,0 +1,57 @@
+using DRM, Test, Random, LinearAlgebra, SparseArrays
+import Distributions
+
+function _scale_draw_fixture(fam; coupled=false, extra=Dict{Symbol,Vector{Float64}}())
+    n=32
+    mu=collect(range(1.4,3.8;length=n))
+    sigma=collect(range(0.35,0.8;length=n))
+    fam isa DRM.Gamma && coupled && (sigma=collect(range(2.0,5.0;length=n)))
+    scales=merge(Dict(:sigma=>sigma),extra)
+    fit=DRM.DrmFit(fam,[:mu=>1:1,:sigma=>2:2],[ :mu=>["Intercept"],:sigma=>["Intercept"]],
+        zeros(2),Matrix{Float64}(I,2,2),-1.,n,true,Dict(:mu=>mu),Dict(:mu=>ones(n)),scales)
+    if coupled
+        kind=fam isa DRM.Gamma ? Val(:gamma) : Val(:nb2)
+        fit=DRM._withnll(fit,DRM.LocScaleObjective(kind,ones(n),ones(n,1),ones(n,1),ones(Int,n),1,sparse(1.0I,1,1);whitened=true))
+    end
+    return fit
+end
+
+function _positive_nb_reference(rng, size, prob)
+    d=Distributions.NegativeBinomial(size,prob)
+    y=rand(rng,d)
+    while y==0
+        y=rand(rng,d)
+    end
+    return Float64(y)
+end
+
+@testset "simulation uses fitted sigma conventions" begin
+    for mode in (:plain,:zi,:hu,:truncated)
+        fam=mode===:truncated ? DRM.TruncatedNegBinomial2() : DRM.NegBinomial2()
+        extra=mode===:zi ? Dict(:zi=>fill(0.2,32)) : mode===:hu ? Dict(:hu=>fill(0.2,32)) : Dict{Symbol,Vector{Float64}}()
+        fit=_scale_draw_fixture(fam;extra)
+        rr=MersenneTwister(9182)
+        expected=map(1:fit.nobs) do i
+            r=fit.scales[:sigma][i]^-2; mu=fit.means[:mu][i]; prob=r/(r+mu)
+            if mode===:zi
+                rand(rr)<0.2 ? 0.0 : rand(rr,Distributions.NegativeBinomial(r,prob))
+            elseif mode===:hu
+                rand(rr)<0.2 ? 0.0 : _positive_nb_reference(rr,r,prob)
+            elseif mode===:truncated
+                _positive_nb_reference(rr,r,prob)
+            else
+                rand(rr,Distributions.NegativeBinomial(r,prob))
+            end
+        end
+        @test simulate(fit;rng=MersenneTwister(9182))==expected
+    end
+    for coupled in (false,true)
+        fit=_scale_draw_fixture(DRM.Gamma();coupled)
+        rr=MersenneTwister(4419)
+        expected=map(1:fit.nobs) do i
+            shape=coupled ? fit.scales[:sigma][i] : fit.scales[:sigma][i]^-2
+            rand(rr,Distributions.Gamma(shape,fit.means[:mu][i]/shape))
+        end
+        @test simulate(fit;rng=MersenneTwister(4419))≈expected rtol=1e-14
+    end
+end

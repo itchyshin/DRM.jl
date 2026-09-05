@@ -1,0 +1,1 @@
+| 2026-08-30 | **Prediction adapter contract** (#563) |26+15+122pureassertions;32/32same-coefficient comparisons;32faultrejections;Rose | Adapter passes; nativefactor6.26e-6>4e-6 FAIL; fullparityopen | Ada + Hopper + Rose |

@@ -1,0 +1,29 @@
+F.....F...
+======================================================================
+FAIL: test_base_href_is_refused_instead_of_ignored (tools.tests.test_parity_rendered_docs_audit.RenderedDocsFixture.test_base_href_is_refused_instead_of_ignored)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/integration/DRM.jl/tools/tests/test_parity_rendered_docs_audit.py", line 169, in test_base_href_is_refused_instead_of_ignored
+    self.assertTrue(any(item["kind"] == "unsupported_base_href" for item in report["failures"]))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_nested_css_dependency_is_scanned (tools.tests.test_parity_rendered_docs_audit.RenderedDocsFixture.test_nested_css_dependency_is_scanned)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/drm-parity-20260830/integration/DRM.jl/tools/tests/test_parity_rendered_docs_audit.py", line 148, in test_nested_css_dependency_is_scanned
+    self.assertTrue(any(
+    ~~~~~~~~~~~~~~~^^^^^
+        item["kind"] == "missing_asset" and item.get("target") == "missing.png"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        for item in report["failures"]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ))
+    ^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.169s
+
+FAILED (failures=2)

@@ -1,0 +1,17 @@
+{
+  "native_rds_location": "drmTMB/docs/dev-log/evidence/julia-r-parity/two-gaussian/two-gaussian-native-001.rds",
+  "native_rds_sha256": "7b70c5637b5defc52d845bac7857046b764c31368280b5e1e3b54e34a5fcb303",
+  "source_sha256": {
+    "docs/src/reference/engine-internals.md": "e96f28828059e380bb9779a8e8c70bc60d4c8ec64ef4f9e7a1fcb4807bd34eca",
+    "src/DRM.jl": "34f36193943982e4537e7c2040b4d8ceb3fa13684bf904910db624f6ab15fdf9",
+    "src/joint_missing_two_predictor.jl": "fec1668bb4f6266d7580fbcbc162ae48a1b6202cf614335b97da02ca705ec7bc",
+    "test/fixtures/joint_missing_predictor/two_gaussian_provenance.json": "c905fc3e4ea5d1f9f25375be15c8b6a922b9ecf00b39a82a9b22fec615284756",
+    "test/fixtures/joint_missing_predictor/two_gaussian_reference.toml": "4f108723731dc98808a7ea40db62a91b26f20140d75554865c967755202682ac",
+    "test/test_joint_missing_two_predictor.jl": "a47207e9312afdc4d51c7a8920203feed01dadb86bb943dcee37fdd894dcea5d",
+    "tools/check_two_gaussian_fit.jl": "4011fabecb271f8e2dff4cfc1663bbbd8fedef0e2b1b4d31003f869668eeede9",
+    "tools/check_two_gaussian_fit.py": "57fb15a1881b5469a76dc105064bd300deb27a5303304d2fd32ad60c7da8942c",
+    "tools/check_two_gaussian_reference.py": "5a5f92feeae788aa583104be22df08b18ca5b013f41e15d43e24e201d8dd82ae",
+    "tools/test_two_gaussian_fit.py": "5779fee98b9e571ff750def52d801bd8d42834af9fb7f4878305bb184be69787",
+    "tools/test_two_gaussian_reference.py": "3912443c521d920401e4bf51f21ddbca94ef4515b0ea68e7fdb6a333c02c93ef"
+  }
+}

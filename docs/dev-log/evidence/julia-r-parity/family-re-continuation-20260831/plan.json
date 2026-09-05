@@ -1,0 +1,28 @@
+{
+  "source_head": "479f1e06464d06592b2d845798a27fdd8a5ac544",
+  "files": [
+    "test_nbinom2_slope_re.jl",
+    "test_beta_slope_re.jl",
+    "test_gamma_slope_re.jl",
+    "test_nbinom2_re.jl",
+    "test_beta_re.jl",
+    "test_gamma_re.jl",
+    "test_student_re.jl",
+    "test_student_slope_re.jl",
+    "test_lognormal_re.jl",
+    "test_lognormal_slope_re.jl",
+    "test_betabinomial_re.jl",
+    "test_betabinomial_slope_re.jl",
+    "test_binomial.jl",
+    "test_binomial_re.jl",
+    "test_summary.jl"
+  ],
+  "estimate_seconds": [
+    120,
+    300
+  ],
+  "cap_seconds": 300,
+  "julia_threads": 1,
+  "blas_threads": 1,
+  "scope": "Original family-RE regression batch, no fullsuite/parity/performance claim"
+}

@@ -1,0 +1,1 @@
+| 2026-08-30 | **S9 prepared joint prototypes** (#563) | 63 focused assertions; 2 common-parameter fixtures; 2 ML fits; strict Documenter source | Bounded correctness PASS; native Bernoulli parameter parity FAIL1.0015e-5>4e-6; all programme gates open | Ada / Noether / Rose |

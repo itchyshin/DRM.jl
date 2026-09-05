@@ -1,0 +1,201 @@
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     5
+│   rcond = 7.301069523188384e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     5
+│   rcond = 1.0109714117578256e-16
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: drm: 8 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:341
+┌ Warning: drm: 8 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:341
+ERROR: LoadError: Some tests did not pass: 194 passed, 10 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:106
+dedicated dense named covariance is invariant to first-seen order: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:115
+  Expression: abs(loglik(fit_shuffled) - _lss_named_loglik(fit_shuffled, shuffled, shuffled.phy)) <= 1.0e-7
+   Evaluated: 0.0034952687350653378 <= 1.0e-7
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:115 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:108 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:107
+dedicated dense named covariance is invariant to first-seen order: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:116
+  Expression: maximum(abs.(fit_shuffled.theta - fit_ordered.theta)) <= 4.0e-6
+   Evaluated: 0.04374556657730322 <= 4.0e-6
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:116 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:108 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:107
+dedicated sparse and Newick inputs use the same named tree: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:131
+  Expression: abs(loglik(fit) - _lss_named_loglik(fit, dat, dat.phy)) <= 1.0e-7
+   Evaluated: 0.003495268735047574 <= 1.0e-7
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:131 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:126 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:107
+multi-component phylogenetic covariance remains named: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:144
+  Expression: abs(loglik(fit_shuffled) - _lss_named_loglik(fit_shuffled, shuffled, shuffled.phy; multi = true)) <= 1.0e-7
+   Evaluated: 0.0034952686609805994 <= 1.0e-7
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:144 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:135 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:107
+multi-component phylogenetic covariance remains named: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:145
+  Expression: maximum(abs.(fit_shuffled.theta - fit_ordered.theta)) <= 4.0e-6
+   Evaluated: 1.703122684646182 <= 4.0e-6
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:145 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:135 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:107
+integer positions, and invalid full-input labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:161
+  Expression: abs(loglik(fit) - _lss_named_loglik(fit, numeric, numeric.phy)) <= 1.0e-7
+   Evaluated: 0.0034952687350653378 <= 1.0e-7
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:161 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:158 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:107
+integer positions, and invalid full-input labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:166
+  Expression: drm(_phylo_lss_formula(), Gaussian(); data = (; unknown.y, unknown.x, unknown.z, unknown.study, species = bad_species), tree = unknown.phy)
+    Expected: ArgumentError
+      Thrown: ErrorException
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:166 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:158 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:107
+integer positions, and invalid full-input labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:179
+  Expression: err isa ArgumentError
+   Evaluated: ErrorException("structured matrix must be 5×5 (the number of `species` levels)") isa ArgumentError
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:179 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:158 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:107
+integer positions, and invalid full-input labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:180
+  Expression: occursin("all tree tips", sprint(showerror, err))
+   Evaluated: occursin("all tree tips", "structured matrix must be 5×5 (the number of `species` levels)")
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:180 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:158 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:107
+integer positions, and invalid full-input labels: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:185
+  Expression: drm(_phylo_lss_formula(), Gaussian(); data = (; missing_label.y, missing_label.x, missing_label.z, missing_label.study, species = missing_species), tree = missing_label.phy)
+    Expected: ArgumentError
+      Thrown: ErrorException
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:185 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:158 [inlined]
+ [4] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [5] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_lss_tip_identity.jl:107
+Test Summary:                                                       | Pass  Fail  Total   Time
+Gaussian LSS phylogenetic tip identity                              |  194    10    204  24.6s
+  dedicated dense named covariance is invariant to first-seen order |   49     2     51  12.6s
+  dedicated sparse and Newick inputs use the same named tree        |   46     1     47   1.6s
+  multi-component phylogenetic covariance remains named             |   49     2     51   4.3s
+  REML and a wholly missing response tip retain full tree identity  |    4            4   4.8s
+  integer positions, and invalid full-input labels                  |   46     5     51   1.2s

@@ -1,94 +1,56 @@
-# GOAL — DRM.jl ↔ drmTMB catch-up lane (IMMUTABLE — re-read at the top of EVERY arc)
+# GOAL — complete Julia–R parity and better
 
-Read this first, every cycle. Auto-compact eats messages, not this file. Unsure
-after a compaction? Re-read THIS, then `checkpoint.md`, then continue.
+Approved by Shinichi in Codex task `01a05261-cd5c-7ca3-a654-cebea9f187fb`, 2026-08-30.
+Read this file and checkpoint.md at every continuation. The active app goal is the same programme.
+The approved execution plan is docs/dev-log/plans/2026-08-30-julia-r-parity.md.
+LOOP/ultra-plan.md is an inherited unrelated Cox-Reid plan; do not use it for this programme.
 
-## Mission
+All currently implemented native drmTMB capabilities must work directly in Julia and through
+`engine = "julia"`, with retained correctness evidence. Every registered warm full-workflow
+benchmark must beat a comparably configured R baseline using a reliable automatic thread policy.
+Cold startup is reported separately. Polish the whole Documenter/VitePress site, repair the R
+bridge documentation, preserve/reconcile unfinished work in both repos, and update Mission Control.
 
-Close the **measured** drmTMB parity gaps in DRM.jl, each backed by a
-native-vs-Julia parity fixture, **without ever claiming more than the twin does**.
+## Immutable choices
+- Full native-R scope, not the older 12-row bridge ledger. Keep experimental boundaries honest.
+- Separate complete capability/output coverage from the finite benchmark manifest.
+- Targeted validation, not a universal interval-coverage claim. Native bugs need independent adjudication.
+- Warm timing includes preparation, transfers, construction, requested uncertainty and return conversion.
+- Report 1/2/4/8 threads; calibration fixtures are separate from policy evaluation fixtures.
+- Missing, skipped required, stale or absent output evidence never passes a required gate.
+- A remaining speed loss keeps the programme open. Re-estimate after the 8–20 agent-hour reserve;
+  never silently drop cases or run an unbounded further optimization campaign.
 
-## Definition of done
+## Approved boundaries
+Routine scoped edits, tests, builds, checkpoints and local commits proceed without repeat permission.
+Both repositories are in scope; current source checkouts and other lanes are preserved. Named branch
+PR preparation is in scope. Engine/grammar changes follow the approved mathematical contracts with
+Noether/Rose review. Do not change an estimator merely to agree with a buggy reference.
+No release, registration, collaborator message, credentials/security changes, forced Git operation,
+or deletion of historical work. Retire worktrees only against a concrete recoverability/disposition list.
+Respect separate repository merge/ownership gates. No new publication workflow or permission changes.
+Estimate every fit/benchmark before running; >30 min campaigns need measured pre-run + owner approval.
+Totoro CPU <=150 cores, BLAS=1; DRAC allocated jobs only. No campaigns in GitHub Actions.
 
-- [ ] All in-fence arcs landed on `main` with **green CI**
-- [ ] `tools/parity_ledger.py` re-run and the countdown recorded
-- [ ] Plan-vs-actual reconciled to `docs/dev-log/plan-actual/`
+## Completion
+All required unlazy gates reverified on final sources; Rose independent verdict; Melissa reconciles
+original promises plus this plan. First-pass completion is not programme completion.
 
-## Headline
+## Current execution locations (integration continuation)
 
-The ledger countdown falls. Every capability shipped is parity-verified against
-**installed drmTMB 0.7.0**, and every boundary drmTMB declares is mirrored rather
-than quietly exceeded.
+Continue in `/private/tmp/drm-parity-20260830/integration/DRM.jl` and sibling
+`drmTMB`, both on `codex/parity-integration-20260831`. These are the active paired
+integration worktrees. The original worktrees listed below are preserved; do not
+resume edits there. The latest operational state is in `LOOP/checkpoint.md`.
 
-## Anchor
+## Original execution locations (preserved history)
 
-drmTMB **0.7.0**, installed. `origin/main` was `f5ec53634` at A0 and had already
-moved to `859c0f6e6` — **the twin moves fast**. Re-run before trusting any count:
+- Julia: `/private/tmp/drm-parity-20260830/DRM.jl`, branch `codex/julia-r-parity`.
+- R: `/private/tmp/drm-parity-20260830/drmTMB`, branch `codex/julia-r-parity`.
+- Preserve these branches as durable checkpoints. `/private/tmp` itself is not durable storage.
+- Initial sources: DRM f47789646f27221ba4fad29a8ba1b3b8a790b521;
+  drmTMB b35642b4560072cadba7e595e66e00209ebdeb40.
 
-```bash
-python3 tools/parity_ledger.py --drmtmb ../drmTMB --ref origin/main
-```
-
-At lane start: **22 export gaps · 11 capability rows · 14 closed gates · CLOSURE PASS**.
-
-## Invariants (never violate, even to finish faster)
-
-- Verification means reading the **LOG** and inspecting the **ARTEFACT**, never
-  the exit code.
-- A narrow or negative search is not proof. "No X exists" usually means the query
-  missed X.
-- Destructive or irreversible ⇒ **STOP and surface**, even if it feels urgent.
-- A genuine surprise that invalidates the plan ⇒ **STOP**, back to G0. Do not
-  patch around it mid-loop.
-- **Tolerances are MEASURED, never guessed.** Multi-seed spread first, then set
-  the bound. Arc A-fix exists because this was broken once: a tolerance fitted to
-  one Julia 1.10 run failed on 1.12, where `log(ν−2)` deviated **0.5198** against
-  a 0.25 bound. **Julia 1.12 is installed locally — reproduce version-specific
-  failures rather than guessing** (`julia +1.12`).
-- Close every arc by stating what it did **NOT** cover.
-
-## Gate policy
-
-**DRM.jl (owner-approved this run):** push, open PR, **auto-merge on green CI**.
-Two structural rules, because the failure already happened twice — arming
-auto-merge, then pushing more onto that branch, so later work rode an earlier
-approval:
-
-- **One branch per arc.**
-- **Auto-merge is the LAST action on a branch**, after the final commit, and only
-  once the arc is complete.
-
-**drmTMB — STOP GATE. Open a PR, never merge.** That repo has **9 live lanes**
-and an open 0.7.0 release slice (#959). Merging into another team's active
-release unattended is *not* covered by the DRM.jl approval. **Config cannot
-enforce this** — `gh pr merge` permission patterns are global, not per-repo. It
-is a discipline rule. Hold it.
-
-**Also STOP for:** `sigma()`'s public contract (arc A-sigma) before it lands.
-
-## Out of scope (the fence — do NOT drift here)
-
-- Issue **#136** stays OPEN — never `close`/`fix`/`resolve` near that number.
-- **#49 / FIML / missing data** — PARKED.
-- **Registrator / Julia General** — D-111 forbids.
-- **GPL vendoring** from drmTMB — DRM.jl is MIT; parity uses generated outputs.
-- The verified **q=4 core** (2.18×, logLik −256.51) — never regress it.
-- drmTMB edits outside the narrow lane (`R/julia-bridge.R`,
-  `tests/testthat/test-julia-*`, `vignettes/julia-engine.Rmd`).
-- Staging `.worktrees/` or `.codex/agents/shannon-coordinator.toml`; unscoped
-  `git add -A`.
-
-## Per-arc verification (non-negotiable)
-
-- Targeted Julia suites during an arc (~2–5 min); **full suite at the PR boundary**
-  via CI (`test (1)` + `test (1.10)` + `docs`).
-- **`DRM_PARITY_TESTS=1` mandatory** on any arc touching `bf()` / formula grammar.
-- **Every new capability gets a `tools/parity_fixture.R` cell** (native-vs-Julia,
-  tol 1e-4) which must PASS before the arc closes.
-- AGENTS.md DoD: impl + tests + docstrings + worked example +
-  `docs/dev-log/check-log.d/` entry + after-task report + Rose claim-vs-evidence.
-
-## Authoritative WHAT
-
-`LOOP/ultra-plan.md` holds the binding detail. This file wins on "what must never
-be lost".
+The goal skill wrapper could not resolve its launcher; the canonical launcher inspected was
+Claude-specific and rewrote permission settings. Used isolated git worktrees with unchanged
+permissions and the required codex/ prefix instead. This is not a permission workaround.

@@ -1,0 +1,1 @@
+| 2026-08-31 | **Covariance precision reference + MELS reading** (#563 / S11) | Independent128/256-bit four-state reference; focusedTDD; neighbour/status checks; Rose reading review | Partial:28/28 focused checks; inner neighbours pass on prior helper; profile-status and original finite-CI fixture error in Wald covariance. No slice closure. | Ada + Rose |

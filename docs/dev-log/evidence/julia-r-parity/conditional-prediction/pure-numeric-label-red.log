@@ -1,0 +1,10 @@
+julia-conditional-prediction: ..................1
+
+══ Failed ══════════════════════════════════════════════════════════════════════
+── 1. Error ('test-julia-conditional-prediction.R:200:3'): numeric first-seen gr
+Error in `drm_julia_conditional_gaussian_ri_source()`: could not find function "drm_julia_conditional_gaussian_ri_source"
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+Error:
+! Test failures.
+Execution halted

@@ -1,0 +1,13 @@
+{
+  "foreign_entries": 42,
+  "unchanged": true,
+  "changed_keys": [
+    "focus",
+    "next_safe_action",
+    "lane",
+    "active_lane"
+  ],
+  "before_manifest_sha256": "645d5061854a518827bf27a12b03c39e954a1d2caca9c8be9d2b716734aab676",
+  "after_manifest_sha256": "645d5061854a518827bf27a12b03c39e954a1d2caca9c8be9d2b716734aab676",
+  "privacy": "Vault path-level audit retained locally outside package evidence; only aggregate hashes exported."
+}

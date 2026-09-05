@@ -1,0 +1,3 @@
+A scratch copy of actual-r-relmat-bootstrap-profile-final.log was changed by one
+byte. verify.py exited nonzero. The original evidence directory was unchanged.
+DAMAGED_ARTIFACT_REJECTED

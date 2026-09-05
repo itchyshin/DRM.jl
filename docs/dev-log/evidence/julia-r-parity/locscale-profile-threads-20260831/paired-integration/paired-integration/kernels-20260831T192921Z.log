@@ -1,0 +1,30 @@
+Test Summary:                                                | Pass  Total  Time
+location–scale kernels: analytic grad/Hessian vs ForwardDiff | 1500   1500  1.2s
+Test Summary:                                                       | Pass  Total  Time
+location–scale kernels: η-axis matches the fixed-dispersion kernels |   15     15  0.0s
+Test Summary:                            | Pass  Total  Time
+location–scale Λ log-Cholesky round-trip |    9      9  0.2s
+Test Summary:                                           | Pass  Total   Time
+location–scale inner joint: grad/Hessian vs ForwardDiff |    4      4  20.7s
+Test Summary:                                        | Pass  Total  Time
+location–scale inner mode reaches a stationary point |    3      3  0.8s
+Test Summary:                                     | Pass  Total  Time
+location-scale inner-mode stationarity acceptance |   78     78  0.1s
+Test Summary:                        | Pass  Total  Time
+tracked prior directional arithmetic |   32     32  0.0s
+Test Summary:                                                       | Pass  Total  Time
+location–scale Laplace marginal vs 2-D Gauss–Hermite (single group) |    4      4  0.4s
+Test Summary:                                                      | Pass  Total  Time
+location–scale marginal: multi-group i.i.d. factorises over groups |    2      2  0.0s
+Test Summary:                                       | Pass  Total  Time
+location–scale exact gradient vs finite differences |    9      9  1.6s
+Test Summary:                         | Pass  Total  Time
+location-scale compensated arithmetic |   14     14  1.7s
+Test Summary:                                          | Pass  Total  Time
+Gamma covariance gradient at retained profile failures |   24     24  0.8s
+Test Summary:                                   | Pass  Total  Time
+finite precision derivatives at zero covariance |    4      4  0.2s
+Test Summary:                                | Pass  Total  Time
+private whitened paired location-scale route |  284    284  5.4s
+LOCSCALE_WHITENED_FOCUSED_OK
+REGRESSION_BUNDLE_PASS

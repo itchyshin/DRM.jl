@@ -1,0 +1,32 @@
+using DRM
+using LinearAlgebra, SparseArrays, Serialization, SHA
+const ROOT = "/private/tmp/drm-parity-20260830/integration/DRM.jl"
+ctx = deserialize("/private/tmp/locscale_gamma_vcov_actual_context-001.jls")
+θ = copy(ctx.theta); θ[1] -= ctx.h
+pμ, pψ = size(ctx.Xmu,2), size(ctx.Xpsi,2)
+λ = @view θ[pμ+pψ+1:pμ+pψ+3]
+P = DRM.prior_precision(sparse(ctx.Q), DRM._ls_inv2x2(DRM._ls_lc_to_Λ(λ)))
+inner_a, inner_ch, inner_ok = DRM._ls_inner_mode(ctx.kind,ctx.y,ctx.Xmu*(@view θ[1:pμ]),ctx.Xpsi*(@view θ[pμ+1:pμ+pψ]),ctx.gidx,ctx.G,P,ctx.Zeta,ctx.Zpsi; a0=ctx.a0)
+marginal, marginal_a, marginal_ok = DRM._ls_marginal_nll(ctx.kind,ctx.y,ctx.Xmu*(@view θ[1:pμ]),ctx.Xpsi*(@view θ[pμ+1:pμ+pψ]),ctx.gidx,ctx.G,P,ctx.Zeta,ctx.Zpsi; a0=ctx.a0)
+prior_ch = cholesky(Symmetric(P);check=false)
+grad = DRM._ls_joint_grad(ctx.kind,ctx.y,ctx.Xmu*(@view θ[1:pμ]),ctx.Xpsi*(@view θ[pμ+1:pμ+pψ]),ctx.gidx,inner_a,P,ctx.Zeta,ctx.Zpsi)
+println("ACTUAL_CONTEXT_REPLAY")
+println("SOURCE_SHA ", bytes2hex(sha256(read(joinpath(ROOT,"src/locscale_inner.jl")))))
+println("THETA_SIDE ",repr(θ))
+println("A0 ",repr(ctx.a0))
+println("INNER_OK ",inner_ok)
+println("INNER_A ",repr(inner_a))
+println("INNER_H_OK ",issuccess(inner_ch))
+println("INNER_GRADNORM ",norm(grad))
+println("PRIOR_OK ",issuccess(prior_ch))
+println("MARGINAL_OK ",marginal_ok)
+println("MARGINAL_NLL ",marginal)
+println("MARGINAL_A_MATCH ",marginal_a == inner_a)
+println("XMU ",repr(ctx.Xmu))
+println("XPSI ",repr(ctx.Xpsi))
+println("GIDX ",repr(ctx.gidx))
+println("Q ",repr(ctx.Q))
+println("ZETA ",repr(ctx.Zeta))
+println("ZPSI ",repr(ctx.Zpsi))
+println("Y_SHA ",bytes2hex(sha256(reinterpret(UInt8,ctx.y))))
+println("ACTUAL_CONTEXT_REPLAY_COMPLETE")

@@ -386,3 +386,97 @@ function fit_mixed_family(; y1, X1, fam1, y2, X2, fam2,
             iterations = res.iterations,
             fam1 = fam1, fam2 = fam2)   # carried for post-fit accessors (mf_fitted)
 end
+
+# ---------------------------------------------------------------------------
+# Formula front end for the cross-family latent-rho route.
+#
+# WHY THIS EXISTS. `fit_mixed_family` takes RAW DESIGN MATRICES
+# (`y1, X1, fam1, y2, X2, fam2, …`) and is not exported, so cross-family is the
+# only fit in DRM.jl a user reaches by hand-building matrices — every other route
+# is `drm(bf(...), Family(); data = …)`. drmTMB spells the same model with its
+# ordinary formula bundle and `family = c(gaussian(), poisson())`. That gap is
+# the "mixed-family API mismatch" the `cross_family_latent` capability row names
+# as the blocker before any public promotion.
+#
+# This closes it: a `drm` method taking a TUPLE of families, mirroring drmTMB's
+# vector of families, that builds the designs from the formula and delegates to
+# the unchanged `fit_mixed_family`.
+#
+# What it deliberately REFUSES, matching the row's own claim_boundary
+# ("public docs must not present rho12 formulas"):
+#   * a `rho12` formula — the cross-family correlation is a LATENT SCALAR, not a
+#     per-observation linear predictor. Accepting `rho12 ~ x` would imply a
+#     modelled correlation this route does not fit.
+#   * random effects and structured markers on either axis.
+
+"""
+    drm(f::BivariateDrmFormula, fams::Tuple; data, kwargs...)
+
+Cross-family bivariate fit — two responses from **different** families coupled by
+a latent-scale correlation `rho`. The Julia twin of drmTMB's
+`family = c(gaussian(), poisson())` route.
+
+```julia
+fit = drm(bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x),
+             sigma1 = @formula(sigma1 ~ 1), sigma2 = @formula(sigma2 ~ 1)),
+          (Gaussian(), Poisson()); data = dat)
+fit.rho_latent            # the latent-scale correlation
+mf_summary(fit)
+```
+
+Each axis takes its own `mu` and (where the family has one) `sigma` formula.
+`sigma` is ignored for dispersionless families (`Poisson`, `Binomial`).
+
+!!! warning "`rho12` is not a formula here"
+    In the *Gaussian* bivariate route `rho12 ~ x` models a per-observation
+    residual correlation. In the cross-family route the correlation is a
+    **latent scalar** — the two responses live on different scales, so there is
+    no common residual to correlate per observation. Supplying `rho12` is an
+    error rather than being silently ignored.
+
+Returns the `fit_mixed_family` result; see [`mf_summary`](@ref), [`mf_coef`](@ref).
+This route is **experimental** — see the `cross_family_latent` capability row.
+"""
+function drm(f::BivariateDrmFormula, fams::Tuple; data, K::Int = 32,
+             g_tol::Real = 1e-6, confint::Bool = true, level::Real = 0.95,
+             profile::Bool = false, B::Int = 0, rng = Random.default_rng())
+    length(fams) == 2 || throw(ArgumentError(
+        "drm: the cross-family route takes exactly two families, e.g. " *
+        "`(Gaussian(), Poisson())` (got $(length(fams)))"))
+    fam1, fam2 = fams
+    rhs = Dict(f.forms)
+
+    haskey(rhs, :rho12) && rhs[:rho12] !== ConstantTerm(1) && throw(ArgumentError(
+        "drm: the cross-family route fits a LATENT-SCALE correlation, which is a " *
+        "scalar — `rho12 ~ …` would imply a per-observation modelled correlation " *
+        "this route does not fit. Drop the `rho12` formula; read the fitted value " *
+        "from `fit.rho_latent`. (A per-observation `rho12` formula is the " *
+        "two-Gaussian residual route: `drm(bf(...), Gaussian(); data = …)`.)"))
+
+    for p in (:mu1, :mu2)
+        _, re_p, mv_p, st_p = _split_ranef(rhs[p])
+        isempty(re_p) || throw(ArgumentError(
+            "drm: the cross-family route does not support random effects on `$p` yet."))
+        st_p === nothing || throw(ArgumentError(
+            "drm: the cross-family route does not support structured markers on `$p` yet."))
+        mv_p === nothing || throw(ArgumentError(
+            "drm: the cross-family route does not support `meta_V` on `$p`."))
+    end
+
+    y1, X1, _ = _design(f.response1, rhs[:mu1], data)
+    y2, X2, _ = _design(f.response2, rhs[:mu2], data)
+    # σ designs: the sigma formulas reuse a real LHS (only the matrix is kept),
+    # exactly as the Gaussian bivariate residual route does.
+    _, Xs1, _ = _design(f.response1, get(rhs, :sigma1, ConstantTerm(1)), data)
+    _, Xs2, _ = _design(f.response1, get(rhs, :sigma2, ConstantTerm(1)), data)
+
+    fit = fit_mixed_family(; y1 = Float64.(y1), X1 = X1, fam1 = fam1,
+                           y2 = Float64.(y2), X2 = X2, fam2 = fam2,
+                           Xsigma1 = Xs1, Xsigma2 = Xs2,
+                           K = K, g_tol = Float64(g_tol), confint = confint,
+                           level = Float64(level), profile = profile, B = B, rng = rng)
+    # Carry the designs so the post-fit surface works WITHOUT them being handed
+    # back by the user. `mf_fitted(fit, X1, X2)` demanding the matrices is the
+    # same API mismatch in post-fit form: a formula user has no X1 to give it.
+    return (; fit..., X1 = X1, X2 = X2)
+end

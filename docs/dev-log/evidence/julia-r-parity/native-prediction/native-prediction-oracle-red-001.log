@@ -1,0 +1,91 @@
+gaussian FAIL 
+$training_response
+$training_response$status
+[1] "FAIL"
+
+$training_response$max_abs_error
+[1] 0.9332406
+
+
+$training_link
+$training_link$status
+[1] "FAIL"
+
+$training_link$max_abs_error
+[1] 0.9332406
+
+
+$training_sigma
+$training_sigma$status
+[1] "PASS"
+
+$training_sigma$max_abs_error
+[1] 0
+
+
+$newdata_original
+$newdata_original$status
+[1] "PASS"
+
+$newdata_original$max_abs_error
+[1] 2.220446e-16
+
+
+bernoulli FAIL 
+$training_response
+$training_response$status
+[1] "FAIL"
+
+$training_response$max_abs_error
+[1] 0.5718084
+
+
+$training_link
+$training_link$status
+[1] "FAIL"
+
+$training_link$max_abs_error
+[1] 0.5718084
+
+
+$training_sigma
+$training_sigma$status
+[1] "PASS"
+
+$training_sigma$max_abs_error
+[1] 0
+
+
+$newdata_original
+$newdata_original$status
+[1] "ERROR"
+
+$newdata_original$message
+[1] "Could not align the \"mu\" design matrix with fitted coefficients.\nℹ Check that factor levels and predictor columns match the fitted model."
+
+
+$newdata_numeric
+$newdata_numeric$status
+[1] "PASS"
+
+$newdata_numeric$max_abs_error
+[1] 0
+
+
+$newdata_character
+$newdata_character$status
+[1] "ERROR"
+
+$newdata_character$message
+[1] "Could not align the \"mu\" design matrix with fitted coefficients.\nℹ Check that factor levels and predictor columns match the fitted model."
+
+
+$newdata_reversed_levels
+$newdata_reversed_levels$status
+[1] "ERROR"
+
+$newdata_reversed_levels$message
+[1] "Could not align the \"mu\" design matrix with fitted coefficients.\nℹ Check that factor levels and predictor columns match the fitted model."
+
+
+NATIVE_JOINT_PREDICTION_ORACLE_FAIL

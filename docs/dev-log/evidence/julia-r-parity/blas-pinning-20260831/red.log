@@ -1,0 +1,18 @@
+ERROR: LoadError: Some tests did not pass: 13 passed, 1 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_inference_blas_pinning.jl:4
+RUNTIME 1.10.0 threads=4 source=/private/tmp/drm-parity-20260830/integration/DRM.jl/src/DRM.jl
+inference BLAS pinning is composable across callers: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_inference_blas_pinning.jl:37
+  Expression: BLAS.get_num_threads() == 1
+   Evaluated: 2 == 1
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_inference_blas_pinning.jl:37 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_inference_blas_pinning.jl:5
+Test Summary:                                       | Pass  Fail  Total  Time
+inference BLAS pinning is composable across callers |   13     1     14  5.4s

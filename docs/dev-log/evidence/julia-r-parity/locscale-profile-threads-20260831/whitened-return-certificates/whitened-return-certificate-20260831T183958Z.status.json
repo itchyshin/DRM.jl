@@ -1,0 +1,40 @@
+{
+  "after_hashes": {
+    "src/locscale_fit.jl": "10a8782a78db3b1c47a5007a998ed487072285d7f7ec0c395c5bd7664f0f6d01",
+    "src/locscale_grad.jl": "c036952855ab78d8e2c354eeac4be5903c0b173c53db91a3baf50b43ffbb6dd1",
+    "src/locscale_infer.jl": "7944724797b8ddab50df4f741bbbf3d86d1627963976f09a5c6bdfe89e4b945a",
+    "src/locscale_inner.jl": "94f54c74658883ecbe2d790d5b079df81cb91e863802b59ddadf8fa60bbfea75",
+    "src/locscale_marginal.jl": "05cd2e416c14fb3e8063e2bb0288c574c39bec733278d2734829b458443dd71d"
+  },
+  "before_hashes": {
+    "src/locscale_fit.jl": "10a8782a78db3b1c47a5007a998ed487072285d7f7ec0c395c5bd7664f0f6d01",
+    "src/locscale_grad.jl": "c036952855ab78d8e2c354eeac4be5903c0b173c53db91a3baf50b43ffbb6dd1",
+    "src/locscale_infer.jl": "7944724797b8ddab50df4f741bbbf3d86d1627963976f09a5c6bdfe89e4b945a",
+    "src/locscale_inner.jl": "94f54c74658883ecbe2d790d5b079df81cb91e863802b59ddadf8fa60bbfea75",
+    "src/locscale_marginal.jl": "05cd2e416c14fb3e8063e2bb0288c574c39bec733278d2734829b458443dd71d"
+  },
+  "cap_seconds": 30,
+  "command": [
+    "julia",
+    "--project=/private/tmp/drm-parity-20260830/integration/DRM.jl",
+    "--startup-file=no",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-return-certificates/diagnose.jl",
+    "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-return-certificates/whitened-return-certificate-20260831T183958Z.jls"
+  ],
+  "cwd": "/private/tmp/drm-parity-20260830/integration/DRM.jl",
+  "design_sha256": "fabf3e4c1a7d016ecff94a6926944553bb5238a744f03d178b7e3548e9d6c89c",
+  "elapsed_seconds": 3.493668500101194,
+  "neighbors_sha256": "c007a27a05121d47426b0e246b495caf3079563ec4f1c950c6d39ae344dbbd44",
+  "output_exists": true,
+  "prospective_gate": "stored only in JLS; execution status is not numerical acceptance",
+  "returncode": 0,
+  "script_sha256": "d5fca97b52b3bed6444a4aefb7ba990aa269ac61fd72c19ece6ac70837aeeacf",
+  "script_snapshot": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-return-certificates/whitened-return-certificate-20260831T183958Z.script-snapshot.jl",
+  "source_unchanged": true,
+  "stamp": "20260831T183958Z",
+  "threads": {
+    "JULIA_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "timed_out": false
+}

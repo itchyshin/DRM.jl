@@ -1,0 +1,98 @@
+{
+  "max_Xmu_vs_imputed": 0.81382867566557016,
+  "max_expected_vs_native_predict": 0.93324056749746864,
+  "rows_gt_1e5": [
+    {
+      "row": 2,
+      "observed_x": false,
+      "observed_y": false,
+      "Xmu_mi": 1.1520536602388676,
+      "imputed": 1.1640617574846048,
+      "expected": 2.2807216258791989,
+      "predict": 2.2669515980794142
+    },
+    {
+      "row": 5,
+      "observed_x": false,
+      "observed_y": true,
+      "Xmu_mi": 0.25246672885281329,
+      "imputed": 0.89092912462938911,
+      "expected": 1.4535000711677344,
+      "predict": 0.72135702143674196
+    },
+    {
+      "row": 8,
+      "observed_x": false,
+      "observed_y": true,
+      "Xmu_mi": -0.047608760100421581,
+      "imputed": 0.075476074794325013,
+      "expected": 0.34693745665444542,
+      "predict": 0.20579256387518358
+    },
+    {
+      "row": 11,
+      "observed_x": false,
+      "observed_y": true,
+      "Xmu_mi": 0.19805163912971777,
+      "imputed": 0.11694661768886483,
+      "expected": 0.53486014994802566,
+      "predict": 0.62786559261623143
+    },
+    {
+      "row": 14,
+      "observed_x": false,
+      "observed_y": true,
+      "Xmu_mi": -0.083233471529247385,
+      "imputed": -0.076869123990898555,
+      "expected": 0.15188336101567562,
+      "predict": 0.14458518206716126
+    },
+    {
+      "row": 17,
+      "observed_x": false,
+      "observed_y": true,
+      "Xmu_mi": -1.0609526369519764,
+      "imputed": -0.8636985062797774,
+      "expected": -1.3090526843609078,
+      "predict": -1.5352496252578267
+    },
+    {
+      "row": 20,
+      "observed_x": false,
+      "observed_y": true,
+      "Xmu_mi": 0.21086773296475594,
+      "imputed": -0.42622584296445837,
+      "expected": -0.080688258217166464,
+      "predict": 0.64988512673135945
+    },
+    {
+      "row": 23,
+      "observed_x": false,
+      "observed_y": true,
+      "Xmu_mi": 0.0053022010003651587,
+      "imputed": -0.090790120057131649,
+      "expected": 0.18650791860280819,
+      "predict": 0.29669972545024681
+    },
+    {
+      "row": 26,
+      "observed_x": false,
+      "observed_y": true,
+      "Xmu_mi": 0.015633269659048901,
+      "imputed": -0.29105932369698567,
+      "expected": -0.037243450829794078,
+      "predict": 0.31444969839080772
+    },
+    {
+      "row": 29,
+      "observed_x": false,
+      "observed_y": true,
+      "Xmu_mi": 1.1257010068959836,
+      "imputed": 1.9395296825615538,
+      "expected": 3.1549152538456848,
+      "predict": 2.2216746863482162
+    }
+  ],
+  "max_native_vs_bridge": 0.93323784176202418,
+  "bridge_predict_status": "OK"
+}

@@ -1,0 +1,1 @@
+Estimate 1–4 minutes; cap 300 seconds; one Julia/BLAS thread. CHECK: all326expected input hashes match, before/after hashes identical, exit0, six COMPLETE_FILE markers and PREDICTION_RE_COMPLETE. EXPECT: all six unchanged original files pass. Timeout or missing marker is incomplete. No full-suite, native-R parity, coverage or warm performance claim.

@@ -1,0 +1,35 @@
+{
+  "after": {
+    "source": "758b5fc2ea8a0d1cd59ea22be5deca9afea3113be1bcfae936bb5e8876907c1b",
+    "test": "6f51dd37725e71d64a062028d8ee03c5b9044b1d2d488d52fd13ceeb6e255462"
+  },
+  "before": {
+    "source": "758b5fc2ea8a0d1cd59ea22be5deca9afea3113be1bcfae936bb5e8876907c1b",
+    "test": "6f51dd37725e71d64a062028d8ee03c5b9044b1d2d488d52fd13ceeb6e255462"
+  },
+  "cap_seconds": 60,
+  "command": [
+    "julia",
+    "--project=/private/tmp/drm-parity-20260830/integration/DRM.jl",
+    "--startup-file=no",
+    "-e",
+    "using LinearAlgebra; @assert Threads.nthreads()==1 && BLAS.get_num_threads()==1; include(\"test/test_locscale_whitened.jl\")"
+  ],
+  "cwd": "/private/tmp/drm-parity-20260830/integration/DRM.jl",
+  "elapsed_seconds": 1.0404274999164045,
+  "estimate_seconds": 30,
+  "reference_sha256": "90469e7c304453c0e400d4c19897e263b61beb0912c0a1c5bc677b4f39fee6ad",
+  "returncode": 1,
+  "scope": "private unwired whitening helper only; no legacy-routing, inference, or profile claim",
+  "source_snapshot": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-state-runner/whitened-focused-20260831T191447Z.source-snapshot.jl",
+  "source_snapshot_sha256": "758b5fc2ea8a0d1cd59ea22be5deca9afea3113be1bcfae936bb5e8876907c1b",
+  "stamp": "20260831T191447Z",
+  "test_snapshot": "/private/tmp/drm-parity-20260830/profile-threads-s11/whitened-state-runner/whitened-focused-20260831T191447Z.test-snapshot.jl",
+  "test_snapshot_sha256": "6f51dd37725e71d64a062028d8ee03c5b9044b1d2d488d52fd13ceeb6e255462",
+  "threads": {
+    "JULIA_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "timed_out": false,
+  "unchanged": true
+}

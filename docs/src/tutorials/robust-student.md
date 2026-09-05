@@ -32,12 +32,13 @@ fit = drm(bf(@formula(y ~ x), @formula(sigma ~ 1), @formula(nu ~ 1)), Student();
 coef(fit, :mu)              # location coefficients
 ```
 
-`σ` and `ν` are on the log scale (both must stay positive), so read them back
-through `exp`:
+`σ` is on the log scale, so `exp` returns it. `ν` uses a **logm2** link,
+`ν = 2 + exp(η)`, which keeps `ν > 2` so the variance stays finite — read it back
+with `2 + exp(...)`, not `exp(...)`:
 
 ```@example student
-exp(coef(fit, :sigma)[1])   # residual scale
-exp(coef(fit, :nu)[1])      # estimated degrees of freedom (≈ 5 ⇒ heavy tails)
+exp(coef(fit, :sigma)[1])       # residual scale
+2 + exp(coef(fit, :nu)[1])      # degrees of freedom, ν = 2 + exp(η)  (≈ 5 ⇒ heavy tails)
 ```
 
 A small `ν` (say < 10) is the signal that robustness is earning its keep; a large

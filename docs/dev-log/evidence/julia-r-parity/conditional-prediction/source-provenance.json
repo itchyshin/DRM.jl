@@ -1,0 +1,23 @@
+{
+  "R_base_head": "058bf6b2983df47af8cc8371d3ea5777cc84ff51",
+  "candidate_bridge_sha256": "77e29e86633c040329d009a99536a6e5621f840442150efc54987c1cf65118c2",
+  "candidate_fit_sha256": "1fb01724a4d6060f22f2d4062f09cb0f9ecd5d17f4626d0cbb919fe0a0796b59",
+  "patch_sha256": "6a573d81b645bca404f70d73c269114e9a7a642b41ea7c822818df05b3c70e1a",
+  "selected_old_hunk_starts": [
+    487,
+    509,
+    1046,
+    1702,
+    1766,
+    1994,
+    2402,
+    3786,
+    3877,
+    3932
+  ],
+  "excludes": "All unfinished ZOB hunks, including dpars slot",
+  "R_fit_change": "Explicit saved pre-SE parameter snapshot for parList, separately reviewed",
+  "Julia_worktree_head": "f21502b289dd3aa7368cf39b0c49ef4facd990b5",
+  "Julia_src_identical_to": "f47789646f27221ba4fad29a8ba1b3b8a790b521",
+  "source_manifest": "conditional-green-002.json:Julia_source_sha256"
+}

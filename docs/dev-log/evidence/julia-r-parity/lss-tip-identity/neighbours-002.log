@@ -1,0 +1,98 @@
+┌ Warning: drm: 5 of 60 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:129
+┌ Warning: drm: 5 of 60 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:129
+┌ Warning: drm: 5 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:393
+┌ Warning: drm: 5 of 48 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:393
+┌ Warning: drm: 4 of 96 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:754
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     5
+│   rcond = 6.32287815850751e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     5
+│   rcond = 6.32287815850751e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: drm: 4 of 96 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:754
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     5
+│   rcond = 1.622259546263857e-16
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates =
+│    1-element Vector{Int64}:
+│     5
+│   rcond = 1.622259546263857e-16
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: drm: 5 of 40 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:393
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 5.220049752381696e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: drm: 5 of 40 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:393
+┌ Warning: Hessian is numerically singular at the optimum — using a pseudo-inverse.
+│ The fit is at a variance/dispersion boundary, so standard errors for the
+│ flagged coordinates are NOT trustworthy. Prefer `confint(fit, method = :profile)`
+│ or the bootstrap entry points for those targets.
+│   context = ""
+│   flat_coordinates = Int64[]
+│   rcond = 1.832383729615703e-17
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/vcov_guard.jl:87
+┌ Warning: drm: 6 of 50 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:129
+┌ Warning: drm: 6 of 50 rows have a missing/NaN response and were dropped (observed-rows fit, like glmmTMB's default na.action). Use `drm_listwise` to preprocess explicitly, or supply complete responses, to silence this.
+└ @ DRM /private/tmp/drm-parity-20260830/DRM.jl/src/gaussian_lss.jl:129
+TEST_RNG_SOURCE=/Users/z3437171/.julia/packages/StableRNGs/yMYQp/src/StableRNGs.jl
+Test Summary:                                               | Pass  Total   Time
+Sparse LSS vs Dense Comparator: Scalar α (Single Predictor) |   17     17  17.8s
+Test Summary:                                                        | Pass  Total   Time
+Sparse LSS vs Dense Comparator: Multi-column α (Multiple Predictors) |   12     12  13.3s
+Test Summary:                                 | Pass  Total  Time
+Sparse LSS: Routing and sparse = true keyword |    4      4  0.3s
+Test Summary:                         | Pass  Total  Time
+Sparse LSS: Large tree scaling sanity |    5      5  0.0s
+Test Summary:                                    | Pass  Total  Time
+lsss multi: iid + phylo, both sd ~ x (fixture A) |    9      9  5.8s
+Test Summary:                                     | Pass  Total  Time
+lsss multi: three REs, five submodels (fixture B) |    5      5  4.5s
+Test Summary:        | Pass  Total  Time
+lsss multi: refusals |    6      6  5.0s
+Test Summary:                               | Pass  Total  Time
+sparse phylo-mean variance-block SEs (#556) |    5      5  1.9s
+Test Summary:                          | Pass  Total  Time
+Location-scale-scale (lss) REML (#558) |   41     41  7.3s
+Test Summary:                              | Pass  Total  Time
+#559 Location-scale-scale missing response |   57     57  4.6s
+LSS_IDENTITY_NEIGHBOURS_PASS

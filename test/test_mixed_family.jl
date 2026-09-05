@@ -17,13 +17,13 @@ end
 
 @testset "S3 cross-family bivariate (shared-latent GHQ)" begin
     @testset "link_residual values" begin
-        @test DRM.link_residual(Binomial(), 0.3) ≈ (π^2) / 3
-        @test DRM.link_residual(Poisson(), 2.0) ≈ log(1.5)
+        @test DRM.link_residual(DRM.Binomial(), 0.3) ≈ (π^2) / 3
+        @test DRM.link_residual(DRM.Poisson(), 2.0) ≈ log(1.5)
         @test DRM.link_residual(Gaussian(); dispersion = 4.0) ≈ 4.0
         # Tier-2 dispersion families (each maps its own dispersion convention)
         @test DRM.link_residual(NegBinomial2(); dispersion = 5.0) ≈ trigamma(5.0)
-        @test DRM.link_residual(Gamma(); dispersion = 0.25) ≈ trigamma(1 / 0.25)   # disp = σ²
-        @test DRM.link_residual(Beta(), 0.4; dispersion = 8.0) ≈ trigamma(0.4 * 8) + trigamma(0.6 * 8)
+        @test DRM.link_residual(DRM.Gamma(); dispersion = 0.25) ≈ trigamma(1 / 0.25)   # disp = σ²
+        @test DRM.link_residual(DRM.Beta(), 0.4; dispersion = 8.0) ≈ trigamma(0.4 * 8) + trigamma(0.6 * 8)
     end
 
     @testset "Gaussian x Poisson recovery (identified)" begin
@@ -40,7 +40,7 @@ end
         y2 = Float64[_rpois(rng, exp(clamp(η2[i], -20.0, 20.0))) for i in 1:n]
 
         fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gaussian(),
-                                   y2 = y2, X2 = X2, fam2 = Poisson())
+                                   y2 = y2, X2 = X2, fam2 = DRM.Poisson())
         @test fit.converged
         @test isapprox(fit.β1, β1; atol = 0.12)
         @test isapprox(fit.β2, β2; atol = 0.12)
@@ -93,7 +93,7 @@ end
         ρ_true = (λ1 * λ2) / sqrt((λ1^2 + σ1^2) * (λ2^2 + v2_true))
 
         fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gaussian(),
-                                   y2 = y2, X2 = X2, fam2 = Poisson(),
+                                   y2 = y2, X2 = X2, fam2 = DRM.Poisson(),
                                    profile = true, B = 60, rng = MersenneTwister(123))
         # the returned point estimates must be plain Float64 (closure-boxing guard)
         @test eltype(fit.β1) == Float64 && fit.λ1 isa Float64
@@ -199,12 +199,12 @@ end
         u = randn(rng, n)
         η1 = X1 * β1 .+ λ1 .* u
         η2 = X2 * β2 .+ λ2 .* u
-        y1 = [DRM._mf_rand(Beta(), η1[i], 1.0, σ1, rng) for i in 1:n]               # σ → φ=1/σ²
-        y2 = [DRM._mf_rand(Binomial(), η2[i], ntri, 1.0, rng) for i in 1:n]
+        y1 = [DRM._mf_rand(DRM.Beta(), η1[i], 1.0, σ1, rng) for i in 1:n]               # σ → φ=1/σ²
+        y2 = [DRM._mf_rand(DRM.Binomial(), η2[i], ntri, 1.0, rng) for i in 1:n]
         trials2 = fill(ntri, n)
 
-        fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Beta(),
-                                   y2 = y2, X2 = X2, fam2 = Binomial(),
+        fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = DRM.Beta(),
+                                   y2 = y2, X2 = X2, fam2 = DRM.Binomial(),
                                    trials2 = trials2)
         @test fit.converged
         @test isapprox(fit.β1, β1; atol = 0.12)
@@ -227,11 +227,11 @@ end
         u = randn(rng, n)
         η1 = X1 * β1 .+ λ1 .* u
         η2 = X2 * β2 .+ λ2 .* u
-        y1 = [DRM._mf_rand(Gamma(), η1[i], 1.0, σ1, rng) for i in 1:n]              # σ → α=1/σ²
-        y2 = [DRM._mf_rand(Poisson(), η2[i], 1.0, 1.0, rng) for i in 1:n]
+        y1 = [DRM._mf_rand(DRM.Gamma(), η1[i], 1.0, σ1, rng) for i in 1:n]          # σ → α=1/σ²
+        y2 = [DRM._mf_rand(DRM.Poisson(), η2[i], 1.0, 1.0, rng) for i in 1:n]
 
-        fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gamma(),
-                                   y2 = y2, X2 = X2, fam2 = Poisson())
+        fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = DRM.Gamma(),
+                                   y2 = y2, X2 = X2, fam2 = DRM.Poisson())
         @test fit.converged
         @test isapprox(fit.β1, β1; atol = 0.12)
         @test isapprox(fit.β2, β2; atol = 0.12)
@@ -293,7 +293,7 @@ end
 
         local fit
         @test_nowarn fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gaussian(),
-                                                y2 = y2, X2 = X2, fam2 = Poisson(),
+                                                y2 = y2, X2 = X2, fam2 = DRM.Poisson(),
                                                 confint = false)
         @test fit isa NamedTuple                                 # returned, no AssertionError
         @test isfinite(fit.loglik)                               # final objective finite
@@ -325,7 +325,7 @@ end
         y2 = Float64[_rpois(rng, exp(clamp(η2[i], -20.0, 20.0))) for i in 1:n]
 
         fit = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gaussian(),
-                                   y2 = y2, X2 = X2, fam2 = Poisson(),
+                                   y2 = y2, X2 = X2, fam2 = DRM.Poisson(),
                                    Xsigma1 = Xsigma1, confint = false)
         @test fit.converged
         @test length(fit.βσ1) == 2                  # intercept + slope recovered as a vector
@@ -340,7 +340,7 @@ end
         # An intercept-only refit on the SAME data must reproduce the old scalar slot
         # exactly (byte-identical default path): σ1 == exp(βσ1_intercept), one coeff.
         flat = DRM.fit_mixed_family(y1 = y1, X1 = X1, fam1 = Gaussian(),
-                                    y2 = y2, X2 = X2, fam2 = Poisson(),
+                                    y2 = y2, X2 = X2, fam2 = DRM.Poisson(),
                                     confint = false)
         @test length(flat.βσ1) == 1
         @test flat.σ1 == exp(flat.βσ1[1])

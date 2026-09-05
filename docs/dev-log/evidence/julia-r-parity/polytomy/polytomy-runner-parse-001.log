@@ -1,0 +1,106 @@
+expression(a <- commandArgs(TRUE), if (length(a) != 2L) stop("usage: run-julia-polytomy-public.R JULIA_ROOT NEW_PREFIX"), 
+    jroot <- normalizePath(a[1], mustWork = TRUE), prefix <- a[2], 
+    if (any(file.exists(paste0(prefix, c(".json", ".rds"))))) stop("refusing stale outputs"), 
+    Sys.setenv(DRM_JL_PATH = jroot, JULIA_NUM_THREADS = "1", 
+        OPENBLAS_NUM_THREADS = "1"), sha <- function(p) digest::digest(file = p, 
+        algo = "sha256"), manifest <- function() {
+        p <- normalizePath(c(sort(list.files("R", pattern = "[.]R$", 
+            full.names = TRUE)), sort(list.files(file.path(jroot, 
+            "src"), pattern = "[.]jl$", full.names = TRUE, recursive = TRUE))), 
+            mustWork = TRUE)
+        as.list(setNames(vapply(p, sha, ""), p))
+    }, before <- manifest(), pkgload::load_all(quiet = TRUE, 
+        recompile = FALSE), star <- paste0("(", paste0("s", 1:12, 
+        ":2", collapse = ","), ");"), clades <- vapply(0:3, function(g) paste0("(", 
+        paste0("s", g * 3 + 1:3, ":1", collapse = ","), "):1"), 
+        ""), trees <- c(star = star, mixed = paste0("(", paste(clades, 
+        collapse = ","), ");")), out <- list(scope = "Two positive-length ultrametric polytomy Gaussian ML workflows; not all-family or inference parity", 
+        source_before = before, runner_sha256 = sha("tools/run-julia-polytomy-public.R"), 
+        native_tolerance = 4e-06, cases = list()), fits <- list(), 
+    start <- proc.time()[["elapsed"]], save_receipt <- function() jsonlite::write_json(out, 
+        paste0(prefix, ".json"), pretty = TRUE, auto_unbox = TRUE, 
+        digits = 17, na = "string", null = "null"), for (kind in names(trees)) {
+        out$cases[[kind]] <- tryCatch({
+            tree <- ape::read.tree(text = trees[[kind]])
+            set.seed(563L)
+            C <- ape::vcv(tree)
+            K <- ape::vcv(tree, corr = TRUE)
+            idx <- rep(1:12, each = 5L)
+            x <- rnorm(length(idx))
+            u <- as.numeric(t(chol(K)) %*% rnorm(12))
+            d <- data.frame(y = 0.4 + 0.3 * x + u[idx] + 0.25 * 
+                rnorm(length(idx)), x = x, species = tree$tip.label[idx])
+            d <- d[sample(nrow(d)), , drop = FALSE]
+            rownames(d) <- NULL
+            form <- bf(y ~ x + phylo(1 | species, tree = tree), 
+                sigma ~ 1)
+            native <- drmTMB(form, gaussian(), data = d)
+            bridge <- drmTMB(form, gaussian(), data = d, engine = "julia")
+            fits[[kind]] <- list(native = native, bridge = bridge)
+            payload <- drm_julia_phylo_newick(tree)
+            JuliaCall::julia_assign("poly_newick", payload$newick)
+            JuliaCall::julia_assign("poly_y", d$y)
+            JuliaCall::julia_assign("poly_x", d$x)
+            JuliaCall::julia_assign("poly_species", d$species)
+            direct <- JuliaCall::julia_eval("begin\n      using DRM, LinearAlgebra\n      BLAS.set_num_threads(1)\n      pt = augmented_phy(poly_newick)\n      pf = drm(bf(@formula(y ~ x + phylo(1 | species)), @formula(sigma ~ 1)), Gaussian(); data=(y=poly_y, x=poly_x, species=poly_species), tree=pt)\n      Dict(\"mu\"=>coef(pf,:mu), \"sigma\"=>coef(pf,:sigma), \"sd_corr\"=>re_sd(pf)[:species]*sqrt(phylo_tree_height(pt)), \"loglik\"=>loglik(pf), \"fitted\"=>fitted(pf), \"converged\"=>is_converged(pf), \"tree_covariance\"=>sigma_phy_dense(pt), \"tip_order\"=>pt.leaf_names, \"n_total\"=>pt.n_total, \"height\"=>phylo_tree_height(pt))\n    end")
+            sd <- function(fit) {
+                targets <- profile_targets(fit)
+                z <- targets[startsWith(targets$parm, "sd:mu:"), 
+                  , drop = FALSE]
+                if (nrow(z) != 1L) 
+                  stop("expected one mean phylogenetic SD target")
+                as.numeric(z$estimate)
+            }
+            dense_ll <- function(mu, logsigma, sd_corr) {
+                ids <- match(d$species, tree$tip.label)
+                V <- diag(exp(2 * logsigma), nrow(d)) + sd_corr^2 * 
+                  K[ids, ids]
+                L <- chol(V)
+                e <- d$y - as.numeric(cbind(1, d$x) %*% mu)
+                -0.5 * (length(e) * log(2 * pi) + 2 * sum(log(diag(L))) + 
+                  sum(backsolve(L, e, transpose = TRUE)^2))
+            }
+            native_sd <- sd(native)
+            bridge_sd <- sd(bridge)
+            outputs <- list(native = list(mu = unname(coef(native, 
+                "mu")), sigma = unname(coef(native, "sigma")), 
+                sd_corr = native_sd, loglik = as.numeric(logLik(native))), 
+                bridge = list(mu = unname(coef(bridge, "mu")), 
+                  sigma = unname(coef(bridge, "sigma")), sd_corr = bridge_sd, 
+                  loglik = as.numeric(logLik(bridge)), fitted = fitted(bridge)), 
+                direct = direct)
+            ll_error <- vapply(outputs, function(v) abs(v$loglik - 
+                dense_ll(v$mu, v$sigma, v$sd_corr)), 0)
+            bridge_error <- c(mu = max(abs(outputs$bridge$mu - 
+                direct$mu)), sigma = max(abs(outputs$bridge$sigma - 
+                direct$sigma)), sd = abs(bridge_sd - direct$sd_corr), 
+                loglik = abs(outputs$bridge$loglik - direct$loglik), 
+                fitted = max(abs(fitted(bridge) - direct$fitted)))
+            native_error <- c(mu = max(abs(outputs$native$mu - 
+                direct$mu)), sigma = max(abs(outputs$native$sigma - 
+                direct$sigma)), sd = abs(native_sd - direct$sd_corr), 
+                loglik = abs(outputs$native$loglik - direct$loglik))
+            cov_error <- max(abs(direct$tree_covariance - C[direct$tip_order, 
+                direct$tip_order]))
+            pass <- isTRUE(direct$converged) && all(is.finite(ll_error)) && 
+                max(ll_error) < 1e-06 && max(bridge_error) < 
+                4e-06 && cov_error < 1e-12
+            list(status = if (pass) "PASS" else "FAIL", native_status = if (all(native_error <= 
+                4e-06)) "PASS" else "FAIL", source_tree = trees[[kind]], 
+                serialized = payload, new_data = d, raw_covariance = C, 
+                correlation = K, tip_labels = tree$tip.label, 
+                outputs = outputs, dense_loglik_error = as.list(ll_error), 
+                bridge_errors = as.list(bridge_error), native_errors = as.list(native_error), 
+                tree_covariance_error = cov_error)
+        }, error = function(e) list(status = "ERROR", message = conditionMessage(e)))
+        save_receipt()
+        cat(kind, out$cases[[kind]]$status, "\n")
+    }, out$elapsed <- proc.time()[["elapsed"]] - start, out$source_after <- manifest(), 
+    out$source_unchanged <- identical(before, out$source_after), 
+    out$status <- if (out$source_unchanged && all(vapply(out$cases, 
+        function(v) identical(v$status, "PASS"), TRUE))) "PASS" else "FAIL", 
+    out$runtime <- list(R = R.version.string), save_receipt(), 
+    saveRDS(fits, paste0(prefix, ".rds")), cat("POLYTOMY_PUBLIC_", 
+        out$status, " elapsed=", out$elapsed, "\n", sep = ""), 
+    if (out$status != "PASS") quit(status = 1L))
+POLYTOMY_RUNNER_PARSE_PASS

@@ -314,4 +314,166 @@ using Test, Random, LinearAlgebra
     @test pbootstrap["failed"] <= 1
     @test isfinite(pbootstrap["lower"])
     @test isfinite(pbootstrap["upper"])
+
+    # ---------------------------------------------------------------------
+    # #475: `parm` kwarg on the public `drm_bridge_inference` surface. Before
+    # this, drmTMB PR #1080 could only reach an ordinary `fixef:<dpar>:<coef>`
+    # target by calling DRM.jl's underscore-prefixed marshalling internals by
+    # qualified name (`DRM._bridge_data`, `_bridge_formula`, `_bridge_family`,
+    # `_bridge_fit`, `_bridge_inference_flatten`, ...) -- a rename here would
+    # silently break the R bridge. `parm = "fixef:mu:x"` closes that gap.
+    # ---------------------------------------------------------------------
+
+    fx_profile = drm_bridge_inference(;
+        formula = "y ~ x; sigma ~ x", family = "gaussian", data = data,
+        method = "profile", level = 0.90, parm = "fixef:mu:x",
+    )
+    @test fx_profile["method"] == "profile"
+    @test fx_profile["param"] == "mu"
+    @test fx_profile["coef"] == "x"
+    @test isfinite(fx_profile["lower"])
+    @test isfinite(fx_profile["upper"])
+    @test fx_profile["lower"] < fx_profile["estimate"] < fx_profile["upper"]
+
+    fx_boot = drm_bridge_inference(;
+        formula = "y ~ x; sigma ~ x", family = "gaussian", data = data,
+        method = "bootstrap", level = 0.90, B = 25, seed = 20260609,
+        parm = "fixef:mu:x",
+    )
+    @test fx_boot["method"] == "bootstrap"
+    @test fx_boot["param"] == "mu"
+    @test fx_boot["coef"] == "x"
+    @test isfinite(fx_boot["lower"])
+    @test isfinite(fx_boot["upper"])
+
+    # A malformed or nonexistent target is refused loudly, not silently
+    # mislabelled -- mirrors `_bridge_pick_sd_row`'s discipline.
+    @test_throws ArgumentError drm_bridge_inference(;
+        formula = "y ~ x; sigma ~ x", family = "gaussian", data = data,
+        method = "profile", parm = "mu:x",             # missing the "fixef:" tag
+    )
+    @test_throws ArgumentError drm_bridge_inference(;
+        formula = "y ~ x; sigma ~ x", family = "gaussian", data = data,
+        method = "profile", parm = "fixef:mu:not_a_coef",
+    )
+
+    # Equivalence check: the SAME `fixef:mu:x` target reached the OLD way --
+    # by calling the underscore-prefixed marshalling internals directly by
+    # qualified name, exactly as drmTMB PR #1080's Julia glue does today --
+    # must produce IDENTICAL numbers to the new public `parm` route. No
+    # underscore-prefixed function is called on the `fx_profile`/`fx_boot`
+    # side above; this block is only the OLD-route reference computation.
+    dat_i = DRM._bridge_data(data)
+    bundle_i, dat_i = DRM._bridge_formula("y ~ x; sigma ~ x", "gaussian", dat_i)
+    fam_i = DRM._bridge_family("gaussian")
+    opts_i = DRM._bridge_options(Dict{String,Any}())
+    fit_i = DRM._bridge_fit(bundle_i, fam_i, dat_i; tree = nothing, K = nothing,
+                            A = nothing, coords = nothing, options = opts_i)
+
+    result_i = DRM.profile_result(fit_i; level = 0.90, threads = false, parm = :mu)
+    row_i = only(filter(r -> r.param === :mu && r.coef == "x", result_i.ci))
+    internal_profile = DRM._bridge_inference_flatten(
+        row_i; method = "profile", status = "profile",
+        attempted = result_i.attempted, used = result_i.used, failed = result_i.failed,
+        elapsed = result_i.elapsed, threaded = result_i.threaded,
+        worker_threads = result_i.worker_threads, julia_threads = result_i.julia_threads,
+        blas_threads = result_i.blas_threads, message = "profile_result completed")
+    @test fx_profile["estimate"] == internal_profile["estimate"]
+    @test fx_profile["lower"] == internal_profile["lower"]
+    @test fx_profile["upper"] == internal_profile["upper"]
+
+    rng_i = Random.MersenneTwister(20260609)
+    result_ib = DRM.bootstrap_result(fit_i; data = dat_i, B = 25, level = 0.90, rng = rng_i,
+                                     tree = nothing, threads = false, failures = :skip,
+                                     check_converged = true, algorithm = :auto, g_tol = 1e-8)
+    row_ib = only(filter(r -> r.param === :mu && r.coef == "x", result_ib.summary))
+    internal_boot = DRM._bridge_inference_flatten(
+        row_ib; method = "bootstrap",
+        status = result_ib.used >= 2 ? "bootstrap" : "bootstrap_unavailable",
+        attempted = result_ib.attempted, used = result_ib.used, failed = result_ib.failed,
+        elapsed = result_ib.elapsed, threaded = result_ib.threaded,
+        worker_threads = result_ib.worker_threads, julia_threads = result_ib.julia_threads,
+        blas_threads = result_ib.blas_threads,
+        message = "$(result_ib.used)/$(result_ib.attempted) successful refits")
+    @test fx_boot["estimate"] == internal_boot["estimate"]
+    @test fx_boot["lower"] == internal_boot["lower"]
+    @test fx_boot["upper"] == internal_boot["upper"]
+
+    # Pin: the pre-existing SD-target path (no `parm`) is BYTE-IDENTICAL to
+    # before this change. Reconstruct the same phylogenetic-SD profile/
+    # bootstrap result independently through the primitives `drm_bridge_
+    # inference` itself calls, and compare to the public no-`parm` call above
+    # (`pprofile` / `pbootstrap`, on the same `pdata`/`phy` fixture).
+    dat_sd = DRM._bridge_data(pdata)
+    bundle_sd, dat_sd = DRM._bridge_formula(
+        Dict(:mu => "y ~ x + phylo(1 | species)", :sigma => "sigma ~ 1"),
+        "gaussian", dat_sd)
+    fam_sd = DRM._bridge_family("gaussian")
+    opts_sd = DRM._bridge_options(Dict{String,Any}())
+    opts_sd[:profile_ci] = true   # `drm_bridge_inference` sets this for the SD path
+    tree_sd = DRM._bridge_tree(phy)
+    fit_sd = DRM._bridge_fit(bundle_sd, fam_sd, dat_sd; tree = tree_sd, K = nothing,
+                             A = nothing, coords = nothing, options = opts_sd)
+
+    result_sd = DRM.profile_result(fit_sd; level = 0.80, threads = false,
+                                   parm = [:resd_sigma, :resd, :resd_mu])
+    row_sd = only(filter(r -> r.param in (:resd_sigma, :resd, :resd_mu), result_sd.ci))
+    internal_sd_profile = DRM._bridge_inference_flatten(
+        row_sd; method = "profile", status = "profile",
+        attempted = result_sd.attempted, used = result_sd.used, failed = result_sd.failed,
+        elapsed = result_sd.elapsed, threaded = result_sd.threaded,
+        worker_threads = result_sd.worker_threads, julia_threads = result_sd.julia_threads,
+        blas_threads = result_sd.blas_threads, message = "profile_result completed")
+    @test pprofile["estimate"] == internal_sd_profile["estimate"]
+    @test pprofile["lower"] == internal_sd_profile["lower"]
+    @test pprofile["upper"] == internal_sd_profile["upper"]
+    @test pprofile["param"] == internal_sd_profile["param"]
+
+    rng_sd = Random.MersenneTwister(20260609)
+    result_sdb = DRM.bootstrap_result(fit_sd; data = dat_sd, B = 3, level = 0.80,
+                                      rng = rng_sd, tree = tree_sd, threads = false,
+                                      failures = :skip, check_converged = true,
+                                      algorithm = :auto, g_tol = 1e-8)
+    row_sdb = only(filter(r -> r.param in (:resd_sigma, :resd, :resd_mu), result_sdb.summary))
+    internal_sd_boot = DRM._bridge_inference_flatten(
+        row_sdb; method = "bootstrap",
+        status = result_sdb.used >= 2 ? "bootstrap" : "bootstrap_unavailable",
+        attempted = result_sdb.attempted, used = result_sdb.used, failed = result_sdb.failed,
+        elapsed = result_sdb.elapsed, threaded = result_sdb.threaded,
+        worker_threads = result_sdb.worker_threads, julia_threads = result_sdb.julia_threads,
+        blas_threads = result_sdb.blas_threads,
+        message = "$(result_sdb.used)/$(result_sdb.attempted) successful refits")
+    @test pbootstrap["estimate"] == internal_sd_boot["estimate"]
+    @test pbootstrap["lower"] == internal_sd_boot["lower"]
+    @test pbootstrap["upper"] == internal_sd_boot["upper"]
+    @test pbootstrap["param"] == internal_sd_boot["param"]
+end
+
+@testset "keyed univariate `nu` is not a bivariate discriminator (#1090)" begin
+    # drmTMB's Workflow G robust-student cell marshals bf(y ~ x, sigma ~ 1,
+    # nu ~ 1) as KEYED parts. `:nu` sat in _BRIDGE_BIVARIATE_KEYS (it is
+    # threaded through for biv_student), so a plain univariate Student tripped
+    # the bivariate branch and died demanding mu1/mu2 — while univariate
+    # Student legitimately owns a `nu` formula. Only mu1/mu2/sigma1/sigma2/
+    # rho12 discriminate bivariate; `nu` must not.
+    Random.seed!(20260828)
+    n = 160
+    x = randn(n)
+    y = 0.4 .+ 0.7 .* x .+ 0.5 .* randn(n)
+    d = (; y, x)
+
+    r = DRM.drm_bridge(; formula = "mu = y ~ x; sigma = sigma ~ 1; nu = nu ~ 1",
+                       family = "student", data = d)
+    @test r["family"] == "student"
+    @test isfinite(Float64(r["loglik"]))
+    # mu intercept + mu x + sigma + nu — the keyed nu reached the UNIVARIATE
+    # Student bundle rather than tripping the bivariate branch.
+    @test length(r["coef_names"]) >= 4
+
+    # Bivariate Student still routes bivariate (mu1/mu2 discriminate, nu rides).
+    y2 = 0.1 .+ 0.4 .* x .+ 0.6 .* randn(n)
+    d2 = (; y1 = y, y2 = y2, x)
+    r2 = DRM.drm_bridge(; formula = "mu1 = y1 ~ x; mu2 = y2 ~ x; sigma1 = sigma1 ~ 1; sigma2 = sigma2 ~ 1; nu = nu ~ 1; rho12 = rho12 ~ 1",
+                        family = "biv_student", data = d2)
+    @test isfinite(Float64(r2["loglik"]))
 end

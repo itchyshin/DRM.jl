@@ -1,0 +1,1 @@
+| 2026-08-31 | **Location-scale boundary references and private helper** (#563 / S11) | four128/256-bit all-parameter references; fixed output certificates; legacy baseline; sparse-block and seed tests | References pass; baseline7pass2fail; helper red247pass1fail then252/252pass; originalCI12pass4fail; helper unwired, integration open | Ada / Noether / Rose |

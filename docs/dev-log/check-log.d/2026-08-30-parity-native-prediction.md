@@ -1,0 +1,1 @@
+| 2026-08-30 | Native missing-predictor prediction (#563) | Focused and existing prediction suites; independent replay and3freshfits;14damages; matched320row oracle | Prediction repair PASS; strict native optimizer/output parity FAIL retained; no programme closure | Ada / Hopper / Rose |

@@ -1,0 +1,1 @@
+| 2026-08-30 | **Rooted polytomy admission** (#563) | 91Julia+155Rassertions;2native/direct/bridgeGaussianMLcases;16damagecontrols;2docpages | Boundedpositive-lengthadmission PASS;allprogramme/inferencegatesOPEN | Ada / Rose / Melissa |

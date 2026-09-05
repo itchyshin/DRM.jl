@@ -1,0 +1,22 @@
+ERROR: LoadError: Some tests did not pass: 21 passed, 1 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:148
+Test Summary:                                                       | Pass  Total   Time
+finite-state direct formula frontend API and ordinal payload design |   34     34  11.1s
+Test Summary:                                          | Pass  Total  Time
+finite-state contrast construction and marker ordering |   16     16  1.5s
+Test Summary:                                    | Pass  Total  Time
+finite-state categorical direct formula frontend |   12     12  2.9s
+finite-state direct frontend admission guards: Test Failed at /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:169
+  Expression: drm(form, DRM.Gaussian(); data = data, impute = (x = DRM.impute_model(#= /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:170 =# @formula(x ~ z); family = DRM.Binomial()),), missing = ctl)
+    Expected: ArgumentError
+      Thrown: MethodError
+
+Stacktrace:
+ [1] macro expansion
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:169 [inlined]
+ [2] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [3] top-level scope
+   @ /private/tmp/drm-parity-20260830/DRM.jl/test/test_joint_missing_finite_frontend.jl:149
+Test Summary:                                 | Pass  Fail  Total  Time
+finite-state direct frontend admission guards |   21     1     22  6.5s

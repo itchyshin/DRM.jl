@@ -1,0 +1,24 @@
+{
+  "component_cases": 4,
+  "component_predictions": 32,
+  "component_adapter_max": 3.552713678800501e-15,
+  "component_native_max": 1.8956326479635521e-06,
+  "component_likelihood_max": 1.7053025658242404e-13,
+  "component_seconds": 27.118000000000002,
+  "RI_seconds": 19.457,
+  "RI_adapter_max": 1.4432899320127035e-15,
+  "RI_native_failures": [
+    [
+      "varying_scale",
+      "newdata/mu/link",
+      1.0859526544365616e-05
+    ],
+    [
+      "varying_scale",
+      "newdata/mu/response",
+      1.0859526544365616e-05
+    ]
+  ],
+  "Julia_src_unchanged": true,
+  "no_remote_compute": true
+}

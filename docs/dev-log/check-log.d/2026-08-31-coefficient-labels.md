@@ -1,0 +1,1 @@
+| 2026-08-31 | **Coefficient identity and exact inference selectors** (programme #563; bounded checkpoint only) | owned-only combined005 + public008 + damaged-receipt controls | 1061 Julia assertions;17 point cases+12 inference operations;62 R assertions;13 R/11 Python damage controls; Rose approved; broader gates OPEN | Ada / Hopper / Rose / Melissa |

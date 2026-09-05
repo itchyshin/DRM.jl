@@ -1,0 +1,55 @@
+ERROR: LoadError: Some tests did not pass: 4 passed, 2 failed, 0 errored, 0 broken.
+in expression starting at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_grad.jl:26
+DRM_SOURCE /private/tmp/drm-parity-20260830/integration/DRM.jl/src/DRM.jl
+Test Summary:                                     | Pass  Total  Time
+location-scale inner-mode stationarity acceptance |   33     33  1.8s
+FILE_COMPLETE test/test_locscale_inner_status.jl
+Test Summary:                            | Pass  Total  Time
+location–scale Λ log-Cholesky round-trip |    9      9  0.1s
+Test Summary:                                           | Pass  Total   Time
+location–scale inner joint: grad/Hessian vs ForwardDiff |    4      4  20.5s
+Test Summary:                                        | Pass  Total  Time
+location–scale inner mode reaches a stationary point |    3      3  0.1s
+FILE_COMPLETE test/test_locscale_inner.jl
+Test Summary:                                                       | Pass  Total  Time
+location–scale Laplace marginal vs 2-D Gauss–Hermite (single group) |    4      4  0.4s
+Test Summary:                                                      | Pass  Total  Time
+location–scale marginal: multi-group i.i.d. factorises over groups |    2      2  0.0s
+FILE_COMPLETE test/test_locscale_marginal.jl
+Gamma, i.i.d. groups: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_grad.jl:67
+  Expression: _grad_ok(ga, gfd)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_grad.jl:67 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_grad.jl:50 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_grad.jl:28
+NB2, phylogenetic-tree prior: Test Failed at /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_grad.jl:91
+  Expression: _grad_ok(ga, gfd)
+
+Stacktrace:
+ [1] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:672 [inlined]
+ [2] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_grad.jl:91 [inlined]
+ [3] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [4] macro expansion
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_grad.jl:71 [inlined]
+ [5] macro expansion
+   @ ~/.julia/juliaup/julia-1.10.0+0.aarch64.apple.darwin14/share/julia/stdlib/v1.10/Test/src/Test.jl:1577 [inlined]
+ [6] top-level scope
+   @ /private/tmp/drm-parity-20260830/integration/DRM.jl/test/test_locscale_grad.jl:28
+Test Summary:                                       | Pass  Fail  Total  Time
+location–scale exact gradient vs finite differences |    4     2      6  4.9s
+  NB2, i.i.d. groups                                |    2            2  1.3s
+  Gamma, i.i.d. groups                              |    1     1      2  2.7s
+  NB2, phylogenetic-tree prior                      |    1     1      2  0.8s

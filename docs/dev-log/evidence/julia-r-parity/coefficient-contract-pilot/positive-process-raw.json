@@ -1,0 +1,9 @@
+{
+  "exit": 0,
+  "seconds": 33.49561608303338,
+  "estimate_seconds": 300,
+  "cwd": "/private/tmp/drm-parity-20260830/fixture-contract-pilot-001",
+  "source": "/private/tmp/drm-parity-20260830/DRM.jl/tools/parity_fixture.R",
+  "threads": 1,
+  "blas_threads": 1
+}
