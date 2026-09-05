@@ -3,9 +3,10 @@
 !!! note "Status — Experimental"
     A first slice of bivariate modelling for **two responses from different
     families** (e.g. Gaussian × Poisson), via a shared per-observation latent.
-    The entry point is `DRM.fit_mixed_family` (not yet exported, not yet wired
-    into the `bf(...)` front end). `:gaussian`, `:poisson`, and `:binomial` axes
-    are supported in this slice. The dependence is reported on the link/latent
+    The matrix-level entry point is `DRM.fit_mixed_family` (not exported); the
+    `bf(...)` front end is wired as `drm(bf(...), (Gaussian(), Poisson());
+    data = …)` (`src/mixed_family.jl:440`). `:gaussian`, `:poisson`, and
+    `:binomial` axes are admitted in this slice. The dependence is reported on the link/latent
     scale; the residual-correlation [`rho12`](tutorials/bivariate-coscale.md)
     model is the Gaussian × Gaussian special case.
 

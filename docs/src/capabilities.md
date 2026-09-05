@@ -40,8 +40,8 @@ off by default (`DRM_PARITY_TESTS`, `test/runtests.jl:153`).
 | Gamma | `src/gamma.jl` | yes | intercept + slope + phylo | **Tested** — `test/test_gamma.jl`, `test/test_gamma_re.jl`, `test/test_gamma_slope_re.jl` |
 | LogNormal | `src/lognormal.jl` | yes | intercept + slope | **Tested** — `test/test_lognormal.jl`, `test/test_lognormal_re.jl`, `test/test_lognormal_slope_re.jl` |
 | ZeroOneBeta | `src/zeroonebeta.jl` | yes | — | **Tested** — `test/test_zeroonebeta.jl` |
-| Tweedie | `src/tweedie.jl` | yes | — | **Tested** — `test/test_tweedie.jl` |
-| CumulativeLogit (ordinal) | `src/cumulative.jl` | yes | — | **Tested** — `test/test_cumulative.jl` |
+| Tweedie | `src/tweedie.jl` | yes | intercept + independent slope | **Tested** — `test/test_tweedie.jl`, `test/test_tweedie_ranef.jl` |
+| CumulativeLogit (ordinal) | `src/cumulative.jl` | yes | intercept + independent slope + phylo | **Tested** — `test/test_cumulative.jl`, `test/test_cumlogit_ranef.jl`, `test/test_cumlogit_phylo.jl` |
 
 **Count modifiers** `zi` (zero-inflation) and `hu` (hurdle): implemented in the
 Poisson/NB2 paths; **Tested** — `test/test_zi.jl`, `test/test_hurdle.jl`.
@@ -309,9 +309,10 @@ To avoid overclaiming, these are confirmed **not** implemented in this worktree:
   were promoted and are wired — see the Inference table and `src/DRM.jl:55`/`:81`
   — this bullet listed them as unmigrated by mistake). What remains in
   `src/experimental/` (`ls src/experimental`, per its own README) is: two
-  recorded negative results not exposed (`fit_em_natgrad.jl` — #13 decision-gate
-  FAIL; `fit_em_closed.jl`, `em_squarem_fit.jl` — #472, the closed-form Λ step
-  descends the marginal); four superseded predecessors of the production engine
+  unwired variants not exposed (`fit_em_natgrad.jl` — #13 decision-gate FAIL, a
+  recorded negative result; `fit_em_closed.jl`, `em_squarem_fit.jl` — the
+  closed-form Λ step, whose #472 descent was an artefact of a dropped-zeros
+  sparsity pattern and was repaired in #577); four superseded predecessors of the production engine
   (`fit_q4_tmbgrad.jl`, `fit_ml_q4.jl`, `fit_ml_warm.jl`, `fit_q4_p100_tmb.jl`,
   and the four `estep_*.jl` mode-finder hardenings); two diagnostic oracles
   (`q4_em_dense.jl`, `fit_sparse_direct.jl`); and a stale pre-promotion copy of

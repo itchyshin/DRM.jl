@@ -103,4 +103,4 @@ coef(fito, :mu)[1]      # slope ≈ 0.8
 - [Robust continuous responses](../tutorials/robust-student.md) — Student-t.
 - [Count abundance and extra zeros](../tutorials/count-nbinom2.md) — Poisson / NB2.
 - [Proportions and success rates](../tutorials/proportion-beta-binomial.md) — beta.
-- [What can I fit today?](model-map.md) — the live capability matrix.
+- [What can I fit today?](model-map.md) — the map of the model space. For the tested/untested audit, see [Evidence & limits](../capabilities.md).

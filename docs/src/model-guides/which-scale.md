@@ -75,12 +75,12 @@ DRM.jl keeps the inference you are entitled to:
   `vcov_posdef` / `min_eigval` fields, so a non-PD covariance is reported, not
   hidden.
 
-This is a **measured** advantage, not a hope. On the verified q=4 PLSM fit, the
-17×17 observed information had a single negative eigenvalue (the singular
-variance direction); DRM.jl returned valid Wald SEs for the **16 of 17**
-identified parameters where drmTMB's `sdreport` was all-`NaN`, and a parametric
-bootstrap gave finite intervals for **60/60** replicates. See
-`report/comparison-grid.md`.
+This is a **measured** advantage, not a hope. On the verified q=4 PLSM fit the
+observed information had a single negative eigenvalue — the singular variance
+direction — and DRM.jl still returned valid Wald SEs for the identified
+parameters where drmTMB's `sdreport` was all-`NaN`; a parametric bootstrap gave
+finite intervals across the replicates it was run on. The counts and the run
+conditions are in `report/comparison-grid.md`.
 
 !!! note "An undefined CI is information, not a failure"
     `(-Inf, Inf)` and `Inf` are deliberate: they say "this direction is not

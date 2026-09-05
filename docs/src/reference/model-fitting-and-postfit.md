@@ -124,8 +124,8 @@ and `failed`; `confint` warns about failed endpoint solves.
 For coupled non-Gaussian location–scale fits, `endpoint_diagnostics` also records
 why each endpoint search stopped, its last evaluated candidate and its residual.
 A candidate from a failed search is diagnostic information, not a confidence
-limit. Through R's `engine = "julia"`, inspect `conf.status` and `profile.message`
-in the returned interval table. A failed result must not be read as evidence of
+limit. Through the experimental R bridge (`engine = "julia"`), inspect
+`conf.status` and `profile.message` in the returned interval table. A failed result must not be read as evidence of
 an unbounded interval.
 
 ```@docs
@@ -254,7 +254,10 @@ chibar_pvalue
 
 ## Cross-family post-fit
 
-Accessors for a `fit_mixed_family` result. [`mf_coef`](@ref) is the tidy
+Accessors for a `fit_mixed_family` result. The cross-family bivariate route is
+**experimental** and not release-ready: single-fixture evidence, no interval
+coverage, and the dependence it reports is a latent-scale scalar correlation
+(`fit.rho_latent`), not a `rho12` formula. [`mf_coef`](@ref) is the tidy
 coefficient table; the other `mf_*` helpers live beside it in the module.
 
 ## Engine constructors (q=4 and coevolution)

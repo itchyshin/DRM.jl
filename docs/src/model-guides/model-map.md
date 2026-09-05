@@ -104,10 +104,16 @@ Write them as terms in the mean formula:
 intercept/slope, correlated and crossed RE, phylo / spatial / animal / relmat
 structure, `meta_V`, and a random effect *on* `sigma` — fit in closed form or
 via a sparse augmented-state Laplace approximation. The non-Gaussian families
-(Poisson, NB2, Binomial, Gamma, Beta, and the deeper Student-t / LogNormal /
-Beta-binomial GLMMs) carry random intercepts and correlated slopes via
-Gauss–Hermite marginals, and **phylogenetic** (`phylo`) effects via a sparse
-Laplace path — currently with a **constant `sigma`**. `LogNormal()` is the
+(Poisson, NB2, Binomial, Gamma, Beta, Student-t, LogNormal, Beta-binomial)
+carry random intercepts via Gauss–Hermite marginals, and random slopes for
+every one of them except `Binomial()`, which supports `(1 | g)` on the mean
+only. The [capability matrix](../capabilities.md) records which slope form —
+independent or correlated — each family admits.
+**Phylogenetic** (`phylo`) effects go via a sparse Laplace path for Poisson,
+NB2, Binomial, Gamma, Beta and Beta-binomial. On that path NB2, Gamma and Beta
+accept a covariate dispersion formula `sigma ~ x` (a per-observation log σ,
+#164), while `BetaBinomial()` requires a constant `sigma` and `Binomial()`
+carries no dispersion parameter at all; `Student()` rejects `meta_V` and every structured marker. `LogNormal()` is the
 exception: because `log y` is exactly Gaussian, its `phylo`/`relmat`
 structured markers on the mean delegate WHOLESALE to `Gaussian()` on
 `log y` (exact, not a Laplace approximation) rather than the shared
@@ -122,8 +128,9 @@ Gauss–Hermite scheme; the correlated form `(1 + x | g)` and structured
 (phylo/relmat/animal/spatial) effects are not implemented yet.
 
 For the verified engine behind the phylogenetic models — the q=4 phylogenetic
-bivariate location–scale model that fits 2.18× faster than drmTMB with valid
-intervals where its Hessian is singular — see `HANDOVER.md` and
+bivariate location–scale model, which matches drmTMB's fit and still returns
+usable Wald and bootstrap intervals where drmTMB's Hessian is singular — see
+`HANDOVER.md` and
 [`report/comparison-grid.md`](https://github.com/itchyshin/DRM.jl/blob/main/report/comparison-grid.md).
 
 ## After the fit
