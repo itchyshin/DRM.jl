@@ -82,6 +82,24 @@ using DRM: is_converged, _nondegenerate_fit, niterations
 
     # DEFECT 2: simulate draws over the full design, and a bootstrap on a
     # masked response completes instead of losing every replicate.
+    #
+    # `all(isfinite, ysim)` PINS today's cross-engine convention -- a
+    # replicate response spans the FULL design and the original NA mask is
+    # NOT re-imposed before the refit -- and NOT the statistically preferred
+    # semantics. MEASURED (Fisher must-fix round, 2026-09-05): because
+    # replicates always refit on all 60 rows regardless of how many rows the
+    # seed fit actually observed, the parametric bootstrap is
+    # anti-conservative and the narrowing GROWS with the missing fraction
+    # (roughly -7% / -27% / -40% relative to the seed fit's Wald SE at 10% /
+    # 30% / 50% missingness, an implied nominal-95 coverage of roughly 93% /
+    # 85% / 76%). A mask-preserving bootstrap (draw, then re-apply the
+    # original NA mask before refitting) tracks the seed fit's Wald SE far
+    # more closely and does not show that growing bias. See drmTMB issue
+    # #1188 and `docs/dev-log/evidence/julia-r-parity/p2-g3/
+    # a8c-root-cause-receipt.md` in the drmTMB repo. Whoever implements
+    # mask-preserving replicates must change this assertion (and the two
+    # lines above it) to re-check `isnan` at the originally-masked positions
+    # instead of asserting every entry finite.
     ysim = DRM.simulate(fit; rng = MersenneTwister(1))
     @test length(ysim) == n
     @test all(isfinite, ysim)
