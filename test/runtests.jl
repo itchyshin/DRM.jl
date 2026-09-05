@@ -479,3 +479,4 @@ include("test_joint_missing_finite_bridge.jl")
 # Takahashi selected inverse could not supply the logdet-H traces. Guards the root
 # fix (structurally full axis block) and the ML exact gradient it silently broke.
 include("test_577_ml_structural_zeros.jl")
+include("test_609_varying_scale.jl")
