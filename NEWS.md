@@ -6,7 +6,13 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## Unreleased
 
-(nothing yet)
+- **`drm_bridge` admits `skew_normal`** — `_bridge_family` now maps drmTMB's
+  `skew_normal()` (tags `skew_normal` / `skewnormal`) to the native `SkewNormal()`
+  family. The family was already implemented (`src/skewnormal.jl`) but the R
+  bridge had no case for it, so drmTMB's `engine = "julia"` could not admit it.
+  Both packages use the same public moment parameterisation (`mu` = mean,
+  `sigma` = SD, `nu` = Azzalini slant), so the bridged coefficients are the
+  native ones. Fixed effects only, ML only — exactly what `SkewNormal()` fits.
 
 ## v0.7.0 — 2026-08-28
 

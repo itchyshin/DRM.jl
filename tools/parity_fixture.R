@@ -76,7 +76,25 @@ fe_cells <- list(
                             size <- 12L
                             p <- plogis(0.3 + 0.7 * x)
                             s <- rbinom(n, size, p)
-                            data.frame(successes = s, failures = size - s, x = x) })
+                            data.frame(successes = s, failures = size - s, x = x) }),
+  # skew_normal (A4, 2026-09-05). drmTMB's `skew_normal()` (dpars mu, sigma, nu;
+  # public moment form: mu = E[y], sigma = SD[y], nu = Azzalini's slant) through
+  # engine = "julia". Needs the `_bridge_family("skew_normal") -> SkewNormal()`
+  # case in src/bridge.jl. Same draw as drmTMB's
+  # tests/testthat/test-skew-normal-location-scale.R (n = 500, seed 20260608,
+  # nu = 1.6) so the receipt is about the committed fixture.
+  list(id = "skew_normal", label = "Skew-normal (mu ~ x, sigma ~ z, nu ~ 1), fixed effects",
+       jfam = "skew_normal",
+       family = function() skew_normal(),
+       formula = function() bf(y ~ x, sigma ~ z, nu ~ 1),
+       build = function() {
+         set.seed(20260608); n <- 500; nu <- 1.6
+         x <- rnorm(n); z <- rnorm(n)
+         mu <- 0.20 + 0.45 * x; sigma <- exp(-0.35 + 0.18 * z)
+         delta <- nu / sqrt(1 + nu^2); ms <- delta * sqrt(2 / pi)
+         omega <- sigma / sqrt(1 - ms^2); xi <- mu - omega * ms
+         data.frame(y = xi + omega * (delta * abs(rnorm(n)) + sqrt(1 - delta^2) * rnorm(n)),
+                    x = x, z = z) })
 )
 
 # Bivariate lognormal (drmTMB biv_lognormal). Compared native-TMB vs the DRM.jl
