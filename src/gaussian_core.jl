@@ -954,6 +954,14 @@ function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
         Optim.iterations(res))
 end
 
+# Rebuilders for the missing-response routes: refit rows are the OBSERVED ones,
+# but `means`/`obs`/`scales` are restored over the FULL design so `predict`,
+# `fitted` and `simulate` line up with the caller's table. Both pass all 22
+# fields rather than the 19-arg compatibility constructor -- that one defaults
+# `phylo_penalty`/`penalty`/`iterations` to absent, which silently reset the
+# inner fit's recorded iteration count to -1 ("unknown"). The bridge exports it
+# as `iterations`, so a masked-response fit reported no optimiser effort while
+# the identical complete-case fit reported 7 (#646).
 function _with_full_fixed_gaussian_rows(fit::DrmFit, y_full, Xμ_full, Xσ_full)
     rμ = _block_range(fit, :mu)
     rσ = _block_range(fit, :sigma)
@@ -965,6 +973,7 @@ function _with_full_fixed_gaussian_rows(fit::DrmFit, y_full, Xμ_full, Xσ_full)
         fit.loglik, fit.nobs, fit.converged, means, obs, scales,
         fit.formula, fit.nll, fit.nllgrad, fit.ranef,
         fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal,
+        fit.phylo_penalty, fit.penalty, fit.iterations,
     )
 end
 
@@ -1134,6 +1143,7 @@ function _with_full_response_rows(fit::DrmFit, f::DrmFormula, data)
         fit.loglik, fit.nobs, fit.converged, means, obs, scales,
         fit.formula, fit.nll, fit.nllgrad, fit.ranef,
         fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal,
+        fit.phylo_penalty, fit.penalty, fit.iterations,
     )
 end
 
@@ -1773,16 +1783,27 @@ end
 # One residual-level replicate (the per-draw kernel). Returns a response Vector
 # for univariate / RE / meta fits, or a Dict(:mu1, :mu2) for bivariate Gaussian.
 function _simulate_once(fit::DrmFit, rng; mu = nothing, sigma = nothing)
-    n = fit.nobs
     fam = fit.family
+    # Draw one value per ROW OF THE DESIGN, which is `length(fit.means[...])` --
+    # NOT `fit.nobs`. The two coincide everywhere except the missing-response
+    # routes, where `nobs` is deliberately the count that entered the likelihood
+    # (54 on the #646 fixture) while `means`/`scales` are rebuilt over the full
+    # design (60) by `_with_full_fixed_gaussian_rows` / `_with_full_response_rows`.
+    # Drawing `nobs` normals and broadcasting them against the length-60 mean
+    # threw `DimensionMismatch` on every replicate, so a bootstrap of any
+    # masked-response fit failed with "all B bootstrap replicates failed" (#646).
+    # The replicate response must span the full design in any case:
+    # `_bootstrap_data` merges it back into the original table, which still has
+    # all of its rows.
     if fam isa Gaussian && haskey(fit.scales, :sigma1)   # bivariate Gaussian
         μ1, μ2 = fit.means[:mu1], fit.means[:mu2]
         σ1, σ2, ρ = fit.scales[:sigma1], fit.scales[:sigma2], fit.scales[:rho12]
+        n = length(μ1)
         z1 = randn(rng, n); z2 = randn(rng, n)
         return Dict(:mu1 => μ1 .+ σ1 .* z1,
                     :mu2 => μ2 .+ σ2 .* (ρ .* z1 .+ sqrt.(1 .- ρ .^ 2) .* z2))
     elseif fam isa Gaussian && haskey(fit.scales, :sigma) # univariate / RE / meta
-        return fit.means[:mu] .+ fit.scales[:sigma] .* randn(rng, n)
+        return fit.means[:mu] .+ fit.scales[:sigma] .* randn(rng, length(fit.means[:mu]))
     end
     # Non-Gaussian families: draw from the fitted distribution. μ is on the
     # response scale (fit.means[:mu]); per-row auxiliary parameters are stored in
@@ -1795,6 +1816,7 @@ function _simulate_once(fit::DrmFit, rng; mu = nothing, sigma = nothing)
     # canonical coupled Gamma route stores shape (as in quantile residuals).
     # Neither override mutates the fitted object.
     μ = mu === nothing ? fit.means[:mu] : mu
+    n = length(μ)
     if fam isa Poisson
         if haskey(fit.scales, :zi)
             zi = fit.scales[:zi]
