@@ -250,6 +250,7 @@ include("test_bridge_materialization_collision.jl")
 include("test_bridge_formula_labels.jl")
 include("test_bridge_base_r_names.jl")  # #563/#467: the ten design-258 constructs render base-R names
 include("test_bridge_coef_labels_echo.jl")  # #563: options["coef_labels"] echo (design 258 §7.1-7.3)
+include("test_bridge_formula_constructs.jl")  # #467/#609 A6: R-contrast fidelity of the coef_labels echo
 include("test_bridge_lss_labels.jl")
 include("test_bridge_lss_routes.jl")  # #563 S6: bridge-vs-direct parity across every LSS route
 # Bridge inference for the bivariate q4 σ-phylo fit: among-axis SD CIs via bootstrap
