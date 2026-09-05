@@ -290,9 +290,9 @@ end
         @test any(arm.endpoint_failed for arm in (diag.lower, diag.upper)) ==
               (expected_failed > 0)
         if expected_failed > 0
-            @test_logs (:warn, r"profile confidence interval has failed endpoint") begin
-                confint(fit; method=:profile, parm=:mu => "x")
-            end
+            # #631: a failed endpoint arm is REFUSED at the user-facing seam
+            # rather than warned about and returned as a signed Inf.
+            @test_throws ArgumentError confint(fit; method=:profile, parm=:mu => "x")
         else
             @test_logs begin
                 confint(fit; method=:profile, parm=:mu => "x")

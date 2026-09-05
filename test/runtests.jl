@@ -1,6 +1,5 @@
 using DRM
 using Test, LinearAlgebra, SparseArrays, Random
-
 # --- Deterministic Julia-suite sharding (DRM_TEST_SHARD="k/N") -------------
 # Splits the TOP-LEVEL sharded include calls below across N shards by file
 # position: shard k (1-based) gets file i when (i - 1) % N == k - 1. Unset or
@@ -104,6 +103,7 @@ _shard_include("test_lss_tip_identity.jl") # Named tree-tip mapping under shuffl
 _shard_include("test_lss_bootstrap_contract.jl") # Marginal components, masks and REML refits
 _shard_include("test_bootstrap_thread_flags.jl") # Independent storage for parallel status flags
 _shard_include("test_lss_sparse.jl")  # #551 O(p) sparse exact marginal LSS engine
+_shard_include("test_lss_sparse_gradient_scaling.jl")  # #627 O(p) gradient + profile endpoint invariance
 _shard_include("test_lss_sparse_multi.jl")  # #563 S7b.1 sparse multi-component block assembly + objective
 _shard_include("test_lss_sparse_multi_gradient.jl")  # #563 S7b.2/S7b.2b sparse multi-component exact gradient
 _shard_include("test_lss_sparse_multi_reml.jl")  # #563 S7b.3 sparse multi-component REML correction + gradient
@@ -118,6 +118,7 @@ _shard_include("test_profile_ci.jl")
 _shard_include("test_profile_nuisance_status.jl")
 _shard_include("test_profile_acceptance_oracles.jl")
 _shard_include("test_bridge_profile_status.jl")
+_shard_include("test_profile_infinite_bound.jl")  # #631 no infinite bound from a failed endpoint
 _shard_include("test_check_drm.jl")
 _shard_include("test_bias_correct.jl")
 _shard_include("test_visualization.jl")
@@ -267,6 +268,7 @@ _shard_include("test_summary_method.jl")
 _shard_include("test_predict_parameters.jl")
 _shard_include("test_prediction_grid.jl")
 _shard_include("test_bridge.jl")
+_shard_include("test_bridge_option_passthrough.jl")  # #527-adjacent: control-option forwarding + gradient exposure
 _shard_include("test_bridge_bootstrap_tree.jl") # same-tree non-Gaussian fixed-effect bootstrap
 _shard_include("test_bootstrap_provider_forwarding.jl") # K/A/tree/coords survive bootstrap refits
 _shard_include("test_bridge_profile_target.jl")

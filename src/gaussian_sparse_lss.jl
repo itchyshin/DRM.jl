@@ -110,19 +110,34 @@ function _fit_phylo_gaussian_lss_sparse(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G,
             end
         end
 
+        # DRM.jl#627: accumulate the group quadratic term by a SCATTER over the n
+        # observations instead of a GATHER that rescanned all n rows once per
+        # group.  The old nested loop was O(G*n); it dominated every gradient
+        # call at whole-tree scale (measured 380.0 ms per gradient at G = 16,384
+        # against an 8.5 ms objective, and growing 4x per doubling of G) and so
+        # made gradient-bound work -- profile confidence intervals above all --
+        # impractical there while the objective itself remained O(p).  The
+        # multi-component route already used this form
+        # (`_lss_sparse_multi_objective_and_grad`).
+        #
+        # The rewrite is bit-for-bit identical, not merely equivalent, and both
+        # halves of that matter: each `quad_g[g]` still accumulates from 0.0 over
+        # exactly the same observations in the same ascending-`i` order the
+        # gather used, and the subtraction is still the single expression
+        # `trace - quad`, so no floating-point sum is reassociated.  Verified on
+        # the fixtures in `test_lss_sparse_gradient_scaling.jl`: every profile CI
+        # endpoint is unchanged in its last bit.
+        quad_g = zeros(G)
+        for i in 1:n
+            quad_g[gidx[i]] += u[i] * Zâ[i]
+        end
         d_g = zeros(G)
         for g in 1:G
             r_node = leaf_pos[g]
             s_node = Hinv[r_node, r_node]
             ztwz_node = diag_ZtWZ[r_node]
             trace_term = ztwz_node * s_node
-            quad_term = 0.0
-            for i in 1:n
-                if gidx[i] == g
-                    quad_term += u[i] * Zâ[i]
-                end
-            end
-            d_g[g] = trace_term - quad_term
+            d_g[g] = trace_term - quad_g[g]
         end
         g_α = Zg' * d_g
 
@@ -241,10 +256,22 @@ function _fit_phylo_gaussian_lss_sparse(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G,
     end
 
     # Random effects (BLUPs)
+    # #631: the destructured latent mean MUST NOT be named `â`.  `eval_core`
+    # assigns `â` internally, so a second assignment to that name in THIS
+    # enclosing scope makes it ONE shared `Core.Box` for the closure and the
+    # function body -- the same defect class as #549's `V`.  `nll_ml_only` and
+    # `nllgrad!` are stored on the fit and called CONCURRENTLY by a threaded
+    # profile (`confint(...; method = :profile, threads = true)` runs the lower
+    # and upper endpoint arms in parallel), so both arms wrote the same box:
+    # measured on a 600-tip sparse LSS fit, 122/300 concurrent objective pairs
+    # disagreed with the serial value by up to 2.0e-2 in the NLL and 7.4e-1 in
+    # the gradient, which starved the nuisance solve of convergence and made the
+    # endpoint search report a failed arm (returned as +/-Inf).  Bare CHOLMOD and
+    # BLAS were exonerated on the same matrices; the box was the whole cause.
     βμ_hat, βσ_hat, α_hat = unpack(θ̂)
-    _, _, _, â, _, _, _, _, _, _ = eval_core(βμ_hat, βσ_hat, α_hat; want_grad = false, use_ref = false)
+    _, _, _, â_hat, _, _, _, _, _, _ = eval_core(βμ_hat, βσ_hat, α_hat; want_grad = false, use_ref = false)
     σa_hat = exp.(Zg * α_hat)
-    u_phylo = [σa_hat[t] * inv_sd[t] * â[leaf_pos[t]] for t in 1:G]
+    u_phylo = [σa_hat[t] * inv_sd[t] * â_hat[leaf_pos[t]] for t in 1:G]
     re_dict = Dict(Symbol(grp) => u_phylo)
 
     blocks = [:mu => iβμ, :sigma => iβσ, block => iα]
