@@ -580,7 +580,45 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
         atanh(fit_q2.rho12 / RHO_GUARD),
         cov_to_lc(fit_q2.Λ),
     )
-    V = fill(NaN, length(θ̂), length(θ̂))
+    nll = function (θ)
+        β = hcat(θ[blocks[1].second], θ[blocks[2].second])
+        Λ = lc_to_cov(θ[blocks[6].second], 2)
+        σ1 = exp(θ[blocks[3].second][1])
+        σ2 = exp(θ[blocks[4].second][1])
+        ρ = RHO_GUARD * tanh(θ[blocks[5].second][1])
+        D = Matrix(Symmetric([σ1^2 ρ * σ1 * σ2; ρ * σ1 * σ2 σ2^2]))
+        ℓ, = coevo_marginal_cov(prob, Q_cond, β, Λ, D)
+        return -ℓ
+    end
+    # Observed-information vcov by finite differences of the marginal ML NLL.
+    # ForwardDiff is not available on this route: `coevo_marginal_cov` factorises a
+    # sparse H_uu through CHOLMOD (coevolution_q.jl), which accepts Float64 and
+    # ComplexF64 only, so even a first-order Dual throws a TypeError. Second-
+    # differencing the objective is the same fallback the sparse-LSS routes take
+    # for the same reason (gaussian_sparse_lss.jl), through the shared helper; the
+    # invert-vs-pseudo-invert decision and its boundary warning are the same guard
+    # the dense ML bivariate sibling uses above.
+    #
+    # STEP: `_fd_hessian_step` is calibrated in the number of scalar observations
+    # summed into the objective. Here that is 2 per row (two responses), so pass
+    # 2 * length(y1), not length(y1). Measured 2026-09-05 against the EXACT
+    # beta-block oracle `_q2_profile_and_schur(...).S`: at 1200 rows the 2n step
+    # gives 1.17e-9 max relative error against 5.54e-9 for the n step (ML arm);
+    # below 400 rows both clamp to 1e-4 and are bit-identical.
+    #
+    # ESTIMATOR: under method = :REML this is the ML curvature evaluated at the
+    # REML point -- the restricted-penalty curvature is omitted, exactly as the q=4
+    # sibling documents at its `_q4_fd_vcov` call site below. REML Wald intervals
+    # on this route are therefore mildly anti-conservative.
+    #
+    # KNOWN WART: `_finite_hessian` hardcodes the prefix "sparse-Laplace vcov:" on
+    # its own FD-quality warnings (sparse_laplace_glmm.jl). On this route that label
+    # is wrong. The route-naming `context` below reaches the user through the
+    # singularity warning; correcting the helper's prefix needs a shared file that
+    # is out of scope for this change.
+    V = _vcov_from_hessian(_finite_hessian(nll, θ̂; h = _fd_hessian_step(2 * length(y1)));
+                           context = "bivariate Gaussian q=2 structured ($kind) " *
+                                     "finite-difference Hessian")
     means = Dict(:mu1 => X1 * fit_q2.β[:, 1], :mu2 => X2 * fit_q2.β[:, 2])
     obs = Dict(:mu1 => Vector{Float64}(y1), :mu2 => Vector{Float64}(y2))
     scales = Dict(
@@ -610,16 +648,6 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
         species = species,
         prob = prob,
     )
-    nll = function (θ)
-        β = hcat(θ[blocks[1].second], θ[blocks[2].second])
-        Λ = lc_to_cov(θ[blocks[6].second], 2)
-        σ1 = exp(θ[blocks[3].second][1])
-        σ2 = exp(θ[blocks[4].second][1])
-        ρ = RHO_GUARD * tanh(θ[blocks[5].second][1])
-        D = Matrix(Symmetric([σ1^2 ρ * σ1 * σ2; ρ * σ1 * σ2 σ2^2]))
-        ℓ, = coevo_marginal_cov(prob, Q_cond, β, Λ, D)
-        return -ℓ
-    end
     fit = DrmFit(fam, blocks, names, θ̂, V, fit_q2.loglik, length(y1),
                  fit_q2.converged, means, obs, scales)
     fit = method === :REML ? _withreml(fit, fit_q2.reml_loglik, fit_q2.ml_loglik) : fit
