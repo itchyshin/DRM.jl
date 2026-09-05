@@ -520,3 +520,10 @@ _shard_include("test_joint_missing_finite_bridge.jl")
 # Takahashi selected inverse could not supply the logdet-H traces. Guards the root
 # fix (structurally full axis block) and the ML exact gradient it silently broke.
 _shard_include("test_577_ml_structural_zeros.jl")
+
+# Issue #646: on the missing-response Gaussian route `is_converged` read false on a
+# genuinely converged fit (the degeneracy bar took std() of a NaN-carrying response,
+# and every > against NaN is false), and every bootstrap replicate threw
+# DimensionMismatch because simulate drew fit.nobs values against full-design
+# means. Guards both, plus the iteration count the full-row rebuild dropped.
+_shard_include("test_bridge_response_mask_inference.jl")
