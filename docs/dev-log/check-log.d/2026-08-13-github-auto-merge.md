@@ -1,0 +1,1 @@
+| 2026-08-13 | **GitHub PR auto-merge ON** (option A; DRM.jl only; no ship G0) | `gh api` allow_auto_merge=true; classic `main` protection; required `test (1.10)` / `test (1)` / `docs`; PR #405 check names | ✅ auto-merge enabled; `enforce_admins` false; no reviews; agents may `gh pr merge N --auto --merge`; pause on src/engine; D-111 still OFF | Shannon |
