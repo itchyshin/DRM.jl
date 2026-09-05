@@ -8,6 +8,9 @@ hero:
   tagline: "Model more than the mean: use separate formulas for location, scale, shape, boundary probabilities, and correlation in Julia."
   actions:
     - theme: brand
+      text: Fit a Gaussian location-scale model
+      link: /tutorials/location-scale
+    - theme: alt
       text: Get started
       link: /getting-started
     - theme: alt
