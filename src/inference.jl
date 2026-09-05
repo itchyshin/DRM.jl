@@ -1662,8 +1662,20 @@ function bootstrap_result(
     else
         (;)
     end
-    refit = datab -> drm(formula, fit.family; data=datab, K, A, tree, coords, algorithm, g_tol, refit_options...)
+    # `drm(::BivariateDrmFormula, ::Gaussian; ...)` declares no `algorithm`
+    # keyword (src/gaussian_bivariate.jl), so forwarding it would throw a
+    # `MethodError` on the first replicate. `refit_options` is empty on this
+    # branch by construction — `_is_gaussian_lss` requires `fit.formula isa
+    # DrmFormula` — so dropping it changes nothing here either.
+    refit = if formula isa BivariateDrmFormula
+        datab -> drm(formula, fit.family; data=datab, K, A, tree, coords, g_tol)
+    else
+        datab -> drm(formula, fit.family; data=datab, K, A, tree, coords, algorithm, g_tol, refit_options...)
+    end
     # #459: redraw the random effects rather than conditioning on the fitted BLUPs.
+    # For the residual-only bivariate fit this returns `nothing` (no random
+    # effects to marginalise), so the conditional `simulate` is used — correct,
+    # because that fit's only stochastic part IS the residual pair.
     simulate_fn = _marginal_simulator(fit, data; K=K, A=A, tree=tree, coords=coords)
     return _bootstrap_result(
         fit, formula, data, B, level, rng, threads, refit;
@@ -1761,8 +1773,20 @@ function bootstrap_result(
     )
 end
 
+# The fit-based bootstrap refits from the fit's own stored formula. A univariate
+# `DrmFormula` has always been accepted; the RESIDUAL-ONLY bivariate Gaussian fit
+# (`bf(mu1 = ..., mu2 = ..., sigma1 = ..., sigma2 = ..., rho12 = ...)` with no
+# structured term) is accepted too — it stores a `BivariateDrmFormula`, has no
+# random effects (`fit.ranef === nothing`), and so is a plain refit-and-recoef
+# problem exactly like the univariate case. A STRUCTURED bivariate fit is NOT
+# admitted here: every `bootstrap_result` method tests
+# `fit.ranef isa NamedTuple && haskey(fit.ranef, :Sigma_a)` first and routes the
+# q=4 phylogenetic fit to `bootstrap_sigma_a`, so it never reaches this function.
+# A `DrmFit` with no `.formula` at all (an internal, formula-less fit) is still
+# refused: there is nothing to refit from.
 function _bootstrap_fit_formula(fit::DrmFit)
-    fit.formula isa DrmFormula && return fit.formula
+    (fit.formula isa DrmFormula || fit.formula isa BivariateDrmFormula) &&
+        return fit.formula
     throw(
         ArgumentError(
             "fit-based bootstrap requires a univariate `DrmFit` created by `drm`; " *
@@ -2058,7 +2082,7 @@ end
 
 function _bootstrap_result(
     fit0,
-    formula::DrmFormula,
+    formula::Union{DrmFormula,BivariateDrmFormula},
     data,
     B::Int,
     level::Real,
@@ -2154,6 +2178,37 @@ function _check_bootstrap_failure_mode(failures::Symbol)
     failures === :error && return nothing
     failures === :skip && return nothing
     throw(ArgumentError("bootstrap failures must be :error or :skip (got :$failures)"))
+end
+
+# Bivariate Gaussian replicate. `_simulate_once` returns a
+# `Dict(:mu1 => y1*, :mu2 => y2*)` for a bivariate fit, so both response columns
+# are replaced at once. The OBSERVATION PATTERN is part of the design, not part
+# of the model: a cell that was unobserved in the data stays unobserved in the
+# replicate, so every refit sees the same likelihood structure the seed fit did.
+# (`_simulate_once` draws at every row, including rows the seed fit's
+# `_observed_response_mask` excluded, so without this the replicates would fit a
+# COMPLETE-DATA model and silently disagree with the seed fit.)
+function _bootstrap_data(formula::BivariateDrmFormula, data, ysim)
+    ysim isa AbstractDict || throw(ArgumentError(
+        "bivariate bootstrap expects a `Dict(:mu1 => ..., :mu2 => ...)` draw " *
+        "(got $(typeof(ysim)))"))
+    y1 = _bootstrap_keep_unobserved(getproperty(data, formula.response1), ysim[:mu1])
+    y2 = _bootstrap_keep_unobserved(getproperty(data, formula.response2), ysim[:mu2])
+    return merge(data, NamedTuple{(formula.response1, formula.response2)}((y1, y2)))
+end
+
+# Copy `sim` where the original response was observed, keep the original cell
+# (`missing` or `NaN`) where it was not. `similar` preserves the column's own
+# eltype, so a `Vector{Union{Missing,Float64}}` stays one.
+function _bootstrap_keep_unobserved(orig::AbstractVector, sim::AbstractVector)
+    length(orig) == length(sim) || throw(ArgumentError(
+        "bivariate bootstrap draw has length $(length(sim)), expected $(length(orig))"))
+    out = similar(orig)
+    @inbounds for i in eachindex(out)
+        o = orig[i]
+        out[i] = (o === missing || (o isa Real && isnan(o))) ? o : sim[i]
+    end
+    return out
 end
 
 function _bootstrap_data(formula::DrmFormula, data, ysim)
