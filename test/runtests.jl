@@ -435,6 +435,7 @@ _shard_include("test_bootstrap_sigma_a.jl")
 # information Newton (the average-information data-quadratic was proven invalid here — â is
 # the shrunk BLUP; see the second file's note). Both were orphan files; wired in here.
 _shard_include("test_reml_sigma_phylo.jl")
+_shard_include("test_reml_reml_phylo_mean.jl")
 _shard_include("test_reml_newton_sigma_phylo.jl")
 # Bivariate q4 REML must correct ALL FOUR among-axis SDs (β_μ AND β_σ profiled), not
 # just the means — regression for the scale-axis REML gap (#18).
