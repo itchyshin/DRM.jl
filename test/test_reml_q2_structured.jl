@@ -206,17 +206,20 @@ end
     @test isfinite(loglik(fit_v_ml))
 end
 
-@testset "q2 REML: residual-only route REML rejection is untouched (#470 boundary)" begin
+# SUPERSEDED 2026-09-05 by #624 / drmTMB #1142. This testset used to assert
+# that the residual-only bivariate route REFUSES REML ("rejection is
+# untouched"). That refusal was wrong: the route has no random effects, but it
+# does have mean fixed effects to restrict, and the closed-form
+# Patterson-Thompson objective in `_fit_bivariate_residual_reml` now fits it
+# (test/test_reml_reml_biv_residual.jl carries the full contract and the
+# drmTMB same-target receipt). The #470 boundary this file cares about is the
+# `V` + REML rejection, which is UNCHANGED and asserted in the testset above.
+@testset "q2 REML: residual-only route now FITS by REML (#624)" begin
     n = 20
     dat = (; y1 = randn(n), y2 = randn(n), x = randn(n))
     form = bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x))
-    err = try
-        drm(form, Gaussian(); data = dat, method = :REML)
-        nothing
-    catch e
-        e
-    end
-    @test err isa ArgumentError
-    @test occursin("no random", err.msg)
-    @test occursin("q=4", err.msg)
+    fit = drm(form, Gaussian(); data = dat, method = :REML)
+    @test estimation_method(fit) === :REML
+    @test isfinite(reml_loglik(fit))
+    @test reml_loglik(fit) != ml_loglik(fit)
 end
