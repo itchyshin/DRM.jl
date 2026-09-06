@@ -53,7 +53,11 @@ DRM._phy_validate_topology
 DRM._parse_label!
 ```
 
-## q=4 and Fisher-z evaluators
+## q=4 and D·R·D separation evaluators
+
+The `fz_` prefix and `fit_q4_sparse_fisherz` are historical names: the
+correlation map is spherical/LKJ, not Fisher-z. The warning on
+`DRM.fit_q4_sparse_fisherz` below gives the correct back-transform.
 
 ```@docs
 DRM.beta_widths
@@ -98,6 +102,7 @@ DRM._bridge_dpars
 DRM._bridge_dpars_newdata
 DRM._bridge_meta_parts
 DRM._bridge_trials
+DRM._bridge_mixture_family_hint
 DRM._bridge_fitted_marginal
 DRM.drm_bridge_q2_known_precision
 DRM.drm_bridge_q2_phylo

@@ -1,4 +1,4 @@
-# fisherz_q4.jl — q=4 Fisher-z (D·R·D) OUTER reparameterization of the 4×4
+# fisherz_q4.jl — q=4 spherical/LKJ (D·R·D) OUTER reparameterization of the 4×4
 # among-axis covariance Σ_a, wrapping the UNTOUCHED sparse exact-gradient engine
 # (marginal_and_exact_grad, fit_q4_sparse_tmb.jl).
 #
@@ -156,12 +156,12 @@ function fz_init_from_Sigma(Σ0::AbstractMatrix)
 end
 
 # ---------------------------------------------------------------------------
-# Fisher-z OUTER objective + transformed gradient, wrapping the engine.
+# D·R·D OUTER objective + transformed gradient, wrapping the engine.
 # Outer parameter vector ψ = [β (k1+k2+ks1+ks2+kr); φ_a (10)]. The β-block maps
 # 1:1 to the engine's β; φ_a maps to lc. The transformed gradient:
 #   g_β = g_β(engine);  g_φ = Jᵀ g_lc(engine),  J = ∂lc/∂φ_a (10×10).
 # ---------------------------------------------------------------------------
-"Length of ψ = nβ + 10 (the Fisher-z outer parameter vector)."
+"Length of ψ = nβ + 10 (the D·R·D outer parameter vector)."
 fz_psi_len(prob::AugProblem) = theta_len(prob)   # same total dimension as θ
 
 "Split ψ into the β-block (Float-passthrough) and φ_a (10)."
@@ -170,7 +170,7 @@ function fz_unpack_psi(prob::AugProblem, ψ::AbstractVector)
     return (@view ψ[1:nβ]), (@view ψ[nβ+1:nβ+10])
 end
 
-"ψ (Fisher-z) → engine θ (β + lc). Pure reparameterization of the Σ_a block."
+"ψ (D·R·D outer) → engine θ (β + lc). Pure reparameterization of the Σ_a block."
 function fz_psi_to_theta(prob::AugProblem, ψ::AbstractVector)
     βblk, φa = fz_unpack_psi(prob, ψ)
     return vcat(Vector{Float64}(βblk), fz_phi_to_lc(Vector{Float64}(φa)))
@@ -179,7 +179,7 @@ end
 """
     fz_marginal_and_grad(prob, Q_cond, ψ; u0, n_newton) -> (nll, g_ψ, û, chH)
 
-TRUE sparse Laplace NLL and its EXACT gradient in the Fisher-z OUTER parameters
+TRUE sparse Laplace NLL and its EXACT gradient in the D·R·D OUTER parameters
 ψ = [β; φ_a]. Calls the UNTOUCHED `marginal_and_exact_grad` on θ = [β; lc(φ_a)],
 then chain-rules the Σ_a block: g_φ = Jᵀ g_lc with J = ∂lc/∂φ_a. β passes through.
 """
@@ -201,7 +201,7 @@ function fz_marginal_and_grad(prob::AugProblem, Q_cond::SparseMatrixCSC,
     return nll, g_ψ, û, chH
 end
 
-"Fisher-z marginal NLL only (for FD verification / line search)."
+"D·R·D outer marginal NLL only (for FD verification / line search)."
 function fz_marginal_nll(prob::AugProblem, Q_cond::SparseMatrixCSC,
                          ψ::AbstractVector{Float64}; u0 = nothing, n_newton::Int = 40)
     θ = fz_psi_to_theta(prob, ψ)
@@ -215,9 +215,20 @@ end
 """
     fit_q4_sparse_fisherz(prob, Q_cond; β0, Σa0 / Λ0, ...) -> NamedTuple
 
-Fit the q=4 PLSM in the Fisher-z D·R·D OUTER parameterization. The inner engine
-is the UNTOUCHED `marginal_and_exact_grad`. Returns Σ_a (= D R D) and the 6
+Fit the q=4 PLSM in the separation (`D·R·D`) OUTER parameterization, with
+`Σ_a = D R D`, `D = diag(exp.(d))` and `R = C Cᵀ` a correlation matrix. The inner
+engine is the UNTOUCHED `marginal_and_exact_grad`. Returns `Σ_a` and the 6
 among-axis correlations directly, alongside the usual fit diagnostics.
+
+!!! warning "The name says Fisher-z; the map is not Fisher-z"
+    `fisherz` here, and the `fz_` prefix throughout, is historical. `R` is built
+    from a spherical/LKJ correlation-Cholesky whose angles are
+    `α = π·(tanh θ + 1)/2 ∈ (0, π)`, so a fitted angle-real `θ` back-transforms as
+    `ρ = cos(π·(tanh θ + 1)/2)` — **not** the Fisher-z bijection `ρ = tanh θ`.
+    Inverting with `tanh` returns the wrong correlation. Only the PD/interior
+    property carries over from the verified q=2 Fisher-z path, not the link
+    itself. The 6 among-axis correlations are returned already on the `ρ` scale,
+    so prefer them to inverting `θ_R` by hand.
 """
 function fit_q4_sparse_fisherz(prob::AugProblem, Q_cond::SparseMatrixCSC;
                                β0 = nothing, Λ0 = nothing, Σa0 = nothing,
