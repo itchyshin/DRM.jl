@@ -119,7 +119,13 @@ exponential kernel `exp(-d / rho)` at a FIXED range `rho` (keyword
 `spatial_range`, else the mean off-diagonal pairwise distance), the same rule
 the q=4 structured route uses. It does NOT estimate the range jointly the way
 the univariate spatial route (`_fit_spatial_gaussian`) does, so the two are not
-the same model and must not be compared as one.
+the same model and must not be compared as one. The range in force is recorded
+as `fit.ranef.spatial_range`.
+
+Row `k` of `coords` is the `k`-th level of `group` **in the order the levels
+first appear in `data`**, not sorted label order, which is the same contract
+`K` and `A` carry on this route. Only the row COUNT is checked, so coordinates
+supplied in the wrong order fit a different spatial structure without error.
 
 With the same `phylo(1 | group)` marker on all four location/scale predictors
 (`mu1`, `mu2`, `sigma1`, and `sigma2`) and a supplied `tree`, this routes to the
