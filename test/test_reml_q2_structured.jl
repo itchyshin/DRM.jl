@@ -309,3 +309,22 @@ end
     @test isfinite(reml_loglik(fit))
     @test reml_loglik(fit) != ml_loglik(fit)
 end
+
+# The spatial covariance helper `_spatial_covariance_from_coords` is SHARED by the q=2 and
+# q=4 spatial routes. PR #658 merged while this branch was open -- it both admitted q=2
+# spatial AND extracted the helper -- so the fix lives in the helper and BOTH routes gain it
+# in one change, which is what makes this q=2 testset real coverage rather than a pin on
+# inherited behaviour: a 1-D transect written as a plain Vector is read as a G-by-1 column,
+# and the Matrix path is unchanged.
+@testset "q2 spatial (inherited helper): coords may be a length-G vector" begin
+    G = 3
+    v = [0.0, 2.0, 5.0]
+    Qv = DRM._q4_structured_precision(:spatial, :site, G;
+                                      K = nothing, A = nothing, coords = v, spatial_range = 2.0)
+    Qm = DRM._q4_structured_precision(:spatial, :site, G;
+                                      K = nothing, A = nothing, coords = reshape(v, G, 1),
+                                      spatial_range = 2.0)
+    @test size(Qv) == (G, G)
+    @test isposdef(Symmetric(Qv))
+    @test Qv == Qm
+end
