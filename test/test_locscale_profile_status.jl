@@ -108,15 +108,21 @@ end
         @test failed.reason == :evaluation_failed
         @test failed.reason != :max_iterations
 
-        # The first bracket point is valid; a later refinement trial fails.
-        refinement_failure(t) = t == 1.0 ? (NaN, NaN, false) : (t^2 - 1.0, NaN, true)
+        # The first bracket point is valid; every later refinement trial fails.
+        # The refusal covers the whole open bracket rather than a single point,
+        # because an isolated bad trial is now contracted away (#651) and would
+        # no longer leave the arm unresolved.
+        refinement_failure(t) = (0.0 < t < 2.0) ? (NaN, NaN, false) : (t^2 - 1.0, NaN, true)
         refined = DRM._ls_profile_root_result(refinement_failure, 0.0; dir=1.0, init=2.0)
         @test refined.endpoint_failed
         @test !refined.unbounded
         @test refined.reason == :evaluation_failed
         @test refined.root_iterations == 1
         @test refined.bracket_expansions == 0
-        @test refined.evaluations == 2
+        # One bracket evaluation, one refinement trial, then the exhausted
+        # contraction budget -- each halving toward the feasible floor.
+        @test refined.contractions == 8
+        @test refined.evaluations == 2 + refined.contractions
 
         interrupted(t) = throw(InterruptException())
         @test_throws InterruptException DRM._ls_profile_root_result(
