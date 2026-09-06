@@ -78,3 +78,42 @@ using DRM, Test, Random
         @test_throws ArgumentError r2_constant_sigma(fit)
     end
 end
+
+# --- issue #752: natural-scale residual SD + dof_residual in show() -------------
+@testset "residual SD (response scale) and dof_residual in show (#752)" begin
+    Random.seed!(20260906)
+    n = 400
+    x = randn(n)
+    sex = rand(["female", "male"], n)
+    sd = [s == "male" ? 1.6 : 0.6 for s in sex]
+    y = 1.0 .+ 2.0 .* x .+ sd .* randn(n)
+
+    @testset "constant σ prints ONE residual SD" begin
+        fit = drm(bf(@formula(y ~ x), @formula(sigma ~ 1)), Gaussian(); data = (; y, x))
+        out = sprint(show, MIME("text/plain"), fit)
+        @test occursin("Residual SD (response scale) = ", out)
+        @test occursin("dof_residual = ", out)
+        @test !occursin("varies with the σ model", out)
+        # the printed number is the fitted scale, not something re-derived
+        @test occursin(string(round(first(fit.scales[:sigma]), digits = 4)), out)
+    end
+
+    @testset "modelled σ prints a RANGE, never one number" begin
+        fit = drm(bf(@formula(y ~ x), @formula(sigma ~ sex)), Gaussian(); data = (; y, x, sex))
+        out = sprint(show, MIME("text/plain"), fit)
+        @test occursin("varies with the σ model", out)
+        # RED CONTROL: collapsing a modelled σ to a single "Residual SD = x" would
+        # be read as "the" residual SD. That form must NOT appear here.
+        @test !occursin("Residual SD (response scale) = ", out)
+        lo, hi = extrema(fit.scales[:sigma])
+        @test hi > lo
+        @test 0.4 < lo < 0.9 && 1.2 < hi < 1.9      # brackets the simulated 0.6 / 1.6
+    end
+
+    @testset "GATED to Gaussian: no Residual SD label on other families" begin
+        # scales[:sigma] holds a shape for Gamma and a dispersion for NB2, so the
+        # label would be wrong there. Absence is the assertion.
+        cnt = drm(bf(@formula(yc ~ x)), Poisson(); data = (yc = rand(0:5, n), x = x))
+        @test !occursin("Residual SD", sprint(show, MIME("text/plain"), cnt))
+    end
+end

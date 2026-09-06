@@ -77,12 +77,14 @@ _family_name(fam) = String(nameof(typeof(fam)))
 # What the zero null MEANS on each block's working scale. Stated under the block
 # heading instead of withholding the test (see the 2026-09-06 note above).
 function _block_null_note(p::Symbol)
-    p in (:mu, :mu1, :mu2)          && return "H0: coefficient = 0"
-    p === :rho12                    && return "H0: rho12 = 0 (atanh scale)"
-    p in (:sigma, :sigma1, :sigma2) && return "H0: coefficient = 0 on log σ — intercept ⇔ σ = 1 (unit-dependent); slope ⇔ equal dispersion"
-    p in (:resd, :resid)            && return "H0: coefficient = 0 on log σ_b — NOT the σ_b = 0 boundary"
-    p in (:recov, :phylocov)        && return "H0: Cholesky entry = 0 (no single interpretable null)"
-    return ""
+    p in (:mu, :mu1, :mu2)          && return ("H0: coefficient = 0",)
+    p === :rho12                    && return ("H0: rho12 = 0 (atanh scale)",)
+    p in (:sigma, :sigma1, :sigma2) && return ("H0: coefficient = 0 on log σ",
+                                                "intercept ⇔ σ = 1 (unit-dependent); slope ⇔ equal dispersion")
+    p in (:resd, :resid)            && return ("H0: coefficient = 0 on log σ_b",
+                                                "NOT the σ_b = 0 boundary")
+    p in (:recov, :phylocov)        && return ("H0: Cholesky entry = 0 (no single interpretable null)",)
+    return ()
 end
 
 # Wald z and two-sided p for one coefficient, honouring two suppression rules:
@@ -200,6 +202,31 @@ function Base.show(io::IO, ::MIME"text/plain", fit::DrmFit)
                 "   logLik = ", @sprintf("%.4f", fit.loglik),
                 "   converged = ", fit.converged)
 
+    # Residual SD on the RESPONSE scale + residual dof (issue #752). An R user
+    # looks for these first: lm() prints both and drmTMB prints sigma. The value
+    # is already computed (fit.scales[:sigma]); this only prints it.
+    #
+    # GATED TO Gaussian ON PURPOSE. The :sigma slot holds a SHAPE for Gamma and a
+    # DISPERSION for NB2, so a "Residual SD" label there would be simply wrong.
+    #
+    # With a MODELLED σ there is no single residual SD -- it varies by observation
+    # -- so the range is printed and labelled as varying rather than collapsing it
+    # to one number the reader would take as "the" residual SD.
+    if fit.family isa Gaussian && haskey(fit.scales, :sigma)
+        sg = fit.scales[:sigma]
+        if !isempty(sg) && all(isfinite, sg)
+            lo, hi = extrema(sg)
+            if hi - lo <= 1e-8 * max(one(hi), abs(hi))
+                println(io, "  Residual SD (response scale) = ", @sprintf("%.4f", first(sg)),
+                            "   dof_residual = ", dof_residual(fit))
+            else
+                println(io, "  Residual SD (response scale) varies with the σ model: ",
+                            @sprintf("%.4f", lo), " to ", @sprintf("%.4f", hi),
+                            "   dof_residual = ", dof_residual(fit))
+            end
+        end
+    end
+
     # Pre-format every cell so column widths fit the actual content.
     fmt(x) = isfinite(x) ? @sprintf("%.4f", x) : (isnan(x) ? "NaN" : (x > 0 ? "Inf" : "-Inf"))
     fmtp(x) = isfinite(x) ? @sprintf("%.4g", x) : "NaN"
@@ -208,8 +235,10 @@ function Base.show(io::IO, ::MIME"text/plain", fit::DrmFit)
     for ((p, r), (_, nms)) in zip(fit.blocks, fit.coefnames)
         println(io)
         println(io, _block_title(p), ":")
-        let note = _block_null_note(p)
-            isempty(note) || println(io, "  ", note)
+        # One line per note, so nothing wraps in a 78-column code block (the book's
+        # width; requested by the stats-hours lane 2026-09-06).
+        for note in _block_null_note(p)
+            println(io, "  ", note)
         end
         # Build the rows for this block.
         labels = String[]; c1 = String[]; c2 = String[]; c3 = String[]; c4 = String[]
