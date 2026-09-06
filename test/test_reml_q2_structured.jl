@@ -219,11 +219,19 @@ end
     @test DRM._bridge_q2_point_export(fit_sp; family = "biv_gaussian")["target"] ==
         "gaussian_q2_mu1_mu2_spatial_residual_correlation"
 
+    # The FIXED range is the one free choice this cell makes and its default is
+    # data-dependent, so it must be readable off the fit, not inferred -- the
+    # same field the q=4 route records. A relmat fit has no range and says so.
+    @test fit_sp.ranef.spatial_range == rho_mean
+    @test drm(spatial_form, Gaussian(); data = dat, coords = coords,
+              spatial_range = 0.5, g_tol = 2e-4).ranef.spatial_range == 0.5
+
     # SAME TARGET, EXACTLY -- one matrix, two marker names, one fit.
     fit_rm = drm(relmat_form, Gaussian(); data = dat, K = Ksp, g_tol = 2e-4)
     @test loglik(fit_sp) == loglik(fit_rm)
     @test fit_sp.theta == fit_rm.theta
     @test maximum(abs.(fit_sp.theta .- fit_rm.theta)) == 0.0
+    @test fit_rm.ranef.spatial_range === nothing
 
     # REML rides the same path: admitted, and exact against relmat there too.
     fit_sp_reml = drm(spatial_form, Gaussian(); data = dat, coords = coords,

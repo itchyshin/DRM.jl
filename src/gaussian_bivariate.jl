@@ -532,7 +532,7 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
         make_coevo_problem_from_covariance(C, Y, Matrix{Float64}(X1); group = gidx)
     elseif kind === :spatial
         # `spatial` supplies a covariance exactly as `relmat`/`animal` do; the
-        # only difference is that the G×G matrix is BUILT from the coordinates
+        # only difference is that the G-by-G matrix is BUILT from the coordinates
         # by the same fixed-range rule the q=4 route uses. Identical solver call
         # below, so `spatial(coords)` and `relmat(K = that same matrix)` are one
         # model reached by two names.
@@ -627,6 +627,14 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
         group = grp,
         group_index = gidx,
         species = species,
+        # The one free choice this cell makes is the FIXED range, and its
+        # default is data-dependent, so it must be visible on the fit rather
+        # than inferred. Same field, same rule, same default helper as the q=4
+        # route records at its own `re`.
+        spatial_range = kind === :spatial ?
+            (spatial_range === nothing ?
+                _q4_default_spatial_range(coords, G) : Float64(spatial_range)) :
+            nothing,
         prob = prob,
     )
     nll = function (θ)
@@ -648,7 +656,7 @@ end
 # Exponential spatial covariance over the G levels of `grp`, at a FIXED range.
 #
 # Shared by the q=2 and q=4 bivariate structured routes so both cells build the
-# same G×G matrix from the same coordinates, and so every fail-closed check on
+# same G-by-G matrix from the same coordinates, and so every fail-closed check on
 # `coords` is stated exactly once. The range is `spatial_range` when supplied,
 # else the mean off-diagonal pairwise distance; the 1e-8 ridge keeps the kernel
 # positive definite at near-coincident sites. Row k of `coords` is the k-th
