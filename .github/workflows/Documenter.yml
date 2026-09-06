@@ -1,6 +1,8 @@
 name: Documenter
 # Single cheap Linux job. Deploys dev docs on push to main (keeps the site
-# current), release docs on version tags, builds as a check on PRs. The
+# current) and release docs on version tags. On a PR it BUILDS ONLY -- no
+# gh-pages write, so the required check cannot be evicted from the deploy
+# queue (see the concurrency block below). The
 # DocumenterVitepress (npm) build uses Node from NodeJS_20_jll — no setup-node.
 on:
   push:
@@ -21,22 +23,34 @@ concurrency:
 jobs:
   docs:
     runs-on: ubuntu-latest
-    # Serialise the gh-pages DEPLOY across every ref in the repo. The
-    # workflow-level group above is keyed on `github.ref`, so two different PRs
-    # land in different groups and run at the same time -- and both push to the
+    # Only a run that DEPLOYS joins the repo-wide serialisation group.
+    #
+    # Why the group exists (#654): the workflow-level group above is keyed on
+    # `github.ref`, so two different refs run at once -- and both push to the
     # single shared `gh-pages` ref. That raced on 2026-09-05 (#650):
     #   ! [remote rejected] HEAD -> gh-pages
     #     (cannot lock ref 'refs/heads/gh-pages': is at 2aa387ee8 but expected a2fa18165)
-    # `docs` is a REQUIRED status check, so a PR was blocked by another PR's
-    # timing, with nothing wrong in either.
     #
-    # `cancel-in-progress: false` is load-bearing and must NOT be flipped: a
-    # cancelled `docs` run reports as cancelled, and a cancelled required check
-    # blocks its PR -- the same shape as #589/#590 noted above, one level down.
-    # Job-level (not workflow-level) so the per-ref superseded-run cancellation
-    # for repeated pushes to one PR is preserved.
+    # Why #654 was only half a fix: `cancel-in-progress: false` protects the
+    # RUNNING job, but says nothing about a PENDING one. Per GitHub's concurrency
+    # reference, "any existing pending job or workflow in the same concurrency
+    # group will be canceled and the new queued job or workflow will take its
+    # place" -- a default that `cancel-in-progress` does not switch off. A group
+    # holds at most one running + one pending job, so under load a third arrival
+    # evicts whoever was waiting. `docs` is REQUIRED and a cancelled check never
+    # reports success, so PR #748 was evicted 30+ times in a row and could not
+    # merge, through no fault of its own.
+    #
+    # The fix is to keep the REQUIRED gate out of the group entirely. A
+    # pull_request run is build-only (DRM_DOCS_DEPLOY=false below), never touches
+    # gh-pages, and therefore needs no serialisation -- it gets a group unique to
+    # its own run and can never be evicted. Pushes to main, version tags and
+    # workflow_dispatch still deploy, and they still serialise exactly as before.
+    #
+    # `cancel-in-progress: false` stays load-bearing for those deploying runs: a
+    # cancelled run reports as cancelled, the same shape as #589/#590 above.
     concurrency:
-      group: docs-gh-pages-deploy
+      group: ${{ github.event_name == 'pull_request' && format('docs-build-{0}', github.run_id) || 'docs-gh-pages-deploy' }}
       cancel-in-progress: false
     permissions:
       contents: write
@@ -54,8 +68,10 @@ jobs:
             using Pkg
             Pkg.develop(PackageSpec(path = pwd()))
             Pkg.instantiate()'
-      - name: Build (and deploy on tag / dispatch)
+      - name: Build (and deploy on push to main / tag / dispatch)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+          # Build-only on pull_request: see the concurrency comment above.
+          DRM_DOCS_DEPLOY: ${{ github.event_name != 'pull_request' }}
         run: julia --project=docs docs/make.jl
