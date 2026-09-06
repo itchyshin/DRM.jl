@@ -4,7 +4,7 @@ All notable changes are recorded here. The live work ledger is
 [GitHub Issues](https://github.com/itchyshin/DRM.jl/issues); this file is the
 human-readable changelog and mirrors `docs/src/changelog.md`.
 
-## Unreleased
+## v0.7.1 — 2026-09-05
 
 - **`drm_bridge` admits `skew_normal`** — `_bridge_family` now maps drmTMB's
   `skew_normal()` (tags `skew_normal` / `skewnormal`) to the native `SkewNormal()`
