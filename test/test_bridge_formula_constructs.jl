@@ -267,6 +267,36 @@ const _FC_DISAGREEMENTS = [
         @test status === :error
         status === :error && @test occursin("supplies 3 names", msg)
         status === :error && @test !occursin("does not match the design", msg)
+        # Too FEW names: no unused-level hint, because that cause cannot
+        # produce a short supply.
+        status === :error && @test !occursin("droplevels", msg)
+    end
+
+    @testset "(f) too MANY names on a coded block names the unused-level cause" begin
+        # The shape drmTMB produces for a factor with a level no row uses:
+        # R's `model.matrix()` sends one name per DECLARED level, DRM.jl
+        # builds one per OBSERVED level. Measured through drmTMB on
+        # 2026-09-05, the bare count message named neither the column nor the
+        # fix (DRM.jl #467/#609).
+        status, msg = _fc_try("y ~ x + grp";
+            options = _fc_options(Dict(
+                "mu" => ["(Intercept)", "x", "grplo", "grpmid", "grpunused"],
+                "sigma" => ["(Intercept)"])))
+        @test status === :error
+        status === :error && @test occursin("supplies 5 names", msg)
+        status === :error && @test occursin("droplevels", msg)
+        status === :error && @test occursin("factor level with no rows", msg)
+        # It names the coded columns DRM.jl actually built.
+        status === :error && @test occursin("mu_grp: lo", msg)
+
+        # A block with no coded column gets the bare count message: the hint
+        # would be wrong there.
+        status2, msg2 = _fc_try("y ~ x + z";
+            options = _fc_options(Dict(
+                "mu" => ["(Intercept)", "x", "z", "extra"], "sigma" => ["(Intercept)"])))
+        @test status2 === :error
+        status2 === :error && @test occursin("supplies 4 names", msg2)
+        status2 === :error && @test !occursin("droplevels", msg2)
     end
 end
 

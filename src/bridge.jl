@@ -640,7 +640,47 @@ function _bridge_family(family::AbstractString)
     fam in ("zero_one_beta", "zeroonebeta") && return ZeroOneBeta()
     fam == "tweedie" && return Tweedie()
     fam in ("cumulative_logit", "ordinal") && return CumulativeLogit()
+    hint = _bridge_mixture_family_hint(fam)
+    hint === nothing ||
+        throw(ArgumentError("drm_bridge: unsupported family `$family`. " * hint))
     throw(ArgumentError("drm_bridge: unsupported family `$family`"))
+end
+
+"""Actionable refusal text for a zero-inflated / hurdle family SPELLING.
+
+Zero-inflation (`zi`) and hurdle (`hu`) are FORMULA parts here, not families:
+the count family stays `poisson` / `nbinom2` and a keyed `zi ~ …` or `hu ~ …`
+entry adds the mixture (see `_bridge_formula` above, `test_zi.jl`,
+`test_hurdle.jl`). drmTMB spells them the same way -- its `drm_family_type()`
+returns `"poisson"` for a zero-inflated Poisson, and `"zi_poisson"` is only its
+post-fit `model_type` -- so the R bridge never sends these tags. A caller
+writing `drm_bridge` by hand reasonably might, and a bare "unsupported family"
+does not tell them the spelling that works.
+
+Deliberately NOT an alias. Mapping `"zi_poisson"` to `Poisson()` would fit a
+PLAIN Poisson, with no error, whenever the caller omitted the `zi ~` part --
+a silent wrong answer in place of a loud refusal.
+
+Returns `nothing` (so the caller falls through to the plain message) unless the
+tag is a recognised mixture prefix on a count family this bridge accepts.
+"""
+function _bridge_mixture_family_hint(fam::AbstractString)
+    m = match(r"^(?:zi|zero_inflated)_(.+)$", fam)
+    part = "zi"
+    if m === nothing
+        m = match(r"^hurdle_(.+)$", fam)
+        part = "hu"
+    end
+    m === nothing && return nothing
+    # Only ever point at a COUNT family: `zi`/`hu` are count-mixture parts, and
+    # this explicit list (rather than a recursive `_bridge_family` probe) keeps
+    # the lookup terminating and the suggestion one this bridge can honour.
+    base = m.captures[1]
+    base in ("nbinom2", "negbinomial2", "negative_binomial_2") && (base = "nbinom2")
+    base in ("poisson", "nbinom2") || return nothing
+    return "Zero-inflation (`zi`) and hurdle (`hu`) are formula parts here, not " *
+           "families: pass `family = \"$base\"` and add a `$part` entry to " *
+           "`formula`, e.g. `Dict(\"mu\" => \"y ~ x\", \"$part\" => \"$part ~ 1\")`."
 end
 
 """Internal, typed provenance for bridge-only public coefficient labels.
@@ -1620,6 +1660,27 @@ end
 # against the block's coefficient count, same fail-closed behaviour on a
 # mismatch. Any other non-String, non-vector-of-String value (e.g. an `Int`)
 # fails closed rather than being coerced (#563 follow-up to #594).
+# Name the construct behind the commonest count mismatch (DRM.jl #467/#609).
+# R's `model.matrix()` gives every DECLARED factor level a column, including
+# an all-zero one for a level no row uses; DRM.jl codes only the levels it
+# OBSERVES. R then supplies more names than this fit has columns, and the bare
+# count message names neither the column nor the fix. Measured through drmTMB
+# on 2026-09-05: `y ~ gempty` with `levels = c("a", "b", "c", "zz")` produced
+# exactly this mismatch (4 supplied, 3 built) with no hint of the cause.
+# Categorical columns are recognisable from the schema's own raw spelling,
+# `"<dpar>_<column>: <level>"`.
+function _bridge_count_mismatch_hint(n_supplied::Integer, n_actual::Integer,
+        block::AbstractVector{String})
+    n_supplied > n_actual || return ""
+    coded = [name for name in block if occursin(": ", name)]
+    isempty(coded) && return ""
+    return ". Supplying MORE names than this fit has columns usually means a factor " *
+        "level with no rows in the data reaching DRM.jl: R's `model.matrix()` gives " *
+        "such a level an all-zero column, DRM.jl codes only the levels it observes. " *
+        "The coded columns DRM.jl built here are $(coded). Drop the unused levels " *
+        "before fitting (`droplevels()` in R), or fit with `engine = \"tmb\"`"
+end
+
 function _bridge_echo_coef_labels(coef_labels, block_ranges::Vector{Pair{Symbol,UnitRange{Int}}},
         raw_names::Vector{String})
     supplied = Dict{String,Any}(String(k) => v for (k, v) in pairs(coef_labels))
@@ -1654,7 +1715,8 @@ function _bridge_echo_coef_labels(coef_labels, block_ranges::Vector{Pair{Symbol,
             error("drm_bridge: coef_labels[\"$dpar\"] supplies $n_supplied names but the " *
                   "$dpar formula part has $n_actual fixed-effect columns " *
                   "(Julia names: $(raw_names[range])); the R side must send exactly one " *
-                  "name per column")
+                  "name per column" *
+                  _bridge_count_mismatch_hint(n_supplied, n_actual, raw_names[range]))
         for (i, nm) in zip(range, dpar_labels)
             names[i] = "$(dpar)_$(nm)"
         end
