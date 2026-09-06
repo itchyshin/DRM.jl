@@ -163,6 +163,10 @@ _shard_include("test_gamma.jl")
 # drmTMB instead of hard-clamping the mean/scale predictors.
 _shard_include("test_eta_clamp_parity.jl")
 _shard_include("test_zi.jl")
+# The `zi`/`hu` count mixtures through the drm_bridge MARSHALLING boundary --
+# the route drmTMB's engine = "julia" crosses, and the one its banked
+# zi_poisson parity receipt rests on. `test_zi.jl` above covers native drm only.
+_shard_include("test_bridge_zi.jl")
 _shard_include("test_lognormal.jl")
 _shard_include("test_hurdle.jl")
 _shard_include("test_truncated_nb.jl")

@@ -230,3 +230,39 @@ end
     @test fit_ok.converged
 end
 
+
+# A 1-D transect is naturally written as a plain Vector. `Matrix{Float64}(::Vector)` has no
+# method, so `coords = [0.0, 1.0, 2.0, 3.0]` used to raise a bare MethodError instead of an
+# actionable message. It is now read as the G-by-1 column it obviously means.
+@testset "q4 spatial: coords may be a length-G vector for a 1-D transect" begin
+    G = 4
+    v = [0.0, 1.0, 2.0, 3.0]
+    m = reshape(v, G, 1)
+
+    Qv = DRM._q4_structured_precision(:spatial, :site, G;
+                                      K = nothing, A = nothing, coords = v, spatial_range = 1.5)
+    Qm = DRM._q4_structured_precision(:spatial, :site, G;
+                                      K = nothing, A = nothing, coords = m, spatial_range = 1.5)
+
+    @test size(Qv) == (G, G)
+    @test isposdef(Symmetric(Qv))
+    # The Matrix path must be UNTOUCHED by the vector admission, so the two agree exactly
+    # rather than merely closely.
+    @test Qv == Qm
+
+    # The admission is unambiguous: a FLATTENED 2-D layout has length 2G, so it reshapes to
+    # a 2G-by-1 and is still caught by the row check, naming the expected shape.
+    flat = vec(rand(G, 2))
+    @test_throws ErrorException DRM._q4_structured_precision(
+        :spatial, :site, G; K = nothing, A = nothing, coords = flat, spatial_range = 1.5)
+
+    # Pre-existing shape errors stay clean errors, not MethodErrors.
+    @test_throws ErrorException DRM._q4_structured_precision(
+        :spatial, :site, G; K = nothing, A = nothing, coords = zeros(G, 0), spatial_range = 1.5)
+
+    # Something that is neither a real vector nor matrix-convertible now names the expected
+    # shape instead of surfacing a MethodError from the constructor.
+    vv = [[0.0, 1.0], [2.0, 3.0], [4.0, 5.0], [6.0, 7.0]]
+    @test_throws ErrorException DRM._q4_structured_precision(
+        :spatial, :site, G; K = nothing, A = nothing, coords = vv, spatial_range = 1.5)
+end
