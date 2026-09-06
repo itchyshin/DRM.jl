@@ -32,6 +32,20 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   with the dense oracle to 1e-06 relative -- the property, not the constant, so re-loosening the
   bar fails it (17 assertions and 1 error under #574's value).
 
+- **`coef_labels` count mismatch now names the construct behind it (#467, #609).** When the R side
+  supplies more names for a dpar than the fit has columns, the commonest cause is a factor level
+  with no rows in the data: base-R `model.matrix()` gives every DECLARED level a column (an
+  all-zero one for a level nothing uses), while DRM.jl codes only the levels it OBSERVES. The
+  message previously said only "the R side must send exactly one name per column", naming neither
+  the column nor the fix. It now names the coded columns DRM.jl actually built and points at
+  `droplevels()`. Measured through drmTMB on 2026-09-05 against this repository: `y ~ gempty` with
+  `levels = c("a", "b", "c", "zz")` produced exactly this mismatch (R supplied 4 names, DRM.jl built
+  `["(Intercept)", "gempty: b", "gempty: c"]`). The hint is emitted only when the block has coded
+  (`"<column>: <level>"`) columns and the supply is too LONG; a short supply, and a block of purely
+  continuous columns, keep the bare count message unchanged. Behaviour is otherwise identical: this
+  is refusal WORDING, not a new refusal, and every existing count/echo/fidelity test is unchanged
+  (`test_bridge_formula_constructs.jl` 188 assertions, `test_bridge_coef_labels_echo.jl` 42,
+  `test_bridge_formula_labels.jl` 819, `test_bridge_base_r_names.jl` 20, all green).
 - **`check_drm()` CRASHED on four shipping routes instead of reporting on them, and a NaN gradient
   could not be told apart from a verified one.** `_check_max_abs_grad` (`src/inference.jl`) ended in
   an unguarded `maximum(abs, ForwardDiff.gradient(fit.nll, fit.theta))`. Four routes store a bare
