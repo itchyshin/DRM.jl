@@ -50,6 +50,7 @@ using DRM, Test, Random, LinearAlgebra
     @test all(isfinite, res["estimate"])
     @test all(res["lower"] .<= res["upper"])
     @test all(res["lower"] .>= 0)          # SD scale
+    @test res["used"] + res["failed"] == res["attempted"]
     @test res["used"] >= 6                 # 12 attempted; loose floor for CI robustness
 
     # PROFILE-likelihood CIs ARE available for the q4 among-axis SDs (hessian-free,

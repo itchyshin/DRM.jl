@@ -198,6 +198,26 @@ end
         (y = [1.0, 2.0], x = [0.0, 1.0]))
 end
 
+@testset "bridge inference selects phylogenetic LSS SD (#546)" begin
+    phy, dat = _qqq_sim(; depth = 4)
+    formula = Dict(
+        :mu => "y ~ x + phylo(1 | species)",
+        :sigma => "sigma ~ x",
+        Symbol("sd_phylo(species)") => "sd_phylo(species) ~ x",
+    )
+    payload = Dict("y" => dat.y, "x" => dat.x, "species" => dat.species)
+    profile = drm_bridge_inference(; formula, family = "gaussian", data = payload,
+                                   tree = phy, method = "profile")
+    @test profile["param"] == "sd_phylo"
+    @test profile["status"] in ("profile", "profile_failed")
+    @test occursin("profile", profile["status"])
+    boot = drm_bridge_inference(; formula, family = "gaussian", data = payload,
+                                tree = phy, method = "bootstrap", B = 2, seed = 42)
+    @test boot["param"] == "sd_phylo"
+    @test boot["attempted"] == 2
+    @test boot["used"] + boot["failed"] == 2
+end
+
 @testset "threaded inference on the stored nll closure (#549/#550)" begin
     # The dense-route nll closure is stored on the fit and called CONCURRENTLY by
     # threaded profile/bootstrap. #549: a closure-local named like an enclosing

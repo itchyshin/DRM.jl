@@ -1090,6 +1090,39 @@ function _q4_default_spatial_range(coords, G::Int)
     return sum(Ddist) / (G^2 - G)
 end
 
+# q4's phylogenetic covariance multiplies the tree covariance, so an
+# initial Σ_a that is appropriate for a unit-depth tree is far too large on
+# a raw tree whose root-to-tip depths are, for example, O(10^2).  Recover the
+# mean tip depth directly from the sparse precision graph; this stays O(p)
+# and does not materialise a dense tree covariance.
+function _q4_phylo_mean_tip_depth(phy::AugmentedPhy)
+    n = phy.n_total
+    depth = fill(NaN, n)
+    depth[phy.root_index] = 0.0
+    queue = Int[phy.root_index]
+    head = 1
+    rows = rowvals(phy.Q_topology)
+    vals = nonzeros(phy.Q_topology)
+    while head <= length(queue)
+        parent = queue[head]
+        head += 1
+        for ptr in nzrange(phy.Q_topology, parent)
+            child = rows[ptr]
+            child == parent && continue
+            isfinite(depth[child]) && continue
+            weight = vals[ptr]
+            weight < 0 || continue
+            depth[child] = depth[parent] - inv(weight)
+            push!(queue, child)
+        end
+    end
+    tip_depths = depth[phy.leaf_indices]
+    all(isfinite, tip_depths) || error("internal error: phylogenetic tree is disconnected")
+    scale = mean(tip_depths)
+    isfinite(scale) && scale > 0 || error("phylogenetic tree must have positive mean tip depth")
+    return scale
+end
+
 function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fixed, marker, tree;
                                  q4_g_tol::Real, q4_iterations::Int,
                                  q4_n_newton::Int, q4_vcov::Bool, method::Symbol = :ML)
@@ -1134,6 +1167,7 @@ function _fit_bivariate_q4_phylo(f::BivariateDrmFormula, fam::Gaussian, data, fi
         0.01 0.01 0.08 0.005
         0.01 0.01 0.005 0.080
     ]))
+    Λ0 ./= _q4_phylo_mean_tip_depth(phy)
     if !isempty(lc_zero)
         # Make the start factor block-consistent with the EXACT pinned pattern the
         # fit enforces (`fit_q4_sparse_tmb`/`fit_q4_reml` force-zero `lc[lc_zero]`).

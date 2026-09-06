@@ -40,7 +40,12 @@ fails loudly (missing column) rather than silently mismodelling; see #467.
 
 The return value is a `Dict{String,Any}` made of primitive R-reconstructable
 pieces: named coefficients, covariance matrix, likelihood summaries, fitted
-values, residuals, scales, and residual correlations when present.
+values, residuals, scales, and residual correlations when present. Its
+`"diagnostic"` entry reports the maximum absolute gradient of DRM.jl's stored
+negative log-likelihood and the threshold used to interpret it. Routes that do
+not retain that objective explicitly report an unavailable diagnostic instead
+of fabricating a gradient; this quantity is not asserted to equal TMB's raw
+optimizer gradient.
 
 It also carries what drmTMB's post-fit surface consumes: `"dpars"`, the
 per-observation distributional parameters on the response scale keyed by dpar
@@ -279,11 +284,14 @@ end
 
 Run a narrow inference primitive for the R bridge.
 
-With `parm = nothing` (the default) this targets the Gaussian phylogenetic SD
-block (`param = :resd` / `:resd_mu` / `:resd_sigma`). Pass `parm = "sd:mu"`
-or `"sd:sigma"` to select the coupled location- or scale-axis row explicitly,
-or `"sd:resd"` / `"sd:resd_mu"` / `"sd:resd_sigma"` when an R bridge caller
-must preserve the fitted parameter block exactly.
+With `parm = nothing` (the default) this targets the admitted Gaussian
+phylogenetic SD block (`param = :sd_phylo` / `:resd` / `:resd_mu` /
+`:resd_sigma`), because the R side needs explicit response-scale transforms
+and parity checks before exposing broader Julia inference results. Pass
+`parm = "sd:mu"` or `"sd:sigma"` to select the coupled location- or
+scale-axis row explicitly, or `"sd:resd"` / `"sd:resd_mu"` /
+`"sd:resd_sigma"` when an R bridge caller must preserve the fitted parameter
+block exactly.
 
 Pass `parm = "fixef:<dpar>:<coef>"` (e.g. `"fixef:mu:x"`) to instead profile
 or bootstrap a single ordinary fixed-effect coefficient, on its link scale —
@@ -334,7 +342,7 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
     if bridge_method == "profile"
         # Preserve the implicit SD target set, but an explicit fixed-effect
         # request must profile only that coefficient, not its entire block.
-        profile_parm = target === nothing ? [:resd_sigma, :resd, :resd_mu] :
+        profile_parm = target === nothing ? [:sd_phylo, :resd_sigma, :resd, :resd_mu] :
             target.kind === :fixef ? rawtarget.param => rawtarget.coef : target.param
         result = profile_result(fit; level = level, threads = threads, parm = profile_parm)
         row = target === nothing ? _bridge_pick_sd_row(result.ci) :
@@ -550,13 +558,13 @@ function _bridge_is_bivariate_phylo_q4(bundle, fam, tree)
 end
 
 # Pick the variance-component SD row from a profile/bootstrap result for the bridge: prefer the
-# σ-phylo location-scale σ-axis SD (:resd_sigma), then the legacy phylo SD block (:resd), then
-# the μ-axis SD (:resd_mu). (Routes the bridge inference to the SD that matters for the σ-phylo
-# cell Ayumi needs.) There is NO silent fall-back to the first row: if none of the expected SD
+# phylogenetic LSS SD block (:sd_phylo), then the σ-phylo location-scale σ-axis SD
+# (:resd_sigma), the legacy phylo SD block (:resd), and the μ-axis SD (:resd_mu).
+# There is NO silent fall-back to the first row: if none of the expected SD
 # params is present the row would be a fixed-effect coefficient mislabelled as the SD CI on the R
 # side, so throw an explicit error naming the params that WERE returned.
 function _bridge_pick_sd_row(rows)
-    for want in (:resd_sigma, :resd, :resd_mu)
+    for want in (:sd_phylo, :resd_sigma, :resd, :resd_mu)
         for row in rows
             row.param === want && return row
         end
@@ -564,7 +572,7 @@ function _bridge_pick_sd_row(rows)
     isempty(rows) && throw(ArgumentError("drm_bridge_inference: no SD row in the result"))
     got = join(unique(String(r.param) for r in rows), ", ")
     throw(ArgumentError("drm_bridge_inference: no variance-component SD row " *
-        "(:resd_sigma, :resd, or :resd_mu) in the result; got params [$(got)]. " *
+        "(:sd_phylo, :resd_sigma, :resd, or :resd_mu) in the result; got params [$(got)]. " *
         "Refusing to mislabel a fixed-effect row as the SD confidence interval."))
 end
 
@@ -1471,6 +1479,7 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
         # NA everywhere and no bridge-side comparison of optimiser effort was
         # possible: a speed difference could be measured but never attributed.
         "iterations" => niterations(fit),
+        "diagnostic" => _bridge_diagnostic(fit),
         "fitted" => _bridge_plain(fitted(fit)),
         "residuals" => _bridge_plain(residuals(fit)),
         "sigma" => _bridge_plain(sigma(fit)),
@@ -1541,6 +1550,31 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
         out["q2_point_export"] = q2_point_export
     end
     return out
+end
+
+# Stable, primitive diagnostic payload for the R bridge. The direct Julia
+# engine knows the scale of this gradient; the R layer must preserve that
+# description rather than compare it numerically to a TMB optimizer gradient.
+function _bridge_diagnostic(fit::DrmFit; grad_tol::Real = 1e-3)
+    # Diagnostics must never make a successful bridge fit fail.  Some valid
+    # sparse objectives are Float64-only under CHOLMOD, so their generic
+    # ForwardDiff gradient is unavailable (not evidence of non-convergence).
+    mag = try
+        _check_max_abs_grad(fit)
+    catch err
+        err isa InterruptException && rethrow()
+        NaN
+    end
+    available = isfinite(mag)
+    return Dict{String,Any}(
+        "status" => available ? "available" : "unavailable",
+        "reason" => available ? nothing :
+            "stored objective gradient is unavailable for this route",
+        "scale" => "max_abs_gradient_of_stored_negative_loglikelihood",
+        "threshold" => Float64(grad_tol),
+        "max_abs_grad" => available ? Float64(mag) : nothing,
+        "converged" => Bool(is_converged(fit)),
+    )
 end
 
 function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = nothing,
@@ -2728,8 +2762,11 @@ function _bridge_bivariate_inference(fit, dat, method::AbstractString;
     if method == "bootstrap"
         rng = seed === nothing ? Random.default_rng() :
               Random.MersenneTwister(Int(seed))
+        # Percentile intervals must be based on converged refits. Retain the
+        # failed count in the bridge payload instead of allowing an arbitrary
+        # non-converged estimate to move an endpoint.
         result = bootstrap_result(fit; data = dat, B = Int(B), level = level,
-                                  rng = rng, failures = :warn, check_converged = false)
+                                  rng = rng, failures = :warn, check_converged = true)
         return _bridge_inference_flatten_multi(
             result.summary;
             method = "bootstrap",
