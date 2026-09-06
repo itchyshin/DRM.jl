@@ -306,9 +306,24 @@ end
         fit = drm(form, Gaussian(); data = dat, K = K, g_tol = 1e-6, method = meth)
         @test fit.converged
         se = stderror(fit)
-        # Measured 2026-09-05: det(Sigma_a) = 9.75e-8 (ML), 1.98e-8 (REML);
-        # among-axis correlation 0.999997 and 0.9999994.
-        @test det(fit.ranef.Sigma_a) < 1e-6
+        # Assert the SCALE-FREE near-singularity of Sigma_a -- 1 - r^2 for the
+        # among-axis correlation r, which is det(Sigma_a) divided by the product
+        # of its diagonal -- and NOT det(Sigma_a) against an absolute bound.
+        # det has units of (variance)^2, and along a direction the data does not
+        # identify its residual value is set by wherever the optimiser stopped,
+        # so it is Julia-version dependent. Measured on this exact fixture
+        # 2026-09-06: det = 9.75e-8 (ML) / 1.98e-8 (REML) on Julia 1.10.12 --
+        # the numbers the original `det < 1e-6` was written against -- but
+        # 5.58e-7 / 1.15e-6 on 1.12.6, and 1.02e-6 in CI on 1.12.7, which is
+        # what made the old bound fail there. 1 - r^2 is stable across both:
+        # 6.71e-6 / 1.17e-6 on 1.10.12, 4.37e-6 / 7.88e-6 on 1.12.6.
+        # It still DISCRIMINATES, measured the same day: rerun this fixture with
+        # an INDEPENDENT second group effect and 1 - r^2 is 0.99983 on both arms
+        # under 1.12.6 (0.377 / 0.399 under 1.10.12) -- four to five orders of
+        # magnitude above the bound -- and the flat-direction assertions below
+        # go with it (se[10] finite at 0.19, argmax(se) = 8, not 10).
+        Sigma_a = fit.ranef.Sigma_a
+        @test det(Sigma_a) / (Sigma_a[1, 1] * Sigma_a[2, 2]) < 1e-4
         # The placeholder is gone even here: a flat direction must not reintroduce
         # a whole-matrix NaN.
         @test count(isnan, vcov(fit)) == 0
