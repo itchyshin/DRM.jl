@@ -306,6 +306,7 @@ _shard_include("test_bridge_materialization_collision.jl")
 _shard_include("test_bridge_formula_labels.jl")
 _shard_include("test_bridge_base_r_names.jl")  # #563/#467: the ten design-258 constructs render base-R names
 _shard_include("test_bridge_coef_labels_echo.jl")  # #563: options["coef_labels"] echo (design 258 §7.1-7.3)
+_shard_include("test_bridge_zi_marginal_mean.jl")  # bridge fitted/residuals = drmTMB's unconditional mean for zi count fits
 _shard_include("test_bridge_lss_labels.jl")
 _shard_include("test_bridge_lss_routes.jl")  # #563 S6: bridge-vs-direct parity across every LSS route
 # Bridge inference for the bivariate q4 σ-phylo fit: among-axis SD CIs via bootstrap
