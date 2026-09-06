@@ -2156,15 +2156,52 @@ function _check_bootstrap_failure_mode(failures::Symbol)
     throw(ArgumentError("bootstrap failures must be :error or :skip (got :$failures)"))
 end
 
-function _bootstrap_data(formula::DrmFormula, data, ysim)
-    if formula.response2 === nothing
-        return merge(data, NamedTuple{(formula.response,)}((ysim,)))
+# Re-apply the seed fit's response mask to a simulated replicate draw
+# (drmTMB #1188). `simulate` draws over the FULL design -- it must, because
+# `means`/`scales` are rebuilt over the full design on the missing-response
+# routes (#646) -- so merging the draw back wholesale hands every replicate
+# MORE rows than the seed fit actually observed. A bootstrap whose replicates
+# are richer than the original necessarily understates uncertainty, and the
+# narrowing deepens with the missing fraction.
+#
+# MEASURED on the R side of the same defect (drmTMB `bootstrap_response_data`,
+# same fixture family: `y = 0.3 + 0.5x + N(0,1) exp(0.1x)`, n = 60,
+# `bf(y ~ x, sigma ~ x)`, Gaussian, `fixef:mu:x`, truth 0.5; S = 200 datasets,
+# B = 99 replicates each, nominal 95% percentile interval):
+#
+#   masked   before   after    Wald reference
+#   10%      0.895    0.910    0.920
+#   30%      0.820    0.895    0.925
+#   50%      0.720    0.910    0.915
+#
+# `_is_response_missing` treats both `missing` and NaN as absent, exactly as
+# `_coerce_response_column` does when the fit reads the response, so the mask
+# restored here is the mask the fit itself used.
+function _restore_response_mask!(ysim::AbstractVector{Float64}, raw)
+    length(raw) == length(ysim) || return ysim
+    @inbounds for i in eachindex(ysim)
+        if _is_response_missing(raw[i])
+            ysim[i] = NaN
+        end
     end
-    ntr =
-        Float64.(getproperty(data, formula.response)) .+
-        Float64.(getproperty(data, formula.response2))
-    fail = ntr .- ysim
-    return merge(data, NamedTuple{(formula.response, formula.response2)}((ysim, fail)))
+    return ysim
+end
+
+function _bootstrap_data(formula::DrmFormula, data, ysim)
+    raw1 = getproperty(data, formula.response)
+    if formula.response2 === nothing
+        y = _restore_response_mask!(collect(Float64, ysim), raw1)
+        return merge(data, NamedTuple{(formula.response,)}((y,)))
+    end
+    # A `cbind(successes, failures)` response is absent when EITHER cell is
+    # absent, so coerce both columns through the same NaN convention and let
+    # NaN arithmetic carry the mask into the failure column.
+    y1, _ = _coerce_response_column(raw1)
+    y2, _ = _coerce_response_column(getproperty(data, formula.response2))
+    ntr = y1 .+ y2
+    succ = _restore_response_mask!(collect(Float64, ysim), ntr)
+    fail = ntr .- succ
+    return merge(data, NamedTuple{(formula.response, formula.response2)}((succ, fail)))
 end
 
 function _bootstrap_ci_rows(rows)

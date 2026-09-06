@@ -6,6 +6,30 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## Unreleased
 
+- **Bootstrap replicates keep a masked fit's response mask (drmTMB #1188).** `_bootstrap_data`
+  merged each simulated draw into the original table wholesale, so on the missing-response routes
+  every replicate refitted on the FULL design regardless of how many rows the seed fit observed.
+  (The draw itself must span the full design -- `means`/`scales` are rebuilt over all rows by #646 --
+  so the mask has to be re-imposed one step later, when the replicate table is built.) A bootstrap
+  whose replicates are richer than the original understates uncertainty, and the shortfall grows with
+  the missing fraction. `_bootstrap_data` now restores the seed fit's response mask, reading it with
+  `_is_response_missing` so `missing` and `NaN` are treated exactly as the fit itself treated them; a
+  `cbind(successes, failures)` response is masked where EITHER cell is absent, and the failure column
+  inherits the mask through NaN arithmetic. MEASURED end to end through the drmTMB bridge
+  (`engine = "julia"`, `y = 0.3 + 0.5x + N(0,1) exp(0.1x)`, `n = 60`, `bf(y ~ x, sigma ~ x)`,
+  Gaussian, 30 of 60 responses masked, `B = 99`, 99/99 replicates converged in both arms): the
+  bootstrap interval on `fixef:mu:x` was 0.4748 wide against a Wald width of 0.8153 before the fix
+  (ratio 0.58) and 0.8754 after (ratio 1.07). MEASURED on the R side of the same defect, which is
+  where coverage is affordable (`S = 200` datasets, `B = 99` replicates each, nominal 95% percentile
+  interval, truth 0.5, same datasets and seeds in both arms): coverage 0.895 / 0.820 / 0.720 before
+  at 10% / 30% / 50% masked and 0.910 / 0.895 / 0.910 after, against a Wald reference of
+  0.920 / 0.925 / 0.915; Monte Carlo standard errors 0.020-0.032, and the paired improvement is
+  significant at 30% (p = 2.75e-04) and 50% (p = 7.28e-12) but NOT at 10% (p = 0.375). Receipt:
+  drmTMB `docs/dev-log/evidence/julia-r-parity/p2-g3/1188-bootstrap-mask-receipt.md`.
+  KNOWN CONSEQUENCE: replicates now legitimately drop rows, so `drm`'s #258 "never silent" warning
+  fires once per replicate. It was left in place deliberately -- the same channel carries the
+  saturated-fit (`residual dof 0`) warning, which is exactly what a user needs when replicates on a
+  heavily masked fit degenerate. `test/test_bridge_response_mask_inference.jl`.
 - **REML on the residual-only bivariate Gaussian route (#624; drmTMB #1142).** `drm(bf(mu1 = y1 ~ x, mu2 = y2 ~ x, sigma1 = ~1, sigma2 = ~1, rho12 = ~1), Gaussian(); method = :REML)` fits instead of refusing. The old message ("`method = :REML` needs random effects to restrict") mistook "no random effects" for "nothing to restrict": REML here integrates the MEAN fixed effects `beta_mu1`/`beta_mu2` out of the Gaussian likelihood under the row-wise 2x2 residual covariance — the classical Patterson–Thompson/SUR case, and the same set native drmTMB hands to TMB's Laplace approximation for this cell (whose Laplace step is EXACT, the integrand being quadratic). Closed form: profile `beta` by GLS, add `-0.5*logdet(sum_i Z_i' S_i^-1 Z_i)` and the `+(p_beta/2)*log(2*pi)` normalising constant, and optimise over `(beta_sigma1, beta_sigma2, beta_rho)` alone. Same-target against drmTMB `engine = "tmb"` with `REML = TRUE` on the committed fixture: logLik `-97.021205818372` on both engines (difference 0.0 at 12 decimal places), coefficients to 4.33e-7, standard errors to 6.54e-7 relative. `vcov` reports the joint mean block `H^-1 + G Var(phi) G'` that TMB's `sdreport()` reports. The ML route is unchanged (same fixture, `-90.202703298791` on both engines, difference 4.8e-13). `meta_V` plus `:REML` keeps its permanent refusal — that route marginalises nothing. `test/test_reml_reml_biv_residual.jl`.
 - **Inference on a missing-response ("response mask") Gaussian fit: `is_converged` read false on a
   converged fit, and every bootstrap replicate failed (#646).** Both defects sat downstream of the
