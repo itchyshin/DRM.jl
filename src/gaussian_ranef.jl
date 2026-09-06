@@ -363,8 +363,35 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
         [C[k] / (1 / σb² + S[k]) for k in 1:G]
     end
     re = Dict(Symbol(grp) => blup)
+    # CONVERGED MEANS THE GRADIENT CRITERION HERE (#609 item 2, measured 2026-09-05).
+    #
+    # `Optim.converged(res)` is the OR of the x, f and g criteria. `Optim.Options(
+    # g_tol = g_tol)` leaves `f_reltol`, `f_abstol`, `x_reltol` and `x_abstol` at
+    # their 0.0 defaults, so `f_converged` fires on two byte-identical successive
+    # objective values -- which is what "flat" means numerically, and which a
+    # VARYING-scale surface (`sigma ~ x`) reaches while running away up the
+    # unbounded σ_i → 0 ridge, nowhere near a stationary point. Reporting that as
+    # converged is the defect #609 item 2 left open: the issue measured that this
+    # route reaches its optimum (g_tol 1e-8 → 1e-16 moves the coefficients by
+    # 1.3e-11) and handed the parity gap to drmTMB, but never checked the flag.
+    #
+    # MEASURED over a 6,400-cell varying-scale grid (n 30..400, G 3..20, σ slope
+    # 0.15..8.0): 1,042 fits returned `converged = true` with the GRADIENT
+    # criterion false; the true gradient ∞-norm there exceeded 1e-3 in 95 of them
+    # and 1.0 in 45, worst 3.7e137 (with a POSITIVE Gaussian loglik of +980).
+    #
+    # `Optim.g_converged` is exactly the right test, not an approximation of it:
+    # over the same grid `Optim.g_residual(res)` equalled
+    # `maximum(abs, ForwardDiff.gradient(nll, θ̂))` with max absolute difference
+    # 0.0 across 5,349 gradient-converged fits, and the largest such norm was
+    # 9.996e-9 -- inside `g_tol`. Restarting LBFGS from the stalled point was
+    # measured and REJECTED: of those 1,042 it recovered 665, left 377, made the
+    # objective WORSE in 143, and produced NaN. So only the reported flag changes
+    # here -- θ̂, the ML/REML objective and logLik are byte-identical.
+    # Guard: test/test_ranef_varying_scale_convergence.jl.
+    converged = Optim.converged(res) && Optim.g_converged(res)
     # Profile intervals reuse the ML Woodbury nll (same convention as FE REML).
-    fit = _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll_ml), re)
+    fit = _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, converged, means, obs, scales), nll_ml), re)
     if reml
         return _withreml(fit, -nll_reml(θ̂), -nll_ml(θ̂))
     end

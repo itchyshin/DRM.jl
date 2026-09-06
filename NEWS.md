@@ -6,6 +6,23 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## Unreleased
 
+- **`converged` on the varying-scale Gaussian random-intercept route is now the GRADIENT
+  criterion (#609 item 2).** `bf(y ~ x + (1 | g), sigma ~ x)` fits through
+  `_fit_ranef_gaussian`, which reported `Optim.converged(res)` -- the OR of Optim's x, f and g
+  criteria. Because `Optim.Options(g_tol = ...)` leaves `f_reltol`/`f_abstol`/`x_reltol`/
+  `x_abstol` at their `0.0` defaults, `f_converged` fires on two byte-identical successive
+  objective values, which a VARYING-scale surface reaches while running away up the unbounded
+  sigma_i -> 0 ridge, nowhere near a stationary point. Measured over a 6,400-cell grid (n
+  30..400, G 3..20, sigma slope 0.15..8.0): 1,042 fits returned `converged = true` with the
+  gradient criterion false; the true gradient inf-norm there exceeded 1e-3 in 95 of them and 1.0
+  in 45, worst 3.7e137 alongside a POSITIVE Gaussian logLik of +980. The reported flag now also
+  requires `Optim.g_converged(res)`, so `fit.converged` implies the gradient met `g_tol`.
+  NOTHING ELSE MOVES: theta-hat, the ML and REML objectives, logLik, vcov and the BLUPs are
+  byte-identical (five fixtures across four routes, logLik equal to 17 significant figures
+  before and after). This is the DRM.jl half of #609 item 2; the ~1e-5 conditional-prediction
+  parity gap the issue diagnosed is drmTMB's `nlminb` stopping rule and is tracked as
+  drmTMB #1130. Guard: `test/test_ranef_varying_scale_convergence.jl`.
+
 - **Gaussian two-SD phylogenetic random slope `phylo(1 + x | species)` on the mean (#620).** The
   #621 refusal is replaced by the fit on the Gaussian mean route: two INDEPENDENT phylogenetic
   fields, `a ~ N(0, σₐ² C)` for the intercept and `b ~ N(0, σ_b² C)` for the slope on the same
