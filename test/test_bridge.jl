@@ -477,3 +477,50 @@ end
                         family = "biv_student", data = d2)
     @test isfinite(Float64(r2["loglik"]))
 end
+
+@testset "bridge admits skew_normal (drmTMB skew_normal(): mu, sigma, nu)" begin
+    # Before this case `_bridge_family("skew_normal")` threw
+    # `drm_bridge: unsupported family \`skew_normal\`` even though
+    # `SkewNormal()` is a native family (src/skewnormal.jl) — the R engine gate
+    # could not admit the family because the Julia side had no tag for it.
+    @test DRM._bridge_family("skew_normal") isa SkewNormal
+    @test DRM._bridge_family("skewnormal") isa SkewNormal
+
+    # Same DGP shape as drmTMB's test-skew-normal-location-scale.R (moment
+    # parameterisation: mu = mean, sigma = SD, nu = slant alpha), so the
+    # bridged fit exercises every dpar the R side sends.
+    Random.seed!(20260608)
+    n = 300
+    x = randn(n); z = randn(n)
+    mu = 0.20 .+ 0.45 .* x
+    sigma = exp.(-0.35 .+ 0.18 .* z)
+    alpha = 1.6
+    delta = alpha / sqrt(1 + alpha^2)
+    ms = delta * sqrt(2 / pi)
+    omega = sigma ./ sqrt(1 - ms^2)
+    xi = mu .- omega .* ms
+    y = xi .+ omega .* (delta .* abs.(randn(n)) .+ sqrt(1 - delta^2) .* randn(n))
+    d = (; y, x, z)
+
+    r = DRM.drm_bridge(; formula = "mu = y ~ x; sigma = sigma ~ z; nu = nu ~ 1",
+                       family = "skew_normal", data = d)
+    @test r["family"] == "skew_normal"
+    @test r["estim_method"] == "ML"
+    @test isfinite(Float64(r["loglik"]))
+    @test r["coef_names"] == ["mu_(Intercept)", "mu_x", "sigma_(Intercept)", "sigma_z", "nu_(Intercept)"]
+    # The bridged fit IS the native fit: same formula, same family, same numbers.
+    native = drm(bf(@formula(y ~ x), @formula(sigma ~ z), @formula(nu ~ 1)), SkewNormal(); data = d)
+    @test Float64(r["loglik"]) ≈ loglik(native) atol = 1e-10
+    @test vec(Float64.(r["coefficients"])) ≈ vcat(coef(native, :mu), coef(native, :sigma), coef(native, :nu)) atol = 1e-10
+
+    # coef_labels echo (design 258 §7.1): R's labels for all three dpars are
+    # echoed verbatim, so the drmTMB side can validate the round trip.
+    labelled = DRM.drm_bridge(; formula = "mu = y ~ x; sigma = sigma ~ z; nu = nu ~ 1",
+                              family = "skew_normal", data = d,
+                              options = Dict{String,Any}("coef_labels" => Dict(
+                                  "mu" => ["(Intercept)", "x"],
+                                  "sigma" => ["(Intercept)", "z"],
+                                  "nu" => ["(Intercept)"])))
+    @test labelled["coef_names"] == r["coef_names"]
+    @test labelled["raw_coef_names"] == r["coef_names"]
+end

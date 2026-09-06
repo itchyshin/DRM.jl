@@ -45,6 +45,7 @@ distributional parameter (`sigma` defaults to `~ 1`).
 |---|---|---|
 | `gaussian()` | `Gaussian()` | `sigma` |
 | `student()` | `Student()` | `sigma`, `nu` |
+| `skew_normal()` | `SkewNormal()` | `sigma`, `nu` (slant `alpha`; moment form on both sides) |
 | `poisson()` | `Poisson()` | — (mean only; `zi`, `hu`) |
 | `nbinom2()` | `NegBinomial2()` | `sigma` (dispersion `θ = 1/σ²`); `zi`, `hu` |
 | `truncated_nbinom2()` | `TruncatedNegBinomial2()` | `sigma` (dispersion `θ = 1/σ²`) |

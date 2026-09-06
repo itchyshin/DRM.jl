@@ -120,6 +120,64 @@ end
     @test isapprox(fh.loglik, fh_dense.loglik; atol = 1e-6)
 end
 
+@testset "#574 follow-up: every scale pair the guard ADMITS matches a dense oracle" begin
+    # WHY THIS TEST EXISTS, and why the #461 bootstrap testset was not enough.
+    # #574 refused the sparse Woodbury objective where the residual variance is
+    # "below machine precision relative to the phylogenetic variance", coded as
+    # sigma^2 / sigma_phy^2 >= eps.  That is exactly the point where NO digits
+    # of the subtraction survive, so the bar had zero margin and the objective
+    # was still wrong just above it: measured 2026-09-05 on the #461 fixture,
+    # the sign flip that produces the runaway +Inf optimum sits at
+    # log(sigma) - log(sigma_phy) = -17.086, INSIDE the old bar of -18.022.
+    #
+    # Whether the optimizer actually walks into that sliver is decided by
+    # rounding, so the #461 bootstrap testset passed on x86_64 Linux CI and
+    # failed on aarch64 macOS at the same commit with the same seeds.  A test
+    # that depends on the optimizer's path cannot pin a numerical boundary.
+    # This one evaluates the objective directly and is path-independent.
+    phy, dat = _qqq_sim()
+    G = phy.n_leaves
+    C = DRM.sigma_phy_dense(phy; σ²_phy = 1.0)
+    X = hcat(ones(G), dat.x)
+    prob = DRM.make_loc_problem(phy, dat.y, X; species = 1:G)
+
+    dense_nll(β, s2phy, s2) = begin
+        V = s2 .* Matrix{Float64}(I, G, G) .+ s2phy .* C
+        ch = cholesky(Symmetric(V))
+        e = dat.y .- X * β
+        0.5 * (G * log(2π) + logdet(ch) + dot(e, ch \ e))
+    end
+
+    lσ_phy = -0.35
+    bar = 0.25 * log(eps(Float64))          # keep half the mantissa
+    # Sweep PAST the old bar so the property -- admitted implies accurate --
+    # is what is asserted, not the value of the constant.  Points the guard
+    # refuses are skipped, so tightening the bar only shortens the sweep;
+    # loosening it back to #574's value re-admits points that fail the
+    # dense-oracle assertion below.
+    admitted = 0
+    for gap in range(0.0, 0.5 * log(eps(Float64)) - 2.0; length = 60)
+        DRM._loconly_resolvable_scales(lσ_phy + gap, lσ_phy) || continue
+        admitted += 1
+        β, nll, _ = DRM._loconly_profile_beta(prob, lσ_phy + gap, lσ_phy)
+        @test β !== nothing
+        β === nothing && continue
+        ref = dense_nll(β, exp(2 * lσ_phy), exp(2 * (lσ_phy + gap)))
+        # Admitted means USABLE: the sparse objective must still be the same
+        # number the dense oracle computes, not merely finite.
+        @test abs(nll - ref) <= 1e-6 * max(1.0, abs(ref))
+    end
+    @test admitted >= 20                     # an empty sweep is not a pass
+
+    # The measured break point must be on the refused side, with margin.
+    @test !DRM._loconly_resolvable_scales(lσ_phy - 17.086, lσ_phy)
+    @test !DRM._loconly_resolvable_scales(lσ_phy + bar - 0.01, lσ_phy)
+    # ... and an ordinary fit is nowhere near it: the worst of the #461
+    # fixture's 60 bootstrap refits sat at a gap of -1.033 (the 60 spanned
+    # [-1.033, +1.439]), about eight nats clear of the bar.
+    @test DRM._loconly_resolvable_scales(lσ_phy - 1.5, lσ_phy)
+end
+
 @testset "bridge: sd()/sd_phylo() parts route (#546)" begin
     dat = (y = [1.0, 2.0, 3.0, 4.0], x = [0.0, 1.0, 0.0, 1.0],
            z = [1.0, 1.0, 2.0, 2.0], g = ["a", "a", "b", "b"])

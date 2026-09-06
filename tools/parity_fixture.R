@@ -40,6 +40,28 @@ cells <- list(
     },
     formula = function() bf(y ~ x, sigma ~ 1),
     family  = function() gaussian()
+  ),
+  # Gaussian observed-response mask. The drmTMB ledger row
+  # `gaussian_response_mask` (inst/extdata/julia-capabilities.tsv:5) had no
+  # receipt row here, so drmTMB's parity scoreboard read the capability
+  # `Missing-response handling (native, per fitted route)` as UNCITED even
+  # though both engines fit it. Same fixture drmTMB's own
+  # tests/testthat/test-julia-missing.R uses, so the two are about one target.
+  # `fit_args` (below) is what lets a cell carry the `missing` policy.
+  list(
+    id       = "gaussian_response_mask",
+    label    = "Gaussian observed-response mask (miss_control(response = 'include'))",
+    build    = function() {
+      set.seed(1)
+      n <- 60
+      x <- rnorm(n)
+      y <- 0.3 + 0.5 * x + rnorm(n) * exp(0.1 * x)
+      y[1:6] <- NA
+      data.frame(y = y, x = x)
+    },
+    formula  = function() bf(y ~ x, sigma ~ x),
+    family   = function() gaussian(),
+    fit_args = function() list(missing = miss_control(response = "include"))
   )
 )
 
@@ -76,7 +98,25 @@ fe_cells <- list(
                             size <- 12L
                             p <- plogis(0.3 + 0.7 * x)
                             s <- rbinom(n, size, p)
-                            data.frame(successes = s, failures = size - s, x = x) })
+                            data.frame(successes = s, failures = size - s, x = x) }),
+  # skew_normal (A4, 2026-09-05). drmTMB's `skew_normal()` (dpars mu, sigma, nu;
+  # public moment form: mu = E[y], sigma = SD[y], nu = Azzalini's slant) through
+  # engine = "julia". Needs the `_bridge_family("skew_normal") -> SkewNormal()`
+  # case in src/bridge.jl. Same draw as drmTMB's
+  # tests/testthat/test-skew-normal-location-scale.R (n = 500, seed 20260608,
+  # nu = 1.6) so the receipt is about the committed fixture.
+  list(id = "skew_normal", label = "Skew-normal (mu ~ x, sigma ~ z, nu ~ 1), fixed effects",
+       jfam = "skew_normal",
+       family = function() skew_normal(),
+       formula = function() bf(y ~ x, sigma ~ z, nu ~ 1),
+       build = function() {
+         set.seed(20260608); n <- 500; nu <- 1.6
+         x <- rnorm(n); z <- rnorm(n)
+         mu <- 0.20 + 0.45 * x; sigma <- exp(-0.35 + 0.18 * z)
+         delta <- nu / sqrt(1 + nu^2); ms <- delta * sqrt(2 / pi)
+         omega <- sigma / sqrt(1 - ms^2); xi <- mu - omega * ms
+         data.frame(y = xi + omega * (delta * abs(rnorm(n)) + sqrt(1 - delta^2) * rnorm(n)),
+                    x = x, z = z) })
 )
 
 # Bivariate lognormal (drmTMB biv_lognormal). Compared native-TMB vs the DRM.jl
@@ -124,10 +164,16 @@ for (cell in cells) {
     tolerance = tol, note = ""
   )
 
-  ft <- try(drmTMB(cell$formula(), family = cell$family(), data = d, engine = "tmb"),
-            silent = TRUE)
-  fj <- try(drmTMB(cell$formula(), family = cell$family(), data = d, engine = "julia"),
-            silent = TRUE)
+  # A cell may need more than formula/family/data -- the observed-response mask
+  # cell carries a `missing` policy. Without this hook the loop would silently
+  # fit the DEFAULT policy and record a receipt for the wrong target.
+  extra <- if (is.null(cell$fit_args)) list() else cell$fit_args()
+  fit_one <- function(engine) {
+    try(do.call(drmTMB, c(list(cell$formula(), family = cell$family(), data = d,
+                               engine = engine), extra)), silent = TRUE)
+  }
+  ft <- fit_one("tmb")
+  fj <- fit_one("julia")
 
   if (inherits(ft, "try-error")) {
     res$status <- "NATIVE_FAILED"; res$note <- conditionMessage(attr(ft, "condition"))
