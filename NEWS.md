@@ -14,6 +14,37 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   `sigma` = SD, `nu` = Azzalini slant), so the bridged coefficients are the
   native ones. Fixed effects only, ML only — exactly what `SkewNormal()` fits.
 - **REML on the residual-only bivariate Gaussian route (#624; drmTMB #1142).** `drm(bf(mu1 = y1 ~ x, mu2 = y2 ~ x, sigma1 = ~1, sigma2 = ~1, rho12 = ~1), Gaussian(); method = :REML)` fits instead of refusing. The old message ("`method = :REML` needs random effects to restrict") mistook "no random effects" for "nothing to restrict": REML here integrates the MEAN fixed effects `beta_mu1`/`beta_mu2` out of the Gaussian likelihood under the row-wise 2x2 residual covariance — the classical Patterson–Thompson/SUR case, and the same set native drmTMB hands to TMB's Laplace approximation for this cell (whose Laplace step is EXACT, the integrand being quadratic). Closed form: profile `beta` by GLS, add `-0.5*logdet(sum_i Z_i' S_i^-1 Z_i)` and the `+(p_beta/2)*log(2*pi)` normalising constant, and optimise over `(beta_sigma1, beta_sigma2, beta_rho)` alone. Same-target against drmTMB `engine = "tmb"` with `REML = TRUE` on the committed fixture: logLik `-97.021205818372` on both engines (difference 0.0 at 12 decimal places), coefficients to 4.33e-7, standard errors to 6.54e-7 relative. `vcov` reports the joint mean block `H^-1 + G Var(phi) G'` that TMB's `sdreport()` reports. The ML route is unchanged (same fixture, `-90.202703298791` on both engines, difference 4.8e-13). `meta_V` plus `:REML` keeps its permanent refusal — that route marginalises nothing. `test/test_reml_reml_biv_residual.jl`.
+- **Profile CIs on the canonical (non-sparse) location-scale route returned a signed infinite
+  bound because ONE unevaluable trial abandoned the whole endpoint arm (#651).** #631/#633 closed
+  this class for the SPARSE phylogenetic LSS engine and made `confint(...; method = :profile)` fail
+  closed; the canonical whitened route kept the defect, and it has been failing unrelated pull
+  requests at random on `Julia 1.10 - shard 1/4` (`test/test_locscale_profile_threads.jl:55` and
+  `:91`, the two `isfinite` assertions). The endpoint search
+  (`_ls_profile_root_result`, `src/locscale_profile.jl`) treated a single trial whose nuisance
+  solve did not converge as terminal, in both the bracket-expansion and guarded-Newton phases, and
+  reported that premature give-up as `Inf`/`-Inf`. It is not a data race and not run-to-run
+  non-determinism: 600 repeats of the fixture at 1, 2 and 4 Julia threads produced zero failures
+  and exactly four distinct `gradient_maxabs` values, bit-identical across thread counts. The
+  fixture's accepted arms simply sit against the acceptance bar -- worst measured 7.96e-08 against
+  a hard 1e-07 -- so a last-bit difference between macOS aarch64 and Linux x86-64 decides whether
+  an arm is accepted, which is why it reproduced in CI and not locally. Both phases now CONTRACT
+  toward a point already known to be feasible, on the bounded budget `maxcontract` (default 8):
+  expansion halves `thi` toward the feasible `tlo`, and refinement halves the TRIAL toward `tlo`,
+  leaving the maintained bracket -- and its proof that a crossing exists -- untouched. Measured with
+  a +/-2-ULP perturbation of the response, the honest local surrogate for that platform difference:
+  17 of 200 draws returned a non-finite bound before, 0 of 200 after, with all 800 endpoint arms
+  accepted and 37 contractions across exactly the 17 draws that used to fail. The search is still
+  bounded -- at most `(maxexpand + maxnewton + 1) * (1 + maxcontract)` evaluations -- so it cannot
+  hang, and it is inert where nothing fails: the unperturbed fixture's intervals and residuals are
+  bit-identical before and after. Contraction only POSTPONES failure; an arm that cannot be
+  evaluated anywhere down to `xtol` is still a failed, signed-infinity endpoint, so
+  `profile_result` remains the auditable surface #631 made it and `confint` still refuses it. One
+  behaviour change beyond that: an expansion that had to contract can no longer certify
+  UNBOUNDEDNESS, because part of the range was never evaluated -- it reports the new
+  `:infeasible_region` failed endpoint instead of `:no_crossing`. Guarded by
+  `test/test_locscale_profile_threads.jl` (29 assertions, 0.3 s, deterministic and
+  platform-independent: it pins the search logic, which is what changed).
+
 - **Inference on a missing-response ("response mask") Gaussian fit: `is_converged` read false on a
   converged fit, and every bootstrap replicate failed (#646).** Both defects sat downstream of the
   fit itself -- the point estimates were already right, matching drmTMB's `engine = "tmb"` to ~7e-06
