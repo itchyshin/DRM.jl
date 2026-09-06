@@ -3,9 +3,11 @@
 !!! note "Status — Implemented"
     Mirrors drmTMB's [Implementation map](https://itchyshin.github.io/drmTMB/articles/implementation-map.html). Where the **source map** lists *files* and the **model map** lists *capability status*, this page maps each **modelling feature → the numerical method that fits it → the fitter entry point** in the source. All entries are taken from `src/`.
 
-Every fit ultimately minimises a negative log-likelihood by L-BFGS with
-ForwardDiff gradients; the rows below differ in **how the random-effect /
-correlation integral is handled**.
+Every fit minimises a negative log-likelihood by L-BFGS. Most routes take their
+gradient from ForwardDiff; the verified sparse engines below instead supply an
+exact O(p) analytic gradient, because ForwardDiff duals do not flow through the
+sparse CHOLMOD factorisation those routes rely on. The rows below differ in
+**how the random-effect / correlation integral is handled**.
 
 ## The verified engine (phylogenetic q=4 PLSM)
 
@@ -44,8 +46,8 @@ tensor grid; crossed intercepts by the sparse-Laplace spine
 | Beta-binomial | `_fit_betabinomial` | `_fit_betabinomial_ranef` | `_fit_betabinomial_corr_ranef` | — | `cbind(s, f)` response |
 | LogNormal | `_fit_lognormal` | `_fit_lognormal_ranef` | `_fit_lognormal_corr_ranef` | — | — |
 | Zero-one-inflated Beta | `_fit_zeroonebeta` | — | — | — | closed `[0,1]` |
-| Tweedie | `_fit_tweedie` | — | — | — | compound Poisson–Gamma |
-| Cumulative-logit | `_fit_cumulative` | — | — | — | ordered categorical |
+| Tweedie | `_fit_tweedie` | `_fit_tweedie_ranef` | — | — | compound Poisson–Gamma; independent slope `_fit_tweedie_slope_ranef` (correlated `(1+x\|g)` refused) |
+| Cumulative-logit | `_fit_cumulative` | `_fit_cumulative_ranef` | — | — | ordered categorical; independent slope `_fit_cumulative_slope_ranef`, phylo `_fit_cumulative_phylo_laplace` (correlated `(1+x\|g)` refused) |
 
 ## Shared spine
 
