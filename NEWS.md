@@ -4,7 +4,7 @@ All notable changes are recorded here. The live work ledger is
 [GitHub Issues](https://github.com/itchyshin/DRM.jl/issues); this file is the
 human-readable changelog and mirrors `docs/src/changelog.md`.
 
-## Unreleased
+## v0.7.1 — 2026-09-05
 
 - **Inference on a missing-response ("response mask") Gaussian fit: `is_converged` read false on a
   converged fit, and every bootstrap replicate failed (#646).** Both defects sat downstream of the
