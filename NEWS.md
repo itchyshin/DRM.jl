@@ -19,7 +19,9 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   bridge export target `gaussian_q2_mu1_mu2_spatial_residual_correlation` with no change to
   `src/bridge.jl`. Measured: `spatial(coords)` and `relmat(K = the same matrix)` on one fixture
   agree BIT-FOR-BIT -- max abs difference 0.0 on logLik and on all ten coefficients, under both
-  ML and REML (`test/test_reml_q2_structured.jl`).
+  ML and REML (`test/test_reml_q2_structured.jl`). The range in force is readable off the fit as
+  `fit.ranef.spatial_range`, the same field the q=4 route already records, because the default is
+  data-dependent and would otherwise be invisible; `relmat`/`animal` fits report `nothing`.
   BOUNDARY: `rho` is FIXED, not estimated. This is not the univariate `spatial` route, which
   carries `log rho` as a free parameter -- the two are different models and must not be compared
   as one. Note also that DRM.jl's default range is the MEAN off-diagonal distance with a 1e-8
