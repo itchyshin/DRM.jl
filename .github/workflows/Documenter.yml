@@ -21,6 +21,23 @@ concurrency:
 jobs:
   docs:
     runs-on: ubuntu-latest
+    # Serialise the gh-pages DEPLOY across every ref in the repo. The
+    # workflow-level group above is keyed on `github.ref`, so two different PRs
+    # land in different groups and run at the same time -- and both push to the
+    # single shared `gh-pages` ref. That raced on 2026-09-05 (#650):
+    #   ! [remote rejected] HEAD -> gh-pages
+    #     (cannot lock ref 'refs/heads/gh-pages': is at 2aa387ee8 but expected a2fa18165)
+    # `docs` is a REQUIRED status check, so a PR was blocked by another PR's
+    # timing, with nothing wrong in either.
+    #
+    # `cancel-in-progress: false` is load-bearing and must NOT be flipped: a
+    # cancelled `docs` run reports as cancelled, and a cancelled required check
+    # blocks its PR -- the same shape as #589/#590 noted above, one level down.
+    # Job-level (not workflow-level) so the per-ref superseded-run cancellation
+    # for repeated pushes to one PR is preserved.
+    concurrency:
+      group: docs-gh-pages-deploy
+      cancel-in-progress: false
     permissions:
       contents: write
       pull-requests: read
