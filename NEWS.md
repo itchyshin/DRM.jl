@@ -32,6 +32,44 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   with the dense oracle to 1e-06 relative -- the property, not the constant, so re-loosening the
   bar fails it (17 assertions and 1 error under #574's value).
 
+- **`check_drm()` CRASHED on four shipping routes instead of reporting on them, and a NaN gradient
+  could not be told apart from a verified one.** `_check_max_abs_grad` (`src/inference.jl`) ended in
+  an unguarded `maximum(abs, ForwardDiff.gradient(fit.nll, fit.theta))`. Four routes store a bare
+  objective (no gradient callback) that is exact on `Float64` but NOT dual-number safe, so that line
+  threw and the health check died on the very fits it exists to report on -- against the comment
+  written two functions below it, "A diagnostic must REPORT trouble, not crash on it". Measured
+  2026-09-05 at origin/main 109b6421c, in two distinct exception types: the bivariate q=2 structured
+  route (`gaussian_bivariate.jl:626`, whose objective factorises a sparse `H_uu` through CHOLMOD
+  inside `coevo_marginal_cov`) and the sparse two-structured Gaussian mean route
+  (`gaussian_structured.jl:652`, same factorisation) both raised `TypeError: in Sparse, in Tv,
+  expected Tv<:Union{Float64, ComplexF64}, got Type{ForwardDiff.Dual{...}}`; sparse LSS under REML,
+  single-component (`gaussian_sparse_lss.jl:285`) and multi-component (`:1018`), raised the
+  different `MethodError: no method matching Float64(::ForwardDiff.Dual{...})` from a Float64 work
+  array. Only the REML arm of those last two ever reaches the line: both store
+  `reml ? nothing : nllgrad!`, and the ML arm's stored callback is consulted first (its
+  `max_abs_grad` is unchanged). The probe now falls back to a CENTRAL FINITE DIFFERENCE of the same
+  objective -- the pattern `_profile_autodiff_mode` (`:805-821`) already uses for exactly this
+  situation -- rather than returning `NaN`. Returning `NaN` would have been the quiet version of the
+  same defect: `ok = converged && (penalized || isnan(mag) || mag <= grad_tol) && pd` treats a NaN
+  magnitude as a PASS, a disjunct written for a fit that stores no objective at all, so an untested
+  route would have reported `ok = true` and looked identical to a verified one. `check_drm` gains a
+  `grad_source` field naming the producer -- `:locscale`, `:stored`, `:forward`, `:finite`, `:none`,
+  `:unavailable`, reusing `profile_result`'s `autodiff` vocabulary -- warns when the magnitude is a
+  finite difference (good to about 1e-6 relative, not to machine precision), and warns again on
+  `:unavailable`, the NaN that is NOT `:none` and whose `ok` was never scored against a gradient.
+  Measured after the fix, all four now RETURN with `grad_source = :finite`: q=2 structured
+  2.7504093225161337e-3, two-structured sparse 2.7248279090903387e-8, sparse LSS REML
+  1.7936919476824185, multi-component sparse LSS REML 1.0092392038529852. The last two are an
+  accuracy check on the fallback rather than just a smoke test: the dense engine fits the same two
+  models with a dual-safe objective, and its exact ForwardDiff magnitudes on the identical fixtures
+  are 1.7936919467546497 and 1.0092392105794588 -- the finite difference agrees to 5.2e-10 and
+  6.7e-9 relative. Eleven dual-safe fixtures spanning `:forward`, `:stored` and `:locscale` are
+  unchanged to the last digit (e.g. plain Gaussian 2.580158309228864e-13, canonical location-scale
+  1.651913078548617e-9), with every `check_drm` verdict field identical. Guarded by
+  `test/test_check_drm.jl` (77 assertions, one testset per AD-hostile route plus `:none` vs
+  `:unavailable` and a non-finite stored callback); removing the guard errors 5 of its testsets with
+  the exceptions quoted above.
+
 - **Bivariate q=2 `spatial(1 | group)` is admitted at the formula front end.** The q=2 marker
   allow-list took only `phylo`, `relmat` and `animal`, so a `spatial(...)` marker on `mu1`/`mu2`
   was refused outright -- a cell drmTMB fits natively AND through the bridge, which reaches it
