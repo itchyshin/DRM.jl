@@ -50,6 +50,24 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   with the dense oracle to 1e-06 relative -- the property, not the constant, so re-loosening the
   bar fails it (17 assertions and 1 error under #574's value).
 
+- **Profile and bootstrap intervals on a fixed-effect target of the RESIDUAL-ONLY bivariate
+  Gaussian fit (drmTMB A8b).** `bf(mu1 = y1 ~ x, mu2 = y2 ~ x, sigma1 = ~ 1, sigma2 = ~ 1,
+  rho12 = ~ 1)` with no structured term had no bootstrap route at all: `_bootstrap_fit_formula`
+  refused every `BivariateDrmFormula`. That gate now admits the residual-only case, and the
+  three blockers behind it are fixed — the `bootstrap_result(::DrmFit{<:Gaussian})` refit
+  closure no longer forwards `algorithm` (which `drm(::BivariateDrmFormula, ::Gaussian; ...)`
+  does not declare), `_bootstrap_result` accepts a `BivariateDrmFormula`, and `_bootstrap_data`
+  gained a bivariate method for the `Dict(:mu1, :mu2)` draw `_simulate_once` returns. That
+  method PRESERVES THE OBSERVATION PATTERN: a cell unobserved in the data stays unobserved in
+  every replicate, so the refits fit the model the seed fit fitted. `profile_result` needed no
+  change (it already reached the generic ForwardDiff path) and is now covered by assertions on
+  the #631 endpoint-failure flags. Measured on an n = 200 fixture: 40/40 replicates, 0 failed,
+  finite bounds on all five blocks; `drm_bridge_inference(parm = "fixef:mu1:x" |
+  "fixef:rho12:(Intercept)")` returns finite rows for both methods
+  (`test/test_bridge_biv_inference.jl`, 71 assertions). BOUNDARY: the STRUCTURED (q = 4
+  phylogenetic) bivariate route is untouched — its `Sigma_a` guard fires first and it still
+  routes to `bootstrap_sigma_a`; a `DrmFit` with no `.formula` is still refused; and this is a
+  capability claim, NOT an interval-coverage claim (one fixture, one seed).
 - **`coef_labels` count mismatch now names the construct behind it (#467, #609).** When the R side
   supplies more names for a dpar than the fit has columns, the commonest cause is a factor level
   with no rows in the data: base-R `model.matrix()` gives every DECLARED level a column (an

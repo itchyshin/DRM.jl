@@ -311,6 +311,12 @@ _shard_include("test_bridge_lss_routes.jl")  # #563 S6: bridge-vs-direct parity 
 # (multi-row payload) + the profile→bootstrap redirect (Ayumi #2 uncertainty-via-R).
 _shard_include("test_bridge_bivariate_inference.jl")
 
+# Profile/bootstrap intervals on a FIXED-EFFECT target of the residual-only
+# bivariate Gaussian fit (drmTMB A8b): the q4 file above covers the among-axis
+# SDs of the STRUCTURED bivariate route; this one covers the residual route's
+# mu1/mu2/sigma/rho12 coefficients, which had no interval target at all.
+_shard_include("test_bridge_biv_inference.jl")
+
 # Poc-migrated foundation checks (#465): the poc's script-style includes and
 # hardcoded paths were fixed to run in-suite. `test_step1_sparse` cross-checks
 # the ported sparse Newick/Takahashi infra against real R (ape::vcv) fixtures;
