@@ -355,6 +355,7 @@ _shard_include("test_reml_q4_missing_response.jl")       # #578: _reml_border_bl
 _shard_include("test_q4_reml_vcov.jl")                   # #563 S11: pin q4 REML vcov() native/bridge behaviour
 _shard_include("test_reml_prior_precision_collapse.jl")  # #563: _reml_prior_precision collapsed into prior_precision after #577
 _shard_include("test_reml_surface_contract.jl")          # #624: bridge estim_method/loglik honesty + refusal message surface
+_shard_include("test_reml_reml_biv_residual.jl")        # #624: REML on the residual-only bivariate Gaussian route
 
 # Delta-method prediction standard errors (feat-predict-se).
 _shard_include("test_predict_se.jl")
