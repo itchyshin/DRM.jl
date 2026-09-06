@@ -5,8 +5,10 @@
     families** (e.g. Gaussian × Poisson), via a shared per-observation latent.
     The matrix-level entry point is `DRM.fit_mixed_family` (not exported); the
     `bf(...)` front end is wired as `drm(bf(...), (Gaussian(), Poisson());
-    data = …)` (`src/mixed_family.jl:440`). `:gaussian`, `:poisson`, and
-    `:binomial` axes are admitted in this slice. The dependence is reported on the link/latent
+    data = …)` (`src/mixed_family.jl:440`). `Gaussian`, `Poisson`, `Binomial`,
+    `NegBinomial2`, `Beta` and `Gamma` axes are supported
+    (`src/mixed_family.jl:32-66`); the route takes family *instances*, e.g.
+    `(Gaussian(), Poisson())`. The dependence is reported on the link/latent
     scale; the residual-correlation [`rho12`](tutorials/bivariate-coscale.md)
     model is the Gaussian × Gaussian special case.
 
@@ -94,6 +96,9 @@ axis `k`. `v_k` comes from [`DRM.link_residual`](@ref):
 - **Poisson** (log link): `v = log(1 + 1/μ̄)`, evaluated at a representative
   fitted mean `μ̄`.
 - **Binomial** (logit link): `v = π²/3` (distribution-free).
+- **Beta** (logit link): `v = trigamma(μ̄ φ) + trigamma((1-μ̄) φ)`, `φ` the precision.
+- **Gamma** (log link): `v = trigamma(1/φ)`.
+- **NegBinomial2** (log link): `v = trigamma(θ)`, `θ` the size.
 
 Because `ρ` is a ratio of the same latent variance on top and bottom, it is
 rotation-invariant and lies in `(-1, 1)`. It is a **reporting** quantity: it is

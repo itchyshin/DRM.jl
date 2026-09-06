@@ -43,14 +43,16 @@
     vs installed drmTMB **0.6.0** at the time; BLAS/OMP threads = 1; 1 warmup +
     5 timed reps):
 
-    - Original six (#372) — median R/Julia ratios retained in
+    - Original six (#372) — the warm median favoured Julia on every cell
+      measured; the ratios are retained in
       `docs/dev-log/evidence/2026-08-03-372-six-cell-timing.md`.
-    - +4 FE + `nbinom2-dispersion` (#389) — median R/Julia ratios retained in
+    - +4 FE + `nbinom2-dispersion` (#389) — likewise on every cell; ratios in
       `docs/dev-log/evidence/2026-08-05-389-plus5-bridge-timing.md`.
 
     The timing artifacts were not re-measured on the 0.7.0 fixture anchor. They
     are neither a general “Nx faster for all drmTMB models” claim nor the
-    verified q=4 PLSM head-to-head cell (`report/comparison-grid.md`).
+    verified q=4 PLSM single-fit cell at p=100 (`report/comparison-grid.md`), which
+    is a different measurement from the #376 scaling campaign below.
     For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
 
 ## The idea

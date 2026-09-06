@@ -2,7 +2,8 @@
 
 !!! note "Status — Experimental (engine), paper-section reference"
     The cross-family route is **Experimental** and not release-ready: the
-    evidence is a single fixture and there is no interval-coverage study. The
+    evidence is a set of simulated fixtures covering five family pairs
+    (`test/test_mixed_family.jl`) and there is no interval-coverage study. The
     maths below is what the code evaluates; the release status is what limits
     its use. See [Evidence & limits](../capabilities.md).
     This page is the methods reference for the cross-family bivariate model

@@ -78,8 +78,9 @@ DRM.jl keeps the inference you are entitled to:
 This is a **measured** advantage, not a hope. On the verified q=4 PLSM fit the
 observed information had a single negative eigenvalue — the singular variance
 direction — and DRM.jl still returned valid Wald SEs for the identified
-parameters where drmTMB's `sdreport` was all-`NaN`; a parametric bootstrap gave
-finite intervals across the replicates it was run on. The counts and the run
+parameters where drmTMB's `sdreport` was all-`NaN`; a parametric bootstrap
+returned a finite interval for every replicate it was run on — no refit failed
+at the boundary. The counts and the run
 conditions are in `report/comparison-grid.md`.
 
 !!! note "An undefined CI is information, not a failure"

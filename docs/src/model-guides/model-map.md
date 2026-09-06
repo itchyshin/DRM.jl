@@ -104,13 +104,13 @@ Write them as terms in the mean formula:
 intercept/slope, correlated and crossed RE, phylo / spatial / animal / relmat
 structure, `meta_V`, and a random effect *on* `sigma` — fit in closed form or
 via a sparse augmented-state Laplace approximation. The non-Gaussian families
-(Poisson, NB2, Binomial, Gamma, Beta, Student-t, LogNormal, Beta-binomial)
-carry random intercepts via Gauss–Hermite marginals, and random slopes for
-every one of them except `Binomial()`, which supports `(1 | g)` on the mean
-only. The [capability matrix](../capabilities.md) records which slope form —
+(Poisson, NB2, Binomial, Gamma, Beta, Student-t, LogNormal, Beta-binomial,
+Tweedie and CumulativeLogit) carry random intercepts via Gauss–Hermite
+marginals, and random slopes for every one of them except `Binomial()`, which
+supports `(1 | g)` on the mean only. The [capability matrix](../capabilities.md) records which slope form —
 independent or correlated — each family admits.
 **Phylogenetic** (`phylo`) effects go via a sparse Laplace path for Poisson,
-NB2, Binomial, Gamma, Beta and Beta-binomial. On that path NB2, Gamma and Beta
+NB2, Binomial, Gamma, Beta, Beta-binomial and CumulativeLogit. On that path NB2, Gamma and Beta
 accept a covariate dispersion formula `sigma ~ x` (a per-observation log σ,
 #164), while `BetaBinomial()` requires a constant `sigma` and `Binomial()`
 carries no dispersion parameter at all; `Student()` rejects `meta_V` and every structured marker. `LogNormal()` is the
@@ -124,7 +124,9 @@ adding a structured or phylogenetic effect.
 
 [`CumulativeLogit`](@ref) (ordinal) carries an ordinary random intercept
 `(1 | g)` or an *independent* random slope `(0 + x | g)` on `mu` via the same
-Gauss–Hermite scheme; the correlated form `(1 + x | g)` and structured
+Gauss–Hermite scheme, and an intercept-only `phylo(1 | species)` through the
+same sparse Laplace engine (`src/cumulative.jl:518`,
+`test/test_cumlogit_phylo.jl`); the correlated form `(1 + x | g)` and the other structured
 (phylo/relmat/animal/spatial) effects are not implemented yet.
 
 For the verified engine behind the phylogenetic models — the q=4 phylogenetic
