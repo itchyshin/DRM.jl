@@ -97,11 +97,22 @@ parameters drmTMB optimizes. Measured same target as drmTMB 67703f541 on the
 committed fixture in `test/test_phylo_slope_two_sd.jl`: logLik, both SDs, β and
 log σ agree to ≤ 6.7e-13.
 
-BOUNDARY (written, not silent): drmTMB fits `phylo(1 + x | g)` on further
-families too, and for Poisson/NegBinomial2 it fits a **different** model —
-an estimated intercept–slope correlation (`has_phylo_mu_q2_covariance`,
-surfaced in `corpars`). DRM.jl refuses every non-Gaussian family here rather
-than fit the independent model under that name. `phylo(0 + x | g)`, multi-slope
+BOUNDARY (written, not silent; CORRECTED 2026-09-05 after measurement).
+drmTMB fits `phylo(1 + x | g)` on Poisson and NegBinomial2 too, and it fits the
+**same** independent two-SD model there, not a different one. Measured on
+drmTMB main (`engine = "tmb"`, 30-tip `ape::rcoal`, Poisson): the untagged
+`phylo(1 + x | site)` returns SD rows `phylo(1 | site)` and
+`phylo(0 + x | site)` with `corpars` **empty**, while the tagged
+`phylo(1 + x | p | site)` returns `corpars` = `cor(mu:(Intercept),mu:x | p |
+site)` = 0.824. The estimated intercept–slope correlation
+(`has_phylo_mu_q2_covariance`) therefore belongs to the *tagged* formula, which
+is a different construct from the one refused here; drmTMB refuses this formula
+outright on Gamma ("intercept-only in this q=1 route"). DRM.jl still refuses
+every non-Gaussian family on this route, for the accurate reason: it is the
+EXACT closed-form Gaussian marginal, which does not extend to a non-Gaussian
+likelihood — the count families need a two-field Laplace route that does not
+exist yet. The prior wording named a target difference that measurement does
+not support; the refusal itself is unchanged. `phylo(0 + x | g)`, multi-slope
 forms, a second structured component, ordinary and `sigma`-side random effects, a
 structured (`phylo`) `sigma`, the `sd(...)`/`sd_phylo(...)` location-scale-scale
 submodels, REML, missing responses, the sparse algorithms and the

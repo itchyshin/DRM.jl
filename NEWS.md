@@ -50,10 +50,17 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   `re_sd`/`vc`/`ranef` all carry both fields), five free parameters — the same five drmTMB
   optimizes. Measured same-target against drmTMB 67703f541 on the committed fixture: logLik,
   both SDs, β and log σ all agree to ≤ 6.7e-13 (`test/test_phylo_slope_two_sd.jl`).
-  BOUNDARY: drmTMB fits `phylo(1 + x | g)` on further families as well, and for Poisson and
-  NegBinomial2 it fits a DIFFERENT model there — an estimated intercept–slope correlation
-  (`has_phylo_mu_q2_covariance`, reported in `corpars`). DRM.jl refuses every non-Gaussian
-  family rather than fit the independent model under that name. `phylo(0 + x | g)`, multi-slope
+  BOUNDARY (corrected 2026-09-05 after measurement): drmTMB fits `phylo(1 + x | g)` on Poisson
+  and NegBinomial2 as well, and it fits the SAME independent two-SD model there — measured on
+  drmTMB main, `corpars` is empty for the untagged `phylo(1 + x | g)` on Poisson (two SD rows,
+  `phylo(1 | site)` and `phylo(0 + x | site)`), while the estimated intercept–slope correlation
+  (`has_phylo_mu_q2_covariance`, reported in `corpars` as `cor(mu:(Intercept),mu:x | p | site)`)
+  appears only for the DIFFERENT tagged formula `phylo(1 + x | p | g)`. drmTMB refuses the
+  formula on Gamma ("intercept-only in this q=1 route"). DRM.jl still refuses every non-Gaussian
+  family here, for the accurate reason: this route is the EXACT closed-form Gaussian marginal
+  and does not extend to a non-Gaussian likelihood, so the count families need a two-field
+  Laplace route that does not exist yet. The earlier claim that drmTMB fits "a DIFFERENT model"
+  for Poisson/NegBinomial2 on this formula was wrong; the refusal it justified is unchanged. `phylo(0 + x | g)`, multi-slope
   forms, a second structured component, ordinary and `sigma`-side random effects, a structured
   (`phylo`) `sigma`, the `sd(...)`/`sd_phylo(...)` location-scale-scale submodels, REML, missing
   responses, the sparse algorithms and the parametric-bootstrap simulator all stay refused with
