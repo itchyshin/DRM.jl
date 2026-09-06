@@ -155,8 +155,8 @@ The same front end also provides these next steps; the
 
 ## Where to go next
 
-- [R ↔ Julia bridge](r-julia-bridge.md) — use the optional R-engine backend
-  for supported models.
+- [R ↔ Julia bridge](r-julia-bridge.md) — the experimental `engine = "julia"`
+  route and the cells it admits today.
 - [Rosetta (R ↔ Julia)](rosetta.md) — vocabulary and workflow translation.
 - [Choosing response families](families.md) — the full list of response
   families and how to fit each one.
