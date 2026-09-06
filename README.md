@@ -175,7 +175,8 @@ experimental Hopper finish-matrix bar (#349 + drmTMB #878) — not a CRAN /
 “supported” promotion.
 
 **Not fully wired / still open:** `src/experimental/` holds only classified
-material — recorded negative results (#13, #472), superseded predecessors, and
+material — a recorded negative result (#13), unwired variants (#472, whose
+descent proved an artefact and was repaired in #577), superseded predecessors, and
 oracles; see [src/experimental/README.md](src/experimental/README.md) for the
 per-file verdicts (public `method = :REML`, `algorithm = :em`, and `lc_metric`
 Fisher infra are already in `src/`);
