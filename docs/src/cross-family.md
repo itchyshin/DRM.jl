@@ -222,8 +222,13 @@ fit_boot.rho_ci_boot       # percentile interval from 500 parametric-bootstrap r
 | `rho_ci_boot`     | Parametric-bootstrap interval; `(NaN, NaN)` unless `B > 0`. |
 
 The fit also returns the fixed effects `β1`/`β2`, the loadings `λ1`/`λ2`, the
-Gaussian residual SDs `σ1`/`σ2` (`NaN` on non-Gaussian axes), the link-scale
-variances `v1`/`v2`, the `loglik`, `converged`, and `iterations`.
+per-axis scale `σ1`/`σ2`, the dispersion sub-model coefficients `βσ1`/`βσ2` (on
+the `log σ` scale), the link-scale variances `v1`/`v2`, the `loglik`,
+`converged`, and `iterations`. Every dispersion-carrying family stores `σ` in
+the same `log σ` slot, so `σ1`/`σ2` is the residual SD for `Gaussian`, a
+coefficient of variation for `Gamma`, and the value behind `φ = 1/σ²` (`Beta`)
+or `θ = 1/σ²` (`NegBinomial2`); it is `NaN` only on the dispersionless
+`Poisson` and `Binomial` axes.
 
 ## See also
 

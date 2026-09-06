@@ -26,7 +26,7 @@ a public solver; `lc_metric` Fisher infra landed; Workflow Q JET gate added
 unwired — **not** the public `method = :REML`, `algorithm = :em`, or `lc_metric`
 surfaces. Phase 1.5 / #5 and Workflow G / [#17](https://github.com/itchyshin/DRM.jl/issues/17)
 are **closed** (experimental bridge bar; always-on `DRM_PARITY_TESTS=1` stays opt-in).
-**The verified q=4 PLSM engine (2.18× over drmTMB, O(p) to p=10,000) stays exactly as handed over.**
+**The verified q=4 PLSM engine (faster than drmTMB on the verified p=100 fixture, near-linear in the number of tips) stays exactly as handed over.**
 
 
 ## Target

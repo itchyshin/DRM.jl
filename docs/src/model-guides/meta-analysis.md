@@ -32,12 +32,13 @@ sampling term and you understate it.
 ```julia
 fit = drm(bf(@formula(yi ~ x + meta_V(vi)), @formula(sigma ~ 1)),
           Gaussian(); data = dat)
-sigma(fit)      # the HETEROGENEITY SD -- not sqrt(v + sigma^2)
+exp(coef(fit, :sigma)[1])   # the HETEROGENEITY SD
+sigma(fit)                  # per-study TOTAL SD, sqrt(v_i + heterogeneity^2)
 ```
 
 `meta_V(vi)` marks the data column holding the known sampling variances. The
-fitted `sigma` is heterogeneity **alone**; the known ``v_i`` is added per row
-inside the likelihood and never absorbed into it.
+fitted `sigma` **parameter** is heterogeneity **alone**; the known ``v_i`` is
+added per row inside the likelihood and never absorbed into it.
 
 ## 2. Two responses, and now *two* correlations
 

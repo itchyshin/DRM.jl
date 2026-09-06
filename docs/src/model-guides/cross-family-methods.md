@@ -71,16 +71,18 @@ scale is ``g_k^{-1}(\eta_{ki})`` (identity, ``\exp``, or logistic).
 
 ### Dispersion sub-model
 
-Dispersion-carrying families also estimate a per-observation **log-native
-dispersion** ``d_{ki}`` through its own linear predictor,
+Dispersion-carrying families also estimate a per-observation **scale**
+``d_{ki} = \sigma_{ki}`` through its own linear predictor,
 
 ```math
 \log d_{ki} \;=\; \mathbf{x}^{\sigma}_{ki}{}^{\!\top} \boldsymbol{\beta}^{\sigma}_k,
 ```
 
 with design matrix ``X^{\sigma}_k`` (default a single intercept column, which
-collapses ``d_{ki}`` to a constant). The natural dispersion ``d_{ki}`` plays the
-family-specific role given in the table below. Poisson and Binomial are
+collapses ``d_{ki}`` to a constant). The slot is ``\log\sigma`` for **every**
+dispersion-carrying family — Gaussian, Beta, Gamma and NegBinomial2 alike — and
+each family maps that ``\sigma`` to its own dispersion as given in the table
+below (`src/mixed_family.jl:20-26`). Poisson and Binomial are
 *dispersionless* — they are pinned by ``\eta`` alone and carry no
 ``\boldsymbol{\beta}^{\sigma}_k``.
 
@@ -89,9 +91,9 @@ family-specific role given in the table below. Poisson and Binomial are
 | `Gaussian` | residual SD ``\sigma`` | ``\mathcal{N}(\eta,\sigma^2)`` |
 | `Poisson` | — | ``\mathrm{Pois}(e^{\eta})`` |
 | `Binomial` | — | ``\mathrm{Bin}(m,\,\mathrm{logistic}(\eta))`` |
-| `NegBinomial2` | size ``\theta`` | ``\mathrm{NB2}(\mu=e^{\eta},\ \theta)``, ``\mathrm{Var}=\mu+\mu^2/\theta`` |
-| `Beta` | SD ``\sigma``, precision ``\phi=\sigma^{-2}`` | ``\mathrm{Beta}(\mu\phi,(1-\mu)\phi)``, ``\mu=\mathrm{logistic}(\eta)`` |
-| `Gamma` | SD ``\sigma`` (CV), shape ``\alpha=\sigma^{-2}`` | ``\mathrm{Gamma}(\alpha,\ \mu/\alpha)``, ``\mu=e^{\eta}`` |
+| `NegBinomial2` | scale ``\sigma``, size ``\theta=\sigma^{-2}`` | ``\mathrm{NB2}(\mu=e^{\eta},\ \theta)``, ``\mathrm{Var}=\mu+\mu^2/\theta`` |
+| `Beta` | scale ``\sigma``, precision ``\phi=\sigma^{-2}`` | ``\mathrm{Beta}(\mu\phi,(1-\mu)\phi)``, ``\mu=\mathrm{logistic}(\eta)`` |
+| `Gamma` | scale ``\sigma`` (CV), shape ``\alpha=\sigma^{-2}`` | ``\mathrm{Gamma}(\alpha,\ \mu/\alpha)``, ``\mu=e^{\eta}`` |
 
 The full parameter vector is
 

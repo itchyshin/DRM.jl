@@ -118,6 +118,30 @@ verified sparse augmented-state Laplace engine (`src/sparse_laplace_glmm.jl`).
 | BetaBinomial | **Tested** (constant σ only, #166) — `test/test_betabinomial_phylo_laplace.jl` |
 | CumulativeLogit (ordinal) | **Tested** (intercept-only) — `src/cumulative.jl:518`, `test/test_cumlogit_phylo.jl` |
 
+Nothing in that engine requires `Q` to come from a tree, so the same spine also
+carries the **non-phylo** structured markers for these families: `relmat(1|id)`,
+`animal(1|id)` and **precomputed** `spatial(1|id)` supply a user-supplied PD
+covariance `C` (via `K =` / `A =`) and reuse the phylo fitter with the tree
+precision swapped for `C⁻¹`. Routed from public `drm()` for Poisson
+(`src/poisson.jl:136`, fitter `src/sparse_laplace_glmm.jl:512`), NegBinomial2
+(`src/negbinomial.jl:125`, `src/sparse_laplace_glmm.jl:1286`), Gamma
+(`src/gamma.jl:87`, `src/sparse_laplace_glmm.jl:1382`) and Beta
+(`src/beta.jl:81`, `src/sparse_laplace_glmm.jl:1463`); the NB2, Gamma and Beta
+routes require a constant `sigma` formula. **Tested** —
+`test/test_relmat_counts.jl` (Poisson), `test/test_relmat_counts_nb2.jl`
+(NB2 + Gamma), `test/test_relmat_counts_beta.jl` (Beta), each asserting parameter
+recovery plus an off-optimum finite-difference gradient gate; default suite
+`test/runtests.jl:180`–`:182`.
+
+Poisson alone also turns **site coordinates** into a kernel: `C(ρ) = exp(-d/ρ)`
+built from the site distances, with the range ρ estimated jointly as part of θ
+(`src/poisson.jl:135`, fitter `src/poisson.jl:625`) — **Tested** —
+`test/test_spatial_coord_poisson.jl` (`test/runtests.jl:183`: recovery, an FD
+gate that exercises the ρ channel, and a likelihood-scale cross-check against the
+precomputed-`K` path). `method = :REML` is refused on that route
+(`src/poisson.jl:134`). Every other non-Gaussian family needs the covariance
+precomputed.
+
 ## Location–scale with a phylogenetic random effect on the scale (q=2 route)
 
 A shared random effect on **both** the mean and the log-dispersion axis (the
@@ -215,7 +239,7 @@ residual correlation ρ12. This is the verified core engine (`src/sparse_phy.jl`
 | Capability | Source | Status |
 |---|---|---|
 | Verified q=4 sparse-Laplace single fit + exact O(p) gradient | `src/fit_q4_sparse_tmb.jl` | **Tested** — `test/test_sparse_aug.jl`, FD gradient gate `test/test_qgate_fd_gradient.jl`, zero-alloc inner gate `test/test_qgate_alloc_inner.jl` |
-| Sparse augmented phylo precision `kron(Q, Λ⁻¹)` foundation | `src/sparse_phy.jl` | **Tested** — `test/runtests.jl:13`, `test/test_step1_sparse.jl`, `test/test_crossed_selected_inverse.jl` |
+| Sparse augmented phylo precision `kron(Q, Λ⁻¹)` foundation | `src/sparse_phy.jl` | **Tested** — `test/test_step1_sparse.jl` (`test/runtests.jl:307`), `test/test_crossed_selected_inverse.jl` |
 | Takahashi selected inverse | `src/takahashi_selinv.jl` | **Tested** — `test/test_crossed_selected_inverse.jl`, used throughout the gradient gates |
 | Public `bf(mu1=…, mu2=…, sigma1=…, sigma2=…, rho12=…)` q=4 front end | `src/gaussian_bivariate.jl` | **Tested** — `test/test_gaussian_bivariate_phylo.jl` (recovers Σ_a, β; validates marker constraints) |
 | q=4 `relmat` / `animal` / fixed-range `spatial` providers (level-indexed `Q_cond`) | `src/gaussian_bivariate.jl`, `src/sparse_em_fit.jl` (`make_problem_from_Q`) | **Tested** — `test/test_gaussian_bivariate_q4_structured.jl` (#189); spatial uses fixed `spatial_range` (default = mean pairwise distance); joint ρ estimation deferred |
@@ -223,6 +247,21 @@ residual correlation ρ12. This is the verified core engine (`src/sparse_phy.jl`
 | Default `q4_vcov=true` path → finite vcov, Wald SEs for the fixed effects | `src/gaussian_bivariate.jl` | **Tested** — `test/test_gaussian_bivariate_phylo.jl` (B2 testset) |
 | Non-tree `bootstrap_sigma_a` for q=4 structured providers | `src/bootstrap_q4_phylo.jl` | **Rejected** — clear `ArgumentError`; tree-driven phylo bootstrap only |
 | **Labelled coevolution-correlation accessor with bootstrap CIs** (ρ_a between axes) | `src/coevo_accessors.jl`, `src/bootstrap_q4_phylo.jl` | **Tested for phylo** — `test/test_coevo_accessors.jl`, `test/test_bootstrap_sigma_a.jl`; point `coevolution_cor` works for structured providers too |
+
+**General-q coevolution block (arbitrary q).** Beyond the q=4 PLSM the package
+ships the canonical general-q multivariate-Brownian coevolution model: q Gaussian
+traits sharing a q×q among-trait evolutionary covariance `Λ` carried on the same
+sparse augmented precision `kron(Q_tree, Λ⁻¹)`, with a diagonal residual. Because
+the leaf likelihood is Gaussian in `u`, the inner mode is a single sparse solve
+and the Laplace marginal is **exact** (`src/coevolution_q.jl`, included at
+`src/DRM.jl:67`; `fit_coevolution` at `src/coevolution_q.jl:315`, exported with
+`simulate_coevolution` / `coevo_pack` / `lc_to_cov` at `src/DRM.jl:160`–`:162`).
+It does **not** generalise the q=4 *location–scale* leaf, which is intrinsically
+bivariate (two log σ axes plus one residual ρ12) — see the header note at
+`src/coevolution_q.jl:5-10`. **Tested** — `test/test_coevo_q6.jl`
+(`test/runtests.jl:97`): exactness of the marginal, q=6 recovery of the
+among-trait SDs, the strong correlations (sign and magnitude) and the residual
+SDs, plus a q=8 shape/identification smoke.
 
 ## Structured q=2 bivariate Gaussian (mu1/mu2 only)
 
@@ -250,7 +289,7 @@ above, and it does so by delegation rather than by a second engine.
 | Capability | Source | Status |
 |---|---|---|
 | Bivariate Gaussian with residual `rho12` (`cbind` / `mu1`,`mu2`) | `src/gaussian_bivariate.jl` | **Tested** — `test/test_gaussian_bivariate.jl` |
-| `rho12(fit)` accessor | `src/summary.jl:65` | **Tested** — `test/test_rho12_accessor.jl` |
+| `rho12(fit)` accessor | `src/summary.jl:95` | **Tested** — `test/test_rho12_accessor.jl` |
 | Bivariate **lognormal** (`drm(bf(…), LogNormal())`, drmTMB's `biv_lognormal()`) | `src/bivariate_lognormal.jl:84` (included `src/DRM.jl:94`; family exported `src/DRM.jl:165`) | **Tested** — `test/test_bivariate_lognormal.jl` (`test/runtests.jl:84`). Two strictly positive responses with `log(Y)` bivariate normal. The **whole** fit delegates to `drm(f, Gaussian(); data = log.(data))` (`src/bivariate_lognormal.jl:112`) and only the reported likelihood shifts, by the parameter-free Jacobian (`src/bivariate_lognormal.jl:126`) — so `mu1`/`mu2` are means on the **log** scale and `rho12` is the **log-residual** correlation, not the raw-scale Pearson correlation (`src/bivariate_lognormal.jl:23`). Because the delegation is total, structured markers reach exactly the q=2 and q=4 engines of the two sections above, run on `log(y)` — **tested for `phylo`** (`test/test_bivariate_lognormal.jl:132`, q=4 across three tree heights; `:153`, q=2 on `mu1`/`mu2` only) **and for `relmat`** (`:166`, q=4). `animal` and `spatial` are **implemented but untested on this route**: the same delegation carries them, but nothing in `test/test_bivariate_lognormal.jl` instantiates either marker. Boundary: a non-positive **observed** response cell is refused (`ArgumentError`, `src/bivariate_lognormal.jl:152`; `test/test_bivariate_lognormal.jl:58`), and `method = :REML` is refused on **every** cell including the structured ones (`ArgumentError`, `src/bivariate_lognormal.jl:88`; `test/test_bivariate_lognormal.jl:67`, `:191`). |
 | Bivariate **Student-t** (`drm(bf(…, nu = …), Student())`, drmTMB's `biv_student()`) | `src/bivariate_student.jl:118` (included `src/DRM.jl:92`; family exported `src/DRM.jl:165`) | **Tested** — `test/test_bivariate_student.jl` (`test/runtests.jl:85`). Exact bivariate-t density, closed form (`src/bivariate_student.jl:166`). `sigma1`/`sigma2` are **scale** parameters, *not* marginal SDs (for `ν > 2` the marginal `SD = σ·√(ν/(ν−2))`); `rho12` is the **scatter** correlation; `nu` uses the `logm2` link `ν = 2 + exp(η)`, so `ν > 2` and the variance is finite (`test/test_bivariate_student.jl:57`). Block order mirrors drmTMB's dpars `mu1, mu2, sigma1, sigma2, nu, rho12` (`src/bivariate_student.jl:216`; `test/test_bivariate_student.jl:63`). **`nu` is shared across the two responses by construction** — one scalar mixing variable governs both margins, so there is no per-margin `nu1`/`nu2` and `bf` refuses one (`ArgumentError`, `src/gaussian_bivariate.jl:28`, called at `:81`; `test/test_bivariate_student.jl:72`); it may still vary across **rows** via `nu ~ x` (`src/bivariate_student.jl:147`), and defaults to `~ 1` when omitted (`test/test_bivariate_student.jl:83`). **Zero `rho12` is not independence** at finite `ν` (`src/bivariate_student.jl:22`). Boundary: residual-only — `phylo`/`relmat`/`animal`/`spatial` markers are a **deliberate rejection**, not a missing port (`ArgumentError`, `src/bivariate_student.jl:126`; `test/test_bivariate_student.jl:92`, which asserts the message says so), as is `method = :REML` (`src/bivariate_student.jl:120`). drmTMB 0.7.0's own `biv_student()` defers the identical request; re-verified live 2026-08-25 with the reproducing snippet at `src/bivariate_student.jl:86`. |
 | **Staged pair association** — `associate_pairs` / `latent_normal` / `association` / `PairAssociation` / `integration_diagnostics` (drmTMB's `associate_pairs()`) | `src/associate_pairs.jl:101` (included `src/DRM.jl:95`; exported `src/DRM.jl:180`, `src/DRM.jl:181`) | **Tested** — `test/test_associate_pairs.jl` (`test/runtests.jl:86`). A **two-stage, frozen-margin** estimator, not a joint model: two already-fitted univariate `drm` fits are coupled by a single latent-normal correlation `eta = 0.999999·tanh(alpha)`, fitted by bounded golden-section multistart (`src/associate_pairs.jl:124`, `:171`). **All five reviewed pair classes are implemented and recover the association** — `gaussian_bernoulli` and `gaussian_nbinom2` in closed form (`src/associate_pairs.jl:445`, `:465`), and `bernoulli_bernoulli` / `bernoulli_nbinom2` / `nbinom2_nbinom2` via a 1-D adaptive rectangle integral whose QuadGK error estimate is retained and surfaced by `integration_diagnostics` (`src/associate_pairs.jl:484`, `:509`); `test/test_associate_pairs.jl:63` (all five), `:115` (quadrature diagnostics). **The uncertainty is conditional on the frozen margins** — it ignores margin estimation error, and no simultaneous `eta` bands or profile intervals are offered, matching drmTMB (`src/associate_pairs.jl:540`; `test/test_associate_pairs.jl:167`). Boundary: the kernel must be explicit (`src/associate_pairs.jl:111`; `test/test_associate_pairs.jl:57`), only an intercept-only `association ~ 1` is implemented (`src/associate_pairs.jl:199`; `test/test_associate_pairs.jl:162`), `marginal = :AGHQ` is refused because QuadGK is not Liu–Pierce AGHQ (`src/associate_pairs.jl:105`), a **non-converged** margin is refused rather than frozen (`src/associate_pairs.jl:395`), a binomial margin must be literal 0/1 Bernoulli (`src/associate_pairs.jl:423`; `test/test_associate_pairs.jl:152`), and any pair outside the five reviewed classes is refused rather than approximated (`src/associate_pairs.jl:355`; `test/test_associate_pairs.jl:142`). |
@@ -261,19 +300,19 @@ above, and it does so by delegation rather than by a second engine.
 | Capability | Source | Status |
 |---|---|---|
 | `gaussian()` + `meta_V(v)` with **known diagonal** sampling variances; τ on the σ intercept | `src/gaussian_meta.jl:17` | **Tested** — `test/test_meta.jl` |
-| Bivariate known sampling covariance (`meta_vcov_bivariate`) | `src/meta_vcov_bivariate.jl` (A8, `src/DRM.jl:72`) | **Tested** (corrected 2026-09-02: was listed Absent; exported at `src/DRM.jl:183`) — `test/test_meta_vcov_bivariate.jl` (`test/runtests.jl:338`) |
+| Bivariate known sampling covariance (`meta_vcov_bivariate`) | `src/meta_vcov_bivariate.jl` (A8, `src/DRM.jl:72`) | **Tested** (corrected 2026-09-02: was listed Absent; exported at `src/DRM.jl:184`) — `test/test_meta_vcov_bivariate.jl` (`test/runtests.jl:408`) |
 | Deprecated `meta_known_V` parity stub | — | **Absent** in this worktree (no such symbol) |
 
 ## Inference
 
 | Method | Source | Status |
 |---|---|---|
-| Wald SEs + CIs (observed information) | `src/inference.jl`, `src/summary.jl:157` | **Tested** — `test/test_inference.jl`, `test/test_predict_se.jl` |
-| Profile-likelihood CIs (`profile_result`, `confint(:profile)`) | `src/inference.jl:124` | **Tested** — `test/test_profile_ci.jl` |
-| Parametric bootstrap (`bootstrap_ci`/`_summary`/`_result`, serial + threaded) | `src/inference.jl:708` | **Tested** — `test/test_bootstrap.jl`, `test/test_bootstrap_nongaussian.jl` |
-| REML for the **fixed-effect Gaussian location–scale** fit (`method=:REML`), with the model-selection guard | `src/gaussian_core.jl`, `src/comparison.jl:84` | **Tested** — `test/test_reml.jl` |
-| REML for **Gaussian mean `(1 \| g)`** (`method=:REML`, Woodbury Patterson–Thompson) | `src/gaussian_core.jl`, `src/gaussian_ranef.jl` | **Tested** (corrected 2026-09-02: `test/test_reml_ordinary_ranef.jl` is included at `test/runtests.jl:40`, not standalone) |
-| `reml_loglik` / `ml_loglik` / `estimation_method` accessors | `src/gaussian_core.jl` (exported `src/DRM.jl:89`) | **Tested** — `test/test_reml.jl` |
+| Wald SEs + CIs (observed information) | `src/inference.jl`, `src/summary.jl:233` | **Tested** — `test/test_inference.jl`, `test/test_predict_se.jl` |
+| Profile-likelihood CIs (`profile_result`, `confint(:profile)`) | `src/inference.jl:276` | **Tested** — `test/test_profile_ci.jl` |
+| Parametric bootstrap (`bootstrap_ci`/`_summary`/`_result`, serial + threaded) | `src/inference.jl:1328` | **Tested** — `test/test_bootstrap.jl`, `test/test_bootstrap_nongaussian.jl` |
+| REML for the **fixed-effect Gaussian location–scale** fit (`method=:REML`), with the model-selection guard | `src/gaussian_core.jl`, `src/comparison.jl:133` | **Tested** — `test/test_reml.jl` |
+| REML for **Gaussian mean `(1 \| g)`** (`method=:REML`, Woodbury Patterson–Thompson) | `src/gaussian_core.jl`, `src/gaussian_ranef.jl` | **Tested** (corrected 2026-09-02: `test/test_reml_ordinary_ranef.jl` is included at `test/runtests.jl:80`, not standalone) |
+| `reml_loglik` / `ml_loglik` / `estimation_method` accessors | `src/gaussian_core.jl` (exported `src/DRM.jl:177`) | **Tested** — `test/test_reml.jl` |
 | Epsilon-method bias correction (`bias_correct`, TMB sdreport analogue) | `src/bias_correct.jl:97` | **Tested** — `test/test_bias_correct.jl` |
 | **χ̄² (chi-bar-square) boundary inference** (Self–Liang / Stram–Lee mixture) | `src/chibar.jl` | **Tested** — `test/test_chibar.jl` (corrects older audit text that listed this as Absent) |
 | REML on the q=4 Laplace model (`method = :REML`, `reml_q4`) | `src/reml_q4.jl` | **Tested** — wired into the module; `test/test_reml_q4_allaxes.jl` (corrects older audit text that left this in `experimental/`) |
@@ -284,7 +323,7 @@ above, and it does so by delegation rather than by a second engine.
     comparable across fixed-effect structures). Wired cells: the fixed-effect
     Gaussian location–scale model (`test/test_reml.jl`); a single Gaussian mean
     intercept `(1 | g)` on the Woodbury spine (`test/test_reml_ordinary_ranef.jl`,
-    in the default suite at `test/runtests.jl:40`; #439); Location–Scale–Scale models
+    in the default suite at `test/runtests.jl:80`; #439); Location–Scale–Scale models
     (`sd(g) ~ z`, `sd(species, phylogenetic) ~ z`, and multi-component LSS;
     `test/test_lss_reml.jl`, `test/test_lss_sparse.jl`; #558); and the
     bivariate q=4 location–scale engine (`test/test_reml_q4_allaxes.jl`).
@@ -304,12 +343,12 @@ above, and it does so by delegation rather than by a second engine.
 
 | Capability | Source | Status |
 |---|---|---|
-| `lrtest`, `anova`, `aicc`, `weights`, `update` | `src/comparison.jl:54` | **Tested** — `test/test_comparison.jl` |
+| `lrtest`, `anova`, `aicc`, `weights`, `update` | `src/comparison.jl:65` | **Tested** — `test/test_comparison.jl` |
 | `aic` / `bic` / `dof` / `nobs` / `deviance` / `dof_residual` | `src/gaussian_core.jl`, `src/summary.jl` | **Tested** — `test/test_aic_bic.jl` |
 | `coef` / `vcov` / `confint` / `stderror` / `coeftable` | `src/inference.jl`, `src/summary.jl` | **Tested** — `test/test_inference.jl`, `test/test_summary.jl`, `test/test_summary_method.jl` |
 | `fixef` / `re_sd` / `vc` / `ranef` / `sigma` / `corpairs` | `src/gaussian_ranef.jl`, `src/summary.jl` | **Tested** — `test/test_ranef.jl`, `test/test_sigma.jl`, `test/test_corpairs.jl` |
 | `family` accessor | `src/gaussian_core.jl` | **Tested** — `test/test_family_accessor.jl` |
-| `heritability` / `repeatability` / `icc` with delta + profile CIs | `src/heritability.jl:246` | **Tested** — `test/test_heritability.jl` |
+| `heritability` / `repeatability` / `icc` with delta + profile CIs | `src/heritability.jl:289` | **Tested** — `test/test_heritability.jl` |
 | Drop-in parity accessors (StatsAPI surface) | `src/summary.jl` | **Tested** — `test/test_parity_accessors.jl` |
 
 ## Prediction, post-fit, residuals, simulation
@@ -335,8 +374,8 @@ A marshalling-friendly boundary for `drmTMB(..., engine = "julia")`
 |---|---|---|
 | `drm_bridge` (string/dict/named-tuple formula → fit → flattened `Dict`); univariate, bivariate, phylo-mean, and narrow q2 structured Gaussian fixtures | `src/bridge.jl:25` | **Tested** — `test/test_bridge.jl` and `test/test_bridge_q2_direct_export.jl` (assert bridge output equals native `drm` output for the admitted fixture cells) |
 | q2/q4 direct point-export payloads (`q2_point_export`, `q4_point_export`) | `src/bridge.jl` | **Tested** — `test/test_bridge_q2_direct_export.jl`, `test/test_bridge_q4_direct_export.jl`; point/export evidence only, not broad bridge or interval coverage evidence |
-| `drm_bridge_inference` (profile + bootstrap), **limited to the Gaussian phylo SD block** (`param=:resd`) | `src/bridge.jl:47` | **Tested** — `test/test_bridge.jl` |
-| Newick tree string parsing + small LRU cache | `src/bridge.jl:127` | **Tested** — `test/test_bridge.jl` |
+| `drm_bridge_inference` (profile + bootstrap), **limited to the Gaussian phylo SD block** (`param=:resd`) | `src/bridge.jl:298` | **Tested** — `test/test_bridge.jl` |
+| Newick tree string parsing + small LRU cache | `src/bridge.jl:579` | **Tested** — `test/test_bridge.jl` |
 | Full R-side glue / `engine="julia"` round-trip in drmTMB | (R repo) | **Absent here** — the Julia primitive is tested; the R package glue lives in the drmTMB repo and is out of scope for this audit |
 
 ## Marginal method selection (VA/ELBO)
@@ -357,16 +396,16 @@ To avoid overclaiming, these are confirmed **not** implemented in this worktree:
   predictor preprocessing, `src/missing_data.jl` (#49, `src/DRM.jl:136`) — pure
   data preprocessing, explicitly documented as NOT FIML; (2) the exported joint
   missing-predictor routes (`mi()`, `JointDrmFit`/`JointTwoDrmFit`/
-  `JointFiniteDrmFit`, `imputed`, `miss_control`) — five files included at
+  `JointFiniteDrmFit`, `imputed`, `miss_control`) — seven files included at
   `src/DRM.jl:137–143` (#563), tested by `test/test_joint_missing_*.jl`
-  (`test/runtests.jl:435–446`) — **Experimental**: exported for evaluation;
+  (`test/runtests.jl:505–516`) — **Experimental**: exported for evaluation;
   fenced for v1.0 (D-181); API and numerics may change; not covered by the
   R-parity scoreboard; (3) the Gaussian observed-response mask route,
   `src/gaussian_core.jl` (`_observed_response_mask`, `:320`; #517, commit
   `53141006`); (4) missing-response handling on the location-scale-scale
   `sd()` routes, `src/gaussian_lss.jl` (`has_missing_response`; #559, commit
   `140460a0`), **Tested** — `test/test_lss_missing_response.jl`
-  (`test/runtests.jl:68`). Still absent: general multiple imputation for
+  (`test/runtests.jl:114`). Still absent: general multiple imputation for
   missing predictors outside the joint-model routes, and an `na.action`-style
   option.
 - **χ̄² boundary inference** — see Inference table.

@@ -118,9 +118,10 @@ exception: because `log y` is exactly Gaussian, its `phylo`/`relmat`
 structured markers on the mean delegate WHOLESALE to `Gaussian()` on
 `log y` (exact, not a Laplace approximation) rather than the shared
 non-Gaussian sparse path; `animal`/`spatial` are not implemented for
-`LogNormal()`. So put predictors on `sigma` for Gaussian freely; for the
-count/proportion families, vary the mean and keep dispersion constant when
-adding a structured or phylogenetic effect.
+`LogNormal()`. So put predictors on `sigma` for Gaussian freely; on the
+phylogenetic Laplace path NB2, Gamma and Beta also accept `sigma ~ x`, but
+`relmat`/`animal`/`spatial` and `BetaBinomial()` require a constant `sigma`,
+and Poisson/Binomial carry no dispersion parameter at all.
 
 [`CumulativeLogit`](@ref) (ordinal) carries an ordinary random intercept
 `(1 | g)` or an *independent* random slope `(0 + x | g)` on `mu` via the same

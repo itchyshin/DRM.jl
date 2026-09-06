@@ -3,10 +3,13 @@
 !!! note "Status — Implemented"
     Mirrors drmTMB's [Implementation map](https://itchyshin.github.io/drmTMB/articles/implementation-map.html). Where the **source map** lists *files* and the **model map** lists *capability status*, this page maps each **modelling feature → the numerical method that fits it → the fitter entry point** in the source. All entries are taken from `src/`.
 
-Every fit minimises a negative log-likelihood by L-BFGS. Most routes take their
-gradient from ForwardDiff; the verified sparse engines below instead supply an
-exact O(p) analytic gradient, because ForwardDiff duals do not flow through the
-sparse CHOLMOD factorisation those routes rely on. The rows below differ in
+Every fit minimises a negative log-likelihood by L-BFGS. Most routes differentiate the
+whole objective with ForwardDiff. The verified sparse engines below instead
+assemble an exact O(p) implicit-function gradient in which the CHOLMOD-blocked
+log-determinant derivatives are Takahashi selected-inverse traces, because
+ForwardDiff duals do not flow through the sparse CHOLMOD factorisation those
+routes rely on; every other derivative in that gradient is still single-level
+ForwardDiff. The rows below differ in
 **how the random-effect / correlation integral is handled**.
 
 ## The verified engine (phylogenetic q=4 PLSM)

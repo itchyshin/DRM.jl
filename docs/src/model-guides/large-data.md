@@ -14,11 +14,11 @@ consequence is near-linear scaling in the number of tips.
 
 The biological per-dimension-variance model (a 4×4 Λ: a separate phylogenetic
 variance per axis plus cross-covariance, `nrep = 4` replicates) was timed end to
-end with the O(p) sparse-precision sampler. Iteration counts stay flat and the
-per-observation logLik is stable as the number of tips grows, which is the
-signature of near-linear scaling. The timings, the fitted scaling exponent and
-the caveats live in `report/comparison-grid.md`; the harness is
-`bench/run_scaling.jl`.
+end with the O(p) sparse-precision sampler. Wall time grows close to
+linearly with the number of tips across the `p` grid, and the fit quality holds
+up as the grid grows: iteration counts stay flat and the per-observation logLik
+stays consistent. The timings, the fitted scaling exponent and the caveats live
+in `report/comparison-grid.md`; the harness is `bench/run_scaling.jl`.
 
 !!! note "On head-to-head claims"
     The scaling result above is measured for DRM.jl alone, on a synthetic

@@ -36,10 +36,10 @@ Same model, same real `q4_p100` data, same Laplace ML marginal as drmTMB
 
 | | drmTMB | DRM.jl |
 |---|---|---|
-| single fit (p=100) | 2.48 s, false-conv | **1.14 s, converged → 2.18× faster** |
+| single fit (p=100) | false convergence (code 8) | **converged, and faster on this fixture** |
 | logLik | −256.52 | −256.51 (matches) |
-| O(p) scaling to p=10,000 | not attempted at that scale (measured O(p^1.27) to p=3000, #486) | **~113 s, k≈1.08 (near-linear)** |
-| Wald SEs at the variance boundary | all-NaN (non-PD Hessian) | **valid for 16/17 params** |
+| scaling in the number of tips | paired head-to-head measured separately (#376) — comparable or faster at the larger tip counts | **near-linear over the measured range** — a single-engine property, not a head-to-head win |
+| Wald SEs at the variance boundary | all-NaN (non-PD Hessian) | **finite SEs for every identified parameter** |
 
 Full grid and honest caveats: [report/comparison-grid.md](report/comparison-grid.md).
 
@@ -95,8 +95,8 @@ q=4 phylogenetic location–scale (PLSM) route — see
 Run the head-to-head and the O(p) scaling curve:
 
 ```bash
-julia --project=. bench/run_sparse_tmb_nd.jl     # 2.18× vs drmTMB, p=100
-julia --project=. bench/run_scaling.jl           # O(p) curve to p=10,000
+julia --project=. bench/run_sparse_tmb_nd.jl     # the p=100 head-to-head single fit
+julia --project=. bench/run_scaling.jl           # the tip-count scaling curve
 ```
 
 ## Repository layout (mirrors GLLVM.jl)
@@ -149,8 +149,9 @@ drmTMB-parity gate (RCall vs. drmTMB v0.1.3 outputs) lives under opt-in
 `DRM_PARITY_TESTS=1` ([#17](https://github.com/itchyshin/DRM.jl/issues/17)
 closed).
 
-**Verified engine (foundation):** the q=4 ML location-scale single fit — 2.18×
-over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
+**Verified engine (foundation):** the q=4 ML location-scale single fit — faster
+than drmTMB on the verified p=100 fixture, near-linear scaling in the number of
+tips, valid CIs where drmTMB's Hessian is singular.
 **Interval claims are capability parity, not coverage** — the R↔Julia ledger's
 `coverage_claimed` fences are permanent documented boundaries by owner decision
 (D-179 #4, reaffirmed D-180 #2); measured coverage campaigns exist in the
