@@ -9,11 +9,15 @@
      kept the marker line, and the next deploy (5bedeea35) reverted it inside
      six hours.
 
-     Target is ./dev/, which is rebuilt from main on every push. ./stable/ is
-     rebuilt only by a version tag: it is still the v0.7.0 build (2026-08-28),
-     and its landing page renders the hero front matter as raw text because that
-     tag predates the "@raw html" fence added in the landing-page work (PR #660).
-     Once a release tag has rebuilt stable/, point this back at ./stable/.-->
+     TARGET IS ./dev/ BY DECISION (Shinichi, 2026-09-06), not as a stopgap.
+     ./dev/ is rebuilt from main on every push, so the front door is always
+     current. ./stable/ is rebuilt only by a version tag, and tags are rare in
+     this repo, so pointing the root there puts a stale page on the front door
+     between releases -- which is how the v0.7.0 build sat there from 2026-08-28
+     showing a landing page whose hero front matter rendered as raw text.
+
+     Do not "restore" this to ./stable/ after a release tag. Released versions
+     stay reachable from the version picker.-->
 <!DOCTYPE html>
 <meta charset="utf-8"/>
 <meta http-equiv="refresh" content="0; url=./dev/"/>
