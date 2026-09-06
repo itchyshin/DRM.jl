@@ -310,12 +310,12 @@ end
     @test reml_loglik(fit) != ml_loglik(fit)
 end
 
-# The spatial covariance helper is SHARED: the q=4 route reaches it today via
-# `_q4_structured_precision`, and the q=2 spatial route reaches the same code once PR #658
-# admits it (on this branch's base, q=2 spatial is still refused -- see the rejection
-# testset above, which stays true). Pinning the vector admission here as well means the q=2
-# route inherits settled behaviour rather than re-discovering it: a 1-D transect written as
-# a plain Vector is read as a G-by-1 column, and the Matrix path is unchanged.
+# The spatial covariance helper `_spatial_covariance_from_coords` is SHARED by the q=2 and
+# q=4 spatial routes. PR #658 merged while this branch was open -- it both admitted q=2
+# spatial AND extracted the helper -- so the fix lives in the helper and BOTH routes gain it
+# in one change, which is what makes this q=2 testset real coverage rather than a pin on
+# inherited behaviour: a 1-D transect written as a plain Vector is read as a G-by-1 column,
+# and the Matrix path is unchanged.
 @testset "q2 spatial (inherited helper): coords may be a length-G vector" begin
     G = 3
     v = [0.0, 2.0, 5.0]
