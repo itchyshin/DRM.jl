@@ -98,6 +98,7 @@ DRM._bridge_dpars
 DRM._bridge_dpars_newdata
 DRM._bridge_meta_parts
 DRM._bridge_trials
+DRM._bridge_mixture_family_hint
 DRM.drm_bridge_q2_known_precision
 DRM.drm_bridge_q2_phylo
 DRM.fit_mixed_family
