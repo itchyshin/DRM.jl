@@ -6,6 +6,32 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## Unreleased
 
+- **The #574 resolvable-scale guard had zero margin, so the #461 runaway degenerate optimum was
+  still reachable (`src/location_only.jl`).** #574 refused the sparse phylogenetic location-only
+  Woodbury objective where the residual variance is "below machine precision relative to the
+  phylogenetic variance", coded as `sigma^2 / sigma_phy^2 >= eps`. The relative error of that
+  Woodbury subtraction grows as `eps * (sigma_phy^2 / sigma^2)`, so `eps` is exactly the point at
+  which NO digits survive: the bar sat *on* the cliff rather than back from it, and the objective
+  was still wrong just above it. Measured 2026-09-05 against a dense `V = sigma^2 I + sigma_phy^2 C`
+  oracle on the #461 fixture (G = 100, one row per species) at `log(sigma_phy) = -26.9176`: the
+  Woodbury log-likelihood tracks the oracle to 1.37e-05 relative at `log(sigma) = -40.0`, then
+  FLIPS SIGN at `log(sigma) = -44.0` (`+4.37745e+25` against the oracle's `-3.15149e+25`). That
+  break is at `log(sigma) - log(sigma_phy) = -17.086`, INSIDE #574's bar of `-18.022`, and it is
+  the whole #461 runaway: `Optim` reports convergence there, `sigma = 7.75e-20`,
+  `sd_phylo = 2.04e-12`, `loglik = +4.38e+25`. Whether the optimiser walks into that sliver is
+  decided by rounding, so `test/test_bootstrap_marginal.jl`'s `#461` testset passed on x86_64
+  Linux CI and failed on aarch64 macOS at the same commit with the same seeds and B = 60
+  (`res.failed == 0` evaluated `1 == 0`; `res.used == 60` evaluated `59 == 60` -- replicate 38).
+  The bar is now the standard rule for a cancellation-limited difference: keep at least HALF the
+  mantissa, `sigma^2 / sigma_phy^2 >= sqrt(eps)`, i.e. `log(sigma) - log(sigma_phy) >=
+  0.25 * log(eps)` = `-9.011`. It refuses `sigma / sigma_phy < 1.2e-04`; on the #461 fixture the
+  60 bootstrap refits span `[-1.033, +1.439]`, about eight nats clear of it. This is a
+  floating-point representation limit, not a statistical lower bound; `algorithm = :gls` remains
+  available for a genuine boundary estimate. New path-independent pin in
+  `test/test_lss_phylo.jl`: every `(log sigma, log sigma_phy)` pair the guard ADMITS must agree
+  with the dense oracle to 1e-06 relative -- the property, not the constant, so re-loosening the
+  bar fails it (17 assertions and 1 error under #574's value).
+
 - **REML on the residual-only bivariate Gaussian route (#624; drmTMB #1142).** `drm(bf(mu1 = y1 ~ x, mu2 = y2 ~ x, sigma1 = ~1, sigma2 = ~1, rho12 = ~1), Gaussian(); method = :REML)` fits instead of refusing. The old message ("`method = :REML` needs random effects to restrict") mistook "no random effects" for "nothing to restrict": REML here integrates the MEAN fixed effects `beta_mu1`/`beta_mu2` out of the Gaussian likelihood under the row-wise 2x2 residual covariance — the classical Patterson–Thompson/SUR case, and the same set native drmTMB hands to TMB's Laplace approximation for this cell (whose Laplace step is EXACT, the integrand being quadratic). Closed form: profile `beta` by GLS, add `-0.5*logdet(sum_i Z_i' S_i^-1 Z_i)` and the `+(p_beta/2)*log(2*pi)` normalising constant, and optimise over `(beta_sigma1, beta_sigma2, beta_rho)` alone. Same-target against drmTMB `engine = "tmb"` with `REML = TRUE` on the committed fixture: logLik `-97.021205818372` on both engines (difference 0.0 at 12 decimal places), coefficients to 4.33e-7, standard errors to 6.54e-7 relative. `vcov` reports the joint mean block `H^-1 + G Var(phi) G'` that TMB's `sdreport()` reports. The ML route is unchanged (same fixture, `-90.202703298791` on both engines, difference 4.8e-13). `meta_V` plus `:REML` keeps its permanent refusal — that route marginalises nothing. `test/test_reml_reml_biv_residual.jl`.
 - **Inference on a missing-response ("response mask") Gaussian fit: `is_converged` read false on a
   converged fit, and every bootstrap replicate failed (#646).** Both defects sat downstream of the
