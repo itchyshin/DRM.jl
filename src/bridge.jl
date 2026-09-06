@@ -1585,6 +1585,8 @@ function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = 
         # refused BY NAME rather than reported silently under R's names.
         labels === nothing ||
             _bridge_check_coef_labels_fidelity(fit, labels, block_ranges, raw_names, names)
+        labels === nothing ||
+            _bridge_check_lss_coef_labels_fidelity(fit, labels, raw_names, names)
         public_to_raw = Dict{String,String}(pub => raw for (pub, raw) in zip(names, raw_names))
         return names, vals, raw_names, public_to_raw
     end
@@ -1764,6 +1766,78 @@ function _bridge_check_coef_labels_fidelity(fit, labels::_BridgeFormulaLabels,
             "coefficients under R's names. Give the column an explicit, treatment-coded " *
             "level order in R before fitting (`factor(x, levels = c(...))`, not an ordered " *
             "factor or a `contrasts` attribute), or use `engine = \"tmb\"`.")
+    end
+    return nothing
+end
+
+# The location-scale-scale `sd_<group>` / `sdphy_<group>` formula blocks are
+# rendered by `_bridge_lss_public_to_raw!`, NOT by
+# `_bridge_rendered_regression_blocks`, which skips them by construction
+# (`_bridge_lss_form_key(param) === nothing || continue`). So on the echo
+# path above they were pasted with R's names and never compared against the
+# design this side actually built, and the fidelity check that closes that
+# hole for `mu`/`sigma` said nothing about them.
+#
+# Measured 2026-09-05, drmTMB origin/main 2fcbb0fbf against DRM.jl aee371cc9,
+# before this function existed: `bf(y ~ x + (1 | study), sigma ~ z,
+# sd(study) ~ s_chr)`, where `s_chr` is a character column whose R
+# locale-collated level order ("alpha", "Beta", "gamma") is not the
+# code-point order Julia sorts a bare `Vector{String}` into ("Beta", "alpha",
+# "gamma"). Both engines converged, both reported logLik -69.917488 (diff
+# 2.98e-13) and identical coefficient names, `mu` and `sigma` agreed to
+# 2.1e-11 -- and the `sd` block was off by 1.3853, with `s_chrBeta` reported
+# as +0.692648 by `engine = "tmb"` and -0.692648 by `engine = "julia"`,
+# the baseline having moved from "alpha" to "Beta". Declaring the column as
+# a factor in R (`s_fac`) made the same fit faithful to 1.5e-10, which is
+# what identifies the level order as the mechanism.
+#
+# Only the SINGLE-COMPONENT route is compared. The multi-IID route qualifies
+# each public spelling with a `"<group>: "` prefix that the R side does not
+# supply (see `_bridge_lss_public_to_raw!`), so comparing it here would
+# refuse a design that is in fact faithful; it stays uncompared, as it was.
+function _bridge_check_lss_coef_labels_fidelity(fit, labels::_BridgeFormulaLabels,
+        raw_names::Vector{String}, echoed::Vector{String})
+    form = hasproperty(fit, :formula) ? fit.formula : nothing
+    form === nothing && return nothing
+    forms = hasproperty(form, :forms) ? form.forms : Pair{Symbol,Any}[]
+    block_names = Dict(p => ns for (p, ns) in fit.coefnames)
+    position = Dict(name => i for (i, name) in enumerate(raw_names))
+    for (key, rhs) in forms
+        block = _bridge_lss_form_key(key)
+        block === nothing && continue
+        haskey(block_names, block) || continue
+        rendered = _bridge_render_formula_block(form, block, rhs, labels; label_scope = key)
+        rendered === nothing && continue
+        raw, public = rendered
+        # `public === raw` is the "nothing to vouch for" signal used by
+        # `_bridge_rendered_regression_blocks`; and a block whose fitted
+        # columns are not exactly this formula's is the multi-group route.
+        public === raw && continue
+        block_names[block] == raw || continue
+        prefix = "$(block)_"
+        supplied = String[]
+        aligned = true
+        for rawname in raw
+            idx = get(position, "$(block)_$(rawname)", 0)
+            if idx == 0 || !startswith(echoed[idx], prefix)
+                aligned = false
+                break
+            end
+            name = echoed[idx]
+            push!(supplied, name[nextind(name, firstindex(name), length(prefix)):end])
+        end
+        aligned || continue
+        supplied == public || error(
+            "drm_bridge: coef_labels[\"$block\"] does not match the design DRM.jl built " *
+            "for the `$key` formula: R supplied $(supplied) but DRM.jl renders $(public) " *
+            "from its own model matrix (Julia raw columns: $(raw)). The two engines " *
+            "disagree on the design columns of a group-level SD formula -- usually a " *
+            "factor or character column whose level order differs between the R data and " *
+            "what reached Julia (DRM.jl codes every factor with treatment contrasts " *
+            "against its first level, in the level order it received). Refusing to report " *
+            "DRM.jl's coefficients under R's names. Give the column an explicit, " *
+            "treatment-coded level order in R before fitting (`factor(x, levels = c(...))`), " *
+            "or use `engine = \"tmb\"`.")
     end
     return nothing
 end
