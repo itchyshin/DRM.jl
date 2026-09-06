@@ -8,9 +8,8 @@ Choose the path that matches your next question:
 
 - [Getting started](getting-started.md) — install DRM.jl and fit, inspect, and
   calculate confidence intervals for a first Gaussian location-scale model.
-- [R ↔ Julia bridge](r-julia-bridge.md) — the optional
-  `drmTMB(..., engine = "julia")` backend for supported models and its current
-  boundary.
+- [R ↔ Julia bridge](r-julia-bridge.md) — the experimental
+  `drmTMB(..., engine = "julia")` route and the cells it admits today.
 - [Rosetta (R ↔ Julia)](rosetta.md) — translate terminology and common
   workflows between drmTMB and DRM.jl.
 - [What can I fit today?](model-guides/model-map.md) — the current capability

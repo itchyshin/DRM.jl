@@ -110,6 +110,25 @@ cells <- list(
     },
     formula = function() bf(cbind(successes, failures) ~ x),
     family  = function() binomial()
+  ),
+  list(
+    # skew_normal (A4, 2026-09-05): the SE limb for drmTMB's `skew_normal()`
+    # through engine = "julia" (mu, sigma, nu; public moment form on both
+    # sides). Same build as the skew_normal cell in tools/parity_fixture.R.
+    capability_id = "skew_normal",
+    cell_id = "se_skew_normal",
+    label   = "Skew-normal (mu ~ x, sigma ~ z, nu ~ 1), fixed effects",
+    build   = function() {
+      set.seed(20260608); n <- 500; nu <- 1.6
+      x <- rnorm(n); z <- rnorm(n)
+      mu <- 0.20 + 0.45 * x; sigma <- exp(-0.35 + 0.18 * z)
+      delta <- nu / sqrt(1 + nu^2); ms <- delta * sqrt(2 / pi)
+      omega <- sigma / sqrt(1 - ms^2); xi <- mu - omega * ms
+      data.frame(y = xi + omega * (delta * abs(rnorm(n)) + sqrt(1 - delta^2) * rnorm(n)),
+                 x = x, z = z)
+    },
+    formula = function() bf(y ~ x, sigma ~ z, nu ~ 1),
+    family  = function() skew_normal()
   )
 )
 

@@ -14,28 +14,23 @@ consequence is near-linear scaling in the number of tips.
 
 The biological per-dimension-variance model (a 4×4 Λ: a separate phylogenetic
 variance per axis plus cross-covariance, `nrep = 4` replicates) was timed end to
-end with the O(p) sparse-precision sampler:
-
-| p (tips, ×4 obs) | wall | iters | per-obs logLik |
-|---|---|---|---|
-| 100 | 0.77 s | 37 | −2.09 |
-| 1000 | 4.49 s | 15 | −2.36 |
-| 5000 | 49.5 s | 22 | −2.35 |
-| **10000** | **112.9 s** | 23 | −2.61 |
-
-The fitted scaling exponent is **k = 1.08 — near-perfect O(p)**: iteration counts
-stay flat and the per-observation logLik is stable as `p` grows. These are
-reproduced numbers (`report/comparison-grid.md`); the harness is
+end with the O(p) sparse-precision sampler. Iteration counts stay flat and the
+per-observation logLik is stable as the number of tips grows, which is the
+signature of near-linear scaling. The timings, the fitted scaling exponent and
+the caveats live in `report/comparison-grid.md`; the harness is
 `bench/run_scaling.jl`.
 
 !!! note "On head-to-head claims"
-    The O(p) result above is measured for DRM.jl. A paired drmTMB head-to-head on
-    the same nrep=4 synthetic grid was measured on Totoro (#376;
-    `docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`): Julia faster at
-    p=100 (~3.3×); at p≥1000 drmTMB 0.6.0 was comparable or faster under that
-    protocol. The older “N× faster at p=10,000” extrapolation is **retired**.
-    The measured single-fit comparison on real q4_p100 data remains **2.18× over
-    drmTMB**; see the [model map](model-map.md) and `HANDOVER.md`.
+    The scaling result above is measured for DRM.jl alone, on a synthetic
+    near-balanced tree grid with equal branch lengths and replicates. A paired drmTMB head-to-head on
+    the same `nrep = 4` grid was measured separately on Totoro against drmTMB
+    0.6.0 (#376;
+    `docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`) and does **not**
+    show DRM.jl faster everywhere: Julia leads at the smallest tip count, and
+    drmTMB is comparable or faster at larger ones under that protocol. Any
+    extrapolated "N× faster" figure is **retired**. Read the numbers in
+    `report/comparison-grid.md` and `HANDOVER.md` rather than quoting a ratio
+    here.
 
 ## Why it scales
 
@@ -46,7 +41,7 @@ reproduced numbers (`report/comparison-grid.md`); the harness is
 - **Exact O(p) gradient.** The implicit-function gradient reuses a Takahashi
   selected inverse — the entries of the inverse that the sparse Cholesky already
   touches — instead of an O(p²) or O(p³) dense differentiation. This is the
-  difference that lets the fit reach p = 10,000 with flat iteration counts.
+  difference that keeps the iteration cost near-linear in the number of tips.
 - **A precision sampler for uncertainty.** Posterior draws of the random effects
   come from the same sparse precision (`Cov(û) ≈ P⁻¹`), so bootstrap and
   conditional-mode work stays O(p) too.
@@ -62,7 +57,9 @@ reproduced numbers (`report/comparison-grid.md`); the harness is
   are independent refits; profile-likelihood endpoints are independent per
   coefficient. `confint(fit; method = :profile, threads = true)` profiles
   coefficients in parallel when the objective is thread-safe — set
-  `JULIA_NUM_THREADS` to engage it.
+  `JULIA_NUM_THREADS` to engage it. Within a single coefficient the lower and
+  upper endpoint chains stay serial, so the gain scales with the number of
+  coefficients profiled, not with threads per coefficient.
 - **Check the fit cheaply.** [`check_drm`](@ref) reports convergence and
   covariance conditioning without re-fitting — useful before committing to an
   expensive bootstrap.

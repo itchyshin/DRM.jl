@@ -442,6 +442,7 @@ _shard_include("test_reml_q4_allaxes.jl")
 # Bivariate q2 structured REML (#470): marginalises beta_mu1/beta_mu2 only (the
 # axes with a random effect on this route); sigma1/sigma2/rho12 stay outer.
 _shard_include("test_reml_q2_structured.jl")
+_shard_include("test_q2_structured_vcov.jl")
 _shard_include("test_reml_baseline_ladder.jl")
 # Covariate dispersion (`sigma ~ x`) with a mean-only phylo RE for NB2 (#164):
 # the per-observation log-dispersion (vector-nuisance) generalisation of the

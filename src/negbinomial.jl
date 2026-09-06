@@ -406,6 +406,17 @@ but conditioned on `y ≥ 1`: `P(k) = NB(k) / (1 − NB(0))`. Mirrors `drmTMB`'s
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), TruncatedNegBinomial2(); data = dat)
 ```
+
+Adding an `hu` part fits the HURDLE NB2 instead: `P(0) = logistic(X_huᵀβ)` and the
+positive counts follow this zero-truncated NB2. Zeros are then allowed in the
+response. This is `drmTMB`'s spelling of the hurdle model — it has no
+`hurdle_nbinom2()` constructor — and it fits the same likelihood as
+[`NegBinomial2`](@ref) with `hu`, which is what the call delegates to (so the
+returned fit reports `NegBinomial2` as its family).
+
+```julia
+fit = drm(bf(y ~ x, sigma ~ 1, hu ~ w), TruncatedNegBinomial2(); data = dat)
+```
 """
 struct TruncatedNegBinomial2 end
 
@@ -422,6 +433,28 @@ function drm(f::DrmFormula, fam::TruncatedNegBinomial2; data, g_tol::Real = 1e-8
         (isempty(re) && mv === nothing && st === nothing) ||
             error("TruncatedNegBinomial2() currently supports fixed effects only")
     end
+    # Refuse, never silently drop, a formula part this family does not consume.
+    # Before this guard `drm(bf(y ~ x, sigma ~ 1, zi ~ w), TruncatedNegBinomial2())`
+    # dropped `zi` from the likelihood without a word and fitted the plain
+    # zero-truncated model — a different model than the caller asked for. Only the
+    # `hu` hurdle part is consumed (below); everything else is an error here.
+    for (pname, _) in f.forms
+        pname in (:mu, :sigma, :hu) ||
+            error("TruncatedNegBinomial2() supports `mu`, `sigma`, and an optional `hu` " *
+                  "hurdle part; got an unsupported formula part `$pname`. A `zi` " *
+                  "zero-inflation part belongs to NegBinomial2(), whose count " *
+                  "component is untruncated -- a different model, not a spelling.")
+    end
+    # Hurdle NB2, spelled drmTMB's way. drmTMB has no `hurdle_nbinom2()`
+    # constructor: `truncated_nbinom2()` plus an `hu ~ ...` part IS its hurdle
+    # model (R/family.R, R/drmTMB.R `model_type = if (has_hu) "hurdle_nbinom2"`),
+    # and the truncated NB2 is exactly the positive component of that hurdle. The
+    # likelihood is the one `NegBinomial2()` + `hu` already fits — P(0) = logistic(
+    # X_huᵀβ), positive counts zero-truncated NB2 — so delegate to it rather than
+    # duplicate a second copy of the same nll. The returned fit therefore reports
+    # `NegBinomial2` as its family; the blocks, coefficients, and log-likelihood
+    # are identical either way.
+    haskey(rhs, :hu) && return drm(f, NegBinomial2(); data = data, g_tol = g_tol)
     y, Xμ, nmμ = _design(f.response, rhs[:mu], data)
     _, Xσ, nmσ = _design(f.response, get(rhs, :sigma, ConstantTerm(1)), data)
     all(yi -> yi ≥ 1 && isinteger(yi), y) ||
