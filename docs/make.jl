@@ -94,10 +94,22 @@ makedocs(
 # https://itchyshin.github.io/DRM.jl/previews/PR<N>/ so phone/GitHub review
 # links work. With false, Documenter still posts documenter/deploy SUCCESS
 # pointing at that URL while Deploying: ✘ → 404.
-DocumenterVitepress.deploydocs(;
-    repo = "github.com/itchyshin/DRM.jl.git",
-    target = joinpath(@__DIR__, "build"),
-    devbranch = "main",
-    branch = "gh-pages",
-    push_preview = true,
-)
+# DRM_DOCS_DEPLOY=false makes this a BUILD-ONLY run (no gh-pages contact).
+# Documenter.yml sets it on pull_request runs. Rationale, in full, there: a run
+# that pushes to gh-pages has to join the repo-wide serialisation group, and a
+# job in that group can be evicted while pending -- which silently blocks the
+# REQUIRED `docs` check. A build-only run stays out of the group, so the gate
+# measures the build and nothing else. The build itself is unchanged: makedocs
+# above still runs with `warnonly = false`, so a broken docstring, link or
+# example fails the check exactly as before.
+if get(ENV, "DRM_DOCS_DEPLOY", "true") == "true"
+    DocumenterVitepress.deploydocs(;
+        repo = "github.com/itchyshin/DRM.jl.git",
+        target = joinpath(@__DIR__, "build"),
+        devbranch = "main",
+        branch = "gh-pages",
+        push_preview = true,
+    )
+else
+    @info "DRM_DOCS_DEPLOY=false — built only, skipping deployment to gh-pages."
+end
