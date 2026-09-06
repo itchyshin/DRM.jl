@@ -618,6 +618,11 @@ function _bridge_family(family::AbstractString)
     fam in ("gaussian", "normal") && return Gaussian()
     fam in ("biv_gaussian", "gaussian_bivariate", "bivariate_gaussian") && return Gaussian()
     fam in ("student", "student_t", "student-t") && return Student()
+    # drmTMB's `skew_normal()` (dpars mu, sigma, nu — the slant rides in the
+    # same `nu` slot Student uses). Public moment parameterisation on BOTH
+    # sides (mu = E[y], sigma = SD[y], nu = Azzalini's alpha), so the bridged
+    # coefficients are the native ones, not a re-parameterisation.
+    fam in ("skew_normal", "skewnormal") && return SkewNormal()
     # drmTMB's `biv_student()` — bivariate-ness is a FORMULA property here.
     fam in ("biv_student", "student_bivariate", "bivariate_student") && return Student()
     fam == "poisson" && return Poisson()

@@ -189,12 +189,29 @@ end
 # `dir`), and a feasibility flag. A failed trial is a numerical endpoint failure,
 # never evidence of an unbounded interval. A finite negative gap after the bounded
 # expansion budget is instead reported as `:no_crossing` in the searched range.
+#
+# A single unevaluable TRIAL, however, is not an unresolvable ENDPOINT (#651). The
+# nuisance solve is a numerical procedure, so an individual profile point can fail
+# to converge while its neighbours solve cleanly; on the canonical (whitened)
+# location-scale route the accepted arms sit close enough to the stationarity
+# threshold that a last-bit platform difference decides it. Both phases therefore
+# CONTRACT toward a point already known to be feasible, on the bounded budget
+# `maxcontract`, instead of abandoning the arm:
+#   * during expansion, `thi` is halved toward the feasible `tlo`;
+#   * during refinement, the TRIAL is halved toward `tlo`, leaving the maintained
+#     bracket -- and its proof that a crossing exists -- untouched.
+# Every loop stays bounded, so the search still terminates in at most
+# `(maxexpand + maxnewton + 1) * (1 + maxcontract)` evaluations. Contraction only
+# postpones failure: an arm that cannot be evaluated anywhere down to `xtol` is
+# still reported as a failed, signed-infinity endpoint.
 function _ls_profile_root_result(evalh, x0; dir::Float64, init::Float64,
                                  cancellation::Float64 = 0.0,
                                  maxexpand::Int = 40, maxnewton::Int = 30,
+                                 maxcontract::Int = 8,
                                  ftol::Float64 = 1e-7, xtol::Float64 = 1e-8)
     evaluations = Ref(0)
     gradient_evaluations = Ref(0)
+    contractions = Ref(0)
     terminal_nuisance = Ref{Any}(nothing)
     function evaluate(t)
         evaluations[] += 1
@@ -238,6 +255,7 @@ function _ls_profile_root_result(evalh, x0; dir::Float64, init::Float64,
         endpoint_failed=endpoint_failed, reason=reason,
         bracket_expansions=bracket_expansions, root_iterations=root_iterations,
         evaluations=evaluations[], gradient_evaluations=gradient_evaluations[],
+        contractions=contractions[],
         candidate=Float64(candidate), residual=Float64(residual),
         cancellation=Float64(allowance),
         nuisance=terminal_nuisance[],
@@ -263,6 +281,17 @@ function _ls_profile_root_result(evalh, x0; dir::Float64, init::Float64,
     expansions = 0
     for _ in 1:maxexpand
         current = evaluate(thi)
+        # #651: an unevaluable trial does not prove the endpoint is unreachable.
+        # `tlo` is feasible -- h(0) < 0 holds by construction at the fitted
+        # optimum, and every later `tlo` was itself evaluated -- so halve toward
+        # it on a bounded budget rather than abandoning the arm.
+        contracted = 0
+        while !current.ok && contracted < maxcontract && thi - tlo > xtol
+            thi = tlo + (thi - tlo) / 2
+            contracted += 1
+            contractions[] += 1
+            current = evaluate(thi)
+        end
         current.ok || return make_result(dir > 0 ? Inf : -Inf, false, false, true,
                                          current.reason, expansions, 0, x0 + dir * thi, current.gap,
                                          current.cancellation)
@@ -279,10 +308,18 @@ function _ls_profile_root_result(evalh, x0; dir::Float64, init::Float64,
         thi *= 1.6
         expansions += 1
     end
-    current.gap > current.cancellation ||
-        return make_result(dir > 0 ? Inf : -Inf, false, true, false, :no_crossing,
-                           expansions, 0, x0 + dir * (thi / 1.6), current.gap,
+    if !(current.gap > current.cancellation)
+        contractions[] == 0 &&
+            return make_result(dir > 0 ? Inf : -Inf, false, true, false, :no_crossing,
+                               expansions, 0, x0 + dir * (thi / 1.6), current.gap,
+                               current.cancellation)
+        # The expansion budget ran out inside a region whose trials could not be
+        # evaluated. Absence of a crossing was never established there, so this
+        # is a failed endpoint, NOT an unbounded interval (#651, fail closed).
+        return make_result(dir > 0 ? Inf : -Inf, false, false, true, :infeasible_region,
+                           expansions, 0, x0 + dir * thi, current.gap,
                            current.cancellation)
+    end
 
     # Guarded Newton on [tlo, thi]; h(tlo) < 0 ≤ h(thi). Every accepted
     # endpoint is an actually evaluated candidate with a small residual.
@@ -309,6 +346,17 @@ function _ls_profile_root_result(evalh, x0; dir::Float64, init::Float64,
         tn = (isfinite(sd) && sd > 0) ? t - current.gap / sd : (tlo + thi) / 2
         t = (tlo < tn < thi) ? tn : (tlo + thi) / 2
         current = evaluate(t)
+        # #651: the maintained bracket still proves a crossing (h(tlo) < 0 <=
+        # h(thi)); an unevaluable interior trial only means THIS point could not
+        # be solved. Halve the trial toward the feasible `tlo` on a bounded
+        # budget, leaving the bracket and its proof untouched.
+        contracted = 0
+        while !current.ok && contracted < maxcontract && t - tlo > xtol
+            t = tlo + (t - tlo) / 2
+            contracted += 1
+            contractions[] += 1
+            current = evaluate(t)
+        end
         current.ok || return make_result(dir > 0 ? Inf : -Inf, false, false, true,
                                          current.reason, expansions, iteration + 1,
                                          x0 + dir * t, current.gap, current.cancellation)
