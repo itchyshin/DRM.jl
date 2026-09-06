@@ -127,6 +127,7 @@ include("profile_q4_phylo.jl")   # Ayumi #2: profile-likelihood CIs for the q=4 
 include("bootstrap_q4_phylo.jl") # Ayumi #2: parametric bootstrap of the q=4 among-axis SDs (boundary-honest CIs)
 include("variational.jl")
 include("summary.jl")
+include("r2.jl")             # R2 for the constant-sigma Gaussian case ONLY; refuses elsewhere
 include("visualization.jl")
 include("plotting_ext.jl")   # #336: method-less drm_figure stub + thin plot_* (DRMMakieExt)
 include("comparison.jl")
@@ -186,6 +187,7 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
 # Public API — post-fit accessors for the cross-family bivariate fit
 # (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).
 export mf_coef, mf_aic, mf_bic, mf_fitted, mf_summary
+export r2_constant_sigma
 
 # Prepared joint missing-predictor API. This whole surface is Experimental: it
 # accepts explicit numerical designs and includes bounded formula/mi and bridge
