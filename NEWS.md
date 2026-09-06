@@ -68,6 +68,36 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   slots; both now pass all 22 fields. Guarded by `test/test_bridge_response_mask_inference.jl`
   (21 assertions: converged status, a 5-replicate bootstrap on a masked response, the iteration
   count, and a degenerate-sigma control proving the widened bar still rejects).
+- **Standard errors on the bivariate q=2 structured route (relmat / animal / phylo, ML and
+  REML).** `vcov` on this route was an all-NaN placeholder for every provider and both
+  estimators, which `stderror` then mapped to `Inf` and `confint` to `(-Inf, Inf)` -- the
+  package's signal for "at a variance boundary", so a converged fit was indistinguishable from
+  an unidentified one. The route now second-differences the marginal ML negative log-likelihood
+  it already builds, through the shared `_finite_hessian` helper, and passes the result to the
+  same `_vcov_from_hessian` guard the dense ML bivariate route uses; that guard eigen-tests the
+  matrix, pseudo-inverts a singular one and warns, naming this route. ForwardDiff is not an
+  option here because `coevo_marginal_cov` factorises a sparse H_uu through CHOLMOD, which
+  rejects dual numbers -- the same reason the sparse-LSS routes finite-difference. RECEIPT: the
+  beta block of the finite-difference Hessian is compared against the EXACT Schur complement
+  `S = X' V^-1 X` that `_q2_profile_and_schur` assembles by an entirely different route; max
+  relative difference 3.96e-9 (ML) and 9.75e-9 (REML) on the committed fixture, asserted at
+  1e-6 in `test/test_q2_structured_vcov.jl`. That oracle is exact but covers only the four
+  beta coordinates, so the variance/correlation axes are corroborated separately by profile
+  likelihood, which never touches the Hessian: profile/Wald half-width ratio 1.0082 for
+  `rho12` and 1.0050 for `sigma1`. `confint(fit, method = :profile)` works on this route
+  through the existing `:finite` autodiff fallback -- and note that it did NOT before: the
+  profile endpoint search seeds its bracket from the Wald standard error, so an infinite SE
+  made it refuse with `not_converged`. The all-NaN covariance had therefore also disabled the
+  documented fallback that the boundary warning tells users to reach for. Cost is 0.012 s at the usual ten parameters and
+  scales as O(p^2): 2.6 s at 46 parameters (a 20-covariate mean design), against a 6.1 s fit,
+  so there is no opt-out keyword -- unlike the q=4 route's `q4_vcov`.
+  ESTIMATOR NOTE: under `method = :REML` the reported covariance is the ML curvature evaluated
+  at the REML point, with the restricted-penalty curvature omitted -- the policy already
+  documented for the q=4 sibling. REML Wald intervals on this route are therefore mildly
+  anti-conservative; prefer `confint(fit, method = :profile)` when that matters.
+  KNOWN WART: when the finite-difference Hessian is poor, the warning that says so is emitted
+  under a hardcoded "sparse-Laplace vcov:" label, because the shared helper carries it. The
+  route-naming text reaches the user through the guard's own singularity warning.
 
 - **Gaussian two-SD phylogenetic random slope `phylo(1 + x | species)` on the mean (#620).** The
   #621 refusal is replaced by the fit on the Gaussian mean route: two INDEPENDENT phylogenetic
