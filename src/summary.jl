@@ -137,8 +137,22 @@ function _nondegenerate_fit(fit::DrmFit)
     # Scale-free bar: a residual SD a millionth of the response SD is
     # interpolation, not a fit. An absolute floor alone would misjudge data
     # measured in small units.
+    #
+    # The scale is taken over the OBSERVED responses only. The missing-response
+    # routes store the full-design response in `obs[:mu]`, NaN in the masked
+    # positions (`_with_full_fixed_gaussian_rows`), and `std` of a NaN-carrying
+    # vector is NaN. Every `>` against NaN is false under IEEE-754, so the bar
+    # used to reject EVERY missing-response Gaussian fit however large `smax`
+    # was -- `is_converged` returned false on a fit whose optimiser had
+    # genuinely converged, and `bootstrap_result(check_converged = true)` threw
+    # all of its replicates away on that false negative (#646).
     yv = get(fit.obs, :mu, nothing)
-    yscale = (yv isa AbstractVector && length(yv) > 1) ? std(yv) : 1.0
+    yscale = 1.0
+    if yv isa AbstractVector
+        obs = filter(isfinite, yv)
+        length(obs) > 1 && (yscale = std(obs))
+    end
+    isfinite(yscale) || (yscale = 1.0)
     return smax > 1e-6 * max(yscale, eps(Float64))
 end
 

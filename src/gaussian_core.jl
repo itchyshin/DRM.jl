@@ -448,7 +448,11 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     (impute === nothing && missing === nothing) ||
         throw(ArgumentError("drm: `impute` and `missing` controls currently require an additive mi(x) joint-model formula; they are not ignored on other routes"))
     rhs = Dict(f.forms)
-    fixed_mu, re, metav, structured = _split_ranef(rhs[:mu])   # (1|g), meta_V(v), relmat/animal/phylo/spatial(1|g)
+    # `allow_phylo_slope = true`: the Gaussian mean is the one route that fits
+    # `phylo(1 + x | g)` (#620, two independent phylogenetic fields); the slope
+    # variable comes back in the fifth slot and is routed below.
+    fixed_mu, re, metav, structured, structured_slope =
+        _split_ranef(rhs[:mu]; allow_phylo_slope = true)   # (1|g), meta_V(v), relmat/animal/phylo/spatial(1|g)
     fixed_sigma, sigma_re, _, structured_sigma = _split_ranef(rhs[:sigma])  # (1|g)→GHQ; structured_sigma = phylo(1|g) on σ
     # Penalized MAP (A4c). Validated here, once, so that a `penalty` handed to a
     # route that cannot honour it ERRORS instead of being silently dropped —
@@ -471,6 +475,44 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
     response_observed = _observed_response_mask(y)
     has_missing_response = !all(response_observed)
     all_structured = _collect_structured(rhs[:mu])
+    # #620 two-SD phylogenetic random slope `phylo(1 + x | g)` on the Gaussian
+    # mean: validate HERE, above every route that can return, so no other
+    # engine ever receives this formula and quietly fits the intercept-only
+    # `phylo(1 | g)` model instead. The fit itself is dispatched further down,
+    # once the routes that do not apply have been passed.
+    if structured_slope !== nothing
+        kind, slope_grp = structured
+        kind === :phylo || error("drm: internal — structured_slope set for a non-phylo marker")
+        _slope_term = "phylo(1 + $(structured_slope) | $(slope_grp))"
+        length(all_structured) == 1 ||
+            throw(ArgumentError("drm: `$(_slope_term)` must be the only structured marker on " *
+                "the mean (got $(length(all_structured)): $(all_structured))"))
+        (isempty(re) && isempty(sigma_re) && metav === nothing) ||
+            throw(ArgumentError("drm: `$(_slope_term)` cannot be combined with an ordinary " *
+                "`(… | g)` random effect, a random effect on `sigma`, or `meta_V(...)` — the " *
+                "two-SD phylogenetic slope route takes fixed-effect `sigma` predictors only " *
+                "(drmTMB's cell is `sigma ~ 1` / fixed effects too)"))
+        structured_sigma === nothing ||
+            throw(ArgumentError("drm: `$(_slope_term)` cannot be combined with a structured " *
+                "random effect on `sigma` — the σ-phylo location-scale route below is written " *
+                "for an intercept-only `phylo(1 | g)` mean field and would drop the slope"))
+        (isempty(_sdphylo_parts(f)) && isempty(_sd_parts(f))) ||
+            throw(ArgumentError("drm: `$(_slope_term)` cannot be combined with an `sd(…) ~ …` " *
+                "location-scale-scale submodel — those routes are written for an intercept-only " *
+                "`phylo(1 | g)` mean field and would drop the slope"))
+        algorithm === :auto ||
+            throw(ArgumentError("drm: `algorithm = :$(algorithm)` is not implemented for " *
+                "`$(_slope_term)`; the two-SD phylogenetic slope route is the dense closed-form " *
+                "marginal only (use `algorithm = :auto`)"))
+        penalty === nothing ||
+            throw(ArgumentError("drm: `penalty` is not wired for `$(_slope_term)` (the two-SD " *
+                "phylogenetic slope route); use `phylo(1 | $(slope_grp))` for a penalized fit"))
+        has_missing_response &&
+            throw(ArgumentError("drm: missing Gaussian responses are not supported on the " *
+                "`$(_slope_term)` route yet; drop the missing-response rows before calling " *
+                "`drm` (`drm_listwise`), or use `phylo(1 | $(slope_grp))`"))
+        tree === nothing && error("$(_slope_term) needs `tree = …`")
+    end
     # Location–scale–scale (#544): `sd(g) ~ …` — dispatch before every other route
     # so an unsupported combination ERRORS instead of silently dropping the sd()
     # part (the issue-#2 silent-drop class).
@@ -640,6 +682,28 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                 "routes (q=2 and q=4, both native and via drm_bridge); and Poisson `(1 | g)` " *
                 "and Poisson `phylo(1 | species)`. Use method = :ML (the default) for this " *
                 "model."))
+    end
+    # Gaussian two-SD phylogenetic random intercept + slope (#620): drmTMB's
+    # `phylo(1 + x | species, tree = tree)` on `mu` — two INDEPENDENT fields
+    # a ~ N(0, σₐ² C), b ~ N(0, σ_b² C) on the same tree correlation C, no
+    # intercept–slope correlation (drmTMB `src/drmTMB.cpp` `model_type == 1`,
+    # `has_phylo_mu` with q = 2 and both dpars on mu, so `has_cross_dpar_phylo`
+    # is false: per-field `exp(-2 log_sd_k) uₖᵀ Q uₖ`, no cross term).
+    # Every REFUSAL for this shape was already raised above, next to
+    # `_split_ranef`, so that the sd()-submodel and σ-phylo routes — which
+    # return BEFORE this point and are written for the intercept-only cell —
+    # cannot silently fit `phylo(1 | g)` in place of what the formula says
+    # (the #620 silent-drop class).
+    if structured_slope !== nothing
+        _, grp = structured
+        phy = tree isa AbstractString ? augmented_phy(tree) : tree
+        _warn_if_tree_not_unit_height(phy)
+        # Rows → tree leaves BY NAME / tip index (#482), never by first-seen order.
+        gidx_phy = _phylo_mean_leaf_index(phy, getproperty(data, grp))
+        Cphy = _phylo_correlation(phy)
+        xs = Float64.(getproperty(data, structured_slope))
+        return _withformula(_fit_phylo_slope_gaussian(fam, y, Xμ, Xσ, gidx_phy, phy.n_leaves,
+            Cphy, xs, nmμ, nmσ, grp, structured_slope, g_tol), f)
     end
     if algorithm in (:em, :sparse_lbfgs)
         # The all-node sparse routes fit only the supported cell: a single
@@ -870,6 +934,14 @@ function _fit_fixed_gaussian(fam::Gaussian, y, Xμ, Xσ, nmμ, nmσ, g_tol)
         Optim.iterations(res))
 end
 
+# Rebuilders for the missing-response routes: refit rows are the OBSERVED ones,
+# but `means`/`obs`/`scales` are restored over the FULL design so `predict`,
+# `fitted` and `simulate` line up with the caller's table. Both pass all 22
+# fields rather than the 19-arg compatibility constructor -- that one defaults
+# `phylo_penalty`/`penalty`/`iterations` to absent, which silently reset the
+# inner fit's recorded iteration count to -1 ("unknown"). The bridge exports it
+# as `iterations`, so a masked-response fit reported no optimiser effort while
+# the identical complete-case fit reported 7 (#646).
 function _with_full_fixed_gaussian_rows(fit::DrmFit, y_full, Xμ_full, Xσ_full)
     rμ = _block_range(fit, :mu)
     rσ = _block_range(fit, :sigma)
@@ -881,6 +953,7 @@ function _with_full_fixed_gaussian_rows(fit::DrmFit, y_full, Xμ_full, Xσ_full)
         fit.loglik, fit.nobs, fit.converged, means, obs, scales,
         fit.formula, fit.nll, fit.nllgrad, fit.ranef,
         fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal,
+        fit.phylo_penalty, fit.penalty, fit.iterations,
     )
 end
 
@@ -1050,6 +1123,7 @@ function _with_full_response_rows(fit::DrmFit, f::DrmFormula, data)
         fit.loglik, fit.nobs, fit.converged, means, obs, scales,
         fit.formula, fit.nll, fit.nllgrad, fit.ranef,
         fit.estim_method, fit.reml_loglik, fit.ml_loglik, fit.marginal,
+        fit.phylo_penalty, fit.penalty, fit.iterations,
     )
 end
 
@@ -1310,7 +1384,9 @@ function predict(fit::DrmFit, newdata; type::Symbol = :response, se::Bool = fals
     nrows = length(first(values(nd)))
     V = se ? vcov(fit) : nothing
     if f isa DrmFormula
-        fixed_mu, _, _, _ = _split_ranef(Dict(f.forms)[:mu])
+        # allow_phylo_slope: a fitted Gaussian `phylo(1 + x | g)` formula (#620)
+        # must still yield its fixed design here; the flag only relaxes parsing.
+        fixed_mu, _, _, _ = _split_ranef(Dict(f.forms)[:mu]; allow_phylo_slope = true)
         ndr = merge(nd, NamedTuple{(f.response,)}((zeros(nrows),)))
         _, Xnew, _ = _design(f.response, fixed_mu, ndr)
         η = Xnew * coef(fit, :mu)
@@ -1509,7 +1585,7 @@ function predict_parameters(fit::DrmFit, newdata; type::Symbol = :response,
     for (p, r) in fit.blocks
         haskey(forms, p) || continue          # skip RE-SD / cutpoint blocks (:resd, :recov, :cutpoints, …)
         resp = bivar ? (p === :mu2 ? f.response2 : f.response1) : f.response
-        fixed_p, _, _, _ = _split_ranef(forms[p])
+        fixed_p, _, _, _ = _split_ranef(forms[p]; allow_phylo_slope = true)   # #620 fits keep predicting
         _, Xp, _ = _design(resp, fixed_p, ndr)
         ηp = Xp * coef(fit, p)
         val = type === :link ? ηp : _param_response(fit.family, p, ηp)
@@ -1687,16 +1763,27 @@ end
 # One residual-level replicate (the per-draw kernel). Returns a response Vector
 # for univariate / RE / meta fits, or a Dict(:mu1, :mu2) for bivariate Gaussian.
 function _simulate_once(fit::DrmFit, rng; mu = nothing, sigma = nothing)
-    n = fit.nobs
     fam = fit.family
+    # Draw one value per ROW OF THE DESIGN, which is `length(fit.means[...])` --
+    # NOT `fit.nobs`. The two coincide everywhere except the missing-response
+    # routes, where `nobs` is deliberately the count that entered the likelihood
+    # (54 on the #646 fixture) while `means`/`scales` are rebuilt over the full
+    # design (60) by `_with_full_fixed_gaussian_rows` / `_with_full_response_rows`.
+    # Drawing `nobs` normals and broadcasting them against the length-60 mean
+    # threw `DimensionMismatch` on every replicate, so a bootstrap of any
+    # masked-response fit failed with "all B bootstrap replicates failed" (#646).
+    # The replicate response must span the full design in any case:
+    # `_bootstrap_data` merges it back into the original table, which still has
+    # all of its rows.
     if fam isa Gaussian && haskey(fit.scales, :sigma1)   # bivariate Gaussian
         μ1, μ2 = fit.means[:mu1], fit.means[:mu2]
         σ1, σ2, ρ = fit.scales[:sigma1], fit.scales[:sigma2], fit.scales[:rho12]
+        n = length(μ1)
         z1 = randn(rng, n); z2 = randn(rng, n)
         return Dict(:mu1 => μ1 .+ σ1 .* z1,
                     :mu2 => μ2 .+ σ2 .* (ρ .* z1 .+ sqrt.(1 .- ρ .^ 2) .* z2))
     elseif fam isa Gaussian && haskey(fit.scales, :sigma) # univariate / RE / meta
-        return fit.means[:mu] .+ fit.scales[:sigma] .* randn(rng, n)
+        return fit.means[:mu] .+ fit.scales[:sigma] .* randn(rng, length(fit.means[:mu]))
     end
     # Non-Gaussian families: draw from the fitted distribution. μ is on the
     # response scale (fit.means[:mu]); per-row auxiliary parameters are stored in
@@ -1709,6 +1796,7 @@ function _simulate_once(fit::DrmFit, rng; mu = nothing, sigma = nothing)
     # canonical coupled Gamma route stores shape (as in quantile residuals).
     # Neither override mutates the fitted object.
     μ = mu === nothing ? fit.means[:mu] : mu
+    n = length(μ)
     if fam isa Poisson
         if haskey(fit.scales, :zi)
             zi = fit.scales[:zi]

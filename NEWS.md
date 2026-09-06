@@ -4,9 +4,220 @@ All notable changes are recorded here. The live work ledger is
 [GitHub Issues](https://github.com/itchyshin/DRM.jl/issues); this file is the
 human-readable changelog and mirrors `docs/src/changelog.md`.
 
-## Unreleased
+## v0.7.1 — 2026-09-05
 
-(nothing yet)
+- **The #574 resolvable-scale guard had zero margin, so the #461 runaway degenerate optimum was
+  still reachable (`src/location_only.jl`).** #574 refused the sparse phylogenetic location-only
+  Woodbury objective where the residual variance is "below machine precision relative to the
+  phylogenetic variance", coded as `sigma^2 / sigma_phy^2 >= eps`. The relative error of that
+  Woodbury subtraction grows as `eps * (sigma_phy^2 / sigma^2)`, so `eps` is exactly the point at
+  which NO digits survive: the bar sat *on* the cliff rather than back from it, and the objective
+  was still wrong just above it. Measured 2026-09-05 against a dense `V = sigma^2 I + sigma_phy^2 C`
+  oracle on the #461 fixture (G = 100, one row per species) at `log(sigma_phy) = -26.9176`: the
+  Woodbury log-likelihood tracks the oracle to 1.37e-05 relative at `log(sigma) = -40.0`, then
+  FLIPS SIGN at `log(sigma) = -44.0` (`+4.37745e+25` against the oracle's `-3.15149e+25`). That
+  break is at `log(sigma) - log(sigma_phy) = -17.086`, INSIDE #574's bar of `-18.022`, and it is
+  the whole #461 runaway: `Optim` reports convergence there, `sigma = 7.75e-20`,
+  `sd_phylo = 2.04e-12`, `loglik = +4.38e+25`. Whether the optimiser walks into that sliver is
+  decided by rounding, so `test/test_bootstrap_marginal.jl`'s `#461` testset passed on x86_64
+  Linux CI and failed on aarch64 macOS at the same commit with the same seeds and B = 60
+  (`res.failed == 0` evaluated `1 == 0`; `res.used == 60` evaluated `59 == 60` -- replicate 38).
+  The bar is now the standard rule for a cancellation-limited difference: keep at least HALF the
+  mantissa, `sigma^2 / sigma_phy^2 >= sqrt(eps)`, i.e. `log(sigma) - log(sigma_phy) >=
+  0.25 * log(eps)` = `-9.011`. It refuses `sigma / sigma_phy < 1.2e-04`; on the #461 fixture the
+  60 bootstrap refits span `[-1.033, +1.439]`, about eight nats clear of it. This is a
+  floating-point representation limit, not a statistical lower bound; `algorithm = :gls` remains
+  available for a genuine boundary estimate. New path-independent pin in
+  `test/test_lss_phylo.jl`: every `(log sigma, log sigma_phy)` pair the guard ADMITS must agree
+  with the dense oracle to 1e-06 relative -- the property, not the constant, so re-loosening the
+  bar fails it (17 assertions and 1 error under #574's value).
+
+- **`check_drm()` CRASHED on four shipping routes instead of reporting on them, and a NaN gradient
+  could not be told apart from a verified one.** `_check_max_abs_grad` (`src/inference.jl`) ended in
+  an unguarded `maximum(abs, ForwardDiff.gradient(fit.nll, fit.theta))`. Four routes store a bare
+  objective (no gradient callback) that is exact on `Float64` but NOT dual-number safe, so that line
+  threw and the health check died on the very fits it exists to report on -- against the comment
+  written two functions below it, "A diagnostic must REPORT trouble, not crash on it". Measured
+  2026-09-05 at origin/main 109b6421c, in two distinct exception types: the bivariate q=2 structured
+  route (`gaussian_bivariate.jl:626`, whose objective factorises a sparse `H_uu` through CHOLMOD
+  inside `coevo_marginal_cov`) and the sparse two-structured Gaussian mean route
+  (`gaussian_structured.jl:652`, same factorisation) both raised `TypeError: in Sparse, in Tv,
+  expected Tv<:Union{Float64, ComplexF64}, got Type{ForwardDiff.Dual{...}}`; sparse LSS under REML,
+  single-component (`gaussian_sparse_lss.jl:285`) and multi-component (`:1018`), raised the
+  different `MethodError: no method matching Float64(::ForwardDiff.Dual{...})` from a Float64 work
+  array. Only the REML arm of those last two ever reaches the line: both store
+  `reml ? nothing : nllgrad!`, and the ML arm's stored callback is consulted first (its
+  `max_abs_grad` is unchanged). The probe now falls back to a CENTRAL FINITE DIFFERENCE of the same
+  objective -- the pattern `_profile_autodiff_mode` (`:805-821`) already uses for exactly this
+  situation -- rather than returning `NaN`. Returning `NaN` would have been the quiet version of the
+  same defect: `ok = converged && (penalized || isnan(mag) || mag <= grad_tol) && pd` treats a NaN
+  magnitude as a PASS, a disjunct written for a fit that stores no objective at all, so an untested
+  route would have reported `ok = true` and looked identical to a verified one. `check_drm` gains a
+  `grad_source` field naming the producer -- `:locscale`, `:stored`, `:forward`, `:finite`, `:none`,
+  `:unavailable`, reusing `profile_result`'s `autodiff` vocabulary -- warns when the magnitude is a
+  finite difference (good to about 1e-6 relative, not to machine precision), and warns again on
+  `:unavailable`, the NaN that is NOT `:none` and whose `ok` was never scored against a gradient.
+  Measured after the fix, all four now RETURN with `grad_source = :finite`: q=2 structured
+  2.7504093225161337e-3, two-structured sparse 2.7248279090903387e-8, sparse LSS REML
+  1.7936919476824185, multi-component sparse LSS REML 1.0092392038529852. The last two are an
+  accuracy check on the fallback rather than just a smoke test: the dense engine fits the same two
+  models with a dual-safe objective, and its exact ForwardDiff magnitudes on the identical fixtures
+  are 1.7936919467546497 and 1.0092392105794588 -- the finite difference agrees to 5.2e-10 and
+  6.7e-9 relative. Eleven dual-safe fixtures spanning `:forward`, `:stored` and `:locscale` are
+  unchanged to the last digit (e.g. plain Gaussian 2.580158309228864e-13, canonical location-scale
+  1.651913078548617e-9), with every `check_drm` verdict field identical. Guarded by
+  `test/test_check_drm.jl` (77 assertions, one testset per AD-hostile route plus `:none` vs
+  `:unavailable` and a non-finite stored callback); removing the guard errors 5 of its testsets with
+  the exceptions quoted above.
+
+- **Bivariate q=2 `spatial(1 | group)` is admitted at the formula front end.** The q=2 marker
+  allow-list took only `phylo`, `relmat` and `animal`, so a `spatial(...)` marker on `mu1`/`mu2`
+  was refused outright -- a cell drmTMB fits natively AND through the bridge, which reaches it
+  only by rewriting `spatial(...)` into `relmat(...) + K` on the R side (`R/julia-bridge.R`).
+  `spatial` now supplies a covariance exactly as `relmat(K = ...)` and `animal(A = ...)` do:
+  the exponential kernel `exp(-d / rho)` over the group levels at a FIXED range `rho` (keyword
+  `spatial_range`, else the mean off-diagonal pairwise distance), which is the identical rule
+  the q=4 structured route already used -- that construction is now one shared helper, so the
+  two cells cannot drift apart. Same solver call as the other providers, so `method = :REML`
+  comes on the same path, and `fit.ranef.structured_type` carries `:spatial` through to the
+  bridge export target `gaussian_q2_mu1_mu2_spatial_residual_correlation` with no change to
+  `src/bridge.jl`. Measured: `spatial(coords)` and `relmat(K = the same matrix)` on one fixture
+  agree BIT-FOR-BIT -- max abs difference 0.0 on logLik and on all ten coefficients, under both
+  ML and REML (`test/test_reml_q2_structured.jl`). The range in force is readable off the fit as
+  `fit.ranef.spatial_range`, the same field the q=4 route already records, because the default is
+  data-dependent and would otherwise be invisible; `relmat`/`animal` fits report `nothing`.
+  BOUNDARY: `rho` is FIXED, not estimated. This is not the univariate `spatial` route, which
+  carries `log rho` as a free parameter -- the two are different models and must not be compared
+  as one. Note also that DRM.jl's default range is the MEAN off-diagonal distance with a 1e-8
+  ridge, while drmTMB's native R-side rule is the MEDIAN positive distance with a 1e-6 jitter,
+  so the two engines build different matrices from the same coordinates unless `spatial_range`
+  is pinned; a coords-to-coords cross-engine comparison is therefore not a parity check.
+  REPAIR shipped with it: the q=2 route had a second, broader guard that refused ANY q=2
+  structured fit merely for carrying a `coords =` keyword, so an ordinary `relmat`/`animal` q=2
+  fit with a stray `coords =` errored. That guard is gone; each provider branch refuses when its
+  own input is missing.
+- **`drm_bridge` admits `skew_normal`** — `_bridge_family` now maps drmTMB's
+  `skew_normal()` (tags `skew_normal` / `skewnormal`) to the native `SkewNormal()`
+  family. The family was already implemented (`src/skewnormal.jl`) but the R
+  bridge had no case for it, so drmTMB's `engine = "julia"` could not admit it.
+  Both packages use the same public moment parameterisation (`mu` = mean,
+  `sigma` = SD, `nu` = Azzalini slant), so the bridged coefficients are the
+  native ones. Fixed effects only, ML only — exactly what `SkewNormal()` fits.
+- **REML on the residual-only bivariate Gaussian route (#624; drmTMB #1142).** `drm(bf(mu1 = y1 ~ x, mu2 = y2 ~ x, sigma1 = ~1, sigma2 = ~1, rho12 = ~1), Gaussian(); method = :REML)` fits instead of refusing. The old message ("`method = :REML` needs random effects to restrict") mistook "no random effects" for "nothing to restrict": REML here integrates the MEAN fixed effects `beta_mu1`/`beta_mu2` out of the Gaussian likelihood under the row-wise 2x2 residual covariance — the classical Patterson–Thompson/SUR case, and the same set native drmTMB hands to TMB's Laplace approximation for this cell (whose Laplace step is EXACT, the integrand being quadratic). Closed form: profile `beta` by GLS, add `-0.5*logdet(sum_i Z_i' S_i^-1 Z_i)` and the `+(p_beta/2)*log(2*pi)` normalising constant, and optimise over `(beta_sigma1, beta_sigma2, beta_rho)` alone. Same-target against drmTMB `engine = "tmb"` with `REML = TRUE` on the committed fixture: logLik `-97.021205818372` on both engines (difference 0.0 at 12 decimal places), coefficients to 4.33e-7, standard errors to 6.54e-7 relative. `vcov` reports the joint mean block `H^-1 + G Var(phi) G'` that TMB's `sdreport()` reports. The ML route is unchanged (same fixture, `-90.202703298791` on both engines, difference 4.8e-13). `meta_V` plus `:REML` keeps its permanent refusal — that route marginalises nothing. `test/test_reml_reml_biv_residual.jl`.
+- **Profile CIs on the canonical (non-sparse) location-scale route returned a signed infinite
+  bound because ONE unevaluable trial abandoned the whole endpoint arm (#651).** #631/#633 closed
+  this class for the SPARSE phylogenetic LSS engine and made `confint(...; method = :profile)` fail
+  closed; the canonical whitened route kept the defect, and it has been failing unrelated pull
+  requests at random on `Julia 1.10 - shard 1/4` (`test/test_locscale_profile_threads.jl:55` and
+  `:91`, the two `isfinite` assertions). The endpoint search
+  (`_ls_profile_root_result`, `src/locscale_profile.jl`) treated a single trial whose nuisance
+  solve did not converge as terminal, in both the bracket-expansion and guarded-Newton phases, and
+  reported that premature give-up as `Inf`/`-Inf`. It is not a data race and not run-to-run
+  non-determinism: 600 repeats of the fixture at 1, 2 and 4 Julia threads produced zero failures
+  and exactly four distinct `gradient_maxabs` values, bit-identical across thread counts. The
+  fixture's accepted arms simply sit against the acceptance bar -- worst measured 7.96e-08 against
+  a hard 1e-07 -- so a last-bit difference between macOS aarch64 and Linux x86-64 decides whether
+  an arm is accepted, which is why it reproduced in CI and not locally. Both phases now CONTRACT
+  toward a point already known to be feasible, on the bounded budget `maxcontract` (default 8):
+  expansion halves `thi` toward the feasible `tlo`, and refinement halves the TRIAL toward `tlo`,
+  leaving the maintained bracket -- and its proof that a crossing exists -- untouched. Measured with
+  a +/-2-ULP perturbation of the response, the honest local surrogate for that platform difference:
+  17 of 200 draws returned a non-finite bound before, 0 of 200 after, with all 800 endpoint arms
+  accepted and 37 contractions across exactly the 17 draws that used to fail. The search is still
+  bounded -- at most `(maxexpand + maxnewton + 1) * (1 + maxcontract)` evaluations -- so it cannot
+  hang, and it is inert where nothing fails: the unperturbed fixture's intervals and residuals are
+  bit-identical before and after. Contraction only POSTPONES failure; an arm that cannot be
+  evaluated anywhere down to `xtol` is still a failed, signed-infinity endpoint, so
+  `profile_result` remains the auditable surface #631 made it and `confint` still refuses it. One
+  behaviour change beyond that: an expansion that had to contract can no longer certify
+  UNBOUNDEDNESS, because part of the range was never evaluated -- it reports the new
+  `:infeasible_region` failed endpoint instead of `:no_crossing`. Guarded by
+  `test/test_locscale_profile_threads.jl` (29 assertions, 0.3 s, deterministic and
+  platform-independent: it pins the search logic, which is what changed).
+
+- **Inference on a missing-response ("response mask") Gaussian fit: `is_converged` read false on a
+  converged fit, and every bootstrap replicate failed (#646).** Both defects sat downstream of the
+  fit itself -- the point estimates were already right, matching drmTMB's `engine = "tmb"` to ~7e-06
+  on the qualification fixture -- which is why nothing caught them until bridge-side inference was
+  measured. (1) `_nondegenerate_fit` (`src/summary.jl`) took its scale-free degeneracy bar as
+  `std(fit.obs[:mu])`, but the missing-response routes keep the full-design response there with NaN
+  in the masked positions, so `yscale` was NaN and `smax > 1e-6 * max(NaN, eps)` was false for every
+  `smax` under IEEE-754. `is_converged` therefore returned false on EVERY masked Gaussian fit,
+  independent of the optimiser: measured on the fixture, `Optim.converged` true, `|grad|inf`
+  6.41e-12 against `g_tol` 1e-8, and `theta` bit-identical to the complete-case fit (max abs diff
+  0.0), yet `is_converged` false. The bar is now taken over the observed (finite) responses only;
+  a genuinely degenerate sigma is still rejected. (2) `_simulate_once` (`src/gaussian_core.jl`)
+  drew `randn(rng, fit.nobs)` -- the count that entered the likelihood, 54 on the fixture -- and
+  broadcast it against the length-60 `means`/`scales` that `_with_full_fixed_gaussian_rows` rebuilds
+  over the full design, throwing `DimensionMismatch` deterministically on every replicate, so
+  `bootstrap_result` raised `"all B bootstrap replicates failed"`. Draws are now taken per row of
+  the design, which is also the length `_bootstrap_data` needs to merge back into the caller's
+  table. (3) Found while fixing those: `_with_full_fixed_gaussian_rows` and `_with_full_response_rows`
+  used the 19-argument compatibility constructor, silently resetting `iterations` to -1
+  ("not recorded") -- the identical complete-case fit reported 7 -- and dropping the MAP penalty
+  slots; both now pass all 22 fields. Guarded by `test/test_bridge_response_mask_inference.jl`
+  (21 assertions: converged status, a 5-replicate bootstrap on a masked response, the iteration
+  count, and a degenerate-sigma control proving the widened bar still rejects).
+- **Standard errors on the bivariate q=2 structured route (relmat / animal / phylo, ML and
+  REML).** `vcov` on this route was an all-NaN placeholder for every provider and both
+  estimators, which `stderror` then mapped to `Inf` and `confint` to `(-Inf, Inf)` -- the
+  package's signal for "at a variance boundary", so a converged fit was indistinguishable from
+  an unidentified one. The route now second-differences the marginal ML negative log-likelihood
+  it already builds, through the shared `_finite_hessian` helper, and passes the result to the
+  same `_vcov_from_hessian` guard the dense ML bivariate route uses; that guard eigen-tests the
+  matrix, pseudo-inverts a singular one and warns, naming this route. ForwardDiff is not an
+  option here because `coevo_marginal_cov` factorises a sparse H_uu through CHOLMOD, which
+  rejects dual numbers -- the same reason the sparse-LSS routes finite-difference. RECEIPT: the
+  beta block of the finite-difference Hessian is compared against the EXACT Schur complement
+  `S = X' V^-1 X` that `_q2_profile_and_schur` assembles by an entirely different route; max
+  relative difference 3.96e-9 (ML) and 9.75e-9 (REML) on the committed fixture, asserted at
+  1e-6 in `test/test_q2_structured_vcov.jl`. That oracle is exact but covers only the four
+  beta coordinates, so the variance/correlation axes are corroborated separately by profile
+  likelihood, which never touches the Hessian: profile/Wald half-width ratio 1.0082 for
+  `rho12` and 1.0050 for `sigma1`. `confint(fit, method = :profile)` works on this route
+  through the existing `:finite` autodiff fallback -- and note that it did NOT before: the
+  profile endpoint search seeds its bracket from the Wald standard error, so an infinite SE
+  made it refuse with `not_converged`. The all-NaN covariance had therefore also disabled the
+  documented fallback that the boundary warning tells users to reach for. Cost is 0.012 s at the usual ten parameters and
+  scales as O(p^2): 2.6 s at 46 parameters (a 20-covariate mean design), against a 6.1 s fit,
+  so there is no opt-out keyword -- unlike the q=4 route's `q4_vcov`.
+  ESTIMATOR NOTE: under `method = :REML` the reported covariance is the ML curvature evaluated
+  at the REML point, with the restricted-penalty curvature omitted -- the policy already
+  documented for the q=4 sibling. REML Wald intervals on this route are therefore mildly
+  anti-conservative; prefer `confint(fit, method = :profile)` when that matters.
+  KNOWN WART: when the finite-difference Hessian is poor, the warning that says so is emitted
+  under a hardcoded "sparse-Laplace vcov:" label, because the shared helper carries it. The
+  route-naming text reaches the user through the guard's own singularity warning.
+
+- **Gaussian two-SD phylogenetic random slope `phylo(1 + x | species)` on the mean (#620).** The
+  #621 refusal is replaced by the fit on the Gaussian mean route: two INDEPENDENT phylogenetic
+  fields, `a ~ N(0, σₐ² C)` for the intercept and `b ~ N(0, σ_b² C)` for the slope on the same
+  tree correlation `C`, no intercept–slope correlation. That is drmTMB's Gaussian model
+  term for term (`src/drmTMB.cpp`, `model_type == 1`, `has_phylo_mu` with `q_phylo == 2`: both
+  fields sit on `mu`, so `has_cross_dpar_phylo` is false and the else-branch adds one
+  `exp(-2·log_sd_phylo(k))·uₖᵀQuₖ` term per field with no cross term). Fitted here as the
+  closed-form dense marginal `V = D + σₐ² Z C Zᵀ + σ_b² Zₓ C Zₓᵀ`, which is that Laplace
+  objective evaluated exactly. Reported as a two-row `:resd` block (`species`, `species:x`;
+  `re_sd`/`vc`/`ranef` all carry both fields), five free parameters — the same five drmTMB
+  optimizes. Measured same-target against drmTMB 67703f541 on the committed fixture: logLik,
+  both SDs, β and log σ all agree to ≤ 6.7e-13 (`test/test_phylo_slope_two_sd.jl`).
+  BOUNDARY (corrected 2026-09-05 after measurement): drmTMB fits `phylo(1 + x | g)` on Poisson
+  and NegBinomial2 as well, and it fits the SAME independent two-SD model there — measured on
+  drmTMB main, `corpars` is empty for the untagged `phylo(1 + x | g)` on Poisson (two SD rows,
+  `phylo(1 | site)` and `phylo(0 + x | site)`), while the estimated intercept–slope correlation
+  (`has_phylo_mu_q2_covariance`, reported in `corpars` as `cor(mu:(Intercept),mu:x | p | site)`)
+  appears only for the DIFFERENT tagged formula `phylo(1 + x | p | g)`. drmTMB refuses the
+  formula on Gamma ("intercept-only in this q=1 route"). DRM.jl still refuses every non-Gaussian
+  family here, for the accurate reason: this route is the EXACT closed-form Gaussian marginal
+  and does not extend to a non-Gaussian likelihood, so the count families need a two-field
+  Laplace route that does not exist yet. The earlier claim that drmTMB fits "a DIFFERENT model"
+  for Poisson/NegBinomial2 on this formula was wrong; the refusal it justified is unchanged. `phylo(0 + x | g)`, multi-slope
+  forms, a second structured component, ordinary and `sigma`-side random effects, a structured
+  (`phylo`) `sigma`, the `sd(...)`/`sd_phylo(...)` location-scale-scale submodels, REML, missing
+  responses, the sparse algorithms and the parametric-bootstrap simulator all stay refused with
+  a named error. Those refusals are raised next to `_split_ranef`, ABOVE every route that can
+  return, so no engine written for the intercept-only cell can receive this formula and quietly
+  fit `phylo(1 | g)` instead.
 
 ## v0.7.0 — 2026-08-28
 

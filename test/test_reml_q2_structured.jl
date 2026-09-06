@@ -163,25 +163,111 @@ end
     @test fit_ml_3.theta == fit_ml_1.theta
 end
 
-@testset "q2 REML: spatial(coords) stays rejected under REML too" begin
-    rng = MersenneTwister(20260902)
-    G = 10
-    coords = hcat(range(0.0, 1.0; length = G), sin.(range(0.0, π; length = G)))
-    labels = ["s$i" for i in 1:G]
-    group = repeat(1:G, inner = 2)
-    n = length(group)
-    x = randn(rng, n)
-    dat = (; y1 = randn(rng, n), y2 = randn(rng, n), x, site = labels[group])
+@testset "q2 spatial(coords) is admitted, and is relmat(K) under another name" begin
+    # Parity leaf jl-q2-spatial. drmTMB fits this cell natively AND through the
+    # bridge, which rewrites `spatial(...)` to `relmat(...) + K` on the R side
+    # (R/julia-bridge.R); DRM.jl used to refuse it outright here. `spatial` now
+    # supplies a covariance exactly as `relmat`/`animal` do -- the exponential
+    # kernel at a FIXED range -- so the two markers must be ONE model reached by
+    # two names, and this testset holds them to bit-for-bit equality.
+    rng = MersenneTwister(20260905)
+    G = 12
+    coords = hcat(range(0.0, 1.0; length = G), sin.(range(0.0, pi; length = G)))
+    Ddist = [sqrt(sum(abs2, coords[k, :] .- coords[l, :])) for k in 1:G, l in 1:G]
+    rho_mean = sum(Ddist) / (G^2 - G)          # the route's fixed-range rule
+    Ksp = exp.(-Ddist ./ rho_mean) + 1e-8 * I
 
-    form = bf(
+    # The matrix the route builds is EXACTLY this one, bit for bit, and
+    # `spatial_range` overrides the default rule.
+    @test DRM._spatial_covariance_from_coords(:site, G, coords, nothing) == Ksp
+    @test DRM._spatial_covariance_from_coords(:site, G, coords, 0.5) ==
+        exp.(-Ddist ./ 0.5) + 1e-8 * I
+
+    # Signal-bearing fixture: simulate FROM the covariance the route will build.
+    beta = [0.20 -0.12; 0.18 0.10]
+    Lam = Matrix(Symmetric([0.20 0.05; 0.05 0.17]))
+    residual_cov = Matrix(Symmetric([0.10 0.025; 0.025 0.14]))
+    sim = _q2_reml_known_cov_fixture(Ksp, beta, Lam, residual_cov; nrep = 3, rng = rng)
+    labels = ["s$(i)" for i in sim.group]
+    dat = (; y1 = sim.Y[:, 1], y2 = sim.Y[:, 2], x = sim.X[:, 2], site = labels)
+
+    spatial_form = bf(
         mu1 = @formula(y1 ~ x + spatial(1 | site)),
         mu2 = @formula(y2 ~ x + spatial(1 | site)),
         sigma1 = @formula(sigma1 ~ 1),
         sigma2 = @formula(sigma2 ~ 1),
         rho12 = @formula(rho12 ~ 1),
     )
-    @test_throws ErrorException drm(form, Gaussian(); data = dat, coords = coords, method = :ML)
-    @test_throws ErrorException drm(form, Gaussian(); data = dat, coords = coords, method = :REML)
+    relmat_form = bf(
+        mu1 = @formula(y1 ~ x + relmat(1 | site)),
+        mu2 = @formula(y2 ~ x + relmat(1 | site)),
+        sigma1 = @formula(sigma1 ~ 1),
+        sigma2 = @formula(sigma2 ~ 1),
+        rho12 = @formula(rho12 ~ 1),
+    )
+
+    # ADMISSION -- the cell fits instead of refusing.
+    fit_sp = drm(spatial_form, Gaussian(); data = dat, coords = coords, g_tol = 2e-4)
+    @test fit_sp.converged
+    @test isfinite(loglik(fit_sp))
+    @test fit_sp.ranef.axes == (:mu1, :mu2)
+    @test size(fit_sp.ranef.Sigma_a) == (2, 2)
+
+    # The `:spatial` sentinel reaches the public accessor, so the q2 bridge
+    # export target is built from it with no change to src/bridge.jl.
+    @test fit_sp.ranef.structured_type === :spatial
+    @test DRM._bridge_q2_point_export(fit_sp; family = "biv_gaussian")["target"] ==
+        "gaussian_q2_mu1_mu2_spatial_residual_correlation"
+
+    # The FIXED range is the one free choice this cell makes and its default is
+    # data-dependent, so it must be readable off the fit, not inferred -- the
+    # same field the q=4 route records. A relmat fit has no range and says so.
+    @test fit_sp.ranef.spatial_range == rho_mean
+    @test drm(spatial_form, Gaussian(); data = dat, coords = coords,
+              spatial_range = 0.5, g_tol = 2e-4).ranef.spatial_range == 0.5
+
+    # SAME TARGET, EXACTLY -- one matrix, two marker names, one fit.
+    fit_rm = drm(relmat_form, Gaussian(); data = dat, K = Ksp, g_tol = 2e-4)
+    @test loglik(fit_sp) == loglik(fit_rm)
+    @test fit_sp.theta == fit_rm.theta
+    @test maximum(abs.(fit_sp.theta .- fit_rm.theta)) == 0.0
+    @test fit_rm.ranef.spatial_range === nothing
+
+    # REML rides the same path: admitted, and exact against relmat there too.
+    fit_sp_reml = drm(spatial_form, Gaussian(); data = dat, coords = coords,
+                      g_tol = 2e-4, method = :REML)
+    fit_rm_reml = drm(relmat_form, Gaussian(); data = dat, K = Ksp,
+                      g_tol = 2e-4, method = :REML)
+    @test estimation_method(fit_sp_reml) === :REML
+    @test isfinite(reml_loglik(fit_sp_reml))
+    @test loglik(fit_sp_reml) == loglik(fit_rm_reml)
+    @test fit_sp_reml.theta == fit_rm_reml.theta
+    @test loglik(fit_sp_reml) != loglik(fit_sp)      # not a silent no-op
+
+    # REPAIR -- the deleted route-wide guard refused ANY q=2 structured fit that
+    # merely carried a `coords =` kwarg, spatial or not. An ordinary relmat fit
+    # now ignores the stray kwarg instead of erroring, and is unchanged by it.
+    fit_rm_coords = drm(relmat_form, Gaussian(); data = dat, K = Ksp,
+                        coords = coords, g_tol = 2e-4)
+    @test fit_rm_coords.theta == fit_rm.theta
+
+    # PRESERVED REFUSALS -- still fail-closed on every shape out of scope.
+    @test_throws ErrorException drm(spatial_form, Gaussian(); data = dat)
+    @test_throws ErrorException drm(spatial_form, Gaussian(); data = dat,
+                                    coords = coords[1:(G - 1), :])
+    @test_throws ErrorException drm(spatial_form, Gaussian(); data = dat,
+                                    coords = zeros(G, 2))
+    @test_throws ErrorException drm(spatial_form, Gaussian(); data = dat,
+                                    coords = coords, spatial_range = -1.0)
+    mixed_form = bf(
+        mu1 = @formula(y1 ~ x + spatial(1 | site)),
+        mu2 = @formula(y2 ~ x + relmat(1 | site)),
+        sigma1 = @formula(sigma1 ~ 1),
+        sigma2 = @formula(sigma2 ~ 1),
+        rho12 = @formula(rho12 ~ 1),
+    )
+    @test_throws ErrorException drm(mixed_form, Gaussian(); data = dat,
+                                    coords = coords, K = Ksp)
 end
 
 @testset "q2 REML: V + REML is permanently rejected (not the vague 'in this slice')" begin
@@ -206,17 +292,20 @@ end
     @test isfinite(loglik(fit_v_ml))
 end
 
-@testset "q2 REML: residual-only route REML rejection is untouched (#470 boundary)" begin
+# SUPERSEDED 2026-09-05 by #624 / drmTMB #1142. This testset used to assert
+# that the residual-only bivariate route REFUSES REML ("rejection is
+# untouched"). That refusal was wrong: the route has no random effects, but it
+# does have mean fixed effects to restrict, and the closed-form
+# Patterson-Thompson objective in `_fit_bivariate_residual_reml` now fits it
+# (test/test_reml_reml_biv_residual.jl carries the full contract and the
+# drmTMB same-target receipt). The #470 boundary this file cares about is the
+# `V` + REML rejection, which is UNCHANGED and asserted in the testset above.
+@testset "q2 REML: residual-only route now FITS by REML (#624)" begin
     n = 20
     dat = (; y1 = randn(n), y2 = randn(n), x = randn(n))
     form = bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x))
-    err = try
-        drm(form, Gaussian(); data = dat, method = :REML)
-        nothing
-    catch e
-        e
-    end
-    @test err isa ArgumentError
-    @test occursin("no random", err.msg)
-    @test occursin("q=4", err.msg)
+    fit = drm(form, Gaussian(); data = dat, method = :REML)
+    @test estimation_method(fit) === :REML
+    @test isfinite(reml_loglik(fit))
+    @test reml_loglik(fit) != ml_loglik(fit)
 end

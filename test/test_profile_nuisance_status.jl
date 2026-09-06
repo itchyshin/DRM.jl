@@ -167,7 +167,7 @@ end
         end
     end
 
-    @testset "failed profile rows warn without changing CI shape" begin
+    @testset "failed profile rows are refused by confint, not returned" begin
         failed_direct(θ) = θ[1] > 0.25 ? Inf : θ[1]^2 / 2
         failedfit = _pn_fit(failed_direct, [0.0]; nllgrad=nothing)
         result = profile_result(failedfit; parm=:mu)
@@ -175,9 +175,9 @@ end
         @test only(result.ci).upper == Inf
         @test only(result.stats).upper_endpoint_failed
         @test only(result.stats).upper_nuisance_reason == :nonfinite_objective
-        @test_logs (:warn, r"profile confidence interval has failed endpoint") begin
-            confint(failedfit; method=:profile, parm=:mu)
-        end
+        # #631: `profile_result` keeps the auditable +/-Inf convention above;
+        # `confint` must not pass that Inf off as a confidence limit.
+        @test_throws ArgumentError confint(failedfit; method=:profile, parm=:mu)
     end
 
     @testset "diagnostics and visual data refuse invalid profiled values" begin
