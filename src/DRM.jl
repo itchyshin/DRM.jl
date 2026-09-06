@@ -54,7 +54,7 @@ include("lc_metric.jl")
 # remains the default and REML is opt-in (`method = :REML`). See #187.
 include("reml_q4.jl")
 
-# q=4 Fisher-z (D·R·D) OUTER reparameterization of the 4×4 among-axis covariance
+# q=4 spherical/LKJ (D·R·D) OUTER reparameterization of the 4×4 among-axis covariance
 # Σ_a (separation strategy: D = diag SDs, R = spherical/LKJ correlation-Cholesky).
 # Additive — wraps the UNTOUCHED marginal_and_exact_grad; the engine still consumes
 # the native log-Cholesky lc. Its value is conditioning/robustness at the σ-collapse
