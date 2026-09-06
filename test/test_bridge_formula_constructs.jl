@@ -189,6 +189,78 @@ const _FC_DISAGREEMENTS = [
         status_bad === :error && @test occursin("grphi", msg) && occursin("grplo", msg)
     end
 
+    # The location-scale-scale `sd_<group>` block is rendered by
+    # `_bridge_lss_public_to_raw!`, which `_bridge_rendered_regression_blocks`
+    # skips by construction, so before `_bridge_check_lss_coef_labels_fidelity`
+    # it was echoed positionally with no design comparison at all. Measured
+    # through drmTMB origin/main 2fcbb0fbf against DRM.jl aee371cc9 on
+    # 2026-09-05: `sd(study) ~ <character column>` converged on both engines to
+    # an identical logLik (-69.917488, diff 2.98e-13) under identical names,
+    # with `mu` and `sigma` faithful to 2.1e-11 and the `sd` block off by
+    # 1.3853 -- the baseline had moved. Same column COUNT, so (e) never fired.
+    @testset "(f) an LSS sd(group) block DRM.jl did not build is refused BY NAME" begin
+        n = 96
+        group = [string("s", mod1(i, 12)) for i in 1:n]
+        # Codepoint order is "Beta" < "alpha" < "gamma", so DRM.jl's baseline
+        # is "Beta" and its columns are alpha, gamma. An R user whose locale
+        # collates alpha < Beta < gamma sends baseline "alpha", columns
+        # Beta, gamma -- same count, different design.
+        lab = [["Beta", "alpha", "gamma"][mod1(mod1(i, 12), 3)] for i in 1:n]
+        gx = [0.15 * mod1(i, 12) for i in 1:n]
+        y = 0.4 .+ 0.3 .* _FC_X[mod1.(1:n, _FC_N)] .+ gx .+
+            [0.05 * sin(3.0 * i) for i in 1:n]
+        data = (; y, x = _FC_X[mod1.(1:n, _FC_N)], g = group, lab = lab)
+        formula = "y ~ x + (1 | g); sigma ~ 1; sd(g) ~ lab"
+        base = try
+            drm_bridge(; formula, family = "gaussian", data)
+        catch e
+            @test false
+            rethrow(e)
+        end
+        rendered = _fc_block(base["coef_names"], "sd")
+        @test rendered == ["(Intercept)", "labalpha", "labgamma"]
+
+        agree = Dict("mu" => ["(Intercept)", "x"], "sigma" => ["(Intercept)"],
+                     "sd" => ["(Intercept)", "labalpha", "labgamma"])
+        disagree = Dict("mu" => ["(Intercept)", "x"], "sigma" => ["(Intercept)"],
+                        "sd" => ["(Intercept)", "labBeta", "labgamma"])
+        # Same column count on the sd block: the count check alone passes both.
+        @test length(agree["sd"]) == length(disagree["sd"]) == length(rendered)
+
+        ok, out = try
+            (:ok, drm_bridge(; formula, family = "gaussian", data,
+                             options = _fc_options(agree)))
+        catch e
+            (:error, sprint(showerror, e))
+        end
+        @test ok === :ok
+        if ok === :ok
+            @test _fc_block(out["coef_names"], "sd") == agree["sd"]
+            @test out["coefficients"] ≈ base["coefficients"]
+            @test out["raw_coef_names"] == base["raw_coef_names"]
+        else
+            println("GREEN CONTROL REFUSED: ", out)
+        end
+
+        bad, msg = try
+            (:ok, drm_bridge(; formula, family = "gaussian", data,
+                             options = _fc_options(disagree)))
+        catch e
+            (:error, sprint(showerror, e))
+        end
+        @test bad === :error
+        if bad === :error
+            @test occursin("does not match the design DRM.jl built", msg)
+            @test occursin("sd_g", msg)
+            @test occursin("labBeta", msg)
+            @test occursin("labalpha", msg)
+            # A design disagreement, not a count complaint.
+            @test !occursin("supplies", msg)
+        else
+            println("NOT REFUSED: ", msg["coef_names"])
+        end
+    end
+
     @testset "(e) the count check still fires first, unchanged" begin
         status, msg = _fc_try("y ~ x + grp";
             options = _fc_options(Dict("mu" => ["(Intercept)", "x", "grplo"], "sigma" => ["(Intercept)"])))

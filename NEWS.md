@@ -47,6 +47,32 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   (`test_bridge_formula_constructs.jl` 188 assertions, `test_bridge_coef_labels_echo.jl` 42,
   `test_bridge_formula_labels.jl` 819, `test_bridge_base_r_names.jl` 20, all green).
 
+- **Bivariate q=2 `spatial(1 | group)` is admitted at the formula front end.** The q=2 marker
+  allow-list took only `phylo`, `relmat` and `animal`, so a `spatial(...)` marker on `mu1`/`mu2`
+  was refused outright -- a cell drmTMB fits natively AND through the bridge, which reaches it
+  only by rewriting `spatial(...)` into `relmat(...) + K` on the R side (`R/julia-bridge.R`).
+  `spatial` now supplies a covariance exactly as `relmat(K = ...)` and `animal(A = ...)` do:
+  the exponential kernel `exp(-d / rho)` over the group levels at a FIXED range `rho` (keyword
+  `spatial_range`, else the mean off-diagonal pairwise distance), which is the identical rule
+  the q=4 structured route already used -- that construction is now one shared helper, so the
+  two cells cannot drift apart. Same solver call as the other providers, so `method = :REML`
+  comes on the same path, and `fit.ranef.structured_type` carries `:spatial` through to the
+  bridge export target `gaussian_q2_mu1_mu2_spatial_residual_correlation` with no change to
+  `src/bridge.jl`. Measured: `spatial(coords)` and `relmat(K = the same matrix)` on one fixture
+  agree BIT-FOR-BIT -- max abs difference 0.0 on logLik and on all ten coefficients, under both
+  ML and REML (`test/test_reml_q2_structured.jl`). The range in force is readable off the fit as
+  `fit.ranef.spatial_range`, the same field the q=4 route already records, because the default is
+  data-dependent and would otherwise be invisible; `relmat`/`animal` fits report `nothing`.
+  BOUNDARY: `rho` is FIXED, not estimated. This is not the univariate `spatial` route, which
+  carries `log rho` as a free parameter -- the two are different models and must not be compared
+  as one. Note also that DRM.jl's default range is the MEAN off-diagonal distance with a 1e-8
+  ridge, while drmTMB's native R-side rule is the MEDIAN positive distance with a 1e-6 jitter,
+  so the two engines build different matrices from the same coordinates unless `spatial_range`
+  is pinned; a coords-to-coords cross-engine comparison is therefore not a parity check.
+  REPAIR shipped with it: the q=2 route had a second, broader guard that refused ANY q=2
+  structured fit merely for carrying a `coords =` keyword, so an ordinary `relmat`/`animal` q=2
+  fit with a stray `coords =` errored. That guard is gone; each provider branch refuses when its
+  own input is missing.
 - **`drm_bridge` admits `skew_normal`** — `_bridge_family` now maps drmTMB's
   `skew_normal()` (tags `skew_normal` / `skewnormal`) to the native `SkewNormal()`
   family. The family was already implemented (`src/skewnormal.jl`) but the R
