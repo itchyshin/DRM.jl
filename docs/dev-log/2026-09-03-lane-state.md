@@ -51,3 +51,44 @@ Factual snapshot, not an after-task. State of the #563 DRM.jl lane at noon.
 3. **Whether the asymmetric one-sided scale effect from the collaborator's
    issue 2 stays sidestepped** — untouched by today's merged slices; status
    unchanged from before this checkpoint.
+
+## Addendum — 2026-09-04
+
+- **#630 MERGED** (`301121287`) — sparse LSS gradient made O(n+G), not
+  O(G·n); refs #627 but does not close it (see below). #632 and #633 are
+  pushed and PR'd but **not yet merged** (`gh pr view` returns OPEN,
+  `mergeCommit: null` for both as of this checkpoint) — #632 forwards the
+  `sparse` bridge option and fail-closes on unknown option keys; #633 fixes
+  the sparse-LSS profile data race and closes #631 once it lands.
+- **Two collaborator-facing corrections posted to
+  Ayumi-495/LS_ecogeographical-rules#28**, both self-corrections against our
+  own earlier comment on that thread: (1) the setup guide's own profile
+  example passed `threads = TRUE`, so a reader following it literally was on
+  the exposed (#631) path, not the safe one we'd first described — the guide
+  now passes `threads = FALSE` with a warning until #633 merges; (2) two of
+  the guide's stated limits were stale in the collaborator's favour and are
+  now marked superseded — the 5,000-species cap is gone (sparse dispatch
+  works at N=10,970), and the lss routes are no longer ML-only (REML is
+  available there, on the bivariate structured routes, and on Poisson
+  random intercepts).
+
+### Open issues — one-line waits (this checkpoint)
+
+- **#616** — OPEN. Waiting on root-causing the Julia-1.10-only CI flake in
+  `test_locscale_profile_threads.jl`; #630's gradient fix does not touch the
+  Gamma objective this flake drives (explicitly disclaimed in #630's PR body).
+- **#620** — OPEN. Waiting on the owner scheduling the Gaussian two-SD
+  phylogenetic random slope as a follow-up slice; refusal already landed.
+- **#622** — CLOSED (by #623, S7b.6 tripwire hardened) — no longer waiting
+  on anything.
+- **#624** — OPEN. Waiting on the owner's `q4_vcov`-on-REML decision
+  (10.5% gap vs `sdreport()`); #632 forwards bridge options but does not
+  touch this.
+- **#627** — OPEN. Waiting on a cost diagnosis of the reported 2h02m at
+  N=10,970: #630 fixed the gradient's O(G·n) cost (17.4× at 16,384 tips) but
+  that leaves the reported runtime ~236× unexplained, so the issue stays
+  open pending a run against the reporter's actual empirical phylogeny.
+- **#631** — OPEN. Waiting on #633 merging — root cause (a shared
+  `Core.Box` making the sparse fit's stored objective thread-unsafe) is
+  fixed on the branch (218/218 + 3/3 new tests, oracle agreement 2.8e-6/
+  2.0e-6) but the PR has not landed on `main` yet.
