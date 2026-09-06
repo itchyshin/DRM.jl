@@ -20,8 +20,12 @@ const REML_NONPD_PENALTY = 1e8
 # `lhs`, so e.g. `phylo(1 + x | g)` fit the exact same intercept-only model as
 # `phylo(1 | g)` with no error (silent data loss, #620). drmTMB fits a genuine
 # two-free-SD phylogenetic random INTERCEPT+SLOPE from `phylo(1 + x | g)` on
-# Gaussian; DRM.jl has no such route yet (nor an analogous one for relmat/
-# animal/spatial), so fail closed instead of silently dropping the slope.
+# Gaussian, Poisson and NegBinomial2 (all three as the SAME independent two-SD
+# model -- measured on drmTMB main 2026-09-05; it refuses the formula on Gamma).
+# DRM.jl implements only the Gaussian one (#620), because that route is the exact
+# closed-form marginal and does not extend to a non-Gaussian likelihood; it has no
+# route at all for relmat/animal/spatial, so fail closed instead of silently
+# dropping the slope.
 _structured_re_lhs_text(lhs) = if lhs isa ConstantTerm
         string(lhs.n)
     elseif lhs isa Term
@@ -52,10 +56,16 @@ function _check_phylo_re_lhs(lhs, grp::Symbol; allow_slope::Bool = false)
                 "route — only `phylo(1 | $grp)` (intercept) is here. The two-SD phylogenetic " *
                 "random intercept + slope `phylo(1 + x | $grp)` is implemented for the " *
                 "Gaussian mean only (`drm(bf(y ~ … + phylo(1 + x | $grp)), Gaussian(); tree)`). " *
-                "drmTMB fits this formula on further families too, and for Poisson/NegBinomial2 " *
-                "it fits a DIFFERENT model there — an estimated intercept–slope correlation " *
-                "(`has_phylo_mu_q2_covariance`); DRM.jl refuses rather than fit the independent " *
-                "model under that name (#620)"))
+                "drmTMB also fits this exact formula on Poisson and NegBinomial2, and it fits " *
+                "the SAME independent two-SD model there — measured on drmTMB main 2026-09-05, " *
+                "`corpars` is empty for `phylo(1 + x | g)` on Poisson; the estimated " *
+                "intercept–slope correlation (`has_phylo_mu_q2_covariance`, surfaced in " *
+                "`corpars`) belongs to the DIFFERENT tagged formula `phylo(1 + x | p | $grp)`. " *
+                "DRM.jl refuses the non-Gaussian families here because its route is the EXACT " *
+                "closed-form Gaussian marginal, which does not extend to a non-Gaussian " *
+                "likelihood — not because the target would differ. On Gamma, drmTMB refuses " *
+                "this formula too (\"intercept-only in this q=1 route\"), so `engine = \"tmb\"` " *
+                "is a route for Gaussian/Poisson/NegBinomial2 but not for Gamma (#620)"))
         end
     end
     throw(ArgumentError("drm: `phylo($lhs_text | $grp)` is not implemented on the " *
