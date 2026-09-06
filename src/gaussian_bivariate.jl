@@ -907,7 +907,24 @@ function _q4_structured_precision(kind::Symbol, grp::Symbol, G::Int;
     elseif kind === :spatial
         coords === nothing && error("spatial(1 | $grp) needs `coords = …`")
         G >= 2 || error("spatial(1 | $grp) needs at least 2 distinct sites; got G=$G")
-        Cmat = Matrix{Float64}(coords)
+        # A 1-D transect is naturally written as a plain Vector (`coords = [0.0, 1.0, 2.0]`),
+        # but `Matrix{Float64}(::Vector)` has no method and raised a bare MethodError. Accept
+        # it as the G-by-1 column it obviously means. This is UNAMBIGUOUS: a flattened 2-D
+        # layout has length 2G, so it reshapes to a 2G-by-1 and still trips the row check
+        # below with a message naming the expected shape (measured: G=4 flattened G-by-2 has
+        # length 8, reshaped rows 8 != 4). Anything that is neither a real vector nor
+        # matrix-convertible gets a shape error instead of a MethodError.
+        Cmat = if coords isa AbstractVector{<:Real}
+            reshape(Float64.(coords), :, 1)
+        else
+            try
+                Matrix{Float64}(coords)
+            catch
+                error("spatial(1 | $grp) needs `coords` as a $(G)-by-d matrix of site " *
+                      "coordinates, or a length-$(G) vector for a 1-D transect; got a " *
+                      "$(typeof(coords)) that is neither")
+            end
+        end
         size(Cmat, 1) == G ||
             error("spatial coords must have $G rows (one per `$grp` level); got $(size(Cmat, 1))")
         size(Cmat, 2) >= 1 || error("spatial coords must have at least one coordinate column")

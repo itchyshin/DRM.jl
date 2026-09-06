@@ -223,3 +223,22 @@ end
     @test isfinite(reml_loglik(fit))
     @test reml_loglik(fit) != ml_loglik(fit)
 end
+
+# The spatial covariance helper is SHARED: the q=4 route reaches it today via
+# `_q4_structured_precision`, and the q=2 spatial route reaches the same code once PR #658
+# admits it (on this branch's base, q=2 spatial is still refused -- see the rejection
+# testset above, which stays true). Pinning the vector admission here as well means the q=2
+# route inherits settled behaviour rather than re-discovering it: a 1-D transect written as
+# a plain Vector is read as a G-by-1 column, and the Matrix path is unchanged.
+@testset "q2 spatial (inherited helper): coords may be a length-G vector" begin
+    G = 3
+    v = [0.0, 2.0, 5.0]
+    Qv = DRM._q4_structured_precision(:spatial, :site, G;
+                                      K = nothing, A = nothing, coords = v, spatial_range = 2.0)
+    Qm = DRM._q4_structured_precision(:spatial, :site, G;
+                                      K = nothing, A = nothing, coords = reshape(v, G, 1),
+                                      spatial_range = 2.0)
+    @test size(Qv) == (G, G)
+    @test isposdef(Symmetric(Qv))
+    @test Qv == Qm
+end
