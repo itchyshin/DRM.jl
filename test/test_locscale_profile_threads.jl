@@ -92,15 +92,33 @@ end
     @test BLAS.get_num_threads() == blas_before
 
     # The contraction budget is reported per arm on the public diagnostic
-    # surface, next to the expansion and Newton counts it belongs with.  This
-    # well-conditioned fixture needs none of it, so the count is zero here: the
-    # guard is inert on a search whose every trial evaluates.
-    for diag in serial.endpoint_diagnostics
-        @test diag.lower.contractions == 0
-        @test diag.upper.contractions == 0
+    # surface, next to the expansion and Newton counts it belongs with.  The
+    # COUNT is deliberately not pinned to zero.  Whether a given trial is
+    # evaluable at the last bit is a property of the machine, not of the search
+    # -- exactly what the next testset's header says about the #651 failure --
+    # and it was measured here on 2026-09-06: this same commit gave 0
+    # contractions on one x64 linux Julia 1.10.12 runner (CI run 34034716401,
+    # 26/26) and 1 on another (run 34037371365), where these two lines were the
+    # ONLY failures, at `1 == 0`, with every finiteness and serial/threaded
+    # agreement assertion above still passing.  Pinning the count re-pins the
+    # platform difference the #651 contraction guard exists to absorb.
+    #
+    # What the guard promises -- and what is asserted instead -- is that
+    # contraction is BOUNDED and FREE.  Bounded: every contraction is one extra
+    # objective evaluation on the same arm, so the count is strictly below the
+    # arm's evaluation count, which a miscounted or double-counted diagnostic
+    # would break.  Free: an arm that contracts still ACCEPTS a finite endpoint
+    # instead of failing, which is precisely what regresses if the guard is
+    # removed and an unevaluable trial once again abandons the arm.  Measured
+    # locally 2026-09-06 (Julia 1.10.12, aarch64 macOS): all six arms report
+    # 0 contractions in 5-6 evaluations, `accepted = true`, `reason = :accepted`.
+    for diag in vcat(serial.endpoint_diagnostics, one.endpoint_diagnostics)
+        for arm in (diag.lower, diag.upper)
+            @test arm.contractions >= 0
+            @test arm.contractions < arm.evaluations
+            @test arm.accepted && !arm.endpoint_failed && arm.reason === :accepted
+        end
     end
-    @test only(one.endpoint_diagnostics).lower.contractions == 0
-    @test only(one.endpoint_diagnostics).upper.contractions == 0
 end
 
 # The endpoint search must not treat one unevaluable TRIAL as an unresolvable
