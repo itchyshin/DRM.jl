@@ -17,10 +17,10 @@ makedocs(
         devurl = "dev",
     ),
     pages = [
-        "Start here" => [
+        "Start" => [
             "Home" => "index.md",
             "Getting started" => "getting-started.md",
-            "Capabilities" => "capabilities.md",
+            "Evidence & limits" => "capabilities.md",
             "R ↔ Julia bridge" => "r-julia-bridge.md",
             "Rosetta (R ↔ Julia)" => "rosetta.md",
         ],

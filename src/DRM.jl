@@ -4,20 +4,20 @@
 `DRM.jl` — a Julia engine for distributional regression models, the Julia
 twin of the R package **drmTMB**. Mirrors the gllvmTMB → GLLVM.jl move.
 
-This v0.1.0 release migrates the verified `drm-julia-poc` engine for the
-**q=4 phylogenetic bivariate location–scale model (PLSM)** — the selling-point
-model of drmTMB (Nakagawa et al. 2025 MEE, Model 5). The marginal is a sparse
-**augmented-state Laplace approximation** with an **exact O(p) gradient**
-(implicit-function / TMB-style, via Takahashi selected inverse — never forms a
-dense p×p Σ_phy), optimised by LBFGS with a fast-path-then-robust mode-finder.
+The package covers univariate and bivariate distributional regression across
+some twenty response families, with random, phylogenetic, spatial, pedigree and
+supplied-matrix structure. Its origin is the **q=4 phylogenetic bivariate
+location–scale model (PLSM)** — the selling-point model of drmTMB (Nakagawa et
+al. 2025 MEE, Model 5). That marginal is a sparse **augmented-state Laplace
+approximation** with an **exact O(p) gradient** (implicit-function / TMB-style,
+via Takahashi selected inverse — never forms a dense p×p Σ_phy), optimised by
+LBFGS with a fast-path-then-robust mode-finder.
 
-Verified results (see report/comparison-grid.md):
-- Single fit (real q4_p100, same model as drmTMB): **1.14 s vs drmTMB 2.48 s
-  (2.18×)**, logLik matches, converged.
-- O(p) scaling (per-dimension-variance model, nrep=4 replicates): **p=10000 in
-  ~113 s, k≈1.08** (near-perfect O(p)).
-- Inference: Wald SEs valid for 16/17 params where drmTMB's Hessian is all-NaN;
-  parametric bootstrap 60/60.
+For what is implemented and how far each route is tested, see the capability
+matrix in the documentation. Measured comparisons against drmTMB, with their
+run conditions, live in `report/comparison-grid.md` and `HANDOVER.md` §2; they
+are specific to the model and data measured and are deliberately not quoted as
+figures here (HANDOVER.md §2, "Do NOT oversell").
 
 NOTE (see HANDOVER.md): the engine files were migrated as the poc's script-style
 includes (chain: fit_q4_sparse_tmb → fit_ml_q4 → sparse_em_fit → sparse_aug_plsm

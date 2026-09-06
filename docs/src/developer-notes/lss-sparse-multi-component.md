@@ -1,8 +1,12 @@
 # Toward an O(p) sparse multi-component LSS engine
 
-Developer note for a **future** `src/gaussian_sparse_lss_multi.jl` (no code
-exists yet — this is the symbolic-alignment pass required before writing
-any). Scope: extend `#551`'s single-phylo-component O(p) sparse engine
+Developer note for the sparse multi-component LSS route, which lives in
+`src/gaussian_sparse_lss.jl` (there is no separate
+`gaussian_sparse_lss_multi.jl`). It was written as the symbolic-alignment pass
+before any code existed; the route has since been implemented, wired into
+`drm()` by the D-206 router (§1), and covered by the default test suite
+(`test/test_lss_sparse_multi*.jl`, `test/runtests.jl:107–110`) — see §9 for its
+documented internals. Scope: extend `#551`'s single-phylo-component O(p) sparse engine
 (`src/gaussian_sparse_lss.jl`) to **several** `sd()` submodels in one fit,
 the way `#555`'s dense engine (`_fit_gaussian_lss_multi`,
 `src/gaussian_lss.jl:564`) already does. Issue #563, Phase-2 slice S7b.

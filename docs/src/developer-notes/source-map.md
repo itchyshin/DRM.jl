@@ -1,7 +1,7 @@
 # Implemented source map
 
 !!! note "Status — Stable"
-    Mirrors drmTMB's [Implemented source map](https://itchyshin.github.io/drmTMB/articles/source-map.html). This page lists the `src/` files that are wired into the module today (via `src/DRM.jl`), taken straight from the source. The `src/experimental/` migrations are **not** yet part of the public API.
+    Mirrors drmTMB's [Implemented source map](https://itchyshin.github.io/drmTMB/articles/source-map.html). This page is a guided tour of the main `src/` files wired into the module (via `src/DRM.jl`), taken straight from the source; it is not the complete include list — `src/DRM.jl` itself is. The `src/experimental/` migrations are **not** yet part of the public API.
 
 DRM.jl loads in three layers: the **verified q=4 engine**, the **`bf`/`drm` front
 end + Gaussian family**, and the **non-Gaussian families** on a shared
@@ -60,13 +60,19 @@ All non-Gaussian families share one reusable Laplace spine:
 |---|---|
 | `inference.jl` | Wald + profile-likelihood inference (and parametric bootstrap) for a fitted `DrmFit`. |
 | `summary.jl` | Human-readable printout for a fitted `DrmFit`. |
-| `visualization.jl` | Plotting-*data* providers (the package returns plot data, not figures), mirroring drmTMB's visualization layer. |
+| `visualization.jl` | Plotting-*data* providers (`profile_curve` / `parameter_surface` / `corpairs_data`), mirroring drmTMB's visualization layer. Drawing itself is an optional extension — `src/plotting_ext.jl` + `ext/DRMMakieExt.jl` — whose methods load only with the Makie + AlgebraOfGraphics weakdeps. |
 
 ## Not yet wired — `src/experimental/`
 
 Some migrated comparison-suite engines and natural-gradient variants remain
-outside the current public API even when related diagnostic helpers are loaded.
-Promoting them into a clean public API is tracked in the
-[issue ledger](https://github.com/itchyshin/DRM.jl/issues) (Phase 1.0). Examples:
-`fit_em_natgrad.jl`, `fit_em_closed.jl`, `em_squarem_fit.jl`, and several
-`estep_*` mode-finder variants.
+outside the public API. Several are kept as **recorded negative results**, not
+as pending promotions: `fit_em_natgrad.jl` failed the #13 decision gate, so
+`algorithm = :natgrad` is deliberately not exposed, and `fit_em_closed.jl` /
+`em_squarem_fit.jl` rest on a closed-form Λ step whose reported #472 descent
+proved to be an artefact of a dropped-zeros sparsity pattern and was repaired in
+#577 — `test/test_lambda_p100.jl` now asserts that the step *ascends* the
+marginal — so they stay unwired pending a case for promotion rather than as a
+recorded failure. The rest are superseded predecessors of the production engine (the
+`estep_*` mode-finder variants) or diagnostic oracles kept for reproducibility.
+Nothing is wired from there without a GitHub issue making the case — see
+`src/experimental/README.md`.
