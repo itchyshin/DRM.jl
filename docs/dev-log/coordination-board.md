@@ -352,3 +352,32 @@ Full Codex brief: **#76** (pinned).
 > Note: Phase 3 article-fill work is exhausted (26/26). Do not invent tip-idle
 > SHA padding after this PR. Never stage `.worktrees/`. Coordinate on
 > `src/DRM.jl` if an engine lane reopens.
+
+---
+
+## Handover — two docstring defects found 2026-09-05, left for their owning lanes
+
+Found by a docstring audit (270 of the 268 names Documenter splices into nine
+docs pages; two agents overlapped). Both live in files another lane holds, so
+they are **not** fixed in `claude/docstring-corrections-20260905` — they belong
+to the lanes below. Hunk-level comparison, not file-level, decided that.
+
+| Defect | File | Owning lane | What is wrong |
+|---|---|---|---|
+| `check_drm` docstring | `src/inference.jl` (~:2250) | `claude/parity-jl-checkdrm-adsafe` | It names **one** case where the gradient criterion is dropped (a penalized fit). The code drops it in **two**: `ok = converged && (penalized \|\| isnan(mag) \|\| mag <= grad_tol) && pd`. The second is any fit storing no objective, where `_check_max_abs_grad` returns `NaN` — a commonly reachable state in which `ok = true` rests on `converged && posdef` alone. That lane is rewriting this exact docstring region, so it should land the fix. |
+| serial-profiling claim | `src/inference.jl:178` | `claude/parity-a8b-biv-inference-drmjl` (nearest holder) | It says canonical location–scale profiling "remains serial … including when `threads = true`". The code parallelises coefficient jobs: `:505` sets `threaded = threads && …` and `:585-589` runs `Threads.@threads` over them. Only the lower/upper endpoint chain **within** one coefficient is serial — which is what the sibling docstring at `:270-274` correctly says. **Two docstrings 90 lines apart contradict each other, and one contradicts the code.** |
+
+Already fixed elsewhere, for context: `predict` / `predict_parameters`
+(`src/gaussian_core.jl`) documented random effects as "integrated out" when the
+code sets them to **zero** — for a non-identity link that is the value at `b = 0`,
+not the marginal mean. Corrected in `claude/docstring-corrections-20260905`
+(docstring text only, 0 code lines). The postfit reference page already carried a
+hand-written `!!! warning` saying this about one of the two functions; the
+docstring underneath had never been corrected and the identical claim on the
+other function was corrected nowhere.
+
+**Why this class was missed twice:** two earlier audit rounds swept `docs/src`
+prose and used `src/` as their *oracle*, so neither ever audited the 268
+docstrings that ARE documentation. The `DRM` module docstring — the entire body
+of `docs/src/reference/package.md` — was publishing four retired figures to the
+live site the whole time.
