@@ -635,7 +635,47 @@ function _bridge_family(family::AbstractString)
     fam in ("zero_one_beta", "zeroonebeta") && return ZeroOneBeta()
     fam == "tweedie" && return Tweedie()
     fam in ("cumulative_logit", "ordinal") && return CumulativeLogit()
+    hint = _bridge_mixture_family_hint(fam)
+    hint === nothing ||
+        throw(ArgumentError("drm_bridge: unsupported family `$family`. " * hint))
     throw(ArgumentError("drm_bridge: unsupported family `$family`"))
+end
+
+"""Actionable refusal text for a zero-inflated / hurdle family SPELLING.
+
+Zero-inflation (`zi`) and hurdle (`hu`) are FORMULA parts here, not families:
+the count family stays `poisson` / `nbinom2` and a keyed `zi ~ …` or `hu ~ …`
+entry adds the mixture (see `_bridge_formula` above, `test_zi.jl`,
+`test_hurdle.jl`). drmTMB spells them the same way -- its `drm_family_type()`
+returns `"poisson"` for a zero-inflated Poisson, and `"zi_poisson"` is only its
+post-fit `model_type` -- so the R bridge never sends these tags. A caller
+writing `drm_bridge` by hand reasonably might, and a bare "unsupported family"
+does not tell them the spelling that works.
+
+Deliberately NOT an alias. Mapping `"zi_poisson"` to `Poisson()` would fit a
+PLAIN Poisson, with no error, whenever the caller omitted the `zi ~` part --
+a silent wrong answer in place of a loud refusal.
+
+Returns `nothing` (so the caller falls through to the plain message) unless the
+tag is a recognised mixture prefix on a count family this bridge accepts.
+"""
+function _bridge_mixture_family_hint(fam::AbstractString)
+    m = match(r"^(?:zi|zero_inflated)_(.+)$", fam)
+    part = "zi"
+    if m === nothing
+        m = match(r"^hurdle_(.+)$", fam)
+        part = "hu"
+    end
+    m === nothing && return nothing
+    # Only ever point at a COUNT family: `zi`/`hu` are count-mixture parts, and
+    # this explicit list (rather than a recursive `_bridge_family` probe) keeps
+    # the lookup terminating and the suggestion one this bridge can honour.
+    base = m.captures[1]
+    base in ("nbinom2", "negbinomial2", "negative_binomial_2") && (base = "nbinom2")
+    base in ("poisson", "nbinom2") || return nothing
+    return "Zero-inflation (`zi`) and hurdle (`hu`) are formula parts here, not " *
+           "families: pass `family = \"$base\"` and add a `$part` entry to " *
+           "`formula`, e.g. `Dict(\"mu\" => \"y ~ x\", \"$part\" => \"$part ~ 1\")`."
 end
 
 """Internal, typed provenance for bridge-only public coefficient labels.

@@ -6,6 +6,25 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## Unreleased
 
+- **The `zi`/`hu` count mixtures now have a test at the `drm_bridge` MARSHALLING
+  boundary, and a family spelled `zi_poisson` gets an actionable refusal.**
+  `test_zi.jl` and `test_hurdle.jl` covered these mixtures through native `drm`
+  only; nothing covered the `drm_bridge` route, which is the boundary drmTMB's
+  `engine = "julia"` actually crosses and the one its banked `zi_poisson` parity
+  receipt rests on. New `test/test_bridge_zi.jl` (45 assertions) pins
+  bridge-vs-native agreement for ZIP (`family = "poisson"` + a keyed `zi` entry)
+  and ZINB (`family = "nbinom2"` + `sigma` + `zi`): coefficients agree to
+  `< 1e-8` and log-likelihoods to `1e-8` on both, with a plain-Poisson contrast
+  proving the `zi` entry is not silently dropped in marshalling. Separately,
+  `_bridge_family("zi_poisson")` (or `zi_nbinom2`, `zero_inflated_poisson`,
+  `hurdle_nbinom2`) previously threw a bare ``unsupported family `zi_poisson` ``;
+  it now names the spelling that works -- `family = "poisson"` plus a `zi` entry
+  in `formula`. It is deliberately NOT an alias: mapping `zi_poisson` to
+  `Poisson()` would fit a PLAIN Poisson, silently and without error, whenever
+  the caller omitted the `zi ~` part. A mixture prefix on a non-count family
+  (`zi_gaussian`, `hurdle_beta`) and any other unknown tag still get the plain
+  message, with no suggestion.
+
 - **Inference on a missing-response ("response mask") Gaussian fit: `is_converged` read false on a
   converged fit, and every bootstrap replicate failed (#646).** Both defects sat downstream of the
   fit itself -- the point estimates were already right, matching drmTMB's `engine = "tmb"` to ~7e-06
