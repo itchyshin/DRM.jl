@@ -4,35 +4,41 @@ layout: home
 
 hero:
   name: "DRM.jl"
-  text: "Distributional regression in Julia"
-  tagline: "Model more than the mean: use separate formulas for location, scale, shape, boundary probabilities, and correlation in Julia."
+  text: "What varies besides the mean?"
+  tagline: "A formula-first Julia twin of drmTMB: the mean, the scale, and boundary probabilities of a response each take their own formula, with random effects and sparse phylogenetic structure."
+  image:
+    src: /logo.png
+    alt: "DRM.jl mark: two density curves sharing one mean, one narrow and one wide"
   actions:
     - theme: brand
-      text: Fit a Gaussian location-scale model
-      link: /tutorials/location-scale
-    - theme: alt
-      text: Get started
+      text: Fit a location–scale model
       link: /getting-started
     - theme: alt
       text: What can I fit today?
       link: /model-guides/model-map
     - theme: alt
-      text: View on GitHub
-      link: https://github.com/itchyshin/DRM.jl
+      text: Evidence & limits
+      link: /capabilities
 
 features:
   - title: "A formula per parameter"
-    details: "Use bf() to bundle the formulas your selected family accepts, so mean, scale, and other distributional effects can be modelled separately."
-  - title: "Families and structured effects"
-    details: "Fit continuous, count, binary, and proportion responses, with random effects and phylogenetic, spatial, pedigree, or supplied-matrix structure. Check the capability matrix for supported combinations."
-  - title: "Sparse phylogenetic models"
-    details: "Work with tree-structured models through sparse Julia solvers. Profile likelihood and parametric bootstrap support inference on the documented routes; performance depends on the model and data."
-  - title: "Built for R users"
-    details: "The optional R bridge is available for its admitted model cells through drmTMB(..., engine = \"julia\"); the default R engine remains TMB. MIT-licensed fresh code, never a port of drmTMB's GPL source."
+    details: "bf() bundles one formula per distributional parameter your family admits, so the mean and the spread are modelled separately. The scale formula is on log σ, and the parameter is named sigma, never tau. Zero-inflation, hurdle, and zero/one-inflation parameters take formulas too."
+  - title: "Correlation between two responses"
+    details: "In the two-response bundle, rho12 takes its own formula, so residual correlation can itself depend on a covariate. It is a bivariate parameter and is not available in the univariate bundle."
+  - title: "Read each coefficient on its own scale"
+    details: "Every parameter is reported on the scale named by its link. The capability matrix says which families, structures, and sparse combinations are tested before you interpret a route."
+  - title: "A twin, not a port"
+    details: "MIT-licensed fresh code; drmTMB (GPL) stays the reference. The optional R bridge is experimental and lists its admitted engine = \"julia\" cells; the R-side glue lives in drmTMB, and the default R engine remains TMB."
 ---
 ```
 
-## Fit your first model
+## Start with the location–scale model
+
+The first question is not which optimiser to use. It is **which feature of the
+response might change?** A mean-only model asks whether the expected response
+changes. A distributional model can also ask whether its spread, its shape, or
+its boundary probabilities change. DRM.jl keeps those questions separate by
+giving each admitted parameter its own formula.
 
 Given a table `dat` with numeric columns `y` and `x`, fit a location–scale
 model as below. [Get started](getting-started.md) includes the complete data
@@ -54,22 +60,42 @@ available distributional parameter. See [Get started](getting-started.md) for a
 worked, runnable example, or [What can I fit today?](model-guides/model-map.md)
 for the model-space guide and its route-specific boundaries.
 
-## Why use the Julia workflow?
+!!! warning "The scale is modelled on the log scale"
+    For a Gaussian fit, `coef(fit, :sigma)` are coefficients on **log σ**, the
+    residual standard deviation. A slope of γ = 0.2 means the residual SD
+    multiplies by exp(0.2) ≈ 1.22 per one-unit increase in `x`, and the residual
+    variance by exp(0.4) ≈ 1.49. Other families keep the log link on `sigma` but
+    interpret it on their own scale: for Gamma it is a coefficient of variation,
+    for Beta it maps to a precision. The parameter is named `sigma`, matching
+    drmTMB, never `tau`.
 
-DRM.jl gives you a direct Julia route for models whose mean and distributional
-parameters need separate predictors. Use the [capability matrix](capabilities.md)
-to choose a supported family and structure, and the
+## What the fit estimates
+
+In the model above, DRM.jl estimates one coefficient vector for **μ** (the mean)
+and one for **log σ** (the residual standard deviation). A positive σ coefficient
+means a multiplicative increase in residual spread, not an additive change in
+the mean. Other families expose other admitted parameters, but the same rule
+holds: interpret a coefficient on the scale named by that parameter's link.
+
+## Evidence and limitations
+
+DRM.jl is a pre-release package. Use the [capability matrix](capabilities.md) to
+choose a tested family–structure combination, and the
 [diagnostics and validation guides](diagnostics-and-validation/testing-likelihoods.md)
-to see how that route is checked. Performance and inference evidence are specific
-to the fitted model and its data; they are not a general promise for every model.
+to see how it was checked. The verified sparse phylogenetic engine, profile
+likelihood, and bootstrap routes are useful evidence — not blanket promises for
+every family, data set, or interval. In particular, an interval method being
+implemented does not claim universal calibrated coverage.
 
-## For R users
+## Relation to drmTMB
 
-The optional [R ↔ Julia bridge](r-julia-bridge.md) already lets supported
-`drmTMB(...)` calls use `engine = "julia"`; its page lists the admitted fixtures,
-formula translations, and explicit refusals. The default R route remains
-`engine = "tmb"` and does not require Julia. For direct Julia use, the
-[Rosetta page](rosetta.md) compares the two syntaxes side by side.
+DRM.jl is the Julia twin of [drmTMB](https://itchyshin.github.io/drmTMB/): it
+adopts a closely related `bf()` grammar and vocabulary so R users do not have to
+relearn the model class. It is independent, MIT-licensed Julia code — not a port
+of drmTMB's GPL source. The optional [R ↔ Julia bridge](r-julia-bridge.md) is
+experimental and lists the admitted `engine = "julia"` cells; `engine = "tmb"`
+remains the default R route and does not require Julia. The
+[Rosetta page](rosetta.md) compares the two syntaxes directly.
 
 ---
 

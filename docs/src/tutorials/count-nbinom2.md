@@ -44,8 +44,7 @@ extrema(fitted(fit))        # fitted means λ̂ = exp(Xβ̂)
 !!! tip "When Poisson is too tight"
     Poisson forces variance = mean. Real counts are often **overdispersed**
     (variance > mean). The negative-binomial family `NegBinomial2()` relaxes that
-    — read on. (The `zi` zero-inflation modifier for **extra zeros** is a later
-    Phase-2 slice.)
+    — read on. (For **extra zeros**, see the `zi` and `hu` modifiers below.)
 
 ## Overdispersion: the negative-binomial (NB2) family
 
