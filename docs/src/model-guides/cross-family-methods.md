@@ -1,6 +1,11 @@
 # Cross-family dependence: statistical foundations
 
-!!! note "Status — Stable (engine), paper-section reference"
+!!! note "Status — Experimental (engine), paper-section reference"
+    The cross-family route is **Experimental** and not release-ready: the
+    evidence is a set of simulated fixtures covering five family pairs
+    (`test/test_mixed_family.jl`) and there is no interval-coverage study. The
+    maths below is what the code evaluates; the release status is what limits
+    its use. See [Evidence & limits](../capabilities.md).
     This page is the methods reference for the cross-family bivariate model
     implemented by `fit_mixed_family` in `src/mixed_family.jl`, with the
     link-scale standardisation in `src/link_residual.jl`. It documents the
