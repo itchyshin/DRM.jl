@@ -1359,7 +1359,9 @@ end
     predict(fit, newdata; type = :response, se = false) -> Vector / Dict / NamedTuple
 
 Population-level prediction on `newdata` (a NamedTuple / column table), random /
-structured effects integrated out. `type = :response` (default) returns the
+structured effects SET TO ZERO — *not* integrated out. For a non-identity link
+this is `g⁻¹(Xβ̂)`, the value at `b = 0`, which differs from the marginal mean
+`E_b[g⁻¹(Xβ̂ + b)]`. `type = :response` (default) returns the
 response-scale mean — the family inverse link applied to `Xβ̂` (`exp` for
 Poisson/Gamma, `logistic` for Beta/Binomial, identity for Gaussian); `type = :link`
 returns `Xβ̂`. In-sample, `predict(fit, data) ≈ fitted(fit)`. Univariate returns a
@@ -1527,8 +1529,11 @@ end
         -> Dict{Symbol,NamedTuple}        (se = true)
 
 Population-level prediction of **every** distributional parameter at `newdata`
-(a NamedTuple / column table), random / structured effects integrated out
-(exactly like [`predict`](@ref)). The returned `Dict` has one entry per
+(a NamedTuple / column table), random / structured effects SET TO ZERO — *not*
+integrated out — exactly as in [`predict`](@ref). Each parameter's fixed-effect
+linear predictor is passed through that parameter's own inverse link, so for a
+non-identity link the result is the value at `b = 0`, not a marginal mean. The
+returned `Dict` has one entry per
 distributional parameter the model carries — always `:mu` and (when the family
 uses it) `:sigma`, plus any family extras present (`:nu`, `:zi`, `:hu`, `:zoi`,
 `:coi`).

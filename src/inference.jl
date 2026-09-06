@@ -1313,8 +1313,12 @@ end
     bootstrap_ci(formula, family; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, coords =, algorithm = :auto, g_tol = 1e-8)
     bootstrap_ci(fit; data, B = 300, level = 0.95, rng = default_rng(), threads = false, K =, A =, tree =, coords =, algorithm = :auto, g_tol = 1e-8)
 
-Parametric bootstrap confidence intervals: fit the model, then `simulate` `B`
-replicate responses, refit each, and take percentile intervals per coefficient.
+Parametric bootstrap confidence intervals: fit the model, then draw `B` replicate
+responses, refit each, and take percentile intervals per coefficient. When the fit
+carries a random or structured effect on the mean the replicates are drawn
+MARGINALLY, redrawing the random effects per replicate (#459), rather than by the
+conditional `simulate`, which would hold them at zero and collapse a
+variance-component interval.
 Univariate-response models (fixed / random-effect / meta / structured). Same row
 shape as [`confint`](@ref). Set `threads = true` to refit bootstrap replicates
 in parallel. Pass through the structured-provider keywords (`K` / `A` / `tree` /
