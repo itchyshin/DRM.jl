@@ -223,10 +223,48 @@ function marginal_loglik(
     return -0.5 * (prob.n * log(2π) + ldV + quad)
 end
 
+# The Woodbury representation subtracts two O(1/σ²) terms.  Once the
+# residual variance is small relative to the phylogenetic variance, that
+# subtraction no longer represents the marginal covariance: it can manufacture
+# a large *negative* NLL and an apparently converged fit.  Treat that part of
+# parameter space as numerically unavailable.  This is a representation limit,
+# not a statistical lower bound; the dense small-model oracle remains available
+# to investigate a genuine boundary estimate.
+#
+# WHERE THE BAR GOES (#574 follow-up, measured 2026-09-05).  The relative error
+# of the subtraction grows as eps * (σ²_phy / σ²), so the ratio σ²/σ²_phy is
+# the fraction of the mantissa that survives it.  #574 put the bar at
+# σ²/σ²_phy >= eps -- exactly the point where NO digits survive, i.e. with
+# zero margin -- and the objective is therefore still wrong just above it.
+# Measured on the #461 fixture (G = 100, one row per species, replicate 38 of
+# the B = 60 bootstrap), Woodbury vs a dense V = σ²I + σ²_phy·C oracle at
+# lσ_phy = -26.9176:
+#
+#     lσ      log10(σ²/σ²_phy)   woodbury_ll     dense_ll     rel.diff
+#    -30.0        -2.68          -6.27054e24  -6.27054e24    6.75e-14
+#    -36.0        -7.89          -6.30213e24  -6.30213e24    1.93e-08
+#    -40.0       -11.36          -6.30204e24  -6.30213e24    1.37e-05
+#    -44.0       -14.84          +4.37745e25  -3.15149e25    2.39      <- sign flip
+#
+# The sign flip -- the whole #461 runaway -- happens at σ²/σ²_phy ~ 6 eps,
+# INSIDE #574's bar, so the optimizer could still reach it and Optim reported
+# convergence there.  It is a coin flip decided by rounding: the same fixture,
+# seeds and source pass on x86_64 Linux CI and fail on aarch64 macOS.
+#
+# The bar is therefore the standard rule for a cancellation-limited difference:
+# keep at least HALF the mantissa, σ²/σ²_phy >= sqrt(eps), which is
+# 2(lσ - lσ_phy) >= 0.5 log(eps).  That is the -36.0 row above (rel.diff
+# 1.93e-08 ~ sqrt(eps)), and it leaves ~8 nats of headroom over the observed
+# break instead of 0.94.  In scale terms it refuses σ/σ_phy < 1.2e-4.
+@inline function _loconly_resolvable_scales(lσ::Real, lσ_phy::Real)
+    return lσ - lσ_phy >= 0.25 * log(eps(Float64))
+end
+
 function _loconly_marginal_nll(
     prob::LocOnlyProblem, β::AbstractVector, lσ::Real, lσ_phy::Real
 )
-    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50 &&
+     _loconly_resolvable_scales(lσ, lσ_phy)) ||
         return _LOCONLY_PENALTY
     σ²_phy = exp(2 * Float64(lσ_phy))
     σ² = exp(2 * Float64(lσ))
@@ -235,7 +273,8 @@ function _loconly_marginal_nll(
 end
 
 function _loconly_profile_beta(prob::LocOnlyProblem, lσ::Real, lσ_phy::Real)
-    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) ||
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50 &&
+     _loconly_resolvable_scales(lσ, lσ_phy)) ||
         return nothing, _LOCONLY_PENALTY, nothing
     σ²_phy = exp(2 * Float64(lσ_phy))
     σ² = exp(2 * Float64(lσ))
@@ -3130,7 +3169,8 @@ function _loconly_marginal_grad!(g, prob::LocOnlyProblem, θ::AbstractVector, p�
     )
     lσ = θ[pμ + 1]
     lσ_phy = θ[pμ + 2]
-    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50) || return g
+    (isfinite(lσ) && isfinite(lσ_phy) && abs(lσ) < 50 && abs(lσ_phy) < 50 &&
+     _loconly_resolvable_scales(lσ, lσ_phy)) || return g
     σ² = exp(2 * Float64(lσ))
     σ²_phy = exp(2 * Float64(lσ_phy))
     try

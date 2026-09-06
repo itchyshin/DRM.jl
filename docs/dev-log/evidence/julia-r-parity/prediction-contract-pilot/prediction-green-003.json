@@ -984,11 +984,11 @@
   "package_version": "0.7.0",
   "R_checkout": "/private/tmp/drm-parity-20260830/s10-candidate",
   "R_head": null,
-  "Julia_checkout": "/private/tmp/drm-parity-20260830/DRM.jl",
-  "Julia_head": "98b9072be09620311e76a26bd166f8c1c2dc2121",
+  "Julia_checkout": "/private/tmp/claude-503/-Users-z3437171-Dropbox-Github-Local-DRM-jl/2b420b3d-cf11-4ac2-ab94-c3306978df50/scratchpad/wt-563-s9",
+  "Julia_head": "f53e06b1e120765a6a9c7b6bce7b2f0f26e10d0f",
   "adapter_oracle_scope": "native prediction evaluated at the same Julia coefficients, tolerance1e-12; diagnostic only, not a replacement baseline",
   "R_bridge_sha256": "9e7b2edad435d0fcd423866ef388426842002c67b40a288e5977fd05fc8d6ad1",
-  "native_methods_sha256": "9822cce16be5d732b9d5b14f93a0be1cbe480ec3a9164611d11256633526ba1f",
+  "native_methods_sha256": "eba7845158b020c795187052ea171c07428d659f70dee0d5f3c16ed351313120",
   "runner_sha256": "5fc719b728cbdd04c9310143b8e64b535c0b548679b321081c7a0003268fcf59",
   "cases": {
     "numeric": {
@@ -1356,13 +1356,13 @@
     "version": "1.10.0",
     "threads": 1,
     "blas": 1,
-    "loaded_source": "/private/tmp/drm-parity-20260830/DRM.jl/src/DRM.jl"
+    "loaded_source": "/private/tmp/claude-503/-Users-z3437171-Dropbox-Github-Local-DRM-jl/2b420b3d-cf11-4ac2-ab94-c3306978df50/scratchpad/wt-563-s9/src/DRM.jl"
   },
   "native_DLL": {
-    "path": "/var/folders/7x/ytfpq14s0v18frbm9v_w9f4c0000gq/T//RtmpowF89L/pkgload1836e7f440fce/drmTMB.so",
+    "path": "/var/folders/7x/ytfpq14s0v18frbm9v_w9f4c0000gq/T//RtmpYNg7T6/pkgload86cb39374d4a/drmTMB.so",
     "sha256": "37ecda8a20e59c7309717865948928fc186bca853cda65b2c23c27805de60174"
   },
-  "seconds": 19.455000000000002,
+  "seconds": 30.193999999999996,
   "bridge_unchanged_during_run": true,
   "completed_predictions": 32,
   "adapter_status": "PASS",

@@ -87,13 +87,25 @@ end
 # Λ_new = (1/N)( Û Q_cond Û'  +  Σ_{(s,t)} Q_cond[s,t]·Cov(u_s,u_t|y) ),
 # N = n_keep. Posterior covariance blocks from Takahashi selected inverse.
 #
-# NOT reachable from the public `drm()` API (#472). Measured to DESCEND the
-# true Laplace marginal at p=100 fixture scale, for every step size tested
-# (`test/test_lambda_p100.jl`, deliberately left unwired — see
-# `test/runtests.jl`'s note by the `test_lambda_direction.jl` include).
-# Production (`fit_ml_q4.jl`) does not call this: it replaces the Λ step with
-# `lambda_ml_step`, a line-searched finite-difference ascent on the true
-# marginal, which is the reason this closed-form update was abandoned.
+# NOT reachable from the public `drm()` API (#472). Production (`fit_ml_q4.jl`)
+# does not call this: it replaces the Λ step with `lambda_ml_step`, a
+# line-searched finite-difference ascent on the true marginal.
+#
+# The p=100 DESCENT that motivated abandoning this step was an ARTEFACT (#577,
+# fixed 2026-09-02). The posterior covariance blocks above come from
+# `takahashi_selinv`, which can only return entries the CHOLMOD pattern carries;
+# `prior_precision` used to drop Λ⁻¹'s exact zeros, so at a diagonal Λ the
+# cross-axis entries were structurally ABSENT at every non-leaf node and this
+# function read them as zero covariances. On the q4_p100 fixture that produced
+# Λ_em off-diagonals of 1.21 (repaired: 0.0078) and a 55.8-nat DESCENT; with the
+# pattern repaired the same step ASCENDS by 0.70 nats, at every step size
+# (`test/test_lambda_p100.jl`, which now asserts the ascent). The p=8 sibling
+# `test/test_lambda_direction.jl` always asserted ascent and always passed — the
+# artefact scales with the number of NON-LEAF nodes.
+#
+# NOT a licence to re-adopt the closed-form step. On a SYNTHETIC p=100 tree with
+# pure-noise responses it still descends (~52 nats) after the repair, and that is
+# unexplained. #472 stays OPEN, re-scoped: measure before re-wiring anything.
 function mstep_Lambda(prob::AugProblem, Q_cond::SparseMatrixCSC, u::Vector{Float64}, ch_H)
     N = prob.n_total                       # n_keep
     Û = reshape(u, 4, N)                    # 4 × n_keep
@@ -160,12 +172,17 @@ end
 # --- EM driver with monotonicity guard --------------------------------------
 # NOT reachable from the public `drm()` API (#472) — this is the closed-form-Λ
 # EM route, driven only by this file's own `abspath(PROGRAM_FILE)` demo and by
-# `bench/` scripts. Its Λ block (`mstep_Lambda`) does not ascend the true
-# marginal at p=100 (see that function's docstring); production fits go
-# through `fit_ml_q4.jl` instead, which line-searches the Λ step. The
-# monotonicity `@assert` below guards THIS driver's own bookkeeping (it only
-# accepts a step if `marg` reports an improvement), so it cannot mask
-# `mstep_Lambda`'s failure to ascend the underlying objective.
+# `bench/` scripts. Production fits go through `fit_ml_q4.jl` instead, which
+# line-searches the Λ step.
+#
+# Its Λ block (`mstep_Lambda`) DID fail to ascend the true marginal at p=100;
+# that failure was the #577 sparsity-pattern artefact and is fixed (see that
+# function's comment for the before/after numbers). The general case is NOT
+# settled — a synthetic pure-noise p=100 tree still descends — so this route
+# stays fenced and #472 stays open. The monotonicity `@assert` below guards
+# THIS driver's own bookkeeping (it only accepts a step if `marg` reports an
+# improvement), so it cannot mask a failure to ascend the underlying objective;
+# that property is unchanged and is why the fence is safe to leave as-is.
 function fit_em_aug(prob::AugProblem, Q_cond::SparseMatrixCSC, β0, Λ0;
                     max_em=200, tol=1e-6, verbose=true)
     β = β0; Λ = Matrix(Λ0)

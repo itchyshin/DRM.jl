@@ -97,6 +97,10 @@ marginal_parameters(fit)            # == predict_parameters(fit, data) in-sample
 
 ## Formula-fitted finite-state missing predictors
 
+!!! warning "Experimental"
+    Exported for evaluation; fenced for v1.0 (D-181). API and numerics may
+    change; not covered by the R-parity scoreboard.
+
 For one ordinal or categorical missing predictor in the bounded Gaussian joint
 route, construct the predictor model with `impute_model`; use
 `CategoricalLogit()` for nominal states. `JointFiniteDrmFit` retains the raw
@@ -120,8 +124,8 @@ and `failed`; `confint` warns about failed endpoint solves.
 For coupled non-Gaussian location–scale fits, `endpoint_diagnostics` also records
 why each endpoint search stopped, its last evaluated candidate and its residual.
 A candidate from a failed search is diagnostic information, not a confidence
-limit. Through R's `engine = "julia"`, inspect `conf.status` and `profile.message`
-in the returned interval table. A failed result must not be read as evidence of
+limit. Through the experimental R bridge (`engine = "julia"`), inspect
+`conf.status` and `profile.message` in the returned interval table. A failed result must not be read as evidence of
 an unbounded interval.
 
 ```@docs
@@ -193,6 +197,7 @@ refusals; these docstrings do not expand that contract.
 ```@docs
 drm_bridge
 drm_bridge_inference
+drm_bridge_objective_at
 drm_listwise
 ```
 
@@ -249,7 +254,10 @@ chibar_pvalue
 
 ## Cross-family post-fit
 
-Accessors for a `fit_mixed_family` result. [`mf_coef`](@ref) is the tidy
+Accessors for a `fit_mixed_family` result. The cross-family bivariate route is
+**experimental** and not release-ready: single-fixture evidence, no interval
+coverage, and the dependence it reports is a latent-scale scalar correlation
+(`fit.rho_latent`), not a `rho12` formula. [`mf_coef`](@ref) is the tidy
 coefficient table; the other `mf_*` helpers live beside it in the module.
 
 ## Engine constructors (q=4 and coevolution)

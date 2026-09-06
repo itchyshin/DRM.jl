@@ -250,4 +250,12 @@ end
     @test res["param"] == "resd_sigma"
     @test res["status"] == "profile"
     @test 0 <= res["lower"] < res["estimate"] < res["upper"]          # SD-scale boundary CI from R
+
+    explicit = DRM.drm_bridge_inference(; formula = "y ~ x; sigma ~ phylo(1 | species)", family = "gaussian",
+            data = Dict("y" => y, "x" => x, "species" => species), tree = phy,
+            options = Dict("method" => "REML"), method = "profile", parm = "sd:sigma")
+    @test explicit["param"] == "resd_sigma"
+    @test explicit["estimate"] == res["estimate"]
+    @test explicit["lower"] == res["lower"]
+    @test explicit["upper"] == res["upper"]
 end

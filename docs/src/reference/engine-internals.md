@@ -53,7 +53,11 @@ DRM._phy_validate_topology
 DRM._parse_label!
 ```
 
-## q=4 and Fisher-z evaluators
+## q=4 and D·R·D separation evaluators
+
+The `fz_` prefix and `fit_q4_sparse_fisherz` are historical names: the
+correlation map is spherical/LKJ, not Fisher-z. The warning on
+`DRM.fit_q4_sparse_fisherz` below gives the correct back-transform.
 
 ```@docs
 DRM.beta_widths
@@ -98,6 +102,7 @@ DRM._bridge_dpars
 DRM._bridge_dpars_newdata
 DRM._bridge_meta_parts
 DRM._bridge_trials
+DRM._bridge_mixture_family_hint
 DRM.drm_bridge_q2_known_precision
 DRM.drm_bridge_q2_phylo
 DRM.fit_mixed_family
@@ -114,6 +119,7 @@ DRM._BridgeFormulaLabels
 
 ```@docs
 DRM._fit_bivariate_q4_structured
+DRM._fit_cumulative_phylo_laplace
 DRM._fit_corr_locscale
 DRM._fit_fixed_gaussian_reml
 DRM._fit_gaussian_locscale_phylo
@@ -229,6 +235,10 @@ nuisance-parameter specification, using the prepared group indices.
 
 
 ## Prepared missing-predictor development route
+
+!!! warning "Experimental"
+    Exported for evaluation; fenced for v1.0 (D-181). API and numerics may
+    change; not covered by the R-parity scoreboard.
 
 !!! warning "Limited developer interface"
     This prepared-array interface covers a Gaussian response with one Gaussian

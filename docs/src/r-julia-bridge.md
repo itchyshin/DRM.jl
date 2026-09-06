@@ -43,14 +43,16 @@
     vs installed drmTMB **0.6.0** at the time; BLAS/OMP threads = 1; 1 warmup +
     5 timed reps):
 
-    - Original six (#372) — median R/Julia ratios ≈ **4.8×–46×**; retained in
+    - Original six (#372) — the warm median favoured Julia on every cell
+      measured; the ratios are retained in
       `docs/dev-log/evidence/2026-08-03-372-six-cell-timing.md`.
-    - +4 FE + `nbinom2-dispersion` (#389) — median R/Julia ratios ≈ **11.4×–59.6×**;
-      retained in `docs/dev-log/evidence/2026-08-05-389-plus5-bridge-timing.md`.
+    - +4 FE + `nbinom2-dispersion` (#389) — likewise on every cell; ratios in
+      `docs/dev-log/evidence/2026-08-05-389-plus5-bridge-timing.md`.
 
     The timing artifacts were not re-measured on the 0.7.0 fixture anchor. They
     are neither a general “Nx faster for all drmTMB models” claim nor the
-    verified q=4 PLSM 2.18× cell (`report/comparison-grid.md`).
+    verified q=4 PLSM single-fit cell at p=100 (`report/comparison-grid.md`), which
+    is a different measurement from the #376 scaling campaign below.
     For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
 
 ## The idea
@@ -113,6 +115,10 @@ standardize a tree whose tip depths differ. Accepting a topology does not itself
 verify every response family, profile interval or bootstrap workflow.
 
 ### One modelled missing predictor — development admission
+
+!!! warning "Experimental"
+    Exported for evaluation; fenced for v1.0 (D-181). API and numerics may
+    change; not covered by the R-parity scoreboard.
 
 The R bridge also has a deliberately narrow development route for one modelled
 missing predictor. It accepts a Gaussian identity-link response, exactly one
@@ -292,7 +298,7 @@ Tracked in the issue ledger:
   describe the same model; the parity tests enforce this once R is available in CI.
 - **Broader measured speed campaigns** — the six-cell fixture timing in #372 is
   retained and scoped; #376 measured the ROADMAP nrep=4 / p>100 q4 scaling
-  head-to-head on Totoro (extrapolated “~12×” **retired** — see
+  head-to-head on Totoro (the earlier extrapolated single-number speedup is **retired** — see
   `docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`). Other large-n
   campaigns remain separate (Rose: do not invent unmeasured ratios).
 

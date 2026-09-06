@@ -18,6 +18,10 @@ Status words:
   the module).
 - `missing` -- no implementation found anywhere in `src/`, `docs/`, `README.md`,
   `ROADMAP.md`, or `HANDOVER.md`.
+- `experimental` -- real code exists, is exported, and has a test file, but a
+  recorded decision fences it out of the frozen/parity-claimed surface (e.g.
+  a v1.0 boundary) or narrows its scope well below a native capability; not
+  `implemented` until that fence is lifted by the same decision process.
 
 Nothing below is marked `implemented` without a source file and a test file
 both found by reading the repository (not by trusting `docs/src/capabilities.md`
@@ -71,11 +75,53 @@ rows; each has a `test/test_*.jl` file cited in `docs/src/capabilities.md`'s
 | Gaussian random slope (mean) | implemented |
 | Gaussian random effect on sigma (scale) | implemented |
 | Gaussian phylogenetic random intercept (mean) | implemented |
+| Gaussian phylogenetic random intercept + slope, two SDs (mean) | implemented |
 | Gaussian spatial random intercept (mean) | implemented |
 | Gaussian animal-model random intercept (mean) | implemented |
 | Gaussian relmat random intercept (mean) | implemented |
 | Non-Gaussian phylogenetic random intercept (mean) | implemented |
 | Non-Gaussian phylogenetic location-scale (μ + log σ) | implemented |
+| Tweedie random intercept (mean) | implemented |
+
+`Gaussian phylogenetic random intercept + slope, two SDs (mean)` is
+`implemented` (#620; was `refused` by #621 at the previous pin):
+`phylo(1 + x | species)` on the Gaussian mean fits drmTMB's model — two
+independent phylogenetic fields (intercept `a ~ N(0, σₐ² C)`, slope
+`b ~ N(0, σ_b² C)`, no correlation). In `src/drmTMB.cpp` that is
+`model_type == 1` + `has_phylo_mu` with `q_phylo == 2` and both fields on `mu`,
+so `has_cross_dpar_phylo` is false and the per-field
+`exp(-2·log_sd_phylo(k))·uₖᵀQuₖ` branch runs with no cross term. DRM.jl fits it
+as the closed-form dense marginal `V = D + σₐ² Z C Zᵀ + σ_b² Zₓ C Zₓᵀ`
+(`src/gaussian_structured.jl` `_fit_phylo_slope_gaussian`), the same five free
+parameters drmTMB optimizes. Measured same target as drmTMB 67703f541 on the
+committed fixture in `test/test_phylo_slope_two_sd.jl`: logLik, both SDs, β and
+log σ agree to ≤ 6.7e-13.
+
+BOUNDARY (written, not silent; CORRECTED 2026-09-05 after measurement).
+drmTMB fits `phylo(1 + x | g)` on Poisson and NegBinomial2 too, and it fits the
+**same** independent two-SD model there, not a different one. Measured on
+drmTMB main (`engine = "tmb"`, 30-tip `ape::rcoal`, Poisson): the untagged
+`phylo(1 + x | site)` returns SD rows `phylo(1 | site)` and
+`phylo(0 + x | site)` with `corpars` **empty**, while the tagged
+`phylo(1 + x | p | site)` returns `corpars` = `cor(mu:(Intercept),mu:x | p |
+site)` = 0.824. The estimated intercept–slope correlation
+(`has_phylo_mu_q2_covariance`) therefore belongs to the *tagged* formula, which
+is a different construct from the one refused here; drmTMB refuses this formula
+outright on Gamma ("intercept-only in this q=1 route"). DRM.jl still refuses
+every non-Gaussian family on this route, for the accurate reason: it is the
+EXACT closed-form Gaussian marginal, which does not extend to a non-Gaussian
+likelihood — the count families need a two-field Laplace route that does not
+exist yet. The prior wording named a target difference that measurement does
+not support; the refusal itself is unchanged. `phylo(0 + x | g)`, multi-slope
+forms, a second structured component, ordinary and `sigma`-side random effects, a
+structured (`phylo`) `sigma`, the `sd(...)`/`sd_phylo(...)` location-scale-scale
+submodels, REML, missing responses, the sparse algorithms and the
+parametric-bootstrap marginal simulator all stay refused with a named error --
+and those refusals are raised next to `_split_ranef`, ABOVE every route that can
+return, so no engine written for the intercept-only cell can receive this formula
+and quietly fit `phylo(1 | g)` instead. The R-side bridge
+receipt (coef labels for the two-row `resd` block, design 258) is the drmTMB
+lane's, after this lands.
 
 `Non-Gaussian phylogenetic random intercept (mean)` is `implemented` via the
 sparse augmented-state Laplace engine (`src/sparse_laplace_glmm.jl`) for
@@ -83,6 +129,21 @@ Poisson, NegBinomial2, Gamma, Binomial, and Beta, each with its own
 `test/test_*_phylo_laplace.jl` plus a gradient gate. This is a genuine R <-> Julia
 gap: drmTMB reports this row `scope-limited` (mixed rejected/scope-limited
 across families).
+
+`cumulative_logit()`'s unlabelled, intercept-only `phylo(1 | species)` on `mu`
+(#563 S8 follow-on) reuses the same sparse-Laplace engine — the ordinal
+likelihood's cutpoints are the one genuinely new piece, generalising the
+scalar/`Xσ`-chained nuisance-parameter IFT gradient (`_phylo_mean_laplace_hetero_fg`,
+#164) from a scalar dispersion to the `K-1` cutpoint increments. Same-target
+vs drmTMB 0.7.0 (`test/test_cumlogit_phylo.jl`, 60-tip `ape::rcoal` tree,
+Brownian phylo intercept): measured gaps of 2.7e-7 (β), 9.6e-7 (cutpoints),
+1.6e-6 relative (phylo SD, correlation-scale), 3.8e-5 (logLik) — both engines
+land on essentially the same optimum, tighter than the iid slice's GHQ-vs-TMB
+comparison because both sides run a Laplace approximation of the same model
+here. Cannot be combined with an ordinary `(1 | g)`/`(0 + x | g)` random
+effect on `mu` (drmTMB parity); `relmat`/`animal`/`spatial` structured markers
+on `mu` stay refused for `cumulative_logit()` (drmTMB scope, not implemented
+there either).
 
 `Non-Gaussian phylogenetic location-scale (μ + log σ)` is `implemented`
 (`closes #202`): shared structured RE on mean **and** scale via grammar B
@@ -93,6 +154,19 @@ Gamma recovery + FD ≤1e-6 already in `test/test_phylo_locscale.jl` (#253).
 **D-94 honesty:** drmTMB still skips coupled `(1|p|species)` for nbinom2 in
 our parity generator; R q=1 NB2 structured-σ covers scale-axis existence.
 No `nbinom2-locscale` R fixture in this closeout.
+
+`Tweedie random intercept (mean)` is `implemented` (#563 S8): an ordinary
+`(1 | g)` random intercept, and (as of the same slice's second cell) an
+independent `(0 + x | g)` random slope, on `mu` via 32-node Gauss–Hermite
+quadrature (`src/tweedie.jl` `_fit_tweedie_ranef` / `_fit_tweedie_slope_ranef`,
+the same scheme as the Poisson/Gamma `(1 | g)` routes), same-target checked
+against drmTMB 0.7.0 (`test/test_tweedie_ranef.jl`, fixtures
+`test/parity/fixtures/tweedie-mu-ranef/` and
+`test/parity/fixtures/tweedie-mu-slope-ranef/`). Matches drmTMB's own scope
+exactly: the CORRELATED random slope `(1 + x | g)`, random effects on
+`sigma`/`nu`, and structured (phylo/relmat/animal/spatial) markers on `mu`
+stay `rejected` in both packages (drmTMB's `validate_tweedie_mu_random_terms()`
+/ `validate_tweedie_random_terms()`).
 
 ## Estimation and inference
 
@@ -216,7 +290,7 @@ what the open issue supports without a separate, explicit call.
 | Bivariate structured random effect on all four axes (q4 PLSM) | implemented |
 | Cross-family bivariate (different families for y1 y2) | missing |
 | Missing-response handling (native, per fitted route) | missing |
-| Missing-predictor imputation (mi()) | missing |
+| Missing-predictor imputation (mi()) | experimental |
 | R to Julia bridge (engine=julia) | implemented |
 
 `Bivariate structured random effect on all four axes (q4 PLSM)` is the
@@ -271,11 +345,21 @@ issue #49 remains open and its own file header states FIML for missing
 responses is explicitly out of scope. This audit leaves the chip as `missing`
 given #49 is parked and the owner's 2026-08-24 authorization did not name
 this row, but corrects the stale citations and the "listwise deletion only"
-undercount above. `Missing-predictor imputation (mi())` is `missing` on
-direct evidence: no `mi(` function, export, or reference exists anywhere in
-`src/` (grep-confirmed); `missing_data.jl`'s own header puts multiple
-imputation for missing predictors explicitly out of scope under the same
-issue #49.
+undercount above. `Missing-predictor imputation (mi())` was `missing` before
+2026-08-30 (#563); that is now stale. Real code exists AND is exported AND is
+tested: `mi`, `JointDrmFit`, `JointTwoDrmFit`, `JointFiniteDrmFit`, `imputed`,
+`miss_control`, `impute_model` are exported from `src/DRM.jl:193-197`, backed
+by six files at `src/DRM.jl:137-143` (#563), and covered by
+`test/test_joint_missing_*.jl` (`test/runtests.jl:435-446`). It is marked
+`experimental`, not `implemented`, because D-181 (2026-08-28, reaffirmed by
+D-209 §3, 2026-09-02) explicitly fences the mi() axis out of the v1.0 twin
+claim, and because the scope itself is narrow: a Gaussian response with one
+Gaussian-or-Bernoulli `mi()` predictor, two independent Gaussian `mi()`
+predictors, or one ordinal/categorical `mi()` predictor, each with complete
+remaining fixed-effect designs, no random/structured effects, no REML, and no
+profile/bootstrap intervals (`docs/src/reference/model-specification.md`,
+`docs/src/reference/engine-internals.md`). No R-parity claim is made for this
+route.
 
 `R to Julia bridge (engine=julia)` is `implemented`: `src/bridge.jl` exports
 `drm_bridge`/`drm_bridge_inference` (`src/DRM.jl` export list), and
@@ -283,19 +367,25 @@ issue #49.
 
 ## Snapshot
 
-- 46 capabilities, all `implemented`/`rejected`/`planned`/`missing` per the
-  mapping above; 41 `implemented`, 1 `rejected` (`:natgrad`), 1 `planned`,
-  3 `missing`. (2026-08-24 chip audit flips `AGHQ adaptive-quadrature
-  marginal estimator` `missing` -> `implemented`: PR #449 / commit
-  `93c3db6b` landed source wired into `src/DRM.jl` plus a test registered in
-  `test/runtests.jl`, meeting this file's own ladder. The same audit
-  re-examined `Cross-family bivariate`, `Missing-response handling (native,
-  per fitted route)`, and `Variational (VA/ELBO) marginal estimator`, found
-  source+test evidence undercounted in each, corrected the stale citations,
-  and left all three chips unflipped for documented reasons -- see
-  `docs/dev-log/evidence/2026-08-24-chip-audit.md`. Prior snapshot said 37/1
-  while the table still listed two `rejected` rows; that recount flipped the
-  ordinary-RE REML chip and left `:natgrad` as the only `rejected` row.)
+- 46 capabilities, all `implemented`/`rejected`/`planned`/`missing`/
+  `experimental` per the mapping above; 41 `implemented`, 1 `rejected`
+  (`:natgrad`), 1 `planned`, 1 `experimental` (`Missing-predictor imputation
+  (mi())`), 2 `missing`. (2026-08-24 chip audit flips `AGHQ
+  adaptive-quadrature marginal estimator` `missing` -> `implemented`: PR #449
+  / commit `93c3db6b` landed source wired into `src/DRM.jl` plus a test
+  registered in `test/runtests.jl`, meeting this file's own ladder. The same
+  audit re-examined `Cross-family bivariate`, `Missing-response handling
+  (native, per fitted route)`, and `Variational (VA/ELBO) marginal
+  estimator`, found source+test evidence undercounted in each, corrected the
+  stale citations, and left all three chips unflipped for documented reasons
+  -- see `docs/dev-log/evidence/2026-08-24-chip-audit.md`. Prior snapshot
+  said 37/1 while the table still listed two `rejected` rows; that recount
+  flipped the ordinary-RE REML chip and left `:natgrad` as the only
+  `rejected` row. 2026-09-02 (S9, #563): `Missing-predictor imputation
+  (mi())` flips `missing` -> `experimental` -- the joint missing-predictor
+  routes exported at `src/DRM.jl:190-197` are now real code, exported, and
+  tested, but D-181/D-209 §3 fence them out of the v1.0 twin claim, so they
+  are labelled `experimental` rather than `implemented`.)
 - Sources read: `src/DRM.jl` (include list + export list), `README.md`,
   `docs/src/capabilities.md`, `docs/src/families.md`, `test/runtests.jl`
   (default-suite include list), and targeted `grep`/`git log` against

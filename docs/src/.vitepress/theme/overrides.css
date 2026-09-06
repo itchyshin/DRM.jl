@@ -1,4 +1,10 @@
-/* Loaded after the resolved DocumenterVitepress theme styles. */
+/* Loaded after the resolved DocumenterVitepress theme styles (index.ts:25).
+   Customisations live HERE and never in theme/style.css: DocumenterVitepress
+   writes its 322-line default stylesheet only when theme/style.css is ABSENT
+   (vitepress_config.jl:61-63), so creating that file silently drops the only
+   JuliaMono @font-face, the only rule that makes display maths scrollable, and
+   every rule behind the sidebar drawer toggle. */
+
 .vp-doc h1,
 .vp-doc h2,
 .vp-doc h3,
@@ -6,4 +12,82 @@
 .vp-doc h5,
 .vp-doc h6 {
   scroll-margin-top: calc(var(--vp-nav-height) + 8px);
+}
+
+/* ---- Palette -------------------------------------------------------------
+   Drawn from the site mark (navy #0B1F3A, teal #12A3A3, indigo #5C7CF0).
+   The mark's own hues are used for fills and edges only. --vp-c-brand-1 has
+   roughly fifty consumers and colours body links, so it takes a darkened
+   sibling that clears WCAG AA at 4.5:1 on white: #0B7C7C measures 5.01:1,
+   where the mark's teal measures 3.09:1. */
+:root {
+  --drm-navy: #0b1f3a;
+  --drm-teal: #12a3a3;      /* mark hue — fills, edges, hover */
+  --drm-teal-text: #0b7c7c; /* AA-safe sibling — text, links, buttons */
+  --drm-indigo: #5c7cf0;    /* mark hue — accents */
+
+  --vp-c-brand-1: var(--drm-teal-text);
+  --vp-c-brand-2: #0a6e6e;
+  --vp-c-brand-3: #095f5f;
+  --vp-c-brand-soft: rgba(18, 163, 163, 0.14);
+
+  --vp-button-brand-bg: var(--drm-teal-text);
+  --vp-button-brand-hover-bg: #0a6e6e;
+  --vp-button-brand-border: var(--drm-teal-text);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(112deg, var(--drm-navy), var(--drm-teal) 55%, var(--drm-indigo));
+  --vp-home-hero-image-background-image:
+    radial-gradient(circle at 38% 38%, rgba(18, 163, 163, 0.26), transparent 46%),
+    radial-gradient(circle at 68% 66%, rgba(92, 124, 240, 0.22), transparent 44%);
+  --vp-home-hero-image-filter: blur(30px);
+}
+
+/* VitePress puts .dark on <html> via useDark, so :root.dark is 0,2,0 and beats
+   the theme's own 0,1,0 .dark rules without depending on load order. */
+:root.dark {
+  --drm-teal: #4fd4d4;
+  --drm-teal-text: #4fd4d4;  /* 9.6:1 on the VitePress dark ground */
+  --drm-indigo: #8fa6ff;     /* #5c7cf0 is too dark against a navy surface */
+
+  --vp-c-brand-1: var(--drm-teal-text);
+  --vp-c-brand-2: #79e0e0;
+  --vp-c-brand-3: #a6ecec;
+  --vp-c-brand-soft: rgba(79, 212, 212, 0.18);
+
+  --vp-button-brand-bg: #0e6e6e;
+  --vp-button-brand-hover-bg: #12a3a3;
+  --vp-button-brand-border: #4fd4d4;
+
+  --vp-home-hero-name-background: linear-gradient(112deg, var(--drm-teal), var(--drm-indigo));
+}
+
+/* ---- Hero ----------------------------------------------------------------
+   .image-container is a fixed 320px with no max-width in the upstream theme,
+   which overflows the body on a 320px viewport. Cap it instead. */
+.VPHero .image-container {
+  width: min(320px, 100%);
+}
+
+.VPHero .tagline {
+  max-width: 40rem;
+}
+
+/* ---- Feature cards ------------------------------------------------------- */
+.VPFeature {
+  border: 1px solid var(--vp-c-divider);
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.VPFeature:hover {
+  border-color: var(--drm-teal);
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .VPFeature,
+  .VPFeature:hover {
+    transition: none;
+    transform: none;
+  }
 }

@@ -66,6 +66,22 @@ function _simulate_lss_phylo(; depth = 5, n_per_group = 2, multi_cov = false, se
     return phy, dat, K
 end
 
+@testset "Dense LSS capacity guard points to the sparse engine" begin
+    n = 5_001
+    err = try
+        DRM._fit_structured_gaussian_lss(
+            Gaussian(), zeros(n), zeros(n, 1), zeros(n, 1), zeros(n, 1),
+            ones(Int, n), n, zeros(0, 0), ["(Intercept)"], ["(Intercept)"],
+            ["(Intercept)"], "species", 1e-8,
+        )
+        nothing
+    catch caught
+        caught
+    end
+    @test err isa ArgumentError
+    @test occursin("sparse = true", sprint(showerror, err))
+end
+
 @testset "Sparse LSS vs Dense Comparator: Scalar α (Single Predictor)" begin
     phy, dat, K = _simulate_lss_phylo(depth = 3, n_per_group = 2, multi_cov = false, seed = 123)
     f = bf(@formula(y ~ x1 + phylo(1 | species)),

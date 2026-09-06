@@ -111,10 +111,21 @@ With matching structured markers on `mu1` and `mu2` only, this routes to the
 q=2 exact-Gaussian point-fit cell, `method = :ML` (default) or `method =
 :REML` (Patterson–Thompson; marginalises `beta_mu1`/`beta_mu2` only — see
 `reml_q2.jl`). The q=2 route currently accepts `phylo(1 | group)` with
-`tree`, `relmat(1 | group)` with `K`, or `animal(1 | group)` with `A`; it
-requires complete responses, identical mean fixed-effect designs, and
-intercept-only `sigma1`, `sigma2`, and `rho12`. `spatial(1 | group)` remains
-outside the formula route here.
+`tree`, `relmat(1 | group)` with `K`, `animal(1 | group)` with `A`, or
+`spatial(1 | group)` with `coords`; it requires complete responses, identical
+mean fixed-effect designs, and intercept-only `sigma1`, `sigma2`, and `rho12`.
+`spatial(1 | group)` supplies a covariance exactly as `relmat`/`animal` do: the
+exponential kernel `exp(-d / rho)` at a FIXED range `rho` (keyword
+`spatial_range`, else the mean off-diagonal pairwise distance), the same rule
+the q=4 structured route uses. It does NOT estimate the range jointly the way
+the univariate spatial route (`_fit_spatial_gaussian`) does, so the two are not
+the same model and must not be compared as one. The range in force is recorded
+as `fit.ranef.spatial_range`.
+
+Row `k` of `coords` is the `k`-th level of `group` **in the order the levels
+first appear in `data`**, not sorted label order, which is the same contract
+`K` and `A` carry on this route. Only the row COUNT is checked, so coordinates
+supplied in the wrong order fit a different spatial structure without error.
 
 With the same `phylo(1 | group)` marker on all four location/scale predictors
 (`mu1`, `mu2`, `sigma1`, and `sigma2`) and a supplied `tree`, this routes to the
@@ -186,23 +197,28 @@ function drm(f::BivariateDrmFormula, fam::Gaussian; data, tree = nothing,
             method = method,
         )
     elseif structured_marker !== nothing && structured_marker[1] === :structured_q2
-        coords === nothing ||
-            throw(ArgumentError("drm: bivariate q=2 spatial(coords) is not implemented; use a known covariance relmat route or method = :ML native TMB."))
+        # No route-wide `coords` guard here: each provider branch below refuses
+        # when ITS OWN input is missing (relmat needs `K`, animal needs `A`,
+        # spatial needs `coords`), so the fail-closed rule is stated once, next
+        # to the provider it constrains. The guard this replaced fired on the
+        # presence of `coords` alone and so refused a perfectly ordinary
+        # relmat/animal q=2 fit that merely carried a stray `coords =` kwarg.
         return _fit_bivariate_q2_structured(
-            f, fam, data, fixed, structured_marker, tree, K, A;
+            f, fam, data, fixed, structured_marker, tree, K, A, coords;
+            spatial_range = spatial_range,
             g_tol = Float64(g_tol),
             method = method,
         )
     end
-    # The residual-only bivariate route has no random effects / structured terms;
-    # REML (Patterson–Thompson) is implemented only for the q=4 structured paths,
-    # so reject it here as the univariate core does (gaussian_core.jl:383-393).
-    method === :REML &&
-        throw(ArgumentError("drm: method = :REML needs random effects to restrict, and the " *
-            "residual-only bivariate Gaussian model has no random effects — use method = :ML (the " *
-            "default). REML IS available on the structured bivariate routes: q=4 " *
-            "(shared `phylo`/`relmat`/`animal`/`spatial` on mu1, mu2, sigma1, sigma2) " *
-            "and q=2 (#470)."))
+    # The residual-only bivariate route carries no random effects, but it DOES
+    # have a restricted likelihood (#624 / drmTMB #1142): REML here integrates the
+    # MEAN fixed effects beta_mu1 and beta_mu2 out of the Gaussian likelihood
+    # under the row-wise 2x2 residual covariance — the classical
+    # Patterson–Thompson/SUR case, and exactly the set native drmTMB hands to
+    # TMB's Laplace approximation for this cell. `V !== nothing` is refused above
+    # and stays refused: that route marginalises nothing and keeps its permanent
+    # scope boundary.
+    method === :REML && return _fit_bivariate_residual_reml(f, fam, data, rhs, g_tol)
     return _fit_bivariate_residual(f, fam, data, rhs, g_tol; V = V)
 end
 
@@ -218,7 +234,11 @@ function _seed_ls(resid::AbstractVector, yobs::AbstractVector)
     return 0.5 * log(max(v_resid, v_floor))
 end
 
-function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rhs, g_tol::Real; V = nothing)
+# Designs, observation masks and the theta block layout shared by the
+# residual-only bivariate Gaussian route's ML fitter and its REML fitter
+# (#624 / drmTMB #1142). Moved out of `_fit_bivariate_residual` unchanged so the
+# two estimators build ONE design and ONE parameter layout, not two that drift.
+function _biv_residual_designs(f::BivariateDrmFormula, rhs, data)
     y1, X1, nm1 = _design(f.response1, rhs[:mu1], data)
     y2, X2, nm2 = _design(f.response2, rhs[:mu2], data)
     _, Xs1, nms1 = _design(f.response1, rhs[:sigma1], data)   # reuse a real LHS;
@@ -240,6 +260,19 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
 
     ps = (size(X1, 2), size(X2, 2), size(Xs1, 2), size(Xs2, 2), size(Xr, 2))
     offs = cumsum([0, ps...])
+    return (; y1, X1, nm1, y2, X2, nm2, Xs1, nms1, Xs2, nms2, Xr, nmr,
+            n, obs1, obs2, n_like, ps, offs)
+end
+
+function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rhs, g_tol::Real; V = nothing)
+    d = _biv_residual_designs(f, rhs, data)
+    y1, X1, nm1 = d.y1, d.X1, d.nm1
+    y2, X2, nm2 = d.y2, d.X2, d.nm2
+    Xs1, nms1 = d.Xs1, d.nms1
+    Xs2, nms2 = d.Xs2, d.nms2
+    Xr, nmr = d.Xr, d.nmr
+    n, obs1, obs2, n_like = d.n, d.obs1, d.obs2, d.n_like
+    offs = d.offs
     rng(k) = (offs[k]+1):offs[k+1]
 
     # A8: known per-row 2x2 sampling covariance (bivariate meta-analysis).
@@ -339,6 +372,222 @@ function _fit_bivariate_residual(f::BivariateDrmFormula, fam::Gaussian, data, rh
         Optim.iterations(res))
 end
 
+# ---------------------------------------------------------------------------
+# REML for the residual-only bivariate Gaussian route (#624 / drmTMB #1142).
+#
+# THE MODEL is the one `_fit_bivariate_residual` fits by ML: row i is bivariate
+# Gaussian with mean (x1_i'b_mu1, x2_i'b_mu2) and covariance
+#
+#     S_i = [ s1_i^2            rho_i*s1_i*s2_i
+#             rho_i*s1_i*s2_i   s2_i^2          ],
+#
+# log s1_i = xs1_i'b_sigma1, log s2_i = xs2_i'b_sigma2,
+# rho_i = RHO_GUARD*tanh(xr_i'b_rho) — same guarded rho link, same
+# partially-observed row handling (a row observing one response contributes its
+# univariate factor).
+#
+# WHICH AXES ARE MARGINALISED. `reml_q2.jl`'s rule — an axis is profiled out of
+# the restricted likelihood iff there is something to integrate it against —
+# reads here as: b_mu1 and b_mu2 enter the leaf LINEARLY through a Gaussian
+# likelihood, so the objective is EXACTLY quadratic in them and they integrate
+# in closed form; b_sigma1, b_sigma2 and b_rho enter nonlinearly (through
+# exp(.) and tanh(.)) and stay OUTER, exactly the role b_rho plays in
+# `reml_q4.jl` and b_sigma1/b_sigma2/b_rho play in `reml_q2.jl`.
+#
+# That marginalised set {b_mu1, b_mu2} is the SAME set native drmTMB hands to
+# TMB for this cell: `drm_apply_estimator_spec()` (drmTMB R/drmTMB.R) sets
+# `tmb_random_names = c("beta_mu1", "beta_mu2")` when the bivariate model has no
+# sigma-side random effect, and TMB's Laplace approximation of a quadratic
+# integrand is EXACT — so the two engines evaluate the same integral rather than
+# two approximations of it.
+#
+# THE OBJECTIVE AND ITS CONSTANT. With Z_i the block-diagonal row design
+# [x1_i' 0; 0 x2_i'], H(phi) = sum_i Z_i' S_i^-1 Z_i the joint fixed-effect
+# Hessian, and bhat(phi) = H^-1 sum_i Z_i' S_i^-1 y_i the GLS profile,
+#
+#     l_R(phi) = l_ML(bhat(phi), phi) - 0.5*logdet H(phi) + (p_beta/2)*log(2*pi).
+#
+# The +(p_beta/2)*log(2*pi) term is the NORMALISED Patterson–Thompson convention
+# this package standardised on in #477, and it is the SAME constant TMB's
+# Laplace approximation carries, since
+# -log(int exp(-f(b)) db) ~= f(bhat) + 0.5*logdet(H/(2*pi)). Keeping it means
+# `loglik()` for this fit is directly comparable to drmTMB's `logLik()` on the
+# same cell: there is no leftover constant to subtract before comparing.
+#
+# vcov. bhat depends on phi, so the mean block carries phi's uncertainty:
+#
+#     Var(bhat) = H^-1 + G*Var(phihat)*G',  G = d bhat / d phi,
+#     Cov(bhat, phihat) = G*Var(phihat),
+#
+# which is the (beta, beta) block of the inverse joint precision — the quantity
+# `TMB::sdreport()` reports for an ADREPORTed function of the marginalised
+# block, and the one drmTMB reads under REML (`vcov.drmTMB` -> `sdr$cov`). On
+# the ledger's cell G is exactly zero (mu1 and mu2 share one design, so the
+# SUR/GLS profile is per-equation OLS and does not move with phi) and the
+# formula collapses to H^-1; it is written in full so that a cell with different
+# mu1/mu2 designs stays correct rather than silently under-reporting.
+function _fit_bivariate_residual_reml(f::BivariateDrmFormula, fam::Gaussian, data, rhs, g_tol::Real)
+    d = _biv_residual_designs(f, rhs, data)
+    y1, X1, nm1 = d.y1, d.X1, d.nm1
+    y2, X2, nm2 = d.y2, d.X2, d.nm2
+    Xs1, nms1 = d.Xs1, d.nms1
+    Xs2, nms2 = d.Xs2, d.nms2
+    Xr, nmr = d.Xr, d.nmr
+    n, obs1, obs2, n_like = d.n, d.obs1, d.obs2, d.n_like
+    offs = d.offs
+    rng(k) = (offs[k]+1):offs[k+1]
+
+    p1, p2 = size(X1, 2), size(X2, 2)
+    pβ = p1 + p2
+    ps1, ps2, pr = size(Xs1, 2), size(Xs2, 2), size(Xr, 2)
+    pφ = ps1 + ps2 + pr
+
+    # An unobserved cell must never enter an arithmetic expression (it can be
+    # NaN-coded). Its S^-1 weights are identically 0 below, so substituting 0 for
+    # the value is safe and keeps the loops branch-light.
+    ỹ1 = [obs1[i] ? Float64(y1[i]) : 0.0 for i in 1:n]
+    ỹ2 = [obs2[i] ? Float64(y2[i]) : 0.0 for i in 1:n]
+    n_cells = count(obs1) + count(obs2)      # observed RESPONSE CELLS, not rows
+    const_2pi = 0.5 * n_cells * log(2π)
+
+    # Per-row S^-1 entries (a, b, c) = (S^-1_11, S^-1_12, S^-1_22) and
+    # sum_i log|S_i| over the observed pattern. A row observing one response
+    # contributes its scalar precision on that axis and nothing off-diagonal.
+    function _weights(φ)
+        ls1 = Xs1 * φ[1:ps1]
+        ls2 = Xs2 * φ[(ps1+1):(ps1+ps2)]
+        ηr = Xr * φ[(ps1+ps2+1):pφ]
+        T = promote_type(eltype(ls1), eltype(ls2), eltype(ηr))
+        a = zeros(T, n); b = zeros(T, n); c = zeros(T, n)
+        logdetS = zero(T)
+        @inbounds for i in 1:n
+            if obs1[i] && obs2[i]
+                ρ = RHO_GUARD * tanh(ηr[i])
+                om = 1 - ρ * ρ
+                a[i] = exp(-2 * ls1[i]) / om
+                b[i] = -ρ * exp(-ls1[i] - ls2[i]) / om
+                c[i] = exp(-2 * ls2[i]) / om
+                logdetS += 2 * ls1[i] + 2 * ls2[i] + log(om)
+            elseif obs1[i]
+                a[i] = exp(-2 * ls1[i])
+                logdetS += 2 * ls1[i]
+            elseif obs2[i]
+                c[i] = exp(-2 * ls2[i])
+                logdetS += 2 * ls2[i]
+            end
+        end
+        return a, b, c, logdetS
+    end
+
+    # H = sum_i Z_i' S_i^-1 Z_i and the GLS right-hand side sum_i Z_i' S_i^-1 y_i.
+    function _hessian_rhs(a, b, c)
+        T = eltype(a)
+        H = zeros(T, pβ, pβ)
+        rhsv = zeros(T, pβ)
+        @inbounds for i in 1:n
+            (obs1[i] || obs2[i]) || continue
+            for r in 1:p1
+                x1r = X1[i, r]
+                for s in 1:p1
+                    H[r, s] += a[i] * x1r * X1[i, s]
+                end
+                for s in 1:p2
+                    H[r, p1+s] += b[i] * x1r * X2[i, s]
+                end
+                rhsv[r] += (a[i] * ỹ1[i] + b[i] * ỹ2[i]) * x1r
+            end
+            for r in 1:p2
+                x2r = X2[i, r]
+                for s in 1:p2
+                    H[p1+r, p1+s] += c[i] * x2r * X2[i, s]
+                end
+                rhsv[p1+r] += (b[i] * ỹ1[i] + c[i] * ỹ2[i]) * x2r
+            end
+        end
+        @inbounds for r in 1:p1, s in 1:p2
+            H[p1+s, r] = H[r, p1+s]
+        end
+        return H, rhsv
+    end
+
+    # GLS profile of (b_mu1, b_mu2) at fixed phi.
+    _profile(φ) = begin
+        a, b, c, logdetS = _weights(φ)
+        H, rhsv = _hessian_rhs(a, b, c)
+        (H \ rhsv, a, b, c, logdetS, H)
+    end
+
+    # Plain ML negative log-likelihood, assembled from the same pieces so the
+    # restricted objective and the reported `ml_loglik` cannot drift apart.
+    # Identical term by term to `_fit_bivariate_residual`'s `nll` on the
+    # V === nothing branch: log(2*pi) + ls1 + ls2 + 0.5*log(1-rho^2) + 0.5*q for a
+    # doubly observed row, 0.5*log(2*pi) + ls + 0.5*z^2 for a singly observed one.
+    function _ml_nll(β, a, b, c, logdetS)
+        r1 = ỹ1 .- X1 * β[1:p1]
+        r2 = ỹ2 .- X2 * β[(p1+1):pβ]
+        q = zero(promote_type(eltype(r1), eltype(r2), eltype(a)))
+        @inbounds for i in 1:n
+            q += a[i] * r1[i] * r1[i] + 2 * b[i] * r1[i] * r2[i] + c[i] * r2[i] * r2[i]
+        end
+        return const_2pi + 0.5 * logdetS + 0.5 * q
+    end
+
+    # Restricted NEGATIVE log-likelihood over phi alone.
+    function nll_reml(φ)
+        β, a, b, c, logdetS, H = _profile(φ)
+        return _ml_nll(β, a, b, c, logdetS) + 0.5 * logdet(H) - 0.5 * pβ * log(2π)
+    end
+
+    # Warm start: the ML fitter's own residual-sigma seeds, rho at 0.
+    X1_obs = Matrix{Float64}(X1[obs1, :])
+    X2_obs = Matrix{Float64}(X2[obs2, :])
+    y1_obs = Vector{Float64}(y1[obs1])
+    y2_obs = Vector{Float64}(y2[obs2])
+    β1_ols = X1_obs \ y1_obs
+    β2_ols = X2_obs \ y2_obs
+    φ0 = zeros(pφ)
+    φ0[1] = _seed_ls(y1_obs - X1_obs * β1_ols, y1_obs)
+    φ0[ps1+1] = _seed_ls(y2_obs - X2_obs * β2_ols, y2_obs)
+
+    res = Optim.optimize(nll_reml, φ0, Optim.LBFGS(), Optim.Options(g_tol = g_tol); autodiff = :forward)
+    φ̂ = Optim.minimizer(res)
+    β̂, â, b̂, ĉ, logdetŜ, Ĥ = _profile(φ̂)
+    θ̂ = vcat(β̂, φ̂)
+
+    Vφ = inv(Symmetric(ForwardDiff.hessian(nll_reml, φ̂)))
+    G = ForwardDiff.jacobian(φ -> _profile(φ)[1], φ̂)      # d bhat / d phi
+    Vβ = Matrix(inv(Symmetric(Ĥ))) .+ G * Vφ * transpose(G)
+    Cβφ = G * Vφ
+    V = zeros(pβ + pφ, pβ + pφ)
+    V[1:pβ, 1:pβ] .= Vβ
+    V[1:pβ, (pβ+1):(pβ+pφ)] .= Cβφ
+    V[(pβ+1):(pβ+pφ), 1:pβ] .= transpose(Cβφ)
+    V[(pβ+1):(pβ+pφ), (pβ+1):(pβ+pφ)] .= Vφ
+
+    reml_ll = -nll_reml(φ̂)
+    ml_ll = -_ml_nll(β̂, â, b̂, ĉ, logdetŜ)
+
+    blocks = [:mu1 => rng(1), :mu2 => rng(2), :sigma1 => rng(3), :sigma2 => rng(4), :rho12 => rng(5)]
+    names = [:mu1 => nm1, :mu2 => nm2, :sigma1 => nms1, :sigma2 => nms2, :rho12 => nmr]
+    means = Dict(:mu1 => X1 * θ̂[rng(1)], :mu2 => X2 * θ̂[rng(2)])
+    obs = Dict(:mu1 => Vector{Float64}(y1), :mu2 => Vector{Float64}(y2))
+    scales = Dict(:sigma1 => exp.(Xs1 * θ̂[rng(3)]),
+                  :sigma2 => exp.(Xs2 * θ̂[rng(4)]),
+                  :rho12 => RHO_GUARD .* tanh.(Xr * θ̂[rng(5)]))
+
+    # Full-theta PLAIN ML objective for profile intervals, in the same theta
+    # layout the ML fitter uses (so downstream inference code sees one layout).
+    function nll_full(θ)
+        a, b, c, logdetS = _weights(θ[(pβ+1):(pβ+pφ)])
+        return _ml_nll(θ[1:pβ], a, b, c, logdetS)
+    end
+
+    fit = DrmFit(fam, blocks, names, θ̂, V, reml_ll, n_like, Optim.converged(res), means, obs, scales)
+    return _withiterations(
+        _withformula(_withreml(_withnll(fit, nll_full), reml_ll, ml_ll), f),
+        Optim.iterations(res))
+end
+
 function _bivariate_q4_marker(rhs)
     params = (:mu1, :mu2, :sigma1, :sigma2)
     fixed = Dict{Symbol,Any}()
@@ -359,8 +608,8 @@ function _bivariate_q4_marker(rhs)
     if marker_keys == Set((:mu1, :mu2))
         marker_vals = [markers[p] for p in (:mu1, :mu2)]
         kind = marker_vals[1][1]
-        kind in (:phylo, :relmat, :animal) ||
-            error("the bivariate q=2 front end currently supports only `phylo(...)`, `relmat(...)`, or `animal(...)` markers")
+        kind in (:phylo, :relmat, :animal, :spatial) ||
+            error("the bivariate q=2 front end currently supports only `phylo(...)`, `relmat(...)`, `animal(...)`, or `spatial(...)` markers")
         all(m -> m[1] === kind, marker_vals) ||
             error("the q=2 structured markers on mu1 and mu2 must use the same structured type")
         groups = [m[2] for m in marker_vals]
@@ -479,7 +728,8 @@ function _structured_marker_kind(t)
 end
 
 function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, data,
-                                      fixed, marker, tree, K, A;
+                                      fixed, marker, tree, K, A, coords;
+                                      spatial_range = nothing,
                                       g_tol::Float64, method::Symbol = :ML)
     marker[1] === :structured_q2 || error("internal error: expected q2 structured marker")
     kind = marker[2]
@@ -518,6 +768,14 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
         A === nothing && error("animal(1 | $grp) needs `A = …`")
         C = Matrix{Float64}(A)
         size(C) == (G, G) || error("animal relatedness matrix must be $(G)×$(G) (the number of `$grp` levels)")
+        make_coevo_problem_from_covariance(C, Y, Matrix{Float64}(X1); group = gidx)
+    elseif kind === :spatial
+        # `spatial` supplies a covariance exactly as `relmat`/`animal` do; the
+        # only difference is that the G-by-G matrix is BUILT from the coordinates
+        # by the same fixed-range rule the q=4 route uses. Identical solver call
+        # below, so `spatial(coords)` and `relmat(K = that same matrix)` are one
+        # model reached by two names.
+        C = _spatial_covariance_from_coords(grp, G, coords, spatial_range)
         make_coevo_problem_from_covariance(C, Y, Matrix{Float64}(X1); group = gidx)
     else
         error("internal error: unsupported q2 structured marker `$kind`")
@@ -580,7 +838,45 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
         atanh(fit_q2.rho12 / RHO_GUARD),
         cov_to_lc(fit_q2.Λ),
     )
-    V = fill(NaN, length(θ̂), length(θ̂))
+    nll = function (θ)
+        β = hcat(θ[blocks[1].second], θ[blocks[2].second])
+        Λ = lc_to_cov(θ[blocks[6].second], 2)
+        σ1 = exp(θ[blocks[3].second][1])
+        σ2 = exp(θ[blocks[4].second][1])
+        ρ = RHO_GUARD * tanh(θ[blocks[5].second][1])
+        D = Matrix(Symmetric([σ1^2 ρ * σ1 * σ2; ρ * σ1 * σ2 σ2^2]))
+        ℓ, = coevo_marginal_cov(prob, Q_cond, β, Λ, D)
+        return -ℓ
+    end
+    # Observed-information vcov by finite differences of the marginal ML NLL.
+    # ForwardDiff is not available on this route: `coevo_marginal_cov` factorises a
+    # sparse H_uu through CHOLMOD (coevolution_q.jl), which accepts Float64 and
+    # ComplexF64 only, so even a first-order Dual throws a TypeError. Second-
+    # differencing the objective is the same fallback the sparse-LSS routes take
+    # for the same reason (gaussian_sparse_lss.jl), through the shared helper; the
+    # invert-vs-pseudo-invert decision and its boundary warning are the same guard
+    # the dense ML bivariate sibling uses above.
+    #
+    # STEP: `_fd_hessian_step` is calibrated in the number of scalar observations
+    # summed into the objective. Here that is 2 per row (two responses), so pass
+    # 2 * length(y1), not length(y1). Measured 2026-09-05 against the EXACT
+    # beta-block oracle `_q2_profile_and_schur(...).S`: at 1200 rows the 2n step
+    # gives 1.17e-9 max relative error against 5.54e-9 for the n step (ML arm);
+    # below 400 rows both clamp to 1e-4 and are bit-identical.
+    #
+    # ESTIMATOR: under method = :REML this is the ML curvature evaluated at the
+    # REML point -- the restricted-penalty curvature is omitted, exactly as the q=4
+    # sibling documents at its `_q4_fd_vcov` call site below. REML Wald intervals
+    # on this route are therefore mildly anti-conservative.
+    #
+    # KNOWN WART: `_finite_hessian` hardcodes the prefix "sparse-Laplace vcov:" on
+    # its own FD-quality warnings (sparse_laplace_glmm.jl). On this route that label
+    # is wrong. The route-naming `context` below reaches the user through the
+    # singularity warning; correcting the helper's prefix needs a shared file that
+    # is out of scope for this change.
+    V = _vcov_from_hessian(_finite_hessian(nll, θ̂; h = _fd_hessian_step(2 * length(y1)));
+                           context = "bivariate Gaussian q=2 structured ($kind) " *
+                                     "finite-difference Hessian")
     means = Dict(:mu1 => X1 * fit_q2.β[:, 1], :mu2 => X2 * fit_q2.β[:, 2])
     obs = Dict(:mu1 => Vector{Float64}(y1), :mu2 => Vector{Float64}(y2))
     scales = Dict(
@@ -608,22 +904,69 @@ function _fit_bivariate_q2_structured(f::BivariateDrmFormula, fam::Gaussian, dat
         group = grp,
         group_index = gidx,
         species = species,
+        # The one free choice this cell makes is the FIXED range, and its
+        # default is data-dependent, so it must be visible on the fit rather
+        # than inferred. Same field, same rule, same default helper as the q=4
+        # route records at its own `re`.
+        spatial_range = kind === :spatial ?
+            (spatial_range === nothing ?
+                _q4_default_spatial_range(coords, G) : Float64(spatial_range)) :
+            nothing,
         prob = prob,
     )
-    nll = function (θ)
-        β = hcat(θ[blocks[1].second], θ[blocks[2].second])
-        Λ = lc_to_cov(θ[blocks[6].second], 2)
-        σ1 = exp(θ[blocks[3].second][1])
-        σ2 = exp(θ[blocks[4].second][1])
-        ρ = RHO_GUARD * tanh(θ[blocks[5].second][1])
-        D = Matrix(Symmetric([σ1^2 ρ * σ1 * σ2; ρ * σ1 * σ2 σ2^2]))
-        ℓ, = coevo_marginal_cov(prob, Q_cond, β, Λ, D)
-        return -ℓ
-    end
     fit = DrmFit(fam, blocks, names, θ̂, V, fit_q2.loglik, length(y1),
                  fit_q2.converged, means, obs, scales)
     fit = method === :REML ? _withreml(fit, fit_q2.reml_loglik, fit_q2.ml_loglik) : fit
     return _withranef(_withformula(_withnll(fit, nll), f), re)
+end
+
+# Exponential spatial covariance over the G levels of `grp`, at a FIXED range.
+#
+# Shared by the q=2 and q=4 bivariate structured routes so both cells build the
+# same G-by-G matrix from the same coordinates, and so every fail-closed check on
+# `coords` is stated exactly once. The range is `spatial_range` when supplied,
+# else the mean off-diagonal pairwise distance; the 1e-8 ridge keeps the kernel
+# positive definite at near-coincident sites. Row k of `coords` is the k-th
+# level of `grp` in `_group_index` order (stable FIRST-SEEN order in the data),
+# which is the same contract the q=4 route has always had.
+#
+# This is NOT the univariate spatial route: `_fit_spatial_gaussian`
+# (gaussian_structured.jl) carries log rho as a free parameter and rebuilds the
+# kernel each evaluation. Here rho is fixed, so the two are different models.
+function _spatial_covariance_from_coords(grp::Symbol, G::Int, coords, spatial_range)
+    coords === nothing && error("spatial(1 | $grp) needs `coords = …`")
+    G >= 2 || error("spatial(1 | $grp) needs at least 2 distinct sites; got G=$G")
+    # A 1-D transect is naturally written as a plain Vector (`coords = [0.0, 1.0, 2.0]`),
+    # but `Matrix{Float64}(::Vector)` has no method and raised a bare MethodError. Accept it
+    # as the G-by-1 column it obviously means. UNAMBIGUOUS: a flattened 2-D layout has length
+    # 2G, so it reshapes to a 2G-by-1 and still trips the row check below with a message
+    # naming the expected shape (measured: G=4 flattened G-by-2 has length 8, rows 8 != 4).
+    # Anything neither a real vector nor matrix-convertible gets a shape error, not a
+    # MethodError. This helper is SHARED by the q=2 and q=4 spatial routes, so both gain it.
+    Cmat = if coords isa AbstractVector{<:Real}
+        reshape(Float64.(coords), :, 1)
+    else
+        try
+            Matrix{Float64}(coords)
+        catch
+            error("spatial(1 | $grp) needs `coords` as a $(G)-by-d matrix of site " *
+                  "coordinates, or a length-$(G) vector for a 1-D transect; got a " *
+                  "$(typeof(coords)) that is neither")
+        end
+    end
+    size(Cmat, 1) == G ||
+        error("spatial coords must have $G rows (one per `$grp` level); got $(size(Cmat, 1))")
+    size(Cmat, 2) >= 1 || error("spatial coords must have at least one coordinate column")
+    Ddist = [sqrt(sum(abs2, Cmat[k, :] .- Cmat[l, :])) for k in 1:G, l in 1:G]
+    any(Ddist .> 0) ||
+        error("spatial(1 | $grp): all site coordinates coincide; the spatial range is not identified")
+    rho = if spatial_range === nothing
+        sum(Ddist) / (G^2 - G)
+    else
+        Float64(spatial_range)
+    end
+    rho > 0 || error("spatial_range must be positive (got $rho)")
+    return Matrix{Float64}(exp.(-Ddist ./ rho) + 1e-8 * I)
 end
 
 # Build a G×G SPD precision for level-indexed q=4 structured providers (#189).
@@ -644,22 +987,7 @@ function _q4_structured_precision(kind::Symbol, grp::Symbol, G::Int;
         isposdef(Symmetric(C)) || error("animal A must be positive definite")
         return Matrix(inv(cholesky(Symmetric(C))))
     elseif kind === :spatial
-        coords === nothing && error("spatial(1 | $grp) needs `coords = …`")
-        G >= 2 || error("spatial(1 | $grp) needs at least 2 distinct sites; got G=$G")
-        Cmat = Matrix{Float64}(coords)
-        size(Cmat, 1) == G ||
-            error("spatial coords must have $G rows (one per `$grp` level); got $(size(Cmat, 1))")
-        size(Cmat, 2) >= 1 || error("spatial coords must have at least one coordinate column")
-        Ddist = [sqrt(sum(abs2, Cmat[k, :] .- Cmat[l, :])) for k in 1:G, l in 1:G]
-        any(Ddist .> 0) ||
-            error("spatial(1 | $grp): all site coordinates coincide; the spatial range is not identified")
-        ρ = if spatial_range === nothing
-            sum(Ddist) / (G^2 - G)
-        else
-            Float64(spatial_range)
-        end
-        ρ > 0 || error("spatial_range must be positive (got $ρ)")
-        Ksp = exp.(-Ddist ./ ρ) + 1e-8 * I
+        Ksp = _spatial_covariance_from_coords(grp, G, coords, spatial_range)
         return Matrix(inv(cholesky(Symmetric(Matrix{Float64}(Ksp)))))
     else
         error("internal error: unsupported q4 structured kind `$kind`")

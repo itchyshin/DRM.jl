@@ -70,7 +70,12 @@ fitt = drm(bf(@formula(y ~ x), @formula(sigma ~ 1), @formula(nu ~ 1)), Student()
 
 For strictly positive, multiplicative data. The μ formula is the mean of
 `log y`; `σ` (log link) is the SD of `log y`. The response-scale median is
-`exp(μ)`.
+`exp(μ)`. A random intercept `(1 | g)` or correlated slope `(1 + x | g)`, or a
+`phylo(1 | group)` (needs `tree = ...`) / `relmat(1 | group)` (needs
+`K = ...`) structured marker, may be placed on the mean; the structured
+routes delegate to `Gaussian()` on `log y` (exact — no approximation) and
+shift the reported log-likelihood by the parameter-free Jacobian. `animal`/
+`spatial` markers are not implemented for `LogNormal()`.
 
 ```@example fam
 Random.seed!(3)
@@ -112,6 +117,13 @@ ytw = [rtw(exp(0.5 + 0.3 * xi), 2.0, 1.5) for xi in x]
 fittw = drm(bf(@formula(y ~ x), @formula(sigma ~ 1), @formula(nu ~ 1)), Tweedie(); data = (; y = ytw, x))
 (zeros = count(==(0.0), ytw), power = 1 + 1 / (1 + exp(-coef(fittw, :nu)[1])))   # power ≈ 1.5
 ```
+
+An ordinary `(1 | g)` random intercept, and an independent `(0 + x | g)`
+random slope, on `mu` are both supported (32-node Gauss–Hermite marginal,
+matching drmTMB's `tweedie() mu ~ x + (1 | g)` / `(0 + x | g)`); the group
+SD is `exp(coef(fit, :resd)[1])` either way. The CORRELATED random slope
+`(1 + x | g)`, random effects on `sigma`/`nu`, and structured (phylo/relmat)
+markers on `mu` remain unimplemented (drmTMB rejects the same forms).
 
 ## Counts
 
@@ -235,6 +247,27 @@ yo = map(x) do xi
 end
 fito = drm(bf(@formula(y ~ x)), CumulativeLogit(); data = (; y = Float64.(yo), x))
 coef(fito, :mu)[1]      # slope ≈ 0.8
+```
+
+An ordinary random intercept `(1 | g)` or an independent random slope
+`(0 + x | g)` on `mu` is integrated out by 32-node Gauss–Hermite quadrature
+(the same scheme as the Poisson/Gamma/Tweedie GLMM routes); the correlated
+form `(1 + x | g)` is not implemented.
+
+```julia
+fit_re = drm(bf(y ~ x + (1 | g)), CumulativeLogit(); data = dat)
+exp(coef(fit_re, :resd)[1])   # random-intercept SD
+```
+
+An unlabelled, intercept-only phylogenetic random intercept `phylo(1 | species)`
+on `mu` is fit via the sparse augmented-state Laplace GLMM route (the same
+engine as the Poisson/Gamma/Binomial/Beta `phylo(1 | g)` cells), matching
+drmTMB 0.7.0's `validate_ordinal_phylo_mu_structured_term()`. It cannot be
+combined with an ordinary `(1 | g)`/`(0 + x | g)` random effect on `mu`.
+
+```julia
+fit_phylo = drm(bf(y ~ x + phylo(1 | species)), CumulativeLogit(); data = dat, tree = tr)
+re_sd(fit_phylo)[:species]   # phylogenetic SD, raw branch-length scale
 ```
 
 ## See also

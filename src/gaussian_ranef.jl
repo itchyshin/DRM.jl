@@ -12,28 +12,123 @@
 # barrier — not Inf — because LBFGS's HagerZhang line search asserts isfinite.
 const REML_NONPD_PENALTY = 1e8
 
+# A structured marker's (`phylo`/`relmat`/`animal`/`spatial`) random-effect
+# left-hand side must be the literal intercept `1` on every univariate route:
+# `_split_ranef` (below) — the shared RHS splitter for every univariate family
+# (Gaussian, Poisson, Gamma, Beta, BetaBinomial, Binomial, NegBinomial2, and
+# more) — used to keep only the grouping symbol `g` and silently discard
+# `lhs`, so e.g. `phylo(1 + x | g)` fit the exact same intercept-only model as
+# `phylo(1 | g)` with no error (silent data loss, #620). drmTMB fits a genuine
+# two-free-SD phylogenetic random INTERCEPT+SLOPE from `phylo(1 + x | g)` on
+# Gaussian, Poisson and NegBinomial2 (all three as the SAME independent two-SD
+# model -- measured on drmTMB main 2026-09-05; it refuses the formula on Gamma).
+# DRM.jl implements only the Gaussian one (#620), because that route is the exact
+# closed-form marginal and does not extend to a non-Gaussian likelihood; it has no
+# route at all for relmat/animal/spatial, so fail closed instead of silently
+# dropping the slope.
+_structured_re_lhs_text(lhs) = if lhs isa ConstantTerm
+        string(lhs.n)
+    elseif lhs isa Term
+        string(lhs.sym)
+    elseif lhs isa FunctionTerm && lhs.f === (+)
+        join((a isa ConstantTerm ? string(a.n) : string(a.sym) for a in lhs.args), " + ")
+    else
+        string(lhs)
+    end
+
+# Returns the slope variable (a `Symbol`) for the ONE admitted slope form
+# `phylo(1 + x | g)` when `allow_slope = true` (the Gaussian mean route, #620:
+# two independent phylogenetic fields with separate SDs — drmTMB's model), and
+# `nothing` for the intercept form `phylo(1 | g)`. Every other lhs — and the
+# slope form on any route that did not opt in — throws, so no route can silently
+# fit the intercept-only model in place of what the formula says.
+function _check_phylo_re_lhs(lhs, grp::Symbol; allow_slope::Bool = false)
+    (lhs isa ConstantTerm && lhs.n == 1) && return nothing
+    lhs_text = _structured_re_lhs_text(lhs)
+    if lhs isa FunctionTerm && lhs.f === (+)
+        consts = filter(t -> t isa ConstantTerm, lhs.args)
+        vars = filter(t -> t isa Term, lhs.args)
+        is_one_slope = length(lhs.args) == 2 && length(consts) == 1 &&
+            consts[1].n == 1 && length(vars) == 1
+        if is_one_slope
+            allow_slope && return vars[1].sym
+            throw(ArgumentError("drm: `phylo($lhs_text | $grp)` is not implemented on this " *
+                "route — only `phylo(1 | $grp)` (intercept) is here. The two-SD phylogenetic " *
+                "random intercept + slope `phylo(1 + x | $grp)` is implemented for the " *
+                "Gaussian mean only (`drm(bf(y ~ … + phylo(1 + x | $grp)), Gaussian(); tree)`). " *
+                "drmTMB also fits this exact formula on Poisson and NegBinomial2, and it fits " *
+                "the SAME independent two-SD model there — measured on drmTMB main 2026-09-05, " *
+                "`corpars` is empty for `phylo(1 + x | g)` on Poisson; the estimated " *
+                "intercept–slope correlation (`has_phylo_mu_q2_covariance`, surfaced in " *
+                "`corpars`) belongs to the DIFFERENT tagged formula `phylo(1 + x | p | $grp)`. " *
+                "DRM.jl refuses the non-Gaussian families here because its route is the EXACT " *
+                "closed-form Gaussian marginal, which does not extend to a non-Gaussian " *
+                "likelihood — not because the target would differ. On Gamma, drmTMB refuses " *
+                "this formula too (\"intercept-only in this q=1 route\"), so `engine = \"tmb\"` " *
+                "is a route for Gaussian/Poisson/NegBinomial2 but not for Gamma (#620)"))
+        end
+    end
+    throw(ArgumentError("drm: `phylo($lhs_text | $grp)` is not implemented on the " *
+        "univariate routes — only `phylo(1 | $grp)` (intercept) is, plus the one-slope " *
+        "`phylo(1 + x | $grp)` on the Gaussian mean (#620); slope-only `phylo(0 + x | g)` " *
+        "and multi-slope forms are not implemented"))
+end
+
+# relmat/animal/spatial share the identical parser gap but, unlike phylo, have
+# no verified drmTMB two-SD slope route to name as a follow-up — say only that
+# the construct is unimplemented (#620).
+function _check_structured_re_lhs(kind::Symbol, lhs, grp::Symbol)
+    (lhs isa ConstantTerm && lhs.n == 1) && return nothing
+    lhs_text = _structured_re_lhs_text(lhs)
+    throw(ArgumentError("drm: `$kind($lhs_text | $grp)` is not implemented on the " *
+        "univariate routes; only the intercept form is"))
+end
+
 # Split a μ right-hand side into its fixed part and any `(lhs | g)` terms.
 # `structured` is the FIRST structured marker (relmat/animal/phylo/spatial) for
 # backward compatibility; use `_collect_structured` to retrieve the full list
 # (the Gaussian router supports two structured components in one fit).
-function _split_ranef(rhs)
+#
+# Returns a 5-tuple `(fixed_rhs, re, metav, structured, structured_slope)`. The
+# fifth slot is the slope variable of a `phylo(1 + x | g)` marker (#620) and is
+# `nothing` otherwise; it is only ever non-`nothing` when the caller opted in
+# with `allow_phylo_slope = true` (the Gaussian mean route and the read-only
+# consumers of an already-fitted Gaussian formula — predict, bridge labels).
+# Every other caller keeps the default and keeps the #621 refusal, so a
+# non-Gaussian family can never receive `(:phylo, g)` for a slope formula and
+# silently fit the intercept-only model. Existing 4-way destructurings
+# (`a, b, c, d = _split_ranef(rhs)`) are unaffected: Julia drops the extra slot.
+function _split_ranef(rhs; allow_phylo_slope::Bool = false)
     terms = rhs isa Tuple ? collect(rhs) : Any[rhs]
     fixed = Any[]
     re = Tuple{Any,Symbol}[]
     metav = nothing                                   # meta_V(v) known-variance column
     structured = nothing                              # (:relmat, grouping) — known K
+    structured_slope = nothing                        # `x` of phylo(1 + x | g), Gaussian mean only
     for t in terms
         if t isa FunctionTerm && t.f === (|)
             push!(re, (t.args[1], t.args[2].sym))     # (re-lhs, grouping symbol)
         elseif t isa FunctionTerm && t.f === meta_V
             metav = t.args[1].sym
         elseif t isa FunctionTerm && t.f === relmat
+            _check_structured_re_lhs(:relmat, t.args[1].args[1], t.args[1].args[2].sym)
             structured === nothing && (structured = (:relmat, t.args[1].args[2].sym))   # inner (1 | grp)
         elseif t isa FunctionTerm && t.f === animal
+            _check_structured_re_lhs(:animal, t.args[1].args[1], t.args[1].args[2].sym)
             structured === nothing && (structured = (:animal, t.args[1].args[2].sym))
         elseif t isa FunctionTerm && t.f === phylo
-            structured === nothing && (structured = (:phylo, t.args[1].args[2].sym))
+            slope = _check_phylo_re_lhs(t.args[1].args[1], t.args[1].args[2].sym;
+                                        allow_slope = allow_phylo_slope)
+            if structured === nothing
+                structured = (:phylo, t.args[1].args[2].sym)
+                structured_slope = slope
+            elseif slope !== nothing
+                throw(ArgumentError("drm: `phylo(1 + $(slope) | $(t.args[1].args[2].sym))` must be " *
+                    "the only structured marker on the mean; a second structured component " *
+                    "alongside the phylogenetic random slope is not implemented (#620)"))
+            end
         elseif t isa FunctionTerm && t.f === spatial
+            _check_structured_re_lhs(:spatial, t.args[1].args[1], t.args[1].args[2].sym)
             structured === nothing && (structured = (:spatial, t.args[1].args[2].sym))
         else
             push!(fixed, t)
@@ -41,7 +136,7 @@ function _split_ranef(rhs)
     end
     fixed_rhs = isempty(fixed) ? ConstantTerm(1) :
                 length(fixed) == 1 ? fixed[1] : Tuple(fixed)
-    return fixed_rhs, re, metav, structured
+    return fixed_rhs, re, metav, structured, structured_slope
 end
 
 # Collect EVERY structured marker on a right-hand side, in source order, as a
@@ -278,8 +373,35 @@ function _fit_ranef_gaussian(fam::Gaussian, y, Xμ, Xσ, gidx, G, w, nmμ, nmσ,
         [C[k] / (1 / σb² + S[k]) for k in 1:G]
     end
     re = Dict(Symbol(grp) => blup)
+    # CONVERGED MEANS THE GRADIENT CRITERION HERE (#609 item 2, measured 2026-09-05).
+    #
+    # `Optim.converged(res)` is the OR of the x, f and g criteria. `Optim.Options(
+    # g_tol = g_tol)` leaves `f_reltol`, `f_abstol`, `x_reltol` and `x_abstol` at
+    # their 0.0 defaults, so `f_converged` fires on two byte-identical successive
+    # objective values -- which is what "flat" means numerically, and which a
+    # VARYING-scale surface (`sigma ~ x`) reaches while running away up the
+    # unbounded σ_i → 0 ridge, nowhere near a stationary point. Reporting that as
+    # converged is the defect #609 item 2 left open: the issue measured that this
+    # route reaches its optimum (g_tol 1e-8 → 1e-16 moves the coefficients by
+    # 1.3e-11) and handed the parity gap to drmTMB, but never checked the flag.
+    #
+    # MEASURED over a 6,400-cell varying-scale grid (n 30..400, G 3..20, σ slope
+    # 0.15..8.0): 1,042 fits returned `converged = true` with the GRADIENT
+    # criterion false; the true gradient ∞-norm there exceeded 1e-3 in 95 of them
+    # and 1.0 in 45, worst 3.7e137 (with a POSITIVE Gaussian loglik of +980).
+    #
+    # `Optim.g_converged` is exactly the right test, not an approximation of it:
+    # over the same grid `Optim.g_residual(res)` equalled
+    # `maximum(abs, ForwardDiff.gradient(nll, θ̂))` with max absolute difference
+    # 0.0 across 5,349 gradient-converged fits, and the largest such norm was
+    # 9.996e-9 -- inside `g_tol`. Restarting LBFGS from the stalled point was
+    # measured and REJECTED: of those 1,042 it recovered 665, left 377, made the
+    # objective WORSE in 143, and produced NaN. So only the reported flag changes
+    # here -- θ̂, the ML/REML objective and logLik are byte-identical.
+    # Guard: test/test_ranef_varying_scale_convergence.jl.
+    converged = Optim.converged(res) && Optim.g_converged(res)
     # Profile intervals reuse the ML Woodbury nll (same convention as FE REML).
-    fit = _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, Optim.converged(res), means, obs, scales), nll_ml), re)
+    fit = _withranef(_withnll(DrmFit(fam, blocks, names, θ̂, V, -nll(θ̂), n, converged, means, obs, scales), nll_ml), re)
     if reml
         return _withreml(fit, -nll_reml(θ̂), -nll_ml(θ̂))
     end

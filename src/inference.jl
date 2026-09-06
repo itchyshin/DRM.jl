@@ -167,6 +167,11 @@ Confidence intervals for every coefficient, as a vector of
   This is a guarded local search, not a guarantee of the globally first LR
   crossing; a `nonmonotone` flag is set on the profile stats row so callers can
   inspect that limitation.
+  An endpoint arm that the search cannot certify is REFUSED, not returned: this
+  method throws an `ArgumentError` naming the coefficient, the arm, and the
+  nuisance-solve reason rather than reporting the failed side as a signed `Inf`
+  (DRM.jl#631). Use [`profile_result`](@ref) when you want the same rows plus
+  the per-endpoint diagnostics instead of an exception.
   Pass `threads = true` to profile coefficients in parallel when the fitted
   objective is thread-safe; if only one coefficient is profiled, its lower and
   upper endpoint searches are run in parallel instead. Canonical location–scale
@@ -183,14 +188,46 @@ function confint(
     method === :wald && return _wald_ci(fit, level, parm)
     if method === :profile
         result = profile_result(fit; level, threads, parm)
-        if result.failed > 0
-            failed = ["$(s.param):$(s.coef)" for s in result.stats if
-                      s.lower_endpoint_failed || s.upper_endpoint_failed]
-            @warn "profile confidence interval has failed endpoint arm(s); failed side(s) are reported as signed Inf" failed
-        end
+        result.failed > 0 && _throw_profile_endpoint_failure(result)
         return result.ci
     end
     throw(ArgumentError("confint: method must be :wald or :profile (got :$method)"))
+end
+
+# DRM.jl#631: a failed endpoint arm must NEVER leave the user-facing interval
+# routine as a bound. `profile_result` is the AUDITABLE surface -- it keeps the
+# ±Inf convention alongside `lower_endpoint_failed` / `upper_endpoint_failed` so
+# a caller that asked for diagnostics can read them. `confint` is the surface a
+# user reads a number off, and there `-Inf` is indistinguishable from a real
+# confidence limit the moment it is printed, copied into a table, or written into
+# a paper. Refuse instead, naming the coefficient, the arm, the nuisance-solve
+# reason, and what to use in its place.
+function _profile_failed_arm_descriptions(result)
+    arms = String[]
+    for s in result.stats
+        (s.lower_endpoint_failed || s.upper_endpoint_failed) || continue
+        sides = String[]
+        s.lower_endpoint_failed &&
+            push!(sides, "lower (nuisance solve: $(s.lower_nuisance_reason))")
+        s.upper_endpoint_failed &&
+            push!(sides, "upper (nuisance solve: $(s.upper_nuisance_reason))")
+        push!(arms, "$(s.param):$(s.coef) — " * join(sides, ", "))
+    end
+    return arms
+end
+
+function _throw_profile_endpoint_failure(result)
+    arms = _profile_failed_arm_descriptions(result)
+    detail = isempty(arms) ? "$(result.failed) coefficient(s); per-arm diagnostics unavailable" :
+        join(arms, "; ")
+    throw(ArgumentError(
+        "confint (method = :profile): the endpoint search did not converge for " *
+        "$(result.failed) of $(result.attempted) coefficient(s) — $detail. " *
+        "A non-converged endpoint is NOT a confidence limit, so it is refused " *
+        "here rather than returned as a signed Inf. Use `method = :wald`, or " *
+        "`bootstrap_ci` / `bootstrap_result`, for an interval on this " *
+        "coefficient; call `profile_result(fit; ...)` if you need the same rows " *
+        "with the per-endpoint diagnostics that explain the failure."))
 end
 
 # Build CI rows from the σ-phylo location-scale route's PRECOMPUTED boundary-aware profile CIs
@@ -216,7 +253,10 @@ end
 
 Auditable profile-likelihood confidence intervals. Returns a `NamedTuple` with:
 
-- `ci` — the same rows returned by `confint(fit; method = :profile)`;
+- `ci` — the same rows `confint(fit; method = :profile)` returns, except that a
+  FAILED endpoint arm is kept here as a signed `Inf` alongside its
+  `lower_endpoint_failed` / `upper_endpoint_failed` flag. This is the auditable
+  surface; `confint` refuses such a row rather than returning it (DRM.jl#631);
 - `stats` — per-coefficient endpoint work counts;
 - `endpoint_diagnostics` — canonical location–scale endpoint reason, last
   evaluated candidate, and residual for each arm; other profile backends omit
@@ -528,6 +568,7 @@ function _ls_profile_result(fit::DrmFit; level::Real=0.95, threads::Bool=false, 
                        gradient_evaluations=lower_status.gradient_evaluations,
                        bracket_expansions=lower_status.bracket_expansions,
                        root_iterations=lower_status.root_iterations,
+                       contractions=lower_status.contractions,
                        nuisance=lower_nuisance),
                 upper=(reason=upper_status.reason, candidate=upper_status.candidate,
                        residual=upper_status.residual, cancellation=upper_status.cancellation,
@@ -538,6 +579,7 @@ function _ls_profile_result(fit::DrmFit; level::Real=0.95, threads::Bool=false, 
                        gradient_evaluations=upper_status.gradient_evaluations,
                        bracket_expansions=upper_status.bracket_expansions,
                        root_iterations=upper_status.root_iterations,
+                       contractions=upper_status.contractions,
                        nuisance=upper_nuisance),
             )
             return row, stat, diagnostic
@@ -1862,7 +1904,14 @@ function _marginal_simulator(fit::DrmFit, data; K=nothing, A=nothing, tree=nothi
     (fit.family isa Gaussian && !haskey(fit.scales, :sigma)) && return nothing
     rhs = Dict(fit.formula.forms)
     haskey(rhs, :mu) || return nothing
-    _, re, _, structured = _split_ranef(rhs[:mu])
+    _, re, _, structured, structured_slope = _split_ranef(rhs[:mu]; allow_phylo_slope = true)
+    # A Gaussian `phylo(1 + x | g)` fit (#620) carries TWO phylogenetic fields;
+    # the simulator below draws a single structured intercept, so building it
+    # would silently bootstrap the wrong (intercept-only) model. Refuse.
+    structured_slope === nothing ||
+        throw(ArgumentError("bootstrap: the marginal simulator for the Gaussian " *
+            "`phylo(1 + $(structured_slope) | $(structured[2]))` two-SD random-slope fit is " *
+            "not implemented (#620); use `profile` intervals or the Wald `vcov`"))
     # No random effect on the mean: conditional and marginal coincide, and the
     # plain `simulate` is already correct. Nothing to build.
     (isempty(re) && structured === nothing) && return nothing
@@ -2154,27 +2203,112 @@ function _bootstrap_summary_rows(fit0, draws, est, level)
     return rows
 end
 
-# Max |∂nll/∂θ| at the estimate. A location–scale fit carries a `LocScaleObjective`
-# whose inner mode-solve is Float64-only (not dual-number safe), so ForwardDiff
-# can't differentiate it — use its exact analytic outer gradient instead (which
-# also upgrades the diagnostic from NaN to a real gradient norm). Sparse q=4
-# fits can store a Float64-only gradient callback; use it before trying
-# ForwardDiff through the objective. `nothing` means no objective → NaN.
+# Max |d nll / d theta| at the estimate, AND where the number came from. A
+# location-scale fit carries a `LocScaleObjective` whose inner mode-solve is
+# Float64-only (not dual-number safe), so ForwardDiff can't differentiate it --
+# use its exact analytic outer gradient instead (which also upgrades the
+# diagnostic from NaN to a real gradient norm). Sparse q=4 fits can store a
+# Float64-only gradient callback; use it before trying ForwardDiff through the
+# objective. `nothing` means no objective -> (NaN, :none).
+#
+# WHY THE FALLBACK AND WHY THE SOURCE (measured 2026-09-05, DRM.jl origin/main
+# 109b6421c). FOUR shipping routes store a bare objective (no gradient callback)
+# that is exact on Float64 but NOT dual-number safe, so the unguarded
+# `ForwardDiff.gradient` on the last line THREW and the health check crashed on
+# the very fits it exists to report on:
+#
+#   bivariate q=2 structured (`gaussian_bivariate.jl:626`; its objective calls
+#     `coevo_marginal_cov`, which factorises a sparse H_uu through CHOLMOD at
+#     `coevolution_q.jl:245`) and the sparse two-structured Gaussian mean route
+#     (`gaussian_structured.jl:652`, same CHOLMOD factorisation at :529) both
+#     raised `TypeError: in Sparse, in Tv, expected Tv<:Union{Float64,
+#     ComplexF64}, got Type{ForwardDiff.Dual{...}}`;
+#   sparse LSS under REML, single-component (`gaussian_sparse_lss.jl:285`) and
+#     multi-component (`:1018`) -- both store `reml ? nothing : nllgrad!`, so
+#     only the REML arm reaches this line -- raised the DIFFERENT
+#     `MethodError: no method matching Float64(::ForwardDiff.Dual{...})` from a
+#     Float64 work array. Two failure modes, hence a broad `catch`.
+#
+# The fix REPORTS instead of raising, which is what a diagnostic is for (the
+# same argument the `vcov_complete` branch of `check_drm` below makes for a
+# deliberately partial covariance). It does not return NaN and
+# stop there: `check_drm`'s verdict is
+# `ok = converged && (penalized || isnan(mag) || mag <= grad_tol) && pd`, whose
+# `isnan(mag)` disjunct is a PASS-THROUGH written for a fit that stores no
+# objective at all. A NaN here would silently borrow it, so a route whose
+# stationarity was never tested would report `ok = true` and look identical to a
+# clean fit -- the same defect as the throw, only quiet. A central finite
+# difference of the SAME objective keeps the criterion live (the pattern
+# `_profile_autodiff_mode` at :805-821 already uses for this exact situation),
+# and `source` says which producer supplied the number, because a
+# finite-difference magnitude is good to about 1e-6 relative, not to machine
+# precision. `:unavailable` is the last resort -- a NaN that is explicitly
+# labelled and warned about, so it can never be mistaken for `:none`.
+const _CHECK_GRAD_FD_STEP = 1e-5
+
+# NaN whenever a producer throws OR yields a non-finite magnitude: to the caller
+# those are the same answer -- this producer cannot supply a usable number.
+function _check_grad_attempt(producer)
+    try
+        m = producer()
+        return isfinite(m) ? Float64(m) : NaN
+    catch err
+        err isa InterruptException && rethrow()
+        return NaN
+    end
+end
+
+# Central difference of the Float64 objective, at the same relative step as
+# `_loconly_fd_gradient2` (src/location_only.jl:573). Costs 2p objective
+# evaluations, with p the outer parameter count (tens on every route that needs
+# this). Returns NaN as soon as any piece is non-finite: a fabricated magnitude
+# would be worse than an honest "unavailable".
+function _check_fd_max_abs_grad(nll, theta::Vector{Float64}; h::Real = _CHECK_GRAD_FD_STEP)
+    isfinite(nll(theta)) || return NaN
+    x = copy(theta)
+    m = 0.0
+    for i in eachindex(x)
+        xi = x[i]
+        s = h * max(abs(xi), 1.0)
+        x[i] = xi + s; fp = nll(x)
+        x[i] = xi - s; fm = nll(x)
+        x[i] = xi
+        gi = (fp - fm) / (2 * s)
+        isfinite(gi) || return NaN
+        m = max(m, abs(gi))
+    end
+    return m
+end
+
+function _check_grad_fallback(nll, theta::Vector{Float64})
+    m = _check_grad_attempt(() -> _check_fd_max_abs_grad(nll, theta))
+    isnan(m) && return (magnitude = NaN, source = :unavailable)
+    return (magnitude = m, source = :finite)
+end
+
 function _check_max_abs_grad(fit::DrmFit)
-    fit.nll === nothing && return NaN
-    if fit.nll isa LocScaleObjective
-        o = fit.nll
-        base = size(o.Xμ, 2) + size(o.Xψ, 2)
-        perm = vcat(collect(1:base), [base + 1, base + 3, base + 2])  # recov→engine
-        g = _ls_objective_gradient(o, fit.theta[perm])
-        return maximum(abs, g)
+    nll = fit.nll
+    nll === nothing && return (magnitude = NaN, source = :none)
+    if nll isa LocScaleObjective
+        base = size(nll.Xμ, 2) + size(nll.Xψ, 2)
+        perm = vcat(collect(1:base), [base + 1, base + 3, base + 2])  # recov->engine
+        theta = fit.theta[perm]
+        m = _check_grad_attempt(() -> maximum(abs, _ls_objective_gradient(nll, theta)))
+        isnan(m) || return (magnitude = m, source = :locscale)
+        return _check_grad_fallback(nll, theta)
     end
     if fit.nllgrad !== nothing
-        g = zeros(length(fit.theta))
-        fit.nllgrad(g, fit.theta)
-        return maximum(abs, g)
+        m = _check_grad_attempt(function ()
+            g = zeros(length(fit.theta))
+            fit.nllgrad(g, fit.theta)
+            return maximum(abs, g)
+        end)
+        isnan(m) || return (magnitude = m, source = :stored)
+        return _check_grad_fallback(nll, fit.theta)
     end
-    return maximum(abs, ForwardDiff.gradient(fit.nll, fit.theta))
+    m = _check_grad_attempt(() -> maximum(abs, ForwardDiff.gradient(nll, fit.theta)))
+    isnan(m) || return (magnitude = m, source = :forward)
+    return _check_grad_fallback(nll, fit.theta)
 end
 
 """
@@ -2185,7 +2319,21 @@ Returns a `NamedTuple` and logs a short report:
 
 - `converged` — the optimiser's convergence flag.
 - `max_abs_grad` — `max|∇nll|` at the optimum (≈ 0 at a clean interior optimum;
-  `NaN` if the objective was not stored on the fit).
+  `NaN` when no gradient could be produced: see `grad_source` for which of the
+  two reasons applies).
+- `grad_source` names which producer supplied `max_abs_grad`, so a caller can tell an
+  exact gradient from an approximate one and either from no gradient at all.
+  Reuses the `autodiff` vocabulary of [`profile_result`](@ref): `:locscale` (the
+  canonical location-scale objective's exact analytic outer gradient), `:stored`
+  (the fit's own gradient callback), `:forward` (ForwardDiff through the stored
+  objective), `:finite` (a central finite difference of the stored objective,
+  used when the objective is exact on `Float64` but not dual-number safe, and
+  accurate to roughly `1e-6` relative, NOT to machine precision), `:none` (the
+  fit stores no objective, so there is nothing to differentiate), and
+  `:unavailable` (an objective IS stored but neither its derivative nor a finite
+  difference of it produced a finite value). `:none` and `:unavailable` are the
+  two `NaN` cases and they mean different things; both leave `ok` **unscored**
+  against the gradient criterion, and `:unavailable` also warns.
 - `vcov_complete` — whether the stored covariance is finite throughout. Some
   routes report a **partial** covariance by design: the sparse phylo fitter
   computes the fixed-effect block and leaves the variance-component block `NaN`.
@@ -2203,14 +2351,18 @@ Returns a `NamedTuple` and logs a short report:
 - `ok` — `true` when converged, the gradient is small, and the covariance is PD.
   On a penalized fit the gradient criterion is **dropped**: the stored objective
   is unpenalized, so its gradient is non-zero at the MAP optimum by construction
-  and scoring it would report a correct fit as broken.
+  and scoring it would report a correct fit as broken. It is also dropped
+  whenever `max_abs_grad` is `NaN`, so read `grad_source` before reading `ok`:
+  `ok = true` alongside `:none` or `:unavailable` means *converged and PD only*,
+  with stationarity untested.
 
 A non-`ok` result is informative, not an error: a model sitting on a variance
 boundary (Watanabe-singular) can be the data's MLE, with valid Wald SEs on the
 remaining directions — see [`confint`](@ref).
 """
 function check_drm(fit::DrmFit; grad_tol::Real=1e-3)
-    mag = _check_max_abs_grad(fit)
+    grad = _check_max_abs_grad(fit)
+    mag = grad.magnitude
     V = fit.vcov
     # A diagnostic must REPORT trouble, not crash on it. Several routes return a
     # deliberately PARTIAL covariance — the sparse phylo fitter
@@ -2239,6 +2391,7 @@ function check_drm(fit::DrmFit; grad_tol::Real=1e-3)
     report = (
         converged=fit.converged,
         max_abs_grad=mag,
+        grad_source=grad.source,
         vcov_complete=vcov_complete,
         vcov_posdef=pd,
         min_eigval=mineig,
@@ -2246,14 +2399,29 @@ function check_drm(fit::DrmFit; grad_tol::Real=1e-3)
         penalized_map=penalized,
         ok=ok,
     )
-    @info "check_drm" converged = report.converged max_abs_grad = report.max_abs_grad vcov_complete =
-        report.vcov_complete vcov_posdef = report.vcov_posdef min_eigval = report.min_eigval cond =
-        report.cond penalized_map = report.penalized_map ok = report.ok
+    @info "check_drm" converged = report.converged max_abs_grad = report.max_abs_grad grad_source =
+        report.grad_source vcov_complete = report.vcov_complete vcov_posdef = report.vcov_posdef min_eigval =
+        report.min_eigval cond = report.cond penalized_map = report.penalized_map ok = report.ok
     vcov_complete || @warn "check_drm: the stored covariance has non-finite entries, so " *
         "`vcov_posdef` / `min_eigval` / `cond` could not be computed and `ok` is false. This is " *
         "EXPECTED on routes that report a partial covariance — the sparse phylo fitter computes " *
         "the fixed-effect block only. Wald SEs on the finite directions are still usable; for the " *
         "variance components use `profile_ci = true` or `profile_result`."
+    # A number that is not an exact gradient, and a NaN that is not `:none`, both
+    # have to be SAID -- otherwise a route whose stationarity could not be tested
+    # is indistinguishable from one that passed, which is the defect the
+    # ForwardDiff guard above exists to remove.
+    grad.source === :finite && @warn "check_drm: `max_abs_grad` is a CENTRAL FINITE DIFFERENCE of " *
+        "the stored objective, not an exact gradient. This fit's objective is exact on `Float64` " *
+        "but not dual-number safe (it factorises a sparse matrix through CHOLMOD, or keeps Float64 " *
+        "work arrays), so ForwardDiff could not be run through it. Read the magnitude to about " *
+        "1e-6 relative precision, not to machine precision; `grad_source` is `:finite`."
+    grad.source === :unavailable && @warn "check_drm: the gradient at the estimate could not be " *
+        "computed on this fit: neither the stored objective's derivative nor a central finite " *
+        "difference of it produced a finite value, so `max_abs_grad` is NaN and `ok` was NOT " *
+        "scored against the gradient criterion: `ok = true` here means converged and " *
+        "positive-definite covariance ONLY, with stationarity untested. `grad_source` is " *
+        "`:unavailable`, which is NOT `:none` (a fit that stores no objective at all)."
     # drmTMB emits the equivalent advisory from `check_penalized_fit()`.
     penalized && @warn "check_drm: penalized (MAP) fit — standard errors come from the penalized " *
         "curvature and are credible-interval-shaped, not frequentist. `loglik` is the UNPENALIZED " *
