@@ -284,6 +284,16 @@ _shard_include("test_missing_listwise.jl")
 # (fit_q4_sparse_tmb end-to-end; marginal_nll / marginal_and_exact_grad return
 # contract + cross-consistency) and the bivariate bf() meta_V/relmat/animal
 # constructor guard rails.
+include("test_coverage_engine.jl")
+include("test_q4_objective_diagnostic.jl")
+include("test_bridge_formula_translation.jl")
+include("test_bridge_materialization_collision.jl")
+include("test_bridge_formula_labels.jl")
+include("test_bridge_base_r_names.jl")  # #563/#467: the ten design-258 constructs render base-R names
+include("test_bridge_coef_labels_echo.jl")  # #563: options["coef_labels"] echo (design 258 §7.1-7.3)
+include("test_bridge_formula_constructs.jl")  # #467/#609 A6: R-contrast fidelity of the coef_labels echo
+include("test_bridge_lss_labels.jl")
+include("test_bridge_lss_routes.jl")  # #563 S6: bridge-vs-direct parity across every LSS route
 _shard_include("test_coverage_engine.jl")
 _shard_include("test_q4_objective_diagnostic.jl")
 _shard_include("test_bridge_formula_translation.jl")
@@ -520,3 +530,10 @@ _shard_include("test_joint_missing_finite_bridge.jl")
 # Takahashi selected inverse could not supply the logdet-H traces. Guards the root
 # fix (structurally full axis block) and the ML exact gradient it silently broke.
 _shard_include("test_577_ml_structural_zeros.jl")
+
+# Issue #646: on the missing-response Gaussian route `is_converged` read false on a
+# genuinely converged fit (the degeneracy bar took std() of a NaN-carrying response,
+# and every > against NaN is false), and every bootstrap replicate threw
+# DimensionMismatch because simulate drew fit.nobs values against full-design
+# means. Guards both, plus the iteration count the full-row rebuild dropped.
+_shard_include("test_bridge_response_mask_inference.jl")

@@ -37,16 +37,20 @@ end
     @testset "(a) echo: verbatim public names, raw stays Julia's own" begin
         _, baseline = _echo_try()
 
+        # Base-R names, exactly as drmTMB's `model.matrix()` spells them: the
+        # echo pastes them verbatim, and (since 2026-09-04) refuses any
+        # spelling DRM.jl's own rendering of the same design disagrees with —
+        # see test_bridge_formula_constructs.jl for the refusal cases.
         options = Dict{String,Any}("coef_labels" => Dict(
-            "mu" => ["(Intercept)", "x_renamed", "ix2_renamed"],
-            "sigma" => ["sigma_only"],
+            "mu" => ["(Intercept)", "x", "I(x^2)"],
+            "sigma" => ["(Intercept)"],
         ))
         status, out = _echo_try(; options = options)
         @test status === :ok
         status === :ok || return
 
         @test out["coef_names"] == [
-            "mu_(Intercept)", "mu_x_renamed", "mu_ix2_renamed", "sigma_sigma_only",
+            "mu_(Intercept)", "mu_x", "mu_I(x^2)", "sigma_(Intercept)",
         ]
         @test out["vcov_names"] == out["coef_names"]
         @test out["coef_label_contract"] == "bridge_formula_labels_v1"
@@ -112,12 +116,12 @@ end
 
     @testset "(f) scalar String for a length-1 block echoes like [String]" begin
         options_vec = Dict{String,Any}("coef_labels" => Dict(
-            "mu" => ["(Intercept)", "x_renamed", "ix2_renamed"],
-            "sigma" => ["sigma_only"],
+            "mu" => ["(Intercept)", "x", "I(x^2)"],
+            "sigma" => ["(Intercept)"],
         ))
         options_scalar = Dict{String,Any}("coef_labels" => Dict(
-            "mu" => ["(Intercept)", "x_renamed", "ix2_renamed"],
-            "sigma" => "sigma_only",  # bare String, not [String] -- JuliaCall unboxing
+            "mu" => ["(Intercept)", "x", "I(x^2)"],
+            "sigma" => "(Intercept)",  # bare String, not [String] -- JuliaCall unboxing
         ))
         status_vec, out_vec = _echo_try(; options = options_vec)
         status_scalar, out_scalar = _echo_try(; options = options_scalar)
@@ -163,8 +167,8 @@ end
             :rho12 => "rho12 ~ 1",
         )
         options = Dict{String,Any}("coef_labels" => Dict(
-            "mu1" => ["b0", "b1"], "mu2" => ["c0", "c1"],
-            "sigma1" => ["s1"], "sigma2" => ["s2"], "rho12" => ["r"],
+            "mu1" => ["(Intercept)", "x"], "mu2" => ["(Intercept)", "x"],
+            "sigma1" => ["(Intercept)"], "sigma2" => ["(Intercept)"], "rho12" => ["(Intercept)"],
         ))
         status = :error
         out = nothing
@@ -179,8 +183,8 @@ end
         @test status === :ok
         status === :ok || return
         @test out["coef_names"] == [
-            "mu1_b0", "mu1_b1", "mu2_c0", "mu2_c1",
-            "sigma1_s1", "sigma2_s2", "rho12_r",
+            "mu1_(Intercept)", "mu1_x", "mu2_(Intercept)", "mu2_x",
+            "sigma1_(Intercept)", "sigma2_(Intercept)", "rho12_(Intercept)",
         ]
         @test out["vcov_names"] == out["coef_names"]
     end
