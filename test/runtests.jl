@@ -147,6 +147,7 @@ _shard_include("test_gaussian_spatial.jl")
 _shard_include("test_predict.jl")
 _shard_include("test_predict_response.jl")
 _shard_include("test_ranef.jl")
+_shard_include("test_ranef_varying_scale_convergence.jl")  # #609: `converged` on the varying-scale ranef route is the GRADIENT criterion
 _shard_include("test_correlated_re.jl")
 _shard_include("test_multi_re.jl")
 _shard_include("test_sigma_re.jl")
