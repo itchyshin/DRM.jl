@@ -90,4 +90,92 @@ end
     @test one.worker_threads == 1
     @test isfinite(only(one.ci).lower) && isfinite(only(one.ci).upper)
     @test BLAS.get_num_threads() == blas_before
+
+    # The contraction budget is reported per arm on the public diagnostic
+    # surface, next to the expansion and Newton counts it belongs with.  This
+    # well-conditioned fixture needs none of it, so the count is zero here: the
+    # guard is inert on a search whose every trial evaluates.
+    for diag in serial.endpoint_diagnostics
+        @test diag.lower.contractions == 0
+        @test diag.upper.contractions == 0
+    end
+    @test only(one.endpoint_diagnostics).lower.contractions == 0
+    @test only(one.endpoint_diagnostics).upper.contractions == 0
+end
+
+# The endpoint search must not treat one unevaluable TRIAL as an unresolvable
+# ENDPOINT (#651).  These cases are synthetic on purpose: the live failure is a
+# last-bit platform difference that does not reproduce on every architecture, so
+# the regression is pinned on the search logic itself, which is what changed.
+@testset "unevaluable profile trials contract instead of failing the arm" begin
+    # h(t) = t^2 - 1 crosses zero at t = 1.  The callback refuses to evaluate a
+    # BAND rather than a single point, so merely retrying the same trial cannot
+    # escape it; only contraction toward the feasible floor can.  Both the
+    # Wald-seeded expansion trial and the first guarded-Newton trial land inside
+    # the band, so this exercises both contraction sites.
+    banded(t) = (1.1 <= t <= 1.6) ? (NaN, NaN, false) : (t^2 - 1.0, 2.0 * t, true)
+
+    contracted = DRM._ls_profile_root_result(banded, 0.0; dir=1.0, init=2.0)
+    @test contracted.accepted
+    @test !contracted.endpoint_failed
+    @test !contracted.unbounded
+    @test contracted.reason == :accepted
+    @test isfinite(contracted.value)
+    @test isapprox(contracted.value, 1.0; atol=1e-6, rtol=0)
+    @test abs(contracted.residual) < 1e-7
+    # The rescue came from the new code path, not from a lucky trial sequence.
+    @test contracted.contractions > 0
+
+    # Counterfactual: with the contraction budget removed the identical callback
+    # abandons the arm and reports the signed infinity this leaf exists to stop.
+    abandoned = DRM._ls_profile_root_result(banded, 0.0; dir=1.0, init=2.0,
+                                            maxcontract=0)
+    @test !abandoned.accepted
+    @test abandoned.endpoint_failed
+    @test abandoned.value == Inf
+    @test abandoned.contractions == 0
+
+    # Contraction only POSTPONES failure: an arm that cannot be evaluated
+    # anywhere above the fitted optimum still fails closed, and still reports a
+    # failed signed-infinity endpoint rather than inventing a finite bound.
+    # `evalh` is called with the PARAMETER COORDINATE `x0 + dir * t`, not with
+    # the displacement, so refusing every coordinate away from the fitted value
+    # covers both directions.
+    unreachable(v) = v == 0.0 ? (-1.0, 0.0, true) : (NaN, NaN, false)
+    hopeless = DRM._ls_profile_root_result(unreachable, 0.0; dir=1.0, init=1.0)
+    @test !hopeless.accepted
+    @test hopeless.endpoint_failed
+    @test !hopeless.unbounded
+    @test hopeless.value == Inf
+    @test hopeless.contractions > 0
+
+    # A negative direction is guarded the same way, and reports -Inf.
+    lower_side = DRM._ls_profile_root_result(unreachable, 0.0; dir=-1.0, init=1.0)
+    @test lower_side.endpoint_failed
+    @test lower_side.value == -Inf
+
+    # An expansion that had to contract cannot then certify UNBOUNDEDNESS: part
+    # of the range was never evaluated, so "no crossing in the searched range"
+    # was not established.  That is reported as a failed endpoint, not as an
+    # unbounded interval, so `confint` refuses it instead of returning Inf.
+    never_crosses(t) = (1.0 <= t <= 1.05) ? (NaN, NaN, false) : (-1.0, 0.0, true)
+    incomplete = DRM._ls_profile_root_result(never_crosses, 0.0; dir=1.0, init=1.0)
+    @test !incomplete.unbounded
+    @test incomplete.endpoint_failed
+    @test incomplete.reason == :infeasible_region
+    @test incomplete.contractions > 0
+
+    # A search that never had to contract keeps the documented `:no_crossing`
+    # verdict, so the fail-closed branch above cannot mask a genuine one.
+    flat(t) = (-1.0, 0.0, true)
+    nocross = DRM._ls_profile_root_result(flat, 0.0; dir=1.0, init=1.0)
+    @test nocross.unbounded
+    @test !nocross.endpoint_failed
+    @test nocross.reason == :no_crossing
+    @test nocross.contractions == 0
+
+    # The search stays bounded: contraction is capped per trial, so the total
+    # evaluation count cannot exceed (maxexpand + maxnewton + 1) * (1 + maxcontract).
+    @test hopeless.evaluations <= (40 + 30 + 1) * (1 + 8)
+    @test contracted.evaluations <= (40 + 30 + 1) * (1 + 8)
 end
