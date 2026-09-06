@@ -13,7 +13,9 @@ Formula marker for Gaussian meta-analysis: `v` is the data column of **known**
 sampling variances. Use inside a `μ` formula, e.g.
 `bf(y ~ x + meta_V(v), sigma ~ 1)`. The residual (between-study) heterogeneity SD
 is the `σ` parameter (the between-study τ of classical meta-analysis).
-(Diagonal known variances; dense/bivariate sampling covariance is planned.)
+(Diagonal known variances; row-paired bivariate sampling covariance ships as
+[`meta_vcov_bivariate`](@ref), passed as `drm(...; V = V)`. Cross-study
+sampling covariance is not supported.)
 """
 meta_V(v) = v     # identity stub; the marker is intercepted during formula parsing
 

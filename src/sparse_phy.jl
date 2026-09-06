@@ -534,12 +534,14 @@ end
 
 Build the dense (p × p) leaf covariance `Σ_phy = σ²_phy · (S Q_cond⁻¹ S')`
 where `Q_cond` is `phy.Q_topology` with the root row/col removed and `S`
-selects leaves. This is what the existing dense path expects; used by
-verification tests to compare sparse vs. dense.
+selects leaves. This is what the dense path expects, and it is reached on
+ordinary fitting paths — `phylo(1 | species)` and `phylo_correlation` both
+build their correlation matrix from it.
 
-This is **O(p³)** in storage and time — only intended for small trees in
-tests. Do NOT call it on the real workload; the entire point of
-`AugmentedPhy` is to avoid materialising Σ_phy.
+The dense inverse is **O(p³)**, so those paths are practical only for modest
+`p`. For a large tree prefer the sparse route
+([`augmented_tree_precision`](@ref)), whose entire point is to avoid
+materialising Σ_phy.
 """
 function sigma_phy_dense(phy::AugmentedPhy; σ²_phy::Real = 1.0)
     p = phy.n_leaves

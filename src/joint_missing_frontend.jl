@@ -9,9 +9,9 @@ using StatsModels: DummyCoding, CategoricalTerm, ContinuousTerm, InteractionTerm
 """
     mi(x)
 
-Marker for exactly one additive predictor whose missing values are modelled by
-the joint missing-predictor frontend. It is valid only inside `@formula`; direct
-evaluation is an error.
+Marker for a bare additive predictor whose missing values are modelled by the
+joint missing-predictor frontend; a mean formula may carry one or two such
+markers. It is valid only inside `@formula`; direct evaluation is an error.
 """
 mi(args...) = throw(ArgumentError("`mi()` is a formula marker; use it only inside `@formula(...)`"))
 

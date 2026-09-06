@@ -41,10 +41,12 @@ animal(x) = x
 
 Phylogenetic structured random intercept on the Gaussian **mean**: pass the tree
 via `drm(...; tree = tree)` (an `AugmentedPhy` from `random_balanced_tree` /
-`augmented_phy`, or a Newick string). The phylogenetic correlation is built from
-the tree (`sigma_phy_dense`) and the marginal is fit in closed form. (The q=4
-phylogenetic *location-scale* model — a structured effect on `log σ` too — uses
-the verified sparse-Laplace engine instead; see `HANDOVER.md`.)
+`augmented_phy`, or a Newick string). Under the default `algorithm = :auto`
+with a constant `sigma ~ 1` this takes the all-node sparse L-BFGS route (the
+root-conditioned tree precision, fixed effects profiled out); the dense leaf
+correlation (`sigma_phy_dense`) is the fallback, used for `algorithm = :gls` /
+`:lbfgs` or alongside extra random effects, `meta_V`, or a non-constant `sigma`
+design. The marginal is exactly Gaussian on either route.
 """
 phylo(x) = x
 

@@ -438,13 +438,13 @@ per-component prior logdets. Structural pattern (nested vs. crossed fill,
 **REML (#563 S7b.3, design note §4).** `reml = true` adds the Patterson–
 Thompson correction `+ 0.5*logdet(Xμ'V⁻¹Xμ) - 0.5*pμ*log(2π)` — the SAME
 closed form and normalisation convention #558's single-component
-`eval_reml` (`:135–156` above) and the dense multi-component route
-(`gaussian_lss.jl:634–638`) both use. `Xμ'V⁻¹Xμ` is obtained via `pμ` sparse
+`eval_reml` (above) and the dense multi-component route
+(`_fit_gaussian_lss_multi`'s `nll_reml`, `gaussian_lss.jl`) both use. `Xμ'V⁻¹Xμ` is obtained via `pμ` sparse
 Cholesky backsolves against the SAME shared factor `ch` this function already
 computes (`_lss_sparse_multi_reml_pieces`, §4's block-accumulation
-generalisation of `:138–152`'s per-column loop: `Z' * (w .* Xμ)` sums every
+generalisation of `eval_reml`'s per-column loop: `Z' * (w .* Xμ)` sums every
 component's contribution into `bX` at its own block offset in one sparse
-product, exactly as the ML `b` accumulation does at `:428` above — no
+product, exactly as the ML `b = Z' * (w .* r)` accumulation does — no
 cross-component term, per the design note's own review, §8 finding 5). Cost:
 `O(pμ · nnz(L))` on top of the ML evaluation, matching #558's order.
 `reml = false` (the default) is the ORIGINAL S7b.1 code path, byte-for-byte
@@ -502,17 +502,16 @@ shared factor `ch`, rather than #558's `pμ` separate column solves — same
 total cost, `O(pμ · nnz(L))`):
 
 - `BX = Zᵀ(w .* Xμ)` (`q_total × pμ`): the multi-component generalisation of
-  `:138–145`'s per-column `bX` accumulation — every component's contribution
+  `eval_reml`'s per-column `bX` accumulation — every component's contribution
   lands at its own block offset in one sparse product, no cross term (§8
   finding 5);
 - `ÂX = ch \\ BX` (`q_total × pμ`): the joint BLUP of every `Xμ` column,
-  generalising `:146`'s `âX = ch \\ bX`;
-- `Xtilde = Xμ - Z*ÂX` (`n × pμ`): generalising `:147–148`'s
-  `Xk .- ZâX`;
+  generalising that loop's `âX = ch \\ bX`;
+- `Xtilde = Xμ - Z*ÂX` (`n × pμ`): generalising its `Xk .- ZâX`;
 - `XtVinvX = Xμ'*(w .* Xtilde)` (`pμ × pμ`), `chX = cholesky(Symmetric(XtVinvX))`.
 
 Returns `(NaN, BX, ÂX, Xtilde, nothing)` if `chX` is not PD (caller applies
-`REML_NONPD_PENALTY`, `:154` above's convention).
+`REML_NONPD_PENALTY`, `eval_reml`'s convention).
 """
 function _lss_sparse_multi_reml_pieces(Xμ::AbstractMatrix, w::AbstractVector,
                                        Z::AbstractMatrix, ch)
@@ -540,8 +539,9 @@ end
 
 Exact analytic gradient of the sparse multi-component LSS objective
 ([`_lss_sparse_multi_objective`](@ref)), generalising #551's single-
-component gradient (`:99–127` above) to `m` components sharing the block
-augmented precision `H` (design note §2). `nll` is obtained by calling
+component gradient (`eval_core`'s `want_grad` branch) to `m` components
+sharing the block augmented precision `H` (design note §2). `nll` is
+obtained by calling
 [`_lss_sparse_multi_objective`](@ref) directly, so it is bit-identical to
 that entry's own return value; `grad = [g_βμ; g_βσ; g_α_1; …; g_α_m]`.
 
@@ -641,8 +641,9 @@ quantity [`_lss_sparse_multi_reml_pieces`](@ref) computes for the objective),
   cancel exactly (verified symbolically and against central-FD below);
 - `∂corr/∂η_c,g` (per-group-level, chained through `Zg_c` exactly as `g_α_c`
   is): own-node term `diagZtWZ[c][node]·Ψ[ĝ,ĝ] - dot(BX[ĝ,:], C2[ĝ,:])` plus
-  the SAME cross-component accumulation pattern the ML `g_α_c` uses (`:687–
-  698` above) with `Hinv[gi,gj]` replaced by `Ψ[gi,gj] := dot(ÂX[gi,:],
+  the SAME cross-component accumulation pattern the ML `g_α_c` uses (this
+  function's `cross_terms` loop) with `Hinv[gi,gj]` replaced by
+  `Ψ[gi,gj] := dot(ÂX[gi,:],
   C2[gj,:])` (the `(gi,gj)` entry of `ÂX*Minv*ÂX'`, needed only at exactly
   the same sparse `(node, node')` pairs the ML gradient already visits — no
   new sparsity pattern to track), where `BX = Zᵀ(w .* Xμ)`
@@ -874,7 +875,7 @@ _lss_multi_route(fit) = get(_LSS_MULTI_ROUTE, fit.theta, :unknown)
                                    comp_label, nmμ, nmσ, g_tol; reml = false) -> DrmFit
 
 The sparse multi-component analogue of `_fit_phylo_gaussian_lss_sparse`
-(:13-263 above), generalising its LBFGS-on-the-exact-gradient optimiser loop
+(above), generalising its LBFGS-on-the-exact-gradient optimiser loop
 from one phylogenetic component to the `comps::Vector{_SparseLssComp}` block
 this sub-slice's S7b.1-S7b.3 machinery already evaluates
 ([`_lss_sparse_multi_objective_and_grad`](@ref)). `comp_nm`/`comp_is_phylo`/
@@ -892,7 +893,7 @@ gradient — design note §8 finding 5), S7b.3 DID build one
 (`_lss_sparse_multi_objective_and_grad(...; reml = true)`), so both `reml =
 false` and `reml = true` here use the SAME LBFGS-on-the-exact-gradient loop
 and the SAME finite-difference-of-the-analytic-gradient Hessian for `vcov`
-(mirroring :199-217's ML branch, not :219-240's REML branch) — there is no
+(mirroring that route's ML branch, not its `eval_reml` REML branch) — there is no
 `autodiff = :finite` fallback in this route at all.
 
 Convergence contract, `DrmFit` fields, and the `nllgrad!`-only-for-ML /

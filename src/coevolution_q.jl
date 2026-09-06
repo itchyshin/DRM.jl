@@ -214,12 +214,12 @@ function coevo_rhs(prob::CoevoProblem, β::AbstractMatrix, Dinv::AbstractMatrix)
 end
 
 """
-    coevo_marginal(prob, Q_cond, β, Λ, σ_res) -> (ℓ, û, ch_H, P)
+    coevo_marginal_cov(prob, Q_cond, β, Λ, D) -> (ℓ, û, ch_H, P)
 
 EXACT Laplace (= Gaussian) marginal log-likelihood at the given parameters,
 plus the inner mode `û`, the CHOLMOD factor of `H_uu`, and the sparse prior `P`.
-`β` is `k × q` (trait-major columns), `Λ` is q×q SPD, `σ_res` a length-q vector
-of residual SDs.
+`β` is `k × q` (trait-major columns), `Λ` is q×q SPD, `D` a q×q SPD residual
+covariance. `coevo_marginal` is the diagonal-residual wrapper taking `σ_res`.
 """
 function coevo_marginal_cov(prob::CoevoProblem, Q_cond::SparseMatrixCSC,
                             β::AbstractMatrix, Λ::AbstractMatrix, D::AbstractMatrix)

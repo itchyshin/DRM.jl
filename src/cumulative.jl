@@ -33,11 +33,12 @@ random slope `(0 + x | g)` on `mu` integrates the group-level term out by
 SD. An unlabelled, intercept-only phylogenetic random intercept
 `phylo(1 | species)` on `mu` is fit via the sparse-Laplace GLMM route instead
 (needs `tree = …`); it cannot be combined with an ordinary random effect. For
-the `phylo` route, `re_sd(fit)[:group]` is on the RAW branch-length scale (tip
+the `phylo` route, `re_sd(fit)` is keyed by the grouping variable (`:species`
+for `phylo(1 | species)`) and is on the RAW branch-length scale (tip
 variance equals the tree height `h`, not 1) — this differs from drmTMB's
 `sdpars\$mu[["phylo(1 | species)"]]`, which is on the CORRELATION scale
 (`ape::vcv(tree, corr = TRUE)`, tip variance 1 regardless of `h`). Convert with
-`re_sd(fit)[:group] * sqrt(phylo_tree_height(augmented_phy(tree)))` to compare
+`re_sd(fit)[:species] * sqrt(phylo_tree_height(augmented_phy(tree)))` to compare
 against drmTMB's number (the same convention used throughout the Gaussian
 phylo-mean route, e.g. `test_parity_gaussian_phylo_mean.jl`).
 Correlated slopes `(1 + x | g)`, crossed/multiple random effects, and

@@ -280,7 +280,8 @@ end
 """
     marginal_and_exact_grad(prob, Q_cond, θ; u0, n_newton) -> (nll, grad, û, ch_H)
 
-TRUE sparse Laplace NLL and its EXACT 17-dim gradient (cheap + implicit), with
+TRUE sparse Laplace NLL and its EXACT gradient (cheap + implicit) in all
+`theta_len(prob)` = nβ+10 coordinates of θ (17 for the reference layout), with
 the inner mode `û` FROZEN. All CHOLMOD-blocked logdet θ-derivatives use the
 Takahashi selected inverse of H (O(p)); all other pieces are single-level AD.
 Returns `û` and the factor so the caller can warm-start the next evaluation.
