@@ -264,7 +264,11 @@ end
           "gaussian_q2_mu1_mu2_animal_residual_correlation"
     @test animal_bridged["q2_point_export"]["residual_correlation"] ≈ first(rho12(animal_fit))
     @test animal_bridged["loglik"] ≈ loglik(animal_fit)
-    @test_throws ErrorException drm(
+    # Parity leaf jl-q2-spatial: this call used to be a refusal. `spatial` now
+    # supplies a fixed-range exponential covariance exactly as relmat/animal
+    # supply theirs, so it exports its own structured type on the same path.
+    # Still NOT a range-estimating spatial route -- rho is fixed, not fitted.
+    spatial_fit = drm(
         bf(
             mu1 = @formula(y1 ~ x + spatial(1 | group_id)),
             mu2 = @formula(y2 ~ x + spatial(1 | group_id)),
@@ -275,7 +279,12 @@ end
         Gaussian();
         data = dat,
         coords = hcat(collect(1:G), collect(1:G)),
+        g_tol = 2e-4,
     )
+    spatial_export = DRM._bridge_q2_point_export(spatial_fit; family = "biv_gaussian")
+    @test spatial_fit.ranef.structured_type == :spatial
+    @test spatial_export["target"] == "gaussian_q2_mu1_mu2_spatial_residual_correlation"
+    @test spatial_export["structured_type"] == "spatial"
 end
 
 @testset "q2 residual-correlation phylo route carries the same target as bivariate rho12" begin
