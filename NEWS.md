@@ -6,6 +6,32 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## v0.7.1 — 2026-09-05
 
+- **The #574 resolvable-scale guard had zero margin, so the #461 runaway degenerate optimum was
+  still reachable (`src/location_only.jl`).** #574 refused the sparse phylogenetic location-only
+  Woodbury objective where the residual variance is "below machine precision relative to the
+  phylogenetic variance", coded as `sigma^2 / sigma_phy^2 >= eps`. The relative error of that
+  Woodbury subtraction grows as `eps * (sigma_phy^2 / sigma^2)`, so `eps` is exactly the point at
+  which NO digits survive: the bar sat *on* the cliff rather than back from it, and the objective
+  was still wrong just above it. Measured 2026-09-05 against a dense `V = sigma^2 I + sigma_phy^2 C`
+  oracle on the #461 fixture (G = 100, one row per species) at `log(sigma_phy) = -26.9176`: the
+  Woodbury log-likelihood tracks the oracle to 1.37e-05 relative at `log(sigma) = -40.0`, then
+  FLIPS SIGN at `log(sigma) = -44.0` (`+4.37745e+25` against the oracle's `-3.15149e+25`). That
+  break is at `log(sigma) - log(sigma_phy) = -17.086`, INSIDE #574's bar of `-18.022`, and it is
+  the whole #461 runaway: `Optim` reports convergence there, `sigma = 7.75e-20`,
+  `sd_phylo = 2.04e-12`, `loglik = +4.38e+25`. Whether the optimiser walks into that sliver is
+  decided by rounding, so `test/test_bootstrap_marginal.jl`'s `#461` testset passed on x86_64
+  Linux CI and failed on aarch64 macOS at the same commit with the same seeds and B = 60
+  (`res.failed == 0` evaluated `1 == 0`; `res.used == 60` evaluated `59 == 60` -- replicate 38).
+  The bar is now the standard rule for a cancellation-limited difference: keep at least HALF the
+  mantissa, `sigma^2 / sigma_phy^2 >= sqrt(eps)`, i.e. `log(sigma) - log(sigma_phy) >=
+  0.25 * log(eps)` = `-9.011`. It refuses `sigma / sigma_phy < 1.2e-04`; on the #461 fixture the
+  60 bootstrap refits span `[-1.033, +1.439]`, about eight nats clear of it. This is a
+  floating-point representation limit, not a statistical lower bound; `algorithm = :gls` remains
+  available for a genuine boundary estimate. New path-independent pin in
+  `test/test_lss_phylo.jl`: every `(log sigma, log sigma_phy)` pair the guard ADMITS must agree
+  with the dense oracle to 1e-06 relative -- the property, not the constant, so re-loosening the
+  bar fails it (17 assertions and 1 error under #574's value).
+
 - **`drm_bridge` admits `skew_normal`** — `_bridge_family` now maps drmTMB's
   `skew_normal()` (tags `skew_normal` / `skewnormal`) to the native `SkewNormal()`
   family. The family was already implemented (`src/skewnormal.jl`) but the R
