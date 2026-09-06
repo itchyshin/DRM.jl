@@ -489,6 +489,7 @@ _shard_include("test_lrtest_boundary_warn.jl")
 
 # #320 / #323.2: coeftable/show suppress z/p for non-location blocks and Inf-SE rows.
 _shard_include("test_summary_zp_suppress.jl")
+_shard_include("test_r2_constant_sigma.jl")
 
 # #325.3: bootstrap summary indexes coefficients by stored block range, not a counter.
 _shard_include("test_bootstrap_block_index.jl")
