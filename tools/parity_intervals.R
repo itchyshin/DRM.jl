@@ -61,6 +61,102 @@ cells <- list(
     },
     formula = function() bf(y ~ x),
     family  = function() poisson()
+  ),
+list(
+    id    = "fe_beta",
+    label = "Beta (logit mu), fixed effects",
+    build = function() {
+      set.seed(4242); n <- 150; x <- rnorm(n)
+      mu <- plogis(0.3 + 0.7 * x); phi <- 8
+      data.frame(y = rbeta(n, mu * phi, (1 - mu) * phi), x = x)
+    },
+    formula = function() bf(y ~ x, sigma ~ 1),
+    family  = function() beta()
+  ),
+# gamma_fe. Gamma (log link), mean-only, through engine = "julia". The build()
+  # is copied VERBATIM from the `fe_gamma` cell in tools/parity_fixture.R:83-86
+  # so the interval receipt and the coefficient receipt are about ONE target,
+  # not two separate draws. That cell carries no `formula` element (the fe_cells
+  # loop defaults to bf(y ~ x)); this file's loop calls cell$formula()
+  # unconditionally, so it is spelled out here.
+  list(
+    id    = "fe_gamma",
+    label = "Gamma (log link), fixed effects",
+    build = function() {
+      set.seed(4242); n <- 150; x <- rnorm(n)
+      data.frame(y = rgamma(n, shape = 4, rate = 4 / exp(0.5 + 0.3 * x)), x = x)
+    },
+    formula = function() bf(y ~ x),
+    family  = function() Gamma(link = "log")
+  ),
+list(
+    id    = "fe_lognormal",
+    label = "Lognormal, fixed effects",
+    build = function() {
+      set.seed(4242); n <- 150; x <- rnorm(n)
+      data.frame(y = exp(0.6 + 0.4 * x + 0.5 * rnorm(n)), x = x)
+    },
+    formula = function() bf(y ~ x),
+    family  = function() lognormal()
+  ),
+list(
+    id    = "fe_nbinom2",
+    label = "NegBinomial2, fixed effects",
+    build = function() {
+      set.seed(4242); n <- 150; x <- rnorm(n)
+      data.frame(y = rnbinom(n, mu = exp(0.6 + 0.4 * x), size = 3), x = x)
+    },
+    formula = function() bf(y ~ x),
+    family  = function() nbinom2()
+  ),
+# skew_normal, fixed effects (measured 2026-09-07). Profile is at parity: both
+  # engines return a finite interval for `fixef:mu:x` agreeing to ~2e-6 relative.
+  # Bootstrap is a MEASURED one-sided gap: native TMB gives 19/19 successful
+  # refits, while the Julia side fails every replicate because DRM.jl's
+  # `_simulate_once` (src/gaussian_core.jl) has no SkewNormal branch and hits its
+  # terminal "simulate: not yet supported" error. Expect UNSUPPORTED_JULIA on the
+  # bootstrap row until that draw kernel gains the family. Fixture draw is the one
+  # already committed in tools/parity_fixture.R (n = 500, seed 20260608, nu = 1.6).
+  list(
+    id    = "fe_skew_normal",
+    label = "Skew-normal (mu ~ x, sigma ~ z, nu ~ 1), fixed effects",
+    build = function() {
+      set.seed(20260608); n <- 500; nu <- 1.6
+      x <- rnorm(n); z <- rnorm(n)
+      mu <- 0.20 + 0.45 * x; sigma <- exp(-0.35 + 0.18 * z)
+      delta <- nu / sqrt(1 + nu^2); ms <- delta * sqrt(2 / pi)
+      omega <- sigma / sqrt(1 - ms^2); xi <- mu - omega * ms
+      data.frame(y = xi + omega * (delta * abs(rnorm(n)) + sqrt(1 - delta^2) * rnorm(n)),
+                 x = x, z = z)
+    },
+    formula = function() bf(y ~ x, sigma ~ z, nu ~ 1),
+    family  = function() skew_normal()
+  ),
+list(
+    id    = "zi_nbinom2",
+    label = "Zero-inflated NB2, fixed effects (zi ~ 1)",
+    build = function() {
+      set.seed(20260824); n <- 400; x <- rnorm(n)
+      mu <- exp(0.45 - 0.30 * x); sigma <- exp(-0.75); zi <- plogis(-1.15)
+      data.frame(
+        y = ifelse(runif(n) < zi, 0L, rnbinom(n, size = 1 / sigma^2, mu = mu)),
+        x = x
+      )
+    },
+    formula = function() bf(y ~ x, sigma ~ 1, zi ~ 1),
+    family  = function() nbinom2()
+  ),
+list(
+    id    = "zi_poisson",
+    label = "Zero-inflated Poisson, fixed effects (zi ~ x)",
+    build = function() {
+      set.seed(20260824); n <- 400; x <- rnorm(n)
+      lambda <- exp(0.6 + 0.4 * x); pz <- plogis(-0.8 + 0.5 * x)
+      y <- ifelse(rbinom(n, 1, pz) == 1L, 0L, rpois(n, lambda))
+      data.frame(y = y, x = x)
+    },
+    formula = function() bf(y ~ x, zi ~ x),
+    family  = function() poisson()
   )
 )
 
@@ -164,7 +260,13 @@ for (cell in cells) {
       rec$note <- one_line(if (inherits(ft, "error")) conditionMessage(ft) else conditionMessage(fj))
     } else {
       # Profile needs an explicit target; use a fixed effect present in every cell.
-      parm_m <- if (m == "profile") "fixef:mu:x" else NULL
+      # BOOTSTRAP NEEDS AN EXPLICIT parm TOO (2026-09-07). With parm = NULL the
+      # bridge refuses: "`method = \"bootstrap\"` confidence intervals require an
+      # explicit `parm` naming exactly one target", and every julia bootstrap cell
+      # recorded UNSUPPORTED_JULIA -- a DRIVER convention gap that was being read as
+      # an engine limitation. Measured otherwise: with an explicit parm the bridge
+      # returns finite bootstrap intervals for 7 non-Gaussian families.
+      parm_m <- if (m %in% c("profile", "bootstrap")) "fixef:mu:x" else NULL
       a <- get_ci(ft, m, parm_m); b <- get_ci(fj, m, parm_m)
       if (!a$ok && !b$ok) {
         rec$status <- "UNSUPPORTED_BOTH"; rec$note <- one_line(a$note)
