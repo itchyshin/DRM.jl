@@ -53,6 +53,13 @@ const API_STABLE = [
 ]
 
 const API_EXPERIMENTAL = [
+    # r2_constant_sigma (2026-09-06): EXPERIMENTAL on purpose. The value it
+    # returns is settled -- it is the ordinary lm() R2 -- but its REFUSAL
+    # BOUNDARIES are what a caller actually programs against, and those may widen:
+    # a marginal/conditional R2 for random-effect fits would reshape this surface,
+    # and that decision has not been made. Promising the boundaries under SemVer
+    # before deciding them would be the wrong claim.
+    "r2_constant_sigma",
     # R bridge (ledger r_bridge_status: experimental)
     "drm_bridge", "drm_bridge_inference", "drm_bridge_objective_at", "drm_listwise",
     # cross-family surface (permanent claim_boundary, D-179 #3)

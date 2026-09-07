@@ -6,6 +6,30 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 
 ## v0.7.1 — 2026-09-05
 
+- **Bootstrap replicates keep a masked fit's response mask (drmTMB #1188).** `_bootstrap_data`
+  merged each simulated draw into the original table wholesale, so on the missing-response routes
+  every replicate refitted on the FULL design regardless of how many rows the seed fit observed.
+  (The draw itself must span the full design -- `means`/`scales` are rebuilt over all rows by #646 --
+  so the mask has to be re-imposed one step later, when the replicate table is built.) A bootstrap
+  whose replicates are richer than the original understates uncertainty, and the shortfall grows with
+  the missing fraction. `_bootstrap_data` now restores the seed fit's response mask, reading it with
+  `_is_response_missing` so `missing` and `NaN` are treated exactly as the fit itself treated them; a
+  `cbind(successes, failures)` response is masked where EITHER cell is absent, and the failure column
+  inherits the mask through NaN arithmetic. MEASURED end to end through the drmTMB bridge
+  (`engine = "julia"`, `y = 0.3 + 0.5x + N(0,1) exp(0.1x)`, `n = 60`, `bf(y ~ x, sigma ~ x)`,
+  Gaussian, 30 of 60 responses masked, `B = 99`, 99/99 replicates converged in both arms): the
+  bootstrap interval on `fixef:mu:x` was 0.4748 wide against a Wald width of 0.8153 before the fix
+  (ratio 0.58) and 0.8754 after (ratio 1.07). MEASURED on the R side of the same defect, which is
+  where coverage is affordable (`S = 200` datasets, `B = 99` replicates each, nominal 95% percentile
+  interval, truth 0.5, same datasets and seeds in both arms): coverage 0.895 / 0.820 / 0.720 before
+  at 10% / 30% / 50% masked and 0.910 / 0.895 / 0.910 after, against a Wald reference of
+  0.920 / 0.925 / 0.915; Monte Carlo standard errors 0.020-0.032, and the paired improvement is
+  significant at 30% (p = 2.75e-04) and 50% (p = 7.28e-12) but NOT at 10% (p = 0.375). Receipt:
+  drmTMB `docs/dev-log/evidence/julia-r-parity/p2-g3/1188-bootstrap-mask-receipt.md`.
+  KNOWN CONSEQUENCE: replicates now legitimately drop rows, so `drm`'s #258 "never silent" warning
+  fires once per replicate. It was left in place deliberately -- the same channel carries the
+  saturated-fit (`residual dof 0`) warning, which is exactly what a user needs when replicates on a
+  heavily masked fit degenerate. `test/test_bridge_response_mask_inference.jl`.
 - **The `zi`/`hu` count mixtures now have a test at the `drm_bridge` MARSHALLING
   boundary, and a family spelled `zi_poisson` gets an actionable refusal.**
   `test_zi.jl` and `test_hurdle.jl` covered these mixtures through native `drm`
@@ -72,6 +96,22 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   the two variance parameters — reporting it would have read as "not converged"
   for a converged fit, through drmTMB's `fit$bridge$gradient`. The ML path keeps
   its analytic score unchanged.
+- **`converged` on the varying-scale Gaussian random-intercept route is now the GRADIENT
+  criterion (#609 item 2).** `bf(y ~ x + (1 | g), sigma ~ x)` fits through
+  `_fit_ranef_gaussian`, which reported `Optim.converged(res)` -- the OR of Optim's x, f and g
+  criteria. Because `Optim.Options(g_tol = ...)` leaves `f_reltol`/`f_abstol`/`x_reltol`/
+  `x_abstol` at their `0.0` defaults, `f_converged` fires on two byte-identical successive
+  objective values, which a VARYING-scale surface reaches while running away up the unbounded
+  sigma_i -> 0 ridge, nowhere near a stationary point. Measured over a 6,400-cell grid (n
+  30..400, G 3..20, sigma slope 0.15..8.0): 1,042 fits returned `converged = true` with the
+  gradient criterion false; the true gradient inf-norm there exceeded 1e-3 in 95 of them and 1.0
+  in 45, worst 3.7e137 alongside a POSITIVE Gaussian logLik of +980. The reported flag now also
+  requires `Optim.g_converged(res)`, so `fit.converged` implies the gradient met `g_tol`.
+  NOTHING ELSE MOVES: theta-hat, the ML and REML objectives, logLik, vcov and the BLUPs are
+  byte-identical (five fixtures across four routes, logLik equal to 17 significant figures
+  before and after). This is the DRM.jl half of #609 item 2; the ~1e-5 conditional-prediction
+  parity gap the issue diagnosed is drmTMB's `nlminb` stopping rule and is tracked as
+  drmTMB #1130. Guard: `test/test_ranef_varying_scale_convergence.jl`.
 - **`coef_labels` count mismatch now names the construct behind it (#467, #609).** When the R side
   supplies more names for a dpar than the fit has columns, the commonest cause is a factor level
   with no rows in the data: base-R `model.matrix()` gives every DECLARED level a column (an

@@ -167,6 +167,7 @@ family
 is_converged
 deviance
 dof_residual
+r2_constant_sigma
 ```
 
 ## Fit summaries and route inventories
