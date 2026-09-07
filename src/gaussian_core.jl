@@ -1747,10 +1747,10 @@ Bivariate Gaussian models return `Dict(:mu1=>…, :mu2=>…)` for `nsim == 1`, o
 length-`nsim` `Vector` of such `Dict`s for `nsim > 1` (a matrix of paired
 responses is not well defined).
 
-Supported families: Gaussian (univariate & bivariate), Student-t, Poisson
-(+ zero-inflated / hurdle), NegBinomial2 (+ zero-inflated / hurdle / truncated),
-Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta, Tweedie, and
-CumulativeLogit.
+Supported families: Gaussian (univariate & bivariate), Student-t, SkewNormal,
+Poisson (+ zero-inflated / hurdle), NegBinomial2 (+ zero-inflated / hurdle /
+truncated), Beta, BetaBinomial, Binomial, Gamma, LogNormal, ZeroOneBeta,
+Tweedie, and CumulativeLogit.
 
 # Example
 ```julia
@@ -1877,6 +1877,29 @@ function _simulate_once(fit::DrmFit, rng; mu = nothing, sigma = nothing)
         η = _scale_vector(fit, :ordinal_eta)
         cuts = _scale_vector(fit, :ordinal_cuts)
         return Float64[_rand_cumulative_logit(rng, η[i], cuts) for i in 1:n]
+    elseif fam isa SkewNormal
+        # Azzalini's stochastic representation. The PUBLIC parameters are the
+        # MOMENT form (μ = mean of y, σ = SD of y, ν = slant α), so a draw has to
+        # map to the internal (ξ, ω, α) of the density first. That mapping is the
+        # SAME THREE LINES the likelihood uses (`_fit_skewnormal`'s `nll` inner
+        # loop, src/skewnormal.jl) and is deliberately kept identical here: a
+        # simulator that parameterised differently from the fitter would leave
+        # the parametric bootstrap quietly wrong rather than loudly broken.
+        #   δ = α/√(1+α²),  ω = σ/√(1 − 2δ²/π),  ξ = μ − ω·δ·√(2/π)
+        #   y = ξ + ω·(δ·|u₀| + √(1−δ²)·v),   u₀, v ~ N(0,1) independent
+        # μ honours the private `mu` override bound above (population-level mean),
+        # exactly as the other non-Gaussian branches do.
+        σ = _scale_vector(fit, :sigma)
+        α = _scale_vector(fit, :nu)
+        u0 = randn(rng, n); v = randn(rng, n)
+        out = Vector{Float64}(undef, n)
+        @inbounds for i in 1:n
+            δ = α[i] / sqrt(1 + α[i]^2)
+            ω = σ[i] / sqrt(1 - 2 * δ^2 / π)   # δ²<1 ⇒ 1−2δ²/π ∈ (1−2/π, 1] > 0
+            ξ = μ[i] - ω * δ * sqrt(2 / π)
+            out[i] = ξ + ω * (δ * abs(u0[i]) + sqrt(1 - δ^2) * v[i])
+        end
+        return out
     end
     error("simulate: not yet supported for $(typeof(fam)).")
 end
