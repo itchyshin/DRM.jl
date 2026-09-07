@@ -12,12 +12,29 @@
 #
 # z = estimate / se on each block's working scale (μ on the response scale; σ on
 # log σ; ρ12 on atanh ρ12; random-effect SDs on log σ_b — matching `confint`).
-# z / Pr(>|z|) are populated only for blocks where the working-scale-zero null is a
-# meaningful hypothesis (:mu/:mu1/:mu2 test coefficient = 0; :rho12 tests ρ12 = 0).
-# For :sigma/:resd/:recov/:phylocov etc. the zero-on-working-scale null is not the
-# scientific null (log σ = 0 ⇔ σ = 1, not σ = 0), so z / p print as NaN (issue
-# #320). A boundary / singular direction (Inf SE) also prints NaN, not a misleading
-# z = 0, p = 1 (issue #323.2).
+# z / Pr(>|z|) are reported for EVERY coefficient with a finite standard error,
+# always ON THE WORKING SCALE shown in the block heading -- for dispersion that is
+# log σ, where a Wald test is symmetric and unbounded and therefore appropriate.
+#
+# CHANGED 2026-09-06, superseding the blanket suppression of issue #320. That rule
+# blanked z / p for every coefficient of :sigma/:resd/:recov/:phylocov because
+# log σ = 0 ⇔ σ = 1 is not a scientific null. The premise is true; withholding the
+# test is not the right response to it, and per-BLOCK application was inconsistent
+# twice over:
+#
+#   * the μ INTERCEPT null is equally arbitrary -- "the mean is 0 at x = 0" is as
+#     unit- and origin-dependent as "σ = 1" -- and was printed without comment.
+#     Suppressing one arbitrary null while printing another does not protect anyone.
+#   * a SLOPE on log σ is a log-RATIO of SDs: β = 0 means the groups vary equally.
+#     That is a real, unit-free null, and blanking it shipped the flagship
+#     location-scale demonstration with an untestable coefficient.
+#
+# gamlss, glmmTMB and brms all report these. The honest alternative to hiding a
+# test is to state its null, which `_block_null_note` does under each heading.
+#
+# The one suppression that REMAINS is #323.2: a boundary / singular direction
+# (non-finite SE) prints NaN, because there is genuinely no test -- not the
+# misleading z = est/Inf = 0, p = 1 that reads as a confident null.
 
 using Printf: @sprintf
 using Distributions: Normal, ccdf
@@ -57,21 +74,26 @@ _family_name(fam) = String(nameof(typeof(fam)))
 # Blocks whose zero-on-working-scale null is a MEANINGFUL hypothesis, so a Wald
 # z / two-sided p against 0 is interpretable. Location blocks (:mu/:mu1/:mu2) test
 # coefficient = 0; :rho12 tests atanh ρ12 = 0 ⇔ ρ12 = 0, a real "no correlation"
-# null. All other blocks live on a working scale where 0 is not the scientific
-# null (issue #320): :sigma/:sigma1/:sigma2 (log σ = 0 ⇔ σ = 1), :resd/:resid
-# (log σ_b = 0 ⇔ σ_b = 1, NOT the σ_b = 0 boundary), :recov/:phylocov (Cholesky
-# entries with no individual interpretable null). For those we suppress z / p.
-const _WALD_TESTABLE_BLOCKS = (:mu, :mu1, :mu2, :rho12)
-_block_wald_testable(p::Symbol) = p in _WALD_TESTABLE_BLOCKS
+# What the zero null MEANS on each block's working scale. Stated under the block
+# heading instead of withholding the test (see the 2026-09-06 note above).
+function _block_null_note(p::Symbol)
+    p in (:mu, :mu1, :mu2)          && return ("H0: coefficient = 0",)
+    p === :rho12                    && return ("H0: rho12 = 0 (atanh scale)",)
+    p in (:sigma, :sigma1, :sigma2) && return ("H0: coefficient = 0 on log σ",
+                                                "intercept ⇔ σ = 1 (unit-dependent); slope ⇔ equal dispersion")
+    p in (:resd, :resid)            && return ("H0: coefficient = 0 on log σ_b",
+                                                "NOT the σ_b = 0 boundary")
+    p in (:recov, :phylocov)        && return ("H0: Cholesky entry = 0 (no single interpretable null)",)
+    return ()
+end
 
 # Wald z and two-sided p for one coefficient, honouring two suppression rules:
-#   * blocks whose working-scale-zero null is meaningless (issue #320) get NaN;
 #   * a boundary / singular direction (Inf SE, issue #323.2) gets NaN — NOT the
 #     misleading z = est/Inf = 0, p = 2·Φ̄(0) = 1 that reads as a confident null.
 # NaN prints as "NaN" in both show and coeftable, flagging "not a hypothesis test"
 # / "unidentified direction" rather than a spurious decision.
 function _wald_zp(p::Symbol, est::Real, se::Real)
-    (_block_wald_testable(p) && isfinite(se)) || return (NaN, NaN)
+    isfinite(se) || return (NaN, NaN)
     z = est / se
     return (z, 2 * ccdf(Normal(), abs(z)))
 end
@@ -180,6 +202,31 @@ function Base.show(io::IO, ::MIME"text/plain", fit::DrmFit)
                 "   logLik = ", @sprintf("%.4f", fit.loglik),
                 "   converged = ", fit.converged)
 
+    # Residual SD on the RESPONSE scale + residual dof (issue #752). An R user
+    # looks for these first: lm() prints both and drmTMB prints sigma. The value
+    # is already computed (fit.scales[:sigma]); this only prints it.
+    #
+    # GATED TO Gaussian ON PURPOSE. The :sigma slot holds a SHAPE for Gamma and a
+    # DISPERSION for NB2, so a "Residual SD" label there would be simply wrong.
+    #
+    # With a MODELLED σ there is no single residual SD -- it varies by observation
+    # -- so the range is printed and labelled as varying rather than collapsing it
+    # to one number the reader would take as "the" residual SD.
+    if fit.family isa Gaussian && haskey(fit.scales, :sigma)
+        sg = fit.scales[:sigma]
+        if !isempty(sg) && all(isfinite, sg)
+            lo, hi = extrema(sg)
+            if hi - lo <= 1e-8 * max(one(hi), abs(hi))
+                println(io, "  Residual SD (response scale) = ", @sprintf("%.4f", first(sg)),
+                            "   dof_residual = ", dof_residual(fit))
+            else
+                println(io, "  Residual SD (response scale) varies with the σ model: ",
+                            @sprintf("%.4f", lo), " to ", @sprintf("%.4f", hi),
+                            "   dof_residual = ", dof_residual(fit))
+            end
+        end
+    end
+
     # Pre-format every cell so column widths fit the actual content.
     fmt(x) = isfinite(x) ? @sprintf("%.4f", x) : (isnan(x) ? "NaN" : (x > 0 ? "Inf" : "-Inf"))
     fmtp(x) = isfinite(x) ? @sprintf("%.4g", x) : "NaN"
@@ -188,6 +235,11 @@ function Base.show(io::IO, ::MIME"text/plain", fit::DrmFit)
     for ((p, r), (_, nms)) in zip(fit.blocks, fit.coefnames)
         println(io)
         println(io, _block_title(p), ":")
+        # One line per note, so nothing wraps in a 78-column code block (the book's
+        # width; requested by the stats-hours lane 2026-09-06).
+        for note in _block_null_note(p)
+            println(io, "  ", note)
+        end
         # Build the rows for this block.
         labels = String[]; c1 = String[]; c2 = String[]; c3 = String[]; c4 = String[]
         for (j, idx) in enumerate(r)

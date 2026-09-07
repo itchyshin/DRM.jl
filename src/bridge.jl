@@ -1483,6 +1483,7 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
         _bridge_coef_vector(fit; labels = labels, coef_labels = coef_labels)
     V = Matrix{Float64}(vcov(fit))
     _bridge_validate_coordinate_axes(fit.blocks, fit.coefnames, length(cvals), V)
+    fitted_vals, residual_vals = _bridge_fitted_marginal(fit)
     out = Dict{String,Any}(
         "family" => String(family),
         "coef_names" => cnames,
@@ -1511,8 +1512,11 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
         # NA everywhere and no bridge-side comparison of optimiser effort was
         # possible: a speed difference could be measured but never attributed.
         "iterations" => niterations(fit),
-        "fitted" => _bridge_plain(fitted(fit)),
-        "residuals" => _bridge_plain(residuals(fit)),
+        # `fitted()`/`residuals()` AS drmTMB DEFINES THEM. Identical to DRM.jl's
+        # own for every fit except a zero-inflated count fit -- see
+        # `_bridge_fitted_marginal`.
+        "fitted" => _bridge_plain(fitted_vals),
+        "residuals" => _bridge_plain(residual_vals),
         "sigma" => _bridge_plain(sigma(fit)),
         "corpairs" => _bridge_plain(corpairs(fit)),
         "dpars" => _bridge_dpars(fit),
@@ -2307,8 +2311,17 @@ The override below repairs that one family.
 
 Checked against drmTMB's full dpar table (`R/family-dpq.R`): every other family
 DRM.jl implements already agrees, including truncated NB2, whose `means[:mu]`
-is the **untruncated** mean and so is already the correct dpar. DRM.jl has no
-zi/hurdle families, the other place this trap lives.
+is the **untruncated** mean and so is already the correct dpar.
+
+The other place this trap lives is zero-inflation, and it lives here in the
+OPPOSITE direction. `zi ~ ...` is a MODIFIER rather than a family in DRM.jl
+(`Poisson()`/`NegBinomial2()` plus a `zi` formula part; `src/poisson.jl`,
+`src/negbinomial.jl`), so the sentence that stood here -- "DRM.jl has no
+zi/hurdle families" -- was false, and false in the direction that hides a bug.
+For a zero-inflated count fit `means[:mu]` holds the COUNT-COMPONENT mean
+`exp(Xmu*betahat)`, which is exactly the `mu` dpar drmTMB wants, so `out["mu"]`
+below needs no repair. What needs repair is the other half -- `fitted()` -- and
+that is done in [`_bridge_fitted_marginal`](@ref), not here.
 """
 function _bridge_dpars(fit::DrmFit)
     out = Dict{String,Vector{Float64}}()
@@ -2328,6 +2341,56 @@ function _bridge_dpars(fit::DrmFit)
     # as its own payload key (see `_bridge_trials`), not inside `dpars`.
     delete!(out, "trials")
     return out
+end
+
+"""
+    _bridge_fitted_marginal(fit) -> (fitted, residuals)
+
+`fitted()` and `residuals()` **as drmTMB defines them**, for the bridge payload
+only. Returns DRM.jl's own values unchanged for every fit except a
+zero-inflated count fit.
+
+DRM.jl's `fitted(fit)` is `means[:mu]`, and for a zero-inflated Poisson or NB2
+fit that slot deliberately holds the COUNT-COMPONENT mean `exp(Xmu*betahat)`,
+because `simulate`, `marginal_parameters` and [`_bridge_dpars`](@ref) all read
+the component mean from it. drmTMB's `fitted()` for `zi_poisson`/`zi_nbinom2`
+is the UNCONDITIONAL mean `(1 - pi) * mu`, and its `residuals()` is
+`y - fitted` (drmTMB `R/methods.R`, `drm_fitted_response`). So the same
+converged model reported two different means across the two engines, silently.
+
+Measured 2026-09-05 on drmTMB's own `tests/testthat/test-zi-nbinom2.R` fixture
+(`new_zi_nbinom2_data()`, n = 1800, seed 20260613,
+`bf(count ~ x + habitat, sigma ~ z, zi ~ w + habitat)`, `nbinom2()`; drmTMB
+0.7.0, DRM.jl at this pin): the two engines' coefficients agree to
+4.56745752330789e-13 and their logLik to 1.72803993336856e-11, yet native
+`fitted()[1:3]` was `1.313104216, 0.712847092, 2.252471245` against the
+bridge's `1.45376964, 1.21616037, 2.56362484` -- max absolute disagreement
+1.3665229755584 over the 1800 observations, a factor-of-`(1 - pi)` gap that no
+coefficient or likelihood check can see.
+
+Repaired HERE, on the bridge boundary, rather than in `means[:mu]`: DRM.jl's
+own `fitted`, `residuals`, `simulate`, `marginal_parameters` and dpar table
+keep the component mean they are built on, and only drmTMB's contract surface
+changes. Same shape as the `zero_one_beta` override in
+[`_bridge_dpars`](@ref).
+
+Selection is `haskey(fit.scales, :zi)`, which is true for exactly the two
+zero-inflated count fits (`src/poisson.jl` `_fit_poisson_zi` stores
+`scales[:zi]`; `src/negbinomial.jl` `_fit_negbin2_zi` stores `scales[:sigma]`
+and `scales[:zi]`). Hurdle fits store `scales[:hu]` instead and are
+deliberately NOT repaired here: drmTMB's hurdle mean divides by `1 - P(0)` as
+well as scaling, and that route carries no bridge parity receipt yet.
+"""
+function _bridge_fitted_marginal(fit::DrmFit)
+    fit_vals = fitted(fit)
+    fit_vals isa AbstractVector || return (fit_vals, residuals(fit))
+    (haskey(fit.scales, :zi) && haskey(fit.obs, :mu)) ||
+        return (fit_vals, residuals(fit))
+    pz = collect(float.(fit.scales[:zi]))
+    mu = collect(float.(fit_vals))
+    length(pz) == length(mu) || return (fit_vals, residuals(fit))
+    marginal = (1 .- pz) .* mu
+    return (marginal, collect(float.(fit.obs[:mu])) .- marginal)
 end
 
 """

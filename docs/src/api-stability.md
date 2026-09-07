@@ -26,6 +26,10 @@ their names, meanings, and conventions across the `0.7.x` line and beyond. The c
 **Experimental — exported, usable, exempt.** These work today and are tested, but their shape may
 change between releases, and each carries its reason:
 
+- **`r2_constant_sigma`** — the number is settled (it is the ordinary `lm()` R², and equals it
+  exactly on a constant-σ Gaussian fit), but the REFUSALS are the part a caller programs against,
+  and they may widen. In particular a *marginal* or *conditional* R² for random-effect fits
+  (Nakagawa & Schielzeth) would reshape this surface, and that decision has not been taken;
 - the **R bridge** (`drm_bridge`, `drm_bridge_inference`, `drm_listwise`) — the R↔Julia capability
   ledger holds `r_bridge_status = experimental`, and the bridge's shape follows that ledger;
 - the **cross-family surface** (`mf_*`, `associate_pairs`, `latent_normal`, `association`,
