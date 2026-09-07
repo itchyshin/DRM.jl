@@ -74,6 +74,28 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   with the dense oracle to 1e-06 relative -- the property, not the constant, so re-loosening the
   bar fails it (17 assertions and 1 error under #574's value).
 
+- **REML for the Gaussian mean-only phylogenetic cell (#624 item (c)).** `drm(bf(y ~ x +
+  phylo(1 | species), sigma ~ 1), Gaussian(); tree, method = :REML)` now FITS. It used to reach
+  the generic univariate REML gate and throw, even though the sparse location-only spine already
+  carried a validated restricted objective. The objective is the same Patterson–Thompson
+  restriction the `sd()` / Woodbury routes use, `nll_REML = nll_ML + 0.5·logdet(Xμ′V⁻¹Xμ) −
+  0.5·pμ·log(2π)`, evaluated by `_loconly_reml_components`; because β_μ is profiled out exactly
+  by GLS at every variance point, the restriction is exact rather than approximate. The
+  integrated-out set is {u_phylo, β_μ} with the same additive `+0.5·pμ·log(2π)` that drmTMB gets
+  from TMB's Laplace fold of `beta_mu` into `random=`, so the two engines' REML log-likelihoods
+  are on ONE convention with no offset to remove. `fit.estim_method` is `:REML`, `reml_loglik` /
+  `ml_loglik` are both populated, and the variance-component SEs use the restricted curvature.
+  Measured against native drmTMB REML on the drmTMB fixture (n = 90, 30 tips): logLik
+  −76.000977125105 vs −76.000977125761 (6.56e-10), coefficients to 3.71e-08, phylogenetic SD
+  0.480176374690 vs 0.480176234530. ML is untouched (same fixture logLik before and after:
+  −61.46784165162242). The widening is scoped to exactly the shape the sparse route serves:
+  `sigma ~ x`, `relmat` / `animal` / `spatial`, `algorithm = :em` and a phylo random slope all
+  still refuse (`test/test_reml_reml_phylo_mean.jl`). A REML fit also carries the
+  RESTRICTED objective in `fit.nll` and no `fit.nllgrad`: the route's analytic
+  score belongs to the ML marginal, and at the REML optimum it is (1.01, 0.99) on
+  the two variance parameters — reporting it would have read as "not converged"
+  for a converged fit, through drmTMB's `fit$bridge$gradient`. The ML path keeps
+  its analytic score unchanged.
 - **Profile and bootstrap intervals on a fixed-effect target of the RESIDUAL-ONLY bivariate
   Gaussian fit (drmTMB A8b).** `bf(mu1 = y1 ~ x, mu2 = y2 ~ x, sigma1 = ~ 1, sigma2 = ~ 1,
   rho12 = ~ 1)` with no structured term had no bootstrap route at all: `_bootstrap_fit_formula`

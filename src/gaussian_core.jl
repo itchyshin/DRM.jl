@@ -669,7 +669,27 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
             _re_kind(re[1][1])[1] === :intercept &&
             isempty(sigma_re) && structured === nothing && metav === nothing &&
             length(_collect_structured(rhs[:mu])) == 0
-        (ordinary_mean_intercept ||
+        # (c) #624 item (c): the Gaussian MEAN-ONLY `phylo(1 | species)` cell with an
+        # intercept-only `sigma`. Its objective is the SAME Patterson–Thompson
+        # restriction the sd()/Woodbury routes use — `nll_REML = nll_ML +
+        # 0.5·logdet(Xμ′V⁻¹Xμ) − 0.5·pμ·log(2π)` — evaluated on the sparse
+        # location-only spine (`_loconly_reml_components`, src/location_only.jl),
+        # where β_μ is profiled out EXACTLY by GLS so the restriction is exact, not
+        # an approximation. This admission is scoped to EXACTLY the shape the sparse
+        # route serves: one phylo structured mean intercept, no slope, no other
+        # random effect on either axis, no `meta_V()`, a constant residual scale, no
+        # missing responses, and an `algorithm` that reaches
+        # `_fit_structured_gaussian_sparse_lbfgs`. The DENSE structured fallback
+        # (`_fit_structured_gaussian`), the conjugate-EM variant (`algorithm = :em`)
+        # and `relmat` / `animal` / `spatial` have NO REML objective and stay refused
+        # — admitting them here would relabel an ML fit as REML, the one failure a
+        # user cannot detect. (`penalty` is already refused with `:REML` above.)
+        phylo_mean_only = structured !== nothing && structured[1] === :phylo &&
+            structured_slope === nothing && length(all_structured) == 1 &&
+            isempty(re) && isempty(sigma_re) && metav === nothing &&
+            size(Xσ, 2) == 1 && !has_missing_response &&
+            algorithm in (:auto, :sparse_lbfgs)
+        (ordinary_mean_intercept || phylo_mean_only ||
          (isempty(re) && isempty(sigma_re) && structured === nothing &&
           metav === nothing && length(_collect_structured(rhs[:mu])) == 0)) ||
             throw(ArgumentError("drm: method = :REML is not implemented for this model on the " *
@@ -845,7 +865,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                 gidx_phy = _phylo_mean_leaf_index(phy, getproperty(data, grp))
                 algorithm in (:auto, :sparse_lbfgs) && return _withformula(
                     _fit_structured_gaussian_sparse_lbfgs(fam, y, Xμ, Xσ, gidx_phy, phy.n_leaves, phy, nmμ, nmσ, grp, g_tol;
-                                                          penalty = penalty), f)
+                                                          penalty = penalty, reml = method === :REML), f)
                 # The conjugate-EM variant maximises a different surrogate; adding a
                 # prior to it is a separate derivation, not a wiring change.
                 penalty === nothing ||
