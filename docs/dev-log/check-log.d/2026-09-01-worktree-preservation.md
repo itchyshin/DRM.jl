@@ -1,0 +1,1 @@
+| 2026-09-01 | Worktree/stash preservation receipt | `git worktree list --porcelain`; `git worktree prune --dry-run`; `git stash list --date=iso` in DRM.jl and drmTMB | 11 DRM.jl and 1 drmTMB stale registrations recorded; 18 stashes and `drmTMB-rose-nit` explicitly preserved; no cleanup command executed | Ada / Shannon |
