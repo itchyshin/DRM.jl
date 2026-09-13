@@ -104,13 +104,14 @@ inside the badge: teal reaches 5.34:1 and indigo 4.40:1 against the navy.
 |---|---|
 | `docs/src/assets/drmjl-mark.svg` | editable master, 512 viewBox |
 | `docs/src/assets/drmjl-favicon.svg` | simplified sibling, 128 viewBox, fewer strokes |
-| `docs/src/assets/logo.png` | 256 px raster, navbar and hero |
-| `docs/src/assets/favicon.ico` | 16/32/48/64/128 |
+| `docs/src/assets/logo.png` | approved compact badge, navbar |
+| `docs/src/assets/drmjl-full-logo.png` | approved full badge, landing-page hero |
+| `docs/src/assets/favicon.ico` | approved compact badge, browser-tab icon |
 
 DocumenterVitepress wires the navbar itself: if `logo.png` exists it is copied
 to the published root and the config gets `logo: { src: '/logo.png', width: 24,
 height: 24 }`. There is nothing to add to `make.jl`. The hero references
-`/logo.png` from the front matter of `docs/src/index.md`.
+`/drmjl-full-logo.png` from the front matter of `docs/src/index.md`.
 
 The two SVGs are the source of truth. Regenerate the raster and the icon from
 them; do not hand-edit either.

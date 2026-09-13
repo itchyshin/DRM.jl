@@ -7,8 +7,8 @@ hero:
   text: "What varies besides the mean?"
   tagline: "A formula-first Julia twin of drmTMB: the mean, the scale, and boundary probabilities of a response each take their own formula, with random effects and sparse phylogenetic structure."
   image:
-    src: /logo.png
-    alt: "DRM.jl mark: two density curves sharing one mean, one narrow and one wide"
+    src: /drmjl-full-logo.png
+    alt: "DRM.jl hexagonal badge with four overlapping response curves"
   actions:
     - theme: brand
       text: Fit a location–scale model
