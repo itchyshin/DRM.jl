@@ -163,6 +163,10 @@ _shard_include("test_gamma.jl")
 # ported soft-clamp (identity in the band, smooth beyond) so DRM.jl agrees with
 # drmTMB instead of hard-clamping the mean/scale predictors.
 _shard_include("test_eta_clamp_parity.jl")
+# The other half of the same guard (#324 follow-up, Dinnage audit M2, D-268):
+# `sigma(fit)` must report the scale the likelihood scored, not the raw
+# `exp(Xσ θ̂)` — on NB2/Gamma/Beta, soft- and hard-guarded routes alike.
+_shard_include("test_report_clamped_sigma.jl")
 _shard_include("test_zi.jl")
 # The `zi`/`hu` count mixtures through the drm_bridge MARSHALLING boundary --
 # the route drmTMB's engine = "julia" crosses, and the one its banked
