@@ -113,7 +113,7 @@ end
     @testset "GATED to Gaussian: no Residual SD label on other families" begin
         # scales[:sigma] holds a shape for Gamma and a dispersion for NB2, so the
         # label would be wrong there. Absence is the assertion.
-        cnt = drm(bf(@formula(yc ~ x)), Poisson(); data = (yc = rand(0:5, n), x = x))
+        cnt = drm(bf(@formula(yc ~ x)), DRModels.Poisson(); data = (yc = rand(0:5, n), x = x))
         @test !occursin("Residual SD", sprint(show, MIME("text/plain"), cnt))
     end
 end
