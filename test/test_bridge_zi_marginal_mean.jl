@@ -74,7 +74,7 @@ _zim_bridge(formula, family) =
         for fam in ("nbinom2", "poisson")
             out = _zim_bridge(Dict("mu" => "y ~ x"), fam)
             fit = drm(bf(@formula(y ~ x)),
-                      fam == "nbinom2" ? NegBinomial2() : Poisson();
+                      fam == "nbinom2" ? NegBinomial2() : DRModels.Poisson();
                       data = _ZIM_DATA)
             @test isapprox(out["fitted"], fitted(fit); atol = 1e-10)
             @test isapprox(out["residuals"], residuals(fit); atol = 1e-10)
@@ -107,7 +107,7 @@ _zim_bridge(formula, family) =
     @testset "(f) the helper itself: selection is scales[:zi], and it is total" begin
         # A fit with no `:zi` scale returns DRModels.jl's own values unchanged --
         # the guard, not an accident of the families exercised above.
-        fit = drm(bf(@formula(y ~ x)), Poisson(); data = _ZIM_DATA)
+        fit = drm(bf(@formula(y ~ x)), DRModels.Poisson(); data = _ZIM_DATA)
         f, r = DRModels._bridge_fitted_marginal(fit)
         @test !haskey(fit.scales, :zi)
         @test f == fitted(fit)
