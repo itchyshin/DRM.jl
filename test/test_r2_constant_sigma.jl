@@ -66,7 +66,7 @@ using DRModels, Test, Random
         Random.seed!(11)
         n = 200; x = randn(n)
         yc = rand(0:5, n)
-        fit = drm(bf(@formula(yc ~ x)), Poisson(); data = (; yc, x))
+        fit = drm(bf(@formula(yc ~ x)), DRModels.Poisson(); data = (; yc, x))
         @test_throws ArgumentError r2_constant_sigma(fit)
     end
 
