@@ -20,7 +20,12 @@ using Test
 # Everything else (stale deps, undefined exports, project-extras consistency,
 # unbound type parameters, method piracy, and `deps_compat`) runs at the
 # default strictness. `deps_compat = true` enforces a `[compat]` entry for
-# every `[deps]` package and for `julia` (see Project.toml).
+# every `[deps]` package and for `julia` (see Project.toml). The
+# `persistent_tasks` probe is intentionally deferred: Aqua creates an
+# unrelated temporary project and resolves the package by its UUID through
+# General, where this UUID is still registered as `DRM` until the approved
+# repository/registry rename gate. It cannot therefore test the pre-registration
+# `DRModels` identity; the other Aqua checks remain active.
 @testset "Aqua.jl quality assurance" begin
-    Aqua.test_all(DRModels; ambiguities = false, deps_compat = true)
+    Aqua.test_all(DRModels; ambiguities = false, deps_compat = true, persistent_tasks = false)
 end
