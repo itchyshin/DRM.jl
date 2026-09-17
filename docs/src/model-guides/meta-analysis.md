@@ -1,7 +1,7 @@
 # Meta-analysis: known sampling variance, and the two correlations
 
 !!! note "Status — Stable (univariate `meta_V`), Stable (bivariate `V =`)"
-    Univariate meta-analysis via `meta_V(v)` has been in DRM.jl since the
+    Univariate meta-analysis via `meta_V(v)` has been in DRModels.jl since the
     Gaussian core. The **bivariate** known-sampling-covariance path — one known
     2×2 block per study — arrived with `meta_vcov_bivariate` and the `V =`
     keyword, and is parity-verified against drmTMB 0.7.0 (`tools/parity_biv_meta.R`).
@@ -105,7 +105,7 @@ drmTMB(bf(mu1 = y1 ~ x + meta_V(V = V), mu2 = y2 ~ x,
        family = c(gaussian(), gaussian()), data = dat)
 ```
 
-DRM.jl takes the object as a **fit-call keyword** instead:
+DRModels.jl takes the object as a **fit-call keyword** instead:
 
 ```julia
 drm(bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x), …),

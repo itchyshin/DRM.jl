@@ -2,7 +2,7 @@
 # logit μ_i = Xμ_iᵀβ + b_{g(i)}, b_g ~ N(0,σ_b²). No closed-form marginal — the
 # group effect is integrated out per group by 32-node Gauss–Hermite quadrature
 # (the same machinery as the Poisson/Beta σ-RE). Recovery: β + σ_b.
-using DRM
+using DRModels
 using Test, Random
 import Distributions
 

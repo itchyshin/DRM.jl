@@ -11,7 +11,7 @@ Poisson response family for counts: log link on the mean `μ` (so `μ` coefficie
 act on `log λ`). No scale parameter. Mirrors `drmTMB`'s `poisson` family.
 
 !!! note
-    `DRM.Poisson` shadows `Distributions.Poisson`; if you need the distribution
+    `DRModels.Poisson` shadows `Distributions.Poisson`; if you need the distribution
     too (e.g. to simulate), qualify it as `Distributions.Poisson`.
 
 ```julia
@@ -504,7 +504,7 @@ end
 # Unlike the verified large-p sparse-Laplace spine (`_fit_poisson_relmat_laplace`,
 # which freezes a precomputed precision Q and supplies a hand-derived O(p) gradient
 # for θ = [β; log σ_b] only), this path must differentiate the marginal w.r.t. ρ
-# as well. It does so the same way every other DRM.jl non-Gaussian family fit does
+# as well. It does so the same way every other DRModels.jl non-Gaussian family fit does
 # (Poisson/NB2/Gamma GHQ paths and the Gaussian coordinate-spatial path
 # `_fit_spatial_gaussian`): the marginal NLL is written in AD-traceable operations
 # and ForwardDiff supplies the EXACT gradient (and the Hessian for the covariance).

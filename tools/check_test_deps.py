@@ -84,7 +84,7 @@ def imports_in(path):
 
 
 def main():
-    allowed = declared_deps() | STDLIB | {"DRM"}
+    allowed = declared_deps() | STDLIB | {"DRModels"}
     problems = []
     checked = 0
     for name in included_files():
@@ -105,7 +105,7 @@ def main():
     for name, lineno, kind, pkg in problems:
         print("  test/%s:%d  %s %s" % (name, lineno, kind, pkg))
     print("\nFix by either removing the import (many packages are re-exported by "
-          "`using DRM` — `@formula` comes from there) or adding the package to "
+          "`using DRModels` — `@formula` comes from there) or adding the package to "
           "test/Project.toml [deps].")
     return 1
 

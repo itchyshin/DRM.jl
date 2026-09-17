@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Collect and verify a metadata-only census of DRM parity worktrees."""
+"""Collect and verify a metadata-only census of DRModels parity worktrees."""
 import argparse, copy, json, os, re, subprocess, sys, tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPOS = [Path("/Users/z3437171/Dropbox/Github Local/DRM.jl"),
+REPOS = [Path("/Users/z3437171/Dropbox/Github Local/DRModels.jl"),
          Path("/Users/z3437171/Dropbox/Github Local/drmTMB")]
-PINNED = {"DRM.jl": "f47789646f27221ba4fad29a8ba1b3b8a790b521", "drmTMB": "b35642b4560072cadba7e595e66e00209ebdeb40"}
+PINNED = {"DRModels.jl": "f47789646f27221ba4fad29a8ba1b3b8a790b521", "drmTMB": "b35642b4560072cadba7e595e66e00209ebdeb40"}
 SCHEMA = "drm-julia-r-parity/worktree-census/v2"
 
 def run(repo, *args):

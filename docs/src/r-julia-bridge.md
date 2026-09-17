@@ -1,7 +1,7 @@
 # R ↔ Julia bridge
 
 !!! note "Status — Experimental bridge + fixture-backed coefficient-scale gate (#370/#383/#385) + measured timing (#372/#389)"
-    DRM.jl exposes `drm_bridge()`, a marshalling-friendly entry point used by
+    DRModels.jl exposes `drm_bridge()`, a marshalling-friendly entry point used by
     the optional `drmTMB(formula, ..., engine = "julia")` backend for supported
     models. The companion R glue lives in the **drmTMB R repository** via
     [JuliaCall](https://github.com/JuliaInterop/JuliaCall); the default
@@ -57,12 +57,12 @@
 
 ## The idea
 
-Two ways to use DRM.jl from R, in increasing integration:
+Two ways to use DRModels.jl from R, in increasing integration:
 
 1. **Translate by hand** — rewrite the model in Julia using `drm` / `bf`. The
    [Rosetta](rosetta.md) phrasebook is the lookup table. Available today.
 2. **`engine = "julia"`** — keep writing ordinary `drmTMB(...)` R code; drmTMB
-   marshals the formula and data across JuliaCall, calls DRM.jl to fit, and
+   marshals the formula and data across JuliaCall, calls DRModels.jl to fit, and
    returns a result object shaped like a native drmTMB fit. Supported for
    Gaussian one-response and two-response models, the first Gaussian
    `phylo(1 | species)` mean bridge with constant `sigma`, location–scale–scale
@@ -88,7 +88,7 @@ them without changing their spelling. In direct Newick input, use single quotes
 around such labels and double an apostrophe inside a quoted label:
 
 ```@example quoted_tree_labels
-using DRM
+using DRModels
 named_tree = augmented_phy("('Mola mola':1,'O''Brien':1,A_B:1);")
 @assert named_tree.leaf_names == ["Mola mola", "O'Brien", "A_B"]
 named_tree.leaf_names
@@ -101,7 +101,7 @@ Direct Julia keeps the supplied Brownian branch-length scale and can represent
 unequal tip depths:
 
 ```@example polytomy_tree
-using DRM
+using DRModels
 phy = augmented_phy("((A:1,B:2,C:3):4,D:5,E:6);")
 @assert phy.n_leaves == 5 && phy.n_total == 7
 @assert phylo_tree_height(phy) == 7
@@ -172,11 +172,11 @@ checks, including new-data predictions. Native numerical parity remains open
 at the unchanged `4e-6` tolerance; these checks establish neither faster warm
 workflows nor the full native missing-data interface.
 
-## The DRM.jl-side contract
+## The DRModels.jl-side contract
 
-For the bridge to work, DRM.jl exposes a stable, marshalling-friendly surface:
+For the bridge to work, DRModels.jl exposes a stable, marshalling-friendly surface:
 
-- **Formula** — the R `bf(mu = y ~ x, sigma = ~ x, ...)` is mapped to DRM.jl's
+- **Formula** — the R `bf(mu = y ~ x, sigma = ~ x, ...)` is mapped to DRModels.jl's
   `bf(...)` (see the [Formula grammar](developer-notes/formula-grammar.md) and Rosetta pages for the exact
   spelling map);
 - **Data** — an R `data.frame` crosses as a column table (`NamedTuple` /
@@ -258,7 +258,7 @@ identity contract; it does not establish interval coverage or large-tree
 profile performance.
 
 ```@example bridge_coefficient_labels
-using DRM
+using DRModels
 x_labels = collect(range(-1.5, 1.5; length = 48))
 y_labels = 0.2 .+ 0.4 .* x_labels .- 0.1 .* x_labels.^2 .+
            0.15 .* sin.(collect(1:48))

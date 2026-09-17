@@ -4,7 +4,7 @@
 # overdispersed version). Two response forms: `cbind(successes, failures) ~ x`
 # (trials = successes + failures, exactly as drmTMB) or a plain 0/1 Bernoulli
 # vector. Fixed effects and a random intercept `(1 | g)` on the mean (logistic
-# GLMM). `Distributions.Binomial` is used qualified — DRM exports its own
+# GLMM). `Distributions.Binomial` is used qualified — DRModels exports its own
 # `Binomial` family.
 
 import Distributions
@@ -23,7 +23,7 @@ engine. A phylogenetic random intercept on the mean, `phylo(1 | species)`, also
 uses the sparse-Laplace engine.
 
 !!! note
-    `DRM.Binomial` shadows `Distributions.Binomial`; if you need the
+    `DRModels.Binomial` shadows `Distributions.Binomial`; if you need the
     distribution too (e.g. to simulate), qualify it as `Distributions.Binomial`.
 
 ```julia

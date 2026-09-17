@@ -2,7 +2,7 @@
 # rates, probabilities). Logit link on the mean μ; the `sigma` slot carries σ
 # with drmTMB's precision mapping φ = 1/σ² (so coef(:sigma) is log σ). The
 # likelihood is Beta(μφ, (1-μ)φ): mean μ, variance μ(1-μ)/(1+φ). Fixed effects,
-# ML. `Distributions.Beta` is used qualified — DRM exports its own `Beta` family.
+# ML. `Distributions.Beta` is used qualified — DRModels exports its own `Beta` family.
 
 import Distributions
 
@@ -20,7 +20,7 @@ user-supplied PD-covariance intercepts — `relmat(1 | id)` with `K = C`, the
 `animal(1 | id)` (`A = C`) and `spatial(1 | id)` (`K = C`) aliases.
 
 !!! note
-    `DRM.Beta` shadows `Distributions.Beta`; qualify the latter if you need it.
+    `DRModels.Beta` shadows `Distributions.Beta`; qualify the latter if you need it.
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), Beta(); data = dat)

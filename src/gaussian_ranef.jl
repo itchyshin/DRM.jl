@@ -22,7 +22,7 @@ const REML_NONPD_PENALTY = 1e8
 # two-free-SD phylogenetic random INTERCEPT+SLOPE from `phylo(1 + x | g)` on
 # Gaussian, Poisson and NegBinomial2 (all three as the SAME independent two-SD
 # model -- measured on drmTMB main 2026-09-05; it refuses the formula on Gamma).
-# DRM.jl implements only the Gaussian one (#620), because that route is the exact
+# DRModels.jl implements only the Gaussian one (#620), because that route is the exact
 # closed-form marginal and does not extend to a non-Gaussian likelihood; it has no
 # route at all for relmat/animal/spatial, so fail closed instead of silently
 # dropping the slope.
@@ -61,7 +61,7 @@ function _check_phylo_re_lhs(lhs, grp::Symbol; allow_slope::Bool = false)
                 "`corpars` is empty for `phylo(1 + x | g)` on Poisson; the estimated " *
                 "intercept–slope correlation (`has_phylo_mu_q2_covariance`, surfaced in " *
                 "`corpars`) belongs to the DIFFERENT tagged formula `phylo(1 + x | p | $grp)`. " *
-                "DRM.jl refuses the non-Gaussian families here because its route is the EXACT " *
+                "DRModels.jl refuses the non-Gaussian families here because its route is the EXACT " *
                 "closed-form Gaussian marginal, which does not extend to a non-Gaussian " *
                 "likelihood — not because the target would differ. On Gamma, drmTMB refuses " *
                 "this formula too (\"intercept-only in this q=1 route\"), so `engine = \"tmb\"` " *
@@ -172,7 +172,7 @@ function _re_kind(re_lhs)
     elseif re_lhs isa FunctionTerm && re_lhs.f === (+)
         consts = filter(t -> t isa ConstantTerm, re_lhs.args)
         vars = filter(t -> t isa Term, re_lhs.args)
-        length(vars) == 1 || error("DRM.jl supports `(1 | g)`, `(0 + x | g)`, `(1 + x | g)`")
+        length(vars) == 1 || error("DRModels.jl supports `(1 | g)`, `(0 + x | g)`, `(1 + x | g)`")
         v = vars[1].sym
         any(c -> c.n == 0, consts) && return (:slope, v)      # 0 + x  → slope only
         any(c -> c.n == 1, consts) && return (:corr, v)       # 1 + x  → correlated intercept+slope

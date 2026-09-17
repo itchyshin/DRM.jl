@@ -2,7 +2,7 @@
 #
 # The public R glue lives in the drmTMB repository. This file keeps the Julia
 # side deliberately boring for JuliaCall: strings, column tables, plain arrays,
-# and dictionaries cross the boundary; DRM.jl objects stay on the Julia side.
+# and dictionaries cross the boundary; DRModels.jl objects stay on the Julia side.
 
 import StatsModels
 using Printf: @sprintf
@@ -21,7 +21,7 @@ const _BRIDGE_TREE_CACHE_MAX = 4
                A = nothing, coords = nothing, newdata = nothing,
                options = Dict())
 
-Fit a DRM.jl model through a marshalling-friendly boundary for R callers.
+Fit a DRModels.jl model through a marshalling-friendly boundary for R callers.
 `formula` may be a semicolon-separated string such as
 `"y ~ x; sigma ~ x"` or a dictionary / named tuple whose values are formula
 strings. `family` is a string such as `"gaussian"`, `"student"`, `"nbinom2"`,
@@ -70,7 +70,7 @@ The bivariate q=4 phylogenetic REML counterpart to [`reml_objective_at`](@ref)
 (#575) reached through the SAME marshalling-friendly boundary [`drm_bridge`](@ref)
 uses — one SUPPORTED entry point for the drmTMB R shim
 (`drm_julia_reml_objective_at()`, `R/julia-bridge.R`), replacing its previous
-dependency on five private DRM.jl names (`_bridge_data`, `_bridge_formula`,
+dependency on five private DRModels.jl names (`_bridge_data`, `_bridge_formula`,
 `_bivariate_q4_marker`, `_design`, `_phylo_species_index`) reached by qualified
 name. `formula`, `family`, `data`, `tree`, `options` are exactly the payload
 `drm_bridge` takes for a bivariate q=4 phylogenetic model (a formula with
@@ -86,13 +86,13 @@ for the profiled-out fixed effects — `reml_objective_at` reprofiles them at
 `phi` regardless of the warm start supplied), `Lambda` is the 4×4 symmetric
 among-axis covariance matrix (axis order mu1, mu2, sigma1, sigma2), and
 `rho12` is the residual correlation. Internally: `Lambda`/`rho12` are packed
-into DRM.jl's own `phi = (beta_rho, lc)` via `pack_phi` and
+into DRModels.jl's own `phi = (beta_rho, lc)` via `pack_phi` and
 [`reml_objective_at`](@ref) evaluates the q=4 REML objective there.
 
 Returns a `Dict{String,Any}` with `"objective"` and `"reml_loglik"` (the
 normalised Patterson–Thompson restricted log-likelihood `reml_objective_at`
 reports — the two keys carry the same value; `"objective"` is the
-route-agnostic name, `"reml_loglik"` names the DRM.jl convention explicitly),
+route-agnostic name, `"reml_loglik"` names the DRModels.jl convention explicitly),
 `"raw_reml_ll"` (the pre-normalisation value), `"converged_inner"` (the inner
 conditional-Newton alternation's own convergence flag — a barrier hit
 surfaces as `-Inf`/`false` rather than an error), and `"contract" =>
@@ -287,8 +287,8 @@ must preserve the fitted parameter block exactly.
 
 Pass `parm = "fixef:<dpar>:<coef>"` (e.g. `"fixef:mu:x"`) to instead profile
 or bootstrap a single ordinary fixed-effect coefficient, on its link scale —
-the same primitive `DRM.profile_result` / `DRM.bootstrap_result` calls the R
-bridge previously had to reach by calling DRM.jl's underscore-prefixed
+the same primitive `DRModels.profile_result` / `DRModels.bootstrap_result` calls the R
+bridge previously had to reach by calling DRModels.jl's underscore-prefixed
 marshalling internals directly (see #475); this kwarg is the supported route
 that replaces that qualified-internal call. Returns the same payload shape
 either way. For an explicit structured fixed-effect target, the supplied
@@ -342,7 +342,7 @@ function drm_bridge_inference(; formula, family::AbstractString, data,
             _bridge_pick_sd_row(result.ci, target.param)
         outcome = _bridge_profile_outcome(result, row)
         target !== nothing && target.kind === :fixef && (row = merge(row, (coef = target.coef,)))
-        # DRM.jl#631: `profile_failed` means the endpoint search could not certify a
+        # DRModels.jl#631: `profile_failed` means the endpoint search could not certify a
         # root, and the row carries the ±Inf placeholder for the failed arm. R reads
         # this payload straight into `confint()`'s `lower`/`upper` columns, where an
         # infinite bound is indistinguishable from a real confidence limit (the
@@ -634,7 +634,7 @@ function _bridge_family(family::AbstractString)
     fam == "gamma" && return Gamma()
     fam == "lognormal" && return LogNormal()
     # drmTMB's `biv_lognormal()`. Bivariate-ness is a property of the FORMULA in
-    # DRM.jl (a `BivariateDrmFormula`), not of the family type — exactly as
+    # DRModels.jl (a `BivariateDrmFormula`), not of the family type — exactly as
     # `biv_gaussian` maps to `Gaussian()` above.
     fam in ("biv_lognormal", "lognormal_bivariate", "bivariate_lognormal") && return LogNormal()
     fam in ("zero_one_beta", "zeroonebeta") && return ZeroOneBeta()
@@ -1512,7 +1512,7 @@ function _bridge_flatten(fit; family::AbstractString, newdata = nothing,
         # NA everywhere and no bridge-side comparison of optimiser effort was
         # possible: a speed difference could be measured but never attributed.
         "iterations" => niterations(fit),
-        # `fitted()`/`residuals()` AS drmTMB DEFINES THEM. Identical to DRM.jl's
+        # `fitted()`/`residuals()` AS drmTMB DEFINES THEM. Identical to DRModels.jl's
         # own for every fit except a zero-inflated count fit -- see
         # `_bridge_fitted_marginal`.
         "fitted" => _bridge_plain(fitted_vals),
@@ -1620,7 +1620,7 @@ function _bridge_coef_vector(fit; labels::Union{Nothing,_BridgeFormulaLabels} = 
             error("drm_bridge: echoed coef_labels public names are not unique")
         # The echo is positional: it pastes R's names onto whatever columns
         # this fit built. Before trusting it, compare every regression block
-        # DRM.jl can render itself against the supplied spelling, so a design
+        # DRModels.jl can render itself against the supplied spelling, so a design
         # that disagrees (factor level order, contrasts, term order) is
         # refused BY NAME rather than reported silently under R's names.
         labels === nothing ||
@@ -1664,9 +1664,9 @@ end
 # against the block's coefficient count, same fail-closed behaviour on a
 # mismatch. Any other non-String, non-vector-of-String value (e.g. an `Int`)
 # fails closed rather than being coerced (#563 follow-up to #594).
-# Name the construct behind the commonest count mismatch (DRM.jl #467/#609).
+# Name the construct behind the commonest count mismatch (DRModels.jl #467/#609).
 # R's `model.matrix()` gives every DECLARED factor level a column, including
-# an all-zero one for a level no row uses; DRM.jl codes only the levels it
+# an all-zero one for a level no row uses; DRModels.jl codes only the levels it
 # OBSERVES. R then supplies more names than this fit has columns, and the bare
 # count message names neither the column nor the fix. Measured through drmTMB
 # on 2026-09-05: `y ~ gempty` with `levels = c("a", "b", "c", "zz")` produced
@@ -1679,9 +1679,9 @@ function _bridge_count_mismatch_hint(n_supplied::Integer, n_actual::Integer,
     coded = [name for name in block if occursin(": ", name)]
     isempty(coded) && return ""
     return ". Supplying MORE names than this fit has columns usually means a factor " *
-        "level with no rows in the data reaching DRM.jl: R's `model.matrix()` gives " *
-        "such a level an all-zero column, DRM.jl codes only the levels it observes. " *
-        "The coded columns DRM.jl built here are $(coded). Drop the unused levels " *
+        "level with no rows in the data reaching DRModels.jl: R's `model.matrix()` gives " *
+        "such a level an all-zero column, DRModels.jl codes only the levels it observes. " *
+        "The coded columns DRModels.jl built here are $(coded). Drop the unused levels " *
         "before fitting (`droplevels()` in R), or fit with `engine = \"tmb\"`"
 end
 
@@ -1792,17 +1792,17 @@ end
 
 # Fidelity check for an R-supplied `options["coef_labels"]` echo. The echo
 # itself is positional — `_bridge_echo_coef_labels` only counts columns — so
-# on its own it will happily print R's names over a design DRM.jl built
+# on its own it will happily print R's names over a design DRModels.jl built
 # differently: a factor whose levels reached Julia in another order (a
 # different baseline), an ordered factor R codes with `contr.poly`, a user
 # `contr.sum`, or a term order the two engines disagree on. Every one of
 # those has the SAME column count on both sides, so the count check passes
 # and the coefficients are silently wrong under the right names (measured
 # through drmTMB on 2026-09-04: an ordered factor differed by 1.25 in the
-# baseline coefficient, name-identical). Here every regression block DRM.jl
+# baseline coefficient, name-identical). Here every regression block DRModels.jl
 # can render itself (`_bridge_rendered_regression_blocks`) must render to
 # exactly the supplied base-R names, in order; otherwise refuse, naming the
-# dpar and BOTH spellings. Blocks DRM.jl cannot render (`vouched == false`)
+# dpar and BOTH spellings. Blocks DRModels.jl cannot render (`vouched == false`)
 # and blocks with no formula counterpart (`phylocov`, `resd`, `sd`) are not
 # compared — the R side names those itself and there is nothing on this side
 # to compare them to.
@@ -1819,12 +1819,12 @@ function _bridge_check_coef_labels_fidelity(fit, labels::_BridgeFormulaLabels,
         prefix = "$(param)_"
         supplied = String[name[nextind(name, firstindex(name), length(prefix)):end] for name in echoed[range]]
         supplied == public || error(
-            "drm_bridge: coef_labels[\"$param\"] does not match the design DRM.jl built for `$param`: " *
-            "R supplied $(supplied) but DRM.jl renders $(public) from its own model matrix " *
+            "drm_bridge: coef_labels[\"$param\"] does not match the design DRModels.jl built for `$param`: " *
+            "R supplied $(supplied) but DRModels.jl renders $(public) from its own model matrix " *
             "(Julia raw columns: $(raw)). The two engines disagree on the design columns — " *
             "usually a factor whose level order or contrasts differ between the R data and " *
-            "what reached Julia (DRM.jl codes every factor with treatment contrasts against " *
-            "its first level, in the level order it received). Refusing to report DRM.jl's " *
+            "what reached Julia (DRModels.jl codes every factor with treatment contrasts against " *
+            "its first level, in the level order it received). Refusing to report DRModels.jl's " *
             "coefficients under R's names. Give the column an explicit, treatment-coded " *
             "level order in R before fitting (`factor(x, levels = c(...))`, not an ordered " *
             "factor or a `contrasts` attribute), or use `engine = \"tmb\"`.")
@@ -1840,7 +1840,7 @@ end
 # design this side actually built, and the fidelity check that closes that
 # hole for `mu`/`sigma` said nothing about them.
 #
-# Measured 2026-09-05, drmTMB origin/main 2fcbb0fbf against DRM.jl aee371cc9,
+# Measured 2026-09-05, drmTMB origin/main 2fcbb0fbf against DRModels.jl aee371cc9,
 # before this function existed: `bf(y ~ x + (1 | study), sigma ~ z,
 # sd(study) ~ s_chr)`, where `s_chr` is a character column whose R
 # locale-collated level order ("alpha", "Beta", "gamma") is not the
@@ -1890,14 +1890,14 @@ function _bridge_check_lss_coef_labels_fidelity(fit, labels::_BridgeFormulaLabel
         end
         aligned || continue
         supplied == public || error(
-            "drm_bridge: coef_labels[\"$block\"] does not match the design DRM.jl built " *
-            "for the `$key` formula: R supplied $(supplied) but DRM.jl renders $(public) " *
+            "drm_bridge: coef_labels[\"$block\"] does not match the design DRModels.jl built " *
+            "for the `$key` formula: R supplied $(supplied) but DRModels.jl renders $(public) " *
             "from its own model matrix (Julia raw columns: $(raw)). The two engines " *
             "disagree on the design columns of a group-level SD formula -- usually a " *
             "factor or character column whose level order differs between the R data and " *
-            "what reached Julia (DRM.jl codes every factor with treatment contrasts " *
+            "what reached Julia (DRModels.jl codes every factor with treatment contrasts " *
             "against its first level, in the level order it received). Refusing to report " *
-            "DRM.jl's coefficients under R's names. Give the column an explicit, " *
+            "DRModels.jl's coefficients under R's names. Give the column an explicit, " *
             "treatment-coded level order in R before fitting (`factor(x, levels = c(...))`), " *
             "or use `engine = \"tmb\"`.")
     end
@@ -2304,19 +2304,19 @@ through `predict_parameters(fit, newdata)`, which is a separate payload.
 **A dpar is not `fitted()`.** For a mixture family the two differ, and feeding
 the wrong one produces a wrong density *silently* because both are in range.
 drmTMB's `mu` dpar for `zero_one_beta` is the **interior beta component** mean
-`plogis(eta_mu)`, which it feeds to `drm_beta_shapes(mu, sigma)`; DRM.jl stores
+`plogis(eta_mu)`, which it feeds to `drm_beta_shapes(mu, sigma)`; DRModels.jl stores
 that as `beta_mu` and puts the *unconditional* mean
 `(1 - zoi) * mu + zoi * coi` — the right answer for `fitted()` — in `means[:mu]`.
 The override below repairs that one family.
 
 Checked against drmTMB's full dpar table (`R/family-dpq.R`): every other family
-DRM.jl implements already agrees, including truncated NB2, whose `means[:mu]`
+DRModels.jl implements already agrees, including truncated NB2, whose `means[:mu]`
 is the **untruncated** mean and so is already the correct dpar.
 
 The other place this trap lives is zero-inflation, and it lives here in the
-OPPOSITE direction. `zi ~ ...` is a MODIFIER rather than a family in DRM.jl
+OPPOSITE direction. `zi ~ ...` is a MODIFIER rather than a family in DRModels.jl
 (`Poisson()`/`NegBinomial2()` plus a `zi` formula part; `src/poisson.jl`,
-`src/negbinomial.jl`), so the sentence that stood here -- "DRM.jl has no
+`src/negbinomial.jl`), so the sentence that stood here -- "DRModels.jl has no
 zi/hurdle families" -- was false, and false in the direction that hides a bug.
 For a zero-inflated count fit `means[:mu]` holds the COUNT-COMPONENT mean
 `exp(Xmu*betahat)`, which is exactly the `mu` dpar drmTMB wants, so `out["mu"]`
@@ -2347,10 +2347,10 @@ end
     _bridge_fitted_marginal(fit) -> (fitted, residuals)
 
 `fitted()` and `residuals()` **as drmTMB defines them**, for the bridge payload
-only. Returns DRM.jl's own values unchanged for every fit except a
+only. Returns DRModels.jl's own values unchanged for every fit except a
 zero-inflated count fit.
 
-DRM.jl's `fitted(fit)` is `means[:mu]`, and for a zero-inflated Poisson or NB2
+DRModels.jl's `fitted(fit)` is `means[:mu]`, and for a zero-inflated Poisson or NB2
 fit that slot deliberately holds the COUNT-COMPONENT mean `exp(Xmu*betahat)`,
 because `simulate`, `marginal_parameters` and [`_bridge_dpars`](@ref) all read
 the component mean from it. drmTMB's `fitted()` for `zi_poisson`/`zi_nbinom2`
@@ -2361,14 +2361,14 @@ converged model reported two different means across the two engines, silently.
 Measured 2026-09-05 on drmTMB's own `tests/testthat/test-zi-nbinom2.R` fixture
 (`new_zi_nbinom2_data()`, n = 1800, seed 20260613,
 `bf(count ~ x + habitat, sigma ~ z, zi ~ w + habitat)`, `nbinom2()`; drmTMB
-0.7.0, DRM.jl at this pin): the two engines' coefficients agree to
+0.7.0, DRModels.jl at this pin): the two engines' coefficients agree to
 4.56745752330789e-13 and their logLik to 1.72803993336856e-11, yet native
 `fitted()[1:3]` was `1.313104216, 0.712847092, 2.252471245` against the
 bridge's `1.45376964, 1.21616037, 2.56362484` -- max absolute disagreement
 1.3665229755584 over the 1800 observations, a factor-of-`(1 - pi)` gap that no
 coefficient or likelihood check can see.
 
-Repaired HERE, on the bridge boundary, rather than in `means[:mu]`: DRM.jl's
+Repaired HERE, on the bridge boundary, rather than in `means[:mu]`: DRModels.jl's
 own `fitted`, `residuals`, `simulate`, `marginal_parameters` and dpar table
 keep the component mean they are built on, and only drmTMB's contract surface
 changes. Same shape as the `zero_one_beta` override in
@@ -2770,7 +2770,7 @@ function _bridge_q4_direct_export_status()
             bridge_status = "experimental",
             inference_status = "point_target_only",
             claim_boundary = "Direct q4 export is a status contract for point SD targets only; no R-via-Julia q4 bridge parity, q4 REML, AI-REML, interval reliability, or interval coverage is promoted.",
-            next_gate = "Compare same-target native R/TMB, direct DRM.jl, and R-via-Julia q4 point outputs before bridge parity.",
+            next_gate = "Compare same-target native R/TMB, direct DRModels.jl, and R-via-Julia q4 point outputs before bridge parity.",
         )
         for axis in _BRIDGE_Q4_DIRECT_AXES
     )
@@ -2888,7 +2888,7 @@ function _bridge_inference_flatten(row; method::AbstractString,
         failed::Integer, elapsed::Real, threaded::Bool,
         worker_threads::Integer, julia_threads::Integer,
         blas_threads::Integer, message::AbstractString)
-    # DRM.jl#631 backstop: a failed-status row must never carry a bound at all.
+    # DRModels.jl#631 backstop: a failed-status row must never carry a bound at all.
     # The profile branch above raises before reaching here; this catches any
     # future status that pairs an infinite endpoint with a non-"profile" status.
     (status == "profile_failed" && !(isfinite(row.lower) && isfinite(row.upper))) &&

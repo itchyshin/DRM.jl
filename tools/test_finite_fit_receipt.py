@@ -5,7 +5,7 @@ p=ROOT/'docs/dev-log/evidence/julia-r-parity/finite-state/finite-fit-002.toml'
 b=tomllib.loads(p.read_text());check(b)
 damages={
  'tolerance':lambda r:r.update(tolerance=1e-3),
- 'source':lambda r:r['source_before'].update({'src/DRM.jl':'bad'}),
+ 'source':lambda r:r['source_before'].update({'src/DRModels.jl':'bad'}),
  'runtime':lambda r:r['runtime'].update(julia_threads=2),
  'denominator':lambda r:r['cases'].pop('ordinal'),
  'false_pass':lambda r:r['cases']['categorical'].update(parity_pass=True),

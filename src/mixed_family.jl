@@ -159,7 +159,7 @@ Fit the cross-family bivariate model (shared per-observation latent) and return 
 `iterations`, and the two family instances `fam1`/`fam2` (carried so the post-fit
 accessors in `mixed_family_postfit.jl` can recover each axis's inverse link).
 
-`fam1`/`fam2` are DRM family instances. Supported: `Gaussian`, `Poisson`,
+`fam1`/`fam2` are DRModels family instances. Supported: `Gaussian`, `Poisson`,
 `Binomial`, `NegBinomial2`, `Beta`, `Gamma`. Dispersion-carrying families
 (Gaussian/Beta/Gamma/NB2) all carry the scale `σ` in a per-observation `log σ`
 SUB-MODEL `log σ_{k,i} = (Xσ_k · β_σk)_i` with `size(Xσ_k, 2)` coefficients;
@@ -392,7 +392,7 @@ end
 #
 # WHY THIS EXISTS. `fit_mixed_family` takes RAW DESIGN MATRICES
 # (`y1, X1, fam1, y2, X2, fam2, …`) and is not exported, so cross-family is the
-# only fit in DRM.jl a user reaches by hand-building matrices — every other route
+# only fit in DRModels.jl a user reaches by hand-building matrices — every other route
 # is `drm(bf(...), Family(); data = …)`. drmTMB spells the same model with its
 # ordinary formula bundle and `family = c(gaussian(), poisson())`. That gap is
 # the "mixed-family API mismatch" the `cross_family_latent` capability row names

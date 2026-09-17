@@ -45,7 +45,7 @@
 #       "/Users/z3437171/Dropbox/Github Local/drm-julia-poc/julia/drm_q4/reml_q4.jl"
 
 using LinearAlgebra, SparseArrays, ForwardDiff, Statistics, Printf, Optim, Random
-# Additive include into the DRM module: the q=4 engine symbols (AugProblem,
+# Additive include into the DRModels module: the q=4 engine symbols (AugProblem,
 # lc_to_Λ, Λ_to_lc, prior_precision, estep_mode, laplace_ll, leaf_etas,
 # leaf_hess, leaf_nll, RHO_GUARD, fit_q4_sparse_tmb, pack_theta) are already in
 # module scope via fit_q4_sparse_tmb.jl's include chain — no self-include here.
@@ -626,8 +626,8 @@ end
     _reml_normalise(reml_ll, n_beta)
 
 Add the `(n_beta/2)·log(2π)` normalising constant to an unnormalised
-Patterson–Thompson restricted log-likelihood, so DRM.jl's bivariate REML routes
-report on the same scale as lme4, glmmTMB, TMB — and as DRM.jl's own univariate
+Patterson–Thompson restricted log-likelihood, so DRModels.jl's bivariate REML routes
+report on the same scale as lme4, glmmTMB, TMB — and as DRModels.jl's own univariate
 REML routes, which have always added it (#477).
 
 `n_beta` counts only the **marginalised** fixed effects. Non-finite input passes
@@ -648,9 +648,9 @@ internally (`reml_ll_and_mode`), rather than re-running the outer LBFGS.
 
 This is the diagnostic primitive behind cross-engine mode-finder-vs-
 objective-translation checks (#575): given another engine's fitted point
-(mapped into DRM.jl's `phi`/`beta` scale — see `pack_phi`, `Λ_to_lc`), call
-this to ask "is DRM.jl's OWN objective, evaluated AT that point, better or
-worse than what DRM.jl's own solver returned?" without hand-writing the
+(mapped into DRModels.jl's `phi`/`beta` scale — see `pack_phi`, `Λ_to_lc`), call
+this to ask "is DRModels.jl's OWN objective, evaluated AT that point, better or
+worse than what DRModels.jl's own solver returned?" without hand-writing the
 inner E-step/Newton alternation each time.
 
 `beta0`/`u0` seed the conditional-Newton warm start (pass the other engine's
@@ -712,7 +712,7 @@ dimension; `beta_rho` is never marginalised, so it does not count). That matches
 lme4, glmmTMB and TMB, so `reml_loglik` is directly comparable across engines.
 
 **Changed 2026-08-25 (#477).** It previously reported the unnormalised form,
-while DRM.jl's own univariate REML routes — `_fit_fixed_gaussian_reml`
+while DRModels.jl's own univariate REML routes — `_fit_fixed_gaussian_reml`
 (`gaussian_core.jl`), the Gaussian mean `(1 | g)` route (`gaussian_ranef.jl`)
 and `location_only.jl` — already added the constant. So one package reported two
 different scales under one name, and `reml_loglik(fit)` meant different things
@@ -1003,7 +1003,7 @@ function fit_q4_reml(prob::AugProblem, Q_cond::SparseMatrixCSC;
 
     # #477: report the NORMALISED Patterson-Thompson restricted log-likelihood.
     # `rhat` is the unnormalised form; lme4, glmmTMB and TMB all add
-    # `(n_beta/2)*log(2pi)`, and so do DRM.jl's OWN univariate REML routes
+    # `(n_beta/2)*log(2pi)`, and so do DRModels.jl's OWN univariate REML routes
     # (`gaussian_core.jl`, `gaussian_ranef.jl`, `location_only.jl`). Reporting
     # both conventions inside one package made `reml_loglik(fit)` mean different
     # things depending on which route produced the fit. `n_beta` is the combined

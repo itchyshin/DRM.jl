@@ -38,7 +38,7 @@ def check(r):
     require(r.get('source_before')==source and r.get('source_after')==source and r.get('source_unchanged') is True,'current source')
     runtime=r.get('runtime',{})
     require(runtime.get('julia_threads')==1 and runtime.get('blas_threads')==1 and runtime.get('julia_version')=='1.10.0','runtime')
-    require(Path(runtime.get('loaded_source','')).resolve()==(ROOT/'src/DRM.jl').resolve(),'loaded source')
+    require(Path(runtime.get('loaded_source','')).resolve()==(ROOT/'src/DRModels.jl').resolve(),'loaded source')
     require(type(r.get('seconds')) in (int,float) and math.isfinite(r['seconds']) and r['seconds']>0,'elapsed')
     require(set(r.get('cases',{}))=={'ordinal','categorical'},'case denominator')
     verdict={}

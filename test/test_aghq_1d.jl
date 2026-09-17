@@ -7,13 +7,13 @@
 #
 # Default `marginal = :LA` stays today's GHQ-32. Capability row stays missing.
 
-using DRM
+using DRModels
 using Test
 using Random
 using LinearAlgebra
 import Distributions
 
-const DA = DRM
+const DA = DRModels
 
 # ── S1 / S2 kernel ───────────────────────────────────────────────────────────
 

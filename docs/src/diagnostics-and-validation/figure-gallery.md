@@ -2,7 +2,7 @@
 
 !!! note "Status — Stable"
     Mirrors drmTMB's [Figure gallery](https://itchyshin.github.io/drmTMB/articles/figure-gallery.html).
-    **In DRM.jl today:** publication-quality [CairoMakie](https://docs.makie.org/)
+    **In DRModels.jl today:** publication-quality [CairoMakie](https://docs.makie.org/)
     figures rendered straight from fitted models, including the **Confidence Eye**
     (Florence's house contract for interval plots).
 
@@ -10,7 +10,7 @@ Every figure below is rendered at build time from a real `drm` fit — nothing i
 mocked.
 
 ```@example gallery
-using DRM, CairoMakie, Random
+using DRModels, CairoMakie, Random
 CairoMakie.activate!(type = "png")   # render-proof raster output
 nothing # hide
 ```
@@ -44,7 +44,7 @@ fig
 
 ## The Confidence Eye
 
-DRM.jl draws confidence intervals as **Confidence Eyes** — Florence's house
+DRModels.jl draws confidence intervals as **Confidence Eyes** — Florence's house
 contract: a **pale compatibility region** (the interval), a **darker outline**,
 and a **hollow point estimate**. The lens is widest at the estimate and tapers to
 the interval limits, so the eye literally narrows as the evidence sharpens.

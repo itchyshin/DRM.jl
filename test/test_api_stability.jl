@@ -2,7 +2,7 @@
 # docs/dev-log/plans/2026-08-28-v1.0-roadmap.md; decisions D-180).
 #
 # Every exported name is classified into exactly one of three tiers, and the
-# union must EQUAL `names(DRM)` — so a new export cannot appear without being
+# union must EQUAL `names(DRModels)` — so a new export cannot appear without being
 # classified, a stable name cannot vanish or be renamed without failing this
 # test loudly, and a tier change is a reviewed edit here, never drift.
 #
@@ -19,7 +19,7 @@
 #                   utilities). Exempt like Base internals: stable in practice,
 #                   not promised.
 
-using DRM
+using DRModels
 using Test
 
 const API_STABLE = [
@@ -106,8 +106,8 @@ const API_ENGINE = [
 ]
 
 @testset "API freeze gate (v0.7 line)" begin
-    exported = Set(string.(names(DRM)))
-    classified = vcat(API_STABLE, API_EXPERIMENTAL, API_ENGINE, ["DRM"])
+    exported = Set(string.(names(DRModels)))
+    classified = vcat(API_STABLE, API_EXPERIMENTAL, API_ENGINE, ["DRModels"])
 
     @testset "no name is classified twice" begin
         @test length(classified) == length(Set(classified))
@@ -130,8 +130,8 @@ const API_ENGINE = [
     @testset "every STABLE name is exported and defined" begin
         for nm in API_STABLE
             sym = Symbol(nm)
-            @test sym in names(DRM)
-            @test isdefined(DRM, sym)
+            @test sym in names(DRModels)
+            @test isdefined(DRModels, sym)
         end
     end
 
@@ -142,6 +142,6 @@ const API_ENGINE = [
         @test "sigma" in API_STABLE
         @test "rho12" in API_STABLE
         @test "meta_V" in API_STABLE
-        @test !any(n -> occursin("meta_known", n), string.(names(DRM)))
+        @test !any(n -> occursin("meta_known", n), string.(names(DRModels)))
     end
 end

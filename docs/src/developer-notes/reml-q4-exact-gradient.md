@@ -197,7 +197,7 @@ by `fit_q4_reml`'s `fg!`). Both take the augmented problem, the root-conditioned
 tree precision `Q_cond`, and the outer parameter vector `φ = (β_ρ, lc)`.
 
 ```@docs
-DRM.reml_nll_exact
-DRM.reml_nll_and_exact_grad
+DRModels.reml_nll_exact
+DRModels.reml_nll_and_exact_grad
 reml_objective_at
 ```

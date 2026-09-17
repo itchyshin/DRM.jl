@@ -53,7 +53,7 @@ REML or AI-REML claim.
 - REML and AI-REML wording here is exact-Gaussian only.
 - q4 Patterson-Thompson REML is not HSquared AI-REML.
 - Non-Gaussian Laplace routes keep their own method names.
-- R bridge support needs row-specific native R, direct DRM.jl, and R-via-Julia
+- R bridge support needs row-specific native R, direct DRModels.jl, and R-via-Julia
   evidence before promotion.
 - Profile-axis diagnostics are not interval coverage.
 - No Ayumi-facing reply or draft is changed by these diagnostics.

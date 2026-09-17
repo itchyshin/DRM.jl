@@ -1,4 +1,4 @@
-# DRM.jl visual identity
+# DRModels.jl visual identity
 
 The site mark, the palette it implies, and the constraints that produced both.
 This is an internal design note: `docs/design/` is outside `docs/src/`, so
@@ -34,7 +34,7 @@ Two constraints made it that and not something else:
 The badge shape is the Julia-ecosystem convention, which is why it is here. It
 is also the shape drmTMB uses. For a package whose whole positioning is *the
 Julia twin of drmTMB*, family resemblance is defensible and arguably correct.
-It is still a deliberate choice and not an accident, and if DRM.jl should ever
+It is still a deliberate choice and not an accident, and if DRModels.jl should ever
 read as visually independent, the same curves on a rounded square carry the
 idea unchanged. That variant was drawn and set aside, not overlooked.
 
@@ -44,7 +44,7 @@ A "convergence mark" — three coloured paths, for mean, spread and association,
 meeting a fitted-distribution disc — was proposed alongside this one
 (`archive/identity-convergence-mark-20260905`, with two further candidates).
 The idea is richer. It fails the first constraint: it carries an embedded
-`DRM.jl` wordmark that renders about 2 px tall at navbar size, and its light
+`DRModels.jl` wordmark that renders about 2 px tall at navbar size, and its light
 tile becomes a bright rectangle against a dark navbar. Read at a distance it
 also suggests a pipeline, which is not what this package is.
 

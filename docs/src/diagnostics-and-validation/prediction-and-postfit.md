@@ -12,7 +12,7 @@ A fit is the beginning, not the end. Once `drm` returns, you usually want to
 small location–scale model.
 
 ```@example postfit
-using DRM, Random, Statistics
+using DRModels, Random, Statistics
 Random.seed!(11)
 
 n = 500

@@ -110,7 +110,7 @@ function _fit_phylo_gaussian_lss_sparse(fam::Gaussian, y, Xμ, Xσ, Zg, gidx, G,
             end
         end
 
-        # DRM.jl#627: accumulate the group quadratic term by a SCATTER over the n
+        # DRModels.jl#627: accumulate the group quadratic term by a SCATTER over the n
         # observations instead of a GATHER that rescanned all n rows once per
         # group.  The old nested loop was O(G*n); it dominated every gradient
         # call at whole-tree scale (measured 380.0 ms per gradient at G = 16,384

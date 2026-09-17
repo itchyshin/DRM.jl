@@ -1,5 +1,5 @@
 # visualization.jl — plotting *data* providers, mirroring drmTMB's visualization
-# helpers (plot_parameter_surface, plot_corpairs). DRM.jl keeps the base package
+# helpers (plot_parameter_surface, plot_corpairs). DRModels.jl keeps the base package
 # plotting-dependency-free: these return the numbers a plot needs (grids, levels,
 # correlations) so any backend (Makie/Plots/…) can render them with a few lines.
 # The drmTMB-named plot_* wrappers are documented to call these.

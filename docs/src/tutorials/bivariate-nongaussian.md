@@ -2,7 +2,7 @@
 
 !!! note "Status — mixed tiers"
     Mirrors drmTMB's [Bivariate non-Gaussian models](https://itchyshin.github.io/drmTMB/articles/bivariate-nongaussian.html).
-    **In DRM.jl today:** direct joint fits for two positive responses
+    **In DRModels.jl today:** direct joint fits for two positive responses
     (`LogNormal()`) and two heavy-tailed responses (`Student()`), both Stable;
     and the staged frozen-margin route ([`associate_pairs`](@ref)), which is
     **Experimental** — see [API stability](../api-stability.md).
@@ -39,7 +39,7 @@ N_2\!\left((\mu_{1i}, \mu_{2i}),\;
 ```
 
 ```@example bivng
-using DRM, Random, Statistics
+using DRModels, Random, Statistics
 Random.seed!(20260828)
 
 n = 4000
@@ -146,7 +146,7 @@ verified engine here whose per-leaf likelihood is bivariate-t; drmTMB defers the
 same feature in its own `biv_student()`, so there is no reference implementation
 on either side to mirror. This is a documented boundary
 ([API stability](../api-stability.md), D-180 #3, issue
-[#471](https://github.com/itchyshin/DRM.jl/issues/471)), not an oversight —
+[#471](https://github.com/itchyshin/DRModels.jl/issues/471)), not an oversight —
 fixed-effect fits are unaffected and parity-verified. For structured effects on
 two heavy-tailed traits, model `log(y)` with `LogNormal()` if the responses are
 positive, or use the Gaussian route and report the robustness caveat.
@@ -190,7 +190,7 @@ exactly as in drmTMB.
     association(assoc).uncertainty
     ```
 
-    DRM.jl offers no simultaneous bands or profile intervals for `eta`, matching
+    DRModels.jl offers no simultaneous bands or profile intervals for `eta`, matching
     drmTMB, which bounds its own staged route the same way. Treat these
     intervals as experimental.
 
@@ -216,6 +216,6 @@ conditional-uncertainty caveat alongside the estimate.
 - [Robust continuous responses](robust-student.md) — the single-response
   Student-t model, and the same `ν = 2 + exp(η)` convention.
 - [Cross-family bivariate dependence](../cross-family.md) — two responses from
-  *different* families through a shared latent (`DRM.fit_mixed_family`).
+  *different* families through a shared latent (`DRModels.fit_mixed_family`).
 - [API stability](../api-stability.md) — which of these surfaces are Stable and
   which are Experimental.

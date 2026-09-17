@@ -2,7 +2,7 @@
 
 !!! note "Status — Stable (diagonal known variances)"
     Mirrors drmTMB's [Mean effects and residual heterogeneity](https://itchyshin.github.io/drmTMB/articles/meta-analysis.html).
-    **In DRM.jl today:** Gaussian meta-analysis with **known** per-study sampling
+    **In DRModels.jl today:** Gaussian meta-analysis with **known** per-study sampling
     variances via `meta_V(v)`, plus estimated between-study heterogeneity τ
     (the `σ` parameter). Dense / bivariate sampling covariance is planned.
 
@@ -26,7 +26,7 @@ on top of the known per-study variances plus estimated heterogeneity. This is th
 classic random-effects meta-analysis.
 
 ```@example meta
-using DRM, Random
+using DRModels, Random
 Random.seed!(20260603)
 
 k = 300

@@ -1,18 +1,18 @@
 using Documenter
 using DocumenterVitepress
-using DRM
+using DRModels
 
 # Five compact menus keep all reference and tutorial routes reachable.
 # The site uses the DocumenterVitepress backend (a VitePress/Vue build, the
 # docs.makie.org look). Node is supplied by NodeJS_20_jll — no system install.
 # Fail on broken examples, links and omitted module docstrings.
 makedocs(
-    sitename = "DRM.jl",
+    sitename = "DRModels.jl",
     authors = "Shinichi Nakagawa",
-    modules = [DRM],
+    modules = [DRModels],
     warnonly = false,
     format = DocumenterVitepress.MarkdownVitepress(
-        repo = "github.com/itchyshin/DRM.jl",
+        repo = "github.com/itchyshin/DRModels.jl",
         devbranch = "main",
         devurl = "dev",
     ),
@@ -91,7 +91,7 @@ makedocs(
 # `base`. Plain Documenter.deploydocs deploys build/ verbatim → the site lands as
 # build/1/ and every asset/nav link 404s (the bug this site hit). Mirrors GLLVM.jl.
 # push_preview = true (mirrors GLLVM.jl): PR docs land at
-# https://itchyshin.github.io/DRM.jl/previews/PR<N>/ so phone/GitHub review
+# https://itchyshin.github.io/DRModels.jl/previews/PR<N>/ so phone/GitHub review
 # links work. With false, Documenter still posts documenter/deploy SUCCESS
 # pointing at that URL while Deploying: ✘ → 404.
 # DRM_DOCS_DEPLOY=false makes this a BUILD-ONLY run (no gh-pages contact).
@@ -104,7 +104,7 @@ makedocs(
 # example fails the check exactly as before.
 if get(ENV, "DRM_DOCS_DEPLOY", "true") == "true"
     DocumenterVitepress.deploydocs(;
-        repo = "github.com/itchyshin/DRM.jl.git",
+        repo = "github.com/itchyshin/DRModels.jl.git",
         target = joinpath(@__DIR__, "build"),
         devbranch = "main",
         branch = "gh-pages",

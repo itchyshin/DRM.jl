@@ -9,7 +9,7 @@
 #
 # ML only: REML log-likelihoods are not comparable across different fixed-effect
 # structures, so the LR test (and AIC/AICc differences) assume ML fits — which is
-# DRM.jl's default.
+# DRModels.jl's default.
 
 using Distributions: Chisq, ccdf
 import StatsAPI: weights
@@ -19,7 +19,7 @@ import StatsAPI: weights
 
 Likelihood-ratio test for two **nested**, **ML**-fitted models, mirroring
 drmTMB's `anova(reduced, full)`. `reduced` must be a special case of `full`
-(fewer parameters); both must be fit by maximum likelihood (DRM.jl's default —
+(fewer parameters); both must be fit by maximum likelihood (DRModels.jl's default —
 REML likelihoods are not comparable across fixed-effect structures).
 
 Returns a `NamedTuple` `(; statistic, dof, pvalue)`:
@@ -146,7 +146,7 @@ end
 # ratio of two such fits does not have the usual chi-square reference
 # distribution — the prior is doing part of the work the test would attribute to
 # the data. drmTMB flags the same hazard as a note from `check_penalized_fit()`;
-# because a silent wrong p-value is worse than a refusal, DRM.jl errors here and
+# because a silent wrong p-value is worse than a refusal, DRModels.jl errors here and
 # surfaces the same information through `check_drm(fit).penalized_map`.
 function _map_compare_guard(a::DrmFit, b::DrmFit, verb::AbstractString)
     (a.estim_method === :MAP || b.estim_method === :MAP) || return nothing
@@ -218,7 +218,7 @@ end
     weights(fit::DrmFit) -> Vector{Float64}
 
 Prior (per-observation) weights used in the fit — drmTMB / glmmTMB's `weights()`.
-DRM.jl fits do not currently store prior weights, so this returns
+DRModels.jl fits do not currently store prior weights, so this returns
 `ones(nobs(fit))` (every observation weighted equally). Extends
 `StatsAPI.weights`.
 

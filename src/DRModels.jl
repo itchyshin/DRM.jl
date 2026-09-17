@@ -1,7 +1,7 @@
 """
-    DRM
+    DRModels
 
-`DRM.jl` — a Julia engine for distributional regression models, the Julia
+`DRModels.jl` — a Julia engine for distributional regression models, the Julia
 twin of the R package **drmTMB**. Mirrors the gllvmTMB → GLLVM.jl move.
 
 The package covers univariate and bivariate distributional regression across
@@ -33,7 +33,17 @@ line-search E-steps, dense q=4 EM, warm-start fit variants, and the leftover
 `src/experimental/location_only.jl` / `fit_em_natgrad.jl` prototypes — do not
 treat that directory as the public REML / `:em` surface.
 """
-module DRM
+module DRModels
+
+# Soft source-level migration aid: users who have already loaded DRModels can
+# qualify the old module name while moving calls to DRModels.  A renamed Julia
+# package cannot keep `using DRM` alive because that resolves the package name
+# before this module is loaded.
+const DRM = DRModels
+
+function __init__()
+    @warn "`DRM` is deprecated; use `DRModels` instead. `using DRM` is not available after the package rename."
+end
 
 # Load the verified core engine. The relative @__DIR__ includes inside
 # fit_q4_sparse_tmb.jl transitively pull the whole chain from this src/ dir.
@@ -129,7 +139,7 @@ include("variational.jl")
 include("summary.jl")
 include("r2.jl")             # R2 for the constant-sigma Gaussian case ONLY; refuses elsewhere
 include("visualization.jl")
-include("plotting_ext.jl")   # #336: method-less drm_figure stub + thin plot_* (DRMMakieExt)
+include("plotting_ext.jl")   # #336: method-less drm_figure stub + thin plot_* (DRModelsMakieExt)
 include("comparison.jl")
 include("chibar.jl")             # chi-bar-square boundary p-values for variance-component LRTs
 include("bridge.jl")
@@ -185,7 +195,7 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
        meta_vcov_bivariate, MetaVcovBivariate
 
 # Public API — post-fit accessors for the cross-family bivariate fit
-# (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).
+# (`fit_mixed_family`, currently reached as `DRModels.fit_mixed_family`).
 export mf_coef, mf_aic, mf_bic, mf_fitted, mf_summary
 export r2_constant_sigma
 
@@ -202,6 +212,6 @@ export PreparedJointModel, PreparedJointFit, PreparedFiniteJointModel, PreparedF
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare
 # `Laplace` would clash with `Distributions.Laplace`. Reach them as
-# `DRM.Variational` etc. if needed.
+# `DRModels.Variational` etc. if needed.
 
-end # module DRM
+end # module DRModels

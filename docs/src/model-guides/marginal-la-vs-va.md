@@ -55,7 +55,7 @@ The trouble starts when the integrand is **not** close to Gaussian:
 
 ## Concrete evidence (from the sister project GLLVM.jl)
 
-DRM.jl is a sister of GLLVM.jl, which fits the same kind of latent-variable
+DRModels.jl is a sister of GLLVM.jl, which fits the same kind of latent-variable
 integrals and has measured where LA bites:
 
 - **Two-part Gamma shape.** In a two-part (hurdle) Gamma model, the Gamma shape
@@ -93,7 +93,7 @@ factorised Gaussian `q` need not represent a multimodal posterior. The bound is
 an objective property, not a guarantee of global optimisation or complete
 posterior geometry.
 
-The expectations under a Gaussian `q` are tractable in the two regimes DRM.jl
+The expectations under a Gaussian `q` are tractable in the two regimes DRModels.jl
 needs:
 
 - **Closed form** when the log-density is linear in the linear predictor `η` and
@@ -115,7 +115,7 @@ against a curvature match at a single point.
 | Fixed-effects-only model | VA adds nothing — there is no latent integral to approximate. |
 | Gaussian response with a Gaussian RE entering the mean linearly and independent residual variance | VA adds nothing — the marginal is already exact here. |
 | Ordinary Gamma `(1\|g)` shape | LA ≈ VA in the #136e smoke; **prefer LA** (15–20× faster warm). |
-| Two-part / hurdle / ZINB geometry | VA may help (GLLVM evidence) — **not a public DRM path yet**. |
+| Two-part / hurdle / ZINB geometry | VA may help (GLLVM evidence) — **not a public DRModels path yet**. |
 | Speed-critical fits | Route-specific: `:LA` is the default; Poisson scalar random intercepts use fixed GHQ-32. |
 
 In short: **`:LA` is the default and its numerical implementation is
@@ -164,7 +164,7 @@ on Gamma `(1 | g)`, LA ≈ VA on shape `α` and LA is much faster. Closing #136 
 needs public VA beyond random intercept (phylo / crossed / ZI / hurdle) and any
 two-part bias cell — those are not claimed here.
 
-## A place DRM.jl can exceed drmTMB
+## A place DRModels.jl can exceed drmTMB
 
 drmTMB is built on TMB, which is **Laplace-only**. Offering a variational
 marginal alongside LA is therefore not parity work — it is a capability drmTMB

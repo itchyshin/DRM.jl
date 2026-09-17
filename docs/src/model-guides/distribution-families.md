@@ -2,7 +2,7 @@
 
 !!! note "Status — Stable"
     Mirrors drmTMB's [Choosing response families](https://itchyshin.github.io/drmTMB/articles/distribution-families.html).
-    **In DRM.jl today:** Gaussian, Student-t, LogNormal, Gamma, Poisson,
+    **In DRModels.jl today:** Gaussian, Student-t, LogNormal, Gamma, Poisson,
     negative-binomial (NB2) + truncated, beta, beta-binomial,
     zero-one-inflated beta, Tweedie, and cumulative-logit (ordinal) — plus the
     `zi` / `hu` count modifiers. **This is drmTMB's complete family set.**
@@ -35,8 +35,8 @@ right-skewed. The mean uses a log link; the `sigma` slot is the **coefficient of
 variation**, mapped to the shape `α = 1/σ²`:
 
 ```@example fam
-using DRM, Random
-import Distributions          # `Gamma` below is DRM's family; qualify the distribution
+using DRModels, Random
+import Distributions          # `Gamma` below is DRModels's family; qualify the distribution
 Random.seed!(20260618)
 
 n = 3000

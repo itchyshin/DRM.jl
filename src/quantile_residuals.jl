@@ -2,7 +2,7 @@
 # Quantile residuals (Dunn–Smyth randomized quantile residuals, à la DHARMa /
 # glmmTMB) — per-family conditional-distribution dispatch.
 #
-# This file is included from DRM.jl *after* every family type is defined
+# This file is included from DRModels.jl *after* every family type is defined
 # (gaussian, student, poisson, negbinomial, beta, betabinomial, binomial,
 # gamma, lognormal, zeroonebeta, tweedie, cumulative). The `_conditional_dist`
 # / `_is_continuous_family` methods dispatch on those family types, so they must
@@ -143,7 +143,7 @@ function _quantile_residuals(fit::DrmFit, rng)
     elseif fam isa Tweedie
         throw(ArgumentError("residuals(type=:quantile): Tweedie has no closed-form CDF " *
             "in Distributions.jl; a Tweedie compound Poisson–Gamma CDF is tracked as a " *
-            "follow-up. All other DRM.jl families are supported."))
+            "follow-up. All other DRModels.jl families are supported."))
     end
 
     # Single-distribution families via `_conditional_dist`.

@@ -2,7 +2,7 @@
 
 !!! note "Status — Stable (Gaussian + non-Gaussian mean; NB2/Gamma location–scale)"
     Mirrors drmTMB's [Phylogenetic structured effects](https://itchyshin.github.io/drmTMB/articles/phylogenetic-models.html).
-    **In DRM.jl today:** `phylo(1 | species)` on the **mean** — a phylogenetic
+    **In DRModels.jl today:** `phylo(1 | species)` on the **mean** — a phylogenetic
     random intercept. For Gaussian responses, the latent effects integrate out exactly and covariance
     parameters are estimated numerically; for the non-Gaussian
     families (Poisson, NB2, Binomial, Gamma, Beta, BetaBinomial) it is fit by the
@@ -26,7 +26,7 @@ Pass the tree via `tree =` (an `AugmentedPhy` from `random_balanced_tree` /
 leaves:
 
 ```@example phy
-using DRM, Random, LinearAlgebra
+using DRModels, Random, LinearAlgebra
 Random.seed!(7)
 
 G = 64
@@ -70,7 +70,7 @@ The call site is identical — add `phylo(1 | species)` to the mean formula, pas
 recover it.
 
 ```@example phycount
-using DRM, Random, LinearAlgebra
+using DRModels, Random, LinearAlgebra
 import Distributions
 Random.seed!(20260603)
 
@@ -102,7 +102,7 @@ the known-trials response and constant overdispersion via `sigma ~ 1`
 (`φ = 1/σ²`, #166):
 
 ```@example phybb
-using DRM, Random, LinearAlgebra
+using DRModels, Random, LinearAlgebra
 import Distributions
 Random.seed!(20260802)
 G2 = 24

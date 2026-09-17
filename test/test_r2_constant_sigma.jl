@@ -6,7 +6,7 @@
 #
 # The refusal tests are the point of the function. Each one is a RED CONTROL for a
 # denominator that would otherwise be picked silently.
-using DRM, Test, Random
+using DRModels, Test, Random
 
 @testset "r2_constant_sigma" begin
     @testset "constant σ: equals the OLS R² exactly" begin

@@ -52,7 +52,7 @@ function profile_sigma_a(fit::DrmFit; level::Real = 0.95, axes = :all, chibar::B
     re = fit.ranef
     (re isa NamedTuple && haskey(re, :prob) && haskey(re, :Sigma_a) && haskey(re, :Q_cond)) ||
         throw(ArgumentError("profile_sigma_a requires a bivariate q=4 phylogenetic fit whose " *
-            "ranef carries `prob` (re-fit on this DRM version)"))
+            "ranef carries `prob` (re-fit on this DRModels version)"))
     0 < level < 1 || throw(ArgumentError("level must be in (0, 1)"))
     is_converged(fit) ||
         @warn "profile_sigma_a: the supplied fit did not converge; profile CIs may be unreliable"

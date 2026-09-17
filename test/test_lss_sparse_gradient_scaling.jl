@@ -1,5 +1,5 @@
 # test/test_lss_sparse_gradient_scaling.jl
-# DRM.jl#627: the single-component sparse LSS gradient must stay O(p).
+# DRModels.jl#627: the single-component sparse LSS gradient must stay O(p).
 #
 # `_fit_phylo_gaussian_lss_sparse` used to accumulate the sd-block quadratic
 # term with a GATHER — for each of the G groups, rescan all n observations —
@@ -17,7 +17,7 @@
 # would leave (2) green, so neither substitutes for the other.
 
 using Test
-using DRM
+using DRModels
 using StableRNGs
 using LinearAlgebra
 
@@ -50,7 +50,7 @@ function _grad_scaling_leaf_names(d)
 end
 
 function _grad_scaling_fit(depth; seed = 882)
-    phy = DRM.augmented_phy(_grad_scaling_newick(depth))
+    phy = DRModels.augmented_phy(_grad_scaling_newick(depth))
     G = phy.n_leaves
     rng = StableRNG(seed)
     lr = _grad_scaling_leaf_names(depth)
@@ -80,7 +80,7 @@ end
 @testset "#627 sparse LSS profile endpoints are unchanged" begin
     _, fit = _grad_scaling_fit(9)          # G = 512
     @test fit.converged
-    @test DRM._profile_autodiff_mode(fit.nll, fit.nllgrad, fit.theta) === :stored
+    @test DRModels._profile_autodiff_mode(fit.nll, fit.nllgrad, fit.theta) === :stored
 
     prof = profile_result(fit)
     @test prof.autodiff === :stored
@@ -117,7 +117,7 @@ end
     # per coefficient (both arms combined), stable across sizes and seeds.  The
     # ceilings sit far above that so ordinary solver drift cannot trip them,
     # while the runaway this issue is about — a search that re-solves the
-    # nuisance problem tens of times more often — still would.  (DRM.jl#622: a
+    # nuisance problem tens of times more often — still would.  (DRModels.jl#622: a
     # ceiling pinned near the observed value is a flake, not a guard.)
     for st in prof.stats
         @test st.evaluations <= 60

@@ -17,7 +17,7 @@ the **SD of `log y`**. The response-scale median is `exp(μ)`. Mirrors `drmTMB`'
 `lognormal` family.
 
 !!! note
-    `DRM.LogNormal` shadows `Distributions.LogNormal`; qualify the latter if needed.
+    `DRModels.LogNormal` shadows `Distributions.LogNormal`; qualify the latter if needed.
 
 A random intercept `(1 | g)` or a correlated random intercept+slope `(1 + x | g)`
 may be placed on the log-mean `μ`; the group effect is integrated out by

@@ -1,7 +1,7 @@
 # Working with large data
 
 !!! note "Status — Stable"
-    Mirrors drmTMB's [Working with large data](https://itchyshin.github.io/drmTMB/articles/large-data.html). How DRM.jl stays fast as the number of units grows, and what to reach for when a model is large.
+    Mirrors drmTMB's [Working with large data](https://itchyshin.github.io/drmTMB/articles/large-data.html). How DRModels.jl stays fast as the number of units grows, and what to reach for when a model is large.
 
 The selling-point model — the q=4 phylogenetic bivariate location–scale fit — is
 built to scale. The marginal likelihood is a **sparse augmented-state Laplace
@@ -21,12 +21,12 @@ the caveats live in `report/comparison-grid.md`; the harness is
 `bench/run_scaling.jl`.
 
 !!! note "On head-to-head claims"
-    The scaling result above is measured for DRM.jl alone, on a synthetic
+    The scaling result above is measured for DRModels.jl alone, on a synthetic
     near-balanced tree grid with equal branch lengths and replicates. A paired drmTMB head-to-head on
     the same `nrep = 4` grid was measured separately on Totoro against drmTMB
     0.6.0 (#376;
     `docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`) and does **not**
-    show DRM.jl faster everywhere: Julia leads at the smallest tip count, and
+    show DRModels.jl faster everywhere: Julia leads at the smallest tip count, and
     drmTMB is comparable or faster at larger ones under that protocol. Any
     extrapolated "N× faster" figure is **retired**. Read the numbers in
     `report/comparison-grid.md` and `HANDOVER.md` rather than quoting a ratio

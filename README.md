@@ -1,6 +1,6 @@
-# DRM.jl
+# DRModels.jl
 
-[![Build Status](https://github.com/itchyshin/DRM.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/itchyshin/DRM.jl/actions/workflows/CI.yml)
+[![Build Status](https://github.com/itchyshin/DRModels.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/itchyshin/DRModels.jl/actions/workflows/CI.yml)
 
 Fast **distributional regression models** in Julia — the Julia twin of
 the R package [drmTMB](https://github.com/itchyshin/drmTMB).
@@ -10,7 +10,7 @@ the R package [drmTMB](https://github.com/itchyshin/drmTMB).
 > the 0.x series, with breaking changes requiring a minor-version bump.
 > See [HANDOVER.md](HANDOVER.md) (verified engine), [ROADMAP.md](ROADMAP.md)
 > (phases), and [AGENTS.md](AGENTS.md) (the team) for what is solid vs. planned.
-> The [Documenter site](https://itchyshin.github.io/DRM.jl/) mirrors drmTMB's
+> The [Documenter site](https://itchyshin.github.io/DRModels.jl/) mirrors drmTMB's
 > navbar, with every page status-tagged.
 
 ## Why
@@ -23,7 +23,7 @@ scale depends nonlinearly on a random effect, there is no closed-form marginal:
 it needs a **Laplace approximation**. brms/Stan needs ~122 h on this model;
 drmTMB (R/TMB) fits it in ~2.5 s at p=100 species.
 
-`DRM.jl` is a Julia engine for that model class, built on a **sparse
+`DRModels.jl` is a Julia engine for that model class, built on a **sparse
 augmented-state precision** (`kron(Q_topology, Λ⁻¹)`, O(p) non-zeros) with an
 **exact O(p) marginal gradient** (implicit-function / TMB-style, via Takahashi
 selected inversion — it never forms a dense p×p phylogenetic covariance) and a
@@ -34,7 +34,7 @@ fast-path-then-robust Laplace mode-finder.
 Same model, same real `q4_p100` data, same Laplace ML marginal as drmTMB
 (reproduced in this repo's `bench/run_sparse_tmb_nd.jl`):
 
-| | drmTMB | DRM.jl |
+| | drmTMB | DRModels.jl |
 |---|---|---|
 | single fit (p=100) | 2.48 s, false-conv | **1.14 s, converged → 2.18× faster** |
 | logLik | −256.52 | −256.51 (matches) |
@@ -47,9 +47,9 @@ Full grid and honest caveats: [report/comparison-grid.md](report/comparison-grid
 
 ```julia
 using Pkg
-Pkg.develop(path = "/path/to/DRM.jl")
+Pkg.develop(path = "/path/to/DRModels.jl")
 Pkg.instantiate()              # resolve deps the first time
-using DRM
+using DRModels
 ```
 
 ## Worked example — a Gaussian location–scale regression
@@ -58,7 +58,7 @@ The smallest real **distributional** regression: both the mean **and** the
 (log) scale depend on a covariate. This runs as-is (verified).
 
 ```julia
-using DRM, Random
+using DRModels, Random
 Random.seed!(1)
 
 n = 400
@@ -104,7 +104,7 @@ julia --project=. bench/run_scaling.jl           # O(p) curve to p=10,000
 ```
 src/                core engine (verified): sparse_phy, takahashi_selinv,
                     sparse_aug_plsm (robust mode-finder), sparse_em_fit,
-                    fit_ml_q4, fit_q4_sparse_tmb; DRM.jl module
+                    fit_ml_q4, fit_q4_sparse_tmb; DRModels.jl module
 src/experimental/   leftover prototypes NOT wired into the public API
                     (SQUAREM / natgrad EM [\#13 FAIL — parked], E-step variants,
                     dense oracle, leftover location_only copy). Public surfaces
@@ -125,7 +125,7 @@ Tree version and git tag are **`0.1.2` / `v0.1.2`**. Older tags `v0.1.0` /
 brain **D-111**). MIT via GitHub / `Pkg.develop` until then. Do not treat
 `v0.1.2` as General registration; do not chase Registrator.
 
-**Next:** Phase 1.5 / [#5](https://github.com/itchyshin/DRM.jl/issues/5) is
+**Next:** Phase 1.5 / [#5](https://github.com/itchyshin/DRModels.jl/issues/5) is
 **closed** (#349 + drmTMB #878). Tip hygiene / deeper parity remain — **not**
 General registration. S2/S3 hygiene already landed (#340–#342).
 
@@ -146,7 +146,7 @@ General registration. S2/S3 hygiene already landed (#340–#342).
 
 Families are validated by **simulation parameter recovery**; the numerical
 drmTMB-parity gate (RCall vs. drmTMB v0.1.3 outputs) lives under opt-in
-`DRM_PARITY_TESTS=1` ([#17](https://github.com/itchyshin/DRM.jl/issues/17)
+`DRM_PARITY_TESTS=1` ([#17](https://github.com/itchyshin/DRModels.jl/issues/17)
 closed).
 
 **Verified engine (foundation):** the q=4 ML location-scale single fit — 2.18×
@@ -170,7 +170,7 @@ the bivariate q=2 structured route (`reml_q2.jl`, #470); epsilon-method bias
 correction; `heritability` /
 `repeatability` / `icc` with delta + profile CIs. Julia-side R↔Julia helpers
 (`drm_bridge` / `drm_bridge_inference`) are in-tree; **Phase 1.5 /
-[#5](https://github.com/itchyshin/DRM.jl/issues/5)** is **closed** at the
+[#5](https://github.com/itchyshin/DRModels.jl/issues/5)** is **closed** at the
 experimental Hopper finish-matrix bar (#349 + drmTMB #878) — not a CRAN /
 “supported” promotion.
 

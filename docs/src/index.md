@@ -3,12 +3,12 @@
 layout: home
 
 hero:
-  name: "DRM.jl"
+  name: "DRModels.jl"
   text: "What varies besides the mean?"
   tagline: "A formula-first Julia twin of drmTMB: the mean, the scale, and boundary probabilities of a response each take their own formula, with random effects and sparse phylogenetic structure."
   image:
-    src: /drmjl-full-logo.png
-    alt: "DRM.jl hexagonal badge with four overlapping response curves"
+    src: /drmodels-full-logo.png
+    alt: "DRModels.jl hexagonal badge with four overlapping response curves"
   actions:
     - theme: brand
       text: Fit a location–scale model
@@ -37,7 +37,7 @@ features:
 The first question is not which optimiser to use. It is **which feature of the
 response might change?** A mean-only model asks whether the expected response
 changes. A distributional model can also ask whether its spread, its shape, or
-its boundary probabilities change. DRM.jl keeps those questions separate by
+its boundary probabilities change. DRModels.jl keeps those questions separate by
 giving each admitted parameter its own formula.
 
 Given a table `dat` with numeric columns `y` and `x`, fit a location–scale
@@ -45,7 +45,7 @@ model as below. [Get started](getting-started.md) includes the complete data
 setup and a runnable example.
 
 ```julia
-using DRM
+using DRModels
 
 # y varies in BOTH its mean and its spread with x:
 fit = drm(bf(@formula(y ~ x), @formula(sigma ~ x)), Gaussian(); data = dat)
@@ -71,7 +71,7 @@ for the model-space guide and its route-specific boundaries.
 
 ## What the fit estimates
 
-In the model above, DRM.jl estimates one coefficient vector for **μ** (the mean)
+In the model above, DRModels.jl estimates one coefficient vector for **μ** (the mean)
 and one for **log σ** (the residual standard deviation). A positive σ coefficient
 means a multiplicative increase in residual spread, not an additive change in
 the mean. Other families expose other admitted parameters, but the same rule
@@ -79,7 +79,7 @@ holds: interpret a coefficient on the scale named by that parameter's link.
 
 ## Evidence and limitations
 
-DRM.jl is a pre-release package. Use the [capability matrix](capabilities.md) to
+DRModels.jl is a pre-release package. Use the [capability matrix](capabilities.md) to
 choose a tested family–structure combination, and the
 [diagnostics and validation guides](diagnostics-and-validation/testing-likelihoods.md)
 to see how it was checked. The verified sparse phylogenetic engine, profile
@@ -89,7 +89,7 @@ implemented does not claim universal calibrated coverage.
 
 ## Relation to drmTMB
 
-DRM.jl is the Julia twin of [drmTMB](https://itchyshin.github.io/drmTMB/): it
+DRModels.jl is the Julia twin of [drmTMB](https://itchyshin.github.io/drmTMB/): it
 adopts a closely related `bf()` grammar and vocabulary so R users do not have to
 relearn the model class. It is independent, MIT-licensed Julia code — not a port
 of drmTMB's GPL source. The optional [R ↔ Julia bridge](r-julia-bridge.md) is
@@ -100,5 +100,5 @@ remains the default R route and does not require Julia. The
 ---
 
 *MIT licensed. A sister package to [drmTMB](https://itchyshin.github.io/drmTMB/)
-(GPL) and [GLLVM.jl](https://itchyshin.github.io/GLLVM.jl). DRM.jl is fresh code —
+(GPL) and [GLLVM.jl](https://itchyshin.github.io/GLLVM.jl). DRModels.jl is fresh code —
 never a port of drmTMB's GPL source.*

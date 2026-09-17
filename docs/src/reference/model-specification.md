@@ -72,7 +72,7 @@ are still outside this admission. The same narrow route is available as
 not establish full native fitted-result parity.
 
 ```@example joint_formula
-using DRM, LinearAlgebra
+using DRModels, LinearAlgebra
 BLAS.set_num_threads(1)
 n = 32
 z = collect(range(-1.2, 1.2; length=n))
@@ -123,7 +123,7 @@ covariates; conditioning on an observed response can correlate their missing
 values. The prepared fit retains that full conditional covariance.
 
 ```@example joint_formula_two
-using DRM, Random, LinearAlgebra
+using DRModels, Random, LinearAlgebra
 BLAS.set_num_threads(1)
 rng = MersenneTwister(9302)
 n = 64

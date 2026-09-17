@@ -252,7 +252,7 @@ _withiterations(fit::DrmFit, n::Integer) = DrmFit(fit.family, fit.blocks, fit.co
 Optimiser iterations actually taken, or `-1` when the fitter does not record it.
 
 Deliberately NOT named `iterations`: `Optim.iterations` already means this, and
-DRM.jl also uses `iterations` as a fitting OPTION (the cap). Keeping the accessor
+DRModels.jl also uses `iterations` as a fitting OPTION (the cap). Keeping the accessor
 distinct stops "max allowed" and "actually taken" being confused for each other.
 
 `-1` is not a placeholder to be filled in later on every route — it is the
@@ -779,7 +779,7 @@ function drm(f::DrmFormula, fam::Gaussian; data, K = nothing, A = nothing, tree 
                 "route, and the phylo-MEAN cell (`phylo(1 | g)` on the mean with `sigma ~ 1`, " *
                 "fitted as observed rows + full tree, matching drmTMB's " *
                 "`response = \"include\"`). This is a ROUTE-level restriction, not a " *
-                "family-level one — DRM.jl's engine has no missing-response handling for a " *
+                "family-level one — DRModels.jl's engine has no missing-response handling for a " *
                 "relmat/animal/spatial mean term, a random effect, `meta_V`, or a phylo mean " *
                 "with a non-constant sigma design, whose positional row-to-level matching is " *
                 "not subset-safe (#482). Dropping the missing-response rows before calling " *
@@ -1314,7 +1314,7 @@ Model residuals. `type` selects the kind:
   probability-integral transform of `y_i`. Under a correct model the `r_i`
   are i.i.d. standard normal. Univariate only.
 
-Quantile residuals are implemented for every DRM.jl response family except
+Quantile residuals are implemented for every DRModels.jl response family except
 Tweedie (no closed-form CDF in `Distributions.jl`):
 
 - **continuous** (PIT `u_i = F(y_i)`, no RNG): Gaussian, Student-t, LogNormal,
@@ -1905,7 +1905,7 @@ function _simulate_once(fit::DrmFit, rng; mu = nothing, sigma = nothing)
 end
 
 function _scale_vector(fit::DrmFit, key::Symbol)
-    haskey(fit.scales, key) || error("simulate: fitted $(typeof(fit.family)) object does not carry `$key`; refit with current DRM.jl")
+    haskey(fit.scales, key) || error("simulate: fitted $(typeof(fit.family)) object does not carry `$key`; refit with current DRModels.jl")
     return fit.scales[key]
 end
 
@@ -2003,7 +2003,7 @@ rather than a labelling difference, which is exactly how it misled this project
 once (see the corrected note in
 `test/parity/q4-reml/biv-q4-phylo-reml/expected.toml`).
 
-Every REML route in DRM.jl now reports the normalised form, matching lme4,
+Every REML route in DRModels.jl now reports the normalised form, matching lme4,
 glmmTMB, TMB and drmTMB. See `fit_q4_reml`'s docstring in `src/reml_q4.jl` for
 the derivation and for the evidence: the q=4 parity gate's `atol_loglik` fell
 from 5.5436 to 0.03 once the constant was no longer being absorbed.

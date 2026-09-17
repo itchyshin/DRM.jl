@@ -270,7 +270,7 @@ end
 """
     summary(fit::DrmFit)
 
-Coefficient table for a fitted model — the DRM.jl analogue of drmTMB's `summary()`.
+Coefficient table for a fitted model — the DRModels.jl analogue of drmTMB's `summary()`.
 Returns the same `CoefTable` as [`coeftable`](@ref) (estimates, SEs, z, p, CIs).
 """
 Base.summary(fit::DrmFit) = coeftable(fit)

@@ -307,7 +307,7 @@ function fit_coevolution_q2_reml(prob::CoevoProblem, Q_cond::SparseMatrixCSC;
     ρ̂ = D̂[1, 2] / (σ̂[1] * σ̂[2])
 
     # #477: report the NORMALISED restricted log-likelihood, matching the q=4
-    # route, DRM.jl's univariate REML routes, and lme4/glmmTMB/TMB. `β̂` holds
+    # route, DRModels.jl's univariate REML routes, and lme4/glmmTMB/TMB. `β̂` holds
     # exactly the marginalised fixed effects (`nbeta = k * q` above); `rho12`
     # comes from `D̂`, not from `β̂`, so it is correctly not counted.
     reml_ll_norm = _reml_normalise(reml_ll, length(β̂))

@@ -1,4 +1,4 @@
-using DRM, Test, Random, LinearAlgebra, Distributions
+using DRModels, Test, Random, LinearAlgebra, Distributions
 
 @testset "bridge profiles only the requested coefficient" begin
     rng = MersenneTwister(56329)
