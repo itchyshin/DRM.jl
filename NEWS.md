@@ -13,9 +13,8 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   canonical `using DRModels` import is intentionally quiet; this changelog and
   the migration documentation carry the deprecation notice instead of a
   package-startup warning. The UUID and package version remain unchanged.
-  GitHub's repository rename and the corresponding Pages deployment remain
-  pending maintainer actions; the old Pages URL will be declared dead when that
-  click occurs. Historical
+  The GitHub repository rename is complete; the stable Pages deployment awaits
+  this unmerged PR landing. Historical
   `docs/dev-log/` records intentionally retain their original spelling.
 
 ## v0.7.1 — 2026-09-05
