@@ -4,6 +4,28 @@ All notable changes are recorded here. The live work ledger is
 [GitHub Issues](https://github.com/itchyshin/DRM.jl/issues); this file is the
 human-readable changelog and mirrors `docs/src/changelog.md`.
 
+## Unreleased
+
+- **`sigma(fit)` reports the scale the likelihood scored, on every NB2 / Gamma / Beta
+  route (Dinnage audit M2, D-268).** Each of those fitters guards the log-scale linear
+  predictor before exponentiating it — `_softclamp` on the fixed-effects routes, a hard
+  `clamp` on the ranef / correlated-ranef / zi / hurdle / truncated routes — but then
+  stored the UNguarded `exp.(Xσ * θ̂)` in `scales[:sigma]`. On any row where the guard
+  bit, `sigma(fit)`, `simulate`, `residuals` and `predict` (all of which read
+  `fit.scales[:sigma]`) described a scale the model never evaluated, and `loglik(fit)`
+  could not be reproduced from the reported parameters. MEASURED on the new fixtures: the
+  reported NB2 scale was 75x the scale the likelihood scored (6.99e11 vs 9.30e9), Gamma
+  3.3x low, Beta 1.45x low. Twelve reporting sites now route θ̂ through the same guard the
+  objective used, via `_reported_sigma` — the design DRM.jl's multi-RE Gaussian route
+  already used, and the Julia twin of drmTMB's `drm_clamped_sigma_eta()`. INSIDE the band
+  the guard is exactly the identity, so every fit that never approached it reports
+  bit-for-bit what it reported before (asserted with `==`, not `≈`). The BANDS are
+  unchanged and deliberately differ from drmTMB's ±12 — NB2 ±20, Gamma ±15, Beta ±15,
+  and no clamp at all in the Gaussian fixed-effects core — now written up in
+  `docs/src/rosetta.md`. NOT covered: `predict`/`predict_parameters` at new data, which
+  still map η → σ unguarded, and the kernel-based Laplace routes.
+  `test/test_report_clamped_sigma.jl`.
+
 ## v0.7.1 — 2026-09-05
 
 - **Bootstrap replicates keep a masked fit's response mask (drmTMB #1188).** `_bootstrap_data`
