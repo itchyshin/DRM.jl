@@ -224,7 +224,7 @@ infra for AI-REML — **not** `algorithm = :natgrad`). Those promotions do
 ## 7. Current repo state
 
 Published, MIT, public; **v0.1.0 and v0.1.1 tagged**. `src/` core loads cleanly
-(`using DRM` resolves the include chain + exports). The `drm()` / `bf()` front
+(`using DRModels` resolves the include chain + exports). The `drm()` / `bf()` front
 end, all 13 families (12 univariate + bivariate Gaussian), and the inference
 surface (Wald + profile + bootstrap) are wired and exported; families are
 validated by simulation parameter recovery (numerical drmTMB-parity gate
@@ -285,7 +285,7 @@ that already works here.
 
 ## 9. Decisions
 
-**Made:** package name `DRM` (drops the TMB suffix, matches GLLVModels.jl pattern);
+**Made:** package name `DRModels` (drops the TMB suffix, matches GLLVModels.jl pattern);
 **MIT license** (Julia-ecosystem norm + matches GLLVModels.jl; DRModels.jl is fresh code,
 not a port of drmTMB's GPL source, so it's legally free to be MIT); **public**
 repo at `itchyshin/DRModels.jl`; cost-disciplined CI.
@@ -313,7 +313,7 @@ natural-gradient = AI-REML; the singular boundary) · `why-q4-plsm-matters.md` �
 
 ```bash
 cd DRM.jl
-julia --project=. -e 'using Pkg; Pkg.instantiate(); using DRM; println("DRM loaded")'
+julia --project=. -e 'using Pkg; Pkg.instantiate(); using DRModels; println("DRModels loaded")'
 julia --project=. bench/run_sparse_tmb_nd.jl   # ~1.1 s, logLik −256.51, 2.18× vs drmTMB
 julia --project=. bench/run_scaling.jl         # k≈1.08 to p=10,000
 ```
