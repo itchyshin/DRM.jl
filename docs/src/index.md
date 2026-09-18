@@ -100,5 +100,5 @@ remains the default R route and does not require Julia. The
 ---
 
 *MIT licensed. A sister package to [drmTMB](https://itchyshin.github.io/drmTMB/)
-(GPL) and [GLLVM.jl](https://itchyshin.github.io/GLLVM.jl). DRModels.jl is fresh code —
+(GPL) and [GLLVModels.jl](https://itchyshin.github.io/GLLVModels.jl). DRModels.jl is fresh code —
 never a port of drmTMB's GPL source.*
