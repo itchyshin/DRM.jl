@@ -1,7 +1,7 @@
 # Testing likelihoods
 
 !!! note "Status — Implemented"
-    Mirrors drmTMB's [Testing likelihoods](https://itchyshin.github.io/drmTMB/articles/testing-likelihoods.html). This page describes how DRModels.jl validates each likelihood today — the gates that actually run in `test/runtests.jl` and in the engine-quality battery (Workflow Q).
+    Mirrors drmTMB's [Testing likelihoods](https://itchyshin.github.io/drmTMB/articles/testing-likelihoods.html). This page describes how DRModels.jl validates each likelihood today, using the tests in `test/runtests.jl` and the engine-quality battery.
 
 Every family and every random-effect path in DRModels.jl is checked the same way:
 **write the likelihood, then prove it numerically** before it is wired into the
@@ -62,9 +62,8 @@ for an unidentified direction) rather than a silent `NaN`.
 
 ## Where the results live
 
-Every gate run is recorded in the [check-log](https://github.com/itchyshin/DRModels.jl/blob/main/docs/dev-log/check-log.md)
-— one row per slice, citing the verification command and the result — and the
-engine-quality battery (FD-gradient ≤ 1e-6, zero-allocation inner loop,
-multi-shape scaling sweep) is the standing Workflow Q gate run before each tag.
-The bar is **verify before claiming**: every speed or accuracy number in this
+The project keeps reproducibility records for its verification runs. Before a
+release, the engine is checked for an FD-gradient error no larger than 1e-6, a
+zero-allocation inner loop, and behaviour across several problem shapes. The
+bar is **verify before claiming**: every speed or accuracy number in this
 repository was reproduced by an independent run.

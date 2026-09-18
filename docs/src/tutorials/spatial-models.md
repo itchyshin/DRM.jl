@@ -50,9 +50,8 @@ closed-form structured-GLS engine — only the source of the correlation differs
     A coordinate spatial effect is currently supported on the **Gaussian** mean.
     Routing `spatial(1 | site)` through the sparse-Laplace engine for the
     non-Gaussian families (Poisson, NB2, Gamma, Beta, Binomial) — alongside
-    `relmat` / `animal` — is tracked as future work in
-    [issue #167](https://github.com/itchyshin/DRModels.jl/issues/167)
-    (`phylo` already has its non-Gaussian route).
+    `relmat` / `animal` — is planned future work (`phylo` already has its
+    non-Gaussian route).
 
 ## See also
 

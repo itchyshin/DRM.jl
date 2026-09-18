@@ -104,10 +104,10 @@ the two SDs:
 Today's animal-model path covers the **Gaussian mean** with a supplied `A`.
 Building `A` from a pedigree and a sparse large-pedigree path are planned.
 Non-Gaussian animal models (Poisson / NB2 / Gamma / Beta / Binomial breeding
-effects routed through the sparse-Laplace GLMM engine) are tracked in
-[issue #167](https://github.com/itchyshin/DRModels.jl/issues/167) — the phylogenetic
-non-Gaussian route already exists and the `relmat`/`animal` route will reuse it,
-so don't assume non-Gaussian families work here yet.
+effects routed through the sparse-Laplace GLMM engine) are planned future work.
+The phylogenetic non-Gaussian route already exists and the `relmat`/`animal`
+route is intended to reuse it, so don't assume non-Gaussian families work here
+yet.
 
 ## See also
 

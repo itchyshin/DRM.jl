@@ -56,7 +56,7 @@ cbind
 ## [Modelled missing predictors](@id joint-predictor-formula)
 
 !!! warning "Experimental"
-    Exported for evaluation; fenced for v1.0 (D-181). API and numerics may
+    Exported for evaluation, not yet stable. API and numerics may
     change; not covered by the R-parity scoreboard.
 
 For a Gaussian response, `mi(x)` marks an additive predictor whose missing

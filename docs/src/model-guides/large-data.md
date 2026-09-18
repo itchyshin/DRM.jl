@@ -24,8 +24,7 @@ the caveats live in `report/comparison-grid.md`; the harness is
     The scaling result above is measured for DRModels.jl alone, on a synthetic
     near-balanced tree grid with equal branch lengths and replicates. A paired drmTMB head-to-head on
     the same `nrep = 4` grid was measured separately on Totoro against drmTMB
-    0.6.0 (#376;
-    `docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`) and does **not**
+    0.6.0 and does **not**
     show DRModels.jl faster everywhere: Julia leads at the smallest tip count, and
     drmTMB is comparable or faster at larger ones under that protocol. Any
     extrapolated "N× faster" figure is **retired**. Read the numbers in

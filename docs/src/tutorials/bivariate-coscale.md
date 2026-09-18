@@ -94,13 +94,13 @@ The internal `:phylocov` coefficient block is not a distributional predictor, so
 `:rho12`, but not `:phylocov`. Use [`coevolution_cor`](@ref) for the among-axis
 correlation matrix of `Σ_a`.
 
-## Relmat / animal / spatial q=4 coevolution (#189)
+## Relmat / animal / spatial q=4 coevolution
 
 The same verified q=4 engine accepts level-indexed structured providers. Put
 `relmat(1 | id)`, `animal(1 | id)`, or `spatial(1 | site)` on **all four** axes
 and pass `K=…`, `A=…`, or `coords=…` respectively. Spatial uses a **fixed**
-range (`spatial_range`; default = mean pairwise site distance) in this slice —
-joint range estimation is deferred. Non-tree `bootstrap_sigma_a` is not yet
+range (`spatial_range`; default = mean pairwise site distance); joint range
+estimation is deferred. Non-tree `bootstrap_sigma_a` is not yet
 supported (clear `ArgumentError`).
 
 ```julia

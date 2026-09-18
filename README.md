@@ -38,7 +38,7 @@ Same model, same real `q4_p100` data, same Laplace ML marginal as drmTMB
 |---|---|---|
 | single fit (p=100) | 2.48 s, false-conv | **1.14 s, converged → 2.18× faster** |
 | logLik | −256.52 | −256.51 (matches) |
-| O(p) scaling to p=10,000 | not attempted at that scale (measured O(p^1.27) to p=3000, #486) | **~113 s, k≈1.08 (near-linear)** |
+| O(p) scaling to p=10,000 | not attempted at that scale (measured O(p^1.27) to p=3000) | **~113 s, k≈1.08 (near-linear)** |
 | Wald SEs at the variance boundary | all-NaN (non-PD Hessian) | **valid for 16/17 params** |
 
 Full grid and honest caveats: [report/comparison-grid.md](report/comparison-grid.md).
@@ -99,14 +99,14 @@ julia --project=. bench/run_sparse_tmb_nd.jl     # 2.18× vs drmTMB, p=100
 julia --project=. bench/run_scaling.jl           # O(p) curve to p=10,000
 ```
 
-## Repository layout (mirrors GLLVM.jl)
+## Repository layout (mirrors GLLVModels.jl)
 
 ```
 src/                core engine (verified): sparse_phy, takahashi_selinv,
                     sparse_aug_plsm (robust mode-finder), sparse_em_fit,
                     fit_ml_q4, fit_q4_sparse_tmb; DRModels.jl module
 src/experimental/   leftover prototypes NOT wired into the public API
-                    (SQUAREM / natgrad EM [\#13 FAIL — parked], E-step variants,
+                    (SQUAREM / natgrad EM [parked negative result], E-step variants,
                     dense oracle, leftover location_only copy). Public surfaces
                     in src/: method=:REML, algorithm=:em, lc_metric (Fisher infra).
 bench/              runnable benchmarks + the q4_p100 fixtures + R fixture gen
@@ -119,15 +119,15 @@ AGENTS.md ROADMAP.md   the 12-persona team + the phase plan
 
 ## Status — honest (v0.7.x)
 
-Tree version and git tag are **`0.7.1` / `v0.7.1`**. Earlier tags remain
-historical. **Julia General stays out** until readiness
-(catch up with drmTMB + both working well; drmTMB likely R/CRAN first —
-brain **D-111**). MIT via GitHub / `Pkg.develop` until then. Do not treat
+This rename branch retains version **`0.7.1`**. The existing **`v0.7.1`** tag
+predates the package rename and names `DRM`; it is historical rather than a
+DRModels release tag. **Julia General stays out** until readiness
+(catch up with drmTMB + both working well; drmTMB likely R/CRAN first).
+MIT via GitHub / `Pkg.develop` until then. Do not treat
 `v0.7.1` as General registration; do not chase Registrator.
 
-**Next:** Phase 1.5 / [#5](https://github.com/itchyshin/DRModels.jl/issues/5) is
-**closed** (#349 + drmTMB #878). Tip hygiene / deeper parity remain — **not**
-General registration. S2/S3 hygiene already landed (#340–#342).
+**Current transition:** R–Julia support remains experimental. Deeper parity work
+continues; it is **not** Julia General registration.
 
 **Public `drm()` / `bf()` front end** — recovery-tested, drmTMB-mirroring syntax:
 
@@ -145,15 +145,14 @@ General registration. S2/S3 hygiene already landed (#340–#342).
   figures (incl. the Confidence Eye), executed examples, honest per-page tags.
 
 Families are validated by **simulation parameter recovery**; the numerical
-drmTMB-parity gate (RCall vs. drmTMB v0.1.3 outputs) lives under opt-in
-`DRM_PARITY_TESTS=1` ([#17](https://github.com/itchyshin/DRModels.jl/issues/17)
-closed).
+drmTMB-parity gate (RCall vs. fixture outputs generated with drmTMB v0.7.0)
+lives under opt-in
+`DRM_PARITY_TESTS=1`. Formula grammar separately retains drmTMB v0.1.3 spelling.
 
 **Verified engine (foundation):** the q=4 ML location-scale single fit — 2.18×
 over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
 **Interval claims are capability parity, not coverage** — the R↔Julia ledger's
-`coverage_claimed` fences are permanent documented boundaries by owner decision
-(D-179 #4, reaffirmed D-180 #2); measured coverage campaigns exist in the
+`coverage_claimed` fences are permanent documented boundaries; measured coverage campaigns exist in the
 dev-log evidence but no route claims calibrated intervals as a supported
 guarantee.
 Per-family engine-vs-engine timings, with their caveats stated, are
@@ -164,24 +163,22 @@ measured evidence.
 
 **Inference:** Wald + profile + parametric bootstrap; opt-in **REML**
 (`method = :REML`, with the model-selection guard) across the fixed-effect
-Gaussian location–scale fit, a single Gaussian mean intercept `(1|g)` (#439),
-the σ-phylo route, the bivariate q=4 all-axes route (`reml_q4.jl`, #11), and
-the bivariate q=2 structured route (`reml_q2.jl`, #470); epsilon-method bias
+Gaussian location–scale fit, a single Gaussian mean intercept `(1|g)`,
+the σ-phylo route, the bivariate q=4 all-axes route (`reml_q4.jl`), and
+the bivariate q=2 structured route (`reml_q2.jl`); epsilon-method bias
 correction; `heritability` /
 `repeatability` / `icc` with delta + profile CIs. Julia-side R↔Julia helpers
-(`drm_bridge` / `drm_bridge_inference`) are in-tree; **Phase 1.5 /
-[#5](https://github.com/itchyshin/DRModels.jl/issues/5)** is **closed** at the
-experimental Hopper finish-matrix bar (#349 + drmTMB #878) — not a CRAN /
-“supported” promotion.
+(`drm_bridge` / `drm_bridge_inference`) are in-tree and remain experimental,
+not a CRAN / "supported" promotion.
 
 **Not fully wired / still open:** `src/experimental/` holds only classified
-material — a recorded negative result (#13), unwired variants (#472, whose
-descent proved an artefact and was repaired in #577), superseded predecessors, and
+material — a recorded negative result, unwired variants whose earlier descent
+proved an artefact, superseded predecessors, and
 oracles; see [src/experimental/README.md](src/experimental/README.md) for the
 per-file verdicts (public `method = :REML`, `algorithm = :em`, and `lc_metric`
 Fisher infra are already in `src/`);
 **χ̄² boundary inference** where not yet exported; the **variational (VA/ELBO)**
-marginal track (#136, deferred). See
+marginal track (deferred). See
 [Capabilities](docs/src/capabilities.md),
 [capability-status](docs/design/capability-status.md),
 [HANDOVER.md](HANDOVER.md), and [ROADMAP.md](ROADMAP.md) for the
@@ -189,4 +186,4 @@ test-cited breakdown — prefer those over any shorter summary here.
 
 ## License
 
-MIT © 2026 Shinichi Nakagawa. A sister package to drmTMB and GLLVM.jl.
+MIT © 2026 Shinichi Nakagawa. A sister package to drmTMB and GLLVModels.jl.

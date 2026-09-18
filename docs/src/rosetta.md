@@ -17,8 +17,7 @@ Three differences cover almost everything:
 !!! note "On the R column"
     The R snippets show drmTMB's grammar (which itself mirrors **brms**). The
     family-constructor and S3 method spellings here were reconciled (2026-06-03)
-    against the verified drmTMB `NAMESPACE` (see
-    `docs/dev-log/decisions/2026-06-03-drmtmb-api-snapshot.md`); the
+    against drmTMB's exported interface; the
     parameterisations (e.g. Beta `φ = 1/σ²`) match. drmTMB reuses the base-R
     `stats` families (`gaussian()`, `poisson()`, `Gamma()`, `binomial()`) rather
     than redefining them. This page is maintained from the Julia side.

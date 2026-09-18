@@ -144,9 +144,7 @@ available** for bivariate `Student()`. A Gaussian group-level effect under a
 heavy-tailed conditional density has no closed-form marginal, and there is no
 verified engine here whose per-leaf likelihood is bivariate-t; drmTMB defers the
 same feature in its own `biv_student()`, so there is no reference implementation
-on either side to mirror. This is a documented boundary
-([API stability](../api-stability.md), D-180 #3, issue
-[#471](https://github.com/itchyshin/DRModels.jl/issues/471)), not an oversight —
+on either side to mirror. This is a documented boundary, not an oversight —
 fixed-effect fits are unaffected and parity-verified. For structured effects on
 two heavy-tailed traits, model `log(y)` with `LogNormal()` if the responses are
 positive, or use the Gaussian route and report the robustness caveat.

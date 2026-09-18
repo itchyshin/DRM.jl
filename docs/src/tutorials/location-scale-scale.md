@@ -258,9 +258,8 @@ confint(fit, parm = "fixef:sd_phylo:temp", method = "bootstrap", R = 199,
         threads = TRUE)          # threaded refits; BLAS is pinned internally
 ```
 
-The full M2–M6q model ladder of the ecogeographical-rules protocol gives
-logLik identical to `engine = "tmb"` in every cell — see
-[the cross-engine evidence](https://github.com/itchyshin/DRModels.jl/blob/main/docs/dev-log/evidence/2026-08-28-lss-mladder-cross-engine.md).
+Across the assessed ecogeographical-rules model ladder, the Julia and TMB
+engines gave identical log likelihoods.
 
 ## See also
 

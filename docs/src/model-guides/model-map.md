@@ -111,8 +111,8 @@ supports `(1 | g)` on the mean only. The [capability matrix](../capabilities.md)
 independent or correlated — each family admits.
 **Phylogenetic** (`phylo`) effects go via a sparse Laplace path for Poisson,
 NB2, Binomial, Gamma, Beta, Beta-binomial and CumulativeLogit. On that path NB2, Gamma and Beta
-accept a covariate dispersion formula `sigma ~ x` (a per-observation log σ,
-#164), while `BetaBinomial()` requires a constant `sigma` and `Binomial()`
+accept a covariate dispersion formula `sigma ~ x` (a per-observation log σ),
+while `BetaBinomial()` requires a constant `sigma` and `Binomial()`
 carries no dispersion parameter at all; `Student()` rejects `meta_V` and every structured marker. `LogNormal()` is the
 exception: because `log y` is exactly Gaussian, its `phylo`/`relmat`
 structured markers on the mean delegate WHOLESALE to `Gaussian()` on

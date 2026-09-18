@@ -66,13 +66,12 @@ All non-Gaussian families share one reusable Laplace spine:
 
 Some migrated comparison-suite engines and natural-gradient variants remain
 outside the public API. Several are kept as **recorded negative results**, not
-as pending promotions: `fit_em_natgrad.jl` failed the #13 decision gate, so
-`algorithm = :natgrad` is deliberately not exposed, and `fit_em_closed.jl` /
-`em_squarem_fit.jl` rest on a closed-form Λ step whose reported #472 descent
-proved to be an artefact of a dropped-zeros sparsity pattern and was repaired in
-#577 — `test/test_lambda_p100.jl` now asserts that the step *ascends* the
-marginal — so they stay unwired pending a case for promotion rather than as a
-recorded failure. The rest are superseded predecessors of the production engine (the
-`estep_*` mode-finder variants) or diagnostic oracles kept for reproducibility.
-Nothing is wired from there without a GitHub issue making the case — see
-`src/experimental/README.md`.
+as pending promotions: `fit_em_natgrad.jl` did not meet the promotion criteria,
+so `algorithm = :natgrad` is deliberately not exposed, and `fit_em_closed.jl` /
+`em_squarem_fit.jl` rest on a closed-form Λ step whose apparent descent was an
+artefact of a dropped-zeros sparsity pattern. `test/test_lambda_p100.jl` now
+asserts that the step *ascends* the marginal, so these alternatives stay
+unwired unless there is a new technical case for promotion. The rest are
+superseded predecessors of the production engine (the `estep_*` mode-finder
+variants) or diagnostic oracles kept for reproducibility. See
+`src/experimental/README.md` for the current boundary.

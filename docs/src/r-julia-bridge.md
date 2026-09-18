@@ -1,6 +1,6 @@
 # R ↔ Julia bridge
 
-!!! note "Status — Experimental bridge + fixture-backed coefficient-scale gate (#370/#383/#385) + measured timing (#372/#389)"
+!!! note "Status — Experimental bridge with fixture-backed coefficient-scale checks and measured timing"
     DRModels.jl exposes `drm_bridge()`, a marshalling-friendly entry point used by
     the optional `drmTMB(formula, ..., engine = "julia")` backend for supported
     models. The companion R glue lives in the **drmTMB R repository** via
@@ -12,7 +12,7 @@
     numbers only). The eleven cells below all record **drmTMB 0.7.0** in their
     `expected.meta.toml` files:
 
-    Original six (#370 / refresh #392):
+    Six baseline cells:
 
     - `gaussian-locscale`
     - `gaussian-bivariate-rho12`
@@ -21,14 +21,14 @@
     - `proportion-beta`
     - `meta-analysis-V`
 
-    +4 FE cohort (#383):
+    Four additional fixed-effect cells:
 
     - `count-poisson`
     - `positive-gamma`
     - `binomial-trials`
     - `positive-lognormal`
 
-    NB2 location–scale FE (#385):
+    One NB2 location–scale fixed-effect cell:
 
     - `nbinom2-dispersion` (`y ~ x; sigma ~ x`)
 
@@ -43,16 +43,13 @@
     vs installed drmTMB **0.6.0** at the time; BLAS/OMP threads = 1; 1 warmup +
     5 timed reps):
 
-    - Original six (#372) — the warm median favoured Julia on every cell
-      measured; the ratios are retained in
-      `docs/dev-log/evidence/2026-08-03-372-six-cell-timing.md`.
-    - +4 FE + `nbinom2-dispersion` (#389) — likewise on every cell; ratios in
-      `docs/dev-log/evidence/2026-08-05-389-plus5-bridge-timing.md`.
+    - The six baseline cells — the warm median favoured Julia on every cell measured.
+    - The four additional cells plus `nbinom2-dispersion` — likewise on every cell.
 
     The timing artifacts were not re-measured on the 0.7.0 fixture anchor. They
     are neither a general “Nx faster for all drmTMB models” claim nor the
     verified q=4 PLSM single-fit cell at p=100 (`report/comparison-grid.md`), which
-    is a different measurement from the #376 scaling campaign below.
+    is a different measurement from the separate q=4 scaling comparison.
     For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
 
 ## The idea
@@ -117,7 +114,7 @@ verify every response family, profile interval or bootstrap workflow.
 ### One modelled missing predictor — development admission
 
 !!! warning "Experimental"
-    Exported for evaluation; fenced for v1.0 (D-181). API and numerics may
+    Exported for evaluation. API and numerics may
     change; not covered by the R-parity scoreboard.
 
 The R bridge also has a deliberately narrow development route for one modelled
@@ -269,14 +266,14 @@ label_fit = drm_bridge(formula = "y ~ x + I(x^2); sigma ~ 1",
 label_fit["coef_names"]
 ```
 
-## Coefficient-scale parity gate (#370 / #383 / #385)
+## Coefficient-scale parity checks
 
 Behind `DRM_PARITY_TESTS=1`, `test/parity/runparity_bridge.jl` fits the
 admitted cohort fixtures (original six + four FE families +
 `nbinom2-dispersion`) through `drm_bridge` and compares against committed
 `expected.toml` numbers via `compare_bridge` (same coef bar as Workflow G /
 `compare_fit`: default `atol_coef=1e-6`, `rtol_coef=1e-4`, with per-case
-`[tol]` overrides). Native `drm()` parity (`runparity.jl`, #17) still runs in
+`[tol]` overrides). Native `drm()` parity (`runparity.jl`) still runs in
 the same env gate. `xfam-external-gllvm` remains OUT (cross-package estimand).
 
 MIT/GPL: fixtures are **generated numeric outputs only** — never vendored
@@ -284,22 +281,21 @@ drmTMB source.
 
 ## Open design questions
 
-Tracked in the issue ledger:
+The following boundaries remain:
 
 - **Broader phylo / pedigree / relatedness marshalling** — the first Newick
   tree slice works for one Gaussian `phylo(1 | species)` mean term, and the q=2
   direct-export branch adds fixture-level `K` / `A` evidence. Broad pedigree or
   relatedness marshalling, `Ainv`, multiple structured terms, slopes, and
-  non-Gaussian phylogenetic models still need separate parity tests (issue #19).
+  non-Gaussian phylogenetic models still need separate parity tests.
 - **Result-shape parity** — exact field-by-field equivalence between a native
-  drmTMB fit and the Julia-engine fit (issue #5), guarded by the R-parity suite
-  (Workflow G, issue #17) plus the `drm_bridge` fixture path (#370).
+  drmTMB fit and the Julia-engine fit, guarded by the R-parity suite and the
+  `drm_bridge` fixture path.
 - **Round-trip `bf()` formulas** — an R formula and its Julia translation must
   describe the same model; the parity tests enforce this once R is available in CI.
-- **Broader measured speed campaigns** — the six-cell fixture timing in #372 is
-  retained and scoped; #376 measured the ROADMAP nrep=4 / p>100 q4 scaling
-  head-to-head on Totoro (the earlier extrapolated single-number speedup is **retired** — see
-  `docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`). Other large-n
+- **Broader measured speed campaigns** — the six-cell fixture timing is retained
+  and scoped; a q=4 scaling comparison measured repeated p>100 fits head-to-head
+  on Totoro. The earlier extrapolated single-number speedup is **retired**. Other large-n
   campaigns remain separate (Rose: do not invent unmeasured ratios).
 
 Use the bridge for Gaussian one-response / two-response, the admitted Gaussian

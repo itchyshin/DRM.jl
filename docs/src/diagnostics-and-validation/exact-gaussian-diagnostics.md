@@ -1,19 +1,19 @@
 # Exact-Gaussian Diagnostics
 
 !!! note "Status - developer evidence"
-    This page tracks exact-Gaussian diagnostic lanes that are useful for
+    This page documents exact-Gaussian diagnostic work that is useful for
     source-code review and future parity work. It is not a public optimizer
     promotion, not an R bridge promotion, and not interval-coverage evidence.
 
 ## Current Row-Contract Donor
 
-The location-only phylogenetic mean lane lives in `src/location_only.jl`. Its
-current row contract is guarded by `test/test_location_only_reml_mme.jl` and the
-validation artifacts under `docs/dev-log/validation-status/`.
+The location-only phylogenetic mean implementation lives in
+`src/location_only.jl`. Its current contract is guarded by
+`test/test_location_only_reml_mme.jl` and retained validation evidence.
 
 | Route | Estimator status | Diagnostic rows | Boundary |
 | --- | --- | --- | --- |
-| `gaussian_loconly_phylo_reml` | Exact-Gaussian location-only REML diagnostics | comparator plan, external package/version probe, derivative finite-difference status, guarded line-search status, boundary grid, profile-axis sanity, variance-component point status | Internal developer evidence only: no q4 claim, no non-Gaussian claim, no R bridge promotion, no interval coverage claim, and `ai_reml_ready = false`. |
+| `gaussian_loconly_phylo_reml` | Exact-Gaussian location-only REML diagnostics | comparator plan, external package/version probe, derivative finite-difference status, guarded line-search status, boundary grid, profile-axis sanity, variance-component point status | Internal developer evidence only: no q4 claim, no non-Gaussian claim, no R bridge promotion, no interval coverage claim, and no claim of production readiness. |
 
 ## Second Sparse Candidate
 
@@ -44,7 +44,7 @@ REML or AI-REML claim.
 
 | Artifact | What It Supports | What It Does Not Support |
 | --- | --- | --- |
-| `docs/dev-log/scout/2026-06-22-exact-gaussian-structured-source-map.md` | Source map from the current REML diagnostic donor to the two-structured Gaussian sparse candidate. | Any new estimator, bridge, coverage, q4, or non-Gaussian claim. |
+| Design analysis | Source map from the current REML diagnostic donor to the two-structured Gaussian sparse candidate. | Any new estimator, bridge, coverage, q4, or non-Gaussian claim. |
 | `test/test_two_structured_gaussian_sparse.jl` | Dense/sparse agreement, gradient sanity, recovery smoke, and public `algorithm = :sparse` routing for the two-structured Gaussian ML route. | REML/AI-REML status or interval calibration. |
 | `test/test_location_only_reml_mme.jl` | Exact-Gaussian location-only REML diagnostic row contracts. | q4 Patterson-Thompson REML, non-Gaussian Laplace routes, or R bridge parity. |
 

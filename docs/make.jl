@@ -78,7 +78,6 @@ makedocs(
                 "developer-notes/adding-families.md",
                 "developer-notes/source-map.md",
                 "developer-notes/reml-q4-exact-gradient.md",
-                "developer-notes/lss-sparse-multi-component.md",
                 "API stability" => "api-stability.md",
                 "Changelog" => "changelog.md",
             ],

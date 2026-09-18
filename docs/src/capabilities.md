@@ -37,7 +37,7 @@ live R; `test/parity/README.md:9`) is separate and gated off by default
 | NegBinomial2 | `src/negbinomial.jl` | yes | intercept + slope + crossed + phylo | **Tested** — `test/test_nbinom2.jl`, `test/test_nbinom2_re.jl`, `test/test_nbinom2_slope_re.jl`, `test/test_crossed_laplace_generic.jl:233` |
 | TruncatedNegBinomial2 | `src/negbinomial.jl` | yes | — | **Tested** — `test/test_truncated_nb.jl` |
 | Beta | `src/beta.jl` | yes | intercept + slope + crossed + phylo | **Tested** — `test/test_beta.jl`, `test/test_beta_re.jl`, `test/test_beta_slope_re.jl`, `test/test_crossed_laplace_generic.jl:100` (crossed: internal kernel only, no `drm()` route test) |
-| BetaBinomial | `src/betabinomial.jl` | yes | intercept + slope + crossed + phylo | **Tested** — `test/test_betabinomial.jl`, `test/test_betabinomial_re.jl`, `test/test_betabinomial_slope_re.jl`, `test/test_betabinomial_phylo_laplace.jl`, `test/test_betabinomial_crossed_laplace.jl` (#166; constant-σ only) |
+| BetaBinomial | `src/betabinomial.jl` | yes | intercept + slope + crossed + phylo | **Tested** — `test/test_betabinomial.jl`, `test/test_betabinomial_re.jl`, `test/test_betabinomial_slope_re.jl`, `test/test_betabinomial_phylo_laplace.jl`, `test/test_betabinomial_crossed_laplace.jl` (constant-σ only) |
 | Binomial | `src/binomial.jl` | yes | intercept + crossed + phylo | **Tested** — `test/test_binomial.jl`, `test/test_binomial_re.jl`, `test/test_crossed_laplace_generic.jl:224` (slope REs refused, `src/binomial.jl:115`) |
 | Gamma | `src/gamma.jl` | yes | intercept + slope + crossed + phylo | **Tested** — `test/test_gamma.jl`, `test/test_gamma_re.jl`, `test/test_gamma_slope_re.jl`, `test/test_crossed_laplace_generic.jl:83` (crossed: internal kernel only, no `drm()` route test) |
 | LogNormal | `src/lognormal.jl` | yes | intercept + slope + phylo/relmat | **Tested** — `test/test_lognormal.jl`, `test/test_lognormal_re.jl`, `test/test_lognormal_slope_re.jl`, `test/test_lognormal_structured_mean.jl` (`animal`/`spatial` refused, `src/lognormal.jl:70`) |
@@ -115,7 +115,7 @@ verified sparse augmented-state Laplace engine (`src/sparse_laplace_glmm.jl`).
 | Gamma | **Tested** — `test/test_gamma_beta_phylo_laplace.jl`, gate `test/test_nongaussian_phylo_grad_gate.jl` |
 | Binomial | **Tested** — `test/test_binomial_phylo_laplace.jl`, gate `test/test_nongaussian_phylo_grad_gate.jl` |
 | Beta | **Tested** (gradient reported honestly — looser than 1e-6) — `test/test_gamma_beta_phylo_laplace.jl`, `test/test_nongaussian_phylo_grad_gate.jl` |
-| BetaBinomial | **Tested** (constant σ only, #166) — `test/test_betabinomial_phylo_laplace.jl` |
+| BetaBinomial | **Tested** (constant σ only) — `test/test_betabinomial_phylo_laplace.jl` |
 | CumulativeLogit (ordinal) | **Tested** (intercept-only) — `src/cumulative.jl:518`, `test/test_cumlogit_phylo.jl` |
 
 ## Location–scale with a phylogenetic random effect on the scale (q=2 route)
@@ -127,7 +127,7 @@ exact O(p) outer gradient (`src/locscale_*.jl`).
 | Capability | Source | Status |
 |---|---|---|
 | Two-axis (mean + log-dispersion) kernels — NB2, Gamma | `src/locscale_kernels.jl:56`, `:94` | **Tested** (analytic grad/Hessian vs ForwardDiff) — `test/test_locscale_kernels.jl` |
-| Two-axis kernels — Beta, BetaBinomial (logit mean, precision φ = exp(−2ψ)) | `src/locscale_kernels.jl:129`, `:188` | **Tested** — engine-lane recovery through a structured `C⁻¹` plus an off-optimum FD gradient gate, `test/test_locscale_structured.jl`; whitened paired route `test/test_locscale_whitened.jl` |
+| Two-axis kernels — Beta, BetaBinomial (logit mean, precision φ = exp(−2ψ)) | `src/locscale_kernels.jl:129`, `:188` | **Tested** — recovery through a structured `C⁻¹` plus an off-optimum FD gradient gate, `test/test_locscale_structured.jl`; whitened paired route `test/test_locscale_whitened.jl` |
 | Two-axis kernels — Gaussian mean leaf (η = mean, ψ = log σ_res) | `src/locscale_kernels.jl:266` | **Tested** — driven by the public Gaussian σ-phylo route (`src/gaussian_locscale_phylo.jl:607`, reached from `drm()` at `src/gaussian_core.jl:639`), `test/test_gaussian_locscale_phylo.jl` |
 | Two-axis kernels — Poisson (ψ-axis null: mean-only leaf), LogNormal | `src/locscale_kernels.jl:216`, `:239` | **Impl, untested** — no default-suite test asserts their values; `Val(:poisson)` appears only in a *negative* assertion (`test/test_locscale_inner_status.jl:468`), and the LogNormal leaf's only test, `test/test_corr_locscale_equiv.jl`, is commented out of the suite (`test/runtests.jl:222`) |
 | q=2 augmented inner mode-finder | `src/locscale_inner.jl` | **Tested** — `test/test_locscale_inner.jl` |
@@ -218,7 +218,7 @@ residual correlation ρ12. This is the verified core engine (`src/sparse_phy.jl`
 | Sparse augmented phylo precision `kron(Q, Λ⁻¹)` foundation | `src/sparse_phy.jl` | **Tested** — `test/runtests.jl:13`, `test/test_step1_sparse.jl`, `test/test_crossed_selected_inverse.jl` |
 | Takahashi selected inverse | `src/takahashi_selinv.jl` | **Tested** — `test/test_crossed_selected_inverse.jl`, used throughout the gradient gates |
 | Public `bf(mu1=…, mu2=…, sigma1=…, sigma2=…, rho12=…)` q=4 front end | `src/gaussian_bivariate.jl` | **Tested** — `test/test_gaussian_bivariate_phylo.jl` (recovers Σ_a, β; validates marker constraints) |
-| q=4 `relmat` / `animal` / fixed-range `spatial` providers (level-indexed `Q_cond`) | `src/gaussian_bivariate.jl`, `src/sparse_em_fit.jl` (`make_problem_from_Q`) | **Tested** — `test/test_gaussian_bivariate_q4_structured.jl` (#189); spatial uses fixed `spatial_range` (default = mean pairwise distance); joint ρ estimation deferred |
+| q=4 `relmat` / `animal` / fixed-range `spatial` providers (level-indexed `Q_cond`) | `src/gaussian_bivariate.jl`, `src/sparse_em_fit.jl` (`make_problem_from_Q`) | **Tested** — `test/test_gaussian_bivariate_q4_structured.jl`; spatial uses fixed `spatial_range` (default = mean pairwise distance); joint ρ estimation deferred |
 | `Σ_a` stored on the fit (`fit.ranef.Sigma_a`, axes `mu1,mu2,sigma1,sigma2`) and surfaced via `vc(fit)` / `ranef(fit)` / `coevolution_cor` | `src/gaussian_ranef.jl`, `src/coevo_accessors.jl` | **Tested** — `test/test_gaussian_bivariate_phylo.jl`, `test/test_coevo_accessors.jl`, `test/test_gaussian_bivariate_q4_structured.jl` |
 | Default `q4_vcov=true` path → finite vcov, Wald SEs for the fixed effects | `src/gaussian_bivariate.jl` | **Tested** — `test/test_gaussian_bivariate_phylo.jl` (B2 testset) |
 | Non-tree `bootstrap_sigma_a` for q=4 structured providers | `src/bootstrap_q4_phylo.jl` | **Rejected** — clear `ArgumentError`; tree-driven phylo bootstrap only |
@@ -284,13 +284,13 @@ above, and it does so by delegation rather than by a second engine.
     comparable across fixed-effect structures). Wired cells: the fixed-effect
     Gaussian location–scale model (`test/test_reml.jl`); a single Gaussian mean
     intercept `(1 | g)` on the Woodbury spine (`test/test_reml_ordinary_ranef.jl`,
-    in the default suite at `test/runtests.jl:40`; #439); Location–Scale–Scale models
+    in the default suite at `test/runtests.jl:40`); Location–Scale–Scale models
     (`sd(g) ~ z`, `sd(species, phylogenetic) ~ z`, and multi-component LSS;
-    `test/test_lss_reml.jl`, `test/test_lss_sparse.jl`; #558); and the
+    `test/test_lss_reml.jl`, `test/test_lss_sparse.jl`); and the
     bivariate q=4 location–scale engine (`test/test_reml_q4_allaxes.jl`).
     σ-RE, random slopes, and non-Gaussian REML stay rejected. This is not AI-REML.
 
-    **Normalisation convention (#477, resolved 2026-08-25):** every REML route
+    **Normalisation convention:** every REML route
     in DRModels.jl now reports the **normalised** Patterson–Thompson restricted
     log-likelihood, so `reml_loglik` is directly comparable to lme4's,
     glmmTMB's, TMB's and drmTMB's `logLik()`. The bivariate q=2/q=4 Laplace
@@ -344,8 +344,8 @@ A marshalling-friendly boundary for `drmTMB(..., engine = "julia")`
 | Capability | Source | Status |
 |---|---|---|
 | `marginal=:LA` (Laplace) — the default | engine-wide | **Tested** — implicitly by every fit test |
-| `marginal=:VA` Poisson `(1\|g)` public path | `src/poisson.jl`, `_fit_poisson_ranef_va` | **Experimental** — routes to the existing ELBO kernel; `DrmFit.marginal === :VA`; mixed LA/VA AIC/LRT error; `aicc` errors on VA before the small-n `Inf` short-circuit. **Does not close #136.** |
-| `marginal=:VA` Binomial / NB2 / Gamma / Beta `(1\|g)` | family `drm()` + `_fit_*_ranef_va` | **Experimental** — same keyword / `_va_reject` / `DrmFit.marginal` tag as Poisson; scale families require `sigma ~ 1`. Mixed LA/VA AIC/LRT covered on NB2 as well as Poisson. **Does not close #136.** |
+| `marginal=:VA` Poisson `(1\|g)` public path | `src/poisson.jl`, `_fit_poisson_ranef_va` | **Experimental** — routes to the existing ELBO kernel; `DrmFit.marginal === :VA`; mixed LA/VA AIC/LRT error; `aicc` errors on VA before the small-n `Inf` short-circuit. |
+| `marginal=:VA` Binomial / NB2 / Gamma / Beta `(1\|g)` | family `drm()` + `_fit_*_ranef_va` | **Experimental** — same keyword / `_va_reject` / `DrmFit.marginal` tag as Poisson; scale families require `sigma ~ 1`. Mixed LA/VA AIC/LRT covered on NB2 as well as Poisson. |
 | `method=:VA` on non-Gaussian `drm()` | `_reject_method_as_marginal` | **Rejected** — `method` is ML/REML; pointer to `marginal` |
 
 ## Absent / out-of-scope (explicit)
@@ -354,24 +354,23 @@ To avoid overclaiming, these are confirmed **not** implemented in this worktree:
 
 - **Missing-data handling** (corrected 2026-09-02: this bullet was stale —
   several routes are implemented on `main`). What exists: (1) listwise-deletion
-  predictor preprocessing, `src/missing_data.jl` (#49, `src/DRModels.jl:136`) — pure
+  predictor preprocessing, `src/missing_data.jl` (`src/DRModels.jl:136`) — pure
   data preprocessing, explicitly documented as NOT FIML; (2) the exported joint
   missing-predictor routes (`mi()`, `JointDrmFit`/`JointTwoDrmFit`/
   `JointFiniteDrmFit`, `imputed`, `miss_control`) — five files included at
-  `src/DRModels.jl:137–143` (#563), tested by `test/test_joint_missing_*.jl`
+  `src/DRModels.jl:137–143`, tested by `test/test_joint_missing_*.jl`
   (`test/runtests.jl:435–446`) — **Experimental**: exported for evaluation;
-  fenced for v1.0 (D-181); API and numerics may change; not covered by the
+  API and numerics may change; not covered by the
   R-parity scoreboard; (3) the Gaussian observed-response mask route,
-  `src/gaussian_core.jl` (`_observed_response_mask`, `:320`; #517, commit
-  `53141006`); (4) missing-response handling on the location-scale-scale
-  `sd()` routes, `src/gaussian_lss.jl` (`has_missing_response`; #559, commit
-  `140460a0`), **Tested** — `test/test_lss_missing_response.jl`
+  `src/gaussian_core.jl` (`_observed_response_mask`, `:320`); (4)
+  missing-response handling on the location-scale-scale `sd()` routes,
+  `src/gaussian_lss.jl` (`has_missing_response`), **Tested** — `test/test_lss_missing_response.jl`
   (`test/runtests.jl:68`). Still absent: general multiple imputation for
   missing predictors outside the joint-model routes, and an `na.action`-style
   option.
 - **χ̄² boundary inference** — see Inference table.
 - **Cross-family bivariate models** — see Bivariate table.
-- **Variational (VA/ELBO) public path beyond `(1\|g)` on Poisson / Binomial / NB2 / Gamma / Beta** — Experimental random-intercept VA only (`sigma ~ 1` where the family has a scale). Phylo, crossed, correlated slopes, ZI/hu remain open on #136. `_fit_va` still errors for unwired families. Scoped #136e public Gamma RI smoke: `report/va-vs-laplace-bias.md` (LA ≈ VA on shape `α`; LA faster; does not close #136).
+- **Variational (VA/ELBO) public path beyond `(1\|g)` on Poisson / Binomial / NB2 / Gamma / Beta** — Experimental random-intercept VA only (`sigma ~ 1` where the family has a scale). Phylo, crossed, correlated slopes, and ZI/hu are not yet wired. `_fit_va` still errors for unwired families. The scoped Gamma random-intercept comparison is `report/va-vs-laplace-bias.md` (LA ≈ VA on shape `α`; LA faster).
 - ~~**Dense/bivariate `meta_V`** — diagonal known variances only.~~ (corrected
   2026-09-02: false — bivariate known sampling covariance is implemented via
   `meta_vcov_bivariate`; see the Meta-analysis table.)
@@ -386,10 +385,10 @@ To avoid overclaiming, these are confirmed **not** implemented in this worktree:
   were promoted and are wired — see the Inference table and `src/DRModels.jl:55`/`:81`
   — this bullet listed them as unmigrated by mistake). What remains in
   `src/experimental/` (`ls src/experimental`, per its own README) is: two
-  unwired variants not exposed (`fit_em_natgrad.jl` — #13 decision-gate FAIL, a
+  unwired variants not exposed (`fit_em_natgrad.jl` — a
   recorded negative result; `fit_em_closed.jl`, `em_squarem_fit.jl` — the
-  closed-form Λ step, whose #472 descent was an artefact of a dropped-zeros
-  sparsity pattern and was repaired in #577); four superseded predecessors of the production engine
+  closed-form Λ step, whose earlier descent was an artefact of a dropped-zeros
+  sparsity pattern); four superseded predecessors of the production engine
   (`fit_q4_tmbgrad.jl`, `fit_ml_q4.jl`, `fit_ml_warm.jl`, `fit_q4_p100_tmb.jl`,
   and the four `estep_*.jl` mode-finder hardenings); two diagnostic oracles
   (`q4_em_dense.jl`, `fit_sparse_direct.jl`); and a stale pre-promotion copy of
@@ -406,7 +405,7 @@ The highest-value gaps where code exists but no default-suite test guards it:
    `q4_em_dense`, or `fit_q4_tmbgrad` were wired into the public API, each would
    need its own recovery/gradient test — but per `src/experimental/README.md`
    several of these are recorded *negative* results (e.g. `fit_em_natgrad`
-   failed the #13 decision gate) that the project has decided not to expose,
+   is a recorded negative result) that the project has decided not to expose,
    not pending promotions. Today none of `src/experimental/` is reachable from
    `DRModels.jl` or tested in the default suite.
 2. **Labelled q=4 coevolution-correlation accessor.** (corrected 2026-09-02:
@@ -430,7 +429,7 @@ The highest-value gaps where code exists but no default-suite test guards it:
      `test/runtests.jl:222`. Each needs a ForwardDiff kernel-gradient gate of
      the kind `test/test_locscale_kernels.jl` already applies to NB2/Gamma.
    - **Tested kernels with no public route.** Beta and BetaBinomial are gated
-     *and* recover parameters at the engine lane
+     *and* recover parameters in the engine tests
      (`test/test_locscale_structured.jl`) but are unreachable from `drm()`:
      only `src/negbinomial.jl:94` and `src/gamma.jl:59` call
      `_fit_locscale_frontend`, even though `_ls_frontend_design` already carries

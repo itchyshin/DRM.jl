@@ -7,7 +7,7 @@
     parameters are estimated numerically; for the non-Gaussian
     families (Poisson, NB2, Binomial, Gamma, Beta, BetaBinomial) it is fit by the
     sparse augmented-state Laplace engine (constant `sigma` by default).
-    **Non-Gaussian phylogenetic location–scale** (#202) ships for
+    **Non-Gaussian phylogenetic location–scale** ships for
     `NegBinomial2()` / `Gamma()` via the coupled tag
     `(1 | p | phylo(species))` on **both** `mu` and `sigma` (grammar B). Dual
     issue-text `phylo(1|sp)` on both axes is **not** the public acceptance
@@ -62,7 +62,7 @@ and rates are all correlated across related species. For a non-Gaussian family t
 marginal is no longer closed-form, so `phylo(1 | species)` routes to the **sparse
 augmented-state Laplace** engine (the same machinery behind the q=4 PLSM, here
 with a non-Gaussian data term). Six families carry the phylo route today:
-**Poisson, NegBinomial2, Binomial, Gamma, Beta, BetaBinomial** (#166).
+**Poisson, NegBinomial2, Binomial, Gamma, Beta, BetaBinomial**.
 
 The call site is identical — add `phylo(1 | species)` to the mean formula, pass
 `tree =`. Here is a phylogenetic Poisson count model: a shared tree effect on
@@ -99,7 +99,7 @@ re_sd(fit)[:species]      # phylogenetic SD on log λ (≈ 0.45)
 
 `BetaBinomial()` follows the same shape, with `cbind(successes, failures)` for
 the known-trials response and constant overdispersion via `sigma ~ 1`
-(`φ = 1/σ²`, #166):
+(`φ = 1/σ²`):
 
 ```@example phybb
 using DRModels, Random, LinearAlgebra
@@ -134,9 +134,9 @@ A few things worth knowing:
   `HANDOVER.md` §6 for the location–scale setting.
 - **Mean-only phylo keeps constant dispersion.** The default non-Gaussian phylo
   route varies the **mean** with predictors and the structured effect and keeps
-  `sigma ~ 1`. Fixed predictors on `sigma` (#164) are separate. For a *structured*
-  effect on both axes, see **Phylogenetic location–scale** below (#202).
-  `BetaBinomial()`'s phylo/crossed mean routes remain constant-σ (#166).
+  `sigma ~ 1`. Fixed predictors on `sigma` are separate. For a *structured*
+  effect on both axes, see **Phylogenetic location–scale** below.
+  `BetaBinomial()`'s phylo/crossed mean routes remain constant-σ.
 - **Other families, same shape.** Swap `Poisson()` for `NegBinomial2()` (counts
   with overdispersion), `Binomial()` or `BetaBinomial()` (`cbind(s, f) ~ …` for
   successes/trials, the latter with extra-binomial overdispersion), `Gamma()`, or

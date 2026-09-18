@@ -148,8 +148,8 @@ reporting which value you assumed.
 **And if you have no idea at all, still pass `V` with `cor12 = 0`** rather than
 omitting `V`: supplying the sampling *variances* matters separately from the
 correlation, and omitting `V` entirely was measurably worse (+0.091) than
-assuming independence (+0.062). Evidence:
-`docs/dev-log/evidence/2026-08-16-a12-biv-meta-recovery.md`.
+assuming independence (+0.062). This comparison comes from the package's
+parameter-recovery checks for the bivariate meta-analysis route.
 
 ## 4. What is *not* covered
 
