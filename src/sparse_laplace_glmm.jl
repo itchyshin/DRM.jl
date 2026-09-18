@@ -1506,8 +1506,7 @@ Beta-binomial sparse-Laplace fit with a phylogenetic random intercept
 the verified Beta-family nuisance Laplace spine
 ([`_fit_phylo_mean_laplace_nuisance`](@ref)) with the `:betabinomial_fixed`
 kernel — shifted digamma/trigamma/polygamma arguments (`s+a`, `n-s+b`, `n+a+b`)
-replace Beta's `(a, b)` (#166; see
-`docs/dev-log/plans/2026-08-02-166-betabinomial-kernel-design.md`).
+replace the Beta kernel's `(a, b)` arguments.
 """
 function _fit_betabinomial_phylo_laplace(fam, s, ntr, Xμ, labels, tree, nmμ, nmσ,
                                          grp, g_tol; se::Bool = true,
@@ -3149,8 +3148,7 @@ Beta-binomial sparse-Laplace fit with two crossed random intercepts on the
 logit mean, e.g. `(1 | g) + (1 | h)`, constant-σ (overdispersion) only. Reuses
 the verified Beta-family crossed nuisance Laplace spine
 ([`_fit_crossed_mean_laplace_nuisance`](@ref)) with the `:betabinomial_fixed`
-kernel (#166; see
-`docs/dev-log/plans/2026-08-02-166-betabinomial-kernel-design.md`).
+kernel.
 """
 function _fit_betabinomial_crossed_laplace(fam, s, ntr, Xμ, comps, nmμ, nmσ, g_tol;
                                            se::Bool = false, polish_iterations::Int = 0)

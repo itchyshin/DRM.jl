@@ -14,24 +14,20 @@ via Takahashi selected inverse — never forms a dense p×p Σ_phy), optimised b
 LBFGS with a fast-path-then-robust mode-finder.
 
 For what is implemented and how far each route is tested, see the capability
-matrix in the documentation. Measured comparisons against drmTMB, with their
-run conditions, live in `report/comparison-grid.md` and `HANDOVER.md` §2; they
-are specific to the model and data measured and are deliberately not quoted as
-figures here (HANDOVER.md §2, "Do NOT oversell").
+matrix in the documentation. Measured comparisons against drmTMB include their
+run conditions in `report/comparison-grid.md`; they are specific to the model
+and data measured and are deliberately not quoted as package-wide figures here.
 
-NOTE (see HANDOVER.md): the engine files were migrated as the poc's script-style
-includes (chain: fit_q4_sparse_tmb → fit_ml_q4 → sparse_em_fit → sparse_aug_plsm
-→ sparse_phy / takahashi_selinv). Inference (Wald + profile + parametric bootstrap)
-is wired in `src/inference.jl`. **Public / included on tip:** opt-in REML
-(`src/reml_q4.jl`, `drm(method = :REML)`; restricted correction covers all four
-among-axis axes — see #11) and the conjugate-EM Gaussian phylo-mean solver
-(`src/location_only.jl`, `algorithm = :em` — see #12). **#13 decision gate FAIL
-(2026-08-01):** natural-gradient EM stalls vs sparse TMB on q4_p100 — do **not**
-expose `algorithm = :natgrad`; the reusable Fisher metric lives in
-`src/lc_metric.jl`. **Still experimental (not wired):** SQUAREM EM, trust-region &
-line-search E-steps, dense q=4 EM, warm-start fit variants, and the leftover
-`src/experimental/location_only.jl` / `fit_em_natgrad.jl` prototypes — do not
-treat that directory as the public REML / `:em` surface.
+The engine retains the proof-of-concept's script-style organisation. Inference
+provides Wald, profile, and parametric-bootstrap intervals. **Public:** opt-in
+REML (`drm(method = :REML)`; its restricted correction covers all four
+among-axis axes) and the conjugate-EM Gaussian phylo-mean solver
+(`algorithm = :em`). A natural-gradient EM implementation failed the required
+likelihood-parity check on `q4_p100`, so `algorithm = :natgrad` is not exposed;
+the reusable Fisher metric is retained as engine infrastructure. **Experimental
+prototypes are not wired:** SQUAREM EM, trust-region and line-search E-steps,
+dense q=4 EM, and warm-start variants. Do not treat them as the public REML or
+`:em` surface.
 """
 module DRModels
 

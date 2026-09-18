@@ -1,6 +1,6 @@
 # API stability
 
-*The stability promise of the v0.7 line, stated precisely. Machine-checked by `test/test_api_stability.jl`, which
+*The stability promise of the v0.7 line, stated precisely. Machine-checked by the package API-stability gate, which
 classifies **every** exported name into exactly one tier and fails if a new export appears
 unclassified, a stable name vanishes, or a tier changes without a reviewed edit.*
 
@@ -19,8 +19,8 @@ their names, meanings, and conventions across the `0.7.x` line and beyond. The c
 
 ## The three tiers
 
-**Stable** — the promise above. The authoritative list is the `API_STABLE` vector in
-`test/test_api_stability.jl`; the gate keeps this page and the code from drifting apart.
+**Stable** — the promise above. The authoritative list is the machine-checked
+stable API contract; its gate keeps this page and the code from drifting apart.
 
 **Experimental — exported, usable, exempt.** These work today and are tested, but their shape may
 change between releases, and each carries its reason:
@@ -45,9 +45,9 @@ change between releases, and each carries its reason:
   continue to settle.
 
 **Engine** — the computational spine (`AugProblem`, `make_problem`, `fit_q4_sparse_tmb`,
-`estep_mode`, the `coevo_*` and `fz_*` families, tree utilities, packers). Exported so scripts,
-benchmarks, and the dev-log's instruments can reach it; stable in practice but **not** part of the
-promise, the same way a language's internals are not.
+`estep_mode`, the `coevo_*` and `fz_*` families, tree utilities, packers). Exported for advanced
+scripts and benchmarks; stable in practice but **not** part of the promise, the same way a
+language's internals are not.
 
 ## What the promise does and does not cover
 

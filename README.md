@@ -8,10 +8,10 @@ the R package [drmTMB](https://github.com/itchyshin/drmTMB).
 > **Early v0.7.1 release.** This repo migrates a *verified proof-of-concept*
 > engine; the public API and module layout are still expected to evolve across
 > the 0.x series, with breaking changes requiring a minor-version bump.
-> See [HANDOVER.md](HANDOVER.md) (verified engine), [ROADMAP.md](ROADMAP.md)
-> (phases), and [AGENTS.md](AGENTS.md) (the team) for what is solid vs. planned.
-> The [Documenter site](https://itchyshin.github.io/DRModels.jl/) mirrors drmTMB's
-> navbar, with every page status-tagged.
+> **Package users:** start with the [Documenter site](https://itchyshin.github.io/DRModels.jl/)
+> and its capability matrix. **Contributors:** see [HANDOVER.md](HANDOVER.md) for
+> engineering provenance, [ROADMAP.md](ROADMAP.md) for the development plan, and
+> [AGENTS.md](AGENTS.md) for team responsibilities.
 
 ## Why
 
@@ -112,7 +112,7 @@ src/experimental/   leftover prototypes NOT wired into the public API
 bench/              runnable benchmarks + the q4_p100 fixtures + R fixture gen
 test/               runtests.jl + migrated correctness checks
 report/             53 design/provenance/benchmark reports (the full poc record)
-docs/               Documenter site (mirrors drmTMB navbar) + dev-log; CONTRACT.md
+docs/               Documenter site (mirrors drmTMB navbar); CONTRACT.md
 AGENTS.md ROADMAP.md   the 12-persona team + the phase plan
 .claude/workflows/  10 scripted workflows (W0/Q/A/B/D/F/G/H/S/R)
 ```
@@ -152,14 +152,13 @@ lives under opt-in
 **Verified engine (foundation):** the q=4 ML location-scale single fit — 2.18×
 over drmTMB, O(p) to p=10,000, valid CIs where drmTMB's Hessian is singular.
 **Interval claims are capability parity, not coverage** — the R↔Julia ledger's
-`coverage_claimed` fences are permanent documented boundaries; measured coverage campaigns exist in the
-dev-log evidence but no route claims calibrated intervals as a supported
-guarantee.
+`coverage_claimed` fences are permanent documented boundaries. Some routes have
+measured coverage studies, but no route claims calibrated intervals as a
+supported guarantee.
 Per-family engine-vs-engine timings, with their caveats stated, are
 consolidated in [report/speed-per-family.md](report/speed-per-family.md); the
-R↔Julia capability ledger itself lives in drmTMB's generated
-`inst/extdata/julia-capabilities.tsv`, where rows are promoted only on
-measured evidence.
+R↔Julia capability status is maintained with drmTMB; a route is promoted only
+after measured evidence.
 
 **Inference:** Wald + profile + parametric bootstrap; opt-in **REML**
 (`method = :REML`, with the model-selection guard) across the fixed-effect
