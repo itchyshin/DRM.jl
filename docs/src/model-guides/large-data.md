@@ -17,8 +17,7 @@ variance per axis plus cross-covariance, `nrep = 4` replicates) was timed end to
 end with the O(p) sparse-precision sampler. Iteration counts stay flat and the
 per-observation logLik is stable as the number of tips grows, which is the
 signature of near-linear scaling. The timings, the fitted scaling exponent and
-the caveats live in `report/comparison-grid.md`; the harness is
-`bench/run_scaling.jl`.
+the measured conditions and caveats are documented with the model guide.
 
 !!! note "On head-to-head claims"
     The scaling result above is measured for DRModels.jl alone, on a synthetic
@@ -28,8 +27,7 @@ the caveats live in `report/comparison-grid.md`; the harness is
     show DRModels.jl faster everywhere: Julia leads at the smallest tip count, and
     drmTMB is comparable or faster at larger ones under that protocol. Any
     extrapolated "N× faster" figure is **retired**. Read the numbers in
-    `report/comparison-grid.md` and `HANDOVER.md` rather than quoting a ratio
-    here.
+    the measured conditions rather than quoting a ratio here.
 
 ## Why it scales
 

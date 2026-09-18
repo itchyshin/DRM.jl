@@ -1,7 +1,7 @@
 # Testing likelihoods
 
 !!! note "Status — Implemented"
-    Mirrors drmTMB's [Testing likelihoods](https://itchyshin.github.io/drmTMB/articles/testing-likelihoods.html). This page describes how DRModels.jl validates each likelihood today, using the tests in `test/runtests.jl` and the engine-quality battery.
+    Mirrors drmTMB's [Testing likelihoods](https://itchyshin.github.io/drmTMB/articles/testing-likelihoods.html). This page describes how DRModels.jl validates each likelihood today, through regular package checks and the engine-quality battery.
 
 Every family and every random-effect path in DRModels.jl is checked the same way:
 **write the likelihood, then prove it numerically** before it is wired into the
@@ -9,8 +9,8 @@ public API. There are four standing gates.
 
 ## 1. Parameter recovery — the primary gate
 
-Each family has a `test/test_<family>.jl` that **simulates from known
-coefficients, fits, and asserts recovery** within tolerance. This is the
+Each family is checked by **simulating from known coefficients, fitting, and
+asserting recovery** within tolerance. This is the
 Definition-of-Done gate: it confirms the log-likelihood, the link functions, and
 the `sigma ↔ φ` mapping are all correct end to end. For example, the Gamma family
 checks that the log-mean coefficients come back and that the shape recovers

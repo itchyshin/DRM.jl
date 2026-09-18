@@ -125,15 +125,13 @@ adding a structured or phylogenetic effect.
 [`CumulativeLogit`](@ref) (ordinal) carries an ordinary random intercept
 `(1 | g)` or an *independent* random slope `(0 + x | g)` on `mu` via the same
 Gauss–Hermite scheme, and an intercept-only `phylo(1 | species)` through the
-same sparse Laplace engine (`src/cumulative.jl:518`,
-`test/test_cumlogit_phylo.jl`); the correlated form `(1 + x | g)` and the other structured
+same sparse Laplace engine; the correlated form `(1 + x | g)` and the other structured
 (phylo/relmat/animal/spatial) effects are not implemented yet.
 
 For the verified engine behind the phylogenetic models — the q=4 phylogenetic
 bivariate location–scale model, which matches drmTMB's fit and still returns
 usable Wald and bootstrap intervals where drmTMB's Hessian is singular — see
-`HANDOVER.md` and
-[`report/comparison-grid.md`](https://github.com/itchyshin/DRModels.jl/blob/main/report/comparison-grid.md).
+[Large data](large-data.md) for the scoped performance evidence.
 
 ## After the fit
 

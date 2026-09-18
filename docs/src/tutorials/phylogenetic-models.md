@@ -158,9 +158,9 @@ fit = drm(
 ```
 
 `vc(fit)[:species]` is then a 2×2 named group-level covariance (mean-axis SD,
-scale-axis SD, and their correlation) — **not** residual `rho12`. Public
-recovery for NB2 and a Gamma public-route smoke live in
-`test/test_public_phylo_locscale.jl`. Prefer the coupled `(1 | p | phylo(…))`
+scale-axis SD, and their correlation) — **not** residual `rho12`. The NB2 route
+has recovery evidence and the Gamma route has public-interface smoke coverage.
+Prefer the coupled `(1 | p | phylo(…))`
 spelling; dual `phylo(1 | sp)` on both axes is rejected on the non-Gaussian
 families.
 

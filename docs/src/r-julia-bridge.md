@@ -32,12 +32,10 @@
 
     - `nbinom2-dispersion` (`y ~ x; sigma ~ x`)
 
-    A separate seven-cell `bridge-*` formula-construct cohort also records
-    0.7.0, but it tests formula translation rather than expanding this
-    coefficient-scale cohort. Across all 18 `test/parity/fixtures/*/expected.meta.toml`
-    files that name drmTMB, the version is 0.7.0. Those files do **not** record
-    a comparator build string or source hash, so 0.7.0 is a package-version
-    anchor, not a unique drmTMB source-build pin.
+    A separate seven-cell formula-construct cohort also uses drmTMB 0.7.0, but
+    it tests formula translation rather than expanding this coefficient-scale
+    cohort. The reference records a package-version anchor, not a unique
+    comparator source-build pin.
 
     **Historical measured warm wall-clock** (local machine; Julia `drm_bridge`
     vs installed drmTMB **0.6.0** at the time; BLAS/OMP threads = 1; 1 warmup +
@@ -48,7 +46,7 @@
 
     The timing artifacts were not re-measured on the 0.7.0 fixture anchor. They
     are neither a general “Nx faster for all drmTMB models” claim nor the
-    verified q=4 PLSM single-fit cell at p=100 (`report/comparison-grid.md`), which
+    verified q=4 PLSM single-fit cell at p=100, which
     is a different measurement from the separate q=4 scaling comparison.
     For translating R syntax to Julia by hand, see the [Rosetta page](rosetta.md).
 
@@ -186,7 +184,7 @@ For the bridge to work, DRModels.jl exposes a stable, marshalling-friendly surfa
   remain point/export evidence, not interval or coverage evidence.
 
 For the Gaussian phylogenetic mean cell, the current `algorithm = :auto` route
-uses the all-node sparse L-BFGS fitter in `src/location_only.jl`. That route
+uses an all-node sparse L-BFGS fitter. That route
 profiles the mean coefficients by sparse GLS, uses exact Takahashi trace
 gradients for the residual and phylogenetic standard deviations, and returns a
 finite mean-coefficient covariance block. Scale and variance-component
@@ -198,8 +196,8 @@ remains the next inference slice.
 R's formula mini-language is not Julia's. `@formula` cannot evaluate `poly(x, 3)` or
 `factor(g)` the way an R user means them, so the bridge **rewrites** each construct into
 materialised columns or an expanded term list *before* handing the formula to
-`@formula`. Every construct below is either implemented with an R-parity fixture on
-byte-identical data (`test/parity/fixtures/bridge-*`), or rejected for a measured reason.
+`@formula`. Every construct below is either implemented with a matched R-parity
+reference on byte-identical data, or rejected for a measured reason.
 
 | construct | status |
 |---|---|
@@ -268,13 +266,12 @@ label_fit["coef_names"]
 
 ## Coefficient-scale parity checks
 
-Behind `DRM_PARITY_TESTS=1`, `test/parity/runparity_bridge.jl` fits the
-admitted cohort fixtures (original six + four FE families +
-`nbinom2-dispersion`) through `drm_bridge` and compares against committed
-`expected.toml` numbers via `compare_bridge` (same coef bar as Workflow G /
-`compare_fit`: default `atol_coef=1e-6`, `rtol_coef=1e-4`, with per-case
-`[tol]` overrides). Native `drm()` parity (`runparity.jl`) still runs in
-the same env gate. `xfam-external-gllvm` remains OUT (cross-package estimand).
+The bridge parity gate fits the admitted cohort (the original six, four
+fixed-effect families, and `nbinom2-dispersion`) through `drm_bridge` and
+compares coefficients against committed R reference values. Its default
+tolerances are `atol_coef=1e-6` and `rtol_coef=1e-4`, with documented
+case-specific overrides. Native `drm()` parity runs alongside it.
+Cross-package cross-family estimands remain out of scope.
 
 MIT/GPL: fixtures are **generated numeric outputs only** — never vendored
 drmTMB source.

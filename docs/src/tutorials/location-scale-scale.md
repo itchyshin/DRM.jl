@@ -135,10 +135,9 @@ fitq = drm(bf(@formula(y ~ x + phylo(1 | species)),
 ```
 
 The estimates track the simulated truth (mean 1.0 and 0.5; the σ and σ_a
-slopes in the right directions). On this route's committed test fixture,
-drmTMB's native engine returns the same log-likelihood (−69.1373) and the same
-coefficients to seven significant figures — that cross-engine agreement is
-pinned in `test/test_lss_phylo.jl`.
+slopes in the right directions). On the package's cross-engine reference
+fixture, drmTMB's native engine returns the same log-likelihood (−69.1373) and
+the same coefficients to seven significant figures.
 
 Species rows need not follow tree-tip order when fitting an LSS model. String
 labels match `phy.leaf_names` exactly; integer labels are positions in `1:G`,

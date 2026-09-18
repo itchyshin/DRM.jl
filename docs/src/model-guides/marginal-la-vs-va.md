@@ -11,8 +11,8 @@
     Gamma, and Beta `(1 | g)` via `drm(...; marginal = :VA)` (scale families need
     `sigma ~ 1`). That `loglik` is an ELBO, not a Laplace log-likelihood. Mixed
     LA/VA AIC / LRT errors. Phylo / crossed / correlated slopes / ZI / hurdle /
-    `sigma ~ x` stay unwired — not “implemented everywhere.” Public Gamma RI
-    The scoped Gamma comparison is reported in `report/va-vs-laplace-bias.md`.
+    `sigma ~ x` stay unwired — not “implemented everywhere.” On the scoped
+    Gamma random-intercept comparison, LA and VA agree on shape while LA is faster.
 
 ## What "the marginal" is, and why it matters
 
@@ -121,7 +121,7 @@ against a curvature match at a single point.
 In short: **`:LA` is the default and its numerical implementation is
 route-specific.** On the public Gamma random-intercept cell, Julia matches the
 R/TMB pattern: the two marginals agree on `α` and LA wins on time
-(`report/va-vs-laplace-bias.md`). VA stays an opt-in for the
+in the scoped Gamma comparison. VA stays an opt-in for the
 bias-sensitive *two-part / ZI* cells — those are still unwired here.
 
 ## The public API (Experimental)
@@ -145,9 +145,8 @@ stays the same; only how the random effects are integrated out changes.
 
 ## How we trust it (anchors on tip)
 
-The Experimental `(1 | g)` path is gated by deterministic anchors in
-`test/test_variational.jl` (and per-family ELBO tests) — checks with a known
-answer, not just "the numbers look plausible":
+The Experimental `(1 | g)` path is gated by deterministic anchors with known
+answers, not just "the numbers look plausible":
 
 1. **Variance → 0 collapses to independence.** As the random-effect variance is
    driven to zero there is nothing left to integrate, so the ELBO equals the
@@ -159,8 +158,8 @@ answer, not just "the numbers look plausible":
 3. **Family limits.** The negative binomial as its size `r → ∞` becomes Poisson,
    so NB2-VA converges to Poisson-VA on a shared fixture.
 
-The scoped public-path report is `report/va-vs-laplace-bias.md`: on Gamma
-`(1 | g)`, LA ≈ VA on shape `α` and LA is much faster. VA beyond random
+On Gamma `(1 | g)`, the scoped comparison finds LA ≈ VA on shape `α` and LA is
+much faster. VA beyond random
 intercepts (phylo / crossed / ZI / hurdle) and two-part bias cells are not yet
 claimed here.
 

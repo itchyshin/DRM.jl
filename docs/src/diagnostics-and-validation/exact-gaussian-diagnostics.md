@@ -5,11 +5,10 @@
     source-code review and future parity work. It is not a public optimizer
     promotion, not an R bridge promotion, and not interval-coverage evidence.
 
-## Current Row-Contract Donor
+## Reference diagnostic route
 
-The location-only phylogenetic mean implementation lives in
-`src/location_only.jl`. Its current contract is guarded by
-`test/test_location_only_reml_mme.jl` and retained validation evidence.
+The location-only phylogenetic mean route supplies the reference diagnostic
+guide, with retained validation evidence.
 
 | Route | Estimator status | Diagnostic rows | Boundary |
 | --- | --- | --- | --- |
@@ -17,10 +16,10 @@ The location-only phylogenetic mean implementation lives in
 
 ## Second Sparse Candidate
 
-The two-structured Gaussian sparse route lives in `src/gaussian_structured.jl`
-and is guarded by `test/test_two_structured_gaussian_sparse.jl`. It fits
-Gaussian mean models with two structured random-effect terms by integrating the
-augmented latent vector with sparse linear algebra.
+The two-structured Gaussian sparse route fits Gaussian mean models with two
+structured random-effect terms by integrating the augmented latent vector with
+sparse linear algebra. Its current diagnostic evidence covers dense/sparse
+agreement, gradient sanity, recovery smoke, and public sparse routing.
 
 ```text
 y = X beta + Z1 a1 + Z2 a2 + epsilon
@@ -45,8 +44,8 @@ REML or AI-REML claim.
 | Artifact | What It Supports | What It Does Not Support |
 | --- | --- | --- |
 | Design analysis | Source map from the current REML diagnostic donor to the two-structured Gaussian sparse candidate. | Any new estimator, bridge, coverage, q4, or non-Gaussian claim. |
-| `test/test_two_structured_gaussian_sparse.jl` | Dense/sparse agreement, gradient sanity, recovery smoke, and public `algorithm = :sparse` routing for the two-structured Gaussian ML route. | REML/AI-REML status or interval calibration. |
-| `test/test_location_only_reml_mme.jl` | Exact-Gaussian location-only REML diagnostic row contracts. | q4 Patterson-Thompson REML, non-Gaussian Laplace routes, or R bridge parity. |
+| Sparse-route validation | Dense/sparse agreement, gradient sanity, recovery smoke, and public `algorithm = :sparse` routing for the two-structured Gaussian ML route. | REML/AI-REML status or interval calibration. |
+| Location-only validation | Exact-Gaussian location-only REML diagnostic row contracts. | q4 Patterson-Thompson REML, non-Gaussian Laplace routes, or R bridge parity. |
 
 ## Claim Boundaries
 
