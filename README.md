@@ -5,7 +5,7 @@
 Fast **distributional regression models** in Julia — the Julia twin of
 the R package [drmTMB](https://github.com/itchyshin/drmTMB).
 
-> **Early v0.1.0 release.** This repo migrates a *verified proof-of-concept*
+> **Early v0.7.1 release.** This repo migrates a *verified proof-of-concept*
 > engine; the public API and module layout are still expected to evolve across
 > the 0.x series, with breaking changes requiring a minor-version bump.
 > See [HANDOVER.md](HANDOVER.md) (verified engine), [ROADMAP.md](ROADMAP.md)
@@ -117,13 +117,13 @@ AGENTS.md ROADMAP.md   the 12-persona team + the phase plan
 .claude/workflows/  10 scripted workflows (W0/Q/A/B/D/F/G/H/S/R)
 ```
 
-## Status — honest (v0.1.x)
+## Status — honest (v0.7.x)
 
-Tree version and git tag are **`0.1.2` / `v0.1.2`**. Older tags `v0.1.0` /
-`v0.1.1` remain historical. **Julia General stays out** until readiness
+Tree version and git tag are **`0.7.1` / `v0.7.1`**. Earlier tags remain
+historical. **Julia General stays out** until readiness
 (catch up with drmTMB + both working well; drmTMB likely R/CRAN first —
 brain **D-111**). MIT via GitHub / `Pkg.develop` until then. Do not treat
-`v0.1.2` as General registration; do not chase Registrator.
+`v0.7.1` as General registration; do not chase Registrator.
 
 **Next:** Phase 1.5 / [#5](https://github.com/itchyshin/DRModels.jl/issues/5) is
 **closed** (#349 + drmTMB #878). Tip hygiene / deeper parity remain — **not**
