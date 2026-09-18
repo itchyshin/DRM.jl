@@ -9,10 +9,13 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
 - **Package renamed to DRModels.jl.** The Julia package and module are now
   `DRModels`, while the modelling API remains `drm()`, `bf()`, and the existing
   fit/post-fit surface. `DRModels.DRM` is a soft-deprecated qualified alias for
-  migration only; `using DRM` cannot survive a Julia package rename. The UUID
-  and package version remain unchanged. GitHub's repository rename and the
-  corresponding Pages deployment remain pending maintainer actions; the old
-  Pages URL will be declared dead when that click occurs. Historical
+  migration only; `using DRM` cannot survive a Julia package rename. The
+  canonical `using DRModels` import is intentionally quiet; this changelog and
+  the migration documentation carry the deprecation notice instead of a
+  package-startup warning. The UUID and package version remain unchanged.
+  GitHub's repository rename and the corresponding Pages deployment remain
+  pending maintainer actions; the old Pages URL will be declared dead when that
+  click occurs. Historical
   `docs/dev-log/` records intentionally retain their original spelling.
 
 ## v0.7.1 — 2026-09-05

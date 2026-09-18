@@ -41,10 +41,6 @@ module DRModels
 # before this module is loaded.
 const DRM = DRModels
 
-function __init__()
-    @warn "`DRM` is deprecated; use `DRModels` instead. `using DRM` is not available after the package rename."
-end
-
 # Load the verified core engine. The relative @__DIR__ includes inside
 # fit_q4_sparse_tmb.jl transitively pull the whole chain from this src/ dir.
 include("fit_q4_sparse_tmb.jl")

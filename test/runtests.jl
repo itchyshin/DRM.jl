@@ -70,6 +70,7 @@ end
 # project-extras, unbound args, piracy. Runs early so packaging regressions
 # surface before the numerical suite.
 _shard_include("test_shard_selection.jl")
+_shard_include("test_load_contract.jl")
 _shard_include("test_aqua.jl")
 
 # Gaussian location–scale front end (drm/bf public API).
