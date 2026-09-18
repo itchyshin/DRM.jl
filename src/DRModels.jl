@@ -2,7 +2,7 @@
     DRModels
 
 `DRModels.jl` — a Julia engine for distributional regression models, the Julia
-twin of the R package **drmTMB**. Mirrors the gllvmTMB → GLLVM.jl move.
+twin of the R package **drmTMB**. Mirrors the gllvmTMB → GLLVModels.jl move.
 
 The package covers univariate and bivariate distributional regression across
 some twenty response families, with random, phylogenetic, spatial, pedigree and
