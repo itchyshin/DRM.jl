@@ -295,14 +295,26 @@ function gate_vcov(; verbose::Bool = true)
     # θ_hat itself must match the pinned optimum closely (sanity: the fit
     # trajectory, not just fd_vcov, must be unaffected by S5's changes).
     theta_ok = isapprox(θhat, VCOV_THETA_HAT_PINNED; rtol = 1e-6)
-    V = DRModels._q4_fd_vcov(case.prob, case.Q, θhat; n_newton = 40)
+    V = DRModels._q4_fd_vcov(case.prob, case.Q, θhat; n_newton = 40)   # cold (u0 = nothing, the original default)
     diag_ok = isapprox(diag(V), VCOV_DIAG_PINNED; rtol = 1e-8)
     norm_ok = isapprox(norm(V), VCOV_NORM_PINNED; rtol = 1e-8)
     v12_ok = isapprox(V[1, 2], VCOV_12_PINNED; rtol = 1e-8, atol = 1e-12)
-    ok = theta_ok && diag_ok && norm_ok && v12_ok
+    # S5 change (c): the WARM (u0 = the mode at theta_hat) variant, which
+    # gaussian_bivariate.jl's real _fit_bivariate_q4_phylo now calls, must
+    # equal the pinned COLD result within the same rtol 1e-8 (the ledger's one
+    # stated non-bitwise gate -- warm vs cold may differ at the FD-step level).
+    _, u_hat, _, _ = marginal_nll(case.prob, case.Q, θhat; n_newton = 40)
+    Vwarm = DRModels._q4_fd_vcov(case.prob, case.Q, θhat; n_newton = 40, u0 = Vector{Float64}(u_hat))
+    warm_diag_ok = isapprox(diag(Vwarm), VCOV_DIAG_PINNED; rtol = 1e-8)
+    warm_norm_ok = isapprox(norm(Vwarm), VCOV_NORM_PINNED; rtol = 1e-8)
+    warm_v12_ok = isapprox(Vwarm[1, 2], VCOV_12_PINNED; rtol = 1e-8, atol = 1e-12)
+    ok = theta_ok && diag_ok && norm_ok && v12_ok && warm_diag_ok && warm_norm_ok && warm_v12_ok
     if verbose
         println("  theta_hat rtol<=1e-6 vs pinned: ", theta_ok)
-        println("  diag(V) rtol<=1e-8 vs pinned: ", diag_ok)
+        println("  diag(V) rtol<=1e-8 vs pinned (cold): ", diag_ok)
+        println("  warm diag(V) rtol<=1e-8 vs pinned (cold): ", warm_diag_ok)
+        @printf "  warm norm(V)=%.15g pinned=%.15g %s\n" norm(Vwarm) VCOV_NORM_PINNED (warm_norm_ok ? "OK" : "FAIL")
+        @printf "  warm V[1,2]=%.6e pinned=%.6e %s\n" Vwarm[1, 2] VCOV_12_PINNED (warm_v12_ok ? "OK" : "FAIL")
         @printf "  norm(V)=%.15g pinned=%.15g %s\n" norm(V) VCOV_NORM_PINNED (norm_ok ? "OK" : "FAIL")
         @printf "  V[1,2]=%.6e pinned=%.6e %s\n" V[1, 2] VCOV_12_PINNED (v12_ok ? "OK" : "FAIL")
     end
