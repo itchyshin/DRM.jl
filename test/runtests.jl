@@ -379,6 +379,11 @@ _shard_include("test_qgate_fd_gradient.jl")
 # out-of-Julia-control). Cheap → per-PR. (Workflow Q.)
 _shard_include("test_qgate_alloc_inner.jl")
 
+# leaf-S5 (Julia speed lane, 2026-09-19): identity gates for the q=4 ML phylo
+# route's cholesky!-reuse / warm-u0-vcov performance changes. Pins numbers
+# measured on ORIGINAL origin/main so each change is a provable identity.
+_shard_include("test_q4_perf_identities.jl")
+
 # Standing Workflow Q JET gate (Karpinski): type-stability of hot lc↔Λ kernels.
 # JET lives in test/Project.toml — skip gracefully when absent (bare
 # `julia --project=. test/runtests.jl`). Macro body is in a separate file so it
