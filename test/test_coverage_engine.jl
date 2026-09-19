@@ -21,7 +21,7 @@
 # All problems are SMALL (p = 8 q=4 PLSM; identical generator family to
 # test_analytic_grad.jl / check_sparse_tmb.jl) and self-contained (no fixtures).
 
-using DRM
+using DRModels
 using Test, LinearAlgebra, SparseArrays, Random, Statistics
 
 # --- canonical small q=4 PLSM generator (same as test_qgate_fd_gradient.jl) ----

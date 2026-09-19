@@ -1,7 +1,7 @@
 # Working with large data
 
 !!! note "Status — Stable"
-    Mirrors drmTMB's [Working with large data](https://itchyshin.github.io/drmTMB/articles/large-data.html). How DRM.jl stays fast as the number of units grows, and what to reach for when a model is large.
+    Mirrors drmTMB's [Working with large data](https://itchyshin.github.io/drmTMB/articles/large-data.html). How DRModels.jl stays fast as the number of units grows, and what to reach for when a model is large.
 
 The selling-point model — the q=4 phylogenetic bivariate location–scale fit — is
 built to scale. The marginal likelihood is a **sparse augmented-state Laplace
@@ -17,20 +17,17 @@ variance per axis plus cross-covariance, `nrep = 4` replicates) was timed end to
 end with the O(p) sparse-precision sampler. Iteration counts stay flat and the
 per-observation logLik is stable as the number of tips grows, which is the
 signature of near-linear scaling. The timings, the fitted scaling exponent and
-the caveats live in `report/comparison-grid.md`; the harness is
-`bench/run_scaling.jl`.
+the measured conditions and caveats are documented with the model guide.
 
 !!! note "On head-to-head claims"
-    The scaling result above is measured for DRM.jl alone, on a synthetic
+    The scaling result above is measured for DRModels.jl alone, on a synthetic
     near-balanced tree grid with equal branch lengths and replicates. A paired drmTMB head-to-head on
     the same `nrep = 4` grid was measured separately on Totoro against drmTMB
-    0.6.0 (#376;
-    `docs/dev-log/evidence/2026-08-03-376-q4-scaling-h2h.md`) and does **not**
-    show DRM.jl faster everywhere: Julia leads at the smallest tip count, and
+    0.6.0 and does **not**
+    show DRModels.jl faster everywhere: Julia leads at the smallest tip count, and
     drmTMB is comparable or faster at larger ones under that protocol. Any
     extrapolated "N× faster" figure is **retired**. Read the numbers in
-    `report/comparison-grid.md` and `HANDOVER.md` rather than quoting a ratio
-    here.
+    the measured conditions rather than quoting a ratio here.
 
 ## Why it scales
 

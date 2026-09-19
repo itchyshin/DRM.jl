@@ -1,6 +1,6 @@
 # A non-unit-height tree makes accidental covariance rescaling visible.
 # B=2 is a deterministic integration check, not interval-coverage evidence.
-using DRM, Test, Random, LinearAlgebra
+using DRModels, Test, Random, LinearAlgebra
 import Distributions
 
 @testset "non-Gaussian phylogenetic bootstrap bridge" begin
@@ -21,7 +21,7 @@ import Distributions
     formula = bf(@formula(y ~ x + (1 | tree_boot | phylo(species))),
                  @formula(sigma ~ 1 + (1 | tree_boot | phylo(species))))
     fit = drm(formula, Gamma(); data, tree)
-    @test fit.nll isa DRM.LocScaleObjective
+    @test fit.nll isa DRModels.LocScaleObjective
     @test is_converged(fit)
     direct = bootstrap_result(fit; data, tree, B=2, rng=MersenneTwister(4001),
                               failures=:skip, check_converged=true)

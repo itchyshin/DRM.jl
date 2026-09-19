@@ -1,9 +1,9 @@
 # Adding distribution families
 
 !!! note "Status — Developer guide"
-    Mirrors drmTMB's [Adding distribution families](https://itchyshin.github.io/drmTMB/articles/adding-families.html). This page documents how families are actually built in DRM.jl today (the [`Poisson`](@ref) family is the worked reference). Adding a family is **Workflow H** (the `add-family` skill); it is the once-per-family loop of Phase 2.
+    Mirrors drmTMB's [Adding distribution families](https://itchyshin.github.io/drmTMB/articles/adding-families.html). This page documents how families are actually built in DRModels.jl today (the [`Poisson`](@ref) family is the worked reference). Adding a family is **Workflow H** (the `add-family` skill); it is the once-per-family loop of Phase 2.
 
-A family in DRM.jl is a small **struct** plus a `drm` method that builds the design
+A family in DRModels.jl is a small **struct** plus a `drm` method that builds the design
 matrices, writes the negative log-likelihood, and optimises it by maximum
 likelihood. Everything else — the `bf` front end, the design builder, the
 post-fit accessors, inference — is shared. Adding a family is therefore mostly
@@ -85,7 +85,7 @@ Conventions that matter:
 
 ### 4. Wire it into the module
 
-In `src/DRM.jl`, `include("myfamily.jl")` next to the other families and add the
+In `src/DRModels.jl`, `include("myfamily.jl")` next to the other families and add the
 struct to the family export list.
 
 ### 5. Add a recovery test
@@ -121,7 +121,7 @@ Start with the fixed-effects fitter; add these only once the base family recover
 | 1 | `struct MyFamily end` + docstring (links, `sigma`↔φ) |
 | 2 | `drm(::DrmFormula, ::MyFamily; …)` method |
 | 3 | `_fit_myfamily` with AD-safe `nll`, `DrmFit`, `_withnll` |
-| 4 | `include` + export in `src/DRM.jl` |
+| 4 | `include` + export in `src/DRModels.jl` |
 | 5 | `test/test_myfamily.jl` recovery test + `runtests.jl` |
 | 6 | reference `@docs` entry + tutorial `@example` |
 | 7 | (optional) RE / `zi` / `hu` paths |

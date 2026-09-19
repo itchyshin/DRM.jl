@@ -56,7 +56,7 @@ cbind
 ## [Modelled missing predictors](@id joint-predictor-formula)
 
 !!! warning "Experimental"
-    Exported for evaluation; fenced for v1.0 (D-181). API and numerics may
+    Exported for evaluation, not yet stable. API and numerics may
     change; not covered by the R-parity scoreboard.
 
 For a Gaussian response, `mi(x)` marks an additive predictor whose missing
@@ -72,7 +72,7 @@ are still outside this admission. The same narrow route is available as
 not establish full native fitted-result parity.
 
 ```@example joint_formula
-using DRM, LinearAlgebra
+using DRModels, LinearAlgebra
 BLAS.set_num_threads(1)
 n = 32
 z = collect(range(-1.2, 1.2; length=n))
@@ -123,7 +123,7 @@ covariates; conditioning on an observed response can correlate their missing
 values. The prepared fit retains that full conditional covariance.
 
 ```@example joint_formula_two
-using DRM, Random, LinearAlgebra
+using DRModels, Random, LinearAlgebra
 BLAS.set_num_threads(1)
 rng = MersenneTwister(9302)
 n = 64

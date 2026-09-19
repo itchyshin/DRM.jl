@@ -1,4 +1,4 @@
-using DRM
+using DRModels
 using Test, LinearAlgebra, SparseArrays, Random
 # --- Deterministic Julia-suite sharding (DRM_TEST_SHARD="k/N") -------------
 # Splits the TOP-LEVEL sharded include calls below across N shards by file
@@ -36,17 +36,18 @@ _n_test_files = count("\n_shard_include(\"", read(@__FILE__, String))
 _n_selected = _SHARD === nothing ? _n_test_files :
     length(_shard_indices(_n_test_files, _SHARD[1], _SHARD[2]))
 println(_SHARD === nothing ?
-    "DRM tests: all $_n_test_files files (unsharded)" :
-    "DRM tests: shard $(_SHARD[1])/$(_SHARD[2]) - $_n_selected of $_n_test_files files")
+    "DRModels tests: all $_n_test_files files (unsharded)" :
+    "DRModels tests: shard $(_SHARD[1])/$(_SHARD[2]) - $_n_selected of $_n_test_files files")
 
 
-@testset "DRM.jl — engine loads + phylo foundation" begin
+@testset "DRModels.jl — engine loads + phylo foundation" begin
     @testset "public API present" begin
+        @test DRModels.DRM === DRModels
         for f in (:fit_q4_sparse_tmb, :marginal_and_exact_grad, :make_problem,
                   :estep_mode, :prior_precision, :augmented_phy,
                   :random_balanced_tree, :sigma_phy_dense, :takahashi_selinv,
                   :lc_metric)
-            @test isdefined(DRM, f)
+            @test isdefined(DRModels, f)
         end
     end
 
@@ -69,6 +70,7 @@ end
 # project-extras, unbound args, piracy. Runs early so packaging regressions
 # surface before the numerical suite.
 _shard_include("test_shard_selection.jl")
+_shard_include("test_load_contract.jl")
 _shard_include("test_aqua.jl")
 
 # Gaussian location–scale front end (drm/bf public API).
@@ -122,7 +124,7 @@ _shard_include("test_profile_infinite_bound.jl")  # #631 no infinite bound from 
 _shard_include("test_check_drm.jl")
 _shard_include("test_bias_correct.jl")
 _shard_include("test_visualization.jl")
-_shard_include("test_makie_ext_stub.jl")   # #336: DRMMakieExt method-less stub (Makie OUT of CI)
+_shard_include("test_makie_ext_stub.jl")   # #336: DRModelsMakieExt method-less stub (Makie OUT of CI)
 _shard_include("test_postfit.jl")
 _shard_include("test_meta.jl")
 _shard_include("test_simulate.jl")
@@ -160,7 +162,7 @@ _shard_include("test_nb2_dispersion_seed.jl")
 _shard_include("test_beta.jl")
 _shard_include("test_gamma.jl")
 # eta-clamp twin parity (#324): the NB2/Gamma/Beta density guards now use the
-# ported soft-clamp (identity in the band, smooth beyond) so DRM.jl agrees with
+# ported soft-clamp (identity in the band, smooth beyond) so DRModels.jl agrees with
 # drmTMB instead of hard-clamping the mean/scale predictors.
 _shard_include("test_eta_clamp_parity.jl")
 _shard_include("test_zi.jl")

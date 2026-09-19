@@ -7,13 +7,13 @@
 # `src/reml_q2.jl`'s header for the full argument (mirroring the axis rule
 # `reml_q4.jl` uses, generalised to "no u-axis ⇒ stays outer").
 
-using DRM
+using DRModels
 using Test, LinearAlgebra, Random, Statistics, SparseArrays
 
 function _q2_reml_known_cov_fixture(K, β, Λ, residual_cov; nrep, rng)
     G = size(K, 1)
     Q = sparse(Matrix(inv(cholesky(Symmetric(K)))))
-    P = DRM.prior_precision(Q, inv(Λ))
+    P = DRModels.prior_precision(Q, inv(Λ))
     F = cholesky(Symmetric(P))
     u = F.UP \ randn(rng, size(P, 1))
     group = repeat(1:G, inner = nrep)
@@ -40,10 +40,10 @@ end
     Λ = Matrix(Symmetric([0.20 0.05; 0.05 0.17]))
     residual_cov = Matrix(Symmetric([0.10 0.025; 0.025 0.14]))
     sim = _q2_reml_known_cov_fixture(K, β, Λ, residual_cov; nrep = 4, rng = rng)
-    prob, Q = DRM.make_coevo_problem_from_covariance(K, sim.Y, sim.X; group = sim.group)
+    prob, Q = DRModels.make_coevo_problem_from_covariance(K, sim.Y, sim.X; group = sim.group)
 
-    fit_ml = DRM.fit_coevolution_q2_residual(prob, Q; iterations = 300, g_tol = 1e-6)
-    fit_reml = DRM.fit_coevolution_q2_reml(prob, Q; iterations = 300, g_tol = 1e-6)
+    fit_ml = DRModels.fit_coevolution_q2_residual(prob, Q; iterations = 300, g_tol = 1e-6)
+    fit_reml = DRModels.fit_coevolution_q2_reml(prob, Q; iterations = 300, g_tol = 1e-6)
 
     @test fit_ml.converged
     @test fit_reml.converged
@@ -87,9 +87,9 @@ end
     for s in 1:nsim
         rng = MersenneTwister(1000 + s)
         sim = _q2_reml_known_cov_fixture(K, β, Λ_true, residual_cov; nrep = 3, rng = rng)
-        prob, Q = DRM.make_coevo_problem_from_covariance(K, sim.Y, sim.X; group = sim.group)
-        fit_ml = DRM.fit_coevolution_q2_residual(prob, Q; iterations = 400, g_tol = 1e-5)
-        fit_reml = DRM.fit_coevolution_q2_reml(prob, Q; iterations = 400, g_tol = 1e-5)
+        prob, Q = DRModels.make_coevo_problem_from_covariance(K, sim.Y, sim.X; group = sim.group)
+        fit_ml = DRModels.fit_coevolution_q2_residual(prob, Q; iterations = 400, g_tol = 1e-5)
+        fit_reml = DRModels.fit_coevolution_q2_reml(prob, Q; iterations = 400, g_tol = 1e-5)
         if fit_ml.converged && all(isfinite, fit_ml.Λ)
             push!(ml1, fit_ml.Λ[1, 1]); push!(ml2, fit_ml.Λ[2, 2])
         end
@@ -108,12 +108,12 @@ end
 
 @testset "q2 REML: front-end drm(method = :REML) on the phylo route" begin
     rng = MersenneTwister(20260901)
-    phy = DRM.random_balanced_tree(20; branch_length = 0.2)
+    phy = DRModels.random_balanced_tree(20; branch_length = 0.2)
     β = [0.20 -0.15; 0.25 0.10]
     Λ = Matrix(Symmetric([0.22 0.07; 0.07 0.18]))
     residual_cov = Matrix(Symmetric([0.12 0.04; 0.04 0.16]))
-    Q_cond, leaf_pos, _ = DRM.augmented_tree_precision(phy)
-    P = DRM.prior_precision(Q_cond, inv(Λ))
+    Q_cond, leaf_pos, _ = DRModels.augmented_tree_precision(phy)
+    P = DRModels.prior_precision(Q_cond, inv(Λ))
     F = cholesky(Symmetric(P))
     u = F.UP \ randn(rng, size(P, 1))
     species = repeat(1:phy.n_leaves, inner = 4)
@@ -166,7 +166,7 @@ end
 @testset "q2 spatial(coords) is admitted, and is relmat(K) under another name" begin
     # Parity leaf jl-q2-spatial. drmTMB fits this cell natively AND through the
     # bridge, which rewrites `spatial(...)` to `relmat(...) + K` on the R side
-    # (R/julia-bridge.R); DRM.jl used to refuse it outright here. `spatial` now
+    # (R/julia-bridge.R); DRModels.jl used to refuse it outright here. `spatial` now
     # supplies a covariance exactly as `relmat`/`animal` do -- the exponential
     # kernel at a FIXED range -- so the two markers must be ONE model reached by
     # two names, and this testset holds them to bit-for-bit equality.
@@ -179,8 +179,8 @@ end
 
     # The matrix the route builds is EXACTLY this one, bit for bit, and
     # `spatial_range` overrides the default rule.
-    @test DRM._spatial_covariance_from_coords(:site, G, coords, nothing) == Ksp
-    @test DRM._spatial_covariance_from_coords(:site, G, coords, 0.5) ==
+    @test DRModels._spatial_covariance_from_coords(:site, G, coords, nothing) == Ksp
+    @test DRModels._spatial_covariance_from_coords(:site, G, coords, 0.5) ==
         exp.(-Ddist ./ 0.5) + 1e-8 * I
 
     # Signal-bearing fixture: simulate FROM the covariance the route will build.
@@ -216,7 +216,7 @@ end
     # The `:spatial` sentinel reaches the public accessor, so the q2 bridge
     # export target is built from it with no change to src/bridge.jl.
     @test fit_sp.ranef.structured_type === :spatial
-    @test DRM._bridge_q2_point_export(fit_sp; family = "biv_gaussian")["target"] ==
+    @test DRModels._bridge_q2_point_export(fit_sp; family = "biv_gaussian")["target"] ==
         "gaussian_q2_mu1_mu2_spatial_residual_correlation"
 
     # The FIXED range is the one free choice this cell makes and its default is
@@ -319,9 +319,9 @@ end
 @testset "q2 spatial (inherited helper): coords may be a length-G vector" begin
     G = 3
     v = [0.0, 2.0, 5.0]
-    Qv = DRM._q4_structured_precision(:spatial, :site, G;
+    Qv = DRModels._q4_structured_precision(:spatial, :site, G;
                                       K = nothing, A = nothing, coords = v, spatial_range = 2.0)
-    Qm = DRM._q4_structured_precision(:spatial, :site, G;
+    Qm = DRModels._q4_structured_precision(:spatial, :site, G;
                                       K = nothing, A = nothing, coords = reshape(v, G, 1),
                                       spatial_range = 2.0)
     @test size(Qv) == (G, G)

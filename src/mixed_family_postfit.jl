@@ -5,7 +5,7 @@
 # helpers take that NamedTuple directly. They are deliberately thin: a tidy
 # coefficient table, the two information criteria, per-axis fitted means, and a
 # printed summary. Naming mirrors the `mf_` prefix already used for the model's
-# internal kernels; the public ones are exported from `DRM`.
+# internal kernels; the public ones are exported from `DRModels`.
 
 """
     _mf_nparams(fit) -> Int

@@ -72,7 +72,7 @@ builds the new-data table to sweep over (varying chosen predictors, holding the
 rest at a reference value).
 
 ```julia
-using DRM, Random
+using DRModels, Random
 Random.seed!(20260603)
 
 x = randn(500)
@@ -98,7 +98,7 @@ marginal_parameters(fit)            # == predict_parameters(fit, data) in-sample
 ## Formula-fitted finite-state missing predictors
 
 !!! warning "Experimental"
-    Exported for evaluation; fenced for v1.0 (D-181). API and numerics may
+    Exported for evaluation, not yet stable. API and numerics may
     change; not covered by the R-parity scoreboard.
 
 For one ordinal or categorical missing predictor in the bounded Gaussian joint
@@ -109,9 +109,9 @@ provides the constrained cutpoints separately. See the engine-internals
 reference for the prepared-state design and route limits.
 
 ```@docs
-DRM.CategoricalLogit
-DRM.JointFiniteDrmFit
-DRM.cutpoints
+DRModels.CategoricalLogit
+DRModels.JointFiniteDrmFit
+DRModels.cutpoints
 ```
 
 ## Inference

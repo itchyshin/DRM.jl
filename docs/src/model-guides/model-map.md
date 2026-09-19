@@ -1,6 +1,6 @@
 # What can I fit today?
 
-This page is the **map of the model space** DRM.jl covers — the overview for the
+This page is the **map of the model space** DRModels.jl covers — the overview for the
 Model Guides. It mirrors drmTMB's
 [What can I fit today?](https://itchyshin.github.io/drmTMB/articles/model-map.html),
 and points you at the guide or tutorial for each piece. Read it top to bottom for
@@ -8,7 +8,7 @@ the big picture, or jump to the [which page next](#Which-page-next) table.
 
 ## The one idea: a formula per parameter
 
-DRM.jl is **distributional regression** — you put predictors on *every*
+DRModels.jl is **distributional regression** — you put predictors on *every*
 parameter of the response distribution, not just the mean. Each parameter gets
 its own formula, bundled together with [`bf`](@ref):
 
@@ -26,7 +26,7 @@ the family (Gaussian has no `nu`; only counts take `zi` / `hu`).
 
 See [Which scale are you modelling?](which-scale.md) for the difference between
 the residual `sigma`, a group-level SD, and a known sampling variance — they are
-distinct quantities DRM.jl keeps separate.
+distinct quantities DRModels.jl keeps separate.
 
 ## The `bf(...)` front end
 
@@ -61,7 +61,7 @@ binomial-type responses — see the
 
 Pick the family from the *shape* of the response; the
 [Choosing response families](distribution-families.md) guide has the full
-decision table and worked examples. DRM.jl implements drmTMB's complete family
+decision table and worked examples. DRModels.jl implements drmTMB's complete family
 set:
 
 | Family | Response | Mean link | `sigma` slot / extras |
@@ -86,7 +86,7 @@ bundle, e.g. `bf(@formula(y ~ x), @formula(zi ~ 1))`.
 
 ## Structured and random effects
 
-On top of fixed effects, DRM.jl carries ordinary random effects and several
+On top of fixed effects, DRModels.jl carries ordinary random effects and several
 **structured** effects whose covariance comes from a known matrix or geometry.
 Write them as terms in the mean formula:
 
@@ -111,8 +111,8 @@ supports `(1 | g)` on the mean only. The [capability matrix](../capabilities.md)
 independent or correlated — each family admits.
 **Phylogenetic** (`phylo`) effects go via a sparse Laplace path for Poisson,
 NB2, Binomial, Gamma, Beta, Beta-binomial and CumulativeLogit. On that path NB2, Gamma and Beta
-accept a covariate dispersion formula `sigma ~ x` (a per-observation log σ,
-#164), while `BetaBinomial()` requires a constant `sigma` and `Binomial()`
+accept a covariate dispersion formula `sigma ~ x` (a per-observation log σ),
+while `BetaBinomial()` requires a constant `sigma` and `Binomial()`
 carries no dispersion parameter at all; `Student()` rejects `meta_V` and every structured marker. `LogNormal()` is the
 exception: because `log y` is exactly Gaussian, its `phylo`/`relmat`
 structured markers on the mean delegate WHOLESALE to `Gaussian()` on
@@ -125,15 +125,13 @@ adding a structured or phylogenetic effect.
 [`CumulativeLogit`](@ref) (ordinal) carries an ordinary random intercept
 `(1 | g)` or an *independent* random slope `(0 + x | g)` on `mu` via the same
 Gauss–Hermite scheme, and an intercept-only `phylo(1 | species)` through the
-same sparse Laplace engine (`src/cumulative.jl:518`,
-`test/test_cumlogit_phylo.jl`); the correlated form `(1 + x | g)` and the other structured
+same sparse Laplace engine; the correlated form `(1 + x | g)` and the other structured
 (phylo/relmat/animal/spatial) effects are not implemented yet.
 
 For the verified engine behind the phylogenetic models — the q=4 phylogenetic
 bivariate location–scale model, which matches drmTMB's fit and still returns
 usable Wald and bootstrap intervals where drmTMB's Hessian is singular — see
-`HANDOVER.md` and
-[`report/comparison-grid.md`](https://github.com/itchyshin/DRM.jl/blob/main/report/comparison-grid.md).
+[Large data](large-data.md) for the scoped performance evidence.
 
 ## After the fit
 
@@ -168,4 +166,4 @@ variance boundary (where drmTMB's `sdreport` returns all-`NaN`).
 | Phylogenetic / spatial / animal models | [Phylogenetic](../tutorials/phylogenetic-models.md) · [Spatial](../tutorials/spatial-models.md) · [Animal](../tutorials/animal-models.md) |
 | Meta-analysis with known variances | [Meta-analysis](../tutorials/meta-analysis.md) |
 | The full API reference | [Model specification](../reference/model-specification.md) · [Fitting & post-fit](../reference/model-fitting-and-postfit.md) |
-| What's planned next | the [roadmap](https://github.com/itchyshin/DRM.jl/blob/main/ROADMAP.md) |
+| What's planned next | the [roadmap](https://github.com/itchyshin/DRModels.jl/blob/main/ROADMAP.md) |

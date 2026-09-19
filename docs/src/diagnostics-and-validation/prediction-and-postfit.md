@@ -12,7 +12,7 @@ A fit is the beginning, not the end. Once `drm` returns, you usually want to
 small location–scale model.
 
 ```@example postfit
-using DRM, Random, Statistics
+using DRModels, Random, Statistics
 Random.seed!(11)
 
 n = 500
@@ -111,8 +111,8 @@ rq = residuals(fit; type = :quantile)
     mean (exactly the location–scale case here) or for discrete responses.
     Quantile residuals fold each observation through its own fitted CDF, so a
     well-specified model always yields ≈ N(0, 1) — the scale is the same across
-    families. (Implemented for Gaussian and Poisson today; other families are
-    tracked in issue #183.)
+    families. It is implemented for Gaussian and Poisson today; support for
+    other families is planned.
 
 ## Does the extra structure earn its keep?
 

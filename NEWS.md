@@ -1,8 +1,21 @@
-# DRM.jl — NEWS
+# DRModels.jl — NEWS
 
 All notable changes are recorded here. The live work ledger is
-[GitHub Issues](https://github.com/itchyshin/DRM.jl/issues); this file is the
+[GitHub Issues](https://github.com/itchyshin/DRModels.jl/issues); this file is the
 human-readable changelog and mirrors `docs/src/changelog.md`.
+
+## Development
+
+- **Package renamed to DRModels.jl.** The Julia package and module are now
+  `DRModels`, while the modelling API remains `drm()`, `bf()`, and the existing
+  fit/post-fit surface. `DRModels.DRM` is a soft-deprecated qualified alias for
+  migration only; `using DRM` cannot survive a Julia package rename. The
+  canonical `using DRModels` import is intentionally quiet; this changelog and
+  the migration documentation carry the deprecation notice instead of a
+  package-startup warning. The UUID and package version remain unchanged.
+  The GitHub repository rename is complete; the stable Pages deployment awaits
+  this unmerged PR landing. Historical
+  `docs/dev-log/` records intentionally retain their original spelling.
 
 ## v0.7.1 — 2026-09-05
 
@@ -127,17 +140,17 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   requires `Optim.g_converged(res)`, so `fit.converged` implies the gradient met `g_tol`.
   NOTHING ELSE MOVES: theta-hat, the ML and REML objectives, logLik, vcov and the BLUPs are
   byte-identical (five fixtures across four routes, logLik equal to 17 significant figures
-  before and after). This is the DRM.jl half of #609 item 2; the ~1e-5 conditional-prediction
+  before and after). This is the DRModels.jl half of #609 item 2; the ~1e-5 conditional-prediction
   parity gap the issue diagnosed is drmTMB's `nlminb` stopping rule and is tracked as
   drmTMB #1130. Guard: `test/test_ranef_varying_scale_convergence.jl`.
 - **`coef_labels` count mismatch now names the construct behind it (#467, #609).** When the R side
   supplies more names for a dpar than the fit has columns, the commonest cause is a factor level
   with no rows in the data: base-R `model.matrix()` gives every DECLARED level a column (an
-  all-zero one for a level nothing uses), while DRM.jl codes only the levels it OBSERVES. The
+  all-zero one for a level nothing uses), while DRModels.jl codes only the levels it OBSERVES. The
   message previously said only "the R side must send exactly one name per column", naming neither
-  the column nor the fix. It now names the coded columns DRM.jl actually built and points at
+  the column nor the fix. It now names the coded columns DRModels.jl actually built and points at
   `droplevels()`. Measured through drmTMB on 2026-09-05 against this repository: `y ~ gempty` with
-  `levels = c("a", "b", "c", "zz")` produced exactly this mismatch (R supplied 4 names, DRM.jl built
+  `levels = c("a", "b", "c", "zz")` produced exactly this mismatch (R supplied 4 names, DRModels.jl built
   `["(Intercept)", "gempty: b", "gempty: c"]`). The hint is emitted only when the block has coded
   (`"<column>: <level>"`) columns and the supply is too LONG; a short supply, and a block of purely
   continuous columns, keep the bare count message unchanged. Behaviour is otherwise identical: this
@@ -200,7 +213,7 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   data-dependent and would otherwise be invisible; `relmat`/`animal` fits report `nothing`.
   BOUNDARY: `rho` is FIXED, not estimated. This is not the univariate `spatial` route, which
   carries `log rho` as a free parameter -- the two are different models and must not be compared
-  as one. Note also that DRM.jl's default range is the MEAN off-diagonal distance with a 1e-8
+  as one. Note also that DRModels.jl's default range is the MEAN off-diagonal distance with a 1e-8
   ridge, while drmTMB's native R-side rule is the MEDIAN positive distance with a 1e-6 jitter,
   so the two engines build different matrices from the same coordinates unless `spatial_range`
   is pinned; a coords-to-coords cross-engine comparison is therefore not a parity check.
@@ -319,7 +332,7 @@ human-readable changelog and mirrors `docs/src/changelog.md`.
   `phylo(1 | site)` and `phylo(0 + x | site)`), while the estimated intercept–slope correlation
   (`has_phylo_mu_q2_covariance`, reported in `corpars` as `cor(mu:(Intercept),mu:x | p | site)`)
   appears only for the DIFFERENT tagged formula `phylo(1 + x | p | g)`. drmTMB refuses the
-  formula on Gamma ("intercept-only in this q=1 route"). DRM.jl still refuses every non-Gaussian
+  formula on Gamma ("intercept-only in this q=1 route"). DRModels.jl still refuses every non-Gaussian
   family here, for the accurate reason: this route is the EXACT closed-form Gaussian marginal
   and does not extend to a non-Gaussian likelihood, so the count families need a two-field
   Laplace route that does not exist yet. The earlier claim that drmTMB fits "a DIFFERENT model"
@@ -471,7 +484,7 @@ in `HANDOVER.md` / `report/`):
 ## v0.1.1 (2026-05-31)
 
 **drmTMB family parity complete** — the four remaining families, each
-recovery-tested and shipped one-PR-per-family with green CI. DRM.jl now fits
+recovery-tested and shipped one-PR-per-family with green CI. DRModels.jl now fits
 every distribution family drmTMB offers.
 
 - **Beta-binomial** `BetaBinomial()` — successes out of known trials with

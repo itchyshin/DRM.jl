@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="drm-fav-title drm-fav-desc">
-  <title id="drm-fav-title">DRM.jl</title>
+  <title id="drm-fav-title">DRModels.jl</title>
   <desc id="drm-fav-desc">Narrow and wide density curves sharing one mean, on a hexagonal badge.</desc>
   <path d="M68 5L113 33Q118 36 118 42L118 86Q118 92 113 95L69 123Q64 126 59 123L15 95Q10 92 10 86L10 42Q10 36 15 33L59 5Q64 2 68 5Z" fill="#0B1F3A"/>
   <path d="M68 10L109 36Q113 38 113 43L113 85Q113 90 109 92L68 118Q64 120 60 118L19 92Q15 90 15 85L15 43Q15 38 19 36L60 10Q64 8 68 10Z" fill="none" stroke="#5C7CF0" stroke-width="3"/>

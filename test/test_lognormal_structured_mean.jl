@@ -10,7 +10,7 @@
 # `lognormal` family implements exactly `phylo`/`relmat` structured markers on
 # the mean (session scratch lognormal-cells.md) — `animal`/`spatial` are not
 # implemented on either side and stay refused here.
-using DRM
+using DRModels
 using Test, Random, LinearAlgebra, Statistics
 
 @testset "#563 LogNormal structured mean (phylo/relmat)" begin

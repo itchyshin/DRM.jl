@@ -14,7 +14,7 @@ def check(r,rroot):
     require(r.get('native_tolerance')==4e-6 and r.get('adapter_tolerance')==1e-10,'fixed tolerances')
     runtime=r.get('runtime',{})
     require(runtime.get('threads')==1 and runtime.get('blas')==1,'runtime threads')
-    require(Path(runtime.get('source','')).resolve()==ROOT/'src/DRM.jl','loaded source')
+    require(Path(runtime.get('source','')).resolve()==ROOT/'src/DRModels.jl','loaded source')
     require(r.get('status')=='PASS' and set(r.get('cases',{}))=={'ordinal','categorical'},'case denominator')
     reference=json.loads(REF.read_text());verdict={}
     for kind,c in reference['cases'].items():

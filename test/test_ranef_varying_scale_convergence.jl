@@ -1,11 +1,11 @@
-# test_ranef_varying_scale_convergence.jl -- DRM.jl #609 item 2 (varying-scale
+# test_ranef_varying_scale_convergence.jl -- DRModels.jl #609 item 2 (varying-scale
 # conditional cell, `bf(y ~ x + (1 | g), sigma ~ x)`, routed through
 # `_fit_ranef_gaussian` in src/gaussian_ranef.jl).
 #
-# WHAT #609 LEFT OPEN. The issue's own diagnosis established that DRM.jl reaches
+# WHAT #609 LEFT OPEN. The issue's own diagnosis established that DRModels.jl reaches
 # its optimum on this cell (sweeping `g_tol` from 1e-8 to 1e-16 moves the
 # coefficients by 1.3e-11) and handed the ~1e-5 parity gap to the drmTMB lane. It
-# never looked at the flag DRM.jl reports alongside that optimum, and that flag is
+# never looked at the flag DRModels.jl reports alongside that optimum, and that flag is
 # where this route does have a defect.
 #
 # THE DEFECT. `Optim.converged(res)` is the OR of the x, f and g criteria
@@ -46,11 +46,11 @@
 # be satisfied by reporting `false` wholesale). Per-fit numbers are printed, so
 # a future platform disagreement is legible from the CI log alone.
 #
-#   julia --project=test -e 'using DRM, Test; include("test/test_ranef_varying_scale_convergence.jl")'
+#   julia --project=test -e 'using DRModels, Test; include("test/test_ranef_varying_scale_convergence.jl")'
 
 module TestRanefVaryingScaleConvergence
 
-using DRM
+using DRModels
 using Test
 using LinearAlgebra
 using ForwardDiff

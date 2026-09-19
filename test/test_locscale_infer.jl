@@ -4,7 +4,7 @@
 # second finite difference of the marginal `_ls_fit_nll`. Agreement confirms the
 # Hessian assembly (no transpose/index slip). Then a fit-level test checks the
 # attached vcov / SEs / components are valid.
-using DRM
+using DRModels
 using Test, Random, LinearAlgebra, SparseArrays
 import Distributions
 
@@ -30,15 +30,15 @@ end
     gidx = repeat(1:G, inner = m)
     x = randn(n); z = randn(n)
     Xμ = hcat(ones(n), x); Xψ = hcat(ones(n), z)
-    Λt = DRM._ls_lc_to_Λ([log(0.4), 0.1, log(0.5)])
+    Λt = DRModels._ls_lc_to_Λ([log(0.4), 0.1, log(0.5)])
     Lt = cholesky(Symmetric(Λt)).L
     A = [Lt * randn(2) for _ in 1:G]
     y = [_nb2_draw_i(0.3 + 0.4x[i] + A[gidx[i]][1], 0.2 + A[gidx[i]][2]) for i in 1:n]
     Q = sparse(1.0 * I, G, G)
     θ = [0.25, 0.35, 0.1, -0.05, log(0.45), 0.08, log(0.55)]   # generic, not the optimum
 
-    Hg = Matrix(DRM._ls_obs_information(Val(:nb2), y, Xμ, Xψ, gidx, G, Q, θ))
-    f = θ -> DRM._ls_fit_nll(Val(:nb2), y, Xμ, Xψ, gidx, G, Q, θ)
+    Hg = Matrix(DRModels._ls_obs_information(Val(:nb2), y, Xμ, Xψ, gidx, G, Q, θ))
+    f = θ -> DRModels._ls_fit_nll(Val(:nb2), y, Xμ, Xψ, gidx, G, Q, θ)
     Hn = _fd_hess(f, θ)
     @test maximum(abs.(Hg .- Hn)) < 1e-2 * (1 + maximum(abs.(Hn)))
     @test Hg ≈ Hg'                                   # symmetric by construction
@@ -56,7 +56,7 @@ end
     y = [_nb2_draw_i(0.5 + 0.4x[i] + A[species[i]][1], 0.3 + A[species[i]][2]) for i in 1:n]
     Q = sparse(1.0 * I, G, G)
 
-    fit = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, species, G, Q; se = true)
+    fit = DRModels._fit_locscale(Val(:nb2), y, Xμ, Xψ, species, G, Q; se = true)
     p = length(fit.θ)
     @test fit.vcov !== nothing
     @test isposdef(Symmetric(fit.vcov))              # PD at the optimum
@@ -68,7 +68,7 @@ end
     @test fit.components.sd_psi ≈ sqrt(fit.Lambda[2, 2])
     @test fit.components.cor_mu_psi ≈
           fit.Lambda[1, 2] / sqrt(fit.Lambda[1, 1] * fit.Lambda[2, 2])
-    fit0 = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, species, G, Q; se = false)
+    fit0 = DRModels._fit_locscale(Val(:nb2), y, Xμ, Xψ, species, G, Q; se = false)
     @test fit0.vcov === nothing && fit0.se === nothing
     @test fit0.components.sd_mu > 0
 end

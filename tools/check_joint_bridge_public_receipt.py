@@ -25,7 +25,7 @@ def check(receipt, reference, direct, rroot, jroot, native=False):
     frozen_json = jroot / "docs/dev-log/evidence/julia-r-parity/missing-predictor-oracle/native-mi-oracle-003.json"
     require(receipt.get("fixture_sha256") == oracle.digest(frozen_json), "fixture hash")
     require(receipt.get("runtime", {}).get("threads") == 1 and receipt["runtime"].get("blas") == 1, "thread budget")
-    require(receipt["runtime"].get("source") == str(jroot / "src/DRM.jl"), "loaded Julia source")
+    require(receipt["runtime"].get("source") == str(jroot / "src/DRModels.jl"), "loaded Julia source")
     require(set(receipt.get("cases", {})) == {"gaussian", "bernoulli"}, "case denominator")
     for kind in ("gaussian", "bernoulli"):
         case, frozen, julia = receipt["cases"][kind], reference[kind], direct["cases"][kind]

@@ -2,7 +2,7 @@
 
 !!! note "Status — Experimental"
     Mirrors drmTMB's [location-scale-scale](https://itchyshin.github.io/drmTMB/articles/location-scale-scale.html)
-    vignette. **In DRM.jl today:** `sd(group) ~ z` on the iid `(1 | g)` random
+    vignette. **In DRModels.jl today:** `sd(group) ~ z` on the iid `(1 | g)` random
     effect (ML + REML), `sd(group, phylogenetic) ~ z` on the per-species
     phylogenetic SD (ML + REML, with dense and $O(p)$ sparse solvers), and
     multi-component LSS models. Both are Experimental-tier
@@ -12,7 +12,7 @@
 A [location–scale model](location-scale.md) asks whether predictors change the
 expected response `μ` and the residual SD `σ`. A **location–scale–scale** model
 adds a third submodel: predictors can also change the standard deviation of a
-**latent random effect**. DRM.jl writes that third submodel as `sd(group) ~ z`,
+**latent random effect**. DRModels.jl writes that third submodel as `sd(group) ~ z`,
 exactly as drmTMB.
 
 ## Personality, predictability, repeatability
@@ -39,7 +39,7 @@ b_i &\sim \mathrm{N}(0,\, \sigma_{b,i}^2), &
 The matching formula bundle — one formula per submodel:
 
 ```@example lss
-using DRM, Random
+using DRModels, Random
 
 rng = Random.MersenneTwister(20260715)
 n_id, n_each = 80, 6
@@ -70,7 +70,7 @@ through `exp`. On this simulation (truth: between-SD 0.65 vs 0.40, within-SD
 
 !!! warning "sd() predictors must be constant within each group"
     Sex is used to model `sd(id)`, so it must not vary within an individual.
-    DRM.jl checks this and errors, naming the offending predictor — exactly as
+    DRModels.jl checks this and errors, naming the offending predictor — exactly as
     drmTMB does. Do not average a genuinely within-group predictor to silence
     the error; that changes the scientific question.
 
@@ -113,9 +113,9 @@ function _baln(d)
                   "($(node(p*"a",k-1)),$(node(p*"b",k-1))):$(1/d)")
     node("t", d)
 end
-phy = DRM.augmented_phy(_baln(6))
+phy = DRModels.augmented_phy(_baln(6))
 G = phy.n_leaves
-K0 = DRM.sigma_phy_dense(phy; σ²_phy = 1.0)
+K0 = DRModels.sigma_phy_dense(phy; σ²_phy = 1.0)
 dK = sqrt.(diag(K0)); K = K0 ./ (dK * dK')
 
 rng2 = Random.MersenneTwister(11)
@@ -135,10 +135,9 @@ fitq = drm(bf(@formula(y ~ x + phylo(1 | species)),
 ```
 
 The estimates track the simulated truth (mean 1.0 and 0.5; the σ and σ_a
-slopes in the right directions). On this route's committed test fixture,
-drmTMB's native engine returns the same log-likelihood (−69.1373) and the same
-coefficients to seven significant figures — that cross-engine agreement is
-pinned in `test/test_lss_phylo.jl`.
+slopes in the right directions). On the package's cross-engine reference
+fixture, drmTMB's native engine returns the same log-likelihood (−69.1373) and
+the same coefficients to seven significant figures.
 
 Species rows need not follow tree-tip order when fitting an LSS model. String
 labels match `phy.leaf_names` exactly; integer labels are positions in `1:G`,
@@ -185,7 +184,7 @@ coef(fitq_shuffled, :sd_phylo)
 
 ## Missing response handling
 
-Like other Gaussian routes in DRM.jl, Location–Scale–Scale models support
+Like other Gaussian routes in DRModels.jl, Location–Scale–Scale models support
 incomplete responses (`missing` or `NaN` in `y`), matching `response = "include"`
 in drmTMB:
 
@@ -258,9 +257,8 @@ confint(fit, parm = "fixef:sd_phylo:temp", method = "bootstrap", R = 199,
         threads = TRUE)          # threaded refits; BLAS is pinned internally
 ```
 
-The full M2–M6q model ladder of the ecogeographical-rules protocol gives
-logLik identical to `engine = "tmb"` in every cell — see
-[the cross-engine evidence](https://github.com/itchyshin/DRM.jl/blob/main/docs/dev-log/evidence/2026-08-28-lss-mladder-cross-engine.md).
+Across the assessed ecogeographical-rules model ladder, the Julia and TMB
+engines gave identical log likelihoods.
 
 ## See also
 

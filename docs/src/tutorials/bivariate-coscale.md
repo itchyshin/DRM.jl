@@ -2,12 +2,12 @@
 
 !!! note "Status — Stable"
     Mirrors drmTMB's [Changing residual coupling with rho12](https://itchyshin.github.io/drmTMB/articles/bivariate-coscale.html).
-    **In DRM.jl today:** bivariate Gaussian location–scale with a
+    **In DRModels.jl today:** bivariate Gaussian location–scale with a
     predictor-dependent residual correlation `ρ12` (fixed effects, ML).
 
 With two responses, the interesting structure is often the **residual
 correlation** ρ12 — how `y1` and `y2` co-vary *after* accounting for their means.
-DRM.jl lets ρ12 depend on predictors, with its own formula, exactly as drmTMB.
+DRModels.jl lets ρ12 depend on predictors, with its own formula, exactly as drmTMB.
 
 ## A correlation that changes with a covariate
 
@@ -16,7 +16,7 @@ then recover that structure. ρ12 is modelled on the `atanh` scale (so it always
 stays in `(-1, 1)`):
 
 ```@example bc
-using DRM, Random
+using DRModels, Random
 Random.seed!(11)
 
 n = 3000
@@ -57,7 +57,7 @@ For the q=4 phylogenetic location-scale model, put the same
 `mu2`, `sigma1`, and `sigma2`. The residual `rho12` formula stays separate.
 
 ```julia
-using DRM, Random
+using DRModels, Random
 Random.seed!(42)
 
 phy = random_balanced_tree(6; branch_length = 0.2)
@@ -94,17 +94,17 @@ The internal `:phylocov` coefficient block is not a distributional predictor, so
 `:rho12`, but not `:phylocov`. Use [`coevolution_cor`](@ref) for the among-axis
 correlation matrix of `Σ_a`.
 
-## Relmat / animal / spatial q=4 coevolution (#189)
+## Relmat / animal / spatial q=4 coevolution
 
 The same verified q=4 engine accepts level-indexed structured providers. Put
 `relmat(1 | id)`, `animal(1 | id)`, or `spatial(1 | site)` on **all four** axes
 and pass `K=…`, `A=…`, or `coords=…` respectively. Spatial uses a **fixed**
-range (`spatial_range`; default = mean pairwise site distance) in this slice —
-joint range estimation is deferred. Non-tree `bootstrap_sigma_a` is not yet
+range (`spatial_range`; default = mean pairwise site distance); joint range
+estimation is deferred. Non-tree `bootstrap_sigma_a` is not yet
 supported (clear `ArgumentError`).
 
 ```julia
-using DRM, LinearAlgebra, Random
+using DRModels, LinearAlgebra, Random
 Random.seed!(189)
 
 G = 8; nrep = 3
@@ -131,4 +131,4 @@ coevolution_cor(fit_k)
 - [When variance carries signal](location-scale.md) — the single-response
   location–scale model.
 - The verified **q=4 phylogenetic** bivariate location–scale engine (the speed
-  headline) — see [`HANDOVER.md`](https://github.com/itchyshin/DRM.jl/blob/main/HANDOVER.md).
+  headline) — see [`HANDOVER.md`](https://github.com/itchyshin/DRModels.jl/blob/main/HANDOVER.md).

@@ -1,7 +1,7 @@
 # Hurdle (`hu`) modifier for count families: a two-part model. A logit "hurdle"
 # decides zero vs positive (π = P(y=0)); positive counts follow the ZERO-TRUNCATED
 # count distribution. Unlike `zi`, all zeros are structural. Mirrors drmTMB's `hu`.
-using DRM
+using DRModels
 using Test, Random
 import Distributions
 

@@ -21,7 +21,7 @@
 # the same relative path, INCLUDING bases.txt and the numbered subdirectories. The
 # workflow asserts that below before calling this, so a missing file fails loudly
 # with a readable message instead of deep inside Documenter.
-using DRM
+using DRModels
 using DocumenterVitepress
 
 target = joinpath(@__DIR__, "build")
@@ -36,7 +36,7 @@ isfile(bases) || error(
 # NOTE: no `versions=` kwarg. DocumenterVitepress.deploydocs HARD-ERRORS on one
 # (src/DocumenterVitepress.jl:145); versions are steered by bases.txt instead.
 DocumenterVitepress.deploydocs(;
-    repo = "github.com/itchyshin/DRM.jl.git",
+    repo = "github.com/itchyshin/DRModels.jl.git",
     target = target,
     devbranch = "main",
     branch = "gh-pages",

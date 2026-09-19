@@ -2,7 +2,7 @@
 # sizes, concentrations). Log link on the mean μ; the `sigma` slot carries σ =
 # the coefficient of variation, mapped to the shape α = 1/σ² (so var = μ²σ² and
 # coef(:sigma) is log σ). Likelihood Gamma(α, μ/α) (shape–scale, mean μ). Fixed
-# effects, ML. `Distributions.Gamma` is used qualified — DRM exports its own
+# effects, ML. `Distributions.Gamma` is used qualified — DRModels exports its own
 # `Gamma` family.
 
 import Distributions
@@ -19,7 +19,7 @@ sparse-Laplace engine when `sigma ~ 1`. A phylogenetic random intercept on the
 mean, `phylo(1 | species)`, also uses the sparse-Laplace engine.
 
 !!! note
-    `DRM.Gamma` shadows `Distributions.Gamma`; qualify the latter if you need it.
+    `DRModels.Gamma` shadows `Distributions.Gamma`; qualify the latter if you need it.
 
 ```julia
 fit = drm(bf(y ~ x, sigma ~ 1), Gamma(); data = dat)

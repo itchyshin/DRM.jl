@@ -4,7 +4,7 @@
 # σ = SD); data are simulated from a skew-normal with a known mean/SD/slant and
 # the fit recovers all three. Fixed effects, maximum likelihood. Mirrors drmTMB's
 # `skew_normal`.
-using DRM
+using DRModels
 using Test, Random, Statistics
 using Distributions: SkewNormal as DSkewNormal
 

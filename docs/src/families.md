@@ -31,7 +31,7 @@ parameters (`nu`, `zoi`, `coi`, ordinal cutpoints).
 
 A handful of families share the name of a `Distributions.jl` distribution
 (`Gaussian` excepted: `Poisson`, `Binomial`, `Beta`, `Gamma`, `LogNormal`).
-DRM exports its own *family* object of that name; when a snippet also needs the
+DRModels exports its own *family* object of that name; when a snippet also needs the
 distribution to simulate, it qualifies it as `Distributions.Poisson` etc.
 
 ## Continuous, real-valued
@@ -42,7 +42,7 @@ Identity link on the mean, log link on the residual SD `σ`. The textbook
 location–scale model: both the mean and the spread can depend on covariates.
 
 ```@example fam
-using DRM, Random
+using DRModels, Random
 import Distributions          # qualified, for the simulating distributions
 Random.seed!(1)
 

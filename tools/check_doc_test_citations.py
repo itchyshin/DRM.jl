@@ -3,14 +3,14 @@
 
 Why this exists
 ---------------
-`docs/src/capabilities.md` is what a user reads to decide whether DRM.jl does the
+`docs/src/capabilities.md` is what a user reads to decide whether DRModels.jl does the
 thing they need, and its Status column cites test files as the evidence. Two ways
 that can be false, both found on 2026-08-25:
 
   * A capability is declared **absent while it ships** — the cross-family bivariate
     model was listed "Absent -- no cross-family bivariate model is implemented"
     while `src/mixed_family.jl`, three wired test files and a ~450-line methods
-    guide were all on main (DRM.jl#490). A user went elsewhere past a working
+    guide were all on main (DRModels.jl#490). A user went elsewhere past a working
     feature. That direction is not mechanically checkable and is not what this
     guard does.
 

@@ -3,7 +3,7 @@
 # (trials = successes + failures), exactly as drmTMB. Logit link on the mean
 # success probability μ; the `sigma` slot is σ with precision φ = 1/σ² (same
 # mapping as Beta) — likelihood BetaBinomial(n, μφ, (1-μ)φ). `Distributions.
-# BetaBinomial` is used qualified — DRM exports its own `BetaBinomial` family.
+# BetaBinomial` is used qualified — DRModels exports its own `BetaBinomial` family.
 
 import Distributions
 

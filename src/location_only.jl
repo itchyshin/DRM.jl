@@ -30,7 +30,7 @@
 # leaf diagonal from S'S — but leaves ARE in Q_cond's pattern), so they are exact.
 #
 # Depends on `AugmentedPhy` / `sparse_phy.jl` and `takahashi_selinv` (already
-# loaded by the verified core engine include chain in DRM.jl — do NOT re-include).
+# loaded by the verified core engine include chain in DRModels.jl — do NOT re-include).
 
 using LinearAlgebra, SparseArrays, Statistics, Random
 
@@ -3012,7 +3012,7 @@ function _loconly_reml_external_comparator_candidates()
         (
             comparator_id = :internal_dense_gls_oracle,
             target = :gaussian_loconly_phylo_reml,
-            comparator = "DRM.jl dense GLS oracle",
+            comparator = "DRModels.jl dense GLS oracle",
             same_estimand_status = :same_estimand_internal,
             dependency_status = :internal,
             artifact_status = :covered_by_focused_test,

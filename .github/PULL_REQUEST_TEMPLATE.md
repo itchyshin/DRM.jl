@@ -1,4 +1,4 @@
-<!-- DRM.jl pull request. Keep slices narrow: one issue → one branch → one PR. -->
+<!-- DRModels.jl pull request. Keep slices narrow: one issue → one branch → one PR. -->
 
 Closes #
 

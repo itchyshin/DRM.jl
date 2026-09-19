@@ -1,16 +1,16 @@
-module DRMMakieExt
+module DRModelsMakieExt
 
-# Makie/AoG drawing extension for DRM's backend-free visualization preparers.
+# Makie/AoG drawing extension for DRModels's backend-free visualization preparers.
 # Loads only when a Makie backend and AlgebraOfGraphics are in scope
 # (`using CairoMakie, AlgebraOfGraphics`). Arc 0 drawings are mostly raw Makie;
 # AlgebraOfGraphics is in the extension gate to match the HSquared house pattern.
 # Florence's Confidence Eye contract applies to `:profile`.
 
-using DRM
+using DRModels
 using AlgebraOfGraphics
 using Makie
 using Printf: @sprintf
-import DRM: drm_figure
+import DRModels: drm_figure
 
 function _infer_kind(d::NamedTuple)
     hasproperty(d, :deviance) && hasproperty(d, :cutoff) && hasproperty(d, :estimate) &&

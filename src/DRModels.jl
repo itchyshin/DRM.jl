@@ -1,8 +1,8 @@
 """
-    DRM
+    DRModels
 
-`DRM.jl` — a Julia engine for distributional regression models, the Julia
-twin of the R package **drmTMB**. Mirrors the gllvmTMB → GLLVM.jl move.
+`DRModels.jl` — a Julia engine for distributional regression models, the Julia
+twin of the R package **drmTMB**. Mirrors the gllvmTMB → GLLVModels.jl move.
 
 The package covers univariate and bivariate distributional regression across
 some twenty response families, with random, phylogenetic, spatial, pedigree and
@@ -14,26 +14,28 @@ via Takahashi selected inverse — never forms a dense p×p Σ_phy), optimised b
 LBFGS with a fast-path-then-robust mode-finder.
 
 For what is implemented and how far each route is tested, see the capability
-matrix in the documentation. Measured comparisons against drmTMB, with their
-run conditions, live in `report/comparison-grid.md` and `HANDOVER.md` §2; they
-are specific to the model and data measured and are deliberately not quoted as
-figures here (HANDOVER.md §2, "Do NOT oversell").
+matrix in the documentation. Measured comparisons against drmTMB include their
+run conditions in `report/comparison-grid.md`; they are specific to the model
+and data measured and are deliberately not quoted as package-wide figures here.
 
-NOTE (see HANDOVER.md): the engine files were migrated as the poc's script-style
-includes (chain: fit_q4_sparse_tmb → fit_ml_q4 → sparse_em_fit → sparse_aug_plsm
-→ sparse_phy / takahashi_selinv). Inference (Wald + profile + parametric bootstrap)
-is wired in `src/inference.jl`. **Public / included on tip:** opt-in REML
-(`src/reml_q4.jl`, `drm(method = :REML)`; restricted correction covers all four
-among-axis axes — see #11) and the conjugate-EM Gaussian phylo-mean solver
-(`src/location_only.jl`, `algorithm = :em` — see #12). **#13 decision gate FAIL
-(2026-08-01):** natural-gradient EM stalls vs sparse TMB on q4_p100 — do **not**
-expose `algorithm = :natgrad`; the reusable Fisher metric lives in
-`src/lc_metric.jl`. **Still experimental (not wired):** SQUAREM EM, trust-region &
-line-search E-steps, dense q=4 EM, warm-start fit variants, and the leftover
-`src/experimental/location_only.jl` / `fit_em_natgrad.jl` prototypes — do not
-treat that directory as the public REML / `:em` surface.
+The engine retains the proof-of-concept's script-style organisation. Inference
+provides Wald, profile, and parametric-bootstrap intervals. **Public:** opt-in
+REML (`drm(method = :REML)`; its restricted correction covers all four
+among-axis axes) and the conjugate-EM Gaussian phylo-mean solver
+(`algorithm = :em`). A natural-gradient EM implementation failed the required
+likelihood-parity check on `q4_p100`, so `algorithm = :natgrad` is not exposed;
+the reusable Fisher metric is retained as engine infrastructure. **Experimental
+prototypes are not wired:** SQUAREM EM, trust-region and line-search E-steps,
+dense q=4 EM, and warm-start variants. Do not treat them as the public REML or
+`:em` surface.
 """
-module DRM
+module DRModels
+
+# Soft source-level migration aid: users who have already loaded DRModels can
+# qualify the old module name while moving calls to DRModels.  A renamed Julia
+# package cannot keep `using DRM` alive because that resolves the package name
+# before this module is loaded.
+const DRM = DRModels
 
 # Load the verified core engine. The relative @__DIR__ includes inside
 # fit_q4_sparse_tmb.jl transitively pull the whole chain from this src/ dir.
@@ -129,7 +131,7 @@ include("variational.jl")
 include("summary.jl")
 include("r2.jl")             # R2 for the constant-sigma Gaussian case ONLY; refuses elsewhere
 include("visualization.jl")
-include("plotting_ext.jl")   # #336: method-less drm_figure stub + thin plot_* (DRMMakieExt)
+include("plotting_ext.jl")   # #336: method-less drm_figure stub + thin plot_* (DRModelsMakieExt)
 include("comparison.jl")
 include("chibar.jl")             # chi-bar-square boundary p-values for variance-component LRTs
 include("bridge.jl")
@@ -185,7 +187,7 @@ export @formula, bf, drm_formula, drm, Gaussian, Student, SkewNormal, Poisson, N
        meta_vcov_bivariate, MetaVcovBivariate
 
 # Public API — post-fit accessors for the cross-family bivariate fit
-# (`fit_mixed_family`, currently reached as `DRM.fit_mixed_family`).
+# (`fit_mixed_family`, currently reached as `DRModels.fit_mixed_family`).
 export mf_coef, mf_aic, mf_bic, mf_fitted, mf_summary
 export r2_constant_sigma
 
@@ -202,6 +204,6 @@ export PreparedJointModel, PreparedJointFit, PreparedFiniteJointModel, PreparedF
 # Marginal method-selection surface (#136): VA/ELBO scaffold. Kept INTERNAL on
 # purpose — the user-facing API is `method = :LA` / `:VA`, and exporting a bare
 # `Laplace` would clash with `Distributions.Laplace`. Reach them as
-# `DRM.Variational` etc. if needed.
+# `DRModels.Variational` etc. if needed.
 
-end # module DRM
+end # module DRModels

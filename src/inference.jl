@@ -1,4 +1,4 @@
-# inference.jl — Wald + profile-likelihood inference for fitted DRM models.
+# inference.jl — Wald + profile-likelihood inference for fitted DRModels models.
 # Wald: estimate ± z·se from the observed information stored on the fit, on each
 # parameter's working scale (log σ, atanh ρ12, log σ_b). Profile: invert the
 # likelihood-ratio statistic — the endpoints where 2(ℓ̂ − ℓ_profile) = χ²₁(level),
@@ -56,7 +56,7 @@ const _ProfileStatsRow = NamedTuple{
         :lower_unbounded,
         :upper_unbounded,
         :nonmonotone,
-        # DRM.jl#493: the refinement loop's `thi - tlo < 1e-8` bracket-collapse
+        # DRModels.jl#493: the refinement loop's `thi - tlo < 1e-8` bracket-collapse
         # exit was being treated identically to genuine convergence
         # (`abs(ht) < 1e-9`), which let a trapped, non-monotone profiled-nll
         # surface report a fabricated near-zero step as if it were a real
@@ -170,7 +170,7 @@ Confidence intervals for every coefficient, as a vector of
   An endpoint arm that the search cannot certify is REFUSED, not returned: this
   method throws an `ArgumentError` naming the coefficient, the arm, and the
   nuisance-solve reason rather than reporting the failed side as a signed `Inf`
-  (DRM.jl#631). Use [`profile_result`](@ref) when you want the same rows plus
+  (DRModels.jl#631). Use [`profile_result`](@ref) when you want the same rows plus
   the per-endpoint diagnostics instead of an exception.
   Pass `threads = true` to profile coefficients in parallel when the fitted
   objective is thread-safe; if only one coefficient is profiled, its lower and
@@ -194,7 +194,7 @@ function confint(
     throw(ArgumentError("confint: method must be :wald or :profile (got :$method)"))
 end
 
-# DRM.jl#631: a failed endpoint arm must NEVER leave the user-facing interval
+# DRModels.jl#631: a failed endpoint arm must NEVER leave the user-facing interval
 # routine as a bound. `profile_result` is the AUDITABLE surface -- it keeps the
 # ±Inf convention alongside `lower_endpoint_failed` / `upper_endpoint_failed` so
 # a caller that asked for diagnostics can read them. `confint` is the surface a
@@ -256,7 +256,7 @@ Auditable profile-likelihood confidence intervals. Returns a `NamedTuple` with:
 - `ci` — the same rows `confint(fit; method = :profile)` returns, except that a
   FAILED endpoint arm is kept here as a signed `Inf` alongside its
   `lower_endpoint_failed` / `upper_endpoint_failed` flag. This is the auditable
-  surface; `confint` refuses such a row rather than returning it (DRM.jl#631);
+  surface; `confint` refuses such a row rather than returning it (DRModels.jl#631);
 - `stats` — per-coefficient endpoint work counts;
 - `endpoint_diagnostics` — canonical location–scale endpoint reason, last
   evaluated candidate, and residual for each arm; other profile backends omit
@@ -341,7 +341,7 @@ function profile_result(fit::DrmFit; level::Real=0.95, threads::Bool=false, parm
             end
         end
     end
-    # DRM.jl#493: a coefficient counts as `failed` when either arm's endpoint
+    # DRModels.jl#493: a coefficient counts as `failed` when either arm's endpoint
     # search hit the bracket-collapse exit without genuine convergence (the row
     # is still returned, with ±Inf on the failed side — see `_profile_endpoint_result`).
     failed = count(s -> s.lower_endpoint_failed || s.upper_endpoint_failed, stats)
@@ -688,7 +688,7 @@ function _loconly_profile_row_result(
         lower_unbounded=lstats.unbounded,
         upper_unbounded=rstats.unbounded,
         nonmonotone=lstats.nonmonotone || rstats.nonmonotone,
-        # `_loconly_profile_endpoint_result` was not in scope for DRM.jl#493 (the
+        # `_loconly_profile_endpoint_result` was not in scope for DRModels.jl#493 (the
         # reported degenerate fit routes through the generic path, not here) and
         # is not instrumented for the same bracket-collapse failure; default false
         # rather than claim a check that was not made.
@@ -1168,7 +1168,7 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
     t = (tlo + thi) / 2
     root_iterations = 0
     # `converged` is set ONLY by the genuine convergence test `abs(ht) < 1e-9`
-    # (DRM.jl#493). The loop's OTHER exit, `thi - tlo < 1e-8`, is a bracket-
+    # (DRModels.jl#493). The loop's OTHER exit, `thi - tlo < 1e-8`, is a bracket-
     # collapse safety valve, not a root: on a trapped, non-monotone profiled-nll
     # surface (the warm-started inner nuisance solve landing in a spurious local
     # optimum ~28 NLL units above the true profile, for every t on the affected
@@ -1225,7 +1225,7 @@ function _profile_endpoint_result(nll, nllgrad, θ̂, k, nllhat, half, s, dir, u
         if thi - tlo < 1e-8
             # Bracket collapsed. That is a genuine root iff the residual is small
             # relative to the target; otherwise the surface never crossed and the
-            # step is fabricated (DRM.jl#493).
+            # step is fabricated (DRModels.jl#493).
             converged = isfinite(ht) && abs(ht) + final_cancellation <= endpoint_tolerance
             converged && (t = t_eval)
             break
@@ -2312,7 +2312,7 @@ end
 # Float64-only gradient callback; use it before trying ForwardDiff through the
 # objective. `nothing` means no objective -> (NaN, :none).
 #
-# WHY THE FALLBACK AND WHY THE SOURCE (measured 2026-09-05, DRM.jl origin/main
+# WHY THE FALLBACK AND WHY THE SOURCE (measured 2026-09-05, DRModels.jl origin/main
 # 109b6421c). FOUR shipping routes store a bare objective (no gradient callback)
 # that is exact on Float64 but NOT dual-number safe, so the unguarded
 # `ForwardDiff.gradient` on the last line THREW and the health check crashed on

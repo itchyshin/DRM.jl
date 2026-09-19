@@ -11,7 +11,7 @@ Poisson response family for counts: log link on the mean `μ` (so `μ` coefficie
 act on `log λ`). No scale parameter. Mirrors `drmTMB`'s `poisson` family.
 
 !!! note
-    `DRM.Poisson` shadows `Distributions.Poisson`; if you need the distribution
+    `DRModels.Poisson` shadows `Distributions.Poisson`; if you need the distribution
     too (e.g. to simulate), qualify it as `Distributions.Poisson`.
 
 ```julia
@@ -21,15 +21,15 @@ fitted(fit)        # fitted counts λ = exp(Xβ̂), on the response scale
 fit_phy = drm(bf(@formula(y ~ x + phylo(1 | species))), Poisson();
               data = dat, tree = tr, se = false)
 
-# Experimental (#136 Arc 0): Poisson random-intercept variational (ELBO) marginal.
+# Experimental: Poisson random-intercept variational (ELBO) marginal.
 # Default remains Laplace (`marginal = :LA`). `loglik` on a VA fit is an ELBO.
 fit_va = drm(bf(@formula(y ~ x + (1 | g))), Poisson(); data = dat, marginal = :VA)
 
-# Opt-in Cox–Reid restricted estimation (#443 / #450). ML is the default.
+# Opt-in Cox–Reid restricted estimation. ML is the default.
 fit_reml = drm(bf(@formula(y ~ x + (1 | g))), Poisson(); data = dat, method = :REML)
 estimation_method(fit_reml)   # :REML
 
-# Opt-in 1-D Liu–Pierce AGHQ for `(1 | g)` only (#448). Default `:LA` stays
+# Opt-in 1-D Liu–Pierce AGHQ for `(1 | g)` only. Default `:LA` stays
 # today's non-adaptive GHQ-32. k=1 ≡ 1-point Laplace plumbing, not a recovery
 # headline. Capability row stays missing. `:REML` is not wired to `:AGHQ`.
 fit_aghq = drm(bf(@formula(y ~ x + (1 | g))), Poisson();
@@ -45,9 +45,9 @@ fit_phy_reml = drm(bf(@formula(y ~ x + phylo(1 | species))), Poisson();
 `method = :REML` is **opt-in — ML remains the default**. It maximises the Cox–Reid
 adjusted profile likelihood `ℓ_ML − ½·log|I_ββ|` on two Poisson routes:
 
-- a scalar random intercept `(1 | g)` integrated by GHQ-32 (#443)
+- a scalar random intercept `(1 | g)` integrated by GHQ-32
 - phylogenetic / `relmat` / `animal` / precomputed-spatial Laplace
-  (`_fit_poisson_general_laplace`, #450)
+  (`_fit_poisson_general_laplace`)
 
 On the Gaussian route this correction is exactly Patterson–Thompson REML, so the
 mechanism is anchored rather than ad hoc.
@@ -56,8 +56,8 @@ mechanism is anchored rather than ad hoc.
     A 16-tip / 12-seed Poisson phylo cell over-corrected under Cox–Reid
     (ML +8.18%, CR +17.41%). Do not read those percentages as a bias-sign
     headline or a reason to prefer `:REML` on trees. ADEMP on a larger tree
-    is a follow-on. Evidence:
-    `docs/dev-log/evidence/2026-08-18-cox-reid-scoping-probe.md`.
+    is a follow-on. This is a small exploratory result, not a general
+    performance claim.
 
 !!! warning "It over-corrects when clusters are plentiful"
     On a Poisson `(1 | g)` cell with true `σ_b = 0.6` and 6 observations per cluster,
@@ -169,7 +169,7 @@ function drm(f::DrmFormula, fam::Poisson; data, tree = nothing, K = nothing,
             # marginal is deferred B).
             reml && isva && _reject_reml_route(fam, "`marginal = :VA` (the ELBO is not a likelihood)")
             reml && isaghq && throw(ArgumentError(
-                "drm (Poisson): `method = :REML` is not available with `marginal = :AGHQ` (#448). " *
+                "drm (Poisson): `method = :REML` is not available with `marginal = :AGHQ`. " *
                 "The restricted (Cox–Reid) correction is not wired to the AGHQ marginal this slice. " *
                 "Use `method = :ML` (the default) with `marginal = :AGHQ`, or `method = :REML` with `marginal = :LA`."))
             isva && return _withformula(_withmarginal(
@@ -309,7 +309,7 @@ end
 # prior-scaled GHQ-32. Default `:LA` is unchanged. `nAGQ=1` is 1-point Laplace
 # plumbing, not a recovery claim. `:REML` is rejected upstream.
 function _fit_poisson_ranef_aghq(fam::Poisson, y, Xμ, gidx, G, nmμ, grp, g_tol; nAGQ::Int = 5)
-    nAGQ >= 1 || throw(ArgumentError("nAGQ must be ≥ 1; got $nAGQ (#448)"))
+    nAGQ >= 1 || throw(ArgumentError("nAGQ must be ≥ 1; got $nAGQ"))
     n = length(y); pμ = size(Xμ, 2)
     members = [Int[] for _ in 1:G]
     for i in 1:n
@@ -504,7 +504,7 @@ end
 # Unlike the verified large-p sparse-Laplace spine (`_fit_poisson_relmat_laplace`,
 # which freezes a precomputed precision Q and supplies a hand-derived O(p) gradient
 # for θ = [β; log σ_b] only), this path must differentiate the marginal w.r.t. ρ
-# as well. It does so the same way every other DRM.jl non-Gaussian family fit does
+# as well. It does so the same way every other DRModels.jl non-Gaussian family fit does
 # (Poisson/NB2/Gamma GHQ paths and the Gaussian coordinate-spatial path
 # `_fit_spatial_gaussian`): the marginal NLL is written in AD-traceable operations
 # and ForwardDiff supplies the EXACT gradient (and the Hessian for the covariance).
@@ -604,7 +604,7 @@ end
     _fit_poisson_spatial_coord(fam, y, Xμ, labels, coords, nmμ, grp, g_tol; se)
 
 Poisson `spatial(1 | grp)` fit with a coordinate-based exponential-kernel spatial
-covariance `C(ρ) = exp(-d/ρ)` and the range `ρ` **estimated jointly** (#270). The
+covariance `C(ρ) = exp(-d/ρ)` and the range `ρ` **estimated jointly**. The
 site coordinates (`coords`, a `G×2` matrix, one row per group level in first-seen
 order) give the pairwise distances `d`; the random intercept is `b ~ N(0, σ_b² C(ρ))`
 on `log λ`. The outer parameter vector is `θ = [β_μ; log σ_b; log ρ]`, so `ρ` is a

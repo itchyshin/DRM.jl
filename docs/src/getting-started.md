@@ -8,7 +8,7 @@
     [Rosetta](rosetta.md); for the full capability map see
     [What can I fit today?](model-guides/model-map.md).
 
-DRM.jl is *distributional* regression: instead of a single linear predictor for
+DRModels.jl is *distributional* regression: instead of a single linear predictor for
 the mean, you give **each parameter of the response distribution its own
 formula**. The simplest case puts a formula on the mean **μ** and a formula on
 the residual scale **σ**, so the spread of the data can change with covariates
@@ -19,12 +19,12 @@ read what came back.
 
 ## Install
 
-DRM.jl is pre-release, so develop it from a local checkout:
+DRModels.jl is pre-release, so develop it from a local checkout:
 
 ```julia
 using Pkg
-Pkg.develop(path = "/path/to/DRM.jl")   # or Pkg.add(url = "https://github.com/itchyshin/DRM.jl")
-using DRM
+Pkg.develop(path = "/path/to/DRModels.jl")   # or Pkg.add(url = "https://github.com/itchyshin/DRModels.jl")
+using DRModels
 ```
 
 The two verbs you will use the most are exported at the top level:
@@ -41,7 +41,7 @@ also rises with `x` (heteroscedasticity), so a mean-only model would be
 mis-specified.
 
 ```@example getstarted
-using DRM, Random
+using DRModels, Random
 Random.seed!(20260610)
 
 n    = 400

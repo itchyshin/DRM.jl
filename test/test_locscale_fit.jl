@@ -9,7 +9,7 @@
 # trustworthy variance-component recovery. Tight recovery waits on the exact O(p)
 # outer gradient (Takahashi) slice; marginal accuracy is already pinned by the
 # marginal-vs-Gauss–Hermite gate.
-using DRM
+using DRModels
 using Test, Random, LinearAlgebra, SparseArrays
 import Distributions
 
@@ -30,7 +30,7 @@ _nb2_draw(η, ψ) = (r = exp(ψ); μ = exp(η);
                    βψ[1] + A[species[i], 2]) for i in 1:n]
 
     Q = sparse(1.0 * I, p, p)
-    fit = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, species, p, Q)
+    fit = DRModels._fit_locscale(Val(:nb2), y, Xμ, Xψ, species, p, Q)
 
     @test fit.nll < 1e17                            # feasible fit (the guard worked)
     # Valid covariance: a collapsed (boundary) variance is a legitimate tiny-data
@@ -59,8 +59,8 @@ end
     y = [_nb2_draw(βμ[1] + βμ[2] * x[i] + A[species[i], 1],
                    βψ[1] + A[species[i], 2]) for i in 1:n]
 
-    Q, gidx, G = DRM._locscale_phylo_setup(phy, species)
-    fit = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, gidx, G, Q)
+    Q, gidx, G = DRModels._locscale_phylo_setup(phy, species)
+    fit = DRModels._fit_locscale(Val(:nb2), y, Xμ, Xψ, gidx, G, Q)
 
     @test fit.nll < 1e17                            # phylo precision path runs end-to-end (feasible)
     @test all(isfinite, fit.Lambda) && fit.Lambda[1, 1] ≥ 0 && fit.Lambda[2, 2] ≥ 0
@@ -84,9 +84,9 @@ end
     y = [_nb2_draw(βμ[1] + βμ[2] * x[i] + A[species[i]][1],
                    βψ[1] + A[species[i]][2]) for i in 1:n]
     Q = sparse(1.0 * I, G, G)
-    fit = DRM._fit_locscale(Val(:nb2), y, Xμ, Xψ, species, G, Q)
+    fit = DRModels._fit_locscale(Val(:nb2), y, Xμ, Xψ, species, G, Q)
 
-    gmax = maximum(abs.(DRM._ls_marginal_grad(Val(:nb2), y, Xμ, Xψ, species, G, Q, fit.θ)))
+    gmax = maximum(abs.(DRModels._ls_marginal_grad(Val(:nb2), y, Xμ, Xψ, species, G, Q, fit.θ)))
     @test gmax < 1e-3                               # stationarity of the exact gradient (convergence evidence)
     @test fit.beta_mu[1] ≈ 0.5 atol = 0.2
     @test fit.beta_mu[2] ≈ 0.4 atol = 0.1

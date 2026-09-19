@@ -2,7 +2,7 @@
 
 !!! note "Status — Stable"
     Mirrors drmTMB's [When variance carries signal, Part 1](https://itchyshin.github.io/drmTMB/articles/location-scale.html).
-    **In DRM.jl today:** the univariate Gaussian location–scale model fits by ML.
+    **In DRModels.jl today:** the univariate Gaussian location–scale model fits by ML.
     Continue with [Part 2: location–scale–scale](location-scale-scale.md) when the
     question moves from the residual SD to the SD of a random effect.
 
@@ -13,7 +13,7 @@ mean-only model is blind to that; a location–scale model sees it.
 ## A variance that moves while the mean stays put
 
 ```@example ls
-using DRM, Random
+using DRModels, Random
 Random.seed!(7)
 
 n = 400
@@ -63,7 +63,7 @@ or turn the comparison into a formal test with `lrtest` / `aicc` — see
 When the *spread* itself varies across many groups (sites, individuals,
 studies), put a **random intercept on `σ`** rather than a fixed level per group.
 Because the random effect enters σ nonlinearly there is no closed-form marginal,
-so DRM.jl integrates each group's effect out with per-group **Gauss–Hermite
+so DRModels.jl integrates each group's effect out with per-group **Gauss–Hermite
 quadrature**. drmTMB uses Laplace: both target the same marginal model, but
 their numerical approximations need not be identical.
 

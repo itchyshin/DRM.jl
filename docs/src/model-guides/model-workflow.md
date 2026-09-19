@@ -2,7 +2,7 @@
 
 !!! note "Status — Stable (Gaussian post-fit + inference)"
     Mirrors drmTMB's [Checking and using fitted models](https://itchyshin.github.io/drmTMB/articles/model-workflow.html).
-    **In DRM.jl today:** coefficient extraction, Wald standard errors, Wald
+    **In DRModels.jl today:** coefficient extraction, Wald standard errors, Wald
     **and profile-likelihood** confidence intervals, fitted values, residuals,
     `predict` (new data), `simulate`, and **parametric bootstrap** intervals
     (`bootstrap_ci`).
@@ -10,7 +10,7 @@
 Once you have a fit, pull coefficients and quantify their uncertainty.
 
 ```@example wf
-using DRM, Random
+using DRModels, Random
 Random.seed!(5)
 n = 1500
 x = randn(n)

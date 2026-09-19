@@ -1,7 +1,7 @@
 # Meta-analysis: known sampling variance, and the two correlations
 
 !!! note "Status — Stable (univariate `meta_V`), Stable (bivariate `V =`)"
-    Univariate meta-analysis via `meta_V(v)` has been in DRM.jl since the
+    Univariate meta-analysis via `meta_V(v)` has been in DRModels.jl since the
     Gaussian core. The **bivariate** known-sampling-covariance path — one known
     2×2 block per study — arrived with `meta_vcov_bivariate` and the `V =`
     keyword, and is parity-verified against drmTMB 0.7.0 (`tools/parity_biv_meta.R`).
@@ -105,7 +105,7 @@ drmTMB(bf(mu1 = y1 ~ x + meta_V(V = V), mu2 = y2 ~ x,
        family = c(gaussian(), gaussian()), data = dat)
 ```
 
-DRM.jl takes the object as a **fit-call keyword** instead:
+DRModels.jl takes the object as a **fit-call keyword** instead:
 
 ```julia
 drm(bf(mu1 = @formula(y1 ~ x), mu2 = @formula(y2 ~ x), …),
@@ -148,8 +148,8 @@ reporting which value you assumed.
 **And if you have no idea at all, still pass `V` with `cor12 = 0`** rather than
 omitting `V`: supplying the sampling *variances* matters separately from the
 correlation, and omitting `V` entirely was measurably worse (+0.091) than
-assuming independence (+0.062). Evidence:
-`docs/dev-log/evidence/2026-08-16-a12-biv-meta-recovery.md`.
+assuming independence (+0.062). This comparison comes from the package's
+parameter-recovery checks for the bivariate meta-analysis route.
 
 ## 4. What is *not* covered
 

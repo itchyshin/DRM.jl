@@ -70,7 +70,7 @@ function _fit_va(args...; kwargs...)
           "(`_fit_poisson_ranef_va`), Binomial/Bernoulli (`_fit_binomial_ranef_va`), " *
           "NegBinomial2 (`_fit_nb2_ranef_va`), Gamma (`_fit_gamma_ranef_va`) and Beta " *
           "(`_fit_beta_ranef_va`) random-intercept cases so far; other families are not " *
-          "yet wired — see https://github.com/itchyshin/DRM.jl/issues/136. Use " *
+          "yet wired — see https://github.com/itchyshin/DRModels.jl/issues/136. Use " *
           "marginal = :LA (Laplace, the default).")
 end
 
