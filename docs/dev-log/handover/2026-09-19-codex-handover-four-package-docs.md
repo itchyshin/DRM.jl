@@ -90,7 +90,7 @@ third label must remain scientific rather than mechanically identical.
 
 | Artifact / branch | Committed | Pushed | PR | State |
 |---|---:|---:|---|---|
-| `handover/2026-09-19-codex-four-package-docs` (this handover) | pending | pending | pending | CARRIED-OVER until this protocol is completed |
+| `handover/2026-09-19-codex-four-package-docs` @ `454e8870f` (this handover) | yes | yes | pending | CARRIED-OVER until its docs-only PR is opened |
 | `claude/lane-speed6-20260919` | yes, unpushed | no | none observed locally | CARRIED-OVER; foreign live performance lane |
 
 FINDINGS-OF-RECORD: none.  This handover records a user-approved programme
